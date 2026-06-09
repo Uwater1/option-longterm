@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.eggs/
+*.egg-info/
+
+# Virtual env
+venv/
+.venv/
+
+# Data committed to repo — do NOT ignore
+# data/
+*.parquet
+*.csv
+
+# Backtest outputs
+*.log
+*.png
+
+# Temp / research artifacts
+*_syntetic.txt
+spread_model.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+~$*
