@@ -7,7 +7,7 @@ Enhanced income strategy for Chinese ETFs: Covered Call + Bull Put Spread on 50E
 ```bash
 source venv/bin/activate                    # Activate Python env (uses system miniconda for rqdatac)
 python3 update_data.py                      # Refresh parquet data from rqdatac
-python backtest_covered_call.py [50|300|500]  # Run backtest (generates .log + .png)
+python backtest_covered_call.py [50|300|500]  # Run backtest (generates logs and charts under backtest/)
 python research_otm_levels.py -e 300        # OTM level analysis with filters
 python research_synthetic_otm.py -e 300     # OTM analysis on synthetic data
 python alpha_finder.py                      # 30-day forward return distribution
@@ -22,6 +22,7 @@ python research_robustness.py -e 500       # Data completeness & robustness anal
 ## Project Structure
 
 ```
+backtest/                      # Backtest output logs and PNG charts
 data/                          # Local Parquet database (rqdatac source)
 ├── {ETF}_instruments.parquet  # Option contract metadata (strike, expiry, multiplier)
 ├── {ETF}_historrical_prices.parquet  # Option daily OHLC/OI (order_book_id keyed)
