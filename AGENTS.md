@@ -12,7 +12,7 @@ python research_otm_levels.py -e 300        # OTM level analysis with filters
 python research_synthetic_otm.py -e 300     # OTM analysis on synthetic data
 python alpha_finder.py                      # 30-day forward return distribution
 python research_otm_no_filter.py -e 300     # Baseline OTM without filters
-python eval_synth_filters.py -e 500        # Enhanced synthetic filter eval (per-level, bootstrap CI, significance, scoring)
+python eval_synth_filters.py -e 500        # Enhanced synthetic filter eval (63 filters, risk metrics, bootstrap CI, significance, multi-criteria scoring)
 python eval_synth_combinations.py -e 300   # Filter combo search on synthetic data
 python evaluate_combinations.py -e 300     # Filter combo search on real data
 python diagnose_500etf.py -e 500           # 500ETF multi-variant diagnostic (10 variants)
@@ -106,6 +106,14 @@ README.md                      # English README (links to Chinese docs)
 
 **Implemented change:** RSI threshold for 500ETF raised from 66→70. Gains +697 RMB (1 extra trade cycle). **Statistically NOT significant** (P=64.3%, only 1 cycle differs). Keep as implemented but low confidence.
 
+**Synthetic filter research findings** (`eval_synth_filters.py -e 500`, 692 samples, 63 filters):
+- f4_AND_f6 (RSI>30 AND BBU) is #1 ranked by composite score (Total 20%, Sharpe 20%, MaxDD 20%, Calmar 15%, WinRate 10%, WorstLoss 10%, PF 5%)
+- 13 filters beat baseline on both total P&L and max drawdown, but none reaches 95% significance
+- f5 (MACD<0) has best Sharpe (0.000) and shallowest MaxDD (-265K) but too restrictive (47.5% placement)
+- Combined strategy (calls+put) is net negative on synthetic — Put L1 drag ~45K overwhelms call income
+- Adding CCI to f4_AND_f6 provides negligible improvement
+- New promising filters: f_roc5 (ROC<3%), f_sma50 (Close>SMA50), f_atr_low (low ATR), f_vol_low (low vol regime)
+
 **Robustness findings** (`research_robustness.py -e 500`):
 - 45 cycles only — bootstrap 95% CIs overlap across all variants
 - LOOCV: single cycle swing = ~14,630 RMB (68% of baseline total)
@@ -120,5 +128,6 @@ README.md                      # English README (links to Chinese docs)
 
 - [x] Explore data completeness for 500ETF and make research more robust → `research_robustness.py`
 - [ ] Test early roll management for 500ETF — roll calls to higher strikes if underlying rallies >5% mid-cycle
+- [ ] Explore more filters on real data: ROC5/10, f_sma50, CCI, vol_ratio, ATR_low — promising on synthetic
 - [ ] Explore weekly options for 500ETF if available — shorter DTE reduces rally exposure
 - [ ] Revisit conclusions when 500ETF reaches 80+ cycles (~2029)
