@@ -1,18 +1,18 @@
-Combination Rank 1: c11
-Filters: f6 AND f9
-Expanded logic: (Close < Upper Bollinger Band (20, 2)) AND (20-day ROC < 5%)
+Combination Rank 1: c34
+Filters: (f3 OR f22) AND f6
+Expanded logic: ((14-day RSI < 70) OR (10-day ROC < 5%)) AND (Close < Upper Bollinger Band (20, 2))
 
-Average Cycles Traded: 35.0 / 45 (77.78%)
-Average Winrate: 89.52%
-Average Expected Return: 435.45 RMB
-Average Max Loss: -2887.20 RMB
-Total Annual Return Approximation: 4064.17
+Average Cycles Traded: 40.8 / 45 (90.74%)
+Average Winrate: 86.99%
+Average Expected Return: 177.56 RMB
+Average Max Loss: -2895.39 RMB
+Total Annual Return Approximation: 1933.38
 
 --- Level Breakdown ---
 Option Type  OTM Level  Cycles Winrate  Expected Return  Max Loss
-       Call          0      35  77.14%          1248.15  -6494.40
-       Call          1      35  77.14%           677.08  -5358.56
-       Call          2      35  88.57%           323.37  -3752.32
-       Call          3      35  94.29%           150.22  -1725.66
-       Call          4      35 100.00%           135.79      5.84
-       Call          5      35 100.00%            78.07      1.92
+       Call          0      41  63.41%           346.23  -6494.40
+       Call          1      41  78.05%           227.10  -5358.56
+       Call          2      41  87.80%           185.15  -3752.32
+       Call          3      41  95.12%           112.43  -1725.66
+       Call          4      41  97.56%           116.36    -42.36
+       Call          5      40 100.00%            78.07      0.94
