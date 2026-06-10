@@ -8,7 +8,12 @@ import os
 # Import original functions
 import research_otm_levels as r_otm
 
-r_otm.select_etf("300")
+parser = argparse.ArgumentParser()
+parser.add_argument("-e", "--etf", type=str, choices=["50", "300", "500"], default="300")
+args = parser.parse_args()
+ETF_TAG = args.etf
+
+r_otm.select_etf(args.etf)
 inst, opt, etf = r_otm.load_data()
 cycles = r_otm.get_cycles(opt, etf, years=None)
 
@@ -260,7 +265,7 @@ for name, func, desc in combinations:
         total_annual_return = avg_er * avg_cycles / (len(cycles) / 12) # Approximation, assume ~1 cycle per month
 
         # Score it (we want 70% placement, which is 0.7 * 75 = 52.5 cycles)
-        if avg_cycles >= 50: # MIN_AVG_CYCLES_FOR_SCORING
+        if avg_cycles >= len(cycles) * 0.7:
             score = (avg_winrate * 1000) + avg_er + (total_annual_return * 0.1) # Arbitrary scoring
             all_results.append({
                 "Name": name,
@@ -291,7 +296,7 @@ for i, res in enumerate(all_results[:5]):
         desc_expanded = desc_expanded.replace(k, f"({v})")
     log_content += f"Expanded logic: {desc_expanded}\n\n"
 
-    log_content += f"Average Cycles Traded: {res['Avg Cycles']:.1f} / 75 ({(res['Avg Cycles']/75):.2%})\n"
+    log_content += f"Average Cycles Traded: {res['Avg Cycles']:.1f} / {len(cycles)} ({(res['Avg Cycles']/len(cycles)):.2%})\n"
     log_content += f"Average Winrate: {res['Avg Winrate']:.2%}\n"
     log_content += f"Average Expected Return: {res['Avg Expected Return']:.2f} RMB\n"
     log_content += f"Average Max Loss: {res['Avg Max Loss']:.2f} RMB\n"
@@ -308,7 +313,7 @@ for i, res in enumerate(all_results[:5]):
 
     log_content += df_formatted.to_string(index=False)
 
-    with open(f"filter2_{i+1}.log", "w") as f:
+    with open(f"filter2_{ETF_TAG}_{i+1}.log", "w") as f:
         f.write(log_content)
 
 print("\nSaved top 5 combinations to filter2_1.log ... filter2_5.log")

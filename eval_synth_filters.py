@@ -1,11 +1,24 @@
 import pandas as pd
 import numpy as np
 import pandas_ta as ta
+import argparse
 import os
 from numba_utils import calculate_research_metrics_numba
 
 PATH_PARQUET = "synthetic_options_300ETF.parquet"
 PATH_ETF = "./data/510300_1d.parquet"
+
+def select_etf(choice):
+    global PATH_PARQUET, PATH_ETF
+    if choice == "50":
+        PATH_PARQUET = "synthetic_options_50ETF.parquet"
+        PATH_ETF = "./data/50ETF_1d.parquet"
+    elif choice == "500":
+        PATH_PARQUET = "synthetic_options_500ETF.parquet"
+        PATH_ETF = "./data/500ETF_1d.parquet"
+    else:
+        PATH_PARQUET = "synthetic_options_300ETF.parquet"
+        PATH_ETF = "./data/510300_1d.parquet"
 
 def load_data():
     df = pd.read_parquet(PATH_PARQUET)
@@ -41,9 +54,13 @@ def load_data():
 
     df = df.merge(etf, left_on="Date", right_index=True, how="left")
 
-    # Pre-sort for numba
     df = df.sort_values(['Option Type', 'Date', 'Strike']).reset_index(drop=True)
     return df
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-e", "--etf", type=str, choices=["50", "300", "500"], default="300")
+args = parser.parse_args()
+select_etf(args.etf)
 
 df = load_data()
 

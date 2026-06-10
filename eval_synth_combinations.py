@@ -1,11 +1,24 @@
 import pandas as pd
 import numpy as np
 import pandas_ta as ta
+import argparse
 import os
 from numba_utils import calculate_research_metrics_numba
 
 PATH_PARQUET = "synthetic_options_300ETF.parquet"
 PATH_ETF = "./data/510300_1d.parquet"
+
+def select_etf(choice):
+    global PATH_PARQUET, PATH_ETF
+    if choice == "50":
+        PATH_PARQUET = "synthetic_options_50ETF.parquet"
+        PATH_ETF = "./data/50ETF_1d.parquet"
+    elif choice == "500":
+        PATH_PARQUET = "synthetic_options_500ETF.parquet"
+        PATH_ETF = "./data/500ETF_1d.parquet"
+    else:
+        PATH_PARQUET = "synthetic_options_300ETF.parquet"
+        PATH_ETF = "./data/510300_1d.parquet"
 
 def load_data():
     df = pd.read_parquet(PATH_PARQUET)
@@ -45,6 +58,12 @@ def load_data():
     # Pre-sort for numba
     df = df.sort_values(['Option Type', 'Date', 'Strike']).reset_index(drop=True)
     return df
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-e", "--etf", type=str, choices=["50", "300", "500"], default="300")
+args = parser.parse_args()
+select_etf(args.etf)
+ETF_TAG = args.etf
 
 df = load_data()
 
@@ -184,7 +203,7 @@ for res in results:
 
 best_filters.sort(key=lambda x: x["Score"], reverse=True)
 
-with open("filter_syntetic.txt", "w") as f:
+with open(f"filter_syntetic_{ETF_TAG}ETF.txt", "w") as f:
     f.write("Top 5 Combinations based on synthetic data evaluation:\n\n")
     for i, bf in enumerate(best_filters[:5]):
         f.write(f"Rank {i+1}: Combination {bf['Name']}\n")

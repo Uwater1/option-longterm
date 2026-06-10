@@ -1,0 +1,32 @@
+Top 5 Combinations based on synthetic data evaluation:
+
+Rank 1: Combination f4 AND f6
+  - Placement Rate: 89.32%
+  - Avg EV (Included): 350.20 RMB
+  - Avg EV (Filtered Out): -424.75 RMB
+  - Avg Max Loss: -14775.71 RMB
+
+Rank 2: Combination f3 AND f6
+  - Placement Rate: 90.20%
+  - Avg EV (Included): 319.31 RMB
+  - Avg EV (Filtered Out): -209.76 RMB
+  - Avg Max Loss: -14775.71 RMB
+
+Rank 3: Combination f3 AND f4 AND f6
+  - Placement Rate: 83.93%
+  - Avg EV (Included): 348.76 RMB
+  - Avg EV (Filtered Out): -156.99 RMB
+  - Avg Max Loss: -14775.71 RMB
+
+Rank 4: Combination f12 OR (f3 AND f6)
+  - Placement Rate: 91.07%
+  - Avg EV (Included): 294.75 RMB
+  - Avg EV (Filtered Out): -10.95 RMB
+  - Avg Max Loss: -14775.71 RMB
+
+Rank 5: Combination c2
+  - Placement Rate: 92.05%
+  - Avg EV (Included): 284.26 RMB
+  - Avg EV (Filtered Out): 73.01 RMB
+  - Avg Max Loss: -14775.71 RMB
+
