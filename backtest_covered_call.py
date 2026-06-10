@@ -132,19 +132,14 @@ def load_data():
     opt["date"]           = pd.to_datetime(opt["date"])
     etf["date"]           = pd.to_datetime(etf["date"])
 
-    # Keep only the columns we need from instruments
-    inst = inst[["order_book_id", "strike_price", "maturity_date",
-                 "option_type", "contract_multiplier"]].copy()
-
     # Merge instrument metadata into daily option prices
-    opt = opt.merge(inst, on="order_book_id", how="left",
-                    suffixes=("_raw", ""))
-    # Resolve duplicate strike_price / contract_multiplier columns if any
-    for col in ["strike_price", "contract_multiplier"]:
-        raw = col + "_raw"
-        if raw in opt.columns:
-            opt[col] = opt[col].fillna(opt[raw])
-            opt.drop(columns=[raw], inplace=True)
+    # IMPORTANT: Only merge maturity_date and option_type from instruments.
+    # The opt parquet already has daily-correct strike_price and contract_multiplier
+    # (which change when the underlying pays dividends and contracts are adjusted).
+    # Using instruments' strike/mult would give post-adjustment values for ALL dates,
+    # causing incorrect OTM classification and P&L for adjusted contracts.
+    inst_slim = inst[["order_book_id", "maturity_date", "option_type"]].drop_duplicates()
+    opt = opt.merge(inst_slim, on="order_book_id", how="left")
 
     etf = etf.set_index("date").sort_index()
 
@@ -408,6 +403,7 @@ def get_strike_by_level(opt, etf, entry_date, expiry_date, option_type, level):
 
 # ── Per-cycle P&L ─────────────────────────────────────────────────────────────
 def calc_leg_pnl(leg, opt, etf, expiry_date, side, is_buyer_at_expiry):
+    # NO_FILTER_MODE is set globally from CLI
     """
     Compute the full P&L (in RMB) for a single option leg.
 
@@ -529,10 +525,13 @@ def calc_cycle_pnl(cyc, opt, etf, daily_ivs):
     bbu = etf.loc[idx, "bbu20"]
     etf_close_entry = float(etf.loc[idx, "close"])
 
-    filter_passed = False
+    filter_would_pass = False
     if pd.notna(rsi) and pd.notna(bbu):
         rsi_threshold = 60.0 if etf_choice == "50" else (70.0 if etf_choice == "500" else 66.0)
-        filter_passed = (rsi < rsi_threshold) and (etf_close_entry < bbu)
+        filter_would_pass = (rsi < rsi_threshold) and (etf_close_entry < bbu)
+
+    # In no-filter mode, always pass (sell OTM2+OTM3); otherwise use actual filter
+    filter_passed = True if NO_FILTER_MODE else filter_would_pass
 
     # 3. Constant Sizing
     num_contracts = NUM_CONTRACTS
@@ -588,6 +587,7 @@ def calc_cycle_pnl(cyc, opt, etf, daily_ivs):
         "rsi":            rsi,
         "bbu":            bbu,
         "filter_passed":  filter_passed,
+        "filter_would_pass": filter_would_pass,
         "call_offsets":   call_offsets,
         "put_offsets":    put_offsets,
         "num_contracts":  num_contracts,
@@ -629,17 +629,23 @@ def run_backtest(opt, etf):
 
     # ── Per-cycle detail printout ──────────────────────────────────────────────
     print("\n" + "=" * 70)
-    print("  备兑期权 BACKTEST — Cycle Detail")
+    mode_label = "NO-FILTER MODE (always sell OTM2+OTM3)" if NO_FILTER_MODE else "FILTERED MODE (RSI+BBU)"
+    print(f"  备兑期权 BACKTEST — Cycle Detail  [{mode_label}]")
     print("=" * 70)
 
     for res in results:
         call_str = "+".join([f"OTM{o}" for o in res['call_offsets']])
         total_legs_contracts = sum(res['num_contracts'] for _ in res['legs'])
         unit_str = "contract" if res['num_contracts'] == 1 else "contracts"
+        # Show what filter WOULD have decided (even in no-filter mode)
+        if NO_FILTER_MODE and not res['filter_would_pass']:
+            filter_tag = "[FILTER WOULD FAIL — overridden to OTM2+OTM3]"
+        else:
+            filter_tag = "[FILTER PASS]" if res['filter_would_pass'] else "[FILTER FAIL]"
         print(f"\nCycle  {res['entry_date'].date()} → {res['expiry_date'].date()}"
               f"   IV={res['iv']:.1%} (IVR={res['ivr']:.2f})  calls={call_str} puts=Level{PUT_BUY_LEVEL}"
               f"   ETF={res['etf_entry']:.4f} RSI={res['rsi']:.1f} BBU={res['bbu']:.3f} "
-              f"(Total {total_legs_contracts} contracts) {'[FILTER PASS]' if res['filter_passed'] else '[FILTER FAIL]'}")
+              f"(Total {total_legs_contracts} contracts) {filter_tag}")
         hdr = f"  {'Leg':<25} {'side':>4} {'K':>7} {'exec_px':>8} {'prem':>8}  {'exer':>9}  {'net':>8}"
         print(hdr)
         print("  " + "-" * (len(hdr) - 2))
@@ -659,7 +665,8 @@ def run_backtest(opt, etf):
     avg_prem   = np.mean(premiums) if premiums else 0
 
     print("\n" + "=" * 70)
-    print("  SUMMARY")
+    mode_label_sum = "NO-FILTER" if NO_FILTER_MODE else "FILTERED (RSI+BBU)"
+    print(f"  SUMMARY  [{mode_label_sum}]")
     print("=" * 70)
     print(f"  Cycles traded          : {len(results)}")
     print(f"  Winning cycles         : {sum(1 for n in nets if n > 0)}/{len(nets)}"
@@ -668,8 +675,28 @@ def run_backtest(opt, etf):
     print(f"  Total net P&L          : {total_net:>8.2f} RMB")
     print(f"  Cumulative by cycle    : {[f'{v:.0f}' for v in cumulative]}")
 
+    # ── No-Filter: Blocked cycle analysis ─────────────────────────────────────────
+    if NO_FILTER_MODE:
+        blocked = [r for r in results if not r['filter_would_pass']]
+        passed  = [r for r in results if r['filter_would_pass']]
+        blocked_pnl = sum(r['total_net_rmb'] for r in blocked)
+        passed_pnl  = sum(r['total_net_rmb'] for r in passed)
+        blocked_win = sum(1 for r in blocked if r['total_net_rmb'] > 0)
+        print(f"\n  ── Filter Would-Block Analysis ─────────────────────────────")
+        print(f"  Cycles filter WOULD pass : {len(passed)}/{len(results)}  (P&L = {passed_pnl:>+.2f} RMB)")
+        print(f"  Cycles filter WOULD block: {len(blocked)}/{len(results)}  (P&L = {blocked_pnl:>+.2f} RMB)")
+        if blocked:
+            print(f"  Blocked win rate         : {blocked_win}/{len(blocked)} ({blocked_win/len(blocked):.0%})")
+            print(f"\n  Blocked cycle detail:")
+            for r in blocked:
+                tag = "WIN" if r['total_net_rmb'] > 0 else "LOSS"
+                print(f"    {r['entry_date'].date()} → {r['expiry_date'].date()}  "
+                      f"RSI={r['rsi']:.1f}  ETF={r['etf_entry']:.4f}  "
+                      f"P&L={r['total_net_rmb']:>+10.2f}  [{tag}]")
+        print(f"  ─────────────────────────────────────────────────────────────")
+
     # ── Chart ─────────────────────────────────────────────────────────────────
-    out_file = f"backtest_covered_call_{ETF_NAME}.png"
+    out_file = f"backtest_covered_call_{ETF_NAME}{'_nofilter' if NO_FILTER_MODE else ''}.png"
     plot_backtest_results(results, etf, out_file)
 
     return results
@@ -750,7 +777,8 @@ def plot_backtest_results(results, etf, out_path):
              bbox=dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.8),
              fontsize=10, family='monospace')
     
-    ax1.set_title(f"Covered Call Strategy Performance vs {ETF_NAME}", fontsize=14, fontweight='bold', pad=15)
+    mode_str = "NO-FILTER" if NO_FILTER_MODE else "FILTERED"
+    ax1.set_title(f"Covered Call Strategy Performance vs {ETF_NAME}  [{mode_str}]", fontsize=14, fontweight='bold', pad=15)
 
     # ── MIDDLE PANEL ──────────────────────────────────────────────────────────
     ax2 = fig.add_subplot(gs[1])
@@ -796,15 +824,18 @@ def plot_backtest_results(results, etf, out_path):
 
 
 if __name__ == "__main__":
-    # Handle command line argument for ETF choice
+    # Handle command line arguments for ETF choice
     etf_choice = "300"
+    NO_FILTER_MODE = "--no-filter" in sys.argv
+    # Remove --no-filter from argv before parsing ETF choice
+    sys.argv = [a for a in sys.argv if a != "--no-filter"]
     if len(sys.argv) > 1:
         etf_choice = sys.argv[1]
     
     select_underlying(etf_choice)
     
     # Redirect output to log file
-    log_file = f"backtest_covered_call_{ETF_NAME}.log"
+    log_file = f"backtest_covered_call_{ETF_NAME}{'_nofilter' if NO_FILTER_MODE else ''}.log"
     f = open(log_file, 'w', encoding='utf-8')
     sys.stdout = Tee(sys.stdout, f)
     

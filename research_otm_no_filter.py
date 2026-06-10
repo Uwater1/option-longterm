@@ -42,15 +42,10 @@ def load_data():
     opt["date"]           = pd.to_datetime(opt["date"])
     etf["date"]           = pd.to_datetime(etf["date"])
 
-    inst = inst[["order_book_id", "strike_price", "maturity_date",
-                 "option_type", "contract_multiplier"]].copy()
-
-    opt = opt.merge(inst, on="order_book_id", how="left", suffixes=("_raw", ""))
-    for col in ["strike_price", "contract_multiplier"]:
-        raw = col + "_raw"
-        if raw in opt.columns:
-            opt[col] = opt[col].fillna(opt[raw])
-            opt.drop(columns=[raw], inplace=True)
+    # Only merge maturity_date and option_type from instruments.
+    # opt parquet already has daily-correct strike_price and contract_multiplier.
+    inst_slim = inst[["order_book_id", "maturity_date", "option_type"]].drop_duplicates()
+    opt = opt.merge(inst_slim, on="order_book_id", how="left")
 
     etf = etf.set_index("date").sort_index()
     return inst, opt, etf
