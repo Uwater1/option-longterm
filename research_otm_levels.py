@@ -52,14 +52,27 @@ def load_data():
     
     # Calculate indicators
     etf["sma20"] = ta.sma(etf["close"], length=20)
+    etf["ema20"] = ta.ema(etf["close"], length=20)
+    etf["sma50"] = ta.sma(etf["close"], length=50)
     etf["rsi14"] = ta.rsi(etf["close"], length=14)
+    etf["atr20"] = ta.atr(etf["high"], etf["low"], etf["close"], length=20)
+    etf["roc10"] = ta.roc(etf["close"], length=10)
+    etf["roc20"] = ta.roc(etf["close"], length=20)
     
     # Bollinger Bands
     bb = ta.bbands(etf["close"], length=20, std=2)
-    etf["bbu20"] = bb["BBU_20_2.0_2.0"]
-    
-    # ROC (Rate of Change) - returns percentage values (e.g., 5.0 for 5%)
-    etf["roc20"] = ta.roc(etf["close"], length=20)
+    if bb is not None:
+        etf["bbu20"] = bb["BBU_20_2.0_2.0"]
+        etf["bbl20"] = bb["BBL_20_2.0_2.0"]
+    else:
+        etf["bbu20"] = np.nan
+        etf["bbl20"] = np.nan
+
+    # Volatility and MACD
+    etf["vol20"] = etf["close"].pct_change().rolling(20).std() * np.sqrt(252)
+    etf["vol20_median"] = etf["vol20"].rolling(252).median()
+    macd = ta.macd(etf["close"])
+    etf["macd_hist"] = macd.iloc[:, 1] if macd is not None else np.nan
     
     return inst, opt, etf
 
@@ -151,8 +164,6 @@ def filter_cycle(etf, entry_date):
     """
     User-defined filter for trading cycles. 
     Return True to include the cycle, False to skip.
-
-    Using Combined Filter: 14-day RSI < 66 AND Close < Upper Bollinger Band (20, 2)
     """
     idx = entry_date.normalize()
     if idx not in etf.index:
@@ -160,14 +171,28 @@ def filter_cycle(etf, entry_date):
 
     rsi = etf.loc[idx, "rsi14"]
     bbu = etf.loc[idx, "bbu20"]
+    bbl = etf.loc[idx, "bbl20"]
+    sma20 = etf.loc[idx, "sma20"]
+    sma50 = etf.loc[idx, "sma50"]
+    atr20 = etf.loc[idx, "atr20"]
+    roc10 = etf.loc[idx, "roc10"]
+    vol20 = etf.loc[idx, "vol20"]
+    vol20_median = etf.loc[idx, "vol20_median"]
+    macd_hist = etf.loc[idx, "macd_hist"]
+    close = float(etf.loc[idx, "close"])
 
-    if pd.isna(rsi) or pd.isna(bbu):
-        return False
-
-    cond1 = rsi < 66.0
-    cond2 = etf.loc[idx, "close"] < bbu
-
-    return cond1 and cond2
+    if ETF_NAME == "50ETF":
+        if pd.isna(rsi) or pd.isna(roc10) or pd.isna(vol20) or pd.isna(vol20_median):
+            return False
+        return (rsi < 60.0) and (rsi > 30.0) and (roc10 < 3.0) and (vol20 < vol20_median)
+    elif ETF_NAME == "500ETF":
+        if pd.isna(rsi) or pd.isna(bbu) or pd.isna(sma50):
+            return False
+        return (rsi > 30.0) and (close < bbu) and (close > sma50)
+    else: # 300ETF
+        if pd.isna(rsi) or pd.isna(macd_hist):
+            return False
+        return (rsi < 72.0) and (rsi > 25.0) and (macd_hist < 0.0)
 
 def analyze_otm_levels(years=None):
     print(f"Analyzing {ETF_NAME}...")
