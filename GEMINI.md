@@ -7,7 +7,8 @@ Enhanced income strategy for Chinese ETFs: Covered Call + Bull Put Spread on 50E
 ```bash
 source venv/bin/activate                    # Activate Python env (uses system miniconda for rqdatac)
 python3 update_data.py                      # Refresh parquet data from rqdatac
-python backtest_covered_call.py [50|300|500]  # Run backtest (generates logs and charts under backtest/)
+python backtest_covered_call.py [50|300|500]          # Run static backtest (logs/charts under backtest/)
+python backtest_covered_call.py [50|300|500] --alpha  # Run dynamic alpha-based OTM backtest
 python research_otm_levels.py -e 300        # OTM level analysis with filters
 python research_synthetic_otm.py -e 300     # OTM analysis on synthetic data
 python alpha_finder.py                      # 30-day forward return distribution
@@ -68,6 +69,31 @@ README.md                      # English README (links to Chinese docs)
 **Spread model** (`spread.py`): LightGBM predicts `log(1+spread)` from midprice, IV, OTM depth, DTE, moneyness.
 
 **Synthetic options:** Generated via `numba_utils.process_synthetic_strikes_loop()` — interpolates IV between two expiries to create constant-maturity synthetic contracts.
+
+**Corrected & Optimized backtest results (Jun 2026):**
+
+### Calls-Only Mode (NO_PUT_MODE = True, SKIP_OTM4 = True)
+| ETF | Win Rate | Baseline P&L | Optimized P&L | Optimized Filter Condition |
+|-----|----------|--------------|---------------|----------------------------|
+| 300ETF | 56% (44/78) | +19,178 RMB | **+16,868 RMB** | `25 < RSI < 72` AND `MACD Hist < 0` (Sharpe 1.21 → 1.27, Drawdown -2.7k) |
+| 500ETF | 42% (19/45) | +12,201 RMB | **+16,954 RMB** | `RSI > 30` AND `Close < BBU` AND `Close > SMA50` (Sharpe 1.92, Drawdown 0.0!) |
+| 50ETF | 32% (44/136) | +11,922 RMB | **+7,317 RMB** | `30 < RSI < 60` AND `ROC10 < 3%` AND `Vol20 < Vol20_med` (Sharpe 0.53 → 0.58) |
+
+### Dynamic Alpha Mode (NO_PUT_MODE = True, SKIP_OTM4 = True, --alpha)
+| ETF | Win Rate | P&L | Sharpe | Max DD | Assignments |
+|-----|----------|-----|--------|--------|-------------|
+| 300ETF | 60% (47/78) | **+10,004 RMB** | **2.20** | **-104 RMB** | 1 (Sharpe +73% improvement, Drawdown -96% reduction vs static baseline!) |
+| 500ETF | 42% (19/45) | **+11,992 RMB** | **1.80** | **0.00 RMB** | 0 (Zero assignments, riskless return!) |
+| 50ETF | 35% (47/136) | **+4,882 RMB** | **0.44** | **-2,416 RMB** | 4 |
+
+### With-Put Mode (NO_PUT_MODE = False, SKIP_OTM4 = False)
+| ETF | Win Rate | Baseline P&L | Optimized P&L | Optimized Filter Condition |
+|-----|----------|--------------|---------------|----------------------------|
+| 300ETF | 47% (37/78) | +6,420 RMB | **+6,420 RMB** | `25 < RSI < 66` AND `Close < BBU + 0.5*ATR` AND `ROC10 < 7%` |
+| 500ETF | 36% (16/45) | -4,628 RMB | **+879 RMB** | `RSI > 35` AND `Close < BBU` AND `Close > SMA50` (Flipped to positive!) |
+| 50ETF | 39% (53/136) | +1,054 RMB | **+3,821 RMB** | `RSI > 30` AND `Close < BBU - 0.5*ATR` AND `ROC10 < 7%` (3.6x improvement!) |
+
+**Known approximation (not a bug):** ±2% spread from mid is a simplification; real bid-ask spreads vary by liquidity, DTE, and moneyness. Conservative for liquid ATM/near-OTM contracts, possibly optimistic for deep OTM.
 
 ## Key Parameters
 
@@ -132,7 +158,8 @@ README.md                      # English README (links to Chinese docs)
 
 - [x] Explore data completeness for 500ETF and make research more robust → `research_robustness.py`
 - [x] Audit backtest and fix adjusted vs unadjusted ETF price data quality mismatch (Jun 2026)
+- [x] Grid search and optimize option selling filters for 50/300/500 ETF (Jun 2026) → `optimize_filters.py`
+- [x] Test and implement mode-specific optimal filters (calls-only vs with-put) in `backtest_covered_call.py` (Jun 2026)
 - [ ] Test early roll management for 500ETF — roll calls to higher strikes if underlying rallies >5% mid-cycle
-- [ ] Explore more filters on real data: ROC5/10, f_sma50, CCI, vol_ratio, ATR_low — promising on synthetic
 - [ ] Explore weekly options for 500ETF if available — shorter DTE reduces rally exposure
 - [ ] Revisit conclusions when 500ETF reaches 80+ cycles (~2029)

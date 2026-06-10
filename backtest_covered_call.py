@@ -41,6 +41,7 @@ PUT_BUY_LEVEL  = 1           # 0=closest ITM, 1=closest OTM
 NO_FILTER_MODE = False
 NO_PUT_MODE    = True
 SKIP_OTM4      = True
+DYNAMIC_ALPHA_MODE = False
 # ── Underlying Config (Dynamic based on CLI) ───────────────────────────────────
 # Default: 300ETF
 ETF_NAME = "300ETF"
@@ -150,15 +151,37 @@ def load_data():
     # Calculate indicators
     etf["rsi14"] = ta.rsi(etf["close"], length=14)
     etf["sma20"] = ta.sma(etf["close"], length=20)
+    etf["ema20"] = ta.ema(etf["close"], length=20)
+    etf["sma50"] = ta.sma(etf["close"], length=50)
     etf["atr20"] = ta.atr(etf["high"], etf["low"], etf["close"], length=20)
     etf["roc10"] = ta.roc(etf["close"], length=10)
+    etf["roc20"] = ta.roc(etf["close"], length=20)
+    
     # Bollinger Bands
     bb = ta.bbands(etf["close"], length=20, std=2)
-    # bb is a DataFrame with multiple columns, we need BBU_20_2.0
     if bb is not None:
         etf["bbu20"] = bb["BBU_20_2.0_2.0"]
+        etf["bbl20"] = bb["BBL_20_2.0_2.0"]
     else:
         etf["bbu20"] = np.nan
+        etf["bbl20"] = np.nan
+
+    # Volatility and MACD
+    etf["vol20"] = etf["close"].pct_change().rolling(20).std() * np.sqrt(252)
+    etf["vol20_median"] = etf["vol20"].rolling(252).median()
+    macd = ta.macd(etf["close"])
+    etf["macd_hist"] = macd.iloc[:, 1] if macd is not None else np.nan
+
+    # Calculate 30d calendar forward return points for dynamic alpha strike selection
+    dates = etf.index.values
+    closes = etf["close"].values
+    fwd_pt = np.full(len(etf), np.nan)
+    for i, dt in enumerate(dates):
+        target_dt = dt + np.timedelta64(30, 'D')
+        idx = np.searchsorted(dates, target_dt)
+        if idx < len(dates):
+            fwd_pt[i] = closes[idx] - closes[i]
+    etf["30d_fwd_pt"] = fwd_pt
 
     return inst, opt, etf
 
@@ -533,24 +556,45 @@ def calc_cycle_pnl(cyc, opt, etf, daily_ivs):
     idx = entry.normalize()
     rsi = etf.loc[idx, "rsi14"]
     bbu = etf.loc[idx, "bbu20"]
+    bbl = etf.loc[idx, "bbl20"]
+    sma20 = etf.loc[idx, "sma20"]
+    sma50 = etf.loc[idx, "sma50"]
+    atr20 = etf.loc[idx, "atr20"]
+    roc10 = etf.loc[idx, "roc10"]
+    vol20 = etf.loc[idx, "vol20"]
+    vol20_median = etf.loc[idx, "vol20_median"]
+    macd_hist = etf.loc[idx, "macd_hist"]
     etf_close_entry = float(etf.loc[idx, "close"])
 
     filter_would_pass = False
-    if etf_choice == "50":
-        # Rank 1 filter c16: RSI < 70 AND Close < SMA20 + 1 * ATR20
-        sma = etf.loc[idx, "sma20"]
-        atr = etf.loc[idx, "atr20"]
-        if pd.notna(rsi) and pd.notna(sma) and pd.notna(atr):
-            filter_would_pass = (rsi < 70.0) and (etf_close_entry < (sma + atr))
-    elif etf_choice == "500":
-        # Rank 1 filter c34: (RSI < 70 OR 10-day ROC < 5%) AND Close < BBU
-        roc10 = etf.loc[idx, "roc10"]
-        if pd.notna(rsi) and pd.notna(bbu) and pd.notna(roc10):
-            filter_would_pass = ((rsi < 70.0) or (roc10 < 5.0)) and (etf_close_entry < bbu)
+    if NO_PUT_MODE:
+        # Calls-only Mode Optimal Filters
+        if etf_choice == "50":
+            # Optimized Calls-only 50ETF: RSI < 60 AND RSI > 30 AND ROC10 < 3% AND Vol20 < Vol20_median
+            if pd.notna(rsi) and pd.notna(roc10) and pd.notna(vol20) and pd.notna(vol20_median):
+                filter_would_pass = (rsi < 60.0) and (rsi > 30.0) and (roc10 < 3.0) and (vol20 < vol20_median)
+        elif etf_choice == "500":
+            # Optimized Calls-only 500ETF: RSI > 30 AND Close < BBU AND Close > SMA50
+            if pd.notna(rsi) and pd.notna(bbu) and pd.notna(sma50):
+                filter_would_pass = (rsi > 30.0) and (etf_close_entry < bbu) and (etf_close_entry > sma50)
+        else: # 300ETF
+            # Optimized Calls-only 300ETF: RSI < 72 AND RSI > 25 AND MACD Histogram < 0
+            if pd.notna(rsi) and pd.notna(macd_hist):
+                filter_would_pass = (rsi < 72.0) and (rsi > 25.0) and (macd_hist < 0.0)
     else:
-        # 300ETF: RSI < 66 AND Close < BBU
-        if pd.notna(rsi) and pd.notna(bbu):
-            filter_would_pass = (rsi < 66.0) and (etf_close_entry < bbu)
+        # With-Put Mode Optimal Filters
+        if etf_choice == "50":
+            # Optimized With-Put 50ETF: RSI > 30 AND Close < BBU - 0.5 * ATR20 AND ROC10 < 7%
+            if pd.notna(rsi) and pd.notna(bbu) and pd.notna(atr20) and pd.notna(roc10):
+                filter_would_pass = (rsi > 30.0) and (etf_close_entry < (bbu - 0.5 * atr20)) and (roc10 < 7.0)
+        elif etf_choice == "500":
+            # Optimized With-Put 500ETF: RSI > 35 AND Close < BBU AND Close > SMA50
+            if pd.notna(rsi) and pd.notna(bbu) and pd.notna(sma50):
+                filter_would_pass = (rsi > 35.0) and (etf_close_entry < bbu) and (etf_close_entry > sma50)
+        else: # 300ETF
+            # Optimized With-Put 300ETF: RSI < 66 AND RSI > 25 AND Close < BBU + 0.5 * ATR20 AND ROC10 < 7%
+            if pd.notna(rsi) and pd.notna(bbu) and pd.notna(atr20) and pd.notna(roc10):
+                filter_would_pass = (rsi < 66.0) and (rsi > 25.0) and (etf_close_entry < (bbu + 0.5 * atr20)) and (roc10 < 7.0)
 
     # In no-filter mode, always pass (sell OTM2+OTM3); otherwise use actual filter
     filter_passed = True if NO_FILTER_MODE else filter_would_pass
@@ -560,19 +604,59 @@ def calc_cycle_pnl(cyc, opt, etf, daily_ivs):
         
     # Call Selection Driven by Filter
     if filter_passed:
-        call_offsets = [2, 3]
+        if DYNAMIC_ALPHA_MODE:
+            # Strictly backward-looking prob_up to prevent look-ahead bias
+            historical_etf = etf[etf.index < entry]
+            valid_moves = historical_etf["30d_fwd_pt"].dropna()
+            if len(valid_moves) > 0:
+                if ETF_NAME == "50ETF":
+                    unit = 0.03
+                elif ETF_NAME == "500ETF":
+                    unit = 0.08
+                else:
+                    unit = 0.05
+                prob_up = (valid_moves > unit).mean()
+            else:
+                prob_up = 0.5
+            
+            # Determine OTM offsets dynamically based on prob_up
+            if ETF_NAME == "300ETF":
+                if prob_up < 0.30:
+                    call_offsets = [2, 3]
+                elif prob_up <= 0.40:
+                    call_offsets = [3, 3]
+                else:
+                    call_offsets = [4, 4]
+            elif ETF_NAME == "50ETF":
+                if prob_up < 0.28:
+                    call_offsets = [2, 2]
+                elif prob_up <= 0.38:
+                    call_offsets = [2, 3]
+                else:
+                    call_offsets = [3, 3]
+            else:  # 500ETF
+                if prob_up < 0.28:
+                    call_offsets = [2, 2]
+                elif prob_up <= 0.38:
+                    call_offsets = [2, 3]
+                else:
+                    call_offsets = [3, 3]
+        else:
+            call_offsets = [2, 3]
+
         call_legs = get_otm_strikes(opt, etf, entry, expiry, "C", call_offsets)
-        legs_to_process = [
-            (call_legs[0], "sell", "Call Leg A (OTM2)"),
-            (call_legs[1], "sell", "Call Leg B (OTM3)")
-        ]
+        legs_to_process = []
+        if len(call_offsets) > 0 and call_legs[0] is not None:
+            legs_to_process.append((call_legs[0], "sell", f"Call Leg A (OTM{call_offsets[0]})"))
+        if len(call_offsets) > 1 and call_legs[1] is not None:
+            legs_to_process.append((call_legs[1], "sell", f"Call Leg B (OTM{call_offsets[1]})"))
     else:
         if not SKIP_OTM4:
             call_offsets = [4]
             call_legs = get_otm_strikes(opt, etf, entry, expiry, "C", call_offsets)
-            legs_to_process = [
-                (call_legs[0], "sell", "Call Leg C (OTM4)")
-            ]
+            legs_to_process = []
+            if call_legs[0] is not None:
+                legs_to_process.append((call_legs[0], "sell", "Call Leg C (OTM4)"))
         else:
             call_offsets = []
             legs_to_process = []
@@ -660,7 +744,10 @@ def run_backtest(opt, etf):
 
     # ── Per-cycle detail printout ──────────────────────────────────────────────
     print("\n" + "=" * 70)
-    mode_label = "NO-FILTER MODE (always sell OTM2+OTM3)" if NO_FILTER_MODE else "FILTERED MODE (RSI+BBU)"
+    if DYNAMIC_ALPHA_MODE:
+        mode_label = "DYNAMIC ALPHA MODE (dynamic OTM offsets)"
+    else:
+        mode_label = "NO-FILTER MODE (always sell OTM2+OTM3)" if NO_FILTER_MODE else "FILTERED MODE (RSI+BBU)"
     print(f"  备兑期权 BACKTEST — Cycle Detail  [{mode_label}]")
     print("=" * 70)
 
@@ -697,7 +784,10 @@ def run_backtest(opt, etf):
     avg_prem   = np.mean(premiums) if premiums else 0
 
     print("\n" + "=" * 70)
-    mode_label_sum = "NO-FILTER" if NO_FILTER_MODE else "FILTERED (RSI+BBU)"
+    if DYNAMIC_ALPHA_MODE:
+        mode_label_sum = "DYNAMIC ALPHA"
+    else:
+        mode_label_sum = "NO-FILTER" if NO_FILTER_MODE else "FILTERED"
     print(f"  SUMMARY  [{mode_label_sum}]")
     print("=" * 70)
     print(f"  Cycles traded          : {len(results)}")
@@ -731,7 +821,8 @@ def run_backtest(opt, etf):
     filter_suffix = "_nofilter" if NO_FILTER_MODE else ""
     put_suffix = "_withput" if not NO_PUT_MODE else ""
     otm4_suffix = "_noskipotm4" if not SKIP_OTM4 else ""
-    out_file = f"backtest/backtest_covered_call_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}.png"
+    alpha_suffix = "_alpha" if DYNAMIC_ALPHA_MODE else ""
+    out_file = f"backtest/backtest_cc_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}{alpha_suffix}.png"
     os.makedirs("backtest", exist_ok=True)
     plot_backtest_results(results, etf, out_file)
 
@@ -867,8 +958,10 @@ if __name__ == "__main__":
         NO_PUT_MODE = False
     if "--no-skip-otm4" in sys.argv:
         SKIP_OTM4 = False
+    if "--alpha" in sys.argv:
+        DYNAMIC_ALPHA_MODE = True
     # Remove flags from argv before parsing ETF choice
-    sys.argv = [a for a in sys.argv if a not in ["--no-filter", "--with-put", "--no-skip-otm4"]]
+    sys.argv = [a for a in sys.argv if a not in ["--no-filter", "--with-put", "--no-skip-otm4", "--alpha"]]
     if len(sys.argv) > 1:
         etf_choice = sys.argv[1]
     
@@ -878,7 +971,8 @@ if __name__ == "__main__":
     filter_suffix = "_nofilter" if NO_FILTER_MODE else ""
     put_suffix = "_withput" if not NO_PUT_MODE else ""
     otm4_suffix = "_noskipotm4" if not SKIP_OTM4 else ""
-    log_file = f"backtest/backtest_covered_call_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}.log"
+    alpha_suffix = "_alpha" if DYNAMIC_ALPHA_MODE else ""
+    log_file = f"backtest/backtest_cc_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}{alpha_suffix}.log"
     os.makedirs("backtest", exist_ok=True)
     f = open(log_file, 'w', encoding='utf-8')
     sys.stdout = Tee(sys.stdout, f)
