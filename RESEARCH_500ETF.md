@@ -206,5 +206,5 @@ No entry-date filter can prevent the big losses because they occur when RSI is l
 
 ## 8. TODO
 
-- [ ] Test early roll management for 500ETF — roll calls to higher strikes if underlying rallies >5% mid-cycle
-- [ ] Explore weekly options for 500ETF if available — shorter DTE reduces rally exposure
+- [ ] Explore data synchronization for 500 ETF and make the research more robust
+- [ ] Explore more dynamic put protection strategies for 500 ETF, not open it every time
