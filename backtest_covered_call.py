@@ -258,14 +258,17 @@ def get_30d_iv(opt, etf, date):
         return IV_THRESHOLD
     etf_close = float(etf.loc[date_norm, "close"])
 
-    # All calls for this date
-    day_calls = opt[
-        (opt["date"] == date) &
-        (opt["option_type"] == "C") &
-        (opt["close"] > 0)
-    ].copy()
+    # All calls for this date (support fast dict lookup)
+    if isinstance(opt, dict):
+        day_calls = opt.get(date)
+    else:
+        day_calls = opt[
+            (opt["date"] == date) &
+            (opt["option_type"] == "C") &
+            (opt["close"] > 0)
+        ].copy()
 
-    if day_calls.empty:
+    if day_calls is None or day_calls.empty:
         return IV_THRESHOLD
 
     # Group by expiry and find ATM strike for each
@@ -610,11 +613,13 @@ def run_backtest(opt, etf):
     else:
         print("\nPre-calculating daily 30-day IVs (this may take a moment)...")
         trading_days = sorted(etf.index.unique())
+        # Pre-group options by date for 740x speedup
+        day_calls_dict = {d: group for d, group in opt[(opt["option_type"] == "C") & (opt["close"] > 0)].groupby("date")}
         iv_data = {}
         for i, d in enumerate(trading_days):
             if i % 100 == 0:
                 print(f"  Progress: {i}/{len(trading_days)}")
-            iv_data[d] = get_30d_iv(opt, etf, d)
+            iv_data[d] = get_30d_iv(day_calls_dict, etf, d)
         daily_ivs = pd.Series(iv_data).sort_index()
         # Save cache
         os.makedirs(os.path.dirname(PATH_IV_CACHE), exist_ok=True)

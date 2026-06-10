@@ -51,7 +51,10 @@ README.md                      # English README (links to Chinese docs)
 
 ## Architecture
 
-**Data flow:** rqdatac → `update_data.py` → `data/*.parquet` → all scripts
+**Data loading & pricing rules (critical):**
+1. **Underlying ETF Daily Prices must be unadjusted (不复权)** (downloaded with `adjust_type="none"` in `update_data.py`). Pre-adjusted prices create a severe mismatch with nominal option strikes, introducing look-ahead bias and invalidating the backtest.
+2. The opt parquet contains daily-correct `strike_price` and `contract_multiplier`. `load_data()` must only merge `maturity_date` and `option_type` from instruments — never overwrite opt's daily strike/mult.
+3. **ATM 30d IV Optimization**: Pre-groups options by date once into a dictionary (`day_calls_dict`) before iterating, achieving ~740x speedup in implied volatility lookup.
 
 **Backtest logic** (`backtest_covered_call.py`):
 - Cycles = monthly option expiries, enter after previous expiry
@@ -89,14 +92,14 @@ README.md                      # English README (links to Chinese docs)
 2. **Big loss cycles from sharp rallies** — 2025-01 (-3,375), 2025-12 (-4,057), 2026-03 (-7,261). All had LOW RSI (37-46), filter can't prevent
 3. **Expensive put hedge** — Level 1 put often costs 500-1500 RMB, creating drag on flat/rally months
 
-**10-variant diagnostic results** (`diagnose_500etf.py -e 500`):
+**10-variant diagnostic results** (True results after fixing adjusted ETF price mismatch):
 
 | Variant | P&L | Wins | Assignments |
 |---------|-----|------|-------------|
-| RSI70+BBU (implemented) | 22,145 | 30/45 | 6 |
-| Baseline RSI66+BBU | 21,448 | 29/45 | 6 |
-| IVR-Driven (OTM1+2 low IVR) | 21,396 | 31/45 | 18 |
-| Wider OTM3+4/5 | 14,047 | 20/45 | 3 |
+| Baseline | -4,628 | 16/45 | 1 |
+| RSI70+BBU | -3,931 | 17/45 | 1 |
+| IVR-Driven | -3,873 | 16/45 | 3 |
+| Wider OTM3+4/5 | -5,720 | 12/45 | 0 |
 
 **What was tried and failed:**
 - IVR-driven OTM: Low IVR → sell closest strikes → catastrophic assignment losses (-18K worst cycle)
@@ -127,6 +130,7 @@ README.md                      # English README (links to Chinese docs)
 ## TODO
 
 - [x] Explore data completeness for 500ETF and make research more robust → `research_robustness.py`
+- [x] Audit backtest and fix adjusted vs unadjusted ETF price data quality mismatch (Jun 2026)
 - [ ] Test early roll management for 500ETF — roll calls to higher strikes if underlying rallies >5% mid-cycle
 - [ ] Explore more filters on real data: ROC5/10, f_sma50, CCI, vol_ratio, ATR_low — promising on synthetic
 - [ ] Explore weekly options for 500ETF if available — shorter DTE reduces rally exposure
