@@ -51,9 +51,10 @@ README.md                      # English README (links to Chinese docs)
 
 ## Architecture
 
-**Data flow:** rqdatac → `update_data.py` → `data/*.parquet` → all scripts
-
-**Data loading (critical):** The opt parquet contains daily-correct `strike_price` and `contract_multiplier` (adjusted when the underlying ETF pays dividends). The instruments parquet holds FINAL post-adjustment values. `load_data()` must only merge `maturity_date` and `option_type` from instruments — never overwrite opt's daily strike/mult. Affects: `backtest_covered_call.py`, `research_otm_levels.py` (also used by `diagnose_500etf.py`, `research_robustness.py`, `evaluate_combinations.py`), `research_otm_levels_1.py`, `research_otm_no_filter.py`.
+**Data loading (critical):** 
+1. The opt parquet contains daily-correct `strike_price` and `contract_multiplier` (adjusted when underlying ETF pays dividends). The instruments parquet holds FINAL post-adjustment values. `load_data()` must only merge `maturity_date` and `option_type` from instruments — never overwrite opt's daily strike/mult.
+2. **Underlying ETF Daily Prices must be unadjusted (不复权)** (pulled with `adjust_type="none"` in `update_data.py`). If pre-adjusted prices are used, it creates a mismatch with unadjusted option strikes/premiums, causing major look-ahead bias and false backtest performance.
+3. **ATM 30d IV Speed Optimization**: Daily 30d IV calculation in `get_30d_iv` is optimized by passing a pre-grouped dictionary of calls instead of running slow boolean filters on the full DataFrame, reducing runtime by ~740x.
 
 **Backtest logic** (`backtest_covered_call.py`):
 - Cycles = monthly option expiries, enter on first trading day after previous expiry
@@ -78,13 +79,13 @@ README.md                      # English README (links to Chinese docs)
 
 **Pricing bug fixed (strike/mult from wrong source).** The old merge used instruments table values (final post-adjustment) instead of opt parquet's daily-correct values. For 22% of contracts with dividend adjustments, this used the wrong strike and multiplier on pre-adjustment dates, understating P&L by ~6K total for 300ETF (6 cycles affected, 2 flipped loss→win).
 
-**Corrected backtest results:**
+**Corrected backtest results (True results after fixing adjusted ETF price mismatch):**
 
 | ETF | Win Rate | Total P&L |
 |-----|----------|-----------|
-| 300ETF | 91% (71/78) | +240,998 RMB |
-| 500ETF | 67% (30/45) | +22,182 RMB |
-| 50ETF | 91% (124/136) | +326,929 RMB |
+| 300ETF | 47% (37/78) | +6,420 RMB |
+| 500ETF | 36% (16/45) | -4,628 RMB |
+| 50ETF | 40% (54/136) | +463 RMB |
 
 **Known approximation (not a bug):** ±2% spread from mid is a simplification; real bid-ask spreads vary by liquidity, DTE, and moneyness. Conservative for liquid ATM/near-OTM contracts, possibly optimistic for deep OTM.
 

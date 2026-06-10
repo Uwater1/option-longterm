@@ -62,7 +62,8 @@ def update_etf_prices(cfg):
     etf = rq.get_price(
         underlying, start_date=start.strftime("%Y-%m-%d"),
         end_date=pd.Timestamp.now().strftime("%Y-%m-%d"),
-        frequency="1d"
+        frequency="1d",
+        adjust_type="none"
     )
 
     if etf is None or etf.empty:
