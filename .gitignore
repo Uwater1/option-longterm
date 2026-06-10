@@ -10,11 +10,6 @@ __pycache__/
 venv/
 .venv/
 
-# Data committed to repo — do NOT ignore
-# data/
-*.parquet
-*.csv
-
 # Temp / research artifacts
 *_syntetic.txt
 spread_model.txt
