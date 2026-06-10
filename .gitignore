@@ -15,10 +15,6 @@ venv/
 *.parquet
 *.csv
 
-# Backtest outputs
-*.log
-*.png
-
 # Temp / research artifacts
 *_syntetic.txt
 spread_model.txt

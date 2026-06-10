@@ -1,0 +1,18 @@
+Combination Rank 5: c21
+Filters: (f1 OR f11) AND f3
+Expanded logic: ((Close < 20-day SMA) OR (14-day ADX < 25)) AND (14-day RSI < 70)
+
+Average Cycles Traded: 31.8 / 45 (70.74%)
+Average Winrate: 85.94%
+Average Expected Return: 175.66 RMB
+Average Max Loss: -5829.82 RMB
+Total Annual Return Approximation: 1491.12
+
+--- Level Breakdown ---
+Option Type  OTM Level  Cycles Winrate  Expected Return  Max Loss
+       Call          0      32  71.88%           659.19 -10947.26
+       Call          1      32  71.88%           260.90  -9355.05
+       Call          2      32  84.38%            38.78  -7277.06
+       Call          3      32  90.62%           -26.54  -4915.50
+       Call          4      32  96.88%            46.61  -2486.01
+       Call          5      31 100.00%            74.99      1.92
