@@ -23,8 +23,8 @@ python research_robustness.py -e 500       # Data completeness & robustness anal
 
 ```
 data/                          # Local Parquet database (rqdatac source)
-├── {ETF}_instruments.parquet  # Option contract metadata (strike, expiry, multiplier)
-├── {ETF}_historrical_prices.parquet  # Option daily OHLC/OI (order_book_id keyed)
+├── {ETF}_instruments.parquet  # Option contract metadata (FINAL strike/mult after all adjustments)
+├── {ETF}_historical_prices.parquet  # Option daily OHLC/OI (DAILY-CORRECT strike_price & contract_multiplier)
 ├── {ETF}_1d.parquet           # Underlying ETF daily prices
 └── 30d_iv_cache_{N}.parquet   # Pre-computed 30-day interpolated ATM IV (auto-deleted on update)
 
@@ -53,8 +53,10 @@ README.md                      # English README (links to Chinese docs)
 
 **Data flow:** rqdatac → `update_data.py` → `data/*.parquet` → all scripts
 
+**Data loading (critical):** The opt parquet contains daily-correct `strike_price` and `contract_multiplier` (adjusted when the underlying ETF pays dividends). The instruments parquet holds FINAL post-adjustment values. `load_data()` must only merge `maturity_date` and `option_type` from instruments — never overwrite opt's daily strike/mult. Affects: `backtest_covered_call.py`, `research_otm_levels.py` (also used by `diagnose_500etf.py`, `research_robustness.py`, `evaluate_combinations.py`), `research_otm_levels_1.py`, `research_otm_no_filter.py`.
+
 **Backtest logic** (`backtest_covered_call.py`):
-- Cycles = monthly option expiries, enter after previous expiry
+- Cycles = monthly option expiries, enter on first trading day after previous expiry
 - IV Rank (252-day) drives OTM offset: high IVR → further OTM
 - RSI < 66 + Close < Upper BB filter: pass → 2 call legs (OTM2+OTM3), fail → 1 call leg (OTM4)
 - 500ETF exception: RSI < 70 (looser filter, 500ETF vol profile suits wider threshold)
@@ -64,6 +66,27 @@ README.md                      # English README (links to Chinese docs)
 **Spread model** (`spread.py`): LightGBM predicts `log(1+spread)` from midprice, IV, OTM depth, DTE, moneyness.
 
 **Synthetic options:** Generated via `numba_utils.process_synthetic_strikes_loop()` — interpolates IV between two expiries to create constant-maturity synthetic contracts.
+
+## Backtest Audit (Jun 2026)
+
+**No look-ahead bias found.** All signals use only data available at entry time:
+- RSI (14-bar), BB (20-bar): purely backward-looking windows
+- IV Rank: `daily_ivs[index <= entry]` — historical only
+- Cycle detection: entry = first opt trading day after previous expiry; no outcome-based filtering
+- Settlement: `etf.index[<= expiry_date][-1]` — last ETF close on or before expiry
+- Option pricing: entry-day close (known at market close, standard assumption)
+
+**Pricing bug fixed (strike/mult from wrong source).** The old merge used instruments table values (final post-adjustment) instead of opt parquet's daily-correct values. For 22% of contracts with dividend adjustments, this used the wrong strike and multiplier on pre-adjustment dates, understating P&L by ~6K total for 300ETF (6 cycles affected, 2 flipped loss→win).
+
+**Corrected backtest results:**
+
+| ETF | Win Rate | Total P&L |
+|-----|----------|-----------|
+| 300ETF | 91% (71/78) | +240,998 RMB |
+| 500ETF | 67% (30/45) | +22,182 RMB |
+| 50ETF | 91% (124/136) | +326,929 RMB |
+
+**Known approximation (not a bug):** ±2% spread from mid is a simplification; real bid-ask spreads vary by liquidity, DTE, and moneyness. Conservative for liquid ATM/near-OTM contracts, possibly optimistic for deep OTM.
 
 ## Key Parameters
 
@@ -82,7 +105,7 @@ README.md                      # English README (links to Chinese docs)
 
 ## 500ETF Research Findings (Jun 2026)
 
-**Problem:** 500ETF underperforms 300ETF — lower win rate (67% vs 88%), bigger drawdowns.
+**Problem:** 500ETF underperforms 300ETF — lower win rate (67% vs 91%), bigger drawdowns.
 
 **Root causes:**
 1. **Higher vol (26.8% ann)** — ~40% more than 300ETF → strikes hit more often
@@ -93,7 +116,7 @@ README.md                      # English README (links to Chinese docs)
 
 | Variant | P&L | Wins | Assignments |
 |---------|-----|------|-------------|
-| RSI70+BBU (implemented) | 22,145 | 30/45 | 6 |
+| RSI70+BBU (implemented) | 22,182 | 30/45 | 6 |
 | Baseline RSI66+BBU | 21,448 | 29/45 | 6 |
 | IVR-Driven (OTM1+2 low IVR) | 21,396 | 31/45 | 18 |
 | Wider OTM3+4/5 | 14,047 | 20/45 | 3 |
@@ -127,6 +150,7 @@ README.md                      # English README (links to Chinese docs)
 ## TODO
 
 - [x] Explore data completeness for 500ETF and make research more robust → `research_robustness.py`
+- [x] Audit backtest for look-ahead bias and pricing correctness (Jun 2026) → strike/mult bug fixed
 - [ ] Test early roll management for 500ETF — roll calls to higher strikes if underlying rallies >5% mid-cycle
 - [ ] Explore more filters on real data: ROC5/10, f_sma50, CCI, vol_ratio, ATR_low — promising on synthetic
 - [ ] Explore weekly options for 500ETF if available — shorter DTE reduces rally exposure
