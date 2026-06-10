@@ -37,6 +37,10 @@ IVR_LOW        = 0.10        # IVR below this → go closer OTM (offset 3)
 IV_THRESHOLD   = 0.20        # Fallback ATM IV if calculation fails
 MIN_PUT_CREDIT = 5.0         # Minimum expected net credit (RMB) for put spread per contract
 PUT_BUY_LEVEL  = 1           # 0=closest ITM, 1=closest OTM
+# ── Global control flags (overridden by CLI) ──────────────────────────────────
+NO_FILTER_MODE = False
+NO_PUT_MODE    = True
+SKIP_OTM4      = True
 # ── Underlying Config (Dynamic based on CLI) ───────────────────────────────────
 # Default: 300ETF
 ETF_NAME = "300ETF"
@@ -145,6 +149,9 @@ def load_data():
 
     # Calculate indicators
     etf["rsi14"] = ta.rsi(etf["close"], length=14)
+    etf["sma20"] = ta.sma(etf["close"], length=20)
+    etf["atr20"] = ta.atr(etf["high"], etf["low"], etf["close"], length=20)
+    etf["roc10"] = ta.roc(etf["close"], length=10)
     # Bollinger Bands
     bb = ta.bbands(etf["close"], length=20, std=2)
     # bb is a DataFrame with multiple columns, we need BBU_20_2.0
@@ -522,16 +529,28 @@ def calc_cycle_pnl(cyc, opt, etf, daily_ivs):
     else:
         ivr = 0.5
 
-    # 2. RSI & Bollinger Band Filter
+    # 2. Optimized Filter Logic per ETF
     idx = entry.normalize()
     rsi = etf.loc[idx, "rsi14"]
     bbu = etf.loc[idx, "bbu20"]
     etf_close_entry = float(etf.loc[idx, "close"])
 
     filter_would_pass = False
-    if pd.notna(rsi) and pd.notna(bbu):
-        rsi_threshold = 60.0 if etf_choice == "50" else (70.0 if etf_choice == "500" else 66.0)
-        filter_would_pass = (rsi < rsi_threshold) and (etf_close_entry < bbu)
+    if etf_choice == "50":
+        # Rank 1 filter c16: RSI < 70 AND Close < SMA20 + 1 * ATR20
+        sma = etf.loc[idx, "sma20"]
+        atr = etf.loc[idx, "atr20"]
+        if pd.notna(rsi) and pd.notna(sma) and pd.notna(atr):
+            filter_would_pass = (rsi < 70.0) and (etf_close_entry < (sma + atr))
+    elif etf_choice == "500":
+        # Rank 1 filter c34: (RSI < 70 OR 10-day ROC < 5%) AND Close < BBU
+        roc10 = etf.loc[idx, "roc10"]
+        if pd.notna(rsi) and pd.notna(bbu) and pd.notna(roc10):
+            filter_would_pass = ((rsi < 70.0) or (roc10 < 5.0)) and (etf_close_entry < bbu)
+    else:
+        # 300ETF: RSI < 66 AND Close < BBU
+        if pd.notna(rsi) and pd.notna(bbu):
+            filter_would_pass = (rsi < 66.0) and (etf_close_entry < bbu)
 
     # In no-filter mode, always pass (sell OTM2+OTM3); otherwise use actual filter
     filter_passed = True if NO_FILTER_MODE else filter_would_pass
@@ -548,20 +567,27 @@ def calc_cycle_pnl(cyc, opt, etf, daily_ivs):
             (call_legs[1], "sell", "Call Leg B (OTM3)")
         ]
     else:
-        call_offsets = [4]
-        call_legs = get_otm_strikes(opt, etf, entry, expiry, "C", call_offsets)
-        legs_to_process = [
-            (call_legs[0], "sell", "Call Leg C (OTM4)")
-        ]
+        if not SKIP_OTM4:
+            call_offsets = [4]
+            call_legs = get_otm_strikes(opt, etf, entry, expiry, "C", call_offsets)
+            legs_to_process = [
+                (call_legs[0], "sell", "Call Leg C (OTM4)")
+            ]
+        else:
+            call_offsets = []
+            legs_to_process = []
     
     # 4. Put Selection (V7: Long Put driven by research "Buyer Advantage")
     # Buy one put option at either closest ITM (level 0) or closest OTM (level 1)
-    put_leg = get_strike_by_level(opt, etf, entry, expiry, "P", PUT_BUY_LEVEL)
-    put_valid = (put_leg is not None)
-    put_offsets = [PUT_BUY_LEVEL, PUT_BUY_LEVEL] # reuse list for logging
+    if not NO_PUT_MODE:
+        put_leg = get_strike_by_level(opt, etf, entry, expiry, "P", PUT_BUY_LEVEL)
+        put_valid = (put_leg is not None)
+        put_offsets = [PUT_BUY_LEVEL, PUT_BUY_LEVEL] # reuse list for logging
 
-    if put_valid:
-        legs_to_process.append((put_leg, "buy", f"Put Buy    (Level {PUT_BUY_LEVEL})"))
+        if put_valid:
+            legs_to_process.append((put_leg, "buy", f"Put Buy    (Level {PUT_BUY_LEVEL})"))
+    else:
+        put_offsets = []
 
     results = []
     
@@ -647,8 +673,9 @@ def run_backtest(opt, etf):
             filter_tag = "[FILTER WOULD FAIL — overridden to OTM2+OTM3]"
         else:
             filter_tag = "[FILTER PASS]" if res['filter_would_pass'] else "[FILTER FAIL]"
+        puts_str = "None" if NO_PUT_MODE else f"Level{PUT_BUY_LEVEL}"
         print(f"\nCycle  {res['entry_date'].date()} → {res['expiry_date'].date()}"
-              f"   IV={res['iv']:.1%} (IVR={res['ivr']:.2f})  calls={call_str} puts=Level{PUT_BUY_LEVEL}"
+              f"   IV={res['iv']:.1%} (IVR={res['ivr']:.2f})  calls={call_str} puts={puts_str}"
               f"   ETF={res['etf_entry']:.4f} RSI={res['rsi']:.1f} BBU={res['bbu']:.3f} "
               f"(Total {total_legs_contracts} contracts) {filter_tag}")
         hdr = f"  {'Leg':<25} {'side':>4} {'K':>7} {'exec_px':>8} {'prem':>8}  {'exer':>9}  {'net':>8}"
@@ -701,7 +728,10 @@ def run_backtest(opt, etf):
         print(f"  ─────────────────────────────────────────────────────────────")
 
     # ── Chart ─────────────────────────────────────────────────────────────────
-    out_file = f"backtest_covered_call_{ETF_NAME}{'_nofilter' if NO_FILTER_MODE else ''}.png"
+    filter_suffix = "_nofilter" if NO_FILTER_MODE else ""
+    put_suffix = "_withput" if not NO_PUT_MODE else ""
+    otm4_suffix = "_noskipotm4" if not SKIP_OTM4 else ""
+    out_file = f"backtest_covered_call_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}.png"
     plot_backtest_results(results, etf, out_file)
 
     return results
@@ -832,15 +862,22 @@ if __name__ == "__main__":
     # Handle command line arguments for ETF choice
     etf_choice = "300"
     NO_FILTER_MODE = "--no-filter" in sys.argv
-    # Remove --no-filter from argv before parsing ETF choice
-    sys.argv = [a for a in sys.argv if a != "--no-filter"]
+    if "--with-put" in sys.argv:
+        NO_PUT_MODE = False
+    if "--no-skip-otm4" in sys.argv:
+        SKIP_OTM4 = False
+    # Remove flags from argv before parsing ETF choice
+    sys.argv = [a for a in sys.argv if a not in ["--no-filter", "--with-put", "--no-skip-otm4"]]
     if len(sys.argv) > 1:
         etf_choice = sys.argv[1]
     
     select_underlying(etf_choice)
     
     # Redirect output to log file
-    log_file = f"backtest_covered_call_{ETF_NAME}{'_nofilter' if NO_FILTER_MODE else ''}.log"
+    filter_suffix = "_nofilter" if NO_FILTER_MODE else ""
+    put_suffix = "_withput" if not NO_PUT_MODE else ""
+    otm4_suffix = "_noskipotm4" if not SKIP_OTM4 else ""
+    log_file = f"backtest_covered_call_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}.log"
     f = open(log_file, 'w', encoding='utf-8')
     sys.stdout = Tee(sys.stdout, f)
     

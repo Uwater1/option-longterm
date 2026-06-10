@@ -49,6 +49,34 @@ else:
 etf['rolling_high_20'] = etf['close'].rolling(20).max()
 etf['rolling_high_252'] = etf['close'].rolling(252).max()
 
+# New Indicators for advanced filters
+etf['vol20'] = etf['close'].pct_change().rolling(20).std() * np.sqrt(252)
+etf['roc10'] = ta.roc(etf['close'], length=10)
+etf['roc5'] = ta.roc(etf['close'], length=5)
+etf['sma50'] = ta.sma(etf['close'], length=50)
+bbands_lower = ta.bbands(etf['close'], length=20, std=2)
+if bbands_lower is not None:
+    etf['bb_lower'] = bbands_lower.iloc[:, 0]
+else:
+    etf['bb_lower'] = np.nan
+if 'bb_upper' in etf.columns and 'bb_lower' in etf.columns:
+    etf['bb_width'] = (etf['bb_upper'] - etf['bb_lower']) / etf['sma20']
+else:
+    etf['bb_width'] = np.nan
+etf['atr10'] = ta.atr(etf['high'], etf['low'], etf['close'], length=10)
+cci = ta.cci(etf['high'], etf['low'], etf['close'], length=20)
+if cci is not None:
+    etf['cci20'] = cci
+else:
+    etf['cci20'] = np.nan
+etf['tr'] = ta.true_range(etf['high'], etf['low'], etf['close'])
+etf['atr5'] = etf['tr'].rolling(5).mean()
+etf['atr_ratio_5_20'] = etf['atr5'] / etf['atr20']
+
+etf['vol20_median'] = etf['vol20'].rolling(252).median()
+etf['bb_width_mean20'] = etf['bb_width'].rolling(20).mean()
+etf['atr20_q70'] = etf['atr20'].rolling(60).quantile(0.7)
+
 # Define the 12 working filters based on filter.txt
 def f1_sma20(etf, entry_date):
     idx = entry_date.normalize()
@@ -122,12 +150,65 @@ def f20_keltner(etf, entry_date):
     if idx not in etf.index: return False
     return etf.loc[idx, 'close'] < (etf.loc[idx, 'ema20'] + 1.0 * etf.loc[idx, 'atr20'])
 
+def f21_vol_low(etf, entry_date):
+    idx = entry_date.normalize()
+    if idx not in etf.index: return False
+    return etf.loc[idx, 'vol20'] < etf.loc[idx, 'vol20_median']
+
+def f22_roc10(etf, entry_date):
+    idx = entry_date.normalize()
+    if idx not in etf.index: return False
+    return etf.loc[idx, 'roc10'] < 5.0
+
+def f23_roc5(etf, entry_date):
+    idx = entry_date.normalize()
+    if idx not in etf.index: return False
+    return etf.loc[idx, 'roc5'] < 3.0
+
+def f24_sma50(etf, entry_date):
+    idx = entry_date.normalize()
+    if idx not in etf.index: return False
+    return etf.loc[idx, 'close'] > etf.loc[idx, 'sma50']
+
+def f25_bw_expand(etf, entry_date):
+    idx = entry_date.normalize()
+    if idx not in etf.index: return False
+    return etf.loc[idx, 'bb_width'] < etf.loc[idx, 'bb_width_mean20']
+
+def f26_cci(etf, entry_date):
+    idx = entry_date.normalize()
+    if idx not in etf.index: return False
+    return etf.loc[idx, 'cci20'] < 100
+
+def f27_vol_ratio(etf, entry_date):
+    idx = entry_date.normalize()
+    if idx not in etf.index: return False
+    return etf.loc[idx, 'atr_ratio_5_20'] < 1.2
+
+def f28_atr_low(etf, entry_date):
+    idx = entry_date.normalize()
+    if idx not in etf.index: return False
+    return etf.loc[idx, 'atr20'] < etf.loc[idx, 'atr20_q70']
+
+def f29_rsi66(etf, entry_date):
+    idx = entry_date.normalize()
+    if idx not in etf.index: return False
+    return etf.loc[idx, 'rsi14'] < 66.0
+
+def f30_rsi60(etf, entry_date):
+    idx = entry_date.normalize()
+    if idx not in etf.index: return False
+    return etf.loc[idx, 'rsi14'] < 60.0
+
 # Combine filters logically
 filters = {
     "f1": f1_sma20, "f2": f2_ema20, "f3": f3_rsi_overbought, "f4": f4_rsi_oversold,
     "f5": f5_macd, "f6": f6_bbands, "f9": f9_roc, "f10": f10_atr_breakout,
     "f11": f11_adx, "f12": f12_ema_cross, "f15": f15_stoch, "f16": f16_rolling_high_20,
-    "f17": f17_rolling_high_252, "f20": f20_keltner
+    "f17": f17_rolling_high_252, "f20": f20_keltner,
+    "f21": f21_vol_low, "f22": f22_roc10, "f23": f23_roc5, "f24": f24_sma50,
+    "f25": f25_bw_expand, "f26": f26_cci, "f27": f27_vol_ratio, "f28": f28_atr_low,
+    "f29": f29_rsi66, "f30": f30_rsi60
 }
 
 filter_descriptions = {
@@ -145,6 +226,16 @@ filter_descriptions = {
     "f16": "Close < 0.98 * max(close over last 20 days)",
     "f17": "Close < 0.95 * max(close over last 252 days)",
     "f20": "Close < EMA20 + 1.0 * ATR(20)",
+    "f21": "Realized Volatility < Median",
+    "f22": "10-day ROC < 5%",
+    "f23": "5-day ROC < 3%",
+    "f24": "Close > 50-day SMA",
+    "f25": "Bollinger Band width expanding",
+    "f26": "20-day CCI < 100",
+    "f27": "ATR Ratio < 1.2",
+    "f28": "ATR20 < 70th percentile",
+    "f29": "14-day RSI < 66",
+    "f30": "14-day RSI < 60"
 }
 
 combinations = [
@@ -174,6 +265,20 @@ combinations = [
     ("c21", lambda e, d: (filters["f1"](e, d) or filters["f11"](e, d)) and filters["f3"](e, d), "(f1 OR f11) AND f3"),
     ("c22", lambda e, d: filters["f12"](e, d) or (filters["f16"](e, d) and filters["f20"](e, d)), "f12 OR (f16 AND f20)"),
     ("c23", lambda e, d: (filters["f1"](e, d) or filters["f2"](e, d)) and filters["f16"](e, d), "(f1 OR f2) AND f16"),
+    ("c24", lambda e, d: filters["f3"](e, d) and filters["f24"](e, d), "f3 AND f24"),
+    ("c25", lambda e, d: filters["f3"](e, d) and filters["f28"](e, d), "f3 AND f28"),
+    ("c26", lambda e, d: filters["f6"](e, d) and filters["f28"](e, d), "f6 AND f28"),
+    ("c27", lambda e, d: filters["f24"](e, d) and filters["f21"](e, d), "f24 AND f21"),
+    ("c28", lambda e, d: filters["f24"](e, d) and filters["f28"](e, d), "f24 AND f28"),
+    ("c29", lambda e, d: filters["f3"](e, d) and filters["f6"](e, d) and filters["f24"](e, d), "f3 AND f6 AND f24"),
+    ("c30", lambda e, d: filters["f3"](e, d) and filters["f6"](e, d) and filters["f28"](e, d), "f3 AND f6 AND f28"),
+    ("c31", lambda e, d: filters["f23"](e, d) and filters["f6"](e, d), "f23 AND f6"),
+    ("c32", lambda e, d: filters["f22"](e, d) and filters["f6"](e, d), "f22 AND f6"),
+    ("c33", lambda e, d: filters["f21"](e, d) and filters["f28"](e, d), "f21 AND f28"),
+    ("c34", lambda e, d: (filters["f3"](e, d) or filters["f22"](e, d)) and filters["f6"](e, d), "(f3 OR f22) AND f6"),
+    ("c35", lambda e, d: filters["f4"](e, d) and filters["f6"](e, d), "f4 AND f6"),
+    ("c36", lambda e, d: filters["f29"](e, d) and filters["f6"](e, d), "f29 AND f6"),
+    ("c37", lambda e, d: filters["f30"](e, d) and filters["f6"](e, d), "f30 AND f6")
 ]
 
 def run_backtest_with_filter(filter_func):
