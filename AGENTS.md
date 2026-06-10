@@ -16,6 +16,7 @@ python eval_synth_filters.py -e 300        # Single filter eval on synthetic dat
 python eval_synth_combinations.py -e 300   # Filter combo search on synthetic data
 python evaluate_combinations.py -e 300     # Filter combo search on real data
 python diagnose_500etf.py -e 500           # 500ETF multi-variant diagnostic (10 variants)
+python research_robustness.py -e 500       # Data completeness & robustness analysis (bootstrap, LOOCV)
 ```
 
 ## Project Structure
@@ -40,6 +41,7 @@ evaluate_combinations.py       # Filter combination search (on real data)
 eval_synth_combinations.py     # Filter combination search (on synthetic data)
 eval_synth_filters.py          # Individual filter evaluation (on synthetic data)
 diagnose_500etf.py              # 500ETF diagnostic: 10 variants, loss analysis, filter diff
+research_robustness.py          # Data completeness, bootstrap CI, LOOCV, regime comparison
 
 update_data.py                 # Data refresh script (uses rqdatac from system Python)
 备兑期权.md                     # Chinese README (full project docs)
@@ -102,7 +104,13 @@ README.md                      # English README (links to Chinese docs)
 - Put Level 2: Cheaper put but worse total P&L (-2,556 vs baseline)
 - ROC<5% filter: Too restrictive, misses profitable cycles
 
-**Implemented change:** RSI threshold for 500ETF raised from 66→70. Gains +697 RMB (1 extra trade cycle). Marginal but safe improvement.
+**Implemented change:** RSI threshold for 500ETF raised from 66→70. Gains +697 RMB (1 extra trade cycle). **Statistically NOT significant** (P=64.3%, only 1 cycle differs). Keep as implemented but low confidence.
+
+**Robustness findings** (`research_robustness.py -e 500`):
+- 45 cycles only — bootstrap 95% CIs overlap across all variants
+- LOOCV: single cycle swing = ~14,630 RMB (68% of baseline total)
+- 500ETF vol regime matches 300ETF's worst 18% — cross-ETF transfer limited
+- Need ~100 cycles (8+ years) for >80% confidence in variant ranking
 
 **Fundamental limitation:** No filter-based approach can prevent the big losses because they occur when RSI is already low (market not overbought). The losses come from intra-cycle sharp rallies (+8-16%) that blow through all strike levels. Early roll management or delta hedging would be needed for further improvement.
 
@@ -110,5 +118,7 @@ README.md                      # English README (links to Chinese docs)
 
 ## TODO
 
+- [x] Explore data completeness for 500ETF and make research more robust → `research_robustness.py`
 - [ ] Test early roll management for 500ETF — roll calls to higher strikes if underlying rallies >5% mid-cycle
 - [ ] Explore weekly options for 500ETF if available — shorter DTE reduces rally exposure
+- [ ] Revisit conclusions when 500ETF reaches 80+ cycles (~2029)

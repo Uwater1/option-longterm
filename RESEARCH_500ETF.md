@@ -204,7 +204,82 @@ No entry-date filter can prevent the big losses because they occur when RSI is l
 
 ---
 
-## 8. TODO
+## 8. Data Completeness & Robustness Analysis
 
-- [ ] Explore data synchronization for 500 ETF and make the research more robust
+### 8.1 Cross-ETF Data Coverage
+
+| ETF | Cycles | Option History | Ann. Vol | Opt Rows |
+|-----|--------|---------------|----------|----------|
+| 50ETF | 136 | 2015-02 → 2026-05 | 21.4% | 353,380 |
+| 300ETF | 78 | 2019-12 → 2026-05 | 19.1% | 188,822 |
+| **500ETF** | **45** | **2022-09 → 2026-05** | **26.8%** | **104,996** |
+
+500ETF has 3.0x fewer cycles than 50ETF and 1.7x fewer than 300ETF. Only ~3.7 years of option history. This is a fundamental data limitation — all conclusions carry wider uncertainty bands.
+
+### 8.2 Bootstrap Confidence Intervals (5000 iterations)
+
+| Variant | Total P&L | 95% CI Low | 95% CI High | Boot Std | Win Rate |
+|---------|-----------|------------|-------------|----------|----------|
+| Baseline RSI66+BBU | 21,448 | -8,192 | 51,131 | 14,972 | 64% |
+| **RSI70+BBU** | **22,145** | **-7,014** | **51,369** | **14,867** | **67%** |
+| RSI60+BBU | 15,608 | -12,679 | 43,799 | 14,346 | 58% |
+| Conservative OTM3+4/5 | 14,047 | -6,795 | 37,487 | 11,148 | 44% |
+| Aggressive OTM1+2/3 | 39,498 | -6,162 | 80,103 | 22,032 | 62% |
+| No filter OTM2+3 | 8,502 | -36,890 | 46,787 | 21,501 | 71% |
+
+**Key finding:** 95% CIs overlap massively across ALL variants. The difference between "best" and "worst" variant is not statistically significant at 95% level with only 45 cycles.
+
+### 8.3 Leave-One-Out Cross-Validation
+
+| Variant | LOOCV Min | LOOCV Max | LOOCV Range | LOOCV Std |
+|---------|-----------|-----------|-------------|-----------|
+| Baseline RSI66+BBU | 14,079 | 28,709 | 14,630 | 2,244 |
+| RSI70+BBU | 14,776 | 29,406 | 14,630 | 2,241 |
+| Aggressive OTM1+2/3 | 31,276 | 50,392 | 19,116 | 3,275 |
+
+A single cycle swing of ~14,630 RMB (68% of baseline total) demonstrates extreme sensitivity to individual cycle outcomes. Any variant ranking can flip with one more good/bad month.
+
+### 8.4 RSI70 vs RSI66 Statistical Significance
+
+| Metric | Value |
+|--------|-------|
+| Total improvement | +697 RMB |
+| Bootstrap 95% CI | [+0, +2,090] |
+| P(improvement > 0) | **64.3%** |
+| Cycles differing | 1 (2025-09-25, RSI=68.4) |
+
+**Conclusion:** The +697 RMB improvement from RSI70 over RSI66 is NOT statistically significant. With P=64.3%, this is roughly a coin flip. The improvement comes from exactly 1 cycle. We keep RSI70 as implemented because it doesn't hurt, but we should not have high confidence that it's truly better.
+
+### 8.5 Cross-ETF Volatility Regime
+
+500ETF's average 20-day realized vol (22.7%) matches 300ETF's worst 18% of the time. The correlation of 20-day returns between 500ETF and 300ETF is 0.85; vol correlation is 0.80.
+
+**Implication:** We cannot reliably use 300ETF's longer history to validate 500ETF strategy variants, because 500ETF lives in a permanently higher-vol regime that 300ETF rarely experiences.
+
+### 8.6 Sample Size Sensitivity
+
+| Simulated N | P(RSI70 > Baseline) | Baseline 95% CI Width |
+|-------------|---------------------|----------------------|
+| 20 | 35.8% | ±18,914 |
+| 30 | 48.8% | ±22,910 |
+| 40 | 58.9% | ±28,176 |
+| **45 (actual)** | **63.8%** | **±30,127** |
+
+Even at N=45, confidence is only 64%. Would need ~100+ cycles (8+ years) for >80% confidence in RSI70 superiority.
+
+### 8.7 Robustness Conclusions
+
+1. **All variant rankings are unstable** with only 45 cycles. Bootstrap CIs overlap broadly.
+2. **RSI70 improvement is marginal** (P=64.3%). Keep it but don't over-rely on it.
+3. **Aggressive OTM1+2/3 looks best in P&L** (39,498) but has the widest CI (boot std 22K) — highest variance, highest risk.
+4. **Conservative OTM3+4/5 is most stable** (boot std 11K) but sacrifices too much premium.
+5. **500ETF's vol regime is structurally different** from 300ETF — cross-ETF transfer learning is limited.
+6. **More data is needed.** At current rate (~12 cycles/year), robust conclusions (>90% confidence) require 5-8 more years of data.
+
+---
+
+## 9. TODO
+
+- [ ] Explore Synthetic Data for 500ETF and make research more robust (→ `eval_synth_filters.py`)
 - [ ] Explore more dynamic put protection strategies for 500 ETF, not open it every time
+- [ ] Revisit conclusions when 500ETF reaches 80+ cycles (~2029)
