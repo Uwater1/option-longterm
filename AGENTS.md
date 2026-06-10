@@ -12,7 +12,7 @@ python research_otm_levels.py -e 300        # OTM level analysis with filters
 python research_synthetic_otm.py -e 300     # OTM analysis on synthetic data
 python alpha_finder.py                      # 30-day forward return distribution
 python research_otm_no_filter.py -e 300     # Baseline OTM without filters
-python eval_synth_filters.py -e 300        # Single filter eval on synthetic data
+python eval_synth_filters.py -e 500        # Enhanced synthetic filter eval (per-level, bootstrap CI, significance, scoring)
 python eval_synth_combinations.py -e 300   # Filter combo search on synthetic data
 python evaluate_combinations.py -e 300     # Filter combo search on real data
 python diagnose_500etf.py -e 500           # 500ETF multi-variant diagnostic (10 variants)
