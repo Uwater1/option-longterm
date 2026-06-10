@@ -2,19 +2,20 @@
 
 [中文文档](备兑期权.md)
 
-This directory contains scripts and research for long-term option investment strategies, specifically focusing on **Covered Call** and **Bull Put Spread** strategies on Chinese ETFs (50ETF, 300ETF, 500ETF).
+This directory contains scripts and research for long-term option investment strategies, specifically focusing on **Covered Call** with technical filters (and no protective put) on Chinese ETFs (50ETF, 300ETF, 500ETF).
 
 ## Core Strategy
-The primary strategy is a "Covered Call + Bull Put Spread" combination, inspired by income-generating funds like JEPI, but adapted for the Chinese market (Project JEPI-CN).
+The primary strategy is a **Covered Call with Technical Filters (No Put)**, inspired by income-generating funds like JEPI, but adapted for the Chinese market (Project JEPI-CN) to optimize performance.
 
 - **Covered Call**: Selling OTM calls against held ETF shares to generate premium income.
-- **Bull Put Spread**: Selling OTM put spreads to capture additional premium while limiting downside risk.
+- **Technical Filters**: RSI, Bollinger Bands, ROC, and ATR indicators filter out overbought conditions. If the market is overbought, selling calls is skipped (Skip OTM4) to avoid assignment risk during sharp rallies.
+- **No Put**: Protective puts are removed to eliminate long-term premium drag, maximizing net income.
 - **Strike Selection**: Driven by historical probability distributions (Alpha Finder) and ATM Implied Volatility (IV).
 
 ## File Structure
 
 ### Backtesting
-- `backtest_covered_call.py`: The main backtesting engine. Supports multiple ETFs and dynamic strike selection based on IV regimes.
+- `backtest_covered_call.py`: The main backtesting engine. Supports multiple ETFs (50, 300, 500) and options like `--with-put` and `--no-skip-otm4`.
 - `backtest_covered_call*.png`: Visualizations of backtest results (Equity curve, drawdown, etc.).
 - `backtest_covered_call*.log`: Detailed logs of executed trades and performance metrics.
 
@@ -45,13 +46,13 @@ python alpha_finder.py
 ### 2. Run Backtest
 Run a backtest for the 300ETF covered call strategy:
 ```bash
-python backtest_covered_call.py --etf 300
+python backtest_covered_call.py 300
 ```
 
 ### 3. Analyze OTM Levels
 Research the optimal OTM offsets:
 ```bash
-python research_otm_levels.py --etf 300
+python research_otm_levels.py -e 300
 ```
 
 ## Data Dependencies
