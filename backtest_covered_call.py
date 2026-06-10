@@ -731,7 +731,8 @@ def run_backtest(opt, etf):
     filter_suffix = "_nofilter" if NO_FILTER_MODE else ""
     put_suffix = "_withput" if not NO_PUT_MODE else ""
     otm4_suffix = "_noskipotm4" if not SKIP_OTM4 else ""
-    out_file = f"backtest_covered_call_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}.png"
+    out_file = f"backtest/backtest_covered_call_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}.png"
+    os.makedirs("backtest", exist_ok=True)
     plot_backtest_results(results, etf, out_file)
 
     return results
@@ -877,7 +878,8 @@ if __name__ == "__main__":
     filter_suffix = "_nofilter" if NO_FILTER_MODE else ""
     put_suffix = "_withput" if not NO_PUT_MODE else ""
     otm4_suffix = "_noskipotm4" if not SKIP_OTM4 else ""
-    log_file = f"backtest_covered_call_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}.log"
+    log_file = f"backtest/backtest_covered_call_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}.log"
+    os.makedirs("backtest", exist_ok=True)
     f = open(log_file, 'w', encoding='utf-8')
     sys.stdout = Tee(sys.stdout, f)
     
