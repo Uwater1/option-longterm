@@ -7,10 +7,10 @@ Enhanced income strategy for Chinese ETFs: Covered Call + Bull Put Spread on 50E
 ```bash
 source venv/bin/activate                    # Activate Python env (uses system miniconda for rqdatac)
 python3 update_data.py                      # Refresh parquet data from rqdatac
-python backtest_covered_call.py [50|300|500]          # Run static backtest (logs/charts under backtest/)
-python backtest_covered_call.py [50|300|500] --alpha  # Run dynamic alpha-based OTM backtest
+python backtest_covered_call.py [50|300|500]  # Run backtest (generates logs and charts under backtest/)
+python backtest_covered_call.py --alpha 300  # Run backtest with dynamic alpha mode (indicator-based OTM switching)
 python research_otm_levels.py -e 300        # OTM level analysis with filters
-python research_synthetic_otm.py -e 300     # OTM analysis on synthetic data
+python research_synthetic_otm.py -e 300     # OTM analysis + combo alpha + dynamic signal search on synthetic data
 python alpha_finder.py                      # 30-day forward return distribution
 python research_otm_no_filter.py -e 300     # Baseline OTM without filters
 python optimize_alpha_synthetic.py -e 300   # Alpha param grid search on synthetic data (6-component composite score)
@@ -27,19 +27,20 @@ python research_robustness.py -e 500       # Data completeness & robustness anal
 ```
 backtest/                      # Backtest output logs and PNG charts
 data/                          # Local Parquet database (rqdatac source)
-├── {ETF}_instruments.parquet  # Option contract metadata (strike, expiry, multiplier)
-├── {ETF}_historrical_prices.parquet  # Option daily OHLC/OI (order_book_id keyed)
+├── {ETF}_instruments.parquet  # Option contract metadata (FINAL strike/mult after all adjustments)
+├── {ETF}_historical_prices.parquet  # Option daily OHLC/OI (DAILY-CORRECT strike_price & contract_multiplier)
 ├── {ETF}_1d.parquet           # Underlying ETF daily prices
 └── 30d_iv_cache_{N}.parquet   # Pre-computed 30-day interpolated ATM IV (auto-deleted on update)
 
-backtest_covered_call.py       # Main backtest engine (CC + Put, IVR-driven, RSI+BB filter)
+backtest_covered_call.py       # Main backtest engine (CC + Put, IVR-driven, RSI+BB filter, --alpha dynamic mode)
 alpha_finder.py                # Historical 30-day return distribution → strike selection
+alpha.md                       # Dynamic alpha strategy research report (v2 indicator-based)
 spread.py                      # LightGBM bid-ask spread prediction model
 numba_utils.py                 # Numba-compiled BS pricing, IV solver, synthetic metrics
 
 research_otm_levels.py         # OTM level analysis (with RSI<66 + BB filter)
 research_otm_no_filter.py      # OTM baseline (no filter)
-research_synthetic_otm.py      # Synthetic option OTM analysis (numba-accelerated)
+research_synthetic_otm.py      # Synthetic OTM analysis + combo alpha (OTM2+3 vs OTM4) + 24-signal dynamic search
 research_synthetic_no_filter.py # Synthetic baseline (no filter)
 evaluate_combinations.py       # Filter combination search (on real data)
 eval_synth_combinations.py     # Filter combination search (on synthetic data)
@@ -57,27 +58,42 @@ README.md                      # English README (links to Chinese docs)
 
 ## Architecture
 
-**Data loading & pricing rules (critical):**
-1. **Underlying ETF Daily Prices must be unadjusted (不复权)** (downloaded with `adjust_type="none"` in `update_data.py`). Pre-adjusted prices create a severe mismatch with nominal option strikes, introducing look-ahead bias and invalidating the backtest.
-2. The opt parquet contains daily-correct `strike_price` and `contract_multiplier`. `load_data()` must only merge `maturity_date` and `option_type` from instruments — never overwrite opt's daily strike/mult.
-3. **ATM 30d IV Optimization**: Pre-groups options by date once into a dictionary (`day_calls_dict`) before iterating, achieving ~740x speedup in implied volatility lookup.
+**Data loading (critical):** 
+1. The opt parquet contains daily-correct `strike_price` and `contract_multiplier` (adjusted when underlying ETF pays dividends). The instruments parquet holds FINAL post-adjustment values. `load_data()` must only merge `maturity_date` and `option_type` from instruments — never overwrite opt's daily strike/mult.
+2. **Underlying ETF Daily Prices must be unadjusted (不复权)** (pulled with `adjust_type="none"` in `update_data.py`). If pre-adjusted prices are used, it creates a mismatch with unadjusted option strikes/premiums, causing major look-ahead bias and false backtest performance.
+3. **ATM 30d IV Speed Optimization**: Daily 30d IV calculation in `get_30d_iv` is optimized by passing a pre-grouped dictionary of calls instead of running slow boolean filters on the full DataFrame, reducing runtime by ~740x.
 
 **Backtest logic** (`backtest_covered_call.py`):
-- Cycles = monthly option expiries, enter after previous expiry
+- Cycles = monthly option expiries, enter on first trading day after previous expiry
 - IV Rank (252-day) drives OTM offset: high IVR → further OTM
 - RSI < 66 + Close < Upper BB filter: pass → 2 call legs (OTM2+OTM3), fail → 1 call leg (OTM4)
 - 500ETF exception: RSI < 70 (looser filter, 500ETF vol profile suits wider threshold)
 - Long Put at Level 1 (closest OTM) as protective hedge
 - Spread: ±2% from mid, commission 2 RMB/leg
-- **Dynamic Alpha Mode (`--alpha`)**: Strike selection dynamically guided by historical 30d calendar forward return distribution. Corrected to prevent look-ahead bias by only utilizing forward return windows completed on or before the entry date.
+- **Dynamic Alpha Mode** (`--alpha`): Indicator-based combo switching — strong signal → Combo A (OTM2+OTM3), weak signal → Combo B (OTM4). Monthly rate of change (`roc20`) caution filters protect against vertical rallies:
+  - 300ETF: `30 < RSI < 60` AND `roc20 < 4.0` (switches to Combo B if monthly growth $\ge 4\%$; P&L +13.8K $\to$ +16.1K)
+  - 50ETF: `RSI > 30` AND `roc20 < 3.0` (switches to Combo B if monthly growth $\ge 3\%$; P&L +6.3K $\to$ +8.8K)
+  - 500ETF: `RSI > 35 AND Close < BBU AND Close > SMA50` (remains unchanged)
 
 **Spread model** (`spread.py`): LightGBM predicts `log(1+spread)` from midprice, IV, OTM depth, DTE, moneyness.
 
 **Synthetic options:** Generated via [generate_synthetic_options.py](file:///home/hallo/Documents/option-longterm/generate_synthetic_options.py) (calling `numba_utils.process_synthetic_strikes_loop()`). Interpolates IV between two expiries to create constant-maturity synthetic contracts.
 - **Data Pricing & Dividend Adjustment (Critical)**: Must use unadjusted ETF prices and daily-correct option strikes at entry to calculate option prices/IVs. At expiry, options are adjusted for dividends by scaling the unadjusted underlying price by $\frac{f_{expiry}}{f_{entry}}$ (where $f_t = S_{post, t} / S_{none, t}$ is the daily cumulative adjustment factor downloaded from `rqdatac`), keeping the nominal strikes clean and unadjusted.
-- **Synthetic Alpha Optimization**: Dynamic alpha parameters (forward return units, probability thresholds, offsets) are optimized on large-sample synthetic data (1,336 dates) using `optimize_alpha_synthetic.py` to prevent overfitting.
 
 **Optimization scoring (v2, Jun 2026):** Both `optimize_alpha_synthetic.py` and `optimize_filters.py` use a 6-component normalized composite score: Sharpe (20%), Total P&L (15%), MaxDD (15%), WinRate (15%), PlacementRate (15%), FilterLift (20%). FilterLift = avg P&L on filter-placed cycles minus avg P&L if always trading — measures whether the filter genuinely adds alpha vs cherry-picking. PlacementRate penalizes overly restrictive filters. `backtest_covered_call.py` aggregate summary now reports placement rate and filter lift for every run.
+
+## Backtest Audit (Jun 2026)
+
+**No look-ahead bias found.** All signals use only data available at entry time:
+- RSI (14-bar), BB (20-bar): purely backward-looking windows
+- IV Rank: `daily_ivs[index <= entry]` — historical only
+- Cycle detection: entry = first opt trading day after previous expiry; no outcome-based filtering
+- Settlement: `etf.index[<= expiry_date][-1]` — last ETF close on or before expiry
+- Option pricing: entry-day close (known at market close, standard assumption)
+
+**Pricing bug fixed (strike/mult from wrong source).** The old merge used instruments table values (final post-adjustment) instead of opt parquet's daily-correct values. For 22% of contracts with dividend adjustments, this used the wrong strike and multiplier on pre-adjustment dates, understating P&L by ~6K total for 300ETF (6 cycles affected, 2 flipped loss→win).
+
+**Corrected backtest results (True results after fixing adjusted ETF price mismatch):**
 
 **Corrected & Optimized backtest results (Jun 2026):**
 
@@ -87,13 +103,6 @@ README.md                      # English README (links to Chinese docs)
 | 300ETF | 56% (44/78) | +19,178 RMB | **+16,868 RMB** | `25 < RSI < 72` AND `MACD Hist < 0` (Sharpe 1.21 → 1.27, Drawdown -2.7k) |
 | 500ETF | 42% (19/45) | +12,201 RMB | **+16,954 RMB** | `RSI > 30` AND `Close < BBU` AND `Close > SMA50` (Sharpe 1.92, Drawdown 0.0!) |
 | 50ETF | 32% (44/136) | +11,922 RMB | **+7,317 RMB** | `30 < RSI < 60` AND `ROC10 < 3%` AND `Vol20 < Vol20_med` (Sharpe 0.53 → 0.58) |
-
-### Dynamic Alpha Mode (NO_PUT_MODE = True, SKIP_OTM4 = True, --alpha)
-| ETF | Win Rate | P&L | Sharpe | Max DD | Assignments |
-|-----|----------|-----|--------|--------|-------------|
-| 300ETF | 60% (47/78) | **+9,096 RMB** | **2.13** | **-104 RMB** | 1 (Sharpe 2.13, drawdown reduced to -104 RMB) |
-| 500ETF | 42% (19/45) | **+11,992 RMB** | **1.80** | **0.00 RMB** | 0 (Sharpe 1.80, zero assignments, zero drawdown!) |
-| 50ETF | 32% (44/136) | **+6,945 RMB** | **0.55** | **-2,676 RMB** | 8 (Sharpe 0.55, assignments reduced from 12 to 8) |
 
 ### With-Put Mode (NO_PUT_MODE = False, SKIP_OTM4 = False)
 | ETF | Win Rate | Baseline P&L | Optimized P&L | Optimized Filter Condition |
@@ -121,21 +130,21 @@ README.md                      # English README (links to Chinese docs)
 
 ## 500ETF Research Findings (Jun 2026)
 
-**Problem:** 500ETF underperforms 300ETF — lower win rate (67% vs 88%), bigger drawdowns.
+**Problem:** 500ETF underperforms 300ETF — lower win rate (67% vs 91%), bigger drawdowns.
 
 **Root causes:**
 1. **Higher vol (26.8% ann)** — ~40% more than 300ETF → strikes hit more often
 2. **Big loss cycles from sharp rallies** — 2025-01 (-3,375), 2025-12 (-4,057), 2026-03 (-7,261). All had LOW RSI (37-46), filter can't prevent
 3. **Expensive put hedge** — Level 1 put often costs 500-1500 RMB, creating drag on flat/rally months
 
-**10-variant diagnostic results** (True results after fixing adjusted ETF price mismatch):
+**10-variant diagnostic results** (`diagnose_500etf.py -e 500`):
 
 | Variant | P&L | Wins | Assignments |
 |---------|-----|------|-------------|
-| Baseline | -4,628 | 16/45 | 1 |
-| RSI70+BBU | -3,931 | 17/45 | 1 |
-| IVR-Driven | -3,873 | 16/45 | 3 |
-| Wider OTM3+4/5 | -5,720 | 12/45 | 0 |
+| RSI70+BBU (implemented) | 22,182 | 30/45 | 6 |
+| Baseline RSI66+BBU | 21,448 | 29/45 | 6 |
+| IVR-Driven (OTM1+2 low IVR) | 21,396 | 31/45 | 18 |
+| Wider OTM3+4/5 | 14,047 | 20/45 | 3 |
 
 **What was tried and failed:**
 - IVR-driven OTM: Low IVR → sell closest strikes → catastrophic assignment losses (-18K worst cycle)
@@ -166,11 +175,12 @@ README.md                      # English README (links to Chinese docs)
 ## TODO
 
 - [x] Explore data completeness for 500ETF and make research more robust → `research_robustness.py`
-- [x] Audit backtest and fix adjusted vs unadjusted ETF price data quality mismatch (Jun 2026)
+- [x] Audit backtest for look-ahead bias and pricing correctness (Jun 2026) → strike/mult bug fixed
 - [x] Audit, fix pricing mismatch, and regenerate synthetic options data using unadjusted prices & daily strikes adjusted for dividends at expiry (Jun 2026)
 - [x] Grid search and optimize option selling filters for 50/300/500 ETF (Jun 2026) → `optimize_filters.py`
 - [x] Test and implement mode-specific optimal filters (calls-only vs with-put) in `backtest_covered_call.py` (Jun 2026)
 - [x] Upgrade optimization scoring to 6-component composite (Sharpe/Total/MaxDD/WinRate/PlacementRate/FilterLift) in `optimize_alpha_synthetic.py` and `optimize_filters.py` (Jun 2026)
+- [x] Implement indicator-based dynamic alpha mode in `backtest_covered_call.py` — combo switching (OTM2+3 vs OTM4) based on RSI/BBU/SMA signals from synthetic research (Jun 2026)
 - [ ] Test early roll management for 500ETF — roll calls to higher strikes if underlying rallies >5% mid-cycle
 - [ ] Explore weekly options for 500ETF if available — shorter DTE reduces rally exposure
 - [ ] Revisit conclusions when 500ETF reaches 80+ cycles (~2029)

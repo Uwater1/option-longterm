@@ -70,10 +70,10 @@ README.md                      # English README (links to Chinese docs)
 - 500ETF exception: RSI < 70 (looser filter, 500ETF vol profile suits wider threshold)
 - Long Put at Level 1 (closest OTM) as protective hedge
 - Spread: ±2% from mid, commission 2 RMB/leg
-- **Dynamic Alpha Mode** (`--alpha`): Indicator-based combo switching — strong signal → Combo A (OTM2+OTM3), weak signal → Combo B (OTM4). Signals per ETF (from `research_synthetic_otm.py`):
-  - 300ETF: `30 < RSI < 60`
-  - 50ETF: `RSI > 30`
-  - 500ETF: `RSI > 35 AND Close < BBU AND Close > SMA50`
+- **Dynamic Alpha Mode** (`--alpha`): Indicator-based combo switching — strong signal → Combo A (OTM2+OTM3), weak signal → Combo B (OTM4). Monthly rate of change (`roc20`) caution filters protect against vertical rallies:
+  - 300ETF: `30 < RSI < 60` AND `roc20 < 4.0` (switches to Combo B if monthly growth $\ge 4\%$; P&L +13.8K $\to$ +16.1K)
+  - 50ETF: `RSI > 30` AND `roc20 < 3.0` (switches to Combo B if monthly growth $\ge 3\%$; P&L +6.3K $\to$ +8.8K)
+  - 500ETF: `RSI > 35 AND Close < BBU AND Close > SMA50` (remains unchanged)
 
 **Spread model** (`spread.py`): LightGBM predicts `log(1+spread)` from midprice, IV, OTM depth, DTE, moneyness.
 
