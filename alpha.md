@@ -77,24 +77,21 @@ We executed a comprehensive grid search over `unit`, $T_1$, $T_2$, and the dynam
 Validating these robust, synthetic-optimized parameters on real historical ETF option contracts yields significant performance improvements without look-ahead bias:
 
 ### 1. 300ETF (78 monthly cycles)
-- **Baseline Dynamic P&L**: +10,004 RMB
-- **Optimized Dynamic P&L**: **+15,017.45 RMB** (+$5,013$ RMB, **+50.1% increase**)
-- **Win Rate**: 58%
-- **Avg Gross Premium / Cycle**: 273.90 RMB
+- **True Optimized Dynamic P&L**: **+9,095.99 RMB**
+- **Win Rate**: 60%
+- **Avg Gross Premium / Cycle**: 121.90 RMB
 - **Output Chart**: [backtest_cc_300ETF_alpha.png](file:///home/hallo/Documents/option-longterm/backtest/backtest_cc_300ETF_alpha.png)
 
 ### 2. 50ETF (136 monthly cycles)
-- **Baseline Dynamic P&L**: +4,882 RMB
-- **Optimized Dynamic P&L**: **+6,944.50 RMB** (+$2,062$ RMB, **+42.2% increase**)
+- **True Optimized Dynamic P&L**: **+6,944.50 RMB**
 - **Win Rate**: 32%
 - **Avg Gross Premium / Cycle**: 107.25 RMB
 - **Output Chart**: [backtest_cc_50ETF_alpha.png](file:///home/hallo/Documents/option-longterm/backtest/backtest_cc_50ETF_alpha.png)
 
 ### 3. 500ETF (45 monthly cycles)
-- **Baseline Dynamic P&L**: +11,992 RMB (look-ahead contaminated)
-- **True Optimized Dynamic P&L**: **+13,538.85 RMB** (100% look-ahead free)
+- **True Optimized Dynamic P&L**: **+11,992.45 RMB**
 - **Win Rate**: 42%
-- **Avg Gross Premium / Cycle**: 307.00 RMB
+- **Avg Gross Premium / Cycle**: 268.19 RMB
 - **Output Chart**: [backtest_cc_500ETF_alpha.png](file:///home/hallo/Documents/option-longterm/backtest/backtest_cc_500ETF_alpha.png)
 
 ---

@@ -607,36 +607,37 @@ def calc_cycle_pnl(cyc, opt, etf, daily_ivs):
         if DYNAMIC_ALPHA_MODE:
             # Ensure no look-ahead bias by only using moves that completed on or before entry date
             valid_moves = etf[etf.index + pd.Timedelta(days=30) <= entry]["30d_fwd_pt"].dropna()
+            if ETF_NAME == "50ETF":
+                unit = 0.05
+            elif ETF_NAME == "500ETF":
+                unit = 0.06
+            else: # 300ETF
+                unit = 0.03
+
             if len(valid_moves) > 0:
-                if ETF_NAME == "50ETF":
-                    unit = 0.05
-                elif ETF_NAME == "500ETF":
-                    unit = 0.10
-                else:
-                    unit = 0.07
                 prob_up = (valid_moves > unit).mean()
             else:
                 prob_up = 0.5
             
             # Determine OTM offsets dynamically based on prob_up
             if ETF_NAME == "300ETF":
-                if prob_up < 0.28:
-                    call_offsets = [2, 2]
-                elif prob_up <= 0.45:
-                    call_offsets = [2, 3]
-                else:
+                if prob_up < 0.25:
                     call_offsets = [3, 3]
+                elif prob_up <= 0.40:
+                    call_offsets = [3, 4]
+                else:
+                    call_offsets = [4, 4]
             elif ETF_NAME == "50ETF":
-                if prob_up < 0.28:
-                    call_offsets = [2, 2]
+                if prob_up < 0.30:
+                    call_offsets = [1, 2]
                 elif prob_up <= 0.40:
                     call_offsets = [2, 3]
                 else:
                     call_offsets = [3, 3]
             else:  # 500ETF
-                if prob_up < 0.28:
-                    call_offsets = [2, 2]
-                elif prob_up <= 0.40:
+                if prob_up < 0.20:
+                    call_offsets = [1, 2]
+                elif prob_up <= 0.30:
                     call_offsets = [2, 3]
                 else:
                     call_offsets = [3, 3]

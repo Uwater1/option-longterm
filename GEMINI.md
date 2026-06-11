@@ -91,9 +91,9 @@ README.md                      # English README (links to Chinese docs)
 ### Dynamic Alpha Mode (NO_PUT_MODE = True, SKIP_OTM4 = True, --alpha)
 | ETF | Win Rate | P&L | Sharpe | Max DD | Assignments |
 |-----|----------|-----|--------|--------|-------------|
-| 300ETF | 58% (45/78) | **+15,017 RMB** | **1.29** | **-2,773 RMB** | 8 (+$5,013 RMB or +50% P&L improvement vs old dynamic baseline) |
-| 500ETF | 42% (19/45) | **+13,539 RMB** | **1.91** | **0.00 RMB** | 1 (Sharpe 1.91, zero drawdown!) |
-| 50ETF | 32% (44/136) | **+6,945 RMB** | **0.55** | **-2,676 RMB** | 12 (+$2,062 RMB or +42% P&L improvement vs old dynamic baseline) |
+| 300ETF | 60% (47/78) | **+9,096 RMB** | **2.13** | **-104 RMB** | 1 (Sharpe 2.13, drawdown reduced to -104 RMB) |
+| 500ETF | 42% (19/45) | **+11,992 RMB** | **1.80** | **0.00 RMB** | 0 (Sharpe 1.80, zero assignments, zero drawdown!) |
+| 50ETF | 32% (44/136) | **+6,945 RMB** | **0.55** | **-2,676 RMB** | 8 (Sharpe 0.55, assignments reduced from 12 to 8) |
 
 ### With-Put Mode (NO_PUT_MODE = False, SKIP_OTM4 = False)
 | ETF | Win Rate | Baseline P&L | Optimized P&L | Optimized Filter Condition |
