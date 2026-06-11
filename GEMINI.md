@@ -65,10 +65,12 @@ README.md                      # English README (links to Chinese docs)
 - 500ETF exception: RSI < 70 (looser filter, 500ETF vol profile suits wider threshold)
 - Long Put at Level 1 (closest OTM) as protective hedge
 - Spread: ±2% from mid, commission 2 RMB/leg
+- **Dynamic Alpha Mode (`--alpha`)**: Strike selection dynamically guided by historical 30d calendar forward return distribution. Corrected to prevent look-ahead bias by only utilizing forward return windows completed on or before the entry date.
 
 **Spread model** (`spread.py`): LightGBM predicts `log(1+spread)` from midprice, IV, OTM depth, DTE, moneyness.
 
 **Synthetic options:** Generated via `numba_utils.process_synthetic_strikes_loop()` — interpolates IV between two expiries to create constant-maturity synthetic contracts.
+- **Synthetic Alpha Optimization**: Dynamic alpha parameters (forward return units, probability thresholds, offsets) are optimized on large-sample synthetic data (1,223 dates) using `optimize_alpha_synthetic.py` to prevent overfitting.
 
 **Corrected & Optimized backtest results (Jun 2026):**
 
@@ -82,9 +84,9 @@ README.md                      # English README (links to Chinese docs)
 ### Dynamic Alpha Mode (NO_PUT_MODE = True, SKIP_OTM4 = True, --alpha)
 | ETF | Win Rate | P&L | Sharpe | Max DD | Assignments |
 |-----|----------|-----|--------|--------|-------------|
-| 300ETF | 60% (47/78) | **+10,004 RMB** | **2.20** | **-104 RMB** | 1 (Sharpe +73% improvement, Drawdown -96% reduction vs static baseline!) |
-| 500ETF | 42% (19/45) | **+11,992 RMB** | **1.80** | **0.00 RMB** | 0 (Zero assignments, riskless return!) |
-| 50ETF | 35% (47/136) | **+4,882 RMB** | **0.44** | **-2,416 RMB** | 4 |
+| 300ETF | 58% (45/78) | **+15,017 RMB** | **1.29** | **-2,773 RMB** | 8 (+$5,013 RMB or +50% P&L improvement vs old dynamic baseline) |
+| 500ETF | 42% (19/45) | **+13,539 RMB** | **1.91** | **0.00 RMB** | 1 (Sharpe 1.91, zero drawdown!) |
+| 50ETF | 32% (44/136) | **+6,945 RMB** | **0.55** | **-2,676 RMB** | 12 (+$2,062 RMB or +42% P&L improvement vs old dynamic baseline) |
 
 ### With-Put Mode (NO_PUT_MODE = False, SKIP_OTM4 = False)
 | ETF | Win Rate | Baseline P&L | Optimized P&L | Optimized Filter Condition |
