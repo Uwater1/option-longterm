@@ -141,8 +141,8 @@ def _compute_leg_pnls(sub_df, pass_offsets, fail_offsets, ret_col, is_short):
                     otm_indices.append(i)
             selected = []
             for off in offsets:
-                if off < len(otm_indices):
-                    selected.append(otm_indices[off])
+                if off - 1 < len(otm_indices):
+                    selected.append(otm_indices[off - 1])
         else:
             itm_indices = []
             for i in range(start, end):
