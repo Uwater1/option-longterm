@@ -269,7 +269,7 @@ Cycle  2026-05-28 → 2026-06-24   IV=21.0% (IVR=0.44)  calls=OTM2+OTM3 puts=Non
                                         CYCLE TOTAL   2574.99
 
 ======================================================================
-  SUMMARY  [FILTERED (RSI+BBU)]
+  SUMMARY  [FILTERED]
 ======================================================================
   Cycles traded          : 45
   Winning cycles         : 19/45  (42%)
