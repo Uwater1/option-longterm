@@ -555,6 +555,7 @@ def calc_cycle_pnl(cyc, opt, etf, daily_ivs):
     vol20 = etf.loc[idx, "vol20"]
     vol20_median = etf.loc[idx, "vol20_median"]
     macd_hist = etf.loc[idx, "macd_hist"]
+    roc20 = etf.loc[idx, "roc20"]
     etf_close_entry = float(etf.loc[idx, "close"])
 
     filter_would_pass = False
@@ -600,13 +601,14 @@ def calc_cycle_pnl(cyc, opt, etf, daily_ivs):
         #   300ETF: 30 < RSI < 60  -> Combo A (OTM2+OTM3), else -> Combo B (OTM4)
         #   50ETF:  RSI > 30       -> Combo A, else -> Combo B
         #   500ETF: RSI>35 + Close<BBU + Close>SMA50 -> Combo A, else -> Combo B
+        # Add roc20 caution filters for vertical rallies (roc20 < threshold):
         if etf_choice == "50":
-            signal_strong = pd.notna(rsi) and rsi > 30
+            signal_strong = pd.notna(rsi) and rsi > 30 and (pd.isna(roc20) or roc20 < 3.0)
         elif etf_choice == "500":
             signal_strong = (pd.notna(rsi) and pd.notna(bbu) and pd.notna(sma50)
                              and rsi > 35 and etf_close_entry < bbu and etf_close_entry > sma50)
         else:  # 300ETF
-            signal_strong = pd.notna(rsi) and 30 < rsi < 60
+            signal_strong = pd.notna(rsi) and 30 < rsi < 60 and (pd.isna(roc20) or roc20 < 4.0)
 
         if signal_strong:
             call_offsets = [2, 3]  # Combo A (Aggressive)
