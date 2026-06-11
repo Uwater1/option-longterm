@@ -172,16 +172,7 @@ def load_data():
     macd = ta.macd(etf["close"])
     etf["macd_hist"] = macd.iloc[:, 1] if macd is not None else np.nan
 
-    # Calculate 30d calendar forward return points for dynamic alpha strike selection
-    dates = etf.index.values
-    closes = etf["close"].values
-    fwd_pt = np.full(len(etf), np.nan)
-    for i, dt in enumerate(dates):
-        target_dt = dt + np.timedelta64(30, 'D')
-        idx = np.searchsorted(dates, target_dt)
-        if idx < len(dates):
-            fwd_pt[i] = closes[idx] - closes[i]
-    etf["30d_fwd_pt"] = fwd_pt
+    # 30d_fwd_pt no longer needed — dynamic alpha now uses indicator-based signals
 
     return inst, opt, etf
 
@@ -601,49 +592,37 @@ def calc_cycle_pnl(cyc, opt, etf, daily_ivs):
 
     # 3. Constant Sizing
     num_contracts = NUM_CONTRACTS
-        
-    # Call Selection Driven by Filter
-    if filter_passed:
-        if DYNAMIC_ALPHA_MODE:
-            # Ensure no look-ahead bias by only using moves that completed on or before entry date
-            valid_moves = etf[etf.index + pd.Timedelta(days=30) <= entry]["30d_fwd_pt"].dropna()
-            if ETF_NAME == "50ETF":
-                unit = 0.05
-            elif ETF_NAME == "500ETF":
-                unit = 0.06
-            else: # 300ETF
-                unit = 0.03
 
-            if len(valid_moves) > 0:
-                prob_up = (valid_moves > unit).mean()
-            else:
-                prob_up = 0.5
-            
-            # Determine OTM offsets dynamically based on prob_up
-            if ETF_NAME == "300ETF":
-                if prob_up < 0.25:
-                    call_offsets = [3, 3]
-                elif prob_up <= 0.40:
-                    call_offsets = [3, 4]
-                else:
-                    call_offsets = [4, 4]
-            elif ETF_NAME == "50ETF":
-                if prob_up < 0.30:
-                    call_offsets = [1, 2]
-                elif prob_up <= 0.40:
-                    call_offsets = [2, 3]
-                else:
-                    call_offsets = [3, 3]
-            else:  # 500ETF
-                if prob_up < 0.20:
-                    call_offsets = [1, 2]
-                elif prob_up <= 0.30:
-                    call_offsets = [2, 3]
-                else:
-                    call_offsets = [3, 3]
+    # Call Selection
+    if DYNAMIC_ALPHA_MODE:
+        # Dynamic Alpha: signal-based OTM switching (always trade)
+        # Best signals from research_synthetic_otm.py combo analysis:
+        #   300ETF: 30 < RSI < 60  -> Combo A (OTM2+OTM3), else -> Combo B (OTM4)
+        #   50ETF:  RSI > 30       -> Combo A, else -> Combo B
+        #   500ETF: RSI>35 + Close<BBU + Close>SMA50 -> Combo A, else -> Combo B
+        if etf_choice == "50":
+            signal_strong = pd.notna(rsi) and rsi > 30
+        elif etf_choice == "500":
+            signal_strong = (pd.notna(rsi) and pd.notna(bbu) and pd.notna(sma50)
+                             and rsi > 35 and etf_close_entry < bbu and etf_close_entry > sma50)
+        else:  # 300ETF
+            signal_strong = pd.notna(rsi) and 30 < rsi < 60
+
+        if signal_strong:
+            call_offsets = [2, 3]  # Combo A (Aggressive)
         else:
-            call_offsets = [2, 3]
+            call_offsets = [4]     # Combo B (Conservative)
 
+        call_legs = get_otm_strikes(opt, etf, entry, expiry, "C", call_offsets)
+        legs_to_process = []
+        for i, off in enumerate(call_offsets):
+            if i < len(call_legs) and call_legs[i] is not None:
+                tag = "A" if signal_strong else "B"
+                legs_to_process.append((call_legs[i], "sell", f"Call OTM{off} (Dyn-{tag})"))
+        # In dynamic mode, override filter_passed to True (always trade)
+        filter_passed = True
+    elif filter_passed:
+        call_offsets = [2, 3]
         call_legs = get_otm_strikes(opt, etf, entry, expiry, "C", call_offsets)
         legs_to_process = []
         if len(call_offsets) > 0 and call_legs[0] is not None:
