@@ -209,6 +209,24 @@ def main():
         ([1, 2], [2, 3], [3, 3]), # Very aggressive
     ]
 
+    # ── Precompute no-filter baseline (OTM2+3, trade every group) ──────────
+    # Used for filter_lift: how much value the filter adds vs always trading.
+    # This depends only on offset combo, not on unit/t1/t2, so precompute once.
+    pnls_nofilter_by_combo = np.zeros((len(offset_combos), n_groups))
+    for combo_idx, (O1, O2, O3) in enumerate(offset_combos):
+        o_base = [o - 1 for o in O1]  # Use low-regime offsets as no-filter baseline
+        for g in range(n_groups):
+            date_pnl = 0.0
+            for off in o_base:
+                if 0 <= off < 6:
+                    prc = otm_prices[g, off]
+                    ret = otm_rets[g, off]
+                    if not np.isnan(prc) and not np.isnan(ret):
+                        exec_p = prc * (1.0 - SLIPPAGE)
+                        pnl = ret * exec_p * MULTIPLIER - COMMISSION
+                        date_pnl += pnl
+            pnls_nofilter_by_combo[combo_idx, g] = date_pnl
+
     best_sharpe = -float('inf')
     best_params = None
     all_runs = []
@@ -235,10 +253,13 @@ def main():
                     o3_idx = [o - 1 for o in O3]
                     
                     pnls = np.zeros(n_groups)
+                    n_placed = 0
+                    sum_pnl_placed_filtered = 0.0
+                    sum_pnl_placed_nofilter = 0.0
+
+                    pnls_nf = pnls_nofilter_by_combo[combo_idx]
+
                     for g in range(n_groups):
-                        if not filter_passed_group[g]:
-                            continue
-                        
                         prob = prob_ups_group[g]
                         if prob < t1:
                             offsets = o1_idx
@@ -247,16 +268,32 @@ def main():
                         else:
                             offsets = o3_idx
                         
-                        date_pnl = 0.0
-                        for off in offsets:
-                            if 0 <= off < 6:
-                                prc = otm_prices[g, off]
-                                ret = otm_rets[g, off]
-                                if not np.isnan(prc) and not np.isnan(ret):
-                                    exec_p = prc * (1.0 - SLIPPAGE)
-                                    pnl = ret * exec_p * MULTIPLIER - COMMISSION
-                                    date_pnl += pnl
-                        pnls[g] = date_pnl
+                        if filter_passed_group[g]:
+                            n_placed += 1
+                            date_pnl = 0.0
+                            for off in offsets:
+                                if 0 <= off < 6:
+                                    prc = otm_prices[g, off]
+                                    ret = otm_rets[g, off]
+                                    if not np.isnan(prc) and not np.isnan(ret):
+                                        exec_p = prc * (1.0 - SLIPPAGE)
+                                        pnl = ret * exec_p * MULTIPLIER - COMMISSION
+                                        date_pnl += pnl
+                            pnls[g] = date_pnl
+                            sum_pnl_placed_filtered += date_pnl
+                            sum_pnl_placed_nofilter += pnls_nf[g]
+                        # else: pnls[g] stays 0 (filter blocked, no trade)
+
+                    # Filter lift: avg P&L per placed cycle (filtered) minus
+                    # avg P&L per cycle if always trading (no-filter baseline)
+                    placement_rate = n_placed / n_groups if n_groups > 0 else 0.0
+                    if n_placed > 0:
+                        avg_pnl_placed_filtered = sum_pnl_placed_filtered / n_placed
+                        avg_pnf = pnls_nf.mean()
+                        filter_lift = avg_pnl_placed_filtered - avg_pnf
+                    else:
+                        avg_pnl_placed_filtered = 0.0
+                        filter_lift = 0.0
 
                     rm = calc_risk_metrics(pnls)
                     if not rm:
@@ -269,7 +306,10 @@ def main():
                         "O1": O1,
                         "O2": O2,
                         "O3": O3,
-                        "combo_idx": combo_idx
+                        "combo_idx": combo_idx,
+                        "placement_rate": placement_rate,
+                        "filter_lift": filter_lift,
+                        "n_placed": n_placed,
                     })
                     all_runs.append(rm)
 
@@ -293,15 +333,18 @@ def main():
     runs_df["norm_sharpe"] = norm("sharpe", True)
     runs_df["norm_max_dd"] = norm("max_dd", False)
     runs_df["norm_win_rate"] = norm("win_rate", True)
-    runs_df["norm_worst_loss"] = norm("worst_loss", False)
+    runs_df["norm_placement_rate"] = norm("placement_rate", True)
+    runs_df["norm_filter_lift"] = norm("filter_lift", True)
 
-    # Score: 30% Sharpe, 20% Total, 25% MaxDD, 15% Win Rate, 10% Worst Loss
+    # 6-component composite score:
+    # 20% Sharpe, 15% Total, 15% MaxDD, 15% WinRate, 15% PlacementRate, 20% FilterLift
     runs_df["Score"] = (
-        0.30 * runs_df["norm_sharpe"] +
-        0.20 * runs_df["norm_total"] +
-        0.25 * runs_df["norm_max_dd"] +
+        0.20 * runs_df["norm_sharpe"] +
+        0.15 * runs_df["norm_total"] +
+        0.15 * runs_df["norm_max_dd"] +
         0.15 * runs_df["norm_win_rate"] +
-        0.10 * runs_df["norm_worst_loss"]
+        0.15 * runs_df["norm_placement_rate"] +
+        0.20 * runs_df["norm_filter_lift"]
     )
 
     runs_df = runs_df.sort_values("Score", ascending=False).reset_index(drop=True)
@@ -315,6 +358,7 @@ def main():
         print(f"  - Unit={row['unit']:.3f}, T1={row['t1']:.2f}, T2={row['t2']:.2f}")
         print(f"  - Offsets: <T1: {row['O1']}, <=T2: {row['O2']}, >T2: {row['O3']}")
         print(f"  - Performance: P&L={row['total']:.2f} RMB, Sharpe={row['sharpe']:.3f}, MaxDD={row['max_dd']:.2f} RMB, WinRate={row['win_rate']:.1%}")
+        print(f"  - Placement: {row['placement_rate']:.1%} ({int(row['n_placed'])}/{n_groups}), FilterLift={row['filter_lift']:.2f} RMB/cycle")
     print("="*80)
 
     # Print baseline (combo_idx=0, unit=0.05 for 300, 0.03 for 50, 0.08 for 500)
@@ -334,6 +378,7 @@ def main():
         print(f"  - Unit={base_row['unit']:.3f}, T1={base_row['t1']:.2f}, T2={base_row['t2']:.2f}")
         print(f"  - Offsets: <T1: {base_row['O1']}, <=T2: {base_row['O2']}, >T2: {base_row['O3']}")
         print(f"  - Performance: P&L={base_row['total']:.2f} RMB, Sharpe={base_row['sharpe']:.3f}, MaxDD={base_row['max_dd']:.2f} RMB, WinRate={base_row['win_rate']:.1%}")
+        print(f"  - Placement: {base_row['placement_rate']:.1%} ({int(base_row['n_placed'])}/{n_groups}), FilterLift={base_row['filter_lift']:.2f} RMB/cycle")
     
     # Save top run to file for report
     runs_df.to_csv(f"optimization_alpha_{args.etf}ETF_synthetic.csv", index=False)

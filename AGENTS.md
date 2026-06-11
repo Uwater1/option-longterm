@@ -12,6 +12,8 @@ python research_otm_levels.py -e 300        # OTM level analysis with filters
 python research_synthetic_otm.py -e 300     # OTM analysis on synthetic data
 python alpha_finder.py                      # 30-day forward return distribution
 python research_otm_no_filter.py -e 300     # Baseline OTM without filters
+python optimize_alpha_synthetic.py -e 300   # Alpha param grid search on synthetic data (6-component composite score)
+python optimize_filters.py 300              # Filter grid search on real data (6-component composite score)
 python eval_synth_filters.py -e 500        # Enhanced synthetic filter eval (63 filters, risk metrics, bootstrap CI, significance, multi-criteria scoring)
 python eval_synth_combinations.py -e 300   # Filter combo search on synthetic data
 python evaluate_combinations.py -e 300     # Filter combo search on real data
@@ -41,6 +43,8 @@ research_synthetic_no_filter.py # Synthetic baseline (no filter)
 evaluate_combinations.py       # Filter combination search (on real data)
 eval_synth_combinations.py     # Filter combination search (on synthetic data)
 eval_synth_filters.py          # Individual filter evaluation (on synthetic data)
+optimize_alpha_synthetic.py    # Alpha parameter grid search (synthetic data, 6-component composite scoring)
+optimize_filters.py            # Filter condition grid search (real data, 6-component composite scoring)
 diagnose_500etf.py              # 500ETF diagnostic: 10 variants, loss analysis, filter diff
 research_robustness.py          # Data completeness, bootstrap CI, LOOCV, regime comparison
 
@@ -68,6 +72,8 @@ README.md                      # English README (links to Chinese docs)
 **Spread model** (`spread.py`): LightGBM predicts `log(1+spread)` from midprice, IV, OTM depth, DTE, moneyness.
 
 **Synthetic options:** Generated via `numba_utils.process_synthetic_strikes_loop()` — interpolates IV between two expiries to create constant-maturity synthetic contracts.
+
+**Optimization scoring (v2, Jun 2026):** Both `optimize_alpha_synthetic.py` and `optimize_filters.py` use a 6-component normalized composite score: Sharpe (20%), Total P&L (15%), MaxDD (15%), WinRate (15%), PlacementRate (15%), FilterLift (20%). FilterLift = avg P&L on filter-placed cycles minus avg P&L if always trading — measures whether the filter genuinely adds alpha vs cherry-picking. PlacementRate penalizes overly restrictive filters. `backtest_covered_call.py` aggregate summary now reports placement rate and filter lift for every run.
 
 ## Backtest Audit (Jun 2026)
 
@@ -165,6 +171,7 @@ README.md                      # English README (links to Chinese docs)
 - [x] Audit backtest for look-ahead bias and pricing correctness (Jun 2026) → strike/mult bug fixed
 - [x] Grid search and optimize option selling filters for 50/300/500 ETF (Jun 2026) → `optimize_filters.py`
 - [x] Test and implement mode-specific optimal filters (calls-only vs with-put) in `backtest_covered_call.py` (Jun 2026)
+- [x] Upgrade optimization scoring to 6-component composite (Sharpe/Total/MaxDD/WinRate/PlacementRate/FilterLift) in `optimize_alpha_synthetic.py` and `optimize_filters.py` (Jun 2026)
 - [ ] Test early roll management for 500ETF — roll calls to higher strikes if underlying rallies >5% mid-cycle
 - [ ] Explore weekly options for 500ETF if available — shorter DTE reduces rally exposure
 - [ ] Revisit conclusions when 500ETF reaches 80+ cycles (~2029)

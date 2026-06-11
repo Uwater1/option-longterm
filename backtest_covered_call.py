@@ -782,6 +782,18 @@ def run_backtest(opt, etf):
     win_rate   = sum(1 for n in nets if n > 0) / len(nets) if nets else 0
     avg_prem   = np.mean(premiums) if premiums else 0
 
+    # ── Placement rate & filter lift metrics ──────────────────────────────
+    n_cycles_total = len(results)
+    n_placed = sum(1 for r in results if r["filter_would_pass"])
+    placement_rate = n_placed / n_cycles_total if n_cycles_total > 0 else 0.0
+
+    # Filter lift: avg P&L per placed cycle minus avg P&L per total cycle
+    # (positive = filter adds value by blocking losing cycles)
+    placed_pnls = [r["total_net_rmb"] for r in results if r["filter_would_pass"]]
+    avg_pnl_placed = np.mean(placed_pnls) if placed_pnls else 0.0
+    avg_pnl_all = np.mean(nets) if nets else 0.0
+    filter_lift = avg_pnl_placed - avg_pnl_all
+
     print("\n" + "=" * 70)
     if DYNAMIC_ALPHA_MODE:
         mode_label_sum = "DYNAMIC ALPHA"
@@ -795,6 +807,12 @@ def run_backtest(opt, etf):
     print(f"  Avg gross premium/cyc  : {avg_prem:>8.2f} RMB")
     print(f"  Total net P&L          : {total_net:>8.2f} RMB")
     print(f"  Cumulative by cycle    : {[f'{v:.0f}' for v in cumulative]}")
+    print(f"  ── Placement & Filter Lift ─────────────────────────────────────")
+    print(f"  Placement rate         : {placement_rate:.1%}  ({n_placed}/{n_cycles_total} cycles)")
+    print(f"  Avg P&L / placed cycle : {avg_pnl_placed:>+8.2f} RMB")
+    print(f"  Avg P&L / all cycles   : {avg_pnl_all:>+8.2f} RMB")
+    print(f"  Filter lift            : {filter_lift:>+8.2f} RMB/cycle")
+    print(f"  ─────────────────────────────────────────────────────────────")
 
     # ── No-Filter: Blocked cycle analysis ─────────────────────────────────────────
     if NO_FILTER_MODE:
