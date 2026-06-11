@@ -451,6 +451,8 @@ def calc_leg_pnl(leg, opt, etf, expiry_date, side, is_buyer_at_expiry):
     entry_mid  = float(leg["close"])
     otype      = leg["option_type"]   # 'C' or 'P'
     contract   = str(leg.get("order_book_id", ""))
+    if contract.endswith(".0"):
+        contract = contract[:-2]
 
     # Execution price with spread
     if side == "sell":
