@@ -450,6 +450,7 @@ def calc_leg_pnl(leg, opt, etf, expiry_date, side, is_buyer_at_expiry):
     mult       = float(leg["contract_multiplier"])
     entry_mid  = float(leg["close"])
     otype      = leg["option_type"]   # 'C' or 'P'
+    contract   = str(leg.get("order_book_id", ""))
 
     # Execution price with spread
     if side == "sell":
@@ -509,6 +510,7 @@ def calc_leg_pnl(leg, opt, etf, expiry_date, side, is_buyer_at_expiry):
         "K":                  K,
         "mult":               mult,
         "otype":              otype,
+        "contract":           contract,
         "side":               side,
         "premium_rmb":        premium_rmb,
         "exercise_pnl_rmb":   exercise_pnl_rmb,
@@ -716,6 +718,7 @@ def save_csv(results, csv_path):
         }
         for leg in r["legs"]:
             label_clean = leg["label"].replace(" ", "_")
+            row[f"{label_clean}_contract"] = leg.get("contract", "")
             row[f"{label_clean}_K"] = round(leg["K"], 4)
             row[f"{label_clean}_side"] = leg["side"]
             row[f"{label_clean}_exec_px"] = round(leg["exec_px"], 4)
