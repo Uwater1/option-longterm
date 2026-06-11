@@ -8,8 +8,9 @@ Enhanced income strategy for Chinese ETFs: Covered Call + Bull Put Spread on 50E
 source venv/bin/activate                    # Activate Python env (uses system miniconda for rqdatac)
 python3 update_data.py                      # Refresh parquet data from rqdatac
 python backtest_covered_call.py [50|300|500]  # Run backtest (generates logs and charts under backtest/)
+python backtest_covered_call.py --alpha 300  # Run backtest with dynamic alpha mode (indicator-based OTM switching)
 python research_otm_levels.py -e 300        # OTM level analysis with filters
-python research_synthetic_otm.py -e 300     # OTM analysis on synthetic data
+python research_synthetic_otm.py -e 300     # OTM analysis + combo alpha + dynamic signal search on synthetic data
 python alpha_finder.py                      # 30-day forward return distribution
 python research_otm_no_filter.py -e 300     # Baseline OTM without filters
 python optimize_alpha_synthetic.py -e 300   # Alpha param grid search on synthetic data (6-component composite score)
@@ -31,14 +32,15 @@ data/                          # Local Parquet database (rqdatac source)
 ├── {ETF}_1d.parquet           # Underlying ETF daily prices
 └── 30d_iv_cache_{N}.parquet   # Pre-computed 30-day interpolated ATM IV (auto-deleted on update)
 
-backtest_covered_call.py       # Main backtest engine (CC + Put, IVR-driven, RSI+BB filter)
+backtest_covered_call.py       # Main backtest engine (CC + Put, IVR-driven, RSI+BB filter, --alpha dynamic mode)
 alpha_finder.py                # Historical 30-day return distribution → strike selection
+alpha.md                       # Dynamic alpha strategy research report (v2 indicator-based)
 spread.py                      # LightGBM bid-ask spread prediction model
 numba_utils.py                 # Numba-compiled BS pricing, IV solver, synthetic metrics
 
 research_otm_levels.py         # OTM level analysis (with RSI<66 + BB filter)
 research_otm_no_filter.py      # OTM baseline (no filter)
-research_synthetic_otm.py      # Synthetic option OTM analysis (numba-accelerated)
+research_synthetic_otm.py      # Synthetic OTM analysis + combo alpha (OTM2+3 vs OTM4) + 24-signal dynamic search
 research_synthetic_no_filter.py # Synthetic baseline (no filter)
 evaluate_combinations.py       # Filter combination search (on real data)
 eval_synth_combinations.py     # Filter combination search (on synthetic data)
@@ -68,6 +70,10 @@ README.md                      # English README (links to Chinese docs)
 - 500ETF exception: RSI < 70 (looser filter, 500ETF vol profile suits wider threshold)
 - Long Put at Level 1 (closest OTM) as protective hedge
 - Spread: ±2% from mid, commission 2 RMB/leg
+- **Dynamic Alpha Mode** (`--alpha`): Indicator-based combo switching — strong signal → Combo A (OTM2+OTM3), weak signal → Combo B (OTM4). Signals per ETF (from `research_synthetic_otm.py`):
+  - 300ETF: `30 < RSI < 60`
+  - 50ETF: `RSI > 30`
+  - 500ETF: `RSI > 35 AND Close < BBU AND Close > SMA50`
 
 **Spread model** (`spread.py`): LightGBM predicts `log(1+spread)` from midprice, IV, OTM depth, DTE, moneyness.
 
@@ -174,6 +180,7 @@ README.md                      # English README (links to Chinese docs)
 - [x] Grid search and optimize option selling filters for 50/300/500 ETF (Jun 2026) → `optimize_filters.py`
 - [x] Test and implement mode-specific optimal filters (calls-only vs with-put) in `backtest_covered_call.py` (Jun 2026)
 - [x] Upgrade optimization scoring to 6-component composite (Sharpe/Total/MaxDD/WinRate/PlacementRate/FilterLift) in `optimize_alpha_synthetic.py` and `optimize_filters.py` (Jun 2026)
+- [x] Implement indicator-based dynamic alpha mode in `backtest_covered_call.py` — combo switching (OTM2+3 vs OTM4) based on RSI/BBU/SMA signals from synthetic research (Jun 2026)
 - [ ] Test early roll management for 500ETF — roll calls to higher strikes if underlying rallies >5% mid-cycle
 - [ ] Explore weekly options for 500ETF if available — shorter DTE reduces rally exposure
 - [ ] Revisit conclusions when 500ETF reaches 80+ cycles (~2029)
