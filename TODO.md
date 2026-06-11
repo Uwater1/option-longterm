@@ -48,5 +48,7 @@ Enter using limit orders:
 
 ## TODO
 [x] Download option datas (we will use real data only for now, 5 minutes, only 1 month from expirey) and ETF data
-[ ] For each Thursday, in 5 minutes interval, we want to predict the max of (Thursday High, Friday High), and we also want to have 90%+ confidence that we can enter, and the ask price of this option price should be lower than Thursday open price * 0.98
-[ ] 2 ways to do so: perdict the high of ETF or perdict the high of options
+[x] Research daily relationship between Open and High (Distribution plots, 90% success/fill rate)
+[ ] For each Thursday, in 5 minutes interval, predict the max of (Thursday High, Friday High) to achieve 90%+ entry confidence where option ask price <= Thursday open * 0.98
+[ ] Compare two predictive approaches: ETF High prediction vs Option High prediction
+

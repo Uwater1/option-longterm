@@ -21,7 +21,9 @@ python eval_synth_combinations.py -e 300   # Filter combo search on synthetic da
 python evaluate_combinations.py -e 300     # Filter combo search on real data
 python diagnose_500etf.py -e 500           # 500ETF multi-variant diagnostic (10 variants)
 python research_robustness.py -e 500       # Data completeness & robustness analysis (bootstrap, LOOCV)
+python research_open_high.py               # Analyze daily Open-to-High price difference distributions and percentiles
 ```
+
 
 ## Project Structure
 
@@ -52,7 +54,9 @@ optimize_alpha_synthetic.py    # Alpha parameter grid search (synthetic data, 6-
 optimize_filters.py            # Filter condition grid search (real data, 6-component composite scoring)
 diagnose_500etf.py              # 500ETF diagnostic: 10 variants, loss analysis, filter diff
 research_robustness.py          # Data completeness, bootstrap CI, LOOCV, regime comparison
+research_open_high.py           # Analyze daily Open-to-High price difference distributions
 
+INSTRUCTION.md                 # instruction for data API usage
 update_data.py                 # Data refresh script (uses rqdatac from system Python)
 download_5m_data.py            # Download 5m ETF & option historical data for active cycles
 备兑期权.md                     # Chinese README (full project docs)
