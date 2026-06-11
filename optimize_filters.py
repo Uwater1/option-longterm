@@ -112,7 +112,19 @@ def run_optimization(etf_choice, no_put_mode, skip_otm4):
     otm3_pnl = df_legs["OTM3"].values
     otm4_pnl = df_legs["OTM4"].values
     put_pnl = df_legs["Put1"].values
-    
+
+    # ── No-filter baseline: always trade, P&L per cycle ────────────────────
+    # Used to compute filter_lift (how much value the filter adds per cycle)
+    if no_put_mode and skip_otm4:
+        nofilter_cycle_pnls = otm2_pnl + otm3_pnl
+    elif no_put_mode and not skip_otm4:
+        nofilter_cycle_pnls = otm2_pnl + otm3_pnl
+    elif not no_put_mode and skip_otm4:
+        nofilter_cycle_pnls = otm2_pnl + otm3_pnl + put_pnl
+    else:
+        nofilter_cycle_pnls = otm2_pnl + otm3_pnl + put_pnl
+    avg_nofilter_pnl = nofilter_cycle_pnls.mean()
+
     for rsi_thresh in rsi_thresholds:
         for rsi_low in rsi_lows:
             for bb_offset in bb_offsets:
@@ -163,7 +175,9 @@ def run_optimization(etf_choice, no_put_mode, skip_otm4):
                                     cycle_pnls = np.where(filter_passed_arr, otm2_pnl + otm3_pnl + put_pnl, otm4_pnl + put_pnl)
                                 
                                 total_pnl = cycle_pnls.sum()
-                                win_rate = np.mean(cycle_pnls > 0)
+                                n_cycles = len(cycle_pnls)
+                                n_placed = int(filter_passed_arr.sum())
+                                win_rate = np.mean(cycle_pnls > 0) if n_cycles > 0 else 0.0
                                 std_pnl = cycle_pnls.std()
                                 mean_pnl = cycle_pnls.mean()
                                 sharpe = (mean_pnl / std_pnl * np.sqrt(12)) if std_pnl > 0 else 0.0
@@ -171,14 +185,20 @@ def run_optimization(etf_choice, no_put_mode, skip_otm4):
                                 cum_pnl = np.cumsum(cycle_pnls)
                                 max_dd = (cum_pnl - np.maximum.accumulate(cum_pnl)).min()
                                 
-                                placement_rate = np.mean(filter_passed_arr)
+                                placement_rate = n_placed / n_cycles if n_cycles > 0 else 0.0
+
+                                # Filter lift: avg P&L on placed cycles minus avg P&L if always trading
+                                if n_placed > 0:
+                                    avg_pnl_placed = cycle_pnls[filter_passed_arr].mean()
+                                else:
+                                    avg_pnl_placed = 0.0
+                                filter_lift = avg_pnl_placed - avg_nofilter_pnl
                                 
                                 # Ignore overly restrictive filters
                                 if placement_rate < 0.30:
                                     continue
                                 
-                                score = sharpe * 1000 + total_pnl / 100
-                                
+                                # Store raw metrics; scoring happens after loop via normalization
                                 results.append({
                                     "rsi_thresh": rsi_thresh,
                                     "rsi_low": rsi_low,
@@ -188,14 +208,40 @@ def run_optimization(etf_choice, no_put_mode, skip_otm4):
                                     "vol_regime": vol_regime,
                                     "macd_hist_check": macd_hist_check,
                                     "placement_rate": placement_rate,
+                                    "n_placed": n_placed,
                                     "total_pnl": total_pnl,
                                     "win_rate": win_rate,
                                     "sharpe": sharpe,
                                     "max_dd": max_dd,
-                                    "score": score
+                                    "filter_lift": filter_lift,
                                 })
                                 
     df_res = pd.DataFrame(results)
+    if df_res.empty:
+        print("No valid filter combinations found.")
+        return df_res
+
+    # ── Multi-criteria composite scoring (normalized) ───────────────────
+    def norm(col, higher_better=True):
+        val = df_res[col].values.astype(float)
+        vmin, vmax = val.min(), val.max()
+        if vmax == vmin:
+            return np.zeros_like(val)
+        if higher_better:
+            return (val - vmin) / (vmax - vmin)
+        else:
+            return (vmax - val) / (vmax - vmin)
+
+    # 6-component composite: Sharpe 20%, Total 15%, MaxDD 15%, WinRate 15%, PlacementRate 15%, FilterLift 20%
+    df_res["score"] = (
+        0.20 * norm("sharpe", True) +
+        0.15 * norm("total_pnl", True) +
+        0.15 * norm("max_dd", False) +
+        0.15 * norm("win_rate", True) +
+        0.15 * norm("placement_rate", True) +
+        0.20 * norm("filter_lift", True)
+    )
+
     df_res = df_res.sort_values(by="score", ascending=False).reset_index(drop=True)
     return df_res
 
@@ -213,8 +259,11 @@ if __name__ == "__main__":
     print(f"Running optimization for {choice}ETF: with_put={with_put}, skip_otm4={skip_otm4}")
     df_res = run_optimization(choice, no_put_mode, skip_otm4)
     
-    print("\nTop 10 Filters by Score (Sharpe*1000 + P&L/100):")
-    print(df_res.head(10).to_string())
+    print("\nTop 10 Filters by Composite Score (20% Sharpe, 15% Total, 15% MaxDD, 15% WinRate, 15% Placement, 20% FilterLift):")
+    display_cols = ["rsi_thresh", "rsi_low", "bb_offset", "trend_sma50", "roc10_thresh",
+                    "vol_regime", "macd_hist_check", "placement_rate", "n_placed",
+                    "total_pnl", "win_rate", "sharpe", "max_dd", "filter_lift", "score"]
+    print(df_res[display_cols].head(10).to_string())
     
     # Save top 5 to csv/txt
     out_name = f"optimization_{choice}ETF_{'withput' if with_put else 'calls_only'}.csv"

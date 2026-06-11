@@ -99,8 +99,58 @@ Validating these robust, synthetic-optimized parameters on real historical ETF o
 
 ---
 
+## Multi-Criteria Composite Scoring (v2 Optimization)
+
+The previous optimization approach weighted the score heavily toward Sharpe and Total P&L, and completely ignored **order placement rate** (how often the alpha system actually places trades) and **filter lift** (how much value the filter adds vs always trading). This led to configurations that could achieve high P&L by being extremely selective (trading only 31% of cycles) while ignoring the opportunity cost of blocked cycles.
+
+### New 6-Component Composite Score
+
+Both `optimize_alpha_synthetic.py` and `optimize_filters.py` now use a unified 6-component normalized composite score:
+
+| Component | Weight | Metric | Interpretation |
+|-----------|--------|--------|----------------|
+| Sharpe | 20% | Annualized risk-adjusted return | Higher = better risk/reward |
+| Total P&L | 15% | Absolute cumulative gain | Higher = more income |
+| Max Drawdown | 15% | Deepest equity trough | Shallower = safer |
+| Win Rate | 15% | % of profitable cycles | Higher = more consistent |
+| Placement Rate | 15% | % of cycles where orders are placed | Higher = more income opportunities |
+| Filter Lift | 20% | `avg_pnl_placed - avg_pnl_nofilter` | Higher = filter truly adds alpha |
+
+**Normalization:** Each metric is min-max normalized across all parameter candidates (0–1 scale), then weighted and summed.
+
+### Key New Metrics Explained
+
+**Placement Rate** (`placement_rate`): The fraction of available trade cycles in which the filter allows a trade. A filter that only trades 35% of cycles has low placement rate and scores poorly, even if those 35% of trades are profitable. This penalizes overly restrictive filters that sacrifice income opportunities.
+
+**Filter Lift** (`filter_lift`): The average per-cycle P&L improvement the filter provides vs a no-filter baseline (always trading OTM2+OTM3):
+$$\text{filter\_lift} = \frac{\sum \text{P&L}_{\text{placed cycles (filtered)}}}{N_{\text{placed}}} - \frac{\sum \text{P&L}_{\text{all cycles (no-filter baseline)}}}{N_{\text{total}}}$$
+
+A positive filter lift means the filter correctly identifies higher-quality trading opportunities. A negative lift means the filter is blocking profitable cycles on average.
+
+**Backtest reporting:** `backtest_covered_call.py` now also reports placement rate and filter lift in the aggregate summary for every run, allowing direct comparison between filtered, no-filter, and alpha modes.
+
+### Optimization Changes by File
+
+**`optimize_alpha_synthetic.py`:**
+- Precomputes a no-filter baseline P&L array per offset combo (trades every group)
+- Tracks `n_placed` and per-group filtered P&L during simulation
+- Computes `filter_lift` as the placed-cycle avg minus nofilter avg
+- Reports placement rate and filter lift alongside top-5 results
+
+**`optimize_filters.py`:**
+- Computes nofilter baseline per cycle (always trade OTM2+OTM3, with/without put)
+- Computes `filter_lift` per filter combination
+- Scoring moved from `sharpe * 1000 + total_pnl / 100` to the normalized 6-component composite
+- Output table now shows `placement_rate`, `n_placed`, `filter_lift`, and `score`
+
+**`backtest_covered_call.py`:**
+- Aggregate summary now includes: placement rate, avg P&L per placed cycle, avg P&L per all cycles, and filter lift
+
+---
+
 ## Key Conclusions
 
 1. **Large-Sample Synthetic Validation Protects Against Overfitting**: Relying only on 45–78 real option cycles risks selecting parameters that are noise-dominated. Optimizing on 1,223 daily overlapping synthetic option dates forces parameters to fit structural regime dynamics.
 2. **Dynamic Strike Selection Outperforms Static Selection**: By adapting to the underlying return distribution, the system generates up to **50% more P&L** than static covered calls while maintaining a high win rate.
 3. **Correcting Indexing and Look-Ahead Mismatches**: Fixing the 1-off indexing bug in the synthetic evaluator and removing the look-ahead window on the forward return ensures that the simulated returns are fully achievable in live trading.
+4. **Composite Scoring Prevents Overly Selective Filters**: The v2 6-component score (Sharpe, Total, MaxDD, WinRate, PlacementRate, FilterLift) penalizes configs that achieve good P&L by trading very rarely. Filter lift ensures the filter actually contributes alpha vs always trading, not just luck from cherry-picked cycles.
