@@ -550,3 +550,4 @@ Cycle  2026-05-28 → 2026-06-24   IV=13.7% (IVR=0.20)  calls=OTM2+OTM3 puts=Non
   ─────────────────────────────────────────────────────────────
 
   Chart saved → backtest/backtest_cc_300ETF_alpha.png
+  CSV  saved → backtest/backtest_cc_300ETF_alpha.csv
