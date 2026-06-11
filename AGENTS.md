@@ -7,6 +7,7 @@ Enhanced income strategy for Chinese ETFs: Covered Call + Bull Put Spread on 50E
 ```bash
 source venv/bin/activate                    # Activate Python env (uses system miniconda for rqdatac)
 python3 update_data.py                      # Refresh parquet data from rqdatac
+python3 download_5m_data.py                # Download 5m ETF & option historical data
 python backtest_covered_call.py [50|300|500]  # Run backtest (generates logs and charts under backtest/)
 python backtest_covered_call.py --alpha 300  # Run backtest with dynamic alpha mode (indicator-based OTM switching)
 python research_otm_levels.py -e 300        # OTM level analysis with filters
@@ -30,6 +31,8 @@ data/                          # Local Parquet database (rqdatac source)
 ├── {ETF}_instruments.parquet  # Option contract metadata (FINAL strike/mult after all adjustments)
 ├── {ETF}_historical_prices.parquet  # Option daily OHLC/OI (DAILY-CORRECT strike_price & contract_multiplier)
 ├── {ETF}_1d.parquet           # Underlying ETF daily prices
+├── {ETF}_5m.parquet           # Underlying ETF 5m prices (510300_5m.parquet for 300ETF)
+├── {ETF}_historical_prices_5m.parquet # Option 5m prices during 1 month before expiry
 └── 30d_iv_cache_{N}.parquet   # Pre-computed 30-day interpolated ATM IV (auto-deleted on update)
 
 backtest_covered_call.py       # Main backtest engine (CC + Put, IVR-driven, RSI+BB filter, --alpha dynamic mode)
@@ -51,6 +54,7 @@ diagnose_500etf.py              # 500ETF diagnostic: 10 variants, loss analysis,
 research_robustness.py          # Data completeness, bootstrap CI, LOOCV, regime comparison
 
 update_data.py                 # Data refresh script (uses rqdatac from system Python)
+download_5m_data.py            # Download 5m ETF & option historical data for active cycles
 备兑期权.md                     # Chinese README (full project docs)
 STRATEGY.md                    # Legacy strategy reference
 README.md                      # English README (links to Chinese docs)
@@ -125,7 +129,7 @@ README.md                      # English README (links to Chinese docs)
 
 ## Data Dependencies
 
-- **rqdatac** (system miniconda): `python3 update_data.py`
+- **rqdatac** (system miniconda): `python3 update_data.py` and `python3 download_5m_data.py`
 - IV caches auto-regenerate on first backtest run after deletion
 
 ## 500ETF Research Findings (Jun 2026)

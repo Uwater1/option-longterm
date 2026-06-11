@@ -35,7 +35,7 @@ It should be separated from main logic (extract into a dedicated function/module
 - Partial fills or slippage beyond the fixed ±2 % mid assumption.
 - Cash interest on margin / collateral.
 
-### Improvements:
+## Improvements:
 Enter using limit orders:
 
 ## Things we know:
@@ -43,5 +43,10 @@ Enter using limit orders:
 - Data beforehead
 
 ## Things we want to perdict:
-- low of min(Thursday Low, Friday Low), as we must enter within 2 days
+- max(Thursday High, Friday High), as we must enter within 2 days (as we are selling covered calls)
 - We want to have 90%+ confidence that we can enter
+
+## TODO
+[x] Download option datas (we will use real data only for now, 5 minutes, only 1 month from expirey) and ETF data
+[ ] For each Thursday, in 5 minutes interval, we want to predict the max of (Thursday High, Friday High), and we also want to have 90%+ confidence that we can enter, and the ask price of this option price should be lower than Thursday open price * 0.98
+[ ] 2 ways to do so: perdict the high of ETF or perdict the high of options
