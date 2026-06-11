@@ -154,6 +154,7 @@ def analyze_otm_levels(years=None):
     
     levels = [0, 1, 2, 3, 4, 5]
     results_data = []
+    cycle_log = []
 
     for option_type in ["C", "P"]:
         level_metrics = {level: {"wins": 0, "total_wins": 0, "pnls": [], "count": 0} for level in levels}
@@ -170,6 +171,7 @@ def analyze_otm_levels(years=None):
             if etf_expiry_dates.empty:
                 continue
             etf_settle = float(etf.loc[etf_expiry_dates[-1], "close"])
+            etf_entry = float(etf.loc[pd.Timestamp(entry).normalize(), "close"])
 
             legs = get_otm_strikes(opt, etf, entry, expiry, option_type, levels)
             
@@ -184,17 +186,26 @@ def analyze_otm_levels(years=None):
                 
                 intrinsic = 0.0
                 if option_type == "C":
-                    # Short Call (C): Receive premium, pay intrinsic
                     if etf_settle > K:
                         intrinsic = etf_settle - K
                     exec_px = entry_mid * (1 - SPREAD_HALF)
                     net_rmb = (exec_px - intrinsic) * mult - COMMISSION
                 else:
-                    # Long Put (P): Pay premium, receive intrinsic
                     if etf_settle < K:
                         intrinsic = K - etf_settle
                     exec_px = entry_mid * (1 + SPREAD_HALF)
                     net_rmb = (intrinsic - exec_px) * mult - COMMISSION
+
+                assigned = intrinsic > 0
+                note = ""
+                if option_type == "C":
+                    note = "assigned" if assigned else "expires_worthless"
+                    if assigned:
+                        note += f" ETF={etf_settle:.4f} K={K:.4f}"
+                else:
+                    note = "exercised" if assigned else "expires_worthless"
+                    if assigned:
+                        note += f" ETF={etf_settle:.4f} K={K:.4f}"
                 
                 level_metrics[level]["count"] += 1
                 level_metrics[level]["pnls"].append(net_rmb)
@@ -204,6 +215,23 @@ def analyze_otm_levels(years=None):
                     
                 if intrinsic == 0.0:
                     level_metrics[level]["total_wins"] += 1
+
+                cycle_log.append({
+                    "order_book_id": leg.get("order_book_id", ""),
+                    "sell_price": round(exec_px, 4),
+                    "option_type": "Short Call" if option_type == "C" else "Long Put",
+                    "entry_date": pd.Timestamp(entry).strftime("%Y-%m-%d"),
+                    "expiry_date": pd.Timestamp(expiry).strftime("%Y-%m-%d"),
+                    "otm_level": level,
+                    "strike": K,
+                    "mult": mult,
+                    "etf_entry": round(etf_entry, 4),
+                    "etf_settle": round(etf_settle, 4),
+                    "mid_price": round(entry_mid, 4),
+                    "intrinsic": round(intrinsic, 4),
+                    "net_rmb": round(net_rmb, 2),
+                    "note": note,
+                })
                     
         for level in levels:
             metrics = level_metrics[level]
@@ -234,6 +262,13 @@ def analyze_otm_levels(years=None):
     print("="*95)
     print(df.to_string(index=False))
     print("="*95)
+
+    os.makedirs("backtest", exist_ok=True)
+    suffix = f"_last{years}y" if years else ""
+    csv_path = f"backtest/research_otm_no_filter_{ETF_NAME}{suffix}.csv"
+    log_df = pd.DataFrame(cycle_log)
+    log_df.to_csv(csv_path, index=False)
+    print(f"Cycle log saved to {csv_path} ({len(log_df)} rows)")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Research OTM Alpha (Short Call & Long Put) for each level of options.")
