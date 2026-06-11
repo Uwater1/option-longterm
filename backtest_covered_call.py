@@ -695,6 +695,40 @@ def calc_cycle_pnl(cyc, opt, etf, daily_ivs):
 
 
 # ── Main backtest runner ───────────────────────────────────────────────────────
+def save_csv(results, csv_path):
+    rows = []
+    for r in results:
+        row = {
+            "entry_date": r["entry_date"].strftime("%Y-%m-%d"),
+            "expiry_date": r["expiry_date"].strftime("%Y-%m-%d"),
+            "etf_entry": round(r["etf_entry"], 4),
+            "iv": round(r["iv"], 4),
+            "ivr": round(r["ivr"], 4),
+            "rsi": round(r["rsi"], 2) if pd.notna(r["rsi"]) else "",
+            "bbu": round(r["bbu"], 4) if pd.notna(r["bbu"]) else "",
+            "filter_passed": r["filter_passed"],
+            "filter_would_pass": r["filter_would_pass"],
+            "call_offsets": "+".join(str(o) for o in r["call_offsets"]) if r["call_offsets"] else "",
+            "put_offsets": "+".join(str(o) for o in r["put_offsets"]) if r["put_offsets"] else "",
+            "num_contracts": r["num_contracts"],
+            "total_premium": round(r["total_premium"], 2),
+            "total_net_rmb": round(r["total_net_rmb"], 2),
+        }
+        for leg in r["legs"]:
+            label_clean = leg["label"].replace(" ", "_")
+            row[f"{label_clean}_K"] = round(leg["K"], 4)
+            row[f"{label_clean}_side"] = leg["side"]
+            row[f"{label_clean}_exec_px"] = round(leg["exec_px"], 4)
+            row[f"{label_clean}_premium"] = round(leg["premium_rmb"], 2)
+            row[f"{label_clean}_exercise"] = round(leg["exercise_pnl_rmb"], 2)
+            row[f"{label_clean}_net"] = round(leg["net_rmb"], 2)
+            row[f"{label_clean}_note"] = leg["note"]
+        rows.append(row)
+    df = pd.DataFrame(rows)
+    df.to_csv(csv_path, index=False)
+    print(f"  CSV  saved → {csv_path}")
+
+
 def run_backtest(opt, etf):
     if os.path.exists(PATH_IV_CACHE):
         print(f"\nLoading pre-calculated 30-day IVs from {PATH_IV_CACHE}...")
@@ -824,6 +858,9 @@ def run_backtest(opt, etf):
     out_file = f"backtest/backtest_cc_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}{alpha_suffix}.png"
     os.makedirs("backtest", exist_ok=True)
     plot_backtest_results(results, etf, out_file)
+
+    csv_file = f"backtest/backtest_cc_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}{alpha_suffix}.csv"
+    save_csv(results, csv_file)
 
     return results
 
