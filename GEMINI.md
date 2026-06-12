@@ -10,6 +10,10 @@ python3 update_data.py                      # Refresh parquet data from rqdatac
 python3 download_5m_data.py                # Download 5m ETF & option historical data
 python backtest_covered_call.py [50|300|500]  # Run backtest (generates logs and charts under backtest/)
 python backtest_covered_call.py --alpha 300  # Run backtest with dynamic alpha mode (indicator-based OTM switching)
+python backtest_covered_call.py 300 --model-offset  # Run backtest with model-predicted limit order offsets (requires prior training)
+python predict_open_high.py -e 300          # Train open-high P10 prediction model (90% fill-rate limit orders)
+python predict_open_high.py -e 300 --predict # Predict today's limit order offset
+python research_open_high.py               # Static open-high distribution analysis (graphical)
 python research_otm_levels.py -e 300        # OTM level analysis with filters
 python research_synthetic_otm.py -e 300     # OTM analysis + combo alpha + dynamic signal search on synthetic data
 python alpha_finder.py                      # 30-day forward return distribution
@@ -21,14 +25,15 @@ python eval_synth_combinations.py -e 300   # Filter combo search on synthetic da
 python evaluate_combinations.py -e 300     # Filter combo search on real data
 python diagnose_500etf.py -e 500           # 500ETF multi-variant diagnostic (10 variants)
 python research_robustness.py -e 500       # Data completeness & robustness analysis (bootstrap, LOOCV)
-python research_open_high.py               # Analyze daily Open-to-High price difference distributions and percentiles
 ```
-
 
 ## Project Structure
 
 ```
 backtest/                      # Backtest output logs and PNG charts
+├── open_high_model_{N}.json   # Trained open-high P10 model metadata (from predict_open_high.py)
+├── open_high_lgb_{N}.txt      # Trained LightGBM quantile model file
+├── open_high_predictions_{N}.png  # Open-high prediction visualizations
 data/                          # Local Parquet database (rqdatac source)
 ├── {ETF}_instruments.parquet  # Option contract metadata (FINAL strike/mult after all adjustments)
 ├── {ETF}_historical_prices.parquet  # Option daily OHLC/OI (DAILY-CORRECT strike_price & contract_multiplier)
@@ -37,11 +42,13 @@ data/                          # Local Parquet database (rqdatac source)
 ├── {ETF}_historical_prices_5m.parquet # Option 5m prices during 1 month before expiry
 └── 30d_iv_cache_{N}.parquet   # Pre-computed 30-day interpolated ATM IV (auto-deleted on update)
 
-backtest_covered_call.py       # Main backtest engine (CC + Put, IVR-driven, RSI+BB filter, --alpha dynamic mode)
+backtest_covered_call.py       # Main backtest engine (CC + Put, IVR-driven, RSI+BB filter, --alpha dynamic mode, --model-offset)
 alpha_finder.py                # Historical 30-day return distribution → strike selection
 alpha.md                       # Dynamic alpha strategy research report (v2 indicator-based)
 spread.py                      # LightGBM bid-ask spread prediction model
 numba_utils.py                 # Numba-compiled BS pricing, IV solver, synthetic metrics
+predict_open_high.py           # Open-to-High P10 prediction system (Statsmodels QR + LightGBM quantile, 90% fill-rate limit orders)
+research_open_high.py          # Static open-high distribution analysis (graphical only)
 
 research_otm_levels.py         # OTM level analysis (with RSI<66 + BB filter)
 research_otm_no_filter.py      # OTM baseline (no filter)
@@ -54,9 +61,7 @@ optimize_alpha_synthetic.py    # Alpha parameter grid search (synthetic data, 6-
 optimize_filters.py            # Filter condition grid search (real data, 6-component composite scoring)
 diagnose_500etf.py              # 500ETF diagnostic: 10 variants, loss analysis, filter diff
 research_robustness.py          # Data completeness, bootstrap CI, LOOCV, regime comparison
-research_open_high.py           # Analyze daily Open-to-High price difference distributions
 
-INSTRUCTION.md                 # instruction for data API usage
 update_data.py                 # Data refresh script (uses rqdatac from system Python)
 download_5m_data.py            # Download 5m ETF & option historical data for active cycles
 备兑期权.md                     # Chinese README (full project docs)
@@ -84,6 +89,15 @@ README.md                      # English README (links to Chinese docs)
   - 500ETF: `RSI > 35 AND Close < BBU AND Close > SMA50` (remains unchanged)
 
 **Spread model** (`spread.py`): LightGBM predicts `log(1+spread)` from midprice, IV, OTM depth, DTE, moneyness.
+
+**Open-High P10 Prediction** (`predict_open_high.py`): Predicts the 10th percentile of `(High - Open) / Open` to set limit sell orders with ~90% fill probability. Pipeline:
+- 14 candidate features from ETF daily data (gap, RSI, vol, ATR, MACD, ROC, BB width, volume, MA divergence, etc.)
+- Forward feature selection via time-series CV pinball loss (selects best 2–4 features)
+- Dual-model training: Statsmodels Quantile Regression (linear, interpretable) + LightGBM Quantile (nonlinear)
+- Ensemble if models are within 5% CV loss; otherwise picks the winner
+- Rolling validation (expanding window, retrain every 60 days) with coverage calibration
+- Best features across ETFs: `open_ema5_div` (divergence from EMA5), `roc5`, `gap_pct`, `roc10`
+- `--model-offset` in backtest: replaces fixed ±2% spread with limit order execution (sell at mid price, no spread slippage, only commission). The model predicts whether the limit will fill (90% confidence). Improves P&L by +2.1% to +4.2% across ETFs.
 
 **Synthetic options:** Generated via [generate_synthetic_options.py](file:///home/hallo/Documents/option-longterm/generate_synthetic_options.py) (calling `numba_utils.process_synthetic_strikes_loop()`). Interpolates IV between two expiries to create constant-maturity synthetic contracts.
 - **Data Pricing & Dividend Adjustment (Critical)**: Must use unadjusted ETF prices and daily-correct option strikes at entry to calculate option prices/IVs. At expiry, options are adjusted for dividends by scaling the unadjusted underlying price by $\frac{f_{expiry}}{f_{entry}}$ (where $f_t = S_{post, t} / S_{none, t}$ is the daily cumulative adjustment factor downloaded from `rqdatac`), keeping the nominal strikes clean and unadjusted.
@@ -189,3 +203,7 @@ README.md                      # English README (links to Chinese docs)
 - [x] Test and implement mode-specific optimal filters (calls-only vs with-put) in `backtest_covered_call.py` (Jun 2026)
 - [x] Upgrade optimization scoring to 6-component composite (Sharpe/Total/MaxDD/WinRate/PlacementRate/FilterLift) in `optimize_alpha_synthetic.py` and `optimize_filters.py` (Jun 2026)
 - [x] Implement indicator-based dynamic alpha mode in `backtest_covered_call.py` — combo switching (OTM2+3 vs OTM4) based on RSI/BBU/SMA signals from synthetic research (Jun 2026)
+- [x] Build production open-high P10 prediction system (`predict_open_high.py`) with quantile models, feature selection, and backtest integration via `--model-offset` (Jun 2026)
+- [ ] Test early roll management for 500ETF — roll calls to higher strikes if underlying rallies >5% mid-cycle
+- [ ] Explore weekly options for 500ETF if available — shorter DTE reduces rally exposure
+- [ ] Revisit conclusions when 500ETF reaches 80+ cycles (~2029)
