@@ -10,7 +10,8 @@ The primary strategy is a **Covered Call with Technical Filters and Dynamic Alph
 - **Covered Call**: Selling OTM calls against held ETF shares to generate premium income.
 - **Technical Filters**: RSI, Bollinger Bands, ROC, and ATR indicators filter out overbought conditions. If the market is overbought, selling calls is skipped (Skip OTM4) to avoid assignment risk during sharp rallies.
 - **Dynamic Alpha Mode** (`--alpha`): Indicator-based combo switching between aggressive (OTM2+OTM3) and conservative (OTM4) call legs. Signals are derived from synthetic options research — see [alpha.md](alpha.md) for details.
-- **Model-Based Limit Orders** (`--model-offset`): Replaces the fixed ±2% spread assumption with a data-driven limit order offset predicted by a quantile regression model, targeting 90% fill probability. Requires a pre-trained model (see below).
+- **Model-Based Limit Orders** (`--model-offset`): Replaces the fixed ±2% spread assumption with a data-driven limit order offset predicted by a quantile regression model, targeting 90% fill probability. Uses Black-Scholes mapping to set call sell limit prices, simulated against 5m bar data. Requires a pre-trained model (see below).
+- **Put Limit Entry** (`--limit-entry`): Uses the same open-high P10 model via BS mapping to set limit buy orders for protective puts, achieving ~95% fill rate. Combined with `--with-put`.
 - **No Put**: Protective puts are removed to eliminate long-term premium drag, maximizing net income.
 - **Strike Selection**: Driven by technical indicators (RSI, BBU, SMA50) in dynamic alpha mode, or by ATM Implied Volatility (IV) in standard mode.
 
@@ -22,10 +23,10 @@ The primary strategy is a **Covered Call with Technical Filters and Dynamic Alph
 - `backtest_covered_call*.log`: Detailed logs of executed trades and performance metrics.
 
 ### Limit Order Prediction (Open-High P10)
-- `predict_open_high.py`: Production quantile prediction system that predicts the 10th percentile of the intraday `(High - Open) / Open` move. A limit sell order placed at `open * (1 + predicted_p10)` fills with ~90% probability. Used by the backtest via `--model-offset`.
+- `predict_open_high.py`: Production quantile prediction system that predicts the 10th percentile of the intraday `(High - Open) / Open` move. Supports cross-ETF pooled training (`--pool`), ensemble bagging (5 models), and vol-regime-conditional calibration. Used by the backtest via `--model-offset` (calls) and `--limit-entry` (puts).
 - `research_open_high.py`: Static graphical analysis of the open-to-high distribution segmented by 5 overnight gap regimes.
-- `backtest/open_high_model_{N}.json`: Trained model metadata (features, coefficients, coverage stats).
-- `backtest/open_high_lgb_{N}.txt`: Trained LightGBM quantile model file.
+- `backtest/open_high_model_{N}.json`: Trained model metadata (features, coefficients, coverage stats, vol-regime calibration offsets, bagged model paths).
+- `backtest/open_high_lgb_{N}_bag{i}.txt`: Trained bagged LightGBM quantile model files (5 per ETF).
 - `backtest/open_high_predictions_{N}.png`: Model validation visualizations (scatter, coverage calibration, feature importance).
 
 ### Research & Analysis
@@ -68,15 +69,18 @@ python backtest_covered_call.py --alpha 300
 ### 4. Train the Open-High Limit Order Model
 Train the P10 quantile model that predicts the safe limit order offset with ~90% fill probability:
 ```bash
-python predict_open_high.py -e 300   # Train for 300ETF (saves model to backtest/)
+python predict_open_high.py -e 300   # Train for 300ETF (per-ETF, saves 5 bagged models)
 python predict_open_high.py -e 50    # Train for 50ETF
 python predict_open_high.py -e 500   # Train for 500ETF
+python predict_open_high.py -e 300 --pool  # Optional: cross-ETF pooled training (~7200 samples)
 ```
 
 ### 5. Run Backtest with Model-Based Limit Orders
 Use the trained model to set data-driven limit orders instead of the fixed ±2% spread:
 ```bash
-python backtest_covered_call.py 300 --model-offset
+python backtest_covered_call.py 300 --model-offset                 # Call limit orders (sell side)
+python backtest_covered_call.py 300 --with-put --limit-entry       # Put limit orders (buy side)
+python backtest_covered_call.py 300 --model-offset --with-put --limit-entry  # Both
 ```
 
 ### 6. Predict Today's Limit Order Offset
@@ -103,41 +107,66 @@ When selling a covered call at market open, you place a limit sell order. The st
 `predict_open_high.py` predicts the **10th percentile** of `y = (High - Open) / Open × 100%`. If the ETF rises at least `p10%` from open with 90% probability, then a limit sell at `open × (1 + p10/100)` fills 90% of the time — giving you a better execution price than the fixed spread assumption.
 
 ### Pipeline
-1. **Feature Engineering** — 14 candidate features from ETF daily data:
+1. **Feature Engineering** — 25 candidate features from ETF daily data:
    - Overnight gap (`gap_pct`), RSI(14), realized vol(20d), normalized ATR(14)
    - Close/SMA50 ratio, MACD histogram, ROC at 5/10/20 days
    - Bollinger band width, volume ratio, day of week
    - **MA divergence**: `(open - EMA5) / EMA5` and `(open - EMA20) / EMA20` — measures how far the open price deviates from the trend
+   - **Previous day features**: `prev_day_range`, `prev_open_to_high`, `overnight_gap_from_high`, `upper_shadow`, `lower_shadow`
+   - **Momentum oscillators**: `stoch_k14` (Stochastic %K), `williams_r14` (Williams %R), `adx14` (ADX), `mfi14` (Money Flow Index), `cci20` (CCI)
+   - **Tail risk**: `vol_skew20` (rolling 20d return skewness)
 
-2. **Forward Feature Selection** — Greedy forward selection via 5-fold time-series cross-validation, minimizing pinball loss (quantile loss at q=0.10). Evaluates feature set sizes 2, 3, and 4; picks the size with the best CV score.
+2. **Forward Feature Selection** — Greedy forward selection via 5-fold time-series cross-validation, minimizing pinball loss (quantile loss at q=0.10). Evaluates feature set sizes 1–6; picks the size with the best CV score.
 
 3. **Dual-Model Training**:
    - **Statsmodels Quantile Regression** (linear, fully interpretable coefficients)
-   - **LightGBM Quantile** (`objective='quantile', alpha=0.10` — nonlinear, handles feature interactions)
+   - **LightGBM Quantile** (`objective='quantile'` — nonlinear, handles feature interactions)
    - If CV losses are within 5%, uses **ensemble average**; otherwise picks the winner
 
-4. **Rolling Validation** — Expanding-window backtest (retrain every 60 trading days). Reports empirical coverage (target: ~90%), mean predicted offset vs static per-regime baseline, and pinball loss.
+4. **Adaptive Quantile Search** — Binary search for q' (typically 0.03–0.04) that natively achieves 90% coverage, replacing the fixed q=0.10. This reduces systematic bias in the quantile prediction.
 
-5. **Model Serialization** — Saves to `backtest/open_high_model_{ETF}.json` (metadata + Statsmodels coefficients) and `backtest/open_high_lgb_{ETF}.txt` (LightGBM booster file) for use by the backtest engine.
+5. **Ensemble Bagging** — 5 LightGBM models trained on different bootstrap resamples, predictions averaged to reduce variance and overfitting.
 
-### Trained Model Results (Jun 2026)
+6. **Vol-Regime-Conditional Calibration** — Separate calibration offsets for low-vol and high-vol regimes (split by median vol20). Applied based on current vol20 at prediction time. Achieves exactly 90.0% calibrated coverage.
 
-**Best features selected:**
+7. **Block-Bootstrap Augmentation** — 20-day circular blocks, 1x ratio synthetic data to further reduce overfitting.
 
-| ETF | Best Features | Model | Rolling Coverage |
-|-----|--------------|-------|------------------|
-| 300ETF | `open_ema5_div`, `roc5`, `roc10`, `gap_pct` | Ensemble | 88.7% |
-| 50ETF | `open_ema5_div`, `roc5`, `gap_pct`, `rsi14` | Ensemble | 87.6% |
-| 500ETF | `open_ema5_div`, `roc5`, `roc10` | LightGBM | 83.9% |
+8. **Cross-ETF Pooling** (`--pool`) — Optional mode that trains on all 3 ETFs' data (~7200 samples) for more robust feature learning. Per-ETF calibration still applied via rolling validation.
 
-**Key insight**: `open_ema5_div` (divergence of open from EMA5) is the #1 feature across all three ETFs. When open > EMA5 (gap up from trend), the intraday high tends to be relatively close to open (smaller high-open move). When open < EMA5 (gap down from trend), the high tends to be much higher due to mean-reversion bounces.
+9. **Rolling Validation** — Expanding-window backtest (retrain every 60 trading days) with bagged models. Reports empirical coverage (target: ~90%), mean predicted offset vs static per-regime baseline, and pinball loss.
 
-**Backtest P&L comparison (`--model-offset` vs fixed ±2% spread):**
+10. **Model Serialization** — Saves to `backtest/open_high_model_{ETF}.json` (metadata + Statsmodels coefficients + vol-regime calibration) and `backtest/open_high_lgb_{ETF}_bag{0-4}.txt` (5 bagged LightGBM booster files) for use by the backtest engine.
 
-| ETF | Standard P&L | Model Offset P&L | Improvement |
-|-----|-------------|-----------------|-------------|
-| 300ETF | 16,868 RMB | 17,374 RMB | **+506 (+3.0%)** |
-| 50ETF | 7,317 RMB | 7,623 RMB | **+306 (+4.2%)** |
-| 500ETF | 16,954 RMB | 17,305 RMB | **+351 (+2.1%)** |
+### Trained Model Results (Jun 2026, v2 — bagged + vol-regime calibrated)
 
-With limit orders there is no bid-ask spread slippage — the model only predicts whether the limit will fill (90% confidence). The only transaction cost is commission (2 RMB/leg). This means you sell options at mid price instead of mid * 0.98, gaining ~2% premium per sell leg.
+**Best features selected (per-ETF training):**
+
+| ETF | Best Features | Model | Adaptive q | Calibrated Coverage |
+|-----|--------------|-------|-----------|---------------------|
+| 300ETF | `open_ema5_div`, `roc5`, `williams_r14`, `stoch_k14`, `rsi14`, `dow` | LightGBM (bagged x5) | 0.0362 | **90.0%** |
+| 50ETF | `open_ema5_div`, `roc5`, `williams_r14`, `stoch_k14`, `close_sma50_ratio` | Ensemble (bagged x5) | 0.0362 | **90.0%** |
+| 500ETF | `open_ema5_div`, `roc5`, `williams_r14`, `prev_open_to_high`, `overnight_gap_from_high`, `roc20` | LightGBM (bagged x5) | 0.0362 | **90.0%** |
+
+**Key insights:**
+- `open_ema5_div` (divergence of open from EMA5) is the #1 feature across all three ETFs. When open > EMA5 (gap up from trend), the intraday high tends to be relatively close to open (smaller high-open move). When open < EMA5 (gap down from trend), the high tends to be much higher due to mean-reversion bounces.
+- `williams_r14` and `stoch_k14` are consistently selected across all ETFs, capturing momentum/overbought signals.
+- 500ETF uniquely selects `prev_open_to_high` (autocorrelation of target) and `roc20` (medium-term momentum), reflecting its higher-volatility profile.
+
+**Vol-regime calibration offsets:**
+
+| ETF | Low-vol offset (vol20 ≤ median) | High-vol offset (vol20 > median) | Vol threshold |
+|-----|-------------------------------|--------------------------------|---------------|
+| 300ETF | -0.069% | -0.080% | 0.15 |
+| 50ETF | -0.060% | -0.007% | 0.15 |
+| 500ETF | -0.108% | -0.088% | 0.18 |
+
+**Backtest call limit fill rates and P&L (`--model-offset`):**
+
+| ETF | Mode | P&L | Call Fill Rate |
+|-----|------|-----|----------------|
+| 300ETF | Calls-only | **+20,492 RMB** | **99.0%** (95/96) |
+| 300ETF | With-Put + Limit Entry | **+11,469 RMB** | **99.3%** (139/140) |
+| 50ETF | Calls-only | **+9,119 RMB** | **100.0%** (98/98) |
+| 500ETF | Calls-only | **+19,046 RMB** | **92.1%** (35/38) |
+
+With limit orders there is no bid-ask spread slippage — the model predicts the P10 of the ETF's intraday high via BS mapping, then simulates against 5m bar data. The only transaction cost is commission (2 RMB/leg). This means you sell options at mid price instead of mid × 0.98, gaining ~2% premium per sell leg.

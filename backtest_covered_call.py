@@ -45,7 +45,7 @@ DYNAMIC_ALPHA_MODE = False
 USE_MODEL_OFFSET = False  # --model-offset: use trained open-high P10 model for limit orders
 _model_meta = None        # Loaded lazily when USE_MODEL_OFFSET is True
 USE_PUT_LIMIT_ENTRY = False
-_put_limit_meta = None
+_feature_cache = {}  # Cache for engineered feature DataFrames (keyed by etf_key)
 
 # ── Underlying Config (Dynamic based on CLI) ───────────────────────────────────
 # Default: 300ETF
@@ -433,6 +433,33 @@ def get_strike_by_level(opt, etf, entry_date, expiry_date, option_type, level):
 # ── Per-cycle P&L ─────────────────────────────────────────────────────────────
 
 
+def _predict_call_limit_price(etf_df, entry_date, S_open, K, T, P_open):
+    """Predict the limit sell price for a call using BS mapping from the open-high model.
+    When ETF rises to predicted P10 high, the call value increases.
+    Returns the limit price, or None if unavailable."""
+    try:
+        R_ETF_P10_frac = _predict_model_offset(etf_df, entry_date)
+        if R_ETF_P10_frac is None:
+            return None
+
+        # Solve for open IV from the call's open price
+        sigma_open = compute_iv(P_open, S_open, K, T, RISK_FREE, True)
+
+        # Price the call at the target ETF high
+        S_target = S_open * (1 + R_ETF_P10_frac)
+        T_new = max(T - 1/365.0, 1/365.0)
+        P_limit = _bs_price(S_target, K, T_new, RISK_FREE, sigma_open, True)
+
+        # Apply a small cushion (0.3%) to ensure fill — slightly below BS theoretical
+        P_limit *= (1 - 0.003)
+
+        if P_limit <= 0:
+            return None
+        return P_limit
+    except Exception as e:
+        return None
+
+
 def _predict_put_limit_offset(etf_df, entry_date, S_open, K, T, P_open):
     """Predict the P90 offset (%) for a given entry date using the BS mapping method
     based on the open-high model's ETF prediction.
@@ -441,8 +468,9 @@ def _predict_put_limit_offset(etf_df, entry_date, S_open, K, T, P_open):
         R_ETF_P10_frac = _predict_model_offset(etf_df, entry_date)
         if R_ETF_P10_frac is None:
             etf_key = {"50ETF": "50", "300ETF": "300", "500ETF": "500"}.get(ETF_NAME, "300")
-            fallbacks = {"50": 0.001634, "300": 0.001505, "500": 0.001687}
-            R_ETF_P10_frac = fallbacks.get(etf_key, 0.0015)
+            print(f"  WARNING: No P10 prediction available for {ETF_NAME} on {entry_date.date()}. "
+                  f"Train model first: python predict_open_high.py -e {etf_key}")
+            return None
         
         # Solve for open IV
         sigma_open = compute_iv(P_open, S_open, K, T, RISK_FREE, False)
@@ -482,21 +510,26 @@ def _load_model_offset():
 
 def _predict_model_offset(etf_df, entry_date):
     """Predict the P10 offset (%) for a given entry date using the open-high model.
-    Returns the predicted offset as a fraction (e.g., 0.003 for 0.3%), or None if unavailable."""
+    Returns the predicted offset as a fraction (e.g., 0.003 for 0.3%), or None if unavailable.
+    Caches the engineered feature DataFrame to avoid rebuilding it every call."""
     meta = _load_model_offset()
     if meta is None:
         return None
     try:
         etf_key = {"50ETF": "50", "300ETF": "300", "500ETF": "500"}.get(ETF_NAME, "300")
-        df = meta["_engineer_fn"](etf_key)
-        # Find the row matching entry_date
-        df_dates = pd.to_datetime(df["date"])
+        # Use cached feature DataFrame if available
+        if etf_key not in _feature_cache:
+            _feature_cache[etf_key] = meta["_engineer_fn"](etf_key)
+            _feature_cache[etf_key]["_dates_parsed"] = pd.to_datetime(_feature_cache[etf_key]["date"])
+        df = _feature_cache[etf_key]
+        df_dates = df["_dates_parsed"]
         entry_ts = pd.to_datetime(entry_date)
         mask = (df_dates - entry_ts).abs() < pd.Timedelta(days=1)
         if not mask.any():
             return None
         row = df[mask].iloc[[-1]]
-        p10_pct = meta["_predict_fn"](meta, row)  # in percent
+        current_vol = float(row["vol20"].values[0]) if "vol20" in row.columns else None
+        p10_pct = meta["_predict_fn"](meta, row, current_vol20=current_vol)  # in percent
         return max(0.0, p10_pct / 100.0)  # Convert to fraction, floor at 0
     except Exception as e:
         return None
@@ -763,8 +796,59 @@ def calc_cycle_pnl(cyc, opt, etf, daily_ivs, opt_5m=None, etf_5m=None):
     put_limit_px = None
     put_trigger_val = None
 
+    # Call limit sell details (for --model-offset with 5m simulation)
+    call_limit_results = []  # list of {filled, limit_px, exec_px} per call leg
+
     for leg, side, label in legs_to_process:
         override_px = None
+        # ── Call sell limit order simulation (5m) ──
+        if side == "sell" and USE_MODEL_OFFSET and opt_5m is not None and etf_5m is not None:
+            try:
+                trading_days = list(etf.index.unique())
+                entry_norm = entry.normalize()
+                entry_idx = trading_days.index(entry_norm)
+                window_days = trading_days[entry_idx : entry_idx + 2]
+
+                order_book_id = leg["order_book_id"]
+                contract_5m = opt_5m[
+                    (opt_5m["order_book_id"] == order_book_id) &
+                    (opt_5m["datetime"].dt.normalize().isin(window_days))
+                ].sort_values("datetime")
+
+                contract_5m = contract_5m[
+                    (contract_5m["open"] > 0) & (contract_5m["high"] > 0) &
+                    (contract_5m["low"] > 0) & (contract_5m["close"] > 0)
+                ].sort_values("datetime")
+
+                if not contract_5m.empty:
+                    P_open_call = contract_5m.iloc[0]["open"]
+                    strike = float(leg["strike_price"])
+                    etf_entry_5m = etf_5m[etf_5m["datetime"].dt.normalize() == entry_norm].sort_values("datetime")
+                    etf_open_call = float(etf_entry_5m.iloc[0]["open"]) if not etf_entry_5m.empty else float(etf_close_entry)
+
+                    dte = (expiry - entry).days
+                    T_call = max(dte, 1) / 365.0
+
+                    call_limit_px = _predict_call_limit_price(etf, entry, etf_open_call, strike, T_call, P_open_call)
+                    if call_limit_px is not None and call_limit_px > 0:
+                        fill_bars = contract_5m[contract_5m["high"] >= call_limit_px]
+                        if not fill_bars.empty:
+                            override_px = call_limit_px
+                            call_limit_results.append({"filled": True, "limit_px": call_limit_px, "exec_px": call_limit_px})
+                        else:
+                            # Not filled: fall back to last 5m close
+                            override_px = contract_5m.iloc[-1]["close"]
+                            call_limit_results.append({"filled": False, "limit_px": call_limit_px, "exec_px": override_px})
+                    else:
+                        # Model unavailable: fall back to model_spread (mid price)
+                        call_limit_results.append({"filled": None, "limit_px": None, "exec_px": None})
+                else:
+                    call_limit_results.append({"filled": None, "limit_px": None, "exec_px": None})
+            except Exception as e:
+                print(f"  WARNING: Error in call limit sell calculation: {e}")
+                call_limit_results.append({"filled": None, "limit_px": None, "exec_px": None})
+
+        # ── Put buy limit order simulation (5m) ──
         if side == "buy" and USE_PUT_LIMIT_ENTRY and opt_5m is not None and etf_5m is not None:
             try:
                 trading_days = list(etf.index.unique())
@@ -861,6 +945,7 @@ def calc_cycle_pnl(cyc, opt, etf, daily_ivs, opt_5m=None, etf_5m=None):
         "put_exec_px":    put_exec_px,
         "put_limit_px":   put_limit_px,
         "put_trigger_val": put_trigger_val,
+        "call_limit_results": call_limit_results,
     }
 
 
@@ -933,7 +1018,7 @@ def run_backtest(opt, etf):
 
     opt_5m = None
     etf_5m = None
-    if USE_PUT_LIMIT_ENTRY:
+    if USE_PUT_LIMIT_ENTRY or USE_MODEL_OFFSET:
         opt_5m_path = {"50ETF": "./data/50ETF_historical_prices_5m.parquet",
                        "300ETF": "./data/300ETF_historical_prices_5m.parquet",
                        "500ETF": "./data/500ETF_historical_prices_5m.parquet"}.get(ETF_NAME)
@@ -982,10 +1067,18 @@ def run_backtest(opt, etf):
         if USE_PUT_LIMIT_ENTRY and not NO_PUT_MODE and res["put_filled"] is not None:
             fill_tag = " [FILLED]" if res["put_filled"] else " [FORCE FILL]"
             puts_str += fill_tag
+        # Call limit fill status
+        call_limit_str = ""
+        if USE_MODEL_OFFSET and res.get("call_limit_results"):
+            clr = res["call_limit_results"]
+            n_filled = sum(1 for c in clr if c["filled"] is True)
+            n_total = sum(1 for c in clr if c["filled"] is not None)
+            if n_total > 0:
+                call_limit_str = f"  calls_limit={n_filled}/{n_total} filled"
         print(f"\nCycle  {res['entry_date'].date()} → {res['expiry_date'].date()}"
               f"   IV={res['iv']:.1%} (IVR={res['ivr']:.2f})  calls={call_str} puts={puts_str}"
               f"   ETF={res['etf_entry']:.4f} RSI={res['rsi']:.1f} BBU={res['bbu']:.3f} "
-              f"(Total {total_legs_contracts} contracts) {filter_tag}")
+              f"(Total {total_legs_contracts} contracts) {filter_tag}{call_limit_str}")
         hdr = f"  {'Leg':<25} {'side':>4} {'K':>7} {'exec_px':>8} {'prem':>8}  {'exer':>9}  {'net':>8}"
         print(hdr)
         print("  " + "-" * (len(hdr) - 2))
@@ -1041,6 +1134,25 @@ def run_backtest(opt, etf):
         if put_fills:
             fill_rate = sum(1 for f in put_fills if f) / len(put_fills)
             print(f"  Put limit fill rate    : {fill_rate:.1%} ({sum(1 for f in put_fills if f)}/{len(put_fills)} cycles)")
+
+    if USE_MODEL_OFFSET:
+        # Aggregate call limit fill stats across all legs/cycles
+        all_call_limits = []
+        for r in results:
+            all_call_limits.extend(r.get("call_limit_results", []))
+        call_with_5m = [c for c in all_call_limits if c["filled"] is not None]
+        if call_with_5m:
+            call_fill_rate = sum(1 for c in call_with_5m if c["filled"]) / len(call_with_5m)
+            print(f"  Call limit fill rate   : {call_fill_rate:.1%} ({sum(1 for c in call_with_5m if c['filled'])}/{len(call_with_5m)} legs)")
+            # Avg premium improvement for filled vs fallback
+            filled_pxs = [c for c in call_with_5m if c["filled"]]
+            unfilled_pxs = [c for c in call_with_5m if not c["filled"]]
+            if filled_pxs:
+                avg_improve = np.mean([(c["exec_px"] / c["limit_px"] - 1) * 100 for c in filled_pxs if c["limit_px"] > 0])
+                # This is 0 by definition (filled at limit), so show avg limit vs fallback close
+            if unfilled_pxs:
+                avg_fallback = np.mean([(c["exec_px"] / c["limit_px"] - 1) * 100 for c in unfilled_pxs if c["limit_px"] > 0])
+                print(f"  Call unfilled avg gap  : {avg_fallback:+.2f}% (fallback close vs limit)")
 
     print(f"  Cumulative by cycle    : {[f'{v:.0f}' for v in cumulative]}")
     print(f"  ── Placement & Filter Lift ─────────────────────────────────────")
