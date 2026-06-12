@@ -1,5 +1,11 @@
 # Option Longterm Investment - Project JEPI-CN
 
+> **⚠️ DEPRECATED** — This file is a legacy strategy reference (Jun 2025). For current documentation, see:
+> - [README.md](README.md) — English README with full pipeline, model results, and getting started guide
+> - [备兑期权.md](备兑期权.md) — Comprehensive Chinese documentation (strategy, architecture, limit order model)
+> - [TODO.md](TODO.md) — Limit order mechanism details and completed work
+> - [AGENTS.md](AGENTS.md) — Technical architecture, backtest audit, and AI agent instructions
+
 This directory contains scripts and research for long-term option investment strategies, specifically focusing on **Covered Call** and **Bull Put Spread** strategies on Chinese ETFs (50ETF, 300ETF, 500ETF).
 
 ## Core Strategy

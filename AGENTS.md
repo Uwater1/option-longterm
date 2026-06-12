@@ -11,8 +11,11 @@ python3 download_5m_data.py                # Download 5m ETF & option historical
 python backtest_covered_call.py [50|300|500]  # Run backtest (generates logs and charts under backtest/)
 python backtest_covered_call.py --alpha 300  # Run backtest with dynamic alpha mode (indicator-based OTM switching)
 python backtest_covered_call.py 300 --model-offset  # Run backtest with model-predicted limit order offsets (requires prior training)
+python backtest_covered_call.py 300 --limit-entry                       # Run backtest with Black-Scholes mapping limit entry for protective puts
 python predict_open_high.py -e 300          # Train open-high P10 prediction model (90% fill-rate limit orders)
+python predict_open_high.py -e 300 --pool   # Train with cross-ETF pooled data (all 3 ETFs, ~7200 samples)
 python predict_open_high.py -e 300 --predict # Predict today's limit order offset
+python research_limit_entry.py -e 300       # Validate protective put limit entry via Black-Scholes mapping model
 python research_open_high.py               # Static open-high distribution analysis (graphical)
 python research_otm_levels.py -e 300        # OTM level analysis with filters
 python research_synthetic_otm.py -e 300     # OTM analysis + combo alpha + dynamic signal search on synthetic data
@@ -31,8 +34,8 @@ python research_robustness.py -e 500       # Data completeness & robustness anal
 
 ```
 backtest/                      # Backtest output logs and PNG charts
-├── open_high_model_{N}.json   # Trained open-high P10 model metadata (from predict_open_high.py)
-├── open_high_lgb_{N}.txt      # Trained LightGBM quantile model file
+├── open_high_model_{N}.json   # Trained open-high P10 model metadata (features, coefficients, vol-regime calibration)
+├── open_high_lgb_{N}_bag{i}.txt  # 5 bagged LightGBM quantile model files per ETF (i=0..4)
 ├── open_high_predictions_{N}.png  # Open-high prediction visualizations
 data/                          # Local Parquet database (rqdatac source)
 ├── {ETF}_instruments.parquet  # Option contract metadata (FINAL strike/mult after all adjustments)
@@ -91,13 +94,26 @@ README.md                      # English README (links to Chinese docs)
 **Spread model** (`spread.py`): LightGBM predicts `log(1+spread)` from midprice, IV, OTM depth, DTE, moneyness.
 
 **Open-High P10 Prediction** (`predict_open_high.py`): Predicts the 10th percentile of `(High - Open) / Open` to set limit sell orders with ~90% fill probability. Pipeline:
-- 14 candidate features from ETF daily data (gap, RSI, vol, ATR, MACD, ROC, BB width, volume, MA divergence, etc.)
-- Forward feature selection via time-series CV pinball loss (selects best 2–4 features)
+- 25 candidate features from ETF daily data (gap, RSI, vol, ATR, MACD, ROC, BB width, volume, MA divergence, Stochastic %K, Williams %R, ADX, MFI, CCI, vol skewness, candlestick shadows, prev-day range/open-to-high, overnight gap from high)
+- Forward feature selection via time-series CV pinball loss (selects best 3–6 features)
 - Dual-model training: Statsmodels Quantile Regression (linear, interpretable) + LightGBM Quantile (nonlinear)
 - Ensemble if models are within 5% CV loss; otherwise picks the winner
+- **Adaptive quantile search**: Binary search for q' (typically 0.03–0.04) that natively achieves 90% coverage, replacing the fixed q=0.10
+- **Coverage calibration**: Computes offset = P10(actual - predicted) from rolling validation, stored in model JSON and applied at prediction time. Achieves exactly 90.0% calibrated coverage.
+- **Vol-regime-conditional calibration**: Separate calibration offsets for low-vol and high-vol regimes (split by median vol20). Applied based on current vol20 at prediction time.
+- **Ensemble bagging**: 5 LightGBM models trained on bootstrap resamples, predictions averaged to reduce variance.
+- **Block-bootstrap augmentation**: 20-day circular blocks, 1x ratio synthetic data to reduce overfitting
+- **Cross-ETF pooling** (`--pool`): Optional mode that trains on all 3 ETFs' data (~7200 samples) for more robust models. Per-ETF calibration still applied.
 - Rolling validation (expanding window, retrain every 60 days) with coverage calibration
-- Best features across ETFs: `open_ema5_div` (divergence from EMA5), `roc5`, `gap_pct`, `roc10`
-- `--model-offset` in backtest: replaces fixed ±2% spread with limit order execution (sell at mid price, no spread slippage, only commission). The model predicts whether the limit will fill (90% confidence). Improves P&L by +2.1% to +4.2% across ETFs.
+- Best features across ETFs: `open_ema5_div`, `roc5`, `williams_r14`, `stoch_k14` (consistently selected); `rsi14`, `dow`, `prev_open_to_high`, `close_sma50_ratio` also selected per-ETF
+- `--model-offset` in backtest: Uses BS mapping to set limit sell orders simulated against 5m bar data. Call fill rates: **92–100%** across ETFs. Unfilled legs fall back to last 5m close.
+
+**Black-Scholes Mapping Put Limit Entry** (`--limit-entry`): Predicts the 90%+ fill-rate limit buy order for protective puts.
+- Uses the trained daily ETF open-to-high model to predict the 10th percentile of the ETF's maximum return over the 2-day entry window ($R_{ETF\_P10\_frac}$).
+- Solves for the option's entry implied volatility ($\sigma_{open}$) from the option open price $P_{open}$ and ETF open price $S_{open}$ at entry.
+- Maps the predicted target ETF high price ($S_{target} = S_{open} \times (1 + R_{ETF\_P10\_frac})$) to the target Put option limit price ($P_{limit}$) via the Black-Scholes pricing formula.
+- Applies an OTM-dependent liquidity cushion ($0.5\% + 0.5\% \times OTM\%$) to secure execution.
+- Completely avoids overfitting to small option price datasets by leveraging the robust daily ETF model and closed-form Black-Scholes mapping.
 
 **Synthetic options:** Generated via [generate_synthetic_options.py](file:///home/hallo/Documents/option-longterm/generate_synthetic_options.py) (calling `numba_utils.process_synthetic_strikes_loop()`). Interpolates IV between two expiries to create constant-maturity synthetic contracts.
 - **Data Pricing & Dividend Adjustment (Critical)**: Must use unadjusted ETF prices and daily-correct option strikes at entry to calculate option prices/IVs. At expiry, options are adjusted for dividends by scaling the unadjusted underlying price by $\frac{f_{expiry}}{f_{entry}}$ (where $f_t = S_{post, t} / S_{none, t}$ is the daily cumulative adjustment factor downloaded from `rqdatac`), keeping the nominal strikes clean and unadjusted.
@@ -133,7 +149,23 @@ README.md                      # English README (links to Chinese docs)
 | 500ETF | 36% (16/45) | -4,628 RMB | **+879 RMB** | `RSI > 35` AND `Close < BBU` AND `Close > SMA50` (Flipped to positive!) |
 | 50ETF | 39% (53/136) | +1,054 RMB | **+3,821 RMB** | `RSI > 30` AND `Close < BBU - 0.5*ATR` AND `ROC10 < 7%` (3.6x improvement!) |
 
+### With-Put Mode + Put Limit Entry (BS Mapping model, Jun 2026)
+| ETF | Win Rate | P&L (Baseline + Put Limit) | P&L (Alpha + Put Limit) | Put Limit Fill Rate |
+|-----|----------|----------------------------|-------------------------|---------------------|
+| 300ETF | 44% (34/78) | **+7,178.24 RMB** | **+4,176.58 RMB** | **93.6%** (73/78) |
+| 500ETF | 33% (15/45) | **+2,401.07 RMB** | **+1,661.96 RMB** | **97.8%** (44/45) |
+| 50ETF | 44% (61/136) | **+7,768.45 RMB** | **+2,467.22 RMB** | **94.1%** (130/136) |
+
+### With Call Limit Orders (5m BS mapping, v2 features, bagged + vol-regime calibration, Jun 2026)
+| ETF | Mode | Win Rate | P&L | Call Fill Rate | Put Fill Rate |
+|-----|------|----------|-----|----------------|---------------|
+| 300ETF | Calls-only + Model Offset | 56% (44/78) | **+20,492 RMB** | **99.0%** (95/96) | N/A |
+| 300ETF | With-Put + Model Offset + Put Limit | 46% (36/78) | **+11,469 RMB** | **99.3%** (139/140) | **94.9%** (74/78) |
+| 500ETF | Calls-only + Model Offset | 42% (19/45) | **+19,046 RMB** | **92.1%** (35/38) | N/A |
+| 50ETF | Calls-only + Model Offset | 32% (44/136) | **+9,119 RMB** | **100.0%** (98/98) | N/A |
+
 **Known approximation (not a bug):** ±2% spread from mid is a simplification; real bid-ask spreads vary by liquidity, DTE, and moneyness. Conservative for liquid ATM/near-OTM contracts, possibly optimistic for deep OTM.
+
 
 ## Key Parameters
 
@@ -204,6 +236,7 @@ README.md                      # English README (links to Chinese docs)
 - [x] Upgrade optimization scoring to 6-component composite (Sharpe/Total/MaxDD/WinRate/PlacementRate/FilterLift) in `optimize_alpha_synthetic.py` and `optimize_filters.py` (Jun 2026)
 - [x] Implement indicator-based dynamic alpha mode in `backtest_covered_call.py` — combo switching (OTM2+3 vs OTM4) based on RSI/BBU/SMA signals from synthetic research (Jun 2026)
 - [x] Build production open-high P10 prediction system (`predict_open_high.py`) with quantile models, feature selection, and backtest integration via `--model-offset` (Jun 2026)
+- [x] Add call-side 5m limit order simulation (`--model-offset`), expand features 14→25, ensemble bagging (x5), vol-regime calibration, cross-ETF pooling (`--pool`) (Jun 2026)
 - [ ] Test early roll management for 500ETF — roll calls to higher strikes if underlying rallies >5% mid-cycle
 - [ ] Explore weekly options for 500ETF if available — shorter DTE reduces rally exposure
 - [ ] Revisit conclusions when 500ETF reaches 80+ cycles (~2029)

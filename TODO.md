@@ -1,8 +1,8 @@
-# Limit order machenism
+# Limit Order Mechanism
 
-It should be separated from main logic (extract into a dedicated function/module).
+This document describes the limit order execution system for both call selling and put buying.
 
-## Current code: price taker (implied execution model)
+## Default: Price Taker (implied execution model)
 
 ### Entry timing
 - **Entry date**: first available option trading day after the previous cycle's expiry (or the very first data day for cycle 1, since no prior expiry exists).
@@ -29,29 +29,68 @@ It should be separated from main logic (extract into a dedicated function/module
 - `NUM_CONTRACTS = 1` contract per option leg (multiplied per-result after calculation).
 - `ETF_SHARES = 20,000` shares per cycle (equity leg, no modeled cost).
 
-### What is NOT modeled
+### What is NOT modeled (in default mode)
 - Intraday order execution (open → close → open timing not simulated).
 - Real bid-ask depth / limit order fills.
 - Partial fills or slippage beyond the fixed ±2 % mid assumption.
 - Cash interest on margin / collateral.
 
-## Improvements:
-Enter using limit orders:
+---
 
-## Things we know:
-- Thursday Open price (of both ETF and options)
-- Data beforehead
+## Limit Order Mode (Implemented)
 
-## Things we want to perdict:
-- max(Thursday High, Friday High), as we must enter within 2 days (as we are selling covered calls)
-- We want to have 90%+ confidence that we can enter
+### Overview
+The `predict_open_high.py` model predicts the 10th percentile of ETF `(High - Open) / Open`. This prediction is mapped to option limit prices via Black-Scholes, then simulated against 5-minute bar data.
 
-## TODO
-- [x] Download option datas (we will use real data only for now, 5 minutes, only 1 month from expirey) and ETF data
-- [x] Research daily relationship between Open and High (Distribution plots, 90% success/fill rate)
-- [x] For each Thursday, in 5 minutes interval, predict the max of (Thursday High, Friday High) to achieve 90%+ entry confidence where option ask price <= Thursday open * 0.98
-- [x] Compare two predictive approaches: ETF High prediction vs Option High prediction
-- [x] Implement Black-Scholes mapping limit entry for protective puts to prevent overfitting and leverage robust daily ETF models.
-- [x] Validate BS-mapping limit entry across all 3 ETFs (50/300/500) and verify 90%+ fill rates and improved net P&L.
+### Call Sell Limit Orders (`--model-offset`)
+1. Predict `R_ETF_P10_frac` = P10 of ETF max return over 2-day entry window
+2. Compute `σ_open` = implied vol from call's open price via BS inverse
+3. Target ETF high: `S_target = S_open × (1 + R_ETF_P10_frac)`
+4. Limit sell price: `P_limit = BS(S_target, K, T_new, r, σ_open) × (1 - 0.3% cushion)`
+5. Simulate against 5m bars: if any bar's `high ≥ P_limit` in 2-day window → filled at `P_limit`
+6. Unfilled → fallback to last 5m bar close
+
+### Put Buy Limit Orders (`--limit-entry`)
+1. Same `R_ETF_P10_frac` prediction
+2. Compute `σ_open` from put's open price
+3. Target ETF high: `S_target = S_open × (1 + R_ETF_P10_frac)`
+4. Limit buy price: `P_limit = BS(S_target, K, T_new, r, σ_open) × (1 + OTM-dependent cushion)`
+5. Simulate: if any 5m bar's `low ≤ P_limit` → filled at `P_limit`
+
+### Prediction Model Details
+- **Features**: 25 candidates, forward selection picks 5–6 per ETF
+- **Models**: Statsmodels QR + LightGBM Quantile (ensemble if within 5% CV loss)
+- **Bagging**: 5 LightGBM models on bootstrap resamples, averaged
+- **Calibration**: Vol-regime-conditional offsets (low-vol vs high-vol, split by median vol20)
+- **Adaptive quantile**: Binary search for q' (~0.03–0.04) that natively achieves 90% coverage
+- **Augmentation**: Block-bootstrap (20-day blocks, 1x ratio) to reduce overfitting
+
+### Backtest Results (Jun 2026)
+
+| ETF | Mode | P&L | Call Fill Rate | Put Fill Rate |
+|-----|------|-----|----------------|---------------|
+| 300ETF | Calls-only + Model Offset | +20,492 RMB | 99.0% (95/96) | N/A |
+| 300ETF | Combined + Both Limits | +11,469 RMB | 99.3% (139/140) | 94.9% (74/78) |
+| 50ETF | Calls-only + Model Offset | +9,119 RMB | 100.0% (98/98) | N/A |
+| 500ETF | Calls-only + Model Offset | +19,046 RMB | 92.1% (35/38) | N/A |
+
+---
+
+## Completed TODO
+- [x] Download option datas (5m bars, 1 month before expiry) and ETF data
+- [x] Research daily relationship between Open and High (Distribution plots, 90% fill rate)
+- [x] Predict max(Thursday High, Friday High) for 90%+ entry confidence
+- [x] Compare ETF High prediction vs Option High prediction → chose ETF + BS mapping
+- [x] Implement Black-Scholes mapping limit entry for protective puts
+- [x] Validate BS-mapping limit entry across all 3 ETFs (50/300/500) — 90%+ fill rates confirmed
+- [x] Add call-side limit orders with 5m simulation (`--model-offset`)
+- [x] Expand candidate features from 14 to 25 (momentum oscillators, prev-day features, tail risk)
+- [x] Implement ensemble bagging (5 models) and vol-regime-conditional calibration
+- [x] Add cross-ETF pooled training mode (`--pool`)
+
+## Remaining TODO
+- [ ] Test early roll management for 500ETF — roll calls to higher strikes if underlying rallies >5% mid-cycle
+- [ ] Explore weekly options for 500ETF if available — shorter DTE reduces rally exposure
+- [ ] Revisit conclusions when 500ETF reaches 80+ cycles (~2029)
 
 
