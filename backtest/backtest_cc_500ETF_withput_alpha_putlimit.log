@@ -1,0 +1,361 @@
+
+Loading pre-calculated 30-day IVs from ./data/30d_iv_cache_500.parquet...
+Loading 5m option data from ./data/500ETF_historical_prices_5m.parquet...
+Loading 5m ETF data from ./data/500ETF_5m.parquet...
+  Loaded open-high model: ['open_ema5_div', 'roc5', 'roc10'], coverage=83.9%
+
+======================================================================
+  备兑期权 BACKTEST — Cycle Detail  [DYNAMIC ALPHA (dynamic OTM offsets) + PUT LIMIT]
+======================================================================
+
+Cycle  2022-09-19 → 2022-10-26   IV=17.5% (IVR=0.00)  calls=OTM4 puts=Level1 [FILLED]   ETF=5.9190 RSI=21.5 BBU=7.474 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   6.750   0.0041    41.16       0.00     39.16  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.750   0.0835  -835.24       0.00   -837.24  [expires_worthless]
+                                        CYCLE TOTAL   -798.08
+
+Cycle  2022-10-27 → 2022-11-23   IV=20.8% (IVR=0.60)  calls=OTM4 puts=Level1 [FILLED]   ETF=5.9690 RSI=46.7 BBU=6.107 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   6.750   0.0028    28.42       0.00     26.42  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.750   0.0513  -512.75       0.00   -514.75  [expires_worthless]
+                                        CYCLE TOTAL   -488.33
+
+Cycle  2022-11-24 → 2022-12-28   IV=18.5% (IVR=0.23)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=6.1300 RSI=52.0 BBU=6.356 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   6.500   0.0295   294.98       0.00    292.98  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   6.750   0.0085    85.26       0.00     83.26  [expires_worthless]
+  Put Buy    (Level 1)       buy   6.000   0.0713  -712.58    1160.00    444.82  [exercised ETF=5.8840 K=6.0000]
+                                        CYCLE TOTAL    821.06
+
+Cycle  2022-12-29 → 2023-01-30   IV=15.3% (IVR=0.05)  calls=OTM4 puts=Level1 [FILLED]   ETF=5.8810 RSI=35.8 BBU=6.355 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   6.750   0.0008     7.84       0.00      5.84  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.750   0.0468  -468.46       0.00   -470.46  [expires_worthless]
+                                        CYCLE TOTAL   -464.62
+
+Cycle  2023-01-31 → 2023-02-22   IV=16.8% (IVR=0.27)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=6.3030 RSI=74.6 BBU=6.345 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   6.750   0.0075    75.46       0.00     73.46  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   7.000   0.0020    19.60       0.00     17.60  [expires_worthless]
+  Put Buy    (Level 1)       buy   6.250   0.0696  -695.95       0.00   -697.95  [expires_worthless]
+                                        CYCLE TOTAL   -606.89
+
+Cycle  2023-02-23 → 2023-03-22   IV=14.1% (IVR=0.05)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=6.3780 RSI=59.5 BBU=6.440 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   6.750   0.0110   109.76       0.00    107.76  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   7.000   0.0034    34.30       0.00     32.30  [expires_worthless]
+  Put Buy    (Level 1)       buy   6.250   0.0570  -570.31       0.00   -572.31  [expires_worthless]
+                                        CYCLE TOTAL   -432.25
+
+Cycle  2023-03-23 → 2023-04-26   IV=12.6% (IVR=0.00)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=6.3160 RSI=53.8 BBU=6.455 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   6.750   0.0057    56.84       0.00     54.84  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   7.000   0.0010     9.80       0.00      7.80  [expires_worthless]
+  Put Buy    (Level 1)       buy   6.250   0.0930  -930.29     910.00    -22.89  [exercised ETF=6.1590 K=6.2500]
+                                        CYCLE TOTAL     39.75
+
+Cycle  2023-04-27 → 2023-05-24   IV=14.0% (IVR=0.19)  calls=OTM4 puts=Level1 [FILLED]   ETF=6.1850 RSI=36.0 BBU=6.591 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   7.000   0.0008     7.84       0.00      5.84  [expires_worthless]
+  Put Buy    (Level 1)       buy   6.000   0.0440  -439.50       0.00   -441.50  [expires_worthless]
+                                        CYCLE TOTAL   -435.66
+
+Cycle  2023-05-25 → 2023-06-28   IV=14.2% (IVR=0.20)  calls=OTM4 puts=Level1 [FILLED]   ETF=6.0200 RSI=30.7 BBU=6.301 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   7.000   0.0008     7.84       0.00      5.84  [expires_worthless]
+  Put Buy    (Level 1)       buy   6.000   0.0717  -717.44       0.00   -719.44  [expires_worthless]
+                                        CYCLE TOTAL   -713.60
+
+Cycle  2023-06-29 → 2023-07-26   IV=13.5% (IVR=0.15)  calls=OTM4 puts=Level1 [FILLED]   ETF=6.0220 RSI=41.4 BBU=6.231 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   7.000   0.0005     4.90       0.00      2.90  [expires_worthless]
+  Put Buy    (Level 1)       buy   6.000   0.0687  -687.48       0.00   -689.48  [expires_worthless]
+                                        CYCLE TOTAL   -686.58
+
+Cycle  2023-07-27 → 2023-08-23   IV=12.8% (IVR=0.10)  calls=OTM4 puts=Level1 [FILLED]   ETF=6.0650 RSI=47.3 BBU=6.166 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   7.000   0.0004     3.92       0.00      1.92  [expires_worthless]
+  Put Buy    (Level 1)       buy   6.000   0.0461  -461.26    2620.00   2156.14  [exercised ETF=5.7380 K=6.0000]
+                                        CYCLE TOTAL   2158.06
+
+Cycle  2023-08-24 → 2023-09-27   IV=17.7% (IVR=0.46)  calls=OTM4 puts=Level1 [FILLED]   ETF=5.7540 RSI=28.5 BBU=6.370 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   6.750   0.0025    25.48       0.00     23.48  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.750   0.1039 -1038.77       0.00  -1040.77  [expires_worthless]
+                                        CYCLE TOTAL  -1017.29
+
+Cycle  2023-09-28 → 2023-10-25   IV=14.2% (IVR=0.21)  calls=OTM4 puts=Level1 [FILLED]   ETF=5.7920 RSI=45.3 BBU=5.927 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   6.750   0.0011    10.78       0.00      8.78  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.750   0.0510  -510.33    2830.00   2317.07  [exercised ETF=5.4670 K=5.7500]
+                                        CYCLE TOTAL   2325.85
+
+Cycle  2023-10-26 → 2023-11-22   IV=13.5% (IVR=0.15)  calls=OTM4 puts=Level1 [FILLED]   ETF=5.4910 RSI=34.3 BBU=5.931 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   6.250   0.0018    17.64       0.00     15.64  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.250   0.0323  -322.82       0.00   -324.82  [expires_worthless]
+                                        CYCLE TOTAL   -309.18
+
+Cycle  2023-11-23 → 2023-12-27   IV=12.2% (IVR=0.12)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=5.7190 RSI=52.7 BBU=5.796 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   6.000   0.0146   146.02       0.00    144.02  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   6.250   0.0034    34.30       0.00     32.30  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.500   0.0271  -270.80    1280.00   1006.60  [exercised ETF=5.3720 K=5.5000]
+                                        CYCLE TOTAL   1182.92
+
+Cycle  2023-12-28 → 2024-01-24   IV=14.5% (IVR=0.32)  calls=OTM4 puts=Level1 [FILLED]   ETF=5.4750 RSI=43.9 BBU=5.733 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   6.250   0.0011    10.78       0.00      8.78  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.250   0.0356  -355.68    2320.00   1961.72  [exercised ETF=5.0180 K=5.2500]
+                                        CYCLE TOTAL   1970.50
+
+Cycle  2024-01-25 → 2024-02-28   IV=17.3% (IVR=0.38)  calls=OTM4 puts=Level1 [FILLED]   ETF=5.1660 RSI=43.7 BBU=5.624 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   6.000   0.0030    30.38       0.00     28.38  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.000   0.1308 -1308.33       0.00  -1310.33  [expires_worthless]
+                                        CYCLE TOTAL  -1281.95
+
+Cycle  2024-02-29 → 2024-03-27   IV=27.6% (IVR=0.87)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=5.4310 RSI=60.5 BBU=5.598 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   5.750   0.0581   581.14       0.00    579.14  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   6.000   0.0235   235.20       0.00    233.20  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.250   0.1035 -1035.00     140.00   -897.60  [exercised ETF=5.2360 K=5.2500]
+                                        CYCLE TOTAL    -85.26
+
+Cycle  2024-03-28 → 2024-04-24   IV=20.5% (IVR=0.50)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=5.3030 RSI=44.9 BBU=5.653 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   5.750   0.0134   134.26       0.00    132.26  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   6.000   0.0038    38.22       0.00     36.22  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.250   0.1141 -1141.46       0.00  -1143.46  [expires_worthless]
+                                        CYCLE TOTAL   -974.98
+
+Cycle  2024-04-25 → 2024-05-22   IV=17.3% (IVR=0.34)  calls=OTM4 puts=Level1 [FILLED]   ETF=5.3410 RSI=47.5 BBU=5.506 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   6.250   0.0005     4.90       0.00      2.90  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.250   0.0789  -788.83       0.00   -790.83  [expires_worthless]
+                                        CYCLE TOTAL   -787.93
+
+Cycle  2024-05-23 → 2024-06-26   IV=17.8% (IVR=0.36)  calls=OTM4 puts=Level1 [FORCE FILL]   ETF=5.3830 RSI=41.7 BBU=5.711 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   5.750   0.0175   175.42       0.00    173.42  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.250   0.0867  -867.00    1780.00    910.40  [exercised ETF=5.0720 K=5.2500]
+                                        CYCLE TOTAL   1083.82
+
+Cycle  2024-06-27 → 2024-07-24   IV=18.1% (IVR=0.38)  calls=OTM4 puts=Level1 [FILLED]   ETF=4.9880 RSI=29.4 BBU=5.441 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   5.750   0.0020    19.60       0.00     17.60  [expires_worthless]
+  Put Buy    (Level 1)       buy   4.900   0.0475  -474.62    1630.00   1152.78  [exercised ETF=4.7370 K=4.9000]
+                                        CYCLE TOTAL   1170.38
+
+Cycle  2024-07-25 → 2024-08-28   IV=15.4% (IVR=0.24)  calls=OTM4 puts=Level1 [FILLED]   ETF=4.7310 RSI=29.1 BBU=5.097 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   5.250   0.0049    49.00       0.00     47.00  [expires_worthless]
+  Put Buy    (Level 1)       buy   4.700   0.1057 -1056.60    1320.00    260.80  [exercised ETF=4.5680 K=4.7000]
+                                        CYCLE TOTAL    307.80
+
+Cycle  2024-08-29 → 2024-09-25   IV=15.6% (IVR=0.25)  calls=OTM4 puts=Level1 [FILLED]   ETF=4.6320 RSI=38.4 BBU=4.915 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   4.823   0.0208   211.08       0.00    209.08  [expires_worthless]
+  Put Buy    (Level 1)       buy   4.626   0.0986 -1001.89       0.00  -1003.89  [expires_worthless]
+                                        CYCLE TOTAL   -794.81
+
+Cycle  2024-09-26 → 2024-10-23   IV=24.0% (IVR=0.68)  calls=OTM4 puts=Level1 [FILLED]   ETF=5.0610 RSI=73.6 BBU=4.893 (Total 1 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Put Buy    (Level 1)       buy   5.000   0.1613 -1613.25       0.00  -1615.25  [expires_worthless]
+                                        CYCLE TOTAL  -1615.25
+
+Cycle  2024-10-24 → 2024-11-27   IV=27.4% (IVR=0.31)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=5.8180 RSI=64.2 BBU=6.476 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   6.250   0.0711   711.48       0.00    709.48  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   6.500   0.0400   399.84       0.00    397.84  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.750   0.1685 -1685.18       0.00  -1687.18  [expires_worthless]
+                                        CYCLE TOTAL   -579.86
+
+Cycle  2024-11-28 → 2024-12-25   IV=21.8% (IVR=0.21)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=5.8580 RSI=46.9 BBU=6.500 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   6.000   0.0886   885.92       0.00    883.92  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   6.152   0.0510   517.75       0.00    515.75  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.750   0.1256 -1255.91       0.00  -1257.91  [expires_worthless]
+                                        CYCLE TOTAL    141.76
+
+Cycle  2024-12-26 → 2025-01-22   IV=20.3% (IVR=0.15)  calls=OTM4 puts=Level1 [FILLED]   ETF=5.9770 RSI=49.3 BBU=6.164 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   6.750   0.0088    88.20       0.00     86.20  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.750   0.0784  -784.29    1430.00    643.11  [exercised ETF=5.6070 K=5.7500]
+                                        CYCLE TOTAL    729.31
+
+Cycle  2025-01-23 → 2025-02-26   IV=22.5% (IVR=0.18)  calls=OTM4 puts=Level1 [FILLED]   ETF=5.5840 RSI=42.0 BBU=5.974 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   6.000   0.0410   409.64    -450.00    -42.36  [assigned  ETF=6.0450 K=6.0000]
+  Put Buy    (Level 1)       buy   5.500   0.1016 -1016.15       0.00  -1018.15  [expires_worthless]
+                                        CYCLE TOTAL  -1060.51
+
+Cycle  2025-02-27 → 2025-03-26   IV=14.7% (IVR=0.03)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=6.0290 RSI=61.0 BBU=6.177 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   6.250   0.0402   401.80       0.00    399.80  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   6.394   0.0216   219.16       0.00    217.16  [expires_worthless]
+  Put Buy    (Level 1)       buy   6.000   0.1320 -1320.04     590.00   -732.64  [exercised ETF=5.9410 K=6.0000]
+                                        CYCLE TOTAL   -115.69
+
+Cycle  2025-03-27 → 2025-04-23   IV=13.9% (IVR=0.01)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=5.9560 RSI=48.3 BBU=6.150 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   6.250   0.0211   210.70       0.00    208.70  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   6.500   0.0073    72.52       0.00     70.52  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.750   0.0518  -517.98    1220.00    699.42  [exercised ETF=5.6280 K=5.7500]
+                                        CYCLE TOTAL    978.64
+
+Cycle  2025-04-24 → 2025-05-28   IV=14.3% (IVR=0.08)  calls=OTM4 puts=Level1 [FILLED]   ETF=5.6050 RSI=43.4 BBU=6.027 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   6.500   0.0054    53.90       0.00     51.90  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.500   0.1004 -1003.89       0.00  -1005.89  [expires_worthless]
+                                        CYCLE TOTAL   -953.99
+
+Cycle  2025-05-29 → 2025-06-25   IV=14.0% (IVR=0.08)  calls=OTM4 puts=Level1 [FILLED]   ETF=5.7270 RSI=52.5 BBU=5.825 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   6.149   0.0095    96.63       0.00     94.63  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.657   0.1149 -1168.44       0.00  -1170.44  [expires_worthless]
+                                        CYCLE TOTAL  -1075.81
+
+Cycle  2025-06-26 → 2025-07-23   IV=15.3% (IVR=0.10)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=5.8880 RSI=61.4 BBU=5.899 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   6.250   0.0188   188.16    -200.00    -13.84  [assigned  ETF=6.2700 K=6.2500]
+  Call OTM3 (Dyn-A)         sell   6.500   0.0098    98.00       0.00     96.00  [expires_worthless]
+  Put Buy    (Level 1)       buy   5.750   0.0614  -614.15       0.00   -616.15  [expires_worthless]
+                                        CYCLE TOTAL   -533.99
+
+Cycle  2025-07-24 → 2025-08-27   IV=15.6% (IVR=0.11)  calls=OTM4 puts=Level1 [FILLED]   ETF=6.3630 RSI=80.6 BBU=6.335 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   7.250   0.0131   131.32       0.00    129.32  [expires_worthless]
+  Put Buy    (Level 1)       buy   6.250   0.1128 -1128.23       0.00  -1130.23  [expires_worthless]
+                                        CYCLE TOTAL  -1000.91
+
+Cycle  2025-08-28 → 2025-09-24   IV=22.4% (IVR=0.23)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=7.1040 RSI=77.4 BBU=7.178 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   7.500   0.0789   788.90       0.00    786.90  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   7.750   0.0479   479.22       0.00    477.22  [expires_worthless]
+  Put Buy    (Level 1)       buy   7.000   0.1622 -1621.79       0.00  -1623.79  [expires_worthless]
+                                        CYCLE TOTAL   -359.67
+
+Cycle  2025-09-25 → 2025-10-22   IV=18.7% (IVR=0.17)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=7.4410 RSI=68.4 BBU=7.524 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   7.750   0.0570   570.36       0.00    568.36  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   8.000   0.0248   247.94       0.00    245.94  [expires_worthless]
+  Put Buy    (Level 1)       buy   7.250   0.1279 -1279.15     260.00  -1021.75  [exercised ETF=7.2240 K=7.2500]
+                                        CYCLE TOTAL   -207.45
+
+Cycle  2025-10-23 → 2025-11-26   IV=18.3% (IVR=0.26)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=7.2490 RSI=50.2 BBU=7.614 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   7.500   0.0792   791.84       0.00    789.84  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   7.750   0.0353   352.80       0.00    350.80  [expires_worthless]
+  Put Buy    (Level 1)       buy   7.000   0.1257 -1257.29       0.00  -1259.29  [expires_worthless]
+                                        CYCLE TOTAL   -118.65
+
+Cycle  2025-11-27 → 2025-12-24   IV=14.4% (IVR=0.18)  calls=OTM4 puts=Level1 [FILLED]   ETF=7.0500 RSI=39.8 BBU=7.624 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   8.000   0.0021    20.58       0.00     18.58  [expires_worthless]
+  Put Buy    (Level 1)       buy   7.000   0.1335 -1335.09       0.00  -1337.09  [expires_worthless]
+                                        CYCLE TOTAL  -1318.51
+
+Cycle  2025-12-25 → 2026-01-28   IV=15.2% (IVR=0.21)  calls=OTM4 puts=Level1 [FILLED]   ETF=7.5340 RSI=64.6 BBU=7.480 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   8.500   0.0074    74.48   -1910.00  -1837.52  [assigned  ETF=8.6910 K=8.5000]
+  Put Buy    (Level 1)       buy   7.500   0.1712 -1711.92       0.00  -1713.92  [expires_worthless]
+                                        CYCLE TOTAL  -3551.44
+
+Cycle  2026-01-29 → 2026-02-25   IV=22.8% (IVR=0.51)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=8.5910 RSI=68.6 BBU=8.902 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   8.750   0.1519  1519.00       0.00   1517.00  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   8.933   0.1023  1030.79       0.00   1028.79  [expires_worthless]
+  Put Buy    (Level 1)       buy   8.500   0.1334 -1334.06       0.00  -1336.06  [expires_worthless]
+                                        CYCLE TOTAL   1209.74
+
+Cycle  2026-02-26 → 2026-03-25   IV=19.8% (IVR=0.39)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=8.6300 RSI=61.1 BBU=8.795 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   8.750   0.1366  1366.12       0.00   1364.12  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   8.933   0.0779   784.94       0.00    782.94  [expires_worthless]
+  Put Buy    (Level 1)       buy   8.500   0.1417 -1417.16    6740.00   5320.24  [exercised ETF=7.8260 K=8.5000]
+                                        CYCLE TOTAL   7467.30
+
+Cycle  2026-03-26 → 2026-04-22   IV=22.7% (IVR=0.50)  calls=OTM4 puts=Level1 [FILLED]   ETF=7.7000 RSI=36.9 BBU=8.898 (Total 2 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM4 (Dyn-B)         sell   8.500   0.0139   139.16       0.00    137.16  [expires_worthless]
+  Put Buy    (Level 1)       buy   7.500   0.1288 -1288.45       0.00  -1290.45  [expires_worthless]
+                                        CYCLE TOTAL  -1153.29
+
+Cycle  2026-04-23 → 2026-05-27   IV=19.6% (IVR=0.40)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=8.3750 RSI=59.9 BBU=8.562 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   8.750   0.0788   787.92       0.00    785.92  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   9.000   0.0370   370.44       0.00    368.44  [expires_worthless]
+  Put Buy    (Level 1)       buy   8.250   0.1548 -1548.18       0.00  -1550.18  [expires_worthless]
+                                        CYCLE TOTAL   -395.82
+
+Cycle  2026-05-28 → 2026-06-24   IV=21.0% (IVR=0.44)  calls=OTM2+OTM3 puts=Level1 [FILLED]   ETF=8.6490 RSI=53.1 BBU=9.026 (Total 3 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call OTM2 (Dyn-A)         sell   8.750   0.1575  1574.86       0.00   1572.86  [expires_worthless]
+  Call OTM3 (Dyn-A)         sell   8.933   0.0997  1004.13       0.00   1002.13  [expires_worthless]
+  Put Buy    (Level 1)       buy   8.500   0.1869 -1869.07    3290.00   1418.33  [exercised ETF=8.1710 K=8.5000]
+                                        CYCLE TOTAL   3993.33
+
+======================================================================
+  SUMMARY  [DYNAMIC ALPHA + PUT LIMIT]
+======================================================================
+  Cycles traded          : 45
+  Winning cycles         : 15/45  (33%)
+  Avg gross premium/cyc  :  -557.17 RMB
+  Total net P&L          :  1661.96 RMB
+  Put limit fill rate    : 97.8% (44/45 cycles)
+  Cumulative by cycle    : ['-798', '-1286', '-465', '-930', '-1537', '-1969', '-1929', '-2365', '-3079', '-3765', '-1607', '-2624', '-299', '-608', '575', '2546', '1264', '1178', '203', '-584', '499', '1670', '1978', '1183', '-433', '-1012', '-871', '-141', '-1202', '-1318', '-339', '-1293', '-2369', '-2903', '-3904', '-4263', '-4471', '-4589', '-5908', '-9459', '-8250', '-782', '-1936', '-2331', '1662']
+  ── Placement & Filter Lift ─────────────────────────────────────
+  Placement rate         : 42.2%  (19/45 cycles)
+  Avg P&L / placed cycle :  +601.26 RMB
+  Avg P&L / all cycles   :   +36.93 RMB
+  Filter lift            :  +564.33 RMB/cycle
+  ─────────────────────────────────────────────────────────────
+
+  Chart saved → backtest/backtest_cc_500ETF_withput_alpha_putlimit.png
+  CSV  saved → backtest/backtest_cc_500ETF_withput_alpha_putlimit.csv

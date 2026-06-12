@@ -47,8 +47,11 @@ Enter using limit orders:
 - We want to have 90%+ confidence that we can enter
 
 ## TODO
-[x] Download option datas (we will use real data only for now, 5 minutes, only 1 month from expirey) and ETF data
-[x] Research daily relationship between Open and High (Distribution plots, 90% success/fill rate)
-[ ] For each Thursday, in 5 minutes interval, predict the max of (Thursday High, Friday High) to achieve 90%+ entry confidence where option ask price <= Thursday open * 0.98
-[ ] Compare two predictive approaches: ETF High prediction vs Option High prediction
+- [x] Download option datas (we will use real data only for now, 5 minutes, only 1 month from expirey) and ETF data
+- [x] Research daily relationship between Open and High (Distribution plots, 90% success/fill rate)
+- [x] For each Thursday, in 5 minutes interval, predict the max of (Thursday High, Friday High) to achieve 90%+ entry confidence where option ask price <= Thursday open * 0.98
+- [x] Compare two predictive approaches: ETF High prediction vs Option High prediction
+- [x] Implement Black-Scholes mapping limit entry for protective puts to prevent overfitting and leverage robust daily ETF models.
+- [x] Validate BS-mapping limit entry across all 3 ETFs (50/300/500) and verify 90%+ fill rates and improved net P&L.
+
 

@@ -1,0 +1,12 @@
+{
+  "etf_key": "500",
+  "features": [
+    "open_high_model_predicted_etf_p10"
+  ],
+  "model_type": "black_scholes_mapping",
+  "quantile": 0.9,
+  "rolling_coverage": 97.77777777777777,
+  "rolling_mean_pred_offset": -10.87873368100958,
+  "rolling_pinball_loss": 0.0,
+  "rolling_n_predictions": 45
+}
