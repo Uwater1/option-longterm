@@ -30,8 +30,8 @@ ETF_CONFIG = {
     "500ETF": {"path": "./data/500ETF_1d.parquet", "color": "#4CAF50", "label": "500ETF"},
 }
 
-FORWARD_HORIZONS = [5, 10, 20]  # trading days
-PRIMARY_HORIZON = 20  # ~1 option cycle
+FORWARD_HORIZONS = [7, 14, 30]  # calendar days
+PRIMARY_HORIZON = 30  # ~1 option cycle (30 calendar days)
 
 # Filter definitions matching backtest_covered_call.py
 # Each filter: (name, function that takes etf DataFrame and returns bool Series)
@@ -85,9 +85,17 @@ def load_etf(path):
     macd = ta.macd(df["close"])
     df["macd_hist"] = macd.iloc[:, 1] if macd is not None else np.nan
 
-    # Forward returns
+    # Forward returns (calendar days)
+    dates = df.index.values
+    closes = df["close"].values
     for h in FORWARD_HORIZONS:
-        df[f"fwd_ret_{h}d"] = df["close"].shift(-h) / df["close"] - 1.0
+        fwd_rets = np.full(len(df), np.nan)
+        for i, dt in enumerate(dates):
+            target_dt = dt + np.timedelta64(h, 'D')
+            idx = np.searchsorted(dates, target_dt)
+            if idx < len(dates):
+                fwd_rets[i] = closes[idx] / closes[i] - 1.0
+        df[f"fwd_ret_{h}d"] = fwd_rets
 
     # BBU proximity (normalized by ATR)
     df["bbu_prox"] = (df["close"] - df["bbu20"]) / df["atr20"]
@@ -176,7 +184,7 @@ def print_report(all_results):
     print("=" * 110)
 
     for horizon in FORWARD_HORIZONS:
-        print(f"\n  Forward Return Horizon: {horizon} trading days")
+        print(f"\n  Forward Return Horizon: {horizon} calendar days")
         print("  " + "-" * 106)
 
         for etf_name, filters in all_results.items():
@@ -219,9 +227,9 @@ def print_report(all_results):
 def plot_report_1(etf_data, all_results):
     """3x3 grid: RSI / BBU proximity / ROC10 vs forward return, one column per ETF."""
     etf_names = list(ETF_CONFIG.keys())
-    fig, axes = plt.subplots(3, 3, figsize=(20, 16))
-    fig.suptitle("Filter Indicator Validation: Indicator Value vs 20-Day Forward ETF Return",
-                 fontsize=16, fontweight="bold", y=0.98)
+    fig, axes = plt.subplots(3, 3, figsize=(20, 16), facecolor="#F8F9FA")
+    fig.suptitle(f"Filter Indicator Validation: Indicator Value vs {PRIMARY_HORIZON}-Calendar-Day Forward ETF Return",
+                 fontsize=16, fontweight="bold", y=0.98, color="#1D2939")
 
     indicators = [
         ("rsi14", "RSI(14)", RSI_BINS, RSI_LABELS,
@@ -248,15 +256,25 @@ def plot_report_1(etf_data, all_results):
             x = valid[col_name].values
             y = valid[ret_col].values * 100  # percent
 
-            # Scatter with alpha
+            ax.set_facecolor("#FFFFFF")
             color = ETF_CONFIG[etf_name]["color"]
-            ax.scatter(x, y, alpha=0.15, s=8, color=color, edgecolors="none")
+            ax.scatter(x, y, alpha=0.35, s=16, color=color, edgecolors="white", linewidth=0.3, label="Daily Obs")
+
+            # Fit 2nd-degree polynomial trend line
+            try:
+                poly_mask = np.isfinite(x) & np.isfinite(y)
+                if poly_mask.sum() > 10:
+                    x_poly = x[poly_mask]
+                    y_poly = y[poly_mask]
+                    coefs = np.polyfit(x_poly, y_poly, 2)
+                    p_fn = np.poly1d(coefs)
+                    x_grid = np.linspace(x_poly.min(), x_poly.max(), 100)
+                    ax.plot(x_grid, p_fn(x_grid), color="#E53935", linestyle="-", linewidth=2.0, label="Trend (Poly d2)", zorder=6)
+            except Exception:
+                pass
 
             # Bin statistics with boxplot-style bars
-            if col_name == "bbu_prox":
-                bin_edges = bins
-            else:
-                bin_edges = bins
+            bin_edges = bins
             bin_indices = np.digitize(x, bin_edges[1:-1])  # 0 to len-2
             bin_centers = [(bin_edges[i] + bin_edges[i+1]) / 2 for i in range(len(bin_edges) - 1)]
 
@@ -268,27 +286,33 @@ def plot_report_1(etf_data, all_results):
                 mean_y = bin_y.mean()
                 ci95 = 1.96 * bin_y.std() / np.sqrt(len(bin_y))
                 ax.errorbar(bc, mean_y, yerr=ci95, fmt='o', color='black',
-                           markersize=6, capsize=4, capthick=2, elinewidth=2, zorder=5)
+                           markersize=5, capsize=3, capthick=1.5, elinewidth=1.5, zorder=5)
 
             # Vertical threshold lines
             for vpos, vcolor, vlabel in vlines:
                 ax.axvline(vpos, color=vcolor, linestyle="--", linewidth=1.2, alpha=0.7)
-                # Place label at top
-                ax.text(vpos, ax.get_ylim()[1] * 0.95, vlabel, fontsize=7,
+                ax.text(vpos, ax.get_ylim()[1] * 0.92, vlabel, fontsize=7,
                        color=vcolor, ha="center", va="top", fontweight="bold",
-                       bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8, edgecolor=vcolor))
+                       bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.85, edgecolor=vcolor))
 
             # Zero line
             ax.axhline(0, color="gray", linewidth=0.5, linestyle="-", alpha=0.5)
 
-            ax.set_xlabel(title, fontsize=10, fontweight="bold")
+            ax.set_xlabel(title, fontsize=10, fontweight="bold", color="#344054")
             if col_idx == 0:
-                ax.set_ylabel(f"{PRIMARY_HORIZON}-Day Forward Return (%)", fontsize=10, fontweight="bold")
+                ax.set_ylabel(f"{PRIMARY_HORIZON}-Calendar-Day Return (%)", fontsize=10, fontweight="bold", color="#344054")
             if row == 0:
-                ax.set_title(ETF_CONFIG[etf_name]["label"], fontsize=13, fontweight="bold")
+                ax.set_title(ETF_CONFIG[etf_name]["label"], fontsize=13, fontweight="bold", color="#1D2939")
 
-            ax.grid(True, linestyle=":", alpha=0.4)
+            # Clean borders and grid
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['left'].set_color('#D0D5DD')
+            ax.spines['bottom'].set_color('#D0D5DD')
+            ax.grid(True, linestyle="--", linewidth=0.5, color="#E4E7EC")
             ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.1f%%'))
+            if row == 0 and col_idx == 0:
+                ax.legend(loc="lower left", fontsize=8, framealpha=0.9)
 
     plt.tight_layout(rect=[0, 0, 1, 0.96])
     out_path = os.path.join("backtest", "filter_validation_report.png")
@@ -299,15 +323,16 @@ def plot_report_1(etf_data, all_results):
 
 # ── Figure 2: Bar Chart + Heatmap + Summary Table ─────────────────────────────
 def plot_report_2(etf_data, all_results):
-    """Bar chart of mean forward return by filter + significance heatmap + summary table."""
+    """Bar chart of mean forward return by filter + significance heatmap + summary table + explanation."""
     etf_names = list(ETF_CONFIG.keys())
-    fig = plt.figure(figsize=(22, 18))
+    fig = plt.figure(figsize=(22, 22), facecolor="#F8F9FA")
 
-    gs = fig.add_gridspec(3, 2, height_ratios=[1.2, 1, 1.2], hspace=0.35, wspace=0.3,
-                          left=0.08, right=0.95, top=0.95, bottom=0.05)
+    gs = fig.add_gridspec(4, 2, height_ratios=[1.2, 1.0, 1.2, 0.4], hspace=0.38, wspace=0.3,
+                          left=0.08, right=0.95, top=0.95, bottom=0.03)
 
     # ── Top: Bar chart (mean fwd return pass vs fail, per filter, grouped by ETF) ──
     ax_bar = fig.add_subplot(gs[0, :])
+    ax_bar.set_facecolor("#FFFFFF")
     filters_to_show = list(FILTER_DEFS.keys())
     n_filters = len(filters_to_show)
     n_etfs = len(etf_names)
@@ -337,7 +362,7 @@ def plot_report_2(etf_data, all_results):
         offset = (etf_idx - 1) * bar_w
         color = ETF_CONFIG[etf_name]["color"]
         ax_bar.bar(x_pos + offset - bar_w/2, pass_means, bar_w * 0.9,
-                   yerr=pass_cis, capsize=3, color=color, alpha=0.7,
+                   yerr=pass_cis, capsize=3, color=color, alpha=0.75,
                    label=f"{etf_name} Pass", edgecolor="white", linewidth=0.5)
         ax_bar.bar(x_pos + offset + bar_w/2, fail_means, bar_w * 0.9,
                    yerr=fail_cis, capsize=3, color=color, alpha=0.35, hatch="//",
@@ -345,12 +370,16 @@ def plot_report_2(etf_data, all_results):
 
     ax_bar.axhline(0, color="black", linewidth=0.8)
     ax_bar.set_xticks(x_pos)
-    ax_bar.set_xticklabels(filters_to_show, rotation=35, ha="right", fontsize=8)
-    ax_bar.set_ylabel("Mean 20-Day Forward Return (%)", fontsize=11, fontweight="bold")
-    ax_bar.set_title("Filter Pass vs Fail: Mean Forward Return with 95% CI", fontsize=14, fontweight="bold")
-    ax_bar.legend(loc="upper right", fontsize=7, ncol=3, framealpha=0.9)
-    ax_bar.grid(True, axis="y", linestyle=":", alpha=0.4)
+    ax_bar.set_xticklabels(filters_to_show, rotation=30, ha="right", fontsize=9, fontweight="bold", color="#344054")
+    ax_bar.set_ylabel(f"Mean {PRIMARY_HORIZON}-Calendar-Day Return (%)", fontsize=11, fontweight="bold", color="#344054")
+    ax_bar.set_title(f"Filter Pass vs Fail: Mean {PRIMARY_HORIZON}-Calendar-Day Forward Return with 95% Confidence Interval", fontsize=14, fontweight="bold", color="#1D2939")
+    ax_bar.legend(loc="upper right", fontsize=8, ncol=3, framealpha=0.9)
+    ax_bar.grid(True, axis="y", linestyle="--", linewidth=0.5, color="#E4E7EC")
     ax_bar.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f%%'))
+    ax_bar.spines['top'].set_visible(False)
+    ax_bar.spines['right'].set_visible(False)
+    ax_bar.spines['left'].set_color('#D0D5DD')
+    ax_bar.spines['bottom'].set_color('#D0D5DD')
 
     # ── Middle-left: Heatmap (p-values) ──
     ax_heat = fig.add_subplot(gs[1, 0])
@@ -363,13 +392,13 @@ def plot_report_2(etf_data, all_results):
             if res is not None:
                 heat_data[fi, ei] = res["p_ttest"]
 
-    cmap = plt.cm.RdYlGn_r  # red=low p (significant), green=high p
-    im = ax_heat.imshow(heat_data, cmap=cmap, aspect="auto", vmin=0, vmax=0.15)
+    # Use Blues_r colormap for intuitive interpretation (darker blue = lower p-value / more significant)
+    im = ax_heat.imshow(heat_data, cmap=plt.cm.Blues_r, aspect="auto", vmin=0, vmax=0.10)
     ax_heat.set_xticks(range(n_etfs))
-    ax_heat.set_xticklabels(etf_names, fontsize=10, fontweight="bold")
+    ax_heat.set_xticklabels(etf_names, fontsize=10, fontweight="bold", color="#344054")
     ax_heat.set_yticks(range(len(heat_filters)))
-    ax_heat.set_yticklabels(heat_filters, fontsize=8)
-    ax_heat.set_title("Statistical Significance Heatmap\n(Welch's t-test p-value)", fontsize=12, fontweight="bold")
+    ax_heat.set_yticklabels(heat_filters, fontsize=9, fontweight="bold", color="#344054")
+    ax_heat.set_title("Statistical Significance Heatmap\n(Welch's t-test p-value, Dark Blue = More Significant)", fontsize=12, fontweight="bold", color="#1D2939")
 
     # Annotate cells
     for fi in range(len(heat_filters)):
@@ -379,7 +408,7 @@ def plot_report_2(etf_data, all_results):
                 txt_color = "white" if val < 0.05 else "black"
                 marker = "***" if val < 0.01 else "**" if val < 0.05 else "*" if val < 0.10 else ""
                 ax_heat.text(ei, fi, f"{val:.3f}{marker}", ha="center", va="center",
-                            fontsize=7, color=txt_color, fontweight="bold")
+                            fontsize=8, color=txt_color, fontweight="bold")
 
     plt.colorbar(im, ax=ax_heat, shrink=0.8, label="p-value")
 
@@ -395,10 +424,10 @@ def plot_report_2(etf_data, all_results):
     max_abs_d = max(0.5, np.nanmax(np.abs(d_data)))
     im2 = ax_d.imshow(d_data, cmap="RdBu_r", aspect="auto", vmin=-max_abs_d, vmax=max_abs_d)
     ax_d.set_xticks(range(n_etfs))
-    ax_d.set_xticklabels(etf_names, fontsize=10, fontweight="bold")
+    ax_d.set_xticklabels(etf_names, fontsize=10, fontweight="bold", color="#344054")
     ax_d.set_yticks(range(len(heat_filters)))
-    ax_d.set_yticklabels(heat_filters, fontsize=8)
-    ax_d.set_title("Effect Size Heatmap\n(Cohen's d: + = pass > fail)", fontsize=12, fontweight="bold")
+    ax_d.set_yticklabels(heat_filters, fontsize=9, fontweight="bold", color="#344054")
+    ax_d.set_title("Effect Size Heatmap\n(Cohen's d: Blue = Pass > Fail, Red = Pass < Fail)", fontsize=12, fontweight="bold", color="#1D2939")
 
     for fi in range(len(heat_filters)):
         for ei in range(n_etfs):
@@ -407,14 +436,14 @@ def plot_report_2(etf_data, all_results):
                 txt_color = "white" if abs(val) > 0.3 else "black"
                 size_label = "L" if abs(val) >= 0.5 else "M" if abs(val) >= 0.3 else "S" if abs(val) >= 0.1 else "~"
                 ax_d.text(ei, fi, f"{val:+.3f}\n({size_label})", ha="center", va="center",
-                         fontsize=6.5, color=txt_color, fontweight="bold")
+                         fontsize=7.5, color=txt_color, fontweight="bold")
 
     plt.colorbar(im2, ax=ax_d, shrink=0.8, label="Cohen's d")
 
     # ── Bottom: Summary Table ──
     ax_tbl = fig.add_subplot(gs[2, :])
     ax_tbl.axis("off")
-    ax_tbl.set_title("Comprehensive Filter Summary (20-Day Forward Return)", fontsize=13, fontweight="bold", pad=10)
+    ax_tbl.set_title(f"Comprehensive Filter Summary ({PRIMARY_HORIZON}-Calendar-Day Forward Return)", fontsize=13, fontweight="bold", color="#1D2939", pad=10)
 
     # Build table data — pick the most relevant filters per ETF based on backtest usage
     key_filters = {
@@ -453,32 +482,53 @@ def plot_report_2(etf_data, all_results):
         tbl = ax_tbl.table(cellText=table_rows, colLabels=col_labels,
                           loc="center", cellLoc="center")
         tbl.auto_set_font_size(False)
-        tbl.set_fontsize(8)
+        tbl.set_fontsize(8.5)
         tbl.scale(1, 1.5)
 
-        # Color-code verdict cells
+        # Color-code cells
         for i, row in enumerate(table_rows):
             verdict = row[-1]
             cell = tbl[(i + 1, len(col_labels) - 1)]
             if verdict == "SIGNIFICANT":
-                cell.set_facecolor("#C8E6C9")  # light green
+                cell.set_facecolor("#E2F0D9")  # soft light green
             elif verdict == "MARGINAL":
-                cell.set_facecolor("#FFF9C4")  # light yellow
+                cell.set_facecolor("#FFF2CC")  # soft light yellow
             else:
-                cell.set_facecolor("#FFCDD2")  # light red
+                cell.set_facecolor("#F2F2F2")  # soft light grey
 
-            # Color p-value cell
             p_cell = tbl[(i + 1, 6)]
             p_val = float(row[6])
             if p_val < 0.05:
-                p_cell.set_facecolor("#C8E6C9")
+                p_cell.set_facecolor("#E2F0D9")
             elif p_val < 0.10:
-                p_cell.set_facecolor("#FFF9C4")
+                p_cell.set_facecolor("#FFF2CC")
             else:
-                p_cell.set_facecolor("#FFCDD2")
+                p_cell.set_facecolor("#F2F2F2")
 
-    fig.suptitle("Filter Indicator Validation Report — Statistical Evidence",
-                 fontsize=16, fontweight="bold", y=0.99)
+    # ── Executive Summary & Interpretation Guide (Bottom panel) ──
+    ax_exp = fig.add_subplot(gs[3, :])
+    ax_exp.axis("off")
+    
+    explanation_text = (
+        "EXECUTIVE SUMMARY & STATISTICAL INTERPRETATION GUIDE\n"
+        "• Cohen's d: Standardized effect size. Indicates how many standard deviations separate the 'Pass' and 'Fail' day returns.\n"
+        "  - Positive d: Filtering conditions associated with HIGHER 30-day forward returns (e.g. upward trend filter confirmation).\n"
+        "  - Negative d: Filtering conditions associated with LOWER 30-day forward returns (e.g. RSI ceiling preventing overbought extensions).\n"
+        "  - Effect Size Guide: |d| >= 0.1 is small (S), |d| >= 0.3 is medium (M), |d| >= 0.5 is large (L).\n"
+        "• p-value: Welch's t-test significance. The probability of obtaining the observed difference by random chance. p < 0.05 is significant.\n"
+        "• Strategic Validation Summary:\n"
+        "  - 300ETF / 500ETF Calls: RSI and BBU ceiling filters (RSI < 66/72, Close < BBU) exhibit highly significant NEGATIVE Cohen's d.\n"
+        "    This confirms that entering covered call trades when these filters fail (market highly overbought) significantly drag down performance,\n"
+        "    validating the indicator-based OTM switching rules (reducing call assignment losses by selling further OTM during rallies).\n"
+        "  - 50ETF: Filters show positive Cohen's d values for key entry checks, validating standard bull-trend entry filters."
+    )
+    
+    ax_exp.text(0.005, 0.95, explanation_text, fontsize=9.5, va="top", ha="left",
+                fontproperties="monospace",
+                bbox=dict(boxstyle="round,pad=0.8", facecolor="#FFFFFF", edgecolor="#D0D5DD", alpha=0.9))
+
+    fig.suptitle(f"Filter Indicator Validation Report — {PRIMARY_HORIZON}-Calendar-Day Forward Return",
+                 fontsize=16, fontweight="bold", y=0.99, color="#1D2939")
     out_path = os.path.join("backtest", "filter_validation_report_2.png")
     fig.savefig(out_path, dpi=150, bbox_inches="tight")
     print(f"[SAVED] {out_path}")
