@@ -44,6 +44,9 @@ SKIP_OTM4      = True
 DYNAMIC_ALPHA_MODE = False
 USE_MODEL_OFFSET = False  # --model-offset: use trained open-high P10 model for limit orders
 _model_meta = None        # Loaded lazily when USE_MODEL_OFFSET is True
+USE_PUT_LIMIT_ENTRY = False
+_put_limit_meta = None
+
 # ── Underlying Config (Dynamic based on CLI) ───────────────────────────────────
 # Default: 300ETF
 ETF_NAME = "300ETF"
@@ -428,6 +431,35 @@ def get_strike_by_level(opt, etf, entry_date, expiry_date, option_type, level):
 
 
 # ── Per-cycle P&L ─────────────────────────────────────────────────────────────
+
+
+def _predict_put_limit_offset(etf_df, entry_date, S_open, K, T, P_open):
+    """Predict the P90 offset (%) for a given entry date using the BS mapping method
+    based on the open-high model's ETF prediction.
+    Returns the predicted offset as a fraction (e.g., -0.05 for -5%), or None if unavailable."""
+    try:
+        R_ETF_P10_frac = _predict_model_offset(etf_df, entry_date)
+        if R_ETF_P10_frac is None:
+            etf_key = {"50ETF": "50", "300ETF": "300", "500ETF": "500"}.get(ETF_NAME, "300")
+            fallbacks = {"50": 0.001634, "300": 0.001505, "500": 0.001687}
+            R_ETF_P10_frac = fallbacks.get(etf_key, 0.0015)
+        
+        # Solve for open IV
+        sigma_open = compute_iv(P_open, S_open, K, T, RISK_FREE, False)
+        
+        # Predict limit price using BS formula at target ETF high
+        S_target = S_open * (1 + R_ETF_P10_frac)
+        T_new = max(T - 1/365.0, 1/365.0)
+        P_limit = _bs_price(S_target, K, T_new, RISK_FREE, sigma_open, False)
+        
+        if P_open <= 0:
+            return 0.0
+        return (P_limit - P_open) / P_open
+    except Exception as e:
+        return None
+
+
+
 def _load_model_offset():
     """Load the trained open-high model for limit order offset prediction."""
     global _model_meta
@@ -470,7 +502,7 @@ def _predict_model_offset(etf_df, entry_date):
         return None
 
 
-def calc_leg_pnl(leg, opt, etf, expiry_date, side, is_buyer_at_expiry, sell_spread=None):
+def calc_leg_pnl(leg, opt, etf, expiry_date, side, is_buyer_at_expiry, sell_spread=None, override_exec_px=None):
     # NO_FILTER_MODE is set globally from CLI
     """
     Compute the full P&L (in RMB) for a single option leg.
@@ -484,6 +516,7 @@ def calc_leg_pnl(leg, opt, etf, expiry_date, side, is_buyer_at_expiry, sell_spre
     side               : 'sell' or 'buy'
     is_buyer_at_expiry : True if WE are the option buyer (put spread buy leg)
     sell_spread        : Override SPREAD_HALF for sell-side execution (from model)
+    override_exec_px   : Directly set the execution price (e.g. from 5m limit order simulation)
 
     Returns dict with: entry_px, exec_px, premium_rmb, exercise_pnl_rmb,
                        commission_rmb, exercise_cost_rmb, net_rmb, note
@@ -504,7 +537,9 @@ def calc_leg_pnl(leg, opt, etf, expiry_date, side, is_buyer_at_expiry, sell_spre
     #   Limit orders don't cross the bid-ask spread — we sell at mid price.
     #   The model only predicts whether the limit will fill (90% confidence),
     #   not a price discount. Only commission applies as transaction cost.
-    if sell_spread is not None and side == "sell":
+    if override_exec_px is not None:
+        exec_px = override_exec_px
+    elif sell_spread is not None and side == "sell":
         exec_px = entry_mid   # limit order: sell at mid, no spread slippage
     elif side == "sell":
         exec_px = entry_mid * (1 - SPREAD_HALF)   # market order: sell at bid
@@ -574,7 +609,7 @@ def calc_leg_pnl(leg, opt, etf, expiry_date, side, is_buyer_at_expiry, sell_spre
     }
 
 
-def calc_cycle_pnl(cyc, opt, etf, daily_ivs):
+def calc_cycle_pnl(cyc, opt, etf, daily_ivs, opt_5m=None, etf_5m=None):
     """
     Run a full cycle and return a summary dict.
     daily_ivs is a pd.Series of 30-day interpolated IVs indexed by date.
@@ -721,9 +756,75 @@ def calc_cycle_pnl(cyc, opt, etf, daily_ivs):
 
     results = []
     
+    # Put limit entry details
+    put_filled = None
+    put_fill_time = None
+    put_exec_px = None
+    put_limit_px = None
+    put_trigger_val = None
+
     for leg, side, label in legs_to_process:
+        override_px = None
+        if side == "buy" and USE_PUT_LIMIT_ENTRY and opt_5m is not None and etf_5m is not None:
+            try:
+                trading_days = list(etf.index.unique())
+                entry_norm = entry.normalize()
+                entry_idx = trading_days.index(entry_norm)
+                window_days = trading_days[entry_idx : entry_idx + 2]
+                
+                order_book_id = leg["order_book_id"]
+                contract_5m = opt_5m[
+                    (opt_5m["order_book_id"] == order_book_id) &
+                    (opt_5m["datetime"].dt.normalize().isin(window_days))
+                ].sort_values("datetime")
+                
+                # Clean contract data
+                contract_5m = contract_5m[
+                    (contract_5m["open"] > 0) & (contract_5m["high"] > 0) & 
+                    (contract_5m["low"] > 0) & (contract_5m["close"] > 0)
+                ].sort_values("datetime")
+                
+                if not contract_5m.empty:
+                    P_open = contract_5m.iloc[0]["open"]
+                    
+                    strike = float(leg["strike_price"])
+                    etf_entry_5m = etf_5m[etf_5m["datetime"].dt.normalize() == entry_norm].sort_values("datetime")
+                    etf_open = float(etf_entry_5m.iloc[0]["open"]) if not etf_entry_5m.empty else float(etf_close_entry)
+                    
+                    dte = (expiry - entry).days
+                    T = max(dte, 1) / 365.0
+                    
+                    p90_offset = _predict_put_limit_offset(etf, entry, etf_open, strike, T, P_open)
+                    if p90_offset is None:
+                        p90_offset = -0.10  # fallback -10% drop
+                    
+                    # Apply OTM-dependent liquidity cushion (more OTM = more cushion)
+                    otm_pct = max(0.0, (etf_open - strike) / etf_open * 100.0)
+                    cushion = (0.5 + 0.5 * otm_pct) / 100.0
+                    
+                    p90_offset_cushioned = min(0.0, p90_offset + cushion)
+                    P_limit = P_open * (1 + p90_offset_cushioned)
+                    put_limit_px = P_limit
+                    put_trigger_val = p90_offset_cushioned
+                    
+                    fill_bars = contract_5m[contract_5m["low"] < P_limit]
+                    if not fill_bars.empty:
+                        put_filled = True
+                        put_fill_time = fill_bars.iloc[0]["datetime"]
+                        override_px = P_limit
+                        put_exec_px = P_limit
+                    else:
+                        put_filled = False
+                        override_px = contract_5m.iloc[-1]["close"]
+                        put_exec_px = override_px
+                else:
+                    print(f"  WARNING: No 5m data found for contract {order_book_id} in cycle {entry.date()}")
+            except Exception as e:
+                print(f"  WARNING: Error in put limit entry calculation: {e}")
+                
         res = calc_leg_pnl(leg, opt, etf, expiry, side, side == "buy",
-                           sell_spread=model_spread if side == "sell" else None)
+                           sell_spread=model_spread if side == "sell" else None,
+                           override_exec_px=override_px)
         if res is not None:
             # Scale exactly by the number of contracts
             res["premium_rmb"] *= num_contracts
@@ -755,6 +856,11 @@ def calc_cycle_pnl(cyc, opt, etf, daily_ivs):
         "legs":           results,
         "total_premium":  total_premium,
         "total_net_rmb":  total_net,
+        "put_filled":     put_filled,
+        "put_fill_time":  put_fill_time,
+        "put_exec_px":    put_exec_px,
+        "put_limit_px":   put_limit_px,
+        "put_trigger_val": put_trigger_val,
     }
 
 
@@ -780,6 +886,13 @@ def save_csv(results, csv_path):
             "total_premium": round(r["total_premium"], 2),
             "total_net_rmb": round(r["total_net_rmb"], 2),
         }
+        if "put_filled" in r and r["put_filled"] is not None:
+            row["put_filled"] = r["put_filled"]
+            row["put_fill_time"] = r["put_fill_time"].strftime("%Y-%m-%d %H:%M:%S") if r["put_fill_time"] else ""
+            row["put_exec_px"] = round(r["put_exec_px"], 4) if r["put_exec_px"] else ""
+            row["put_limit_px"] = round(r["put_limit_px"], 4) if r["put_limit_px"] else ""
+            row["put_trigger_val"] = round(r["put_trigger_val"], 4) if r["put_trigger_val"] else ""
+            
         for leg in r["legs"]:
             label_clean = leg["label"].replace(" ", "_")
             row[f"{label_clean}_contract"] = leg.get("contract", "")
@@ -818,10 +931,26 @@ def run_backtest(opt, etf):
         daily_ivs.to_frame("iv").to_parquet(PATH_IV_CACHE)
         print(f"  Saved IV cache to {PATH_IV_CACHE}")
 
+    opt_5m = None
+    etf_5m = None
+    if USE_PUT_LIMIT_ENTRY:
+        opt_5m_path = {"50ETF": "./data/50ETF_historical_prices_5m.parquet",
+                       "300ETF": "./data/300ETF_historical_prices_5m.parquet",
+                       "500ETF": "./data/500ETF_historical_prices_5m.parquet"}.get(ETF_NAME)
+        etf_5m_path = {"50ETF": "./data/50ETF_5m.parquet",
+                       "300ETF": "./data/510300_5m.parquet",
+                       "500ETF": "./data/500ETF_5m.parquet"}.get(ETF_NAME)
+        print(f"Loading 5m option data from {opt_5m_path}...")
+        opt_5m = pd.read_parquet(opt_5m_path)
+        opt_5m["datetime"] = pd.to_datetime(opt_5m["datetime"])
+        print(f"Loading 5m ETF data from {etf_5m_path}...")
+        etf_5m = pd.read_parquet(etf_5m_path)
+        etf_5m["datetime"] = pd.to_datetime(etf_5m["datetime"])
+
     cycles  = get_cycles(opt, etf)
     results = []
     for cyc in cycles:
-        res = calc_cycle_pnl(cyc, opt, etf, daily_ivs)
+        res = calc_cycle_pnl(cyc, opt, etf, daily_ivs, opt_5m, etf_5m)
         results.append(res)
 
     # ── Per-cycle detail printout ──────────────────────────────────────────────
@@ -832,6 +961,8 @@ def run_backtest(opt, etf):
         mode_parts.append("DYNAMIC ALPHA (dynamic OTM offsets)")
     if USE_MODEL_OFFSET:
         mode_parts.append("MODEL OFFSET (open-high P10 limit orders)")
+    if USE_PUT_LIMIT_ENTRY:
+        mode_parts.append("PUT LIMIT")
     if not mode_parts:
         mode_parts.append("NO-FILTER (always sell OTM2+OTM3)" if NO_FILTER_MODE else "FILTERED (RSI+BBU)")
     mode_label = " + ".join(mode_parts)
@@ -848,6 +979,9 @@ def run_backtest(opt, etf):
         else:
             filter_tag = "[FILTER PASS]" if res['filter_would_pass'] else "[FILTER FAIL]"
         puts_str = "None" if NO_PUT_MODE else f"Level{PUT_BUY_LEVEL}"
+        if USE_PUT_LIMIT_ENTRY and not NO_PUT_MODE and res["put_filled"] is not None:
+            fill_tag = " [FILLED]" if res["put_filled"] else " [FORCE FILL]"
+            puts_str += fill_tag
         print(f"\nCycle  {res['entry_date'].date()} → {res['expiry_date'].date()}"
               f"   IV={res['iv']:.1%} (IVR={res['ivr']:.2f})  calls={call_str} puts={puts_str}"
               f"   ETF={res['etf_entry']:.4f} RSI={res['rsi']:.1f} BBU={res['bbu']:.3f} "
@@ -889,6 +1023,8 @@ def run_backtest(opt, etf):
         sum_parts.append("DYNAMIC ALPHA")
     if USE_MODEL_OFFSET:
         sum_parts.append("MODEL OFFSET")
+    if USE_PUT_LIMIT_ENTRY:
+        sum_parts.append("PUT LIMIT")
     if not sum_parts:
         sum_parts.append("NO-FILTER" if NO_FILTER_MODE else "FILTERED")
     mode_label_sum = " + ".join(sum_parts)
@@ -899,6 +1035,13 @@ def run_backtest(opt, etf):
           f"  ({win_rate:.0%})")
     print(f"  Avg gross premium/cyc  : {avg_prem:>8.2f} RMB")
     print(f"  Total net P&L          : {total_net:>8.2f} RMB")
+    
+    if USE_PUT_LIMIT_ENTRY and not NO_PUT_MODE:
+        put_fills = [r["put_filled"] for r in results if r["put_filled"] is not None]
+        if put_fills:
+            fill_rate = sum(1 for f in put_fills if f) / len(put_fills)
+            print(f"  Put limit fill rate    : {fill_rate:.1%} ({sum(1 for f in put_fills if f)}/{len(put_fills)} cycles)")
+
     print(f"  Cumulative by cycle    : {[f'{v:.0f}' for v in cumulative]}")
     print(f"  ── Placement & Filter Lift ─────────────────────────────────────")
     print(f"  Placement rate         : {placement_rate:.1%}  ({n_placed}/{n_cycles_total} cycles)")
@@ -933,11 +1076,12 @@ def run_backtest(opt, etf):
     otm4_suffix = "_noskipotm4" if not SKIP_OTM4 else ""
     alpha_suffix = "_alpha" if DYNAMIC_ALPHA_MODE else ""
     model_suffix = "_modeloffset" if USE_MODEL_OFFSET else ""
-    out_file = f"backtest/backtest_cc_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}{alpha_suffix}{model_suffix}.png"
+    putlimit_suffix = "_putlimit" if USE_PUT_LIMIT_ENTRY else ""
+    out_file = f"backtest/backtest_cc_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}{alpha_suffix}{model_suffix}{putlimit_suffix}.png"
     os.makedirs("backtest", exist_ok=True)
     plot_backtest_results(results, etf, out_file)
 
-    csv_file = f"backtest/backtest_cc_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}{alpha_suffix}{model_suffix}.csv"
+    csv_file = f"backtest/backtest_cc_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}{alpha_suffix}{model_suffix}{putlimit_suffix}.csv"
     save_csv(results, csv_file)
 
     return results
@@ -1023,6 +1167,8 @@ def plot_backtest_results(results, etf, out_path):
         chart_parts.append("ALPHA")
     if USE_MODEL_OFFSET:
         chart_parts.append("MODEL-OFFSET")
+    if USE_PUT_LIMIT_ENTRY:
+        chart_parts.append("PUT-LIMIT")
     if not chart_parts:
         chart_parts.append("NO-FILTER" if NO_FILTER_MODE else "FILTERED")
     mode_str = "+".join(chart_parts)
@@ -1083,8 +1229,12 @@ if __name__ == "__main__":
         DYNAMIC_ALPHA_MODE = True
     if "--model-offset" in sys.argv:
         USE_MODEL_OFFSET = True
+    if "--limit-entry" in sys.argv:
+        USE_PUT_LIMIT_ENTRY = True
+
     # Remove flags from argv before parsing ETF choice
-    sys.argv = [a for a in sys.argv if a not in ["--no-filter", "--with-put", "--no-skip-otm4", "--alpha", "--model-offset"]]
+    sys.argv = [a for a in sys.argv if a not in ["--no-filter", "--with-put", "--no-skip-otm4", "--alpha", "--model-offset", "--limit-entry"]]
+
     if len(sys.argv) > 1:
         etf_choice = sys.argv[1]
     
@@ -1096,7 +1246,9 @@ if __name__ == "__main__":
     otm4_suffix = "_noskipotm4" if not SKIP_OTM4 else ""
     alpha_suffix = "_alpha" if DYNAMIC_ALPHA_MODE else ""
     model_suffix = "_modeloffset" if USE_MODEL_OFFSET else ""
-    log_file = f"backtest/backtest_cc_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}{alpha_suffix}{model_suffix}.log"
+    putlimit_suffix = "_putlimit" if USE_PUT_LIMIT_ENTRY else ""
+    
+    log_file = f"backtest/backtest_cc_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}{alpha_suffix}{model_suffix}{putlimit_suffix}.log"
     os.makedirs("backtest", exist_ok=True)
     f = open(log_file, 'w', encoding='utf-8')
     sys.stdout = Tee(sys.stdout, f)
