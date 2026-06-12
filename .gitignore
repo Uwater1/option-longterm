@@ -13,6 +13,8 @@ venv/
 # Temp / research artifacts
 *_syntetic.txt
 spread_model.txt
+backtest/open_high_model_*.json
+backtest/open_high_lgb_*.txt
 
 # OS / editor
 .DS_Store
