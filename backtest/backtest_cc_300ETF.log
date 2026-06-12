@@ -2,7 +2,7 @@
 Loading pre-calculated 30-day IVs from ./data/30d_iv_cache_300.parquet...
 
 ======================================================================
-  备兑期权 BACKTEST — Cycle Detail  [FILTERED MODE (RSI+BBU)]
+  备兑期权 BACKTEST — Cycle Detail  [FILTERED (RSI+BBU)]
 ======================================================================
 
 Cycle  2019-12-23 → 2020-01-22   IV=14.5% (IVR=0.00)  calls= puts=None   ETF=3.9640 RSI=49.7 BBU=4.046 (Total 0 contracts) [FILTER FAIL]

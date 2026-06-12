@@ -136,8 +136,8 @@ When selling a covered call at market open, you place a limit sell order. The st
 
 | ETF | Standard P&L | Model Offset P&L | Improvement |
 |-----|-------------|-----------------|-------------|
-| 300ETF | 16,868 RMB | 17,303 RMB | **+435 (+2.6%)** |
-| 50ETF | 7,317 RMB | 7,579 RMB | **+262 (+3.6%)** |
-| 500ETF | 16,954 RMB | 17,206 RMB | **+252 (+1.5%)** |
+| 300ETF | 16,868 RMB | 17,374 RMB | **+506 (+3.0%)** |
+| 50ETF | 7,317 RMB | 7,623 RMB | **+306 (+4.2%)** |
+| 500ETF | 16,954 RMB | 17,305 RMB | **+351 (+2.1%)** |
 
-The model-based offset is typically much tighter than the fixed 2% (mean predicted offset ~0.29% for 300ETF vs 2.0% static), meaning you sell options at better prices while still filling with high confidence.
+With limit orders there is no bid-ask spread slippage — the model only predicts whether the limit will fill (90% confidence). The only transaction cost is commission (2 RMB/leg). This means you sell options at mid price instead of mid * 0.98, gaining ~2% premium per sell leg.

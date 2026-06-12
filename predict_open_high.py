@@ -1,8 +1,12 @@
 """
-predict_open_high.py — Production Open-to-High Limit Order Prediction System
+predict_open_high.py - Production Open-to-High Limit Order Prediction System
 ============================================================================
 Predicts the 10th percentile of (High - Open) / Open using quantile regression
 and LightGBM, enabling 90% fill-rate limit sell orders for covered call entry.
+
+When used with --model-offset in backtest_covered_call.py, sell legs execute at
+mid price (no bid-ask spread slippage). The model only predicts whether the
+limit order will fill, not a price discount. Only commission applies as cost.
 
 Usage:
     python predict_open_high.py -e 300        # Train & validate for 300ETF
