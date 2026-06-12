@@ -500,11 +500,16 @@ def calc_leg_pnl(leg, opt, etf, expiry_date, side, is_buyer_at_expiry, sell_spre
         contract = contract[:-2]
 
     # Execution price with spread
-    spread = sell_spread if (sell_spread is not None and side == "sell") else SPREAD_HALF
-    if side == "sell":
-        exec_px = entry_mid * (1 - spread)   # we sell at bid (or model limit)
+    # sell_spread is not None when model-offset limit orders are active:
+    #   Limit orders don't cross the bid-ask spread — we sell at mid price.
+    #   The model only predicts whether the limit will fill (90% confidence),
+    #   not a price discount. Only commission applies as transaction cost.
+    if sell_spread is not None and side == "sell":
+        exec_px = entry_mid   # limit order: sell at mid, no spread slippage
+    elif side == "sell":
+        exec_px = entry_mid * (1 - SPREAD_HALF)   # market order: sell at bid
     else:
-        exec_px = entry_mid * (1 + SPREAD_HALF)   # we buy at ask
+        exec_px = entry_mid * (1 + SPREAD_HALF)   # buy at ask
 
     # Premium in RMB (positive = cash received, negative = paid)
     if side == "sell":
@@ -821,12 +826,15 @@ def run_backtest(opt, etf):
 
     # ── Per-cycle detail printout ──────────────────────────────────────────────
     print("\n" + "=" * 70)
+    # Build mode label from active flags
+    mode_parts = []
     if DYNAMIC_ALPHA_MODE:
-        mode_label = "DYNAMIC ALPHA MODE (dynamic OTM offsets)"
-    elif USE_MODEL_OFFSET:
-        mode_label = "MODEL OFFSET MODE (open-high P10 limit orders)"
-    else:
-        mode_label = "NO-FILTER MODE (always sell OTM2+OTM3)" if NO_FILTER_MODE else "FILTERED MODE (RSI+BBU)"
+        mode_parts.append("DYNAMIC ALPHA (dynamic OTM offsets)")
+    if USE_MODEL_OFFSET:
+        mode_parts.append("MODEL OFFSET (open-high P10 limit orders)")
+    if not mode_parts:
+        mode_parts.append("NO-FILTER (always sell OTM2+OTM3)" if NO_FILTER_MODE else "FILTERED (RSI+BBU)")
+    mode_label = " + ".join(mode_parts)
     print(f"  备兑期权 BACKTEST — Cycle Detail  [{mode_label}]")
     print("=" * 70)
 
@@ -875,12 +883,15 @@ def run_backtest(opt, etf):
     filter_lift = avg_pnl_placed - avg_pnl_all
 
     print("\n" + "=" * 70)
+    # Build summary label from active flags
+    sum_parts = []
     if DYNAMIC_ALPHA_MODE:
-        mode_label_sum = "DYNAMIC ALPHA"
-    elif USE_MODEL_OFFSET:
-        mode_label_sum = "MODEL OFFSET"
-    else:
-        mode_label_sum = "NO-FILTER" if NO_FILTER_MODE else "FILTERED"
+        sum_parts.append("DYNAMIC ALPHA")
+    if USE_MODEL_OFFSET:
+        sum_parts.append("MODEL OFFSET")
+    if not sum_parts:
+        sum_parts.append("NO-FILTER" if NO_FILTER_MODE else "FILTERED")
+    mode_label_sum = " + ".join(sum_parts)
     print(f"  SUMMARY  [{mode_label_sum}]")
     print("=" * 70)
     print(f"  Cycles traded          : {len(results)}")
@@ -1007,7 +1018,14 @@ def plot_backtest_results(results, etf, out_path):
              bbox=dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.8),
              fontsize=10, family='monospace')
     
-    mode_str = "NO-FILTER" if NO_FILTER_MODE else "FILTERED"
+    chart_parts = []
+    if DYNAMIC_ALPHA_MODE:
+        chart_parts.append("ALPHA")
+    if USE_MODEL_OFFSET:
+        chart_parts.append("MODEL-OFFSET")
+    if not chart_parts:
+        chart_parts.append("NO-FILTER" if NO_FILTER_MODE else "FILTERED")
+    mode_str = "+".join(chart_parts)
     ax1.set_title(f"Covered Call Strategy Performance vs {ETF_NAME}  [{mode_str}]", fontsize=14, fontweight='bold', pad=15)
 
     # ── MIDDLE PANEL ──────────────────────────────────────────────────────────

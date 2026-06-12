@@ -97,7 +97,7 @@ README.md                      # English README (links to Chinese docs)
 - Ensemble if models are within 5% CV loss; otherwise picks the winner
 - Rolling validation (expanding window, retrain every 60 days) with coverage calibration
 - Best features across ETFs: `open_ema5_div` (divergence from EMA5), `roc5`, `gap_pct`, `roc10`
-- `--model-offset` in backtest: replaces fixed ±2% spread with model-predicted limit order offset for sell-side execution
+- `--model-offset` in backtest: replaces fixed ±2% spread with limit order execution (sell at mid price, no spread slippage, only commission). The model predicts whether the limit will fill (90% confidence). Improves P&L by +2.1% to +4.2% across ETFs.
 
 **Synthetic options:** Generated via [generate_synthetic_options.py](file:///home/hallo/Documents/option-longterm/generate_synthetic_options.py) (calling `numba_utils.process_synthetic_strikes_loop()`). Interpolates IV between two expiries to create constant-maturity synthetic contracts.
 - **Data Pricing & Dividend Adjustment (Critical)**: Must use unadjusted ETF prices and daily-correct option strikes at entry to calculate option prices/IVs. At expiry, options are adjusted for dividends by scaling the unadjusted underlying price by $\frac{f_{expiry}}{f_{entry}}$ (where $f_t = S_{post, t} / S_{none, t}$ is the daily cumulative adjustment factor downloaded from `rqdatac`), keeping the nominal strikes clean and unadjusted.
