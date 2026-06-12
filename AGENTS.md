@@ -9,6 +9,7 @@ source venv/bin/activate                    # Activate Python env (uses system m
 python3 update_data.py                      # Refresh parquet data from rqdatac
 python3 download_5m_data.py                # Download 5m ETF & option historical data
 python backtest_covered_call.py [50|300|500]  # Run backtest (generates logs and charts under backtest/)
+python research_filter_validation.py       # Statistically validates filter indicators on 30-calendar-day forward returns
 python backtest_covered_call.py --alpha 300  # Run backtest with dynamic alpha mode (indicator-based OTM switching)
 python backtest_covered_call.py 300 --model-offset  # Run backtest with model-predicted limit order offsets (requires prior training)
 python backtest_covered_call.py 300 --limit-entry                       # Run backtest with Black-Scholes mapping limit entry for protective puts
@@ -52,6 +53,7 @@ spread.py                      # LightGBM bid-ask spread prediction model
 numba_utils.py                 # Numba-compiled BS pricing, IV solver, synthetic metrics
 predict_open_high.py           # Open-to-High P10 prediction system (Statsmodels QR + LightGBM quantile, 90% fill-rate limit orders)
 research_open_high.py          # Static open-high distribution analysis (graphical only)
+research_filter_validation.py  # Statistically validates filter indicators against 30-calendar-day returns
 
 research_otm_levels.py         # OTM level analysis (with RSI<66 + BB filter)
 research_otm_no_filter.py      # OTM baseline (no filter)
