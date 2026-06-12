@@ -42,6 +42,8 @@ NO_FILTER_MODE = False
 NO_PUT_MODE    = True
 SKIP_OTM4      = True
 DYNAMIC_ALPHA_MODE = False
+USE_MODEL_OFFSET = False  # --model-offset: use trained open-high P10 model for limit orders
+_model_meta = None        # Loaded lazily when USE_MODEL_OFFSET is True
 # ── Underlying Config (Dynamic based on CLI) ───────────────────────────────────
 # Default: 300ETF
 ETF_NAME = "300ETF"
@@ -426,7 +428,49 @@ def get_strike_by_level(opt, etf, entry_date, expiry_date, option_type, level):
 
 
 # ── Per-cycle P&L ─────────────────────────────────────────────────────────────
-def calc_leg_pnl(leg, opt, etf, expiry_date, side, is_buyer_at_expiry):
+def _load_model_offset():
+    """Load the trained open-high model for limit order offset prediction."""
+    global _model_meta
+    if _model_meta is not None:
+        return _model_meta
+    try:
+        from predict_open_high import load_model, load_and_engineer, predict_single
+        etf_key = {"50ETF": "50", "300ETF": "300", "500ETF": "500"}.get(ETF_NAME, "300")
+        _model_meta = load_model(etf_key)
+        _model_meta["_predict_fn"] = predict_single
+        _model_meta["_engineer_fn"] = load_and_engineer
+        print(f"  Loaded open-high model: {_model_meta['features']}, "
+              f"coverage={_model_meta['rolling_coverage']:.1f}%")
+        return _model_meta
+    except Exception as e:
+        print(f"  WARNING: Could not load open-high model: {e}")
+        print(f"  Run: python predict_open_high.py -e {etf_key}  to train first.")
+        return None
+
+
+def _predict_model_offset(etf_df, entry_date):
+    """Predict the P10 offset (%) for a given entry date using the open-high model.
+    Returns the predicted offset as a fraction (e.g., 0.003 for 0.3%), or None if unavailable."""
+    meta = _load_model_offset()
+    if meta is None:
+        return None
+    try:
+        etf_key = {"50ETF": "50", "300ETF": "300", "500ETF": "500"}.get(ETF_NAME, "300")
+        df = meta["_engineer_fn"](etf_key)
+        # Find the row matching entry_date
+        df_dates = pd.to_datetime(df["date"])
+        entry_ts = pd.to_datetime(entry_date)
+        mask = (df_dates - entry_ts).abs() < pd.Timedelta(days=1)
+        if not mask.any():
+            return None
+        row = df[mask].iloc[[-1]]
+        p10_pct = meta["_predict_fn"](meta, row)  # in percent
+        return max(0.0, p10_pct / 100.0)  # Convert to fraction, floor at 0
+    except Exception as e:
+        return None
+
+
+def calc_leg_pnl(leg, opt, etf, expiry_date, side, is_buyer_at_expiry, sell_spread=None):
     # NO_FILTER_MODE is set globally from CLI
     """
     Compute the full P&L (in RMB) for a single option leg.
@@ -439,6 +483,7 @@ def calc_leg_pnl(leg, opt, etf, expiry_date, side, is_buyer_at_expiry):
     expiry_date        : pd.Timestamp
     side               : 'sell' or 'buy'
     is_buyer_at_expiry : True if WE are the option buyer (put spread buy leg)
+    sell_spread        : Override SPREAD_HALF for sell-side execution (from model)
 
     Returns dict with: entry_px, exec_px, premium_rmb, exercise_pnl_rmb,
                        commission_rmb, exercise_cost_rmb, net_rmb, note
@@ -455,8 +500,9 @@ def calc_leg_pnl(leg, opt, etf, expiry_date, side, is_buyer_at_expiry):
         contract = contract[:-2]
 
     # Execution price with spread
+    spread = sell_spread if (sell_spread is not None and side == "sell") else SPREAD_HALF
     if side == "sell":
-        exec_px = entry_mid * (1 - SPREAD_HALF)   # we sell at bid
+        exec_px = entry_mid * (1 - spread)   # we sell at bid (or model limit)
     else:
         exec_px = entry_mid * (1 + SPREAD_HALF)   # we buy at ask
 
@@ -658,10 +704,21 @@ def calc_cycle_pnl(cyc, opt, etf, daily_ivs):
     else:
         put_offsets = []
 
+    # Model-based limit order offset (if enabled)
+    model_spread = None
+    if USE_MODEL_OFFSET:
+        p10_frac = _predict_model_offset(etf, entry)
+        if p10_frac is not None:
+            # Sell at mid * (1 - p10_frac): the limit order that fills 90% of the time
+            # p10_frac is how much the ETF rises → option price rises → our limit fills
+            # Effective spread = p10_frac (smaller = better for seller)
+            model_spread = max(0.0, p10_frac)
+
     results = []
     
     for leg, side, label in legs_to_process:
-        res = calc_leg_pnl(leg, opt, etf, expiry, side, side == "buy")
+        res = calc_leg_pnl(leg, opt, etf, expiry, side, side == "buy",
+                           sell_spread=model_spread if side == "sell" else None)
         if res is not None:
             # Scale exactly by the number of contracts
             res["premium_rmb"] *= num_contracts
@@ -766,6 +823,8 @@ def run_backtest(opt, etf):
     print("\n" + "=" * 70)
     if DYNAMIC_ALPHA_MODE:
         mode_label = "DYNAMIC ALPHA MODE (dynamic OTM offsets)"
+    elif USE_MODEL_OFFSET:
+        mode_label = "MODEL OFFSET MODE (open-high P10 limit orders)"
     else:
         mode_label = "NO-FILTER MODE (always sell OTM2+OTM3)" if NO_FILTER_MODE else "FILTERED MODE (RSI+BBU)"
     print(f"  备兑期权 BACKTEST — Cycle Detail  [{mode_label}]")
@@ -818,6 +877,8 @@ def run_backtest(opt, etf):
     print("\n" + "=" * 70)
     if DYNAMIC_ALPHA_MODE:
         mode_label_sum = "DYNAMIC ALPHA"
+    elif USE_MODEL_OFFSET:
+        mode_label_sum = "MODEL OFFSET"
     else:
         mode_label_sum = "NO-FILTER" if NO_FILTER_MODE else "FILTERED"
     print(f"  SUMMARY  [{mode_label_sum}]")
@@ -860,11 +921,12 @@ def run_backtest(opt, etf):
     put_suffix = "_withput" if not NO_PUT_MODE else ""
     otm4_suffix = "_noskipotm4" if not SKIP_OTM4 else ""
     alpha_suffix = "_alpha" if DYNAMIC_ALPHA_MODE else ""
-    out_file = f"backtest/backtest_cc_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}{alpha_suffix}.png"
+    model_suffix = "_modeloffset" if USE_MODEL_OFFSET else ""
+    out_file = f"backtest/backtest_cc_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}{alpha_suffix}{model_suffix}.png"
     os.makedirs("backtest", exist_ok=True)
     plot_backtest_results(results, etf, out_file)
 
-    csv_file = f"backtest/backtest_cc_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}{alpha_suffix}.csv"
+    csv_file = f"backtest/backtest_cc_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}{alpha_suffix}{model_suffix}.csv"
     save_csv(results, csv_file)
 
     return results
@@ -1001,8 +1063,10 @@ if __name__ == "__main__":
         SKIP_OTM4 = False
     if "--alpha" in sys.argv:
         DYNAMIC_ALPHA_MODE = True
+    if "--model-offset" in sys.argv:
+        USE_MODEL_OFFSET = True
     # Remove flags from argv before parsing ETF choice
-    sys.argv = [a for a in sys.argv if a not in ["--no-filter", "--with-put", "--no-skip-otm4", "--alpha"]]
+    sys.argv = [a for a in sys.argv if a not in ["--no-filter", "--with-put", "--no-skip-otm4", "--alpha", "--model-offset"]]
     if len(sys.argv) > 1:
         etf_choice = sys.argv[1]
     
@@ -1013,7 +1077,8 @@ if __name__ == "__main__":
     put_suffix = "_withput" if not NO_PUT_MODE else ""
     otm4_suffix = "_noskipotm4" if not SKIP_OTM4 else ""
     alpha_suffix = "_alpha" if DYNAMIC_ALPHA_MODE else ""
-    log_file = f"backtest/backtest_cc_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}{alpha_suffix}.log"
+    model_suffix = "_modeloffset" if USE_MODEL_OFFSET else ""
+    log_file = f"backtest/backtest_cc_{ETF_NAME}{filter_suffix}{put_suffix}{otm4_suffix}{alpha_suffix}{model_suffix}.log"
     os.makedirs("backtest", exist_ok=True)
     f = open(log_file, 'w', encoding='utf-8')
     sys.stdout = Tee(sys.stdout, f)
