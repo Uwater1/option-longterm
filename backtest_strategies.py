@@ -244,13 +244,15 @@ class PutStrategy:
 
         filter_would_pass = False
         if self.etf_choice == "50":
-            # 50ETF: RSI < 55 AND Close < SMA50
+            # 50ETF OTM2: RSI < 50 AND Close < SMA50
+            # (Optimized: +4,019 RMB at OTM2 vs +2,306 at OTM1)
             if pd.notna(rsi) and pd.notna(sma50):
-                filter_would_pass = (rsi < 55.0) and (etf_close < sma50)
+                filter_would_pass = (rsi < 50.0) and (etf_close < sma50)
         elif self.etf_choice == "500":
-            # 500ETF: RSI < 55 AND Vol20 > Vol20_median
-            if pd.notna(rsi) and pd.notna(vol20) and pd.notna(vol20_median):
-                filter_would_pass = (rsi < 55.0) and (vol20 > vol20_median)
+            # 500ETF OTM2: VolHigh AND MACD<0 (no RSI threshold)
+            # (Optimized: +1,225 RMB at OTM2)
+            if pd.notna(vol20) and pd.notna(vol20_median) and pd.notna(macd_hist):
+                filter_would_pass = (vol20 > vol20_median) and (macd_hist < 0)
         else:  # 300ETF
             # Optimized: RSI < 60 AND Vol20 > Vol20_median (net positive on real data)
             if pd.notna(rsi) and pd.notna(vol20) and pd.notna(vol20_median):
@@ -312,6 +314,8 @@ class PutStrategy:
 
     def file_suffix(self):
         parts = [f"put_{self.etf_choice}ETF"]
+        if self.put_level != 1:
+            parts.append(f"level{self.put_level}")
         if self.no_filter:
             parts.append("nofilter")
         if self.limit_entry:

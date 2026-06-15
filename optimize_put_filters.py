@@ -5,13 +5,14 @@ Mirrors optimize_filters.py but for put buying.
 Pre-calculates put leg P&L for all real cycles at OTM levels 0-3,
 then grid-searches filter conditions using the synthetic-informed filter space.
 
-6-component composite score:
-  Sharpe (20%), Total P&L (15%), MaxDD (15%), WinRate (15%),
-  PlacementRate (15%), FilterLift (20%)
+Profit-first composite score (v2):
+  TotalPnL (35%), FilterLift (30%), Sharpe (15%), MaxDD (10%),
+  WinRate (5%), PlacementRate (5%)
 
 Usage:
   python optimize_put_filters.py [50|300|500]
   python optimize_put_filters.py 300 --level 1
+  python optimize_put_filters.py 300 --sweep-levels   # rank all OTM levels 1-3
 """
 import os
 import sys
@@ -223,19 +224,71 @@ def run_optimization(etf_choice, otm_level=1):
         else:
             return (vmax - val) / (vmax - vmin)
 
-    # 6-component composite: Sharpe 20%, Total 15%, MaxDD 15%,
-    #                        WinRate 15%, PlacementRate 15%, FilterLift 20%
+    # Profit-first composite (v2): TotalPnL 35%, FilterLift 30%, Sharpe 15%,
+    #                              MaxDD 10%, WinRate 5%, PlacementRate 5%
     df_res["score"] = (
-        0.20 * norm("sharpe", True)
-      + 0.15 * norm("total_pnl", True)
-      + 0.15 * norm("max_dd", False)
-      + 0.15 * norm("win_rate", True)
-      + 0.15 * norm("placement_rate", True)
-      + 0.20 * norm("filter_lift", True)
+        0.35 * norm("total_pnl", True)
+      + 0.30 * norm("filter_lift", True)
+      + 0.15 * norm("sharpe", True)
+      + 0.10 * norm("max_dd", False)
+      + 0.05 * norm("win_rate", True)
+      + 0.05 * norm("placement_rate", True)
     )
 
     df_res = df_res.sort_values(by="score", ascending=False).reset_index(drop=True)
     return df_res
+
+
+# ── Level sweep helper ───────────────────────────────────────────────────────
+
+def sweep_levels(etf_choice, levels=(1, 2, 3)):
+    """Run optimizer for each OTM level and print a summary ranking."""
+    summary = []
+    for lv in levels:
+        print(f"\n{'='*60}")
+        print(f"  Sweeping OTM Level {lv} — {etf_choice}ETF")
+        print(f"{'='*60}")
+        df = run_optimization(etf_choice, otm_level=lv)
+        if df.empty:
+            continue
+        best = df.iloc[0]
+        BBL_LABELS = {0: "skip", 1: "<BBL", 2: "<BBL-0.5ATR", 3: "<BBL+0.5ATR"}
+        summary.append({
+            "OTM Level":     lv,
+            "Total P&L":     best["total_pnl"],
+            "FilterLift":    best["filter_lift"],
+            "Sharpe":        best["sharpe"],
+            "MaxDD":         best["max_dd"],
+            "WinRate":       best["win_rate"],
+            "Placement":     best["placement_rate"],
+            "Score":         best["score"],
+            "RSI<":          best["rsi_thresh"],
+            "BBL":           BBL_LABELS.get(int(best["bbl_mode"]), "?"),
+            "SMA50":         best["sma50"],
+            "VolHigh":       best["vol_high"],
+            "ROC10<":        best["roc10_thresh"],
+            "MACD<0":        best["macd_neg"],
+        })
+        # Save per-level CSV
+        out_name = f"optimization_put_{etf_choice}ETF_level{lv}.csv"
+        df.head(200).to_csv(out_name, index=False)
+        print(f"  Saved → {out_name}")
+
+    if not summary:
+        print("No results.")
+        return
+
+    df_sum = pd.DataFrame(summary)
+    df_sum = df_sum.sort_values("Total P&L", ascending=False).reset_index(drop=True)
+    print("\n" + "="*100)
+    print(f"  LEVEL SWEEP SUMMARY — {etf_choice}ETF  (sorted by Total P&L)")
+    print(f"  Score: 35%TotalPnL + 30%FilterLift + 15%Sharpe + 10%MaxDD + 5%WinRate + 5%Place")
+    print("="*100)
+    pd.set_option("display.float_format", lambda x: f"{x:.3f}")
+    pd.set_option("display.max_columns", 20)
+    pd.set_option("display.width", 200)
+    print(df_sum.to_string(index=False))
+    print()
 
 
 # ── CLI ──────────────────────────────────────────────────────────────────────
@@ -246,7 +299,13 @@ if __name__ == "__main__":
                         help="ETF choice: 50, 300, or 500")
     parser.add_argument("--level", type=int, default=1,
                         help="OTM level for put (0=ATM-ish, 1=closest OTM, etc.)")
+    parser.add_argument("--sweep-levels", action="store_true",
+                        help="Sweep OTM levels 1-3 and compare best filters")
     args = parser.parse_args()
+
+    if args.sweep_levels:
+        sweep_levels(args.etf)
+        import sys; sys.exit(0)
 
     print(f"Running put filter optimization for {args.etf}ETF at OTM level {args.level}")
     df_res = run_optimization(args.etf, otm_level=args.level)
@@ -259,7 +318,7 @@ if __name__ == "__main__":
 
     print("\n" + "=" * 120)
     print(f"  TOP 20 PUT FILTERS — {args.etf}ETF  OTM Level {args.level}")
-    print(f"  Score: 20%Sharpe + 15%Total + 15%MaxDD + 15%WinRate + 15%Place + 20%FilterLift")
+    print(f"  Score: 35%TotalPnL + 30%FilterLift + 15%Sharpe + 10%MaxDD + 5%WinRate + 5%Place")
     print("=" * 120)
 
     display_cols = [
