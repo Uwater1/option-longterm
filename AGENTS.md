@@ -8,11 +8,15 @@ Enhanced income strategy for Chinese ETFs: Covered Call + Bull Put Spread on 50E
 source venv/bin/activate                    # Activate Python env (uses system miniconda for rqdatac)
 python3 update_data.py                      # Refresh parquet data from rqdatac
 python3 download_5m_data.py                # Download 5m ETF & option historical data
-python backtest_covered_call.py [50|300|500]  # Run backtest (generates logs and charts under backtest/)
-python research_filter_validation.py       # Statistically validates filter indicators on 30-calendar-day forward returns
-python backtest_covered_call.py --alpha 300  # Run backtest with dynamic alpha mode (indicator-based OTM switching)
+python backtest_covered_call.py [50|300|500]  # Run call backtest (Covered Call strategy)
+python backtest_put.py [50|300|500]           # Run put backtest (Protective Put strategy)
+python backtest_put.py 300 --no-filter        # Run put backtest without filter (always buy)
+python backtest_put.py 300 --limit-entry      # Run put backtest with BS mapping limit entry
+python research_put_filters.py -e 300         # Synthetic put filter evaluation (bootstrap CI, significance)
+python optimize_put_filters.py 300            # Real-data put filter optimizer (grid search, composite score)
+python research_filter_validation.py          # Statistically validates filter indicators on 30-calendar-day forward returns
+python backtest_covered_call.py --alpha 300   # Run backtest with dynamic alpha mode (indicator-based OTM switching)
 python backtest_covered_call.py 300 --model-offset  # Run backtest with model-predicted limit order offsets (requires prior training)
-python backtest_covered_call.py 300 --limit-entry                       # Run backtest with Black-Scholes mapping limit entry for protective puts
 python predict_open_high.py -e 300          # Train open-high P10 prediction model (90% fill-rate limit orders)
 python predict_open_high.py -e 300 --pool   # Train with cross-ETF pooled data (all 3 ETFs, ~7200 samples)
 python predict_open_high.py -e 300 --predict # Predict today's limit order offset
@@ -50,7 +54,10 @@ data/                          # Local Parquet database (rqdatac source)
 ├── {ETF}_historical_prices_5m.parquet # Option 5m prices during 1 month before expiry
 └── 30d_iv_cache_{N}.parquet   # Pre-computed 30-day interpolated ATM IV (auto-deleted on update)
 
-backtest_covered_call.py       # Main backtest engine (CC + Put, IVR-driven, RSI+BB filter, --alpha dynamic mode, --model-offset)
+backtest_engine.py                # Shared backtest infrastructure (constants, BS helpers, data loading, cycles, strikes, leg P&L, 5m sim, runner, plotting)
+backtest_strategies.py            # CallStrategy + PutStrategy (Engine + Strategy pattern)
+backtest_covered_call.py          # Thin wrapper: CLI + CallStrategy + engine
+backtest_put.py                   # Thin wrapper: CLI + PutStrategy + engine
 alpha_finder.py                # Historical 30-day return distribution → strike selection
 alpha.md                       # Dynamic alpha strategy research report (v2 indicator-based)
 spread.py                      # LightGBM bid-ask spread prediction model
@@ -67,7 +74,9 @@ evaluate_combinations.py       # Filter combination search (on real data)
 eval_synth_combinations.py     # Filter combination search (on synthetic data)
 eval_synth_filters.py          # Individual filter evaluation (on synthetic data)
 optimize_alpha_synthetic.py    # Alpha parameter grid search (synthetic data, 6-component composite scoring)
-optimize_filters.py            # Filter condition grid search (real data, 6-component composite scoring)
+optimize_filters.py            # Call filter grid search (real data, 6-component composite scoring)
+research_put_filters.py          # Synthetic put filter evaluation (30+ filters, bootstrap CI, significance)
+optimize_put_filters.py          # Put filter grid search (real data, synthetic-informed, 6-component composite)
 diagnose_500etf.py              # 500ETF diagnostic: 10 variants, loss analysis, filter diff
 research_robustness.py          # Data completeness, bootstrap CI, LOOCV, regime comparison
 
@@ -85,14 +94,30 @@ README.md                      # English README (links to Chinese docs)
 2. **Underlying ETF Daily Prices must be unadjusted (不复权)** (pulled with `adjust_type="none"` in `update_data.py`). If pre-adjusted prices are used, it creates a mismatch with unadjusted option strikes/premiums, causing major look-ahead bias and false backtest performance.
 3. **ATM 30d IV Speed Optimization**: Daily 30d IV calculation in `get_30d_iv` is optimized by passing a pre-grouped dictionary of calls instead of running slow boolean filters on the full DataFrame, reducing runtime by ~740x.
 
-**Backtest logic** (`backtest_covered_call.py`):
+**Backtest Architecture (Engine + Strategy pattern):**
+- `backtest_engine.py` (~900 lines): Shared infrastructure — constants, BS/IV helpers (numba), data loading, cycle detection, strike selection, leg P&L, 5m limit simulation, runner loop, result aggregation, plotting
+- `backtest_strategies.py` (~360 lines): `CallStrategy` (short calls) + `PutStrategy` (long puts, selective hedge). Each defines: `evaluate_filter()`, `select_legs()`, `compute_limit_orders()`, `format_cycle()`, `mode_label()`
+- `backtest_covered_call.py` (~50 lines): Thin wrapper — parses CLI, instantiates CallStrategy, calls `run_backtest()`
+- `backtest_put.py` (~50 lines): Thin wrapper — parses CLI, instantiates PutStrategy, calls `run_backtest()`
+
+**Call Strategy** (`CallStrategy`):
 - Cycles = monthly option expiries, enter on first trading day after previous expiry
 - IV Rank (252-day) drives OTM offset: high IVR → further OTM
-- RSI < 66 + Close < Upper BB filter: pass → 2 call legs (OTM2+OTM3), fail → 1 call leg (OTM4)
-- 500ETF exception: RSI < 70 (looser filter, 500ETF vol profile suits wider threshold)
-- Long Put at Level 1 (closest OTM) as protective hedge
+- Per-ETF filters: pass → 2 call legs (OTM2+OTM3), fail → 1 call leg (OTM4 or skip)
+  - 300ETF: `25 < RSI < 72` AND `MACD Hist < 0`
+  - 50ETF: `30 < RSI < 60` AND `ROC10 < 3%` AND `Vol20 < Vol20_median`
+  - 500ETF: `RSI > 30` AND `Close < BBU` AND `Close > SMA50`
+- Dynamic Alpha Mode (`--alpha`): Indicator-based combo switching — strong signal → OTM2+OTM3, weak → OTM4
+
+**Put Strategy** (`PutStrategy`) — Selective Hedge:
+- Filter pass → buy put at configured OTM level; fail → skip (P&L = 0)
+- Per-ETF filters (optimized via `optimize_put_filters.py`):
+  - 300ETF: `RSI < 60` AND `Vol20 > Vol20_median` (net positive +616 RMB, 41% placement)
+  - 50ETF: `RSI < 55` AND `Close < SMA50`
+  - 500ETF: `RSI < 55` AND `Vol20 > Vol20_median`
+- Supports `--limit-entry` (BS mapping put buy limit) and configurable `--level` (OTM level, default 1)
 - Spread: ±2% from mid, commission 2 RMB/leg
-- **Dynamic Alpha Mode** (`--alpha`): Indicator-based combo switching — strong signal → Combo A (OTM2+OTM3), weak signal → Combo B (OTM4). Monthly rate of change (`roc20`) caution filters protect against vertical rallies:
+**Dynamic Alpha Mode** (`--alpha`): Indicator-based combo switching for calls — strong signal → Combo A (OTM2+OTM3), weak signal → Combo B (OTM4). Monthly rate of change (`roc20`) caution filters protect against vertical rallies:
   - 300ETF: `30 < RSI < 60` AND `roc20 < 4.0` (switches to Combo B if monthly growth $\ge 4\%$; P&L +13.8K $\to$ +16.1K)
   - 50ETF: `RSI > 30` AND `roc20 < 3.0` (switches to Combo B if monthly growth $\ge 3\%$; P&L +6.3K $\to$ +8.8K)
   - 500ETF: `RSI > 35 AND Close < BBU AND Close > SMA50` (remains unchanged)
@@ -141,19 +166,21 @@ README.md                      # English README (links to Chinese docs)
 
 **Corrected & Optimized backtest results (Jun 2026):**
 
-### Calls-Only Mode (NO_PUT_MODE = True, SKIP_OTM4 = True)
+### Calls-Only Mode (CallStrategy)
 | ETF | Win Rate | Baseline P&L | Optimized P&L | Optimized Filter Condition |
 |-----|----------|--------------|---------------|----------------------------|
 | 300ETF | 56% (44/78) | +19,178 RMB | **+16,868 RMB** | `25 < RSI < 72` AND `MACD Hist < 0` (Sharpe 1.21 → 1.27, Drawdown -2.7k) |
 | 500ETF | 42% (19/45) | +12,201 RMB | **+16,954 RMB** | `RSI > 30` AND `Close < BBU` AND `Close > SMA50` (Sharpe 1.92, Drawdown 0.0!) |
 | 50ETF | 32% (44/136) | +11,922 RMB | **+7,317 RMB** | `30 < RSI < 60` AND `ROC10 < 3%` AND `Vol20 < Vol20_med` (Sharpe 0.53 → 0.58) |
 
-### With-Put Mode (NO_PUT_MODE = False, SKIP_OTM4 = False)
-| ETF | Win Rate | Baseline P&L | Optimized P&L | Optimized Filter Condition |
-|-----|----------|--------------|---------------|----------------------------|
-| 300ETF | 47% (37/78) | +6,420 RMB | **+6,420 RMB** | `25 < RSI < 66` AND `Close < BBU + 0.5*ATR` AND `ROC10 < 7%` |
-| 500ETF | 36% (16/45) | -4,628 RMB | **+879 RMB** | `RSI > 35` AND `Close < BBU` AND `Close > SMA50` (Flipped to positive!) |
-| 50ETF | 39% (53/136) | +1,054 RMB | **+3,821 RMB** | `RSI > 30` AND `Close < BBU - 0.5*ATR` AND `ROC10 < 7%` (3.6x improvement!) |
+### Protective Put Mode (PutStrategy, Selective Hedge, Jun 2026)
+| ETF | Baseline (always buy) | Optimized P&L | Optimized Filter | Placement |
+|-----|----------------------|---------------|------------------|-----------|
+| 300ETF | -11,044 RMB | **+616 RMB** | `RSI < 60` AND `Vol20 > median` | 41% (32/78) |
+| 500ETF | TBD | TBD | `RSI < 55` AND `Vol20 > median` | TBD |
+| 50ETF | TBD | TBD | `RSI < 55` AND `Close < SMA50` | TBD |
+
+Put filter research pipeline: `research_put_filters.py` (synthetic eval, 30+ filters, bootstrap CI) → `optimize_put_filters.py` (real data validation, 6-component composite score). Synthetic research showed RSI < 40 and BBL breaks reduce drag 80-90%; real-data optimizer confirmed RSI < 60 + vol regime is the best composite-scoring filter for 300ETF.
 
 ### With-Put Mode + Put Limit Entry (BS Mapping model, Jun 2026)
 | ETF | Win Rate | P&L (Baseline + Put Limit) | P&L (Alpha + Put Limit) | Put Limit Fill Rate |
@@ -243,6 +270,11 @@ README.md                      # English README (links to Chinese docs)
 - [x] Implement indicator-based dynamic alpha mode in `backtest_covered_call.py` — combo switching (OTM2+3 vs OTM4) based on RSI/BBU/SMA signals from synthetic research (Jun 2026)
 - [x] Build production open-high P10 prediction system (`predict_open_high.py`) with quantile models, feature selection, and backtest integration via `--model-offset` (Jun 2026)
 - [x] Add call-side 5m limit order simulation (`--model-offset`), expand features 14→25, ensemble bagging (x5), vol-regime calibration, cross-ETF pooling (`--pool`) (Jun 2026)
+- [x] Split backtest into Engine + Strategy pattern: `backtest_engine.py` + `backtest_strategies.py` + thin wrappers (Jun 2026)
+- [x] Create dedicated put backtest (`backtest_put.py`) with selective hedge strategy
+- [x] Synthetic put filter research (`research_put_filters.py`) — 30+ filters, bootstrap CI, significance testing
+- [x] Real-data put filter optimization (`optimize_put_filters.py`) — grid search with 6-component composite score, plugged best filters into PutStrategy
+- [ ] Run `optimize_put_filters.py` for 50ETF and 500ETF, update PutStrategy filters
 - [ ] Test early roll management for 500ETF — roll calls to higher strikes if underlying rallies >5% mid-cycle
 - [ ] Explore weekly options for 500ETF if available — shorter DTE reduces rally exposure
 - [ ] Revisit conclusions when 500ETF reaches 80+ cycles (~2029)
