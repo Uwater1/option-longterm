@@ -2,7 +2,7 @@
 Loading pre-calculated 30-day IVs from ./data/30d_iv_cache_300.parquet...
 
 ======================================================================
-  备兑期权 BACKTEST — Cycle Detail  [DYNAMIC ALPHA (dynamic OTM offsets)]
+  Covered Call BACKTEST — Cycle Detail  [DYNAMIC ALPHA]
 ======================================================================
 
 Cycle  2019-12-23 → 2020-01-22   IV=14.5% (IVR=0.00)  calls=OTM2+OTM3 puts=None   ETF=3.9640 RSI=49.7 BBU=4.046 (Total 2 contracts) [FILTER FAIL]
@@ -395,7 +395,7 @@ Cycle  2024-08-29 → 2024-09-25   IV=12.0% (IVR=0.22)  calls=OTM2+OTM3 puts=Non
   Call OTM3 (Dyn-A)         sell   3.600   0.0020    19.60       0.00     17.60  [expires_worthless]
                                         CYCLE TOTAL     79.30
 
-Cycle  2024-09-26 → 2024-10-23   IV=23.3% (IVR=0.94)  calls=OTM4 puts=None   ETF=3.6400 RSI=78.4 BBU=3.525 (Total 0 contracts) [FILTER FAIL]
+Cycle  2024-09-26 → 2024-10-23   IV=23.3% (IVR=0.94)  calls= puts=None   ETF=3.6400 RSI=78.4 BBU=3.525 (Total 0 contracts) [FILTER FAIL]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00

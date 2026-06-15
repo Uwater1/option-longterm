@@ -37,6 +37,7 @@ PRIMARY_HORIZON = 30  # ~1 option cycle (30 calendar days)
 # Each filter: (name, function that takes etf DataFrame and returns bool Series)
 # The "pass" condition is what the backtest considers a valid entry
 FILTER_DEFS = {
+    # ── Call-side filters (used in CallStrategy) ──
     "RSI < 66":       lambda df: df["rsi14"] < 66.0,
     "RSI < 72":       lambda df: df["rsi14"] < 72.0,
     "RSI > 25":       lambda df: df["rsi14"] > 25.0,
@@ -51,6 +52,24 @@ FILTER_DEFS = {
     "ROC20 < 4%":     lambda df: df["roc20"] < 4.0,
     "MACD Hist < 0":  lambda df: df["macd_hist"] < 0.0,
     "Vol20 < Med":    lambda df: df["vol20"] < df["vol20_median"],
+    # ── Put-side filters (used in PutStrategy — selective hedge) ──
+    "RSI < 55":       lambda df: df["rsi14"] < 55.0,
+    "RSI < 60":       lambda df: df["rsi14"] < 60.0,
+    "Vol20 > Med":    lambda df: df["vol20"] > df["vol20_median"],
+    "Close < SMA50":  lambda df: df["close"] < df["sma50"],
+}
+
+# ── Put Strategy Combined Filters (per-ETF, from optimize_put_filters.py) ──
+PUT_FILTER_DEFS = {
+    "300ETF": {
+        "RSI<60 & Vol20>Med": lambda df: (df["rsi14"] < 60.0) & (df["vol20"] > df["vol20_median"]),
+    },
+    "50ETF": {
+        "RSI<55 & Close<SMA50": lambda df: (df["rsi14"] < 55.0) & (df["close"] < df["sma50"]),
+    },
+    "500ETF": {
+        "RSI<55 & Vol20>Med": lambda df: (df["rsi14"] < 55.0) & (df["vol20"] > df["vol20_median"]),
+    },
 }
 
 # RSI binning for scatter analysis
@@ -448,11 +467,14 @@ def plot_report_2(etf_data, all_results):
     # Build table data — pick the most relevant filters per ETF based on backtest usage
     key_filters = {
         "300ETF": ["RSI < 66", "RSI > 25", "Close < BBU+0.5*ATR", "ROC10 < 7%", "MACD Hist < 0",
-                    "RSI < 72", "ROC20 < 4%"],
+                    "RSI < 72", "ROC20 < 4%",
+                    "RSI < 60", "Vol20 > Med"],
         "50ETF":  ["RSI < 60", "RSI > 30", "ROC10 < 3%", "Vol20 < Med",
-                    "Close < BBU", "ROC20 < 3%"],
+                    "Close < BBU", "ROC20 < 3%",
+                    "RSI < 55", "Close < SMA50"],
         "500ETF": ["RSI > 30", "RSI > 35", "Close < BBU", "Close > SMA50",
-                    "ROC20 < 4%"],
+                    "ROC20 < 4%",
+                    "RSI < 55", "Vol20 > Med"],
     }
 
     table_rows = []
@@ -512,15 +534,18 @@ def plot_report_2(etf_data, all_results):
     explanation_text = (
         "EXECUTIVE SUMMARY & STATISTICAL INTERPRETATION GUIDE\n"
         "• Cohen's d: Standardized effect size. Indicates how many standard deviations separate the 'Pass' and 'Fail' day returns.\n"
-        "  - Positive d: Filtering conditions associated with HIGHER 30-day forward returns (e.g. upward trend filter confirmation).\n"
-        "  - Negative d: Filtering conditions associated with LOWER 30-day forward returns (e.g. RSI ceiling preventing overbought extensions).\n"
+        "  - Positive d: Filtering conditions associated with HIGHER forward returns (good for long/trend entry).\n"
+        "  - Negative d: Filtering conditions associated with LOWER forward returns (supports RSI/BBU cap to avoid overbought assignments).\n"
         "  - Effect Size Guide: |d| >= 0.1 is small (S), |d| >= 0.3 is medium (M), |d| >= 0.5 is large (L).\n"
-        "• p-value: Welch's t-test significance. The probability of obtaining the observed difference by random chance. p < 0.05 is significant.\n"
-        "• Strategic Validation Summary:\n"
-        "  - 300ETF / 500ETF Calls: RSI and BBU ceiling filters (RSI < 66/72, Close < BBU) exhibit highly significant NEGATIVE Cohen's d.\n"
-        "    This confirms that entering covered call trades when these filters fail (market highly overbought) significantly drag down performance,\n"
-        "    validating the indicator-based OTM switching rules (reducing call assignment losses by selling further OTM during rallies).\n"
-        "  - 50ETF: Filters show positive Cohen's d values for key entry checks, validating standard bull-trend entry filters."
+        "• p-value: Welch's t-test significance. p < 0.05 is significant.\n"
+        "• Call Strategy Validation:\n"
+        "  - 300ETF/500ETF: RSI and BBU ceiling filters show significant NEGATIVE d — overbought days have lower fwd returns, validating call OTM switching.\n"
+        "  - 50ETF: Vol20 < Med and RSI range filters validate bull-trend entry conditions.\n"
+        "• Put Strategy Validation (Selective Hedge):\n"
+        "  - Put filters seek NEGATIVE fwd returns (market drops) so NEGATIVE d means the hedge timing is effective.\n"
+        "  - 300ETF: RSI<60 & Vol20>Med targets high-volatility weakness periods.\n"
+        "  - 50ETF: RSI<55 & Close<SMA50 targets below-trend weakness.\n"
+        "  - 500ETF: RSI<55 & Vol20>Med targets elevated-vol sell-offs."
     )
     
     ax_exp.text(0.005, 0.95, explanation_text, fontsize=9.5, va="top", ha="left",
@@ -535,8 +560,12 @@ def plot_report_2(etf_data, all_results):
     plt.close(fig)
 
 
-def generate_markdown_report(all_results, out_md_path="validate/filter_validation_report.md"):
-    """Generate markdown report with embedded charts and statistical results."""
+def generate_markdown_report(all_results, put_results, out_md_path="validate/filter_validation_report.md"):
+    """Generate markdown report with embedded charts and statistical results.
+    
+    all_results: dict[etf_name][filter_name][horizon] for individual call/put filters
+    put_results: dict[etf_name][combined_filter_name][horizon] for per-ETF combined put strategy filters
+    """
     import datetime
     now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -547,8 +576,9 @@ def generate_markdown_report(all_results, out_md_path="validate/filter_validatio
         f.write(f"Horizons: `{[f'{h}d' for h in FORWARD_HORIZONS]}`  \n\n")
 
         f.write("> [!NOTE]\n")
-        f.write("> Validates technical indicators used in backtest_covered_call.py ")
-        f.write("(RSI, BBU, ROC, SMA50, MACD Hist) against forward ETF returns. ")
+        f.write("> Validates technical indicators used in both the **Call Strategy** (`backtest_covered_call.py`) ")
+        f.write("and the **Put Strategy** (`backtest_put.py`) ")
+        f.write("(RSI, BBU, ROC, SMA50, MACD Hist, Vol20 regime) against forward ETF returns. ")
         f.write("Determines if filter conditions have statistical edge.\n\n")
 
         f.write("## Visualizations\n\n")
@@ -568,7 +598,7 @@ def generate_markdown_report(all_results, out_md_path="validate/filter_validatio
         f.write("  - `MARGINAL`: p < 0.10\n")
         f.write("  - `NOT SIGNIFICANT`: p >= 0.10\n\n")
 
-        f.write("## Statistical Analysis Tables\n\n")
+        f.write("## Individual Filter Analysis (Call + Put Indicators)\n\n")
 
         for horizon in FORWARD_HORIZONS:
             f.write(f"### {horizon}-Calendar-Day Forward Return Horizon\n\n")
@@ -595,6 +625,54 @@ def generate_markdown_report(all_results, out_md_path="validate/filter_validatio
                             f"{diff:+.3%} | {r['p_ttest']:.4f} | {r['p_mannwhitney']:.4f} | "
                             f"{r['cohens_d']:+.3f} | {verdict_md} |\n")
             f.write("\n")
+
+        # ── Put Strategy Combined Filter Section ──────────────────────────────────────────────
+        f.write("## Put Strategy Combined Filter Analysis\n\n")
+        f.write("> Per-ETF combined conditions as implemented in `PutStrategy.evaluate_filter()` (`backtest_strategies.py`).\n")
+        f.write("> Optimized via `optimize_put_filters.py` (real data, 6-component composite score).\n")
+        f.write("> For put timing, **negative** Cohen's d is desired — pass days should have *lower* forward returns (i.e. the market drops after the signal, validating hedge timing).\n\n")
+
+        # Strategy description table
+        f.write("| ETF | Combined Filter | Condition |\n")
+        f.write("| :--- | :--- | :--- |\n")
+        f.write("| 300ETF | `RSI<60 & Vol20>Med` | `RSI(14) < 60` AND `Vol20 > Vol20_252d_median` |\n")
+        f.write("| 50ETF  | `RSI<55 & Close<SMA50` | `RSI(14) < 55` AND `Close < SMA(50)` |\n")
+        f.write("| 500ETF | `RSI<55 & Vol20>Med` | `RSI(14) < 55` AND `Vol20 > Vol20_252d_median` |\n\n")
+
+        for horizon in FORWARD_HORIZONS:
+            f.write(f"### Put Combined Filter — {horizon}-Calendar-Day Forward Return\n\n")
+            f.write("| ETF | Filter | Placement % | Pass Avg | Fail Avg | Diff | p(t-test) | p(M-W) | Cohen's d | Verdict |\n")
+            f.write("| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |\n")
+
+            for etf_name, filters in put_results.items():
+                for fname, res in filters.items():
+                    if horizon not in res or res[horizon] is None:
+                        continue
+                    r = res[horizon]
+                    v = verdict_str(r["p_ttest"], r["cohens_d"])
+                    diff = r["pass_mean"] - r["fail_mean"]
+
+                    if v == "SIGNIFICANT":
+                        verdict_md = "**SIGNIFICANT**"
+                    elif v == "MARGINAL":
+                        verdict_md = "*MARGINAL*"
+                    else:
+                        verdict_md = "NOT SIGNIFICANT"
+
+                    f.write(f"| {etf_name} | {fname} | {r['placement']:.1%} | "
+                            f"{r['pass_mean']:+.3%} | {r['fail_mean']:+.3%} | "
+                            f"{diff:+.3%} | {r['p_ttest']:.4f} | {r['p_mannwhitney']:.4f} | "
+                            f"{r['cohens_d']:+.3f} | {verdict_md} |\n")
+            f.write("\n")
+
+        # Interpretation note
+        f.write("### Put Combined Filter Interpretation\n\n")
+        f.write("For the protective put strategy, we buy puts when the filter passes and skip when it fails. ")
+        f.write("A **negative** `Pass Avg - Fail Avg` (Diff) means the market tends to drop more on filter-pass days, ")
+        f.write("which makes the put hedge more valuable — this validates the timing signal. ")
+        f.write("Conversely, a positive Diff suggests the filter triggers before rallies, making the put a drag.\n\n")
+        f.write("**Placement rate** is important: too low (<20%) means the hedge rarely activates, too high (>80%) ")
+        f.write("means the filter provides little selectivity. The optimized filters target 30–50% placement.\n")
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -625,6 +703,25 @@ def main():
                 res = analyze_filter(df, ffn, horizon=h)
                 all_results[etf_name][fname][h] = res
 
+    # Run put combined filter analysis (per-ETF strategy filters)
+    print("\n=== Running Put Combined Filter Analysis ===")
+    put_results = {}
+    for etf_name, df in etf_data.items():
+        put_results[etf_name] = {}
+        if etf_name in PUT_FILTER_DEFS:
+            for fname, ffn in PUT_FILTER_DEFS[etf_name].items():
+                put_results[etf_name][fname] = {}
+                for h in FORWARD_HORIZONS:
+                    res = analyze_filter(df, ffn, horizon=h)
+                    put_results[etf_name][fname][h] = res
+                    if res is not None:
+                        v = verdict_str(res["p_ttest"], res["cohens_d"])
+                        print(f"  {etf_name} | {fname} | {h}d | "
+                              f"place={res['placement']:.1%} | "
+                              f"pass={res['pass_mean']:+.3%} | "
+                              f"fail={res['fail_mean']:+.3%} | "
+                              f"p={res['p_ttest']:.4f} | d={res['cohens_d']:+.3f} | {v}")
+
     # Console report
     print_report(all_results)
 
@@ -635,7 +732,7 @@ def main():
     plot_report_2(etf_data, all_results)
     
     md_path = os.path.join("validate", "filter_validation_report.md")
-    generate_markdown_report(all_results, md_path)
+    generate_markdown_report(all_results, put_results, md_path)
 
     print("\n=== Done ===")
     print("Reports saved to:")

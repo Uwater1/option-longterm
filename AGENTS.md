@@ -117,6 +117,7 @@ README.md                      # English README (links to Chinese docs)
   - 500ETF: `RSI < 55` AND `Vol20 > Vol20_median`
 - Supports `--limit-entry` (BS mapping put buy limit) and configurable `--level` (OTM level, default 1)
 - Spread: ±2% from mid, commission 2 RMB/leg
+
 **Dynamic Alpha Mode** (`--alpha`): Indicator-based combo switching for calls — strong signal → Combo A (OTM2+OTM3), weak signal → Combo B (OTM4). Monthly rate of change (`roc20`) caution filters protect against vertical rallies:
   - 300ETF: `30 < RSI < 60` AND `roc20 < 4.0` (switches to Combo B if monthly growth $\ge 4\%$; P&L +13.8K $\to$ +16.1K)
   - 50ETF: `RSI > 30` AND `roc20 < 3.0` (switches to Combo B if monthly growth $\ge 3\%$; P&L +6.3K $\to$ +8.8K)
@@ -150,6 +151,26 @@ README.md                      # English README (links to Chinese docs)
 - **Data Pricing & Dividend Adjustment (Critical)**: Must use unadjusted ETF prices and daily-correct option strikes at entry to calculate option prices/IVs. At expiry, options are adjusted for dividends by scaling the unadjusted underlying price by $\frac{f_{expiry}}{f_{entry}}$ (where $f_t = S_{post, t} / S_{none, t}$ is the daily cumulative adjustment factor downloaded from `rqdatac`), keeping the nominal strikes clean and unadjusted.
 
 **Optimization scoring (v2, Jun 2026):** Both `optimize_alpha_synthetic.py` and `optimize_filters.py` use a 6-component normalized composite score: Sharpe (20%), Total P&L (15%), MaxDD (15%), WinRate (15%), PlacementRate (15%), FilterLift (20%). FilterLift = avg P&L on filter-placed cycles minus avg P&L if always trading — measures whether the filter genuinely adds alpha vs cherry-picking. PlacementRate penalizes overly restrictive filters. `backtest_covered_call.py` aggregate summary now reports placement rate and filter lift for every run.
+
+### Reusable Engine Components
+
+The Engine + Strategy pattern makes the following components reusable across any option strategy (not just calls/puts):
+
+| Component | Location | Reuse |
+|-----------|----------|-------|
+| `run_backtest(strategy, opt, etf)` | `backtest_engine.py` | Generic cycle loop — delegates to strategy for filter/legs/limits |
+| `_execute_cycle()` | `backtest_engine.py` | Single-cycle execution — calls strategy methods, aggregates leg P&L |
+| `simulate_limit_order()` | `backtest_engine.py` | Generic 5m limit simulation — parameterized by side (sell-high / buy-low) |
+| `calc_leg_pnl()` | `backtest_engine.py` | Per-leg P&L — works for any option type, any side, with optional limit override |
+| `get_otm_strikes()` / `get_strike_by_level()` | `backtest_engine.py` | Strike selection — used by both strategies and research scripts |
+| `get_cycles()` | `backtest_engine.py` | Cycle detection — shared by backtests and optimizers |
+| `load_data()` | `backtest_engine.py` | Data loading with indicator computation — used by all backtests and research |
+| BS/IV helpers (`_bs_price`, `compute_iv`, `_predict_model_offset`) | `backtest_engine.py` | Numba-compiled pricing — used by strategies, limit functions, and research |
+| `_print_summary()` / `plot_backtest_results()` / `save_csv()` | `backtest_engine.py` | Output pipeline — parameterized by strategy name |
+| `BaseStrategy` interface | `backtest_strategies.py` | 5-method contract: `evaluate_filter()`, `select_legs()`, `get_predict_limit_fn()`, `format_cycle()`, `mode_label()` |
+| `_predict_call_limit_price()` / `_predict_put_limit_price()` | `backtest_strategies.py` | BS mapping limit price functions — reusable for any call-sell or put-buy strategy |
+
+**To add a new strategy** (e.g. straddle, iron condor): create a new class in `backtest_strategies.py` implementing the 5-method interface, then create a thin wrapper `.py` that parses CLI args and calls `run_backtest(strategy, opt, etf)`. No engine changes needed.
 
 ## Backtest Audit (Jun 2026)
 

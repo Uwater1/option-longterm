@@ -2,7 +2,7 @@
 Loading pre-calculated 30-day IVs from ./data/30d_iv_cache_500.parquet...
 
 ======================================================================
-  备兑期权 BACKTEST — Cycle Detail  [FILTERED MODE (RSI+BBU)]
+  Covered Call BACKTEST — Cycle Detail  [FILTERED]
 ======================================================================
 
 Cycle  2022-09-19 → 2022-10-26   IV=17.5% (IVR=0.00)  calls= puts=None   ETF=5.9190 RSI=21.5 BBU=7.474 (Total 0 contracts) [FILTER FAIL]
@@ -284,3 +284,4 @@ Cycle  2026-05-28 → 2026-06-24   IV=21.0% (IVR=0.44)  calls=OTM2+OTM3 puts=Non
   ─────────────────────────────────────────────────────────────
 
   Chart saved → backtest/backtest_cc_500ETF.png
+  CSV  saved → backtest/backtest_cc_500ETF.csv

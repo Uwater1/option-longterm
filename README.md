@@ -2,25 +2,49 @@
 
 [中文文档](备兑期权.md)
 
-This directory contains scripts and research for long-term option investment strategies, specifically focusing on **Covered Call** with technical filters (and no protective put) on Chinese ETFs (50ETF, 300ETF, 500ETF).
+This directory contains scripts and research for long-term option investment strategies on Chinese ETFs (50ETF, 300ETF, 500ETF). The system uses an **Engine + Strategy pattern** to support multiple option strategies with shared infrastructure:
+
+- **Covered Call** (`backtest_covered_call.py`): Selling OTM calls with technical filters and dynamic alpha
+- **Protective Put** (`backtest_put.py`): Selective put buying with optimized filters (only hedges when signals align)
 
 ## Core Strategy
-The primary strategy is a **Covered Call with Technical Filters and Dynamic Alpha**, inspired by income-generating funds like JEPI, but adapted for the Chinese market (Project JEPI-CN) to optimize performance.
+
+### Covered Call (Short Calls)
+The primary strategy is a **Covered Call with Technical Filters and Dynamic Alpha**, inspired by income-generating funds like JEPI, but adapted for the Chinese market (Project JEPI-CN).
 
 - **Covered Call**: Selling OTM calls against held ETF shares to generate premium income.
 - **Technical Filters**: RSI, Bollinger Bands, ROC, and ATR indicators filter out overbought conditions. If the market is overbought, selling calls is skipped (Skip OTM4) to avoid assignment risk during sharp rallies.
 - **Dynamic Alpha Mode** (`--alpha`): Indicator-based combo switching between aggressive (OTM2+OTM3) and conservative (OTM4) call legs. Signals are derived from synthetic options research — see [alpha.md](alpha.md) for details.
 - **Model-Based Limit Orders** (`--model-offset`): Replaces the fixed ±2% spread assumption with a data-driven limit order offset predicted by a quantile regression model, targeting 90% fill probability. Uses Black-Scholes mapping to set call sell limit prices, simulated against 5m bar data. Requires a pre-trained model (see below).
-- **Put Limit Entry** (`--limit-entry`): Uses the same open-high P10 model via BS mapping to set limit buy orders for protective puts, achieving ~95% fill rate. Combined with `--with-put`.
-- **No Put**: Protective puts are removed to eliminate long-term premium drag, maximizing net income.
 - **Strike Selection**: Driven by technical indicators (RSI, BBU, SMA50) in dynamic alpha mode, or by ATM Implied Volatility (IV) in standard mode.
+
+### Protective Put (Long Puts, Selective Hedge)
+A complementary strategy that **selectively buys protective puts** only when filter signals suggest market vulnerability:
+
+- **Selective Hedging**: Filter pass → buy put at configured OTM level; filter fail → skip (P&L = 0). This avoids the constant premium drag of always-buying puts.
+- **Optimized Filters**: Per-ETF conditions (e.g. 300ETF: `RSI < 60 AND Vol20 > median`) found via synthetic research → real-data validation pipeline.
+- **Put Limit Entry** (`--limit-entry`): Uses the same open-high P10 model via BS mapping to set limit buy orders for protective puts, achieving ~95% fill rate.
+- **Configurable OTM Level**: `--level N` controls how far OTM to buy (default Level 1 = closest OTM put).
 
 ## File Structure
 
-### Backtesting
-- `backtest_covered_call.py`: The main backtesting engine. Supports multiple ETFs (50, 300, 500) and modes: `--with-put`, `--no-skip-otm4`, `--alpha` (dynamic combo switching), `--no-filter`, `--model-offset` (data-driven limit orders).
-- `backtest_covered_call*.png`: Visualizations of backtest results (Equity curve, drawdown, etc.).
-- `backtest_covered_call*.log`: Detailed logs of executed trades and performance metrics.
+### Reusable Backtest Architecture (Engine + Strategy Pattern)
+
+The backtest system is split into a **shared engine** and **pluggable strategies**, making it easy to add new strategies without duplicating infrastructure code:
+
+| File | Role | Reusable Components |
+|------|------|--------------------|
+| `backtest_engine.py` (~900 lines) | **Shared engine** — all infrastructure | `run_backtest()`, `calc_leg_pnl()`, `simulate_limit_order()`, `get_cycles()`, `load_data()`, BS/IV helpers (numba), plotting, CSV export |
+| `backtest_strategies.py` (~360 lines) | **Strategy classes** | `CallStrategy`, `PutStrategy` — each implements a 5-method interface |
+| `backtest_covered_call.py` (~50 lines) | **Thin wrapper** | CLI parsing + `CallStrategy` instantiation |
+| `backtest_put.py` (~50 lines) | **Thin wrapper** | CLI parsing + `PutStrategy` instantiation |
+
+**Adding a new strategy** (e.g. straddle, iron condor) requires only: (1) a new class in `backtest_strategies.py` implementing the 5-method interface (`evaluate_filter()`, `select_legs()`, `get_predict_limit_fn()`, `format_cycle()`, `mode_label()`), and (2) a thin wrapper `.py`. No engine changes needed.
+
+### Backtest Output
+- `backtest/backtest_cc_{ETF}*.png`: Covered Call visualizations (Equity curve, per-leg contribution, drawdown).
+- `backtest/backtest_put_{ETF}*.png`: Protective Put visualizations.
+- `backtest/backtest_*.csv`: Detailed trade logs with per-leg P&L.
 
 ### Limit Order Prediction (Open-High P10)
 - `predict_open_high.py`: Production quantile prediction system that predicts the 10th percentile of the intraday `(High - Open) / Open` move. Supports cross-ETF pooled training (`--pool`), ensemble bagging (5 models), and vol-regime-conditional calibration. Used by the backtest via `--model-offset` (calls) and `--limit-entry` (puts).
@@ -29,14 +53,18 @@ The primary strategy is a **Covered Call with Technical Filters and Dynamic Alph
 - `backtest/open_high_lgb_{N}_bag{i}.txt`: Trained bagged LightGBM quantile model files (5 per ETF).
 - `backtest/open_high_predictions_{N}.png`: Model validation visualizations (scatter, coverage calibration, feature importance).
 
-### Research & Analysis
-- `alpha_finder.py`: Calculates historical 30-day calendar forward return distributions for indices to identify high-probability "alpha" zones for strike selection.
-- `research_synthetic_otm.py`: Synthetic OTM research with combo alpha analysis (OTM2+OTM3 vs OTM4 P&L) and 24-signal dynamic search to find the best indicator for switching between aggressive and conservative combos.
+### Put Filter Research
+- `research_put_filters.py`: Synthetic put filter evaluation — 30+ filters, per-OTM-level breakdown, bootstrap CI, significance testing against baseline. Uses synthetic option data to prevent overfitting.
+- `optimize_put_filters.py`: Real-data put filter optimizer — grid search over synthetic-informed filter space, 6-component composite score (Sharpe 20%, Total 15%, MaxDD 15%, WinRate 15%, Placement 15%, FilterLift 20%).
+
+### Call Filter Research
+- `research_synthetic_otm.py`: Synthetic OTM research with combo alpha analysis (OTM2+OTM3 vs OTM4 P&L) and 24-signal dynamic search.
 - `research_otm_levels.py`: Research script to evaluate the performance of different OTM strike offsets under various market conditions.
 - `research_otm_no_filter.py`: Baseline OTM performance research without technical filters.
+- `optimize_filters.py`: Call filter grid search on real data (6-component composite scoring).
+- `eval_synth_filters.py`: Evaluates individual filters on synthetic data (14 technical indicators).
 - `evaluate_combinations.py`: Searches filter combinations on real option data.
 - `eval_synth_combinations.py`: Searches filter combinations on synthetic data (27 combos, scores and ranks top 5).
-- `eval_synth_filters.py`: Evaluates individual filters on synthetic data (14 technical indicators).
 
 ### Documentation
 - `alpha.md`: Dynamic alpha strategy research report — combo analysis, best signals per ETF, and real backtest validation.
@@ -54,7 +82,7 @@ Analyze combo P&L and find the best indicator signals for dynamic OTM switching:
 python research_synthetic_otm.py -e 300   # Combo alpha + 24-signal dynamic search
 ```
 
-### 2. Run Backtest
+### 2. Run Covered Call Backtest
 Run a standard backtest for the 300ETF covered call strategy:
 ```bash
 python backtest_covered_call.py 300
@@ -79,8 +107,7 @@ python predict_open_high.py -e 300 --pool  # Optional: cross-ETF pooled training
 Use the trained model to set data-driven limit orders instead of the fixed ±2% spread:
 ```bash
 python backtest_covered_call.py 300 --model-offset                 # Call limit orders (sell side)
-python backtest_covered_call.py 300 --with-put --limit-entry       # Put limit orders (buy side)
-python backtest_covered_call.py 300 --model-offset --with-put --limit-entry  # Both
+python backtest_put.py 300 --limit-entry                           # Put limit orders (buy side)
 ```
 
 ### 6. Predict Today's Limit Order Offset
@@ -89,7 +116,22 @@ Get the model-predicted offset for today's market conditions:
 python predict_open_high.py -e 300 --predict
 ```
 
-### 7. Analyze OTM Levels
+### 7. Run Protective Put Backtest
+Run a selective hedge put backtest (only buys when filter signals):
+```bash
+python backtest_put.py 300                   # Filtered put backtest
+python backtest_put.py 300 --no-filter       # Always-buy baseline
+python backtest_put.py 300 --limit-entry     # With BS mapping limit entry
+```
+
+### 8. Research Put Filters
+Evaluate put filters on synthetic data, then validate on real data:
+```bash
+python research_put_filters.py -e 300        # Synthetic eval (30+ filters, bootstrap CI)
+python optimize_put_filters.py 300           # Real-data grid search (composite score)
+```
+
+### 9. Analyze OTM Levels
 Research the optimal OTM offsets:
 ```bash
 python research_otm_levels.py -e 300
