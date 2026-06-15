@@ -9,7 +9,7 @@ from numba_utils import calculate_research_metrics_numba
 # Constants for RMB calculation
 MULTIPLIER = 10000
 COMMISSION = 2.0  # Per contract
-SLIPPAGE = 0.02   # 2% half-spread
+SLIPPAGE = 0.01   # 1% half-spread
 
 # Global paths
 PATH_PARQUET = "synthetic_options_300ETF.parquet"
@@ -109,10 +109,24 @@ def compute_combo_pnl_by_date(df, etf):
         for col in available_all:
             row[col] = grp[col].iloc[0]
 
-        # Compute per-level P&L (levels 0=ATM, 1-5=OTM)
-        # ATM: closest strike <= s0
+        # Compute per-level P&L (levels -2, -1, 0, 1-5)
+        # 0 is ATM, positive = OTM, negative = ITM
         itm = grp[grp["Strike"] <= s0].sort_values("Strike", ascending=False)
-        if not itm.empty:
+        if len(itm) > 2:
+            r = itm.iloc[2]
+            sell_p = r["Price"] * (1 - SLIPPAGE)
+            row["L-2_pnl"] = r["Exp Ret Short"] * sell_p * MULTIPLIER - COMMISSION
+        else:
+            row["L-2_pnl"] = np.nan
+
+        if len(itm) > 1:
+            r = itm.iloc[1]
+            sell_p = r["Price"] * (1 - SLIPPAGE)
+            row["L-1_pnl"] = r["Exp Ret Short"] * sell_p * MULTIPLIER - COMMISSION
+        else:
+            row["L-1_pnl"] = np.nan
+
+        if len(itm) > 0:
             r = itm.iloc[0]
             sell_p = r["Price"] * (1 - SLIPPAGE)
             row["L0_pnl"] = r["Exp Ret Short"] * sell_p * MULTIPLIER - COMMISSION
@@ -192,7 +206,7 @@ def analyze_combos(date_pnl):
 
     # Also print individual levels for reference
     print()
-    for lv in range(6):
+    for lv in [-2, -1, 0, 1, 2, 3, 4, 5]:
         col = f"L{lv}_pnl"
         if col not in date_pnl.columns:
             continue
@@ -370,7 +384,15 @@ def analyze_synthetic_otm(years=None):
     results_data = []
     filter_effectiveness_data = []
 
-    for option_type in ["C", "P"]:
+    # Levels: [-2, -1, 0, 1, 2, 3, 4, 5]. 0 is ATM, positive = OTM, negative = ITM
+    levels = [-2, -1, 0, 1, 2, 3, 4, 5]
+
+    for option_type, trade_type, ret_col, is_long in [
+        ("C", "Short Call", "Exp Ret Short", False),
+        ("C", "Long Call", "Exp Ret Long", True),
+        ("P", "Long Put", "Exp Ret Long", True),
+        ("P", "Short Put", "Exp Ret Short", False),
+    ]:
         mask = df["Option Type"] == option_type
         sub_df = df[mask].reset_index(drop=True)
         if sub_df.empty: continue
@@ -384,7 +406,6 @@ def analyze_synthetic_otm(years=None):
         boundaries[-1] = len(sub_df)
         
         # Prepare filter mask per group (Date)
-        # We need one boolean per group
         group_filter_mask = np.zeros(len(boundaries) - 1, dtype=bool)
         for g in range(len(boundaries) - 1):
             group_filter_mask[g] = sub_df["Pass Filter"].values[boundaries[g]]
@@ -395,35 +416,30 @@ def analyze_synthetic_otm(years=None):
         prices = sub_df["Price"].values.astype(np.float64)
         worthless = sub_df["Expire_worthless"].values.astype(np.int8)
         
-        if option_type == "C":
-            ret_val = sub_df["Exp Ret Short"].values.astype(np.float64)
-            is_call = True
-        else:
-            ret_val = sub_df["Exp Ret Long"].values.astype(np.float64)
-            is_call = False
+        ret_val = sub_df[ret_col].values.astype(np.float64)
+        is_call = (option_type == "C")
             
         # Execute Numba core aggregation
-        # returns (metrics_passed, metrics_filtered)
         metrics_p, metrics_f = calculate_research_metrics_numba(
-            strikes, s0s, ret_val, prices, worthless, boundaries, is_call, group_filter_mask
+            strikes, s0s, ret_val, prices, worthless, boundaries, is_call, is_long, group_filter_mask
         )
         
         # Process Passed Metrics
-        for lv in range(6):
-            count = metrics_p[lv, 0]
+        for idx, lv in enumerate(levels):
+            count = metrics_p[idx, 0]
             if count == 0: continue
             
-            pnl_sum = metrics_p[lv, 1]
-            wins = metrics_p[lv, 2]
-            total_wins = metrics_p[lv, 3]
-            min_pnl = metrics_p[lv, 4]
+            pnl_sum = metrics_p[idx, 1]
+            wins = metrics_p[idx, 2]
+            total_wins = metrics_p[idx, 3]
+            min_pnl = metrics_p[idx, 4]
             
             winrate = wins / count
             total_winrate = total_wins / count
             expected_return = pnl_sum / count
             
             results_data.append({
-                "Option Type": "Short Call" if option_type == "C" else "Long Put",
+                "Option Type": trade_type,
                 "OTM Level": lv,
                 "Samples": int(count),
                 "Winrate": f"{winrate:.2%}",
@@ -433,14 +449,14 @@ def analyze_synthetic_otm(years=None):
             })
 
         # Process Filtered Metrics (Short Call only)
-        if option_type == "C":
-            for lv in range(6):
-                count = metrics_f[lv, 0]
+        if option_type == "C" and not is_long:
+            for idx, lv in enumerate(levels):
+                count = metrics_f[idx, 0]
                 if count == 0: continue
                 
-                pnl_sum = metrics_f[lv, 1]
-                wins = metrics_f[lv, 2]
-                total_wins = metrics_f[lv, 3]
+                pnl_sum = metrics_f[idx, 1]
+                wins = metrics_f[idx, 2]
+                total_wins = metrics_f[idx, 3]
                 
                 winrate = wins / count
                 total_winrate = total_wins / count
@@ -460,7 +476,7 @@ def analyze_synthetic_otm(years=None):
 
     df_res = pd.DataFrame(results_data)
     
-    title = f"ALPHA RESEARCH (SYNTHETIC): OTM OPTIONS ({ETF_NAME}) (0 = ATM)"
+    title = f"ALPHA RESEARCH (SYNTHETIC): OPTIONS ({ETF_NAME}) (0 = ATM, Negative = ITM)"
     if years:
         title += f" - Last {years} Years"
         

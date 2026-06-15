@@ -62,7 +62,15 @@ def analyze_synthetic_otm(years=None):
     
     results_data = []
 
-    for option_type in ["C", "P"]:
+    # Levels: [-2, -1, 0, 1, 2, 3, 4, 5]. 0 is ATM, positive = OTM, negative = ITM
+    levels = [-2, -1, 0, 1, 2, 3, 4, 5]
+
+    for option_type, trade_type, ret_col, is_long in [
+        ("C", "Short Call", "Exp Ret Short", False),
+        ("C", "Long Call", "Exp Ret Long", True),
+        ("P", "Long Put", "Exp Ret Long", True),
+        ("P", "Short Put", "Exp Ret Short", False),
+    ]:
         mask = df["Option Type"] == option_type
         sub_df = df[mask].reset_index(drop=True)
         if sub_df.empty: continue
@@ -84,34 +92,29 @@ def analyze_synthetic_otm(years=None):
         prices = sub_df["Price"].values.astype(np.float64)
         worthless = sub_df["Expire_worthless"].values.astype(np.int8)
         
-        if option_type == "C":
-            ret_val = sub_df["Exp Ret Short"].values.astype(np.float64)
-            is_call = True
-        else:
-            ret_val = sub_df["Exp Ret Long"].values.astype(np.float64)
-            is_call = False
+        ret_val = sub_df[ret_col].values.astype(np.float64)
+        is_call = (option_type == "C")
             
         # Execute Numba core aggregation
-        # metrics_p: passed, metrics_f: filtered
         metrics_p, metrics_f = calculate_research_metrics_numba(
-            strikes, s0s, ret_val, prices, worthless, boundaries, is_call, group_filter_mask
+            strikes, s0s, ret_val, prices, worthless, boundaries, is_call, is_long, group_filter_mask
         )
         
-        for lv in range(6):
-            count = metrics_p[lv, 0]
+        for idx, lv in enumerate(levels):
+            count = metrics_p[idx, 0]
             if count == 0: continue
             
-            pnl_sum = metrics_p[lv, 1]
-            wins = metrics_p[lv, 2]
-            total_wins = metrics_p[lv, 3]
-            min_pnl = metrics_p[lv, 4]
+            pnl_sum = metrics_p[idx, 1]
+            wins = metrics_p[idx, 2]
+            total_wins = metrics_p[idx, 3]
+            min_pnl = metrics_p[idx, 4]
             
             winrate = wins / count
             total_winrate = total_wins / count
             expected_return = pnl_sum / count
             
             results_data.append({
-                "Option Type": "Short Call" if option_type == "C" else "Long Put",
+                "Option Type": trade_type,
                 "OTM Level": lv,
                 "Samples": int(count),
                 "Winrate": f"{winrate:.2%}",
@@ -126,7 +129,7 @@ def analyze_synthetic_otm(years=None):
 
     df_res = pd.DataFrame(results_data)
     
-    title = f"ALPHA RESEARCH (SYNTHETIC): OTM OPTIONS ({ETF_NAME}) (0 = ATM)"
+    title = f"ALPHA RESEARCH (SYNTHETIC): OPTIONS ({ETF_NAME}) (0 = ATM, Negative = ITM)"
     if years:
         title += f" - Last {years} Years"
         

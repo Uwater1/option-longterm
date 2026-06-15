@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import os
 
 # Constants matching backtest_covered_call.py
-SPREAD_HALF    = 0.02
+SPREAD_HALF    = 0.01
 COMMISSION     = 2.0
 
 # Global paths that will be updated by select_etf
@@ -139,6 +139,12 @@ def get_otm_strikes(opt, etf, entry_date, expiry_date, option_type, offsets):
                 results.append(itm.iloc[0].to_dict())
             else:
                 results.append(None)
+        elif off < 0:
+            idx = -off
+            if idx < len(itm):
+                results.append(itm.iloc[idx].to_dict())
+            else:
+                results.append(None)
         else:
             idx = off - 1
             if idx < len(otm):
@@ -176,11 +182,17 @@ def analyze_otm_levels(years=None):
     cycles = get_cycles(opt, etf, years=years)
     print(f"Found {len(cycles)} cycles.")
     
-    levels = [0, 1, 2, 3, 4, 5]
+    # Levels: [-2, -1, 0, 1, 2, 3, 4, 5]. 0 is ATM, positive = OTM, negative = ITM
+    levels = [-2, -1, 0, 1, 2, 3, 4, 5]
     results_data = []
     filter_effectiveness_data = []
 
-    for option_type in ["C", "P"]:
+    for option_type, trade_type, is_long in [
+        ("C", "Short Call", False),
+        ("C", "Long Call", True),
+        ("P", "Long Put", True),
+        ("P", "Short Put", False),
+    ]:
         level_metrics = {level: {"wins": 0, "total_wins": 0, "pnls": [], "count": 0} for level in levels}
         filtered_metrics = {level: {"wins": 0, "total_wins": 0, "pnls": [], "count": 0} for level in levels}
         
@@ -190,7 +202,7 @@ def analyze_otm_levels(years=None):
             
             # Apply cycle filter only to Short Call
             pass_filter = True
-            if option_type == "C":
+            if option_type == "C" and not is_long:
                 pass_filter = filter_cycle(etf, entry)
             
             etf_expiry_dates = etf.index[etf.index <= expiry]
@@ -209,19 +221,17 @@ def analyze_otm_levels(years=None):
                 mult = float(leg["contract_multiplier"])
                 entry_mid = float(leg["close"])
                 
-                intrinsic = 0.0
                 if option_type == "C":
-                    # Short Call (C): Receive premium, pay intrinsic
-                    if etf_settle > K:
-                        intrinsic = etf_settle - K
-                    exec_px = entry_mid * (1 - SPREAD_HALF)
-                    net_rmb = (exec_px - intrinsic) * mult - COMMISSION
+                    intrinsic = max(0.0, etf_settle - K)
                 else:
-                    # Long Put (P): Pay premium, receive intrinsic
-                    if etf_settle < K:
-                        intrinsic = K - etf_settle
+                    intrinsic = max(0.0, K - etf_settle)
+
+                if is_long:
                     exec_px = entry_mid * (1 + SPREAD_HALF)
                     net_rmb = (intrinsic - exec_px) * mult - COMMISSION
+                else:
+                    exec_px = entry_mid * (1 - SPREAD_HALF)
+                    net_rmb = (exec_px - intrinsic) * mult - COMMISSION
                 
                 if pass_filter:
                     level_metrics[level]["count"] += 1
@@ -230,7 +240,7 @@ def analyze_otm_levels(years=None):
                         level_metrics[level]["wins"] += 1
                     if intrinsic == 0.0:
                         level_metrics[level]["total_wins"] += 1
-                elif option_type == "C":
+                elif option_type == "C" and not is_long:
                     filtered_metrics[level]["count"] += 1
                     filtered_metrics[level]["pnls"].append(net_rmb)
                     if net_rmb > 0:
@@ -250,7 +260,7 @@ def analyze_otm_levels(years=None):
             max_loss = np.min(metrics["pnls"])
             
             results_data.append({
-                "Option Type": "Short Call" if option_type == "C" else "Long Put",
+                "Option Type": trade_type,
                 "OTM Level": level,
                 "Cycles": count,
                 "Winrate": f"{winrate:.2%}",
@@ -260,7 +270,7 @@ def analyze_otm_levels(years=None):
             })
 
         # Process filtered metrics for Short Call
-        if option_type == "C":
+        if option_type == "C" and not is_long:
             for level in levels:
                 fm = filtered_metrics[level]
                 if fm["count"] == 0:
@@ -278,7 +288,7 @@ def analyze_otm_levels(years=None):
             
     df = pd.DataFrame(results_data)
     
-    title = f"ALPHA RESEARCH: OTM OPTIONS ({ETF_NAME}) (0 = ATM) - {'Last ' + str(years) + ' Years' if years else 'Full History'}"
+    title = f"ALPHA RESEARCH: OPTIONS ({ETF_NAME}) (0 = ATM, Negative = ITM) - {'Last ' + str(years) + ' Years' if years else 'Full History'}"
     print("\n" + "="*95)
     print(" " * ((95 - len(title)) // 2) + title)
     print("="*95)
