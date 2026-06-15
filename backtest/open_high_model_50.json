@@ -1,0 +1,47 @@
+{
+  "etf_key": "50",
+  "features": [
+    "open_ema5_div",
+    "roc5",
+    "gap_pct",
+    "rsi14"
+  ],
+  "model_type": "ensemble",
+  "quantile": 0.1,
+  "cv_comparison": {
+    "statsmodels_cv_loss": 0.060025761083420635,
+    "lightgbm_cv_loss": 0.05965945891268063,
+    "winner": "ensemble"
+  },
+  "selection_order": [
+    [
+      "open_ema5_div",
+      0.0716501379186114
+    ],
+    [
+      "roc5",
+      0.061065181629354995
+    ],
+    [
+      "gap_pct",
+      0.059994405605139765
+    ],
+    [
+      "rsi14",
+      0.05911182592533646
+    ]
+  ],
+  "best_set_size": 4,
+  "rolling_coverage": 87.61867088607595,
+  "rolling_mean_pred_offset": 0.316108233316959,
+  "rolling_pinball_loss": 0.05855792062596791,
+  "rolling_n_predictions": 2528,
+  "statsmodels_coeffs": {
+    "Intercept": -0.11040325178466659,
+    "open_ema5_div": -0.4760696390934539,
+    "roc5": 0.10005852566053706,
+    "gap_pct": 0.17105785101768925,
+    "rsi14": 0.006741551456838067
+  },
+  "lgb_model_path": "./backtest/open_high_lgb_50.txt"
+}

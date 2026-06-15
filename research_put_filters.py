@@ -9,6 +9,7 @@ Usage:
   python research_put_filters.py -e 300
   python research_put_filters.py -e 500
   python research_put_filters.py -e 50
+  python research_put_filters.py -e 300 --level 3   # bootstrap at OTM3
 """
 import pandas as pd
 import numpy as np
@@ -379,6 +380,8 @@ def main():
     parser = argparse.ArgumentParser(description="Synthetic Put Filter Evaluation")
     parser.add_argument("-e", "--etf", type=str, choices=["50", "300", "500"], default="300")
     parser.add_argument("-n", "--bootstrap", type=int, default=N_BOOTSTRAP)
+    parser.add_argument("-l", "--level", type=int, default=1,
+                        help="OTM level for bootstrap section (default: 1)")
     args = parser.parse_args()
     select_etf(args.etf)
     N_BOOTSTRAP = args.bootstrap
@@ -387,7 +390,7 @@ def main():
     print("=" * 110)
     print(f"  SYNTHETIC PUT FILTER EVALUATION — {ETF_TAG}ETF")
     print(f"  Strategy: Pass→Buy Put, Fail→Skip (Selective Hedge)")
-    print(f"  Bootstrap iterations: {N_BOOTSTRAP}")
+    print(f"  Bootstrap iterations: {N_BOOTSTRAP} | Bootstrap OTM Level: {args.level}")
     print("=" * 110)
 
     df = load_data()
@@ -469,9 +472,9 @@ def main():
 
     section_per_level_breakdown(df, filters)
     all_results = section_filter_ranking(df, filters)
-    boot_results = section_bootstrap(df, filters, best_level=1)
+    boot_results = section_bootstrap(df, filters, best_level=args.level)
     section_significance(boot_results)
-    section_final_recommendations(all_results, best_level=1)
+    section_final_recommendations(all_results, best_level=args.level)
 
 
 if __name__ == "__main__":
