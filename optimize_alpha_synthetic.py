@@ -381,8 +381,8 @@ def main():
         print(f"  - Placement: {base_row['placement_rate']:.1%} ({int(base_row['n_placed'])}/{n_groups}), FilterLift={base_row['filter_lift']:.2f} RMB/cycle")
     
     # Save top run to file for report
-    runs_df.to_csv(f"optimization_alpha_{args.etf}ETF_synthetic.csv", index=False)
-    print(f"Full optimization results saved to optimization_alpha_{args.etf}ETF_synthetic.csv")
+    runs_df.to_csv(f"backtest/optimization_alpha_{args.etf}ETF_synthetic.csv", index=False)
+    print(f"Full optimization results saved to backtest/optimization_alpha_{args.etf}ETF_synthetic.csv")
 
 if __name__ == "__main__":
     main()

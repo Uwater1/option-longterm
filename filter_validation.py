@@ -740,6 +740,25 @@ def main():
     print("  validate/filter_validation_report_2.png (bar chart + heatmap + table)")
     print(f"  {md_path} (markdown report)")
 
+    # ── Generate separate Call and Put reports ──
+    print("\n=== Generating Separate Call & Put Reports ===")
+    from generate_call_report import generate_all as generate_call_all
+    from generate_put_report import generate_all as generate_put_all
+    generate_call_all(all_results, etf_data)
+    generate_put_all(all_results, put_results, etf_data)
+
+    print("\n=== All Reports Complete ===")
+    print("  validate/filter_cover_call.md      (English call report)")
+    print("  validate/filter_cover_call_cn.md   (Chinese call report)")
+    print("  validate/filter_put.md             (English put report)")
+    print("  validate/filter_put_cn.md          (Chinese put report)")
+    print("  validate/filter_call_scatter.png   (call scatter plots)")
+    print("  validate/filter_call_dashboard.png (call dashboard)")
+    print("  validate/filter_call_horizon.png   (call horizon comparison)")
+    print("  validate/filter_put_dashboard.png  (put dashboard)")
+    print("  validate/filter_put_horizon.png    (put horizon comparison)")
+    print("  validate/filter_put_tail_risk.png  (put tail risk analysis)")
+
 
 if __name__ == "__main__":
     main()

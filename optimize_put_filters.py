@@ -270,7 +270,8 @@ def sweep_levels(etf_choice, levels=(1, 2, 3)):
             "MACD<0":        best["macd_neg"],
         })
         # Save per-level CSV
-        out_name = f"optimization_put_{etf_choice}ETF_level{lv}.csv"
+        os.makedirs("backtest", exist_ok=True)
+        out_name = f"backtest/optimization_put_{etf_choice}ETF_level{lv}.csv"
         df.head(200).to_csv(out_name, index=False)
         print(f"  Saved → {out_name}")
 
@@ -343,7 +344,8 @@ if __name__ == "__main__":
               f"WinRate={b['win_rate']:.1%}, Place={b['placement_rate']:.1%}")
 
     # ── Save to CSV ────────────────────────────────────────────────────
-    out_name = f"optimization_put_{args.etf}ETF_level{args.level}.csv"
+    os.makedirs("backtest", exist_ok=True)
+    out_name = f"backtest/optimization_put_{args.etf}ETF_level{args.level}.csv"
     df_res.head(200).to_csv(out_name, index=False)
     print(f"\n  Saved top 200 results to {out_name}")
 
