@@ -7,8 +7,8 @@ predictive power for forward ETF returns over ~1000 trading days per ETF.
 
 Outputs:
   - Console statistical summary table
-  - backtest/filter_validation_report.png    (scatter + bin plots)
-  - backtest/filter_validation_report_2.png  (bar chart + heatmap + summary table)
+  - validate/filter_validation_report.png    (scatter + bin plots)
+  - validate/filter_validation_report_2.png  (bar chart + heatmap + summary table)
 """
 
 import os
@@ -315,7 +315,7 @@ def plot_report_1(etf_data, all_results):
                 ax.legend(loc="lower left", fontsize=8, framealpha=0.9)
 
     plt.tight_layout(rect=[0, 0, 1, 0.96])
-    out_path = os.path.join("backtest", "filter_validation_report.png")
+    out_path = os.path.join("validate", "filter_validation_report.png")
     fig.savefig(out_path, dpi=150, bbox_inches="tight")
     print(f"[SAVED] {out_path}")
     plt.close(fig)
@@ -529,10 +529,72 @@ def plot_report_2(etf_data, all_results):
 
     fig.suptitle(f"Filter Indicator Validation Report — {PRIMARY_HORIZON}-Calendar-Day Forward Return",
                  fontsize=16, fontweight="bold", y=0.99, color="#1D2939")
-    out_path = os.path.join("backtest", "filter_validation_report_2.png")
+    out_path = os.path.join("validate", "filter_validation_report_2.png")
     fig.savefig(out_path, dpi=150, bbox_inches="tight")
     print(f"[SAVED] {out_path}")
     plt.close(fig)
+
+
+def generate_markdown_report(all_results, out_md_path="validate/filter_validation_report.md"):
+    """Generate markdown report with embedded charts and statistical results."""
+    import datetime
+    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    with open(out_md_path, "w", encoding="utf-8") as f:
+        f.write("# Filter Indicator Statistical Validation Report\n\n")
+        f.write(f"Generated on: `{now_str}`  \n")
+        f.write(f"Primary Horizon: `{PRIMARY_HORIZON}` calendar days  \n")
+        f.write(f"Horizons: `{[f'{h}d' for h in FORWARD_HORIZONS]}`  \n\n")
+
+        f.write("> [!NOTE]\n")
+        f.write("> Validates technical indicators used in backtest_covered_call.py ")
+        f.write("(RSI, BBU, ROC, SMA50, MACD Hist) against forward ETF returns. ")
+        f.write("Determines if filter conditions have statistical edge.\n\n")
+
+        f.write("## Visualizations\n\n")
+        f.write("### Figure 1: Indicator Value vs 30-Calendar-Day Forward Return Scatter & Bin Plots\n")
+        f.write("![Scatter & Bin Plots](filter_validation_report.png)\n\n")
+        f.write("### Figure 2: Filter Pass/Fail Bar Chart, Significance Heatmap, and Summary Table\n")
+        f.write("![Bar Chart + Heatmap + Table](filter_validation_report_2.png)\n\n")
+
+        f.write("## Interpretation Guide\n\n")
+        f.write("- **Cohen's d (Effect Size)**: Standard deviation difference between Pass and Fail returns.\n")
+        f.write("  - Positive: Filter-pass has higher forward returns (good for trend entry checks).\n")
+        f.write("  - Negative: Filter-pass has lower forward returns (supports RSI/BBU cap to avoid overbought assignments).\n")
+        f.write("  - Size: 0.1 = small, 0.3 = medium, 0.5 = large.\n")
+        f.write("- **p-value**: Welch's t-test / Mann-Whitney U test significance. p < 0.05 is statistically reliable.\n")
+        f.write("- **Verdict**:\n")
+        f.write("  - `SIGNIFICANT`: p < 0.05 and |Cohen's d| >= 0.1\n")
+        f.write("  - `MARGINAL`: p < 0.10\n")
+        f.write("  - `NOT SIGNIFICANT`: p >= 0.10\n\n")
+
+        f.write("## Statistical Analysis Tables\n\n")
+
+        for horizon in FORWARD_HORIZONS:
+            f.write(f"### {horizon}-Calendar-Day Forward Return Horizon\n\n")
+            f.write("| ETF | Filter | Placement % | Pass Avg | Fail Avg | Diff | p(t-test) | p(M-W) | Cohen's d | Verdict |\n")
+            f.write("| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |\n")
+
+            for etf_name, filters in all_results.items():
+                for fname, res in filters.items():
+                    if horizon not in res or res[horizon] is None:
+                        continue
+                    r = res[horizon]
+                    v = verdict_str(r["p_ttest"], r["cohens_d"])
+                    diff = r["pass_mean"] - r["fail_mean"]
+                    
+                    if v == "SIGNIFICANT":
+                        verdict_md = "**SIGNIFICANT**"
+                    elif v == "MARGINAL":
+                        verdict_md = "*MARGINAL*"
+                    else:
+                        verdict_md = "NOT SIGNIFICANT"
+                        
+                    f.write(f"| {etf_name} | {fname} | {r['placement']:.1%} | "
+                            f"{r['pass_mean']:+.3%} | {r['fail_mean']:+.3%} | "
+                            f"{diff:+.3%} | {r['p_ttest']:.4f} | {r['p_mannwhitney']:.4f} | "
+                            f"{r['cohens_d']:+.3f} | {verdict_md} |\n")
+            f.write("\n")
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -566,17 +628,22 @@ def main():
     # Console report
     print_report(all_results)
 
-    # Generate plots
-    print("=== Generating Report Charts ===")
-    os.makedirs("backtest", exist_ok=True)
+    # Generate plots and markdown
+    print("=== Generating Report Charts & Markdown ===")
+    os.makedirs("validate", exist_ok=True)
     plot_report_1(etf_data, all_results)
     plot_report_2(etf_data, all_results)
+    
+    md_path = os.path.join("validate", "filter_validation_report.md")
+    generate_markdown_report(all_results, md_path)
 
     print("\n=== Done ===")
     print("Reports saved to:")
-    print("  backtest/filter_validation_report.png   (scatter + bin plots)")
-    print("  backtest/filter_validation_report_2.png (bar chart + heatmap + table)")
+    print("  validate/filter_validation_report.png   (scatter + bin plots)")
+    print("  validate/filter_validation_report_2.png (bar chart + heatmap + table)")
+    print(f"  {md_path} (markdown report)")
 
 
 if __name__ == "__main__":
     main()
+
