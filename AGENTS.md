@@ -8,7 +8,6 @@ Enhanced income strategy for Chinese ETFs: Covered Call + Bull Put Spread on 50E
 source venv/bin/activate                    # Activate Python env (uses system miniconda for rqdatac)
 python3 update_data.py                      # Refresh parquet data from rqdatac
 python3 download_5m_data.py                # Download 5m ETF & option historical data
-python backtest_covered_call.py [50|300|500]  # Run call backtest (Covered Call strategy)
 python backtest_put.py [50|300|500]           # Run put backtest (uses per-ETF optimal OTM level by default)
 python backtest_put.py 300 --no-filter        # Run put backtest without filter (always buy)
 python backtest_put.py 300 --limit-entry      # Run put backtest with BS mapping limit entry
@@ -156,6 +155,7 @@ README.md                      # English README (links to Chinese docs)
 
 **Optimization scoring — Call filters (v2, Jun 2026):** Both `optimize_alpha_synthetic.py` and `optimize_filters.py` use a 6-component normalized composite score: Sharpe (20%), Total P&L (15%), MaxDD (15%), WinRate (15%), PlacementRate (15%), FilterLift (20%). FilterLift = avg P&L on filter-placed cycles minus avg P&L if always trading. `backtest_covered_call.py` aggregate summary reports placement rate and filter lift.
 
+**Optimization scoring — Call filters (v2, Jun 2026):** Both `optimize_alpha_synthetic.py` and `optimize_filters.py` use a 6-component normalized composite score: Sharpe (20%), Total P&L (15%), MaxDD (15%), WinRate (15%), PlacementRate (15%), FilterLift (20%). FilterLift = avg P&L on filter-placed cycles minus avg P&L if always trading. `backtest_covered_call.py` aggregate summary reports placement rate and filter lift.
 **Optimization scoring — Put filters (v2, Jun 2026):** `optimize_put_filters.py` uses profit-first composite: **TotalPnL (35%), FilterLift (30%), Sharpe (15%), MaxDD (10%), WinRate (5%), PlacementRate (5%)**. Rationale: for a selective hedge, win-rate and placement matter less than whether selected cycles actually earn money.
 
 ### Reusable Engine Components
