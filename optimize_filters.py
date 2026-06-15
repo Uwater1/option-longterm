@@ -266,6 +266,6 @@ if __name__ == "__main__":
     print(df_res[display_cols].head(10).to_string())
     
     # Save top 5 to csv/txt
-    out_name = f"optimization_{choice}ETF_{'withput' if with_put else 'calls_only'}.csv"
+    out_name = f"backtest/optimization_{choice}ETF_{'withput' if with_put else 'calls_only'}.csv"
     df_res.head(100).to_csv(out_name, index=False)
     print(f"\nSaved top 100 results to {out_name}")

@@ -1,6 +1,6 @@
 # Filter Indicator Statistical Validation Report
 
-Generated on: `2026-06-15 13:09:07`  
+Generated on: `2026-06-15 14:29:12`  
 Primary Horizon: `30` calendar days  
 Horizons: `['7d', '14d', '30d']`  
 
