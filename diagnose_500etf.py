@@ -9,7 +9,7 @@ import argparse
 import math
 from datetime import datetime, timedelta
 from research_otm_levels import select_etf, load_data, get_cycles, get_otm_strikes
-from backtest_covered_call import (
+from backtest_engine import (
     get_strike_by_level, get_atm_iv, get_30d_iv,
     SPREAD_HALF, COMMISSION, EXERCISE_COST, RISK_FREE, IV_THRESHOLD
 )
@@ -343,7 +343,7 @@ if __name__ == "__main__":
     print(f"Found {len(cycles)} cycles for {args.etf}ETF")
 
     import os
-    from backtest_covered_call import PATH_IV_CACHE, select_underlying
+    from backtest_engine import PATH_IV_CACHE, select_underlying
     select_underlying(args.etf)
 
     if os.path.exists(PATH_IV_CACHE):

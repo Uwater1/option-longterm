@@ -4,10 +4,10 @@ import pandas as pd
 import numpy as np
 import pandas_ta as ta
 
-# Add current path to sys.path so we can import from backtest_covered_call
+# Add current path to sys.path so we can import from backtest_engine
 sys.path.append(os.path.abspath("."))
 
-from backtest_covered_call import (
+from backtest_engine import (
     select_underlying, load_data, get_cycles, get_otm_strikes,
     get_strike_by_level, calc_leg_pnl, PATH_IV_CACHE, IV_THRESHOLD
 )
