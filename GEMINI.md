@@ -177,7 +177,7 @@ README.md                      # English README (links to Chinese docs)
 
 | Param | Value | Notes |
 |-------|-------|-------|
-| SPREAD_HALF | 0.02 | ±2% slippage |
+| SPREAD_HALF | 0.01 | ±1% slippage (Updated from 2% as per user request) |
 | COMMISSION | 2.0 RMB | Per option leg |
 | ETF_SHARES | 20,000 | Equity leg size |
 | IV_THRESHOLD | 0.20 | Fallback ATM IV |

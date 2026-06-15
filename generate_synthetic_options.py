@@ -16,7 +16,7 @@ SYMBOL_MAP = {
 }
 DATA_DIR = './data'
 RFR_FILE = os.path.join(DATA_DIR, 'interest_free_rate.csv')
-SLIPPAGE = 0.02
+SLIPPAGE = 0.01
 
 # --- Calendar Logic ---
 class TargetExpiryGenerator:
