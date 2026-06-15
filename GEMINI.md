@@ -34,10 +34,14 @@ python research_robustness.py -e 500       # Data completeness & robustness anal
 ## Project Structure
 
 ```
-backtest/                      # Backtest output logs and PNG charts
+backtest/                      # Backtest output logs, charts, and reports
 ├── open_high_model_{N}.json   # Trained open-high P10 model metadata (features, coefficients, vol-regime calibration)
 ├── open_high_lgb_{N}_bag{i}.txt  # 5 bagged LightGBM quantile model files per ETF (i=0..4)
 ├── open_high_predictions_{N}.png  # Open-high prediction visualizations
+validate/                      # Filter statistical validation reports
+├── filter_validation_report.png   # Filter indicator scatter + bin plots
+├── filter_validation_report_2.png # Filter indicator bar chart + heatmap + table
+├── filter_validation_report.md   # Filter indicator validation markdown report
 data/                          # Local Parquet database (rqdatac source)
 ├── {ETF}_instruments.parquet  # Option contract metadata (FINAL strike/mult after all adjustments)
 ├── {ETF}_historical_prices.parquet  # Option daily OHLC/OI (DAILY-CORRECT strike_price & contract_multiplier)
@@ -53,7 +57,7 @@ spread.py                      # LightGBM bid-ask spread prediction model
 numba_utils.py                 # Numba-compiled BS pricing, IV solver, synthetic metrics
 predict_open_high.py           # Open-to-High P10 prediction system (Statsmodels QR + LightGBM quantile, 90% fill-rate limit orders)
 research_open_high.py          # Static open-high distribution analysis (graphical only)
-research_filter_validation.py  # Statistically validates filter indicators against 30-calendar-day returns
+research_filter_validation.py  # Statistically validates filter indicators (generates charts and markdown report)
 
 research_otm_levels.py         # OTM level analysis (with RSI<66 + BB filter)
 research_otm_no_filter.py      # OTM baseline (no filter)
