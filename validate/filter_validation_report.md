@@ -1,11 +1,11 @@
 # Filter Indicator Statistical Validation Report
 
-Generated on: `2026-06-14 22:11:42`  
+Generated on: `2026-06-15 13:09:07`  
 Primary Horizon: `30` calendar days  
 Horizons: `['7d', '14d', '30d']`  
 
 > [!NOTE]
-> Validates technical indicators used in backtest_covered_call.py (RSI, BBU, ROC, SMA50, MACD Hist) against forward ETF returns. Determines if filter conditions have statistical edge.
+> Validates technical indicators used in both the **Call Strategy** (`backtest_covered_call.py`) and the **Put Strategy** (`backtest_put.py`) (RSI, BBU, ROC, SMA50, MACD Hist, Vol20 regime) against forward ETF returns. Determines if filter conditions have statistical edge.
 
 ## Visualizations
 
@@ -27,7 +27,7 @@ Horizons: `['7d', '14d', '30d']`
   - `MARGINAL`: p < 0.10
   - `NOT SIGNIFICANT`: p >= 0.10
 
-## Statistical Analysis Tables
+## Individual Filter Analysis (Call + Put Indicators)
 
 ### 7-Calendar-Day Forward Return Horizon
 
@@ -47,6 +47,10 @@ Horizons: `['7d', '14d', '30d']`
 | 300ETF | ROC20 < 4% | 78.7% | +0.085% | +0.393% | -0.308% | 0.0898 | 0.1364 | -0.107 | *MARGINAL* |
 | 300ETF | MACD Hist < 0 | 50.6% | +0.191% | +0.110% | +0.081% | 0.5558 | 0.1220 | +0.028 | NOT SIGNIFICANT |
 | 300ETF | Vol20 < Med | 43.8% | -0.004% | +0.271% | -0.276% | 0.0394 | 0.0079 | -0.096 | *MARGINAL* |
+| 300ETF | RSI < 55 | 61.7% | +0.115% | +0.209% | -0.094% | 0.5226 | 0.3905 | -0.032 | NOT SIGNIFICANT |
+| 300ETF | RSI < 60 | 75.4% | +0.113% | +0.267% | -0.154% | 0.4082 | 0.4405 | -0.053 | NOT SIGNIFICANT |
+| 300ETF | Vol20 > Med | 41.2% | +0.209% | +0.110% | +0.100% | 0.4825 | 0.6721 | +0.035 | NOT SIGNIFICANT |
+| 300ETF | Close < SMA50 | 46.6% | +0.115% | +0.182% | -0.066% | 0.6249 | 0.9497 | -0.023 | NOT SIGNIFICANT |
 | 50ETF | RSI < 66 | 89.4% | +0.026% | +0.271% | -0.244% | 0.2311 | 0.9169 | -0.082 | NOT SIGNIFICANT |
 | 50ETF | RSI < 72 | 96.0% | +0.038% | +0.388% | -0.350% | 0.3245 | 0.8636 | -0.118 | NOT SIGNIFICANT |
 | 50ETF | RSI > 25 | 98.7% | +0.030% | +1.712% | -1.682% | 0.0533 | 0.0724 | -0.567 | *MARGINAL* |
@@ -61,6 +65,10 @@ Horizons: `['7d', '14d', '30d']`
 | 50ETF | ROC20 < 4% | 78.9% | +0.033% | +0.124% | -0.091% | 0.5448 | 0.9567 | -0.031 | NOT SIGNIFICANT |
 | 50ETF | MACD Hist < 0 | 48.5% | +0.076% | +0.030% | +0.047% | 0.6788 | 0.4690 | +0.016 | NOT SIGNIFICANT |
 | 50ETF | Vol20 < Med | 48.9% | +0.198% | -0.087% | +0.285% | 0.0110 | 0.0260 | +0.096 | *MARGINAL* |
+| 50ETF | RSI < 55 | 64.3% | +0.066% | +0.028% | +0.038% | 0.7452 | 0.0466 | +0.013 | NOT SIGNIFICANT |
+| 50ETF | RSI < 60 | 77.1% | +0.022% | +0.155% | -0.133% | 0.3355 | 0.3831 | -0.045 | NOT SIGNIFICANT |
+| 50ETF | Vol20 > Med | 41.4% | -0.020% | +0.103% | -0.123% | 0.2749 | 0.1600 | -0.042 | NOT SIGNIFICANT |
+| 50ETF | Close < SMA50 | 46.8% | +0.038% | +0.065% | -0.027% | 0.8086 | 0.1394 | -0.009 | NOT SIGNIFICANT |
 | 500ETF | RSI < 66 | 87.2% | -0.085% | +5.056% | -5.141% | 0.0016 | 0.0000 | -0.449 | **SIGNIFICANT** |
 | 500ETF | RSI < 72 | 92.8% | -0.052% | +8.642% | -8.694% | 0.0025 | 0.0000 | -0.766 | **SIGNIFICANT** |
 | 500ETF | RSI > 25 | 98.3% | +0.545% | +2.360% | -1.815% | 0.0115 | 0.0009 | -0.157 | **SIGNIFICANT** |
@@ -75,6 +83,10 @@ Horizons: `['7d', '14d', '30d']`
 | 500ETF | ROC20 < 4% | 73.2% | -0.124% | +2.484% | -2.609% | 0.0010 | 0.0000 | -0.227 | **SIGNIFICANT** |
 | 500ETF | MACD Hist < 0 | 47.2% | -0.148% | +1.224% | -1.371% | 0.0011 | 0.0236 | -0.119 | **SIGNIFICANT** |
 | 500ETF | Vol20 < Med | 47.4% | +0.082% | +1.020% | -0.938% | 0.0252 | 0.3180 | -0.081 | *MARGINAL* |
+| 500ETF | RSI < 55 | 60.4% | -0.076% | +1.570% | -1.646% | 0.0025 | 0.0543 | -0.143 | **SIGNIFICANT** |
+| 500ETF | RSI < 60 | 74.4% | -0.085% | +2.497% | -2.582% | 0.0018 | 0.0010 | -0.224 | **SIGNIFICANT** |
+| 500ETF | Vol20 > Med | 42.9% | +0.076% | +0.951% | -0.874% | 0.0252 | 0.0728 | -0.076 | *MARGINAL* |
+| 500ETF | Close < SMA50 | 47.7% | -0.023% | +1.123% | -1.146% | 0.0067 | 0.1769 | -0.099 | *MARGINAL* |
 
 ### 14-Calendar-Day Forward Return Horizon
 
@@ -94,6 +106,10 @@ Horizons: `['7d', '14d', '30d']`
 | 300ETF | ROC20 < 4% | 78.6% | +0.225% | +0.395% | -0.170% | 0.4912 | 0.2182 | -0.043 | NOT SIGNIFICANT |
 | 300ETF | MACD Hist < 0 | 50.4% | +0.405% | +0.116% | +0.290% | 0.1198 | 0.1392 | +0.074 | NOT SIGNIFICANT |
 | 300ETF | Vol20 < Med | 43.9% | +0.131% | +0.364% | -0.233% | 0.2162 | 0.0000 | -0.059 | NOT SIGNIFICANT |
+| 300ETF | RSI < 55 | 61.8% | +0.198% | +0.364% | -0.166% | 0.3937 | 0.3856 | -0.042 | NOT SIGNIFICANT |
+| 300ETF | RSI < 60 | 75.3% | +0.226% | +0.371% | -0.145% | 0.5352 | 0.9212 | -0.037 | NOT SIGNIFICANT |
+| 300ETF | Vol20 > Med | 41.1% | +0.217% | +0.293% | -0.076% | 0.6800 | 0.1282 | -0.019 | NOT SIGNIFICANT |
+| 300ETF | Close < SMA50 | 46.8% | +0.261% | +0.263% | -0.002% | 0.9907 | 0.4141 | -0.001 | NOT SIGNIFICANT |
 | 50ETF | RSI < 66 | 89.4% | +0.079% | +0.227% | -0.148% | 0.5656 | 0.3163 | -0.037 | NOT SIGNIFICANT |
 | 50ETF | RSI < 72 | 96.0% | +0.105% | -0.166% | +0.271% | 0.4961 | 0.0354 | +0.068 | NOT SIGNIFICANT |
 | 50ETF | RSI > 25 | 98.7% | +0.061% | +2.578% | -2.517% | 0.0155 | 0.0104 | -0.631 | **SIGNIFICANT** |
@@ -108,6 +124,10 @@ Horizons: `['7d', '14d', '30d']`
 | 50ETF | ROC20 < 4% | 78.9% | +0.092% | +0.106% | -0.014% | 0.9464 | 0.2185 | -0.003 | NOT SIGNIFICANT |
 | 50ETF | MACD Hist < 0 | 48.4% | +0.197% | -0.002% | +0.199% | 0.1898 | 0.3613 | +0.050 | NOT SIGNIFICANT |
 | 50ETF | Vol20 < Med | 49.0% | +0.367% | -0.167% | +0.534% | 0.0004 | 0.0194 | +0.134 | **SIGNIFICANT** |
+| 50ETF | RSI < 55 | 64.2% | +0.067% | +0.144% | -0.076% | 0.6265 | 0.2854 | -0.019 | NOT SIGNIFICANT |
+| 50ETF | RSI < 60 | 77.1% | +0.052% | +0.237% | -0.185% | 0.3170 | 0.2835 | -0.046 | NOT SIGNIFICANT |
+| 50ETF | Vol20 > Med | 41.3% | -0.040% | +0.189% | -0.229% | 0.1203 | 0.0842 | -0.057 | NOT SIGNIFICANT |
+| 50ETF | Close < SMA50 | 46.7% | +0.027% | +0.154% | -0.126% | 0.4097 | 0.5109 | -0.032 | NOT SIGNIFICANT |
 | 500ETF | RSI < 66 | 87.1% | -0.100% | +9.366% | -9.466% | 0.0000 | 0.0000 | -0.583 | **SIGNIFICANT** |
 | 500ETF | RSI < 72 | 92.8% | -0.013% | +15.629% | -15.642% | 0.0001 | 0.0000 | -0.976 | **SIGNIFICANT** |
 | 500ETF | RSI > 25 | 98.3% | +1.102% | +2.039% | -0.937% | 0.3725 | 0.1592 | -0.057 | NOT SIGNIFICANT |
@@ -122,6 +142,10 @@ Horizons: `['7d', '14d', '30d']`
 | 500ETF | ROC20 < 4% | 73.1% | -0.104% | +4.440% | -4.544% | 0.0001 | 0.0000 | -0.277 | **SIGNIFICANT** |
 | 500ETF | MACD Hist < 0 | 47.1% | -0.173% | +2.269% | -2.442% | 0.0000 | 0.0000 | -0.148 | **SIGNIFICANT** |
 | 500ETF | Vol20 < Med | 47.5% | +0.283% | +1.873% | -1.590% | 0.0081 | 0.3166 | -0.096 | *MARGINAL* |
+| 500ETF | RSI < 55 | 60.3% | -0.033% | +2.869% | -2.902% | 0.0002 | 0.0021 | -0.176 | **SIGNIFICANT** |
+| 500ETF | RSI < 60 | 74.4% | -0.116% | +4.699% | -4.815% | 0.0000 | 0.0000 | -0.294 | **SIGNIFICANT** |
+| 500ETF | Vol20 > Med | 42.8% | +0.046% | +1.920% | -1.874% | 0.0007 | 0.0161 | -0.114 | **SIGNIFICANT** |
+| 500ETF | Close < SMA50 | 47.8% | +0.155% | +2.001% | -1.846% | 0.0023 | 0.1040 | -0.112 | **SIGNIFICANT** |
 
 ### 30-Calendar-Day Forward Return Horizon
 
@@ -141,6 +165,10 @@ Horizons: `['7d', '14d', '30d']`
 | 300ETF | ROC20 < 4% | 78.6% | +0.515% | +1.097% | -0.582% | 0.0806 | 0.0128 | -0.104 | *MARGINAL* |
 | 300ETF | MACD Hist < 0 | 50.3% | +0.658% | +0.621% | +0.036% | 0.8910 | 0.7707 | +0.007 | NOT SIGNIFICANT |
 | 300ETF | Vol20 < Med | 43.8% | +0.455% | +0.783% | -0.328% | 0.2217 | 0.0010 | -0.059 | NOT SIGNIFICANT |
+| 300ETF | RSI < 55 | 62.1% | +0.526% | +0.826% | -0.300% | 0.2791 | 0.2153 | -0.054 | NOT SIGNIFICANT |
+| 300ETF | RSI < 60 | 75.4% | +0.468% | +1.167% | -0.699% | 0.0348 | 0.0642 | -0.125 | **SIGNIFICANT** |
+| 300ETF | Vol20 > Med | 41.1% | +0.466% | +0.761% | -0.295% | 0.2656 | 0.7638 | -0.053 | NOT SIGNIFICANT |
+| 300ETF | Close < SMA50 | 47.1% | +0.739% | +0.551% | +0.188% | 0.4809 | 0.6560 | +0.034 | NOT SIGNIFICANT |
 | 50ETF | RSI < 66 | 89.4% | +0.300% | -0.114% | +0.414% | 0.2501 | 0.0649 | +0.072 | NOT SIGNIFICANT |
 | 50ETF | RSI < 72 | 96.0% | +0.291% | -0.593% | +0.885% | 0.0481 | 0.0687 | +0.154 | **SIGNIFICANT** |
 | 50ETF | RSI > 25 | 98.7% | +0.227% | +2.362% | -2.135% | 0.1195 | 0.1754 | -0.371 | NOT SIGNIFICANT |
@@ -155,6 +183,10 @@ Horizons: `['7d', '14d', '30d']`
 | 50ETF | ROC20 < 4% | 78.8% | +0.221% | +0.386% | -0.166% | 0.5678 | 0.6900 | -0.029 | NOT SIGNIFICANT |
 | 50ETF | MACD Hist < 0 | 48.3% | +0.244% | +0.267% | -0.023% | 0.9167 | 0.7545 | -0.004 | NOT SIGNIFICANT |
 | 50ETF | Vol20 < Med | 49.1% | +0.567% | -0.044% | +0.611% | 0.0051 | 0.0404 | +0.106 | **SIGNIFICANT** |
+| 50ETF | RSI < 55 | 64.2% | +0.203% | +0.351% | -0.149% | 0.5137 | 0.7559 | -0.026 | NOT SIGNIFICANT |
+| 50ETF | RSI < 60 | 77.1% | +0.242% | +0.304% | -0.062% | 0.8180 | 0.2533 | -0.011 | NOT SIGNIFICANT |
+| 50ETF | Vol20 > Med | 41.1% | +0.255% | +0.257% | -0.002% | 0.9927 | 0.9900 | -0.000 | NOT SIGNIFICANT |
+| 50ETF | Close < SMA50 | 46.8% | +0.104% | +0.390% | -0.287% | 0.1927 | 0.4906 | -0.050 | NOT SIGNIFICANT |
 | 500ETF | RSI < 66 | 87.1% | -0.012% | +21.777% | -21.789% | 0.0000 | 0.0000 | -0.808 | **SIGNIFICANT** |
 | 500ETF | RSI < 72 | 92.8% | +0.083% | +37.524% | -37.440% | 0.0000 | 0.0000 | -1.428 | **SIGNIFICANT** |
 | 500ETF | RSI > 25 | 98.3% | +2.757% | +4.621% | -1.864% | 0.1551 | 0.0003 | -0.067 | NOT SIGNIFICANT |
@@ -169,4 +201,49 @@ Horizons: `['7d', '14d', '30d']`
 | 500ETF | ROC20 < 4% | 73.3% | +0.084% | +10.205% | -10.121% | 0.0000 | 0.0000 | -0.367 | **SIGNIFICANT** |
 | 500ETF | MACD Hist < 0 | 47.1% | -0.488% | +5.706% | -6.194% | 0.0000 | 0.0000 | -0.223 | **SIGNIFICANT** |
 | 500ETF | Vol20 < Med | 47.6% | +0.909% | +4.496% | -3.587% | 0.0004 | 0.2968 | -0.129 | **SIGNIFICANT** |
+| 500ETF | RSI < 55 | 60.5% | +0.204% | +6.747% | -6.543% | 0.0000 | 0.0028 | -0.236 | **SIGNIFICANT** |
+| 500ETF | RSI < 60 | 74.4% | -0.065% | +11.066% | -11.131% | 0.0000 | 0.0000 | -0.404 | **SIGNIFICANT** |
+| 500ETF | Vol20 > Med | 42.6% | -0.090% | +4.924% | -5.014% | 0.0000 | 0.0004 | -0.180 | **SIGNIFICANT** |
+| 500ETF | Close < SMA50 | 48.0% | +0.793% | +4.633% | -3.840% | 0.0002 | 0.0983 | -0.138 | **SIGNIFICANT** |
 
+## Put Strategy Combined Filter Analysis
+
+> Per-ETF combined conditions as implemented in `PutStrategy.evaluate_filter()` (`backtest_strategies.py`).
+> Optimized via `optimize_put_filters.py` (real data, 6-component composite score).
+> For put timing, **negative** Cohen's d is desired — pass days should have *lower* forward returns (i.e. the market drops after the signal, validating hedge timing).
+
+| ETF | Combined Filter | Condition |
+| :--- | :--- | :--- |
+| 300ETF | `RSI<60 & Vol20>Med` | `RSI(14) < 60` AND `Vol20 > Vol20_252d_median` |
+| 50ETF  | `RSI<55 & Close<SMA50` | `RSI(14) < 55` AND `Close < SMA(50)` |
+| 500ETF | `RSI<55 & Vol20>Med` | `RSI(14) < 55` AND `Vol20 > Vol20_252d_median` |
+
+### Put Combined Filter — 7-Calendar-Day Forward Return
+
+| ETF | Filter | Placement % | Pass Avg | Fail Avg | Diff | p(t-test) | p(M-W) | Cohen's d | Verdict |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 300ETF | RSI<60 & Vol20>Med | 31.3% | +0.153% | +0.150% | +0.004% | 0.9778 | 0.2303 | +0.001 | NOT SIGNIFICANT |
+| 50ETF | RSI<55 & Close<SMA50 | 45.7% | +0.032% | +0.069% | -0.037% | 0.7423 | 0.1585 | -0.013 | NOT SIGNIFICANT |
+| 500ETF | RSI<55 & Vol20>Med | 30.8% | -0.033% | +0.847% | -0.880% | 0.0084 | 0.0942 | -0.076 | *MARGINAL* |
+
+### Put Combined Filter — 14-Calendar-Day Forward Return
+
+| ETF | Filter | Placement % | Pass Avg | Fail Avg | Diff | p(t-test) | p(M-W) | Cohen's d | Verdict |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 300ETF | RSI<60 & Vol20>Med | 31.1% | +0.220% | +0.281% | -0.061% | 0.7426 | 0.0391 | -0.015 | NOT SIGNIFICANT |
+| 50ETF | RSI<55 & Close<SMA50 | 45.6% | -0.005% | +0.179% | -0.184% | 0.2306 | 0.8184 | -0.046 | NOT SIGNIFICANT |
+| 500ETF | RSI<55 & Vol20>Med | 30.7% | -0.044% | +1.632% | -1.675% | 0.0004 | 0.0099 | -0.101 | **SIGNIFICANT** |
+
+### Put Combined Filter — 30-Calendar-Day Forward Return
+
+| ETF | Filter | Placement % | Pass Avg | Fail Avg | Diff | p(t-test) | p(M-W) | Cohen's d | Verdict |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 300ETF | RSI<60 & Vol20>Med | 31.2% | +0.256% | +0.813% | -0.557% | 0.0370 | 0.8600 | -0.100 | *MARGINAL* |
+| 50ETF | RSI<55 & Close<SMA50 | 45.8% | +0.058% | +0.423% | -0.365% | 0.0977 | 0.2378 | -0.063 | *MARGINAL* |
+| 500ETF | RSI<55 & Vol20>Med | 30.7% | +0.114% | +3.973% | -3.859% | 0.0000 | 0.0631 | -0.138 | **SIGNIFICANT** |
+
+### Put Combined Filter Interpretation
+
+For the protective put strategy, we buy puts when the filter passes and skip when it fails. A **negative** `Pass Avg - Fail Avg` (Diff) means the market tends to drop more on filter-pass days, which makes the put hedge more valuable — this validates the timing signal. Conversely, a positive Diff suggests the filter triggers before rallies, making the put a drag.
+
+**Placement rate** is important: too low (<20%) means the hedge rarely activates, too high (>80%) means the filter provides little selectivity. The optimized filters target 30–50% placement.

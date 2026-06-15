@@ -170,7 +170,7 @@ class CallStrategy:
         return " + ".join(parts)
 
     def file_suffix(self):
-        parts = [f"cc_{ETF_NAME}"]
+        parts = [f"cc_{self.etf_choice}ETF"]
         if self.no_filter:
             parts.append("nofilter")
         if self.alpha:
@@ -311,7 +311,7 @@ class PutStrategy:
         return " + ".join(parts)
 
     def file_suffix(self):
-        parts = [f"put_{ETF_NAME}"]
+        parts = [f"put_{self.etf_choice}ETF"]
         if self.no_filter:
             parts.append("nofilter")
         if self.limit_entry:
