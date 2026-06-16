@@ -3,45 +3,71 @@
   "features": [
     "open_ema5_div",
     "roc5",
-    "roc10",
-    "gap_pct"
+    "williams_r14",
+    "stoch_k14",
+    "rsi14",
+    "cci20"
   ],
   "model_type": "ensemble",
   "quantile": 0.1,
+  "adaptive_quantile": 0.03625,
+  "calibration_offset": -0.018963278898049513,
+  "vol_regime_calibration": {
+    "low_vol_offset": -0.039864704561933834,
+    "high_vol_offset": 0.010746812332433422,
+    "vol_threshold": 0.15202675877228256,
+    "coverage": 89.97429305912597
+  },
   "cv_comparison": {
-    "statsmodels_cv_loss": 0.05892721182310097,
-    "lightgbm_cv_loss": 0.05676926142568032,
+    "statsmodels_cv_loss": 0.056219691663081585,
+    "lightgbm_cv_loss": 0.053975197787490936,
     "winner": "ensemble"
   },
   "selection_order": [
     [
       "open_ema5_div",
-      0.06855590761095702
+      0.06847541477829186
     ],
     [
       "roc5",
-      0.05870526868101063
+      0.058788581630777534
     ],
     [
-      "roc10",
-      0.05712780119720508
+      "williams_r14",
+      0.05602294828437524
     ],
     [
-      "gap_pct",
-      0.0567396050239433
+      "stoch_k14",
+      0.054550253838263806
+    ],
+    [
+      "rsi14",
+      0.05374021394919211
+    ],
+    [
+      "cci20",
+      0.053711054823188796
     ]
   ],
-  "best_set_size": 4,
-  "rolling_coverage": 88.66709594333548,
-  "rolling_mean_pred_offset": 0.2919380263502095,
-  "rolling_pinball_loss": 0.05544265025702508,
-  "rolling_n_predictions": 1553,
+  "best_set_size": 6,
+  "rolling_coverage": 89.97429305912597,
+  "rolling_mean_pred_offset": 0.31324847614214074,
+  "rolling_pinball_loss": 0.05298145170003474,
+  "rolling_n_predictions": 1556,
   "statsmodels_coeffs": {
-    "Intercept": 0.2248804883890984,
-    "open_ema5_div": -0.4852050816562558,
-    "roc5": 0.10239996931790034,
-    "roc10": 0.02254413255770009,
-    "gap_pct": 0.21785056042462167
+    "Intercept": 0.9264947649823227,
+    "open_ema5_div": -0.41117617484075986,
+    "roc5": 0.07831320669840514,
+    "williams_r14": 0.007032654189040102,
+    "stoch_k14": -0.009196039993097593,
+    "rsi14": 0.000990612093510812,
+    "cci20": 0.0011187872298031865
   },
-  "lgb_model_path": "./backtest/open_high_lgb_300.txt"
+  "lgb_model_paths": [
+    "./backtest/open_high_lgb_300_bag0.txt",
+    "./backtest/open_high_lgb_300_bag1.txt",
+    "./backtest/open_high_lgb_300_bag2.txt",
+    "./backtest/open_high_lgb_300_bag3.txt",
+    "./backtest/open_high_lgb_300_bag4.txt"
+  ]
 }

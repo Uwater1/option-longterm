@@ -1,6 +1,6 @@
 # Protective Put Filter Validation Report
 
-Generated: `2026-06-15 22:53:39`  
+Generated: `2026-06-15 23:05:08`  
 Primary Horizon: `30` calendar days (~1 option cycle)  
 Horizons Tested: `7d, 14d, 30d`  
 
@@ -144,8 +144,8 @@ The **Protective Put** strategy selectively buys OTM put options as a hedge agai
 | RSI > 35 | 90.8% | +0.524% | +1.891% | -1.367% | 0.0053 | -0.169 | **SIGNIFICANT** |
 | Vol20 > Med | 42.8% | +0.117% | +1.049% | -0.932% | 0.0015 | -0.115 | **SIGNIFICANT** |
 | Vol20 < Med | 47.8% | +0.975% | +0.352% | +0.622% | 0.0411 | +0.077 | *MARGINAL* |
-| Close < SMA50 | 48.1% | +0.888% | +0.430% | +0.458% | 0.1363 | +0.057 | NOT SIGNIFICANT |
-| Close > SMA50 | 50.6% | +0.029% | +1.286% | -1.257% | 0.0000 | -0.156 | **SIGNIFICANT** |
+| Close < SMA50 | 48.1% | +0.885% | +0.432% | +0.453% | 0.1406 | +0.056 | NOT SIGNIFICANT |
+| Close > SMA50 | 50.6% | +0.031% | +1.284% | -1.253% | 0.0000 | -0.155 | **SIGNIFICANT** |
 | MACD Hist < 0 | 47.1% | +0.035% | +1.198% | -1.163% | 0.0001 | -0.144 | **SIGNIFICANT** |
 | Close < BBU | 94.4% | +0.475% | +3.582% | -3.107% | 0.0001 | -0.386 | **SIGNIFICANT** |
 | Close < BBU+0.5*ATR | 98.5% | +0.562% | +6.556% | -5.993% | 0.0000 | -0.744 | **SIGNIFICANT** |

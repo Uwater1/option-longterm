@@ -5,441 +5,439 @@ Loading pre-calculated 30-day IVs from ./data/30d_iv_cache_300.parquet...
   Protective Put BACKTEST — Cycle Detail  [FILTERED]
 ======================================================================
 
-Cycle  2019-12-23 → 2020-01-22   IV=14.5% (IVR=0.00)  calls=None puts=None   ETF=3.9640 RSI=49.7 BBU=4.046 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2019-12-23 → 2020-01-22   IV=14.5% (IVR=0.00)  calls=None puts=None   ETF=3.9640 RSI=55.0 BBU=1.701 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2020-01-23 → 2020-02-26   IV=17.2% (IVR=0.38)  calls=None puts=None   ETF=3.9960 RSI=39.4 BBU=4.235 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2020-01-23 → 2020-02-26   IV=17.2% (IVR=0.38)  calls=None puts=None   ETF=3.9960 RSI=40.0 BBU=1.776 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2020-02-27 → 2020-03-25   IV=20.2% (IVR=0.66)  calls=None puts=Level1   ETF=4.0710 RSI=53.5 BBU=4.234 (Total 1 contracts) [FILTER PASS]
+Cycle  2020-02-27 → 2020-03-25   IV=20.2% (IVR=0.66)  calls=None puts=Level1   ETF=4.0710 RSI=53.6 BBU=1.774 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   4.000   0.0649  -648.72    2940.00   2288.68  [exercised ETF=3.7060 K=4.0000]
                                         CYCLE TOTAL   2288.68
 
-Cycle  2020-03-26 → 2020-04-22   IV=29.6% (IVR=0.58)  calls=None puts=Level1   ETF=3.6830 RSI=40.7 BBU=4.292 (Total 1 contracts) [FILTER PASS]
+Cycle  2020-03-26 → 2020-04-22   IV=29.6% (IVR=0.58)  calls=None puts=Level1   ETF=3.6830 RSI=40.7 BBU=1.797 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   3.600   0.1103 -1102.62       0.00  -1104.62  [expires_worthless]
                                         CYCLE TOTAL  -1104.62
 
-Cycle  2020-04-23 → 2020-05-27   IV=13.3% (IVR=0.00)  calls=None puts=None   ETF=3.8220 RSI=53.0 BBU=3.870 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2020-04-23 → 2020-05-27   IV=13.3% (IVR=0.00)  calls=None puts=None   ETF=3.8220 RSI=53.0 BBU=1.623 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2020-05-28 → 2020-06-24   IV=14.8% (IVR=0.05)  calls=None puts=None   ETF=3.8500 RSI=47.6 BBU=3.989 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2020-05-28 → 2020-06-24   IV=14.8% (IVR=0.05)  calls=None puts=None   ETF=3.8500 RSI=47.6 BBU=1.673 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2020-06-29 → 2020-07-22   IV=14.7% (IVR=0.14)  calls=None puts=None   ETF=4.1280 RSI=66.0 BBU=4.171 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2020-06-29 → 2020-07-22   IV=14.7% (IVR=0.14)  calls=None puts=None   ETF=4.1280 RSI=66.0 BBU=1.749 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2020-07-23 → 2020-08-26   IV=24.4% (IVR=0.45)  calls=None puts=None   ETF=4.7660 RSI=63.9 BBU=5.124 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2020-07-23 → 2020-08-26   IV=24.4% (IVR=0.45)  calls=None puts=None   ETF=4.7660 RSI=63.9 BBU=2.145 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2020-08-27 → 2020-09-23   IV=22.0% (IVR=0.37)  calls=None puts=Level1   ETF=4.7990 RSI=54.9 BBU=4.888 (Total 1 contracts) [FILTER PASS]
+Cycle  2020-08-27 → 2020-09-23   IV=22.0% (IVR=0.37)  calls=None puts=Level1   ETF=4.7990 RSI=54.9 BBU=2.050 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   4.700   0.0981  -981.24       0.00   -983.24  [expires_worthless]
                                         CYCLE TOTAL   -983.24
 
-Cycle  2020-09-24 → 2020-10-28   IV=20.1% (IVR=0.31)  calls=None puts=Level1   ETF=4.6360 RSI=42.0 BBU=4.950 (Total 1 contracts) [FILTER PASS]
+Cycle  2020-09-24 → 2020-10-28   IV=20.1% (IVR=0.31)  calls=None puts=Level1   ETF=4.6360 RSI=42.0 BBU=2.075 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   4.600   0.1218 -1217.88       0.00  -1219.88  [expires_worthless]
                                         CYCLE TOTAL  -1219.88
 
-Cycle  2020-10-29 → 2020-11-25   IV=18.5% (IVR=0.26)  calls=None puts=None   ETF=4.8480 RSI=56.2 BBU=4.970 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2020-10-29 → 2020-11-25   IV=18.5% (IVR=0.26)  calls=None puts=None   ETF=4.8480 RSI=56.2 BBU=2.084 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2020-11-26 → 2020-12-23   IV=16.9% (IVR=0.21)  calls=None puts=None   ETF=4.9850 RSI=55.5 BBU=5.120 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2020-11-26 → 2020-12-23   IV=16.9% (IVR=0.21)  calls=None puts=None   ETF=4.9850 RSI=55.5 BBU=2.147 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2020-12-24 → 2021-01-27   IV=15.6% (IVR=0.17)  calls=None puts=None   ETF=5.0740 RSI=54.5 BBU=5.169 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2020-12-24 → 2021-01-27   IV=15.6% (IVR=0.17)  calls=None puts=None   ETF=5.0740 RSI=54.5 BBU=2.168 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2021-01-28 → 2021-02-24   IV=21.6% (IVR=0.36)  calls=None puts=Level1   ETF=5.3850 RSI=48.3 BBU=5.708 (Total 1 contracts) [FILTER PASS]
+Cycle  2021-01-28 → 2021-02-24   IV=21.6% (IVR=0.36)  calls=None puts=Level1   ETF=5.3850 RSI=50.6 BBU=2.413 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   5.250   0.0750  -749.70       0.00   -751.70  [expires_worthless]
                                         CYCLE TOTAL   -751.70
 
-Cycle  2021-02-25 → 2021-03-24   IV=20.6% (IVR=0.33)  calls=None puts=Level1   ETF=5.4780 RSI=47.8 BBU=5.813 (Total 1 contracts) [FILTER PASS]
+Cycle  2021-02-25 → 2021-03-24   IV=20.6% (IVR=0.33)  calls=None puts=Level1   ETF=5.4780 RSI=48.4 BBU=2.469 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   5.428   0.1142 -1157.48    5015.34   3855.26  [exercised ETF=4.9330 K=5.4280]
                                         CYCLE TOTAL   3855.26
 
-Cycle  2021-03-25 → 2021-04-28   IV=18.7% (IVR=0.27)  calls=None puts=Level1   ETF=4.9290 RSI=35.9 BBU=5.456 (Total 1 contracts) [FILTER PASS]
+Cycle  2021-03-25 → 2021-04-28   IV=18.7% (IVR=0.27)  calls=None puts=Level1   ETF=4.9290 RSI=36.0 BBU=2.317 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   4.900   0.1071 -1071.00       0.00  -1073.00  [expires_worthless]
                                         CYCLE TOTAL  -1073.00
 
-Cycle  2021-04-29 → 2021-05-26   IV=17.1% (IVR=0.26)  calls=None puts=None   ETF=5.1730 RSI=56.9 BBU=5.216 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2021-04-29 → 2021-05-26   IV=17.1% (IVR=0.26)  calls=None puts=None   ETF=5.1730 RSI=57.0 BBU=2.217 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2021-05-27 → 2021-06-23   IV=22.0% (IVR=0.46)  calls=None puts=None   ETF=5.3470 RSI=66.6 BBU=5.353 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2021-05-27 → 2021-06-23   IV=22.0% (IVR=0.46)  calls=None puts=None   ETF=5.3470 RSI=66.6 BBU=2.274 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2021-06-24 → 2021-07-28   IV=16.6% (IVR=0.22)  calls=None puts=None   ETF=5.1890 RSI=49.7 BBU=5.401 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2021-06-24 → 2021-07-28   IV=16.6% (IVR=0.22)  calls=None puts=None   ETF=5.1890 RSI=49.7 BBU=2.295 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2021-07-29 → 2021-08-25   IV=15.6% (IVR=0.18)  calls=None puts=Level1   ETF=4.9060 RSI=36.2 BBU=5.353 (Total 1 contracts) [FILTER PASS]
+Cycle  2021-07-29 → 2021-08-25   IV=15.6% (IVR=0.18)  calls=None puts=Level1   ETF=4.9060 RSI=36.2 BBU=2.273 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   4.900   0.1052 -1051.62       0.00  -1053.62  [expires_worthless]
                                         CYCLE TOTAL  -1053.62
 
-Cycle  2021-08-26 → 2021-09-22   IV=13.9% (IVR=0.22)  calls=None puts=Level1   ETF=4.8860 RSI=41.9 BBU=5.122 (Total 1 contracts) [FILTER PASS]
+Cycle  2021-08-26 → 2021-09-22   IV=13.9% (IVR=0.22)  calls=None puts=Level1   ETF=4.8860 RSI=41.9 BBU=2.177 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   4.800   0.0728  -728.28       0.00   -730.28  [expires_worthless]
                                         CYCLE TOTAL   -730.28
 
-Cycle  2021-09-23 → 2021-10-27   IV=17.5% (IVR=0.44)  calls=None puts=None   ETF=4.9240 RSI=45.6 BBU=5.100 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2021-09-23 → 2021-10-27   IV=17.5% (IVR=0.44)  calls=None puts=None   ETF=4.9240 RSI=45.6 BBU=2.167 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2021-10-28 → 2021-11-24   IV=17.1% (IVR=0.42)  calls=None puts=None   ETF=4.9490 RSI=45.9 BBU=5.057 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2021-10-28 → 2021-11-24   IV=17.1% (IVR=0.42)  calls=None puts=None   ETF=4.9490 RSI=45.9 BBU=2.150 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2021-11-25 → 2021-12-22   IV=13.6% (IVR=0.21)  calls=None puts=None   ETF=4.9780 RSI=52.3 BBU=5.015 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2021-11-25 → 2021-12-22   IV=13.6% (IVR=0.21)  calls=None puts=None   ETF=4.9780 RSI=52.3 BBU=2.132 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2021-12-23 → 2022-01-26   IV=14.5% (IVR=0.27)  calls=None puts=None   ETF=5.0200 RSI=50.6 BBU=5.187 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2021-12-23 → 2022-01-26   IV=14.5% (IVR=0.27)  calls=None puts=None   ETF=5.0200 RSI=50.6 BBU=2.204 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2022-01-27 → 2022-02-23   IV=19.4% (IVR=0.64)  calls=None puts=Level1   ETF=4.6250 RSI=30.4 BBU=5.056 (Total 1 contracts) [FILTER PASS]
+Cycle  2022-01-27 → 2022-02-23   IV=19.4% (IVR=0.64)  calls=None puts=None   ETF=4.6250 RSI=32.9 BBU=2.138 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
-  Put Buy    (Level 1)       buy   4.600   0.0799  -798.66       0.00   -800.66  [expires_worthless]
-                                        CYCLE TOTAL   -800.66
+                                        CYCLE TOTAL      0.00
 
-Cycle  2022-02-24 → 2022-03-23   IV=16.1% (IVR=0.42)  calls=None puts=Level1   ETF=4.5300 RSI=36.2 BBU=4.765 (Total 1 contracts) [FILTER PASS]
+Cycle  2022-02-24 → 2022-03-23   IV=16.1% (IVR=0.42)  calls=None puts=Level1   ETF=4.5300 RSI=37.2 BBU=2.056 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   4.529   0.0815  -827.69    2599.94   1769.64  [exercised ETF=4.2730 K=4.5290]
                                         CYCLE TOTAL   1769.64
 
-Cycle  2022-03-24 → 2022-04-27   IV=13.0% (IVR=0.14)  calls=None puts=Level1   ETF=4.2460 RSI=41.3 BBU=4.675 (Total 1 contracts) [FILTER PASS]
+Cycle  2022-03-24 → 2022-04-27   IV=13.0% (IVR=0.14)  calls=None puts=Level1   ETF=4.2460 RSI=41.5 BBU=2.015 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   4.200   0.0885  -885.36    3110.00   2222.04  [exercised ETF=3.8890 K=4.2000]
                                         CYCLE TOTAL   2222.04
 
-Cycle  2022-04-28 → 2022-05-25   IV=22.1% (IVR=0.56)  calls=None puts=Level1   ETF=3.9150 RSI=37.0 BBU=4.398 (Total 1 contracts) [FILTER PASS]
+Cycle  2022-04-28 → 2022-05-25   IV=22.1% (IVR=0.56)  calls=None puts=Level1   ETF=3.9150 RSI=37.0 BBU=1.896 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   3.900   0.0938  -938.40       0.00   -940.40  [expires_worthless]
                                         CYCLE TOTAL   -940.40
 
-Cycle  2022-05-26 → 2022-06-22   IV=17.5% (IVR=0.35)  calls=None puts=Level1   ETF=3.9920 RSI=47.6 BBU=4.092 (Total 1 contracts) [FILTER PASS]
+Cycle  2022-05-26 → 2022-06-22   IV=17.5% (IVR=0.35)  calls=None puts=Level1   ETF=3.9920 RSI=47.7 BBU=1.766 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   3.900   0.0537  -536.52       0.00   -538.52  [expires_worthless]
                                         CYCLE TOTAL   -538.52
 
-Cycle  2022-06-23 → 2022-07-27   IV=18.4% (IVR=0.39)  calls=None puts=None   ETF=4.3650 RSI=66.3 BBU=4.429 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2022-06-23 → 2022-07-27   IV=18.4% (IVR=0.39)  calls=None puts=None   ETF=4.3650 RSI=66.3 BBU=1.910 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2022-07-28 → 2022-08-24   IV=17.4% (IVR=0.34)  calls=None puts=None   ETF=4.2790 RSI=44.0 BBU=4.539 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2022-07-28 → 2022-08-24   IV=17.4% (IVR=0.34)  calls=None puts=None   ETF=4.2790 RSI=44.0 BBU=1.958 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2022-08-25 → 2022-09-28   IV=15.5% (IVR=0.20)  calls=None puts=Level1   ETF=4.1810 RSI=43.7 BBU=4.293 (Total 1 contracts) [FILTER PASS]
+Cycle  2022-08-25 → 2022-09-28   IV=15.5% (IVR=0.20)  calls=None puts=Level1   ETF=4.1810 RSI=43.7 BBU=1.853 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   4.100   0.0545  -544.68    2070.00   1522.72  [exercised ETF=3.8930 K=4.1000]
                                         CYCLE TOTAL   1522.72
 
-Cycle  2022-09-29 → 2022-10-26   IV=18.2% (IVR=0.28)  calls=None puts=None   ETF=3.8940 RSI=29.8 BBU=4.219 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2022-09-29 → 2022-10-26   IV=18.2% (IVR=0.28)  calls=None puts=None   ETF=3.8940 RSI=29.8 BBU=1.820 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2022-10-27 → 2022-11-23   IV=20.6% (IVR=0.41)  calls=None puts=Level1   ETF=3.6900 RSI=29.2 BBU=3.994 (Total 1 contracts) [FILTER PASS]
+Cycle  2022-10-27 → 2022-11-23   IV=20.6% (IVR=0.41)  calls=None puts=Level1   ETF=3.6900 RSI=29.2 BBU=1.723 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   3.600   0.0448  -447.78       0.00   -449.78  [expires_worthless]
                                         CYCLE TOTAL   -449.78
 
-Cycle  2022-11-24 → 2022-12-28   IV=21.1% (IVR=0.44)  calls=None puts=Level1   ETF=3.8160 RSI=48.3 BBU=3.981 (Total 1 contracts) [FILTER PASS]
+Cycle  2022-11-24 → 2022-12-28   IV=21.1% (IVR=0.44)  calls=None puts=Level1   ETF=3.8160 RSI=48.3 BBU=1.717 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   3.800   0.0863  -862.92       0.00   -864.92  [expires_worthless]
                                         CYCLE TOTAL   -864.92
 
-Cycle  2022-12-29 → 2023-01-30   IV=16.1% (IVR=0.17)  calls=None puts=None   ETF=3.9220 RSI=49.0 BBU=4.080 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2022-12-29 → 2023-01-30   IV=16.1% (IVR=0.17)  calls=None puts=None   ETF=3.9220 RSI=49.0 BBU=1.761 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2023-01-31 → 2023-02-22   IV=17.5% (IVR=0.25)  calls=None puts=None   ETF=4.1590 RSI=66.6 BBU=4.252 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2023-01-31 → 2023-02-22   IV=17.5% (IVR=0.25)  calls=None puts=None   ETF=4.1590 RSI=70.4 BBU=1.866 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2023-02-23 → 2023-03-22   IV=16.8% (IVR=0.20)  calls=None puts=None   ETF=4.0990 RSI=50.3 BBU=4.214 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2023-02-23 → 2023-03-22   IV=16.8% (IVR=0.20)  calls=None puts=None   ETF=4.0990 RSI=51.6 BBU=1.847 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2023-03-23 → 2023-04-26   IV=15.1% (IVR=0.11)  calls=None puts=None   ETF=4.0310 RSI=50.6 BBU=4.145 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2023-03-23 → 2023-04-26   IV=15.1% (IVR=0.11)  calls=None puts=None   ETF=4.0310 RSI=50.9 BBU=1.817 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2023-04-27 → 2023-05-24   IV=14.5% (IVR=0.06)  calls=None puts=None   ETF=3.9860 RSI=41.5 BBU=4.184 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2023-04-27 → 2023-05-24   IV=14.5% (IVR=0.06)  calls=None puts=None   ETF=3.9860 RSI=41.6 BBU=1.834 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2023-05-25 → 2023-06-28   IV=15.8% (IVR=0.18)  calls=None puts=None   ETF=3.8450 RSI=32.0 BBU=4.073 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2023-05-25 → 2023-06-28   IV=15.8% (IVR=0.18)  calls=None puts=None   ETF=3.8450 RSI=32.0 BBU=1.785 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2023-06-29 → 2023-07-26   IV=14.6% (IVR=0.09)  calls=None puts=None   ETF=3.8590 RSI=45.0 BBU=3.971 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2023-06-29 → 2023-07-26   IV=14.6% (IVR=0.09)  calls=None puts=None   ETF=3.8590 RSI=45.0 BBU=1.741 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2023-07-27 → 2023-08-23   IV=14.0% (IVR=0.05)  calls=None puts=Level1   ETF=3.9720 RSI=58.7 BBU=3.989 (Total 1 contracts) [FILTER PASS]
+Cycle  2023-07-27 → 2023-08-23   IV=14.0% (IVR=0.05)  calls=None puts=Level1   ETF=3.9720 RSI=58.7 BBU=1.749 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   3.900   0.0275  -275.40    1320.00   1042.00  [exercised ETF=3.7680 K=3.9000]
                                         CYCLE TOTAL   1042.00
 
-Cycle  2023-08-24 → 2023-09-27   IV=18.6% (IVR=0.39)  calls=None puts=Level1   ETF=3.7910 RSI=34.2 BBU=4.186 (Total 1 contracts) [FILTER PASS]
+Cycle  2023-08-24 → 2023-09-27   IV=18.6% (IVR=0.39)  calls=None puts=Level1   ETF=3.7910 RSI=34.2 BBU=1.834 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   3.700   0.0399  -398.82       0.00   -400.82  [expires_worthless]
                                         CYCLE TOTAL   -400.82
 
-Cycle  2023-09-28 → 2023-10-25   IV=15.7% (IVR=0.18)  calls=None puts=None   ETF=3.7640 RSI=41.1 BBU=3.907 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2023-09-28 → 2023-10-25   IV=15.7% (IVR=0.18)  calls=None puts=None   ETF=3.7640 RSI=41.1 BBU=1.713 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2023-10-26 → 2023-11-22   IV=15.7% (IVR=0.18)  calls=None puts=Level1   ETF=3.5820 RSI=31.8 BBU=3.873 (Total 1 contracts) [FILTER PASS]
+Cycle  2023-10-26 → 2023-11-22   IV=15.7% (IVR=0.18)  calls=None puts=Level1   ETF=3.5820 RSI=31.8 BBU=1.697 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   3.500   0.0254  -253.98       0.00   -255.98  [expires_worthless]
                                         CYCLE TOTAL   -255.98
 
-Cycle  2023-11-23 → 2023-12-27   IV=14.2% (IVR=0.07)  calls=None puts=None   ETF=3.6300 RSI=43.9 BBU=3.698 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2023-11-23 → 2023-12-27   IV=14.2% (IVR=0.07)  calls=None puts=None   ETF=3.6300 RSI=43.9 BBU=1.621 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2023-12-28 → 2024-01-24   IV=15.8% (IVR=0.23)  calls=None puts=Level1   ETF=3.4890 RSI=52.1 BBU=3.537 (Total 1 contracts) [FILTER PASS]
+Cycle  2023-12-28 → 2024-01-24   IV=15.8% (IVR=0.23)  calls=None puts=Level1   ETF=3.4890 RSI=52.1 BBU=1.551 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   3.400   0.0224  -224.40    1210.00    983.00  [exercised ETF=3.2790 K=3.4000]
                                         CYCLE TOTAL    983.00
 
-Cycle  2024-01-25 → 2024-02-28   IV=15.4% (IVR=0.20)  calls=None puts=Level1   ETF=3.3350 RSI=46.9 BBU=3.514 (Total 1 contracts) [FILTER PASS]
+Cycle  2024-01-25 → 2024-02-28   IV=15.4% (IVR=0.20)  calls=None puts=Level1   ETF=3.3350 RSI=52.7 BBU=1.532 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   3.329   0.0656  -669.90       0.00   -671.90  [expires_worthless]
                                         CYCLE TOTAL   -671.90
 
-Cycle  2024-02-29 → 2024-03-27   IV=18.8% (IVR=0.50)  calls=None puts=None   ETF=3.5030 RSI=64.1 BBU=3.562 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2024-02-29 → 2024-03-27   IV=18.8% (IVR=0.50)  calls=None puts=None   ETF=3.5030 RSI=65.3 BBU=1.594 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2024-03-28 → 2024-04-24   IV=14.5% (IVR=0.11)  calls=None puts=None   ETF=3.5100 RSI=50.4 BBU=3.601 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2024-03-28 → 2024-04-24   IV=14.5% (IVR=0.11)  calls=None puts=None   ETF=3.5100 RSI=50.8 BBU=1.613 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2024-04-25 → 2024-05-22   IV=13.8% (IVR=0.08)  calls=None puts=Level1   ETF=3.5230 RSI=50.5 BBU=3.584 (Total 1 contracts) [FILTER PASS]
+Cycle  2024-04-25 → 2024-05-22   IV=13.8% (IVR=0.08)  calls=None puts=Level1   ETF=3.5230 RSI=50.6 BBU=1.605 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   3.500   0.0411  -411.06       0.00   -413.06  [expires_worthless]
                                         CYCLE TOTAL   -413.06
 
-Cycle  2024-05-23 → 2024-06-26   IV=13.5% (IVR=0.05)  calls=None puts=None   ETF=3.6430 RSI=55.4 BBU=3.735 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2024-05-23 → 2024-06-26   IV=13.5% (IVR=0.05)  calls=None puts=None   ETF=3.6430 RSI=55.4 BBU=1.672 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2024-06-27 → 2024-07-24   IV=13.3% (IVR=0.03)  calls=None puts=None   ETF=3.4800 RSI=33.7 BBU=3.630 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2024-06-27 → 2024-07-24   IV=13.3% (IVR=0.03)  calls=None puts=None   ETF=3.4800 RSI=33.7 BBU=1.625 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2024-07-25 → 2024-08-28   IV=13.1% (IVR=0.29)  calls=None puts=None   ETF=3.4590 RSI=39.0 BBU=3.596 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2024-07-25 → 2024-08-28   IV=13.1% (IVR=0.29)  calls=None puts=None   ETF=3.4590 RSI=39.0 BBU=1.610 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2024-08-29 → 2024-09-25   IV=12.0% (IVR=0.22)  calls=None puts=None   ETF=3.3470 RSI=33.8 BBU=3.439 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2024-08-29 → 2024-09-25   IV=12.0% (IVR=0.22)  calls=None puts=None   ETF=3.3470 RSI=33.8 BBU=1.540 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2024-09-26 → 2024-10-23   IV=23.3% (IVR=0.94)  calls=None puts=None   ETF=3.6400 RSI=78.4 BBU=3.525 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2024-09-26 → 2024-10-23   IV=23.3% (IVR=0.94)  calls=None puts=None   ETF=3.6400 RSI=78.4 BBU=1.577 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2024-10-24 → 2024-11-27   IV=24.7% (IVR=0.36)  calls=None puts=None   ETF=4.0110 RSI=60.5 BBU=4.489 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2024-10-24 → 2024-11-27   IV=24.7% (IVR=0.36)  calls=None puts=None   ETF=4.0110 RSI=60.5 BBU=2.004 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2024-11-28 → 2024-12-25   IV=20.2% (IVR=0.26)  calls=None puts=Level1   ETF=3.9580 RSI=46.1 BBU=4.271 (Total 1 contracts) [FILTER PASS]
+Cycle  2024-11-28 → 2024-12-25   IV=20.2% (IVR=0.26)  calls=None puts=Level1   ETF=3.9580 RSI=46.1 BBU=1.911 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   3.900   0.0608  -607.92       0.00   -609.92  [expires_worthless]
                                         CYCLE TOTAL   -609.92
 
-Cycle  2024-12-26 → 2025-01-22   IV=18.8% (IVR=0.23)  calls=None puts=None   ETF=4.0730 RSI=55.6 BBU=4.106 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2024-12-26 → 2025-01-22   IV=18.8% (IVR=0.23)  calls=None puts=None   ETF=4.0730 RSI=55.6 BBU=1.839 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2025-01-23 → 2025-02-26   IV=17.0% (IVR=0.19)  calls=None puts=Level1   ETF=3.8970 RSI=45.0 BBU=4.077 (Total 1 contracts) [FILTER PASS]
+Cycle  2025-01-23 → 2025-02-26   IV=17.0% (IVR=0.19)  calls=None puts=Level1   ETF=3.8970 RSI=45.0 BBU=1.825 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   3.800   0.0463  -463.08       0.00   -465.08  [expires_worthless]
                                         CYCLE TOTAL   -465.08
 
-Cycle  2025-02-27 → 2025-03-26   IV=15.7% (IVR=0.16)  calls=None puts=None   ETF=4.0670 RSI=60.2 BBU=4.114 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2025-02-27 → 2025-03-26   IV=15.7% (IVR=0.16)  calls=None puts=None   ETF=4.0670 RSI=60.2 BBU=1.842 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2025-03-27 → 2025-04-23   IV=12.9% (IVR=0.10)  calls=None puts=Level1   ETF=4.0270 RSI=49.4 BBU=4.119 (Total 1 contracts) [FILTER PASS]
+Cycle  2025-03-27 → 2025-04-23   IV=12.9% (IVR=0.10)  calls=None puts=Level1   ETF=4.0270 RSI=49.4 BBU=1.844 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   4.000   0.0454  -453.90    1180.00    723.50  [exercised ETF=3.8820 K=4.0000]
                                         CYCLE TOTAL    723.50
 
-Cycle  2025-04-24 → 2025-05-28   IV=12.9% (IVR=0.10)  calls=None puts=Level1   ETF=3.8820 RSI=45.5 BBU=4.059 (Total 1 contracts) [FILTER PASS]
+Cycle  2025-04-24 → 2025-05-28   IV=12.9% (IVR=0.10)  calls=None puts=Level1   ETF=3.8820 RSI=45.5 BBU=1.817 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   3.800   0.0418  -418.20       0.00   -420.20  [expires_worthless]
                                         CYCLE TOTAL   -420.20
 
-Cycle  2025-05-29 → 2025-06-25   IV=12.2% (IVR=0.08)  calls=None puts=None   ETF=3.9660 RSI=51.8 BBU=4.063 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2025-05-29 → 2025-06-25   IV=12.2% (IVR=0.08)  calls=None puts=None   ETF=3.9660 RSI=51.8 BBU=1.819 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2025-06-26 → 2025-07-23   IV=13.7% (IVR=0.12)  calls=None puts=None   ETF=3.9860 RSI=54.9 BBU=4.046 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2025-06-26 → 2025-07-23   IV=13.7% (IVR=0.12)  calls=None puts=None   ETF=3.9860 RSI=66.1 BBU=1.820 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2025-07-24 → 2025-08-27   IV=16.0% (IVR=0.17)  calls=None puts=None   ETF=4.2250 RSI=80.0 BBU=4.226 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2025-07-24 → 2025-08-27   IV=16.0% (IVR=0.17)  calls=None puts=None   ETF=4.2250 RSI=83.8 BBU=1.934 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2025-08-28 → 2025-09-24   IV=23.3% (IVR=0.30)  calls=None puts=None   ETF=4.5590 RSI=74.5 BBU=4.598 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2025-08-28 → 2025-09-24   IV=23.3% (IVR=0.30)  calls=None puts=None   ETF=4.5590 RSI=74.8 BBU=2.103 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2025-09-25 → 2025-10-22   IV=15.4% (IVR=0.10)  calls=None puts=None   ETF=4.6950 RSI=66.9 BBU=4.710 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2025-09-25 → 2025-10-22   IV=15.4% (IVR=0.10)  calls=None puts=None   ETF=4.6950 RSI=67.0 BBU=2.156 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2025-10-23 → 2025-11-26   IV=16.2% (IVR=0.19)  calls=None puts=Level1   ETF=4.7130 RSI=56.5 BBU=4.791 (Total 1 contracts) [FILTER PASS]
+Cycle  2025-10-23 → 2025-11-26   IV=16.2% (IVR=0.19)  calls=None puts=Level1   ETF=4.7130 RSI=56.6 BBU=2.194 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   4.700   0.0971  -971.04     740.00   -233.64  [exercised ETF=4.6260 K=4.7000]
                                         CYCLE TOTAL   -233.64
 
-Cycle  2025-11-27 → 2025-12-24   IV=11.8% (IVR=0.05)  calls=None puts=None   ETF=4.6220 RSI=42.9 BBU=4.871 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2025-11-27 → 2025-12-24   IV=11.8% (IVR=0.05)  calls=None puts=None   ETF=4.6220 RSI=42.9 BBU=2.230 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2025-12-25 → 2026-01-28   IV=12.5% (IVR=0.10)  calls=None puts=None   ETF=4.7660 RSI=58.9 BBU=4.771 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2025-12-25 → 2026-01-28   IV=12.5% (IVR=0.10)  calls=None puts=None   ETF=4.7660 RSI=58.9 BBU=2.185 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2026-01-29 → 2026-02-25   IV=16.6% (IVR=0.37)  calls=None puts=Level1   ETF=4.7680 RSI=50.3 BBU=4.969 (Total 1 contracts) [FILTER PASS]
+Cycle  2026-01-29 → 2026-02-25   IV=16.6% (IVR=0.37)  calls=None puts=None   ETF=4.7680 RSI=61.7 BBU=2.260 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
-  Put Buy    (Level 1)       buy   4.700   0.0455  -454.92       0.00   -456.92  [expires_worthless]
-                                        CYCLE TOTAL   -456.92
+                                        CYCLE TOTAL      0.00
 
-Cycle  2026-02-26 → 2026-03-25   IV=11.4% (IVR=0.02)  calls=None puts=Level1   ETF=4.7350 RSI=50.9 BBU=4.783 (Total 1 contracts) [FILTER PASS]
+Cycle  2026-02-26 → 2026-03-25   IV=11.4% (IVR=0.02)  calls=None puts=Level1   ETF=4.7350 RSI=53.6 BBU=2.247 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   4.700   0.0538  -537.54    1560.00   1019.86  [exercised ETF=4.5440 K=4.7000]
                                         CYCLE TOTAL   1019.86
 
-Cycle  2026-03-26 → 2026-04-22   IV=15.0% (IVR=0.26)  calls=None puts=Level1   ETF=4.4880 RSI=37.4 BBU=4.800 (Total 1 contracts) [FILTER PASS]
+Cycle  2026-03-26 → 2026-04-22   IV=15.0% (IVR=0.26)  calls=None puts=Level1   ETF=4.4880 RSI=37.8 BBU=2.254 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
   Put Buy    (Level 1)       buy   4.400   0.0610  -609.96       0.00   -611.96  [expires_worthless]
                                         CYCLE TOTAL   -611.96
 
-Cycle  2026-04-23 → 2026-05-27   IV=12.1% (IVR=0.08)  calls=None puts=None   ETF=4.8010 RSI=64.7 BBU=4.877 (Total 0 contracts) [FILTER FAIL — SKIP]
+Cycle  2026-04-23 → 2026-05-27   IV=12.1% (IVR=0.08)  calls=None puts=None   ETF=4.8010 RSI=64.8 BBU=2.289 (Total 0 contracts) [FILTER FAIL — SKIP]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
-Cycle  2026-05-28 → 2026-06-24   IV=13.7% (IVR=0.20)  calls=None puts=Level1   ETF=4.9320 RSI=58.3 BBU=5.021 (Total 1 contracts) [FILTER PASS]
+Cycle  2026-05-28 → 2026-06-24   IV=13.7% (IVR=0.20)  calls=None puts=Level1   ETF=4.9320 RSI=58.3 BBU=2.359 (Total 1 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
-  Put Buy    (Level 1)       buy   4.900   0.0918  -918.00    1160.00    239.40  [exercised ETF=4.7840 K=4.9000]
-                                        CYCLE TOTAL    239.40
+  Put Buy    (Level 1)       buy   4.900   0.0918  -918.00       0.00   -920.00  [expires_worthless]
+                                        CYCLE TOTAL   -920.00
 
 ======================================================================
   SUMMARY  [FILTERED]
 ======================================================================
   Cycles traded          : 78
-  Winning cycles         : 10/78  (13%)
-  Avg gross premium/cyc  :  -284.85 RMB
-  Total net P&L          :   616.01 RMB
-  Cumulative by cycle    : ['0', '0', '2289', '1184', '1184', '1184', '1184', '1184', '201', '-1019', '-1019', '-1019', '-1019', '-1771', '2085', '1012', '1012', '1012', '1012', '-42', '-772', '-772', '-772', '-772', '-772', '-1573', '197', '2419', '1478', '940', '940', '940', '2462', '2462', '2013', '1148', '1148', '1148', '1148', '1148', '1148', '1148', '1148', '2190', '1789', '1789', '1533', '1533', '2516', '1844', '1844', '1844', '1431', '1431', '1431', '1431', '1431', '1431', '1431', '821', '821', '356', '356', '1079', '659', '659', '659', '659', '659', '659', '426', '426', '426', '-31', '989', '377', '377', '616']
+  Winning cycles         : 9/78  (12%)
+  Avg gross premium/cyc  :  -268.78 RMB
+  Total net P&L          :   714.19 RMB
+  Cumulative by cycle    : ['0', '0', '2289', '1184', '1184', '1184', '1184', '1184', '201', '-1019', '-1019', '-1019', '-1019', '-1771', '2085', '1012', '1012', '1012', '1012', '-42', '-772', '-772', '-772', '-772', '-772', '-772', '997', '3219', '2279', '1740', '1740', '1740', '3263', '3263', '2813', '1948', '1948', '1948', '1948', '1948', '1948', '1948', '1948', '2990', '2590', '2590', '2334', '2334', '3317', '2645', '2645', '2645', '2232', '2232', '2232', '2232', '2232', '2232', '2232', '1622', '1622', '1157', '1157', '1880', '1460', '1460', '1460', '1460', '1460', '1460', '1226', '1226', '1226', '1226', '2246', '1634', '1634', '714']
   ── Placement & Filter Lift ─────────────────────────────────────
-  Placement rate         : 41.0%  (32/78 cycles)
-  Avg P&L / placed cycle :   +19.25 RMB
-  Avg P&L / all cycles   :    +7.90 RMB
-  Filter lift            :   +11.35 RMB/cycle
+  Placement rate         : 38.5%  (30/78 cycles)
+  Avg P&L / placed cycle :   +23.81 RMB
+  Avg P&L / all cycles   :    +9.16 RMB
+  Filter lift            :   +14.65 RMB/cycle
   ─────────────────────────────────────────────────────────────
 
   Chart saved → backtest/backtest_put_300ETF.png

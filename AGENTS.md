@@ -95,6 +95,10 @@ README.md                      # English README (links to Chinese docs)
 1. The opt parquet contains daily-correct `strike_price` and `contract_multiplier` (adjusted when underlying ETF pays dividends). The instruments parquet holds FINAL post-adjustment values. `load_data()` must only merge `maturity_date` and `option_type` from instruments — never overwrite opt's daily strike/mult.
 2. **Underlying ETF Daily Prices must be unadjusted (不复权)** (pulled with `adjust_type="none"` in `update_data.py`). If pre-adjusted prices are used, it creates a mismatch with unadjusted option strikes/premiums, causing major look-ahead bias and false backtest performance.
 3. **ATM 30d IV Speed Optimization**: Daily 30d IV calculation in `get_30d_iv` is optimized by passing a pre-grouped dictionary of calls instead of running slow boolean filters on the full DataFrame, reducing runtime by ~740x.
+4. **ETF Splits/Consolidations & Post-Adjusted Data (Critical)**: Chinese ETFs undergo historical splits/consolidations (e.g. 500ETF 2015-04-14 ratio 1:0.2803 and 2022-08-29 ratio 1:1.1454). If raw unadjusted prices are used to compute technical indicators (RSI, Bollinger Bands, Vol20, MACD) or forward returns spanning split dates, it creates huge artifacts (e.g., faked > 250% returns). 
+   - Database daily parquets (`data/*_1d.parquet`) store both unadjusted prices (`close`, `open`, etc.) and post-adjusted prices (`close_adj`, `open_adj`, etc., using rqdatac's `adjust_type="post"`).
+   - Technical indicators and forward returns in `filter_validation.py`, `predict_open_high.py`, and `backtest_engine.py` are calculated on the post-adjusted columns (`*_adj`).
+   - Strike selection, option matching, and leg P&L settlement in option backtests continue to use unadjusted prices to align with unadjusted options strikes and prevent look-ahead bias.
 
 **Backtest Architecture (Engine + Strategy pattern):**
 - `backtest_engine.py` (~900 lines): Shared infrastructure — constants, BS/IV helpers (numba), data loading, cycle detection, strike selection, leg P&L, 5m limit simulation, runner loop, result aggregation, plotting
