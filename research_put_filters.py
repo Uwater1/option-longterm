@@ -58,24 +58,34 @@ def load_data():
     etf["date"] = pd.to_datetime(etf["date"])
     etf = etf.set_index("date").sort_index()
 
+    # Calculate indicators using adjusted columns if available
+    if "close_adj" in etf.columns:
+        close_for_ind = etf["close_adj"]
+        high_for_ind = etf["high_adj"]
+        low_for_ind = etf["low_adj"]
+    else:
+        close_for_ind = etf["close"]
+        high_for_ind = etf["high"]
+        low_for_ind = etf["low"]
+
     # Technical indicators
-    etf['sma20'] = ta.sma(etf['close'], length=20)
-    etf['ema20'] = ta.ema(etf['close'], length=20)
-    etf['rsi14'] = ta.rsi(etf['close'], length=14)
-    etf['sma50'] = ta.sma(etf['close'], length=50)
-    etf['atr20'] = ta.atr(etf['high'], etf['low'], etf['close'], length=20)
-    macd = ta.macd(etf['close'])
+    etf['sma20'] = ta.sma(close_for_ind, length=20)
+    etf['ema20'] = ta.ema(close_for_ind, length=20)
+    etf['rsi14'] = ta.rsi(close_for_ind, length=14)
+    etf['sma50'] = ta.sma(close_for_ind, length=50)
+    etf['atr20'] = ta.atr(high_for_ind, low_for_ind, close_for_ind, length=20)
+    macd = ta.macd(close_for_ind)
     if macd is not None:
         etf['macd_hist'] = macd.iloc[:, 1]
-    bbands = ta.bbands(etf['close'], length=20, std=2)
+    bbands = ta.bbands(close_for_ind, length=20, std=2)
     if bbands is not None:
         etf['bb_upper'] = bbands.iloc[:, 2]
         etf['bb_lower'] = bbands.iloc[:, 0]
-    etf['roc10'] = ta.roc(etf['close'], length=10)
-    etf['roc20'] = ta.roc(etf['close'], length=20)
-    etf['vol20'] = etf['close'].pct_change().rolling(20).std() * np.sqrt(252)
+    etf['roc10'] = ta.roc(close_for_ind, length=10)
+    etf['roc20'] = ta.roc(close_for_ind, length=20)
+    etf['vol20'] = close_for_ind.pct_change().rolling(20).std() * np.sqrt(252)
     etf['vol20_median'] = etf['vol20'].rolling(252).median()
-    etf['roc5'] = ta.roc(etf['close'], length=5)
+    etf['roc5'] = ta.roc(close_for_ind, length=5)
 
     df = df.merge(etf, left_on="Date", right_index=True, how="left")
     df = df.sort_values(['Option Type', 'Date', 'Strike']).reset_index(drop=True)
@@ -399,20 +409,21 @@ def main():
 
     # ── Define put-buying filters ─────────────────────────────────────
     # Puts profit when market drops. Buy when indicators suggest vulnerability.
+    close_col = 'close_adj' if 'close_adj' in df.columns else 'close'
     f_rsi40 = df['rsi14'] < 40
     f_rsi45 = df['rsi14'] < 45
     f_rsi50 = df['rsi14'] < 50
     f_rsi55 = df['rsi14'] < 55
     f_rsi60 = df['rsi14'] < 60
-    f_bbl = df['close'] < df['bb_lower']
-    f_bbl_atr = df['close'] < (df['bb_lower'] - 0.5 * df['atr20'])
+    f_bbl = df[close_col] < df['bb_lower']
+    f_bbl_atr = df[close_col] < (df['bb_lower'] - 0.5 * df['atr20'])
     f_vol_high = df['vol20'] > df['vol20_median']
     f_roc10_neg3 = df['roc10'] < -3.0
     f_roc10_neg5 = df['roc10'] < -5.0
     f_roc10_neg7 = df['roc10'] < -7.0
     f_roc5_neg = df['roc5'] < -2.0
-    f_sma50_below = df['close'] < df['sma50']
-    f_sma20_below = df['close'] < df['sma20']
+    f_sma50_below = df[close_col] < df['sma50']
+    f_sma20_below = df[close_col] < df['sma20']
     f_macd_neg = df['macd_hist'] < 0
     f_ema_cross = df['ema20'] < df['sma50']  # bearish alignment
 

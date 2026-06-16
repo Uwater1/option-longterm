@@ -65,7 +65,19 @@ def analyze_etf(name, info):
         return None
     
     df = pd.read_parquet(info['path'])
-    df = df.sort_values('date').tail(2000).copy()
+    df = df.sort_values('date')
+    
+    # Overwrite raw columns with pre-adjusted columns to avoid split distortions
+    if 'close_adj' in df.columns:
+        df['close'] = df['close_adj']
+        df['open'] = df['open_adj']
+        df['high'] = df['high_adj']
+        df['low'] = df['low_adj']
+        df['prev_close'] = df['close'].shift(1)
+    else:
+        df['prev_close'] = df['close'].shift(1)
+        
+    df = df.tail(2000).copy()
     
     # Calculate difference
     df['diff_abs'] = df['high'] - df['open']

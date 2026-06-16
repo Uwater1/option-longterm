@@ -30,28 +30,38 @@ def load_data():
     etf["date"] = pd.to_datetime(etf["date"])
     etf = etf.set_index("date").sort_index()
 
+    # Calculate indicators using adjusted columns if available
+    if "close_adj" in etf.columns:
+        close_for_ind = etf["close_adj"]
+        high_for_ind = etf["high_adj"]
+        low_for_ind = etf["low_adj"]
+    else:
+        close_for_ind = etf["close"]
+        high_for_ind = etf["high"]
+        low_for_ind = etf["low"]
+
     # Needs entire ETF history for smoothing warmth
-    etf['sma20'] = ta.sma(etf['close'], length=20)
-    etf['ema20'] = ta.ema(etf['close'], length=20)
-    etf['rsi14'] = ta.rsi(etf['close'], length=14)
-    macd = ta.macd(etf['close'])
+    etf['sma20'] = ta.sma(close_for_ind, length=20)
+    etf['ema20'] = ta.ema(close_for_ind, length=20)
+    etf['rsi14'] = ta.rsi(close_for_ind, length=14)
+    macd = ta.macd(close_for_ind)
     if macd is not None:
         etf['macd_hist'] = macd.iloc[:, 1]
-    bbands = ta.bbands(etf['close'], length=20, std=2)
+    bbands = ta.bbands(close_for_ind, length=20, std=2)
     if bbands is not None:
         etf['bb_upper'] = bbands.iloc[:, 2]
-    etf['roc20'] = ta.roc(etf['close'], length=20)
-    etf['atr20'] = ta.atr(etf['high'], etf['low'], etf['close'], length=20)
-    adx = ta.adx(etf['high'], etf['low'], etf['close'], length=14)
+    etf['roc20'] = ta.roc(close_for_ind, length=20)
+    etf['atr20'] = ta.atr(high_for_ind, low_for_ind, close_for_ind, length=20)
+    adx = ta.adx(high_for_ind, low_for_ind, close_for_ind, length=14)
     if adx is not None:
         etf['adx14'] = adx.iloc[:, 0]
-    etf['ema10'] = ta.ema(etf['close'], length=10)
-    etf['ema30'] = ta.ema(etf['close'], length=30)
-    stoch = ta.stoch(etf['high'], etf['low'], etf['close'], k=14, d=3, smooth_k=3)
+    etf['ema10'] = ta.ema(close_for_ind, length=10)
+    etf['ema30'] = ta.ema(close_for_ind, length=30)
+    stoch = ta.stoch(high_for_ind, low_for_ind, close_for_ind, k=14, d=3, smooth_k=3)
     if stoch is not None:
         etf['stoch_k'] = stoch.iloc[:, 0]
-    etf['rolling_high_20'] = etf['close'].rolling(20).max()
-    etf['rolling_high_252'] = etf['close'].rolling(252).max()
+    etf['rolling_high_20'] = close_for_ind.rolling(20).max()
+    etf['rolling_high_252'] = close_for_ind.rolling(252).max()
 
     df = df.merge(etf, left_on="Date", right_index=True, how="left")
 
@@ -67,20 +77,21 @@ ETF_TAG = args.etf
 
 df = load_data()
 
-f1 = df['close'] < df['sma20']
-f2 = df['close'] < df['ema20']
+close_col = 'close_adj' if 'close_adj' in df.columns else 'close'
+f1 = df[close_col] < df['sma20']
+f2 = df[close_col] < df['ema20']
 f3 = df['rsi14'] < 70
 f4 = df['rsi14'] > 30
 f5 = df['macd_hist'] < 0
-f6 = df['close'] < df['bb_upper']
+f6 = df[close_col] < df['bb_upper']
 f9 = df['roc20'] < 5.0
-f10 = df['close'] < (df['sma20'] + df['atr20'])
+f10 = df[close_col] < (df['sma20'] + df['atr20'])
 f11 = df['adx14'] < 25
 f12 = df['ema10'] < df['ema30']
 f15 = df['stoch_k'] < 80
-f16 = df['close'] < (0.98 * df['rolling_high_20'])
-f17 = df['close'] < (0.95 * df['rolling_high_252'])
-f20 = df['close'] < (df['ema20'] + 1.0 * df['atr20'])
+f16 = df[close_col] < (0.98 * df['rolling_high_20'])
+f17 = df[close_col] < (0.95 * df['rolling_high_252'])
+f20 = df[close_col] < (df['ema20'] + 1.0 * df['atr20'])
 
 combinations = {
     "c1": f1 & f3,

@@ -54,15 +54,28 @@ def run_optimization(etf_choice, otm_level=1):
     inst, opt, etf = load_data()
 
     # Additional indicators on ETF daily data (mirrors optimize_filters.py)
-    etf["ema20"]  = ta.ema(etf["close"], length=20)
-    etf["roc20"]  = ta.roc(etf["close"], length=20)
-    etf["roc5"]   = ta.roc(etf["close"], length=5)
-    bb = ta.bbands(etf["close"], length=20, std=2)
-    etf["bbu20"]  = bb["BBU_20_2.0_2.0"]
-    etf["bbl20"]  = bb["BBL_20_2.0_2.0"]
-    etf["vol20"]  = etf["close"].pct_change().rolling(20).std() * np.sqrt(252)
+    if "close_adj" in etf.columns:
+        close_for_ind = etf["close_adj"]
+        high_for_ind = etf["high_adj"]
+        low_for_ind = etf["low_adj"]
+    else:
+        close_for_ind = etf["close"]
+        high_for_ind = etf["high"]
+        low_for_ind = etf["low"]
+
+    etf["ema20"]  = ta.ema(close_for_ind, length=20)
+    etf["roc20"]  = ta.roc(close_for_ind, length=20)
+    etf["roc5"]   = ta.roc(close_for_ind, length=5)
+    bb = ta.bbands(close_for_ind, length=20, std=2)
+    if bb is not None:
+        etf["bbu20"]  = bb["BBU_20_2.0_2.0"]
+        etf["bbl20"]  = bb["BBL_20_2.0_2.0"]
+    else:
+        etf["bbu20"]  = np.nan
+        etf["bbl20"]  = np.nan
+    etf["vol20"]  = close_for_ind.pct_change().rolling(20).std() * np.sqrt(252)
     etf["vol20_median"] = etf["vol20"].rolling(252).median()
-    macd = ta.macd(etf["close"])
+    macd = ta.macd(close_for_ind)
     etf["macd_hist"] = macd.iloc[:, 1] if macd is not None else np.nan
 
     cycles = get_cycles(opt, etf)
@@ -81,7 +94,7 @@ def run_optimization(etf_choice, otm_level=1):
         cycle_indicators.append({
             "entry_date":   cyc["entry_date"],
             "rsi14":        row["rsi14"],
-            "close":        row["close"],
+            "close":        row["close_adj"] if "close_adj" in etf.columns else row["close"],
             "sma20":        row["sma20"],
             "ema20":        row["ema20"],
             "sma50":        row["sma50"],

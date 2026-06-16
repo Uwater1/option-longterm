@@ -51,15 +51,23 @@ def load_data():
     etf = etf.set_index("date").sort_index()
     
     # Calculate indicators
-    etf["sma20"] = ta.sma(etf["close"], length=20)
-    etf["rsi14"] = ta.rsi(etf["close"], length=14)
+    if "close_adj" in etf.columns:
+        close_for_ind = etf["close_adj"]
+    else:
+        close_for_ind = etf["close"]
+
+    etf["sma20"] = ta.sma(close_for_ind, length=20)
+    etf["rsi14"] = ta.rsi(close_for_ind, length=14)
     
     # Bollinger Bands
-    bb = ta.bbands(etf["close"], length=20, std=2)
-    etf["bbu20"] = bb["BBU_20_2.0_2.0"]
+    bb = ta.bbands(close_for_ind, length=20, std=2)
+    if bb is not None:
+        etf["bbu20"] = bb["BBU_20_2.0_2.0"]
+    else:
+        etf["bbu20"] = np.nan
     
     # ROC (Rate of Change) - returns percentage values (e.g., 5.0 for 5%)
-    etf["roc20"] = ta.roc(etf["close"], length=20)
+    etf["roc20"] = ta.roc(close_for_ind, length=20)
     
     return inst, opt, etf
 
@@ -171,7 +179,8 @@ def filter_cycle(etf, entry_date):
         return False
 
     cond1 = rsi < 66.0
-    cond2 = etf.loc[idx, "close"] < bbu
+    close_val = etf.loc[idx, "close_adj"] if "close_adj" in etf.columns else etf.loc[idx, "close"]
+    cond2 = close_val < bbu
 
     return cond1 and cond2
 
