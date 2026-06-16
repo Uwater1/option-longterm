@@ -54,6 +54,22 @@ ETF_CONFIG = {
         "inst": "./data/500ETF_instruments.parquet",
         "name": "500ETF (510500)"
     },
+    "588000": {
+        "path": "./data/588000ETF_1d.parquet",
+        "etf_5m": "./data/588000ETF_5m.parquet",
+        "opt_5m": "./data/588000ETF_historical_prices_5m.parquet",
+        "opt_daily": "./data/588000ETF_historical_prices.parquet",
+        "inst": "./data/588000ETF_instruments.parquet",
+        "name": "588000ETF (588000)"
+    },
+    "159915": {
+        "path": "./data/159915ETF_1d.parquet",
+        "etf_5m": "./data/159915ETF_5m.parquet",
+        "opt_5m": "./data/159915ETF_historical_prices_5m.parquet",
+        "opt_daily": "./data/159915ETF_historical_prices.parquet",
+        "inst": "./data/159915ETF_instruments.parquet",
+        "name": "159915ETF (159915)"
+    },
 }
 
 QUANTILE = 0.90          # Target 90% fill rate
@@ -272,8 +288,8 @@ def plot_results(df: pd.DataFrame, etf_name: str, etf_key: str, coverage: float)
 
 def main():
     parser = argparse.ArgumentParser(description="BS-Mapping Put Limit Order entry validation.")
-    parser.add_argument("-e", "--etf", type=str, required=True, choices=["50", "300", "500"],
-                        help="ETF key: 50, 300, or 500")
+    parser.add_argument("-e", "--etf", type=str, required=True, choices=["50", "300", "500", "588000", "159915"],
+                        help="ETF key (50, 300, 500, 588000, 159915)")
     args = parser.parse_args()
 
     etf_key = args.etf

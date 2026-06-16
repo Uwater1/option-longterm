@@ -26,6 +26,14 @@ def select_etf(choice):
         ETF_NAME = "500ETF"
         PATH_PARQUET = "synthetic_options_500ETF.parquet"
         PATH_ETF = "./data/500ETF_1d.parquet"
+    elif choice == "588000":
+        ETF_NAME = "588000ETF"
+        PATH_PARQUET = "synthetic_options_588000ETF.parquet"
+        PATH_ETF = "./data/588000ETF_1d.parquet"
+    elif choice == "159915":
+        ETF_NAME = "159915ETF"
+        PATH_PARQUET = "synthetic_options_159915ETF.parquet"
+        PATH_ETF = "./data/159915ETF_1d.parquet"
     else:
         ETF_NAME = "300ETF"
         PATH_PARQUET = "synthetic_options_300ETF.parquet"
@@ -522,7 +530,7 @@ def analyze_synthetic_otm(years=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Research Synthetic OTM Alpha (Short Call & Long Put).")
     parser.add_argument("-t", "--years", type=int, help="Limit analysis to last N years")
-    parser.add_argument("-e", "--etf", type=str, choices=["50", "300", "500"], default="300", help="ETF choice (default: 300)")
+    parser.add_argument("-e", "--etf", type=str, choices=["50", "300", "500", "588000", "159915"], default="300", help="ETF choice (default: 300)")
     args = parser.parse_args()
     
     select_etf(args.etf)

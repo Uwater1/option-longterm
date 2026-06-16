@@ -9,7 +9,7 @@ import os
 import research_otm_levels as r_otm
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-e", "--etf", type=str, choices=["50", "300", "500"], default="300")
+parser.add_argument("-e", "--etf", type=str, choices=["50", "300", "500", "588000", "159915"], default="300")
 args = parser.parse_args()
 ETF_TAG = args.etf
 

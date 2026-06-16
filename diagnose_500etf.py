@@ -332,7 +332,7 @@ def filter_rsi70_bbu(etf, idx, close, rsi, bbu, roc20):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="500ETF Diagnostic Tool")
-    parser.add_argument("-e", "--etf", type=str, choices=["50", "300", "500"], default="500")
+    parser.add_argument("-e", "--etf", type=str, choices=["50", "300", "500", "588000", "159915"], default="500")
     args = parser.parse_args()
 
     select_etf(args.etf)

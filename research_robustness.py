@@ -159,7 +159,7 @@ def analyze_data_completeness():
     print("=" * 100)
 
     stats = {}
-    for etf_id in ["50", "300", "500"]:
+    for etf_id in ["50", "300", "500", "588000", "159915"]:
         select_etf(etf_id)
         inst, opt, etf = load_data()
         cycles = get_cycles(opt, etf, years=None)
@@ -174,11 +174,11 @@ def analyze_data_completeness():
             "ann_vol": ann_vol,
         }
 
-    print(f"\n  {'ETF':>8} {'ETF Days':>10} {'Opt Rows':>10} {'Cycles':>8} {'First Cycle':>14} {'Ann Vol':>8}")
-    print("  " + "-" * 70)
-    for etf_id in ["50", "300", "500"]:
+    print(f"\n  {'ETF':>10} {'ETF Days':>10} {'Opt Rows':>10} {'Cycles':>8} {'First Cycle':>14} {'Ann Vol':>8}")
+    print("  " + "-" * 75)
+    for etf_id in ["50", "300", "500", "588000", "159915"]:
         s = stats[etf_id]
-        print(f"  {s['name']:>8} {s['etf_days']:>10} {s['opt_rows']:>10} {s['cycles']:>8} "
+        print(f"  {s['name']:>10} {s['etf_days']:>10} {s['opt_rows']:>10} {s['cycles']:>8} "
               f"{str(s['first_cycle']):>14} {s['ann_vol']:>7.1f}%")
 
     print(f"\n  500ETF has {stats['500']['cycles']} cycles vs {stats['300']['cycles']} (300ETF) and {stats['50']['cycles']} (50ETF)")
@@ -387,7 +387,7 @@ def run_analysis(etf_choice="500"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="500ETF Data Completeness & Robustness")
-    parser.add_argument("-e", "--etf", type=str, choices=["50", "300", "500"], default="500")
+    parser.add_argument("-e", "--etf", type=str, choices=["50", "300", "500", "588000", "159915"], default="500")
     parser.add_argument("-n", "--bootstrap", type=int, default=N_BOOTSTRAP)
     args = parser.parse_args()
     N_BOOTSTRAP = args.bootstrap

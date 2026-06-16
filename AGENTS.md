@@ -314,6 +314,8 @@ Put filter/level pipeline: `research_synthetic_no_filter.py` (OTM level comparis
   - 300ETF: OTM1, RSI<60+Vol>median → +616 RMB
   - 50ETF: OTM2, RSI<50+SMA50 below → **+4,019 RMB** (+75% vs old OTM1 config)
   - 500ETF: OTM2, Vol>median+MACD<0 → **+1,225 RMB**
+- [x] Add full support for `588000` (科创50ETF) and `159915` (创业板ETF易方达) to data downloader, backtest engine, strategies, limit entry offset model, and synthetic option generation (Jun 2026)
+- [x] Update all research, combinations, and optimization scripts (`research_*.py`, `eval_synth_*.py`, `optimize_alpha_synthetic.py`, `evaluate_combinations.py`, `eval_synth_combinations.py`) to support choice/selection of `588000` and `159915` (Jun 2026)
 - [ ] Test early roll management for 500ETF — roll calls to higher strikes if underlying rallies >5% mid-cycle
 - [ ] Explore weekly options for 500ETF if available — shorter DTE reduces rally exposure
 - [ ] Revisit conclusions when 500ETF reaches 80+ cycles (~2029)

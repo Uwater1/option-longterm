@@ -25,6 +25,14 @@ def select_etf(choice):
         PATH_PARQUET = "synthetic_options_500ETF.parquet"
         PATH_ETF = "./data/500ETF_1d.parquet"
         ETF_TAG = "500"
+    elif choice == "588000":
+        PATH_PARQUET = "synthetic_options_588000ETF.parquet"
+        PATH_ETF = "./data/588000ETF_1d.parquet"
+        ETF_TAG = "588000"
+    elif choice == "159915":
+        PATH_PARQUET = "synthetic_options_159915ETF.parquet"
+        PATH_ETF = "./data/159915ETF_1d.parquet"
+        ETF_TAG = "159915"
     else:
         PATH_PARQUET = "synthetic_options_300ETF.parquet"
         PATH_ETF = "./data/510300_1d.parquet"
@@ -141,7 +149,7 @@ def calc_risk_metrics(pnls):
 
 def main():
     parser = argparse.ArgumentParser(description="Optimize dynamic alpha strike selection on synthetic options data")
-    parser.add_argument("-e", "--etf", type=str, choices=["50", "300", "500"], default="300")
+    parser.add_argument("-e", "--etf", type=str, choices=["50", "300", "500", "588000", "159915"], default="300")
     args = parser.parse_args()
 
     select_etf(args.etf)
