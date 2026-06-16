@@ -83,6 +83,13 @@ def load_etf(path):
     df["date"] = pd.to_datetime(df["date"])
     df = df.set_index("date").sort_index()
 
+    # Overwrite raw price columns with pre-adjusted columns to compute all indicators and returns correctly
+    if "close_adj" in df.columns:
+        df["close"] = df["close_adj"]
+        df["open"] = df["open_adj"]
+        df["high"] = df["high_adj"]
+        df["low"] = df["low_adj"]
+
     # Indicators (same as backtest_covered_call.py lines 156-178)
     df["rsi14"] = ta.rsi(df["close"], length=14)
     df["sma20"] = ta.sma(df["close"], length=20)

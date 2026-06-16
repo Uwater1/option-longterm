@@ -70,11 +70,36 @@ def update_etf_prices(cfg):
         print(f"  ETF prices: no new data since {last_date.date()}")
         return
 
+    etf_adj = rq.get_price(
+        underlying, start_date=start.strftime("%Y-%m-%d"),
+        end_date=pd.Timestamp.now().strftime("%Y-%m-%d"),
+        frequency="1d",
+        adjust_type="pre"
+    )
+
     etf = etf.reset_index()
     etf.columns = [c.lower() if c != "order_book_id" else c for c in etf.columns]
     if "date" not in etf.columns and "datetime" in etf.columns:
         etf.rename(columns={"datetime": "date"}, inplace=True)
     etf["date"] = pd.to_datetime(etf["date"])
+
+    if etf_adj is not None and not etf_adj.empty:
+        etf_adj = etf_adj.reset_index()
+        etf_adj.columns = [c.lower() if c != "order_book_id" else c for c in etf_adj.columns]
+        if "date" not in etf_adj.columns and "datetime" in etf_adj.columns:
+            etf_adj.rename(columns={"datetime": "date"}, inplace=True)
+        etf_adj["date"] = pd.to_datetime(etf_adj["date"])
+
+        etf_adj_slim = etf_adj[["date", "open", "high", "low", "close"]].rename(columns={
+            "open": "open_adj",
+            "high": "high_adj",
+            "low": "low_adj",
+            "close": "close_adj"
+        })
+        etf = etf.merge(etf_adj_slim, on="date", how="left")
+    else:
+        for col in ["open", "high", "low", "close"]:
+            etf[f"{col}_adj"] = etf[col]
 
     combined = pd.concat([existing, etf], ignore_index=True)
     combined = combined.drop_duplicates(subset=["date"], keep="last").sort_values("date")
