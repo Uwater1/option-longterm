@@ -130,23 +130,32 @@ def load_data():
     etf = etf.set_index("date").sort_index()
 
     # Calculate indicators
-    etf["rsi14"] = ta.rsi(etf["close"], length=14)
-    etf["sma20"] = ta.sma(etf["close"], length=20)
-    etf["ema20"] = ta.ema(etf["close"], length=20)
-    etf["sma50"] = ta.sma(etf["close"], length=50)
-    etf["atr20"] = ta.atr(etf["high"], etf["low"], etf["close"], length=20)
-    etf["roc10"] = ta.roc(etf["close"], length=10)
-    etf["roc20"] = ta.roc(etf["close"], length=20)
-    bb = ta.bbands(etf["close"], length=20, std=2)
+    if "close_adj" in etf.columns:
+        close_for_ind = etf["close_adj"]
+        high_for_ind = etf["high_adj"]
+        low_for_ind = etf["low_adj"]
+    else:
+        close_for_ind = etf["close"]
+        high_for_ind = etf["high"]
+        low_for_ind = etf["low"]
+
+    etf["rsi14"] = ta.rsi(close_for_ind, length=14)
+    etf["sma20"] = ta.sma(close_for_ind, length=20)
+    etf["ema20"] = ta.ema(close_for_ind, length=20)
+    etf["sma50"] = ta.sma(close_for_ind, length=50)
+    etf["atr20"] = ta.atr(high_for_ind, low_for_ind, close_for_ind, length=20)
+    etf["roc10"] = ta.roc(close_for_ind, length=10)
+    etf["roc20"] = ta.roc(close_for_ind, length=20)
+    bb = ta.bbands(close_for_ind, length=20, std=2)
     if bb is not None:
         etf["bbu20"] = bb["BBU_20_2.0_2.0"]
         etf["bbl20"] = bb["BBL_20_2.0_2.0"]
     else:
         etf["bbu20"] = np.nan
         etf["bbl20"] = np.nan
-    etf["vol20"] = etf["close"].pct_change().rolling(20).std() * np.sqrt(252)
+    etf["vol20"] = close_for_ind.pct_change().rolling(20).std() * np.sqrt(252)
     etf["vol20_median"] = etf["vol20"].rolling(252).median()
-    macd = ta.macd(etf["close"])
+    macd = ta.macd(close_for_ind)
     etf["macd_hist"] = macd.iloc[:, 1] if macd is not None else np.nan
 
     return inst, opt, etf
@@ -588,6 +597,7 @@ def _execute_cycle(strategy, cyc, opt, etf, daily_ivs, opt_5m, etf_5m):
 
     # Gather indicators
     etf_close_entry = float(etf.loc[idx, "close"])
+    etf_close_entry_for_filter = float(etf.loc[idx, "close_adj"]) if "close_adj" in etf.columns else etf_close_entry
     indicators = {
         "rsi": etf.loc[idx, "rsi14"],
         "bbu": etf.loc[idx, "bbu20"],
@@ -604,7 +614,7 @@ def _execute_cycle(strategy, cyc, opt, etf, daily_ivs, opt_5m, etf_5m):
 
     # 1. Evaluate filter
     filter_passed, filter_would_pass = strategy.evaluate_filter(
-        etf, idx, etf_close_entry, indicators)
+        etf, idx, etf_close_entry_for_filter, indicators)
 
     # 2. Select legs
     legs_to_process = strategy.select_legs(

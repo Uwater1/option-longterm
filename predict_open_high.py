@@ -93,6 +93,13 @@ def load_and_engineer(etf_key: str) -> pd.DataFrame:
     df = pd.read_parquet(cfg["path"]).sort_values("date").copy()
     df = df.reset_index(drop=True)
 
+    # Overwrite raw columns with pre-adjusted columns to avoid split distortions in features and targets
+    if "close_adj" in df.columns:
+        df["close"] = df["close_adj"]
+        df["open"] = df["open_adj"]
+        df["high"] = df["high_adj"]
+        df["low"] = df["low_adj"]
+
     # ── Target: (high - open) / open * 100 (percent) ──
     df["y"] = (df["high"] - df["open"]) / df["open"] * 100.0
 
