@@ -52,6 +52,18 @@ def select_underlying(etf_choice):
         PATH_OPT  = "./data/500ETF_historical_prices.parquet"
         PATH_ETF  = "./data/500ETF_1d.parquet"
         PATH_IV_CACHE = "./data/30d_iv_cache_500.parquet"
+    elif etf_choice == "588000":
+        ETF_NAME = "588000ETF"
+        PATH_INST = "./data/588000ETF_instruments.parquet"
+        PATH_OPT  = "./data/588000ETF_historical_prices.parquet"
+        PATH_ETF  = "./data/588000ETF_1d.parquet"
+        PATH_IV_CACHE = "./data/30d_iv_cache_588000.parquet"
+    elif etf_choice == "159915":
+        ETF_NAME = "159915ETF"
+        PATH_INST = "./data/159915ETF_instruments.parquet"
+        PATH_OPT  = "./data/159915ETF_historical_prices.parquet"
+        PATH_ETF  = "./data/159915ETF_1d.parquet"
+        PATH_IV_CACHE = "./data/30d_iv_cache_159915.parquet"
     else:
         ETF_NAME = "300ETF"
         PATH_INST = "./data/300ETF_instruments.parquet"
@@ -333,7 +345,7 @@ def _load_model_offset():
         return _model_meta
     try:
         from predict_open_high import load_model, load_and_engineer, predict_single
-        etf_key = {"50ETF": "50", "300ETF": "300", "500ETF": "500"}.get(ETF_NAME, "300")
+        etf_key = {"50ETF": "50", "300ETF": "300", "500ETF": "500", "588000ETF": "588000", "159915ETF": "159915"}.get(ETF_NAME, "300")
         _model_meta = load_model(etf_key)
         _model_meta["_predict_fn"] = predict_single
         _model_meta["_engineer_fn"] = load_and_engineer
@@ -351,7 +363,7 @@ def _predict_model_offset(etf_df, entry_date):
     if meta is None:
         return None
     try:
-        etf_key = {"50ETF": "50", "300ETF": "300", "500ETF": "500"}.get(ETF_NAME, "300")
+        etf_key = {"50ETF": "50", "300ETF": "300", "500ETF": "500", "588000ETF": "588000", "159915ETF": "159915"}.get(ETF_NAME, "300")
         if etf_key not in _feature_cache:
             _feature_cache[etf_key] = meta["_engineer_fn"](etf_key)
             _feature_cache[etf_key]["_dates_parsed"] = pd.to_datetime(_feature_cache[etf_key]["date"])
@@ -528,10 +540,14 @@ def run_backtest(strategy, opt, etf):
     if strategy.needs_5m():
         opt_5m_path = {"50ETF": "./data/50ETF_historical_prices_5m.parquet",
                        "300ETF": "./data/300ETF_historical_prices_5m.parquet",
-                       "500ETF": "./data/500ETF_historical_prices_5m.parquet"}.get(ETF_NAME)
+                       "500ETF": "./data/500ETF_historical_prices_5m.parquet",
+                       "588000ETF": "./data/588000ETF_historical_prices_5m.parquet",
+                       "159915ETF": "./data/159915ETF_historical_prices_5m.parquet"}.get(ETF_NAME)
         etf_5m_path = {"50ETF": "./data/50ETF_5m.parquet",
                        "300ETF": "./data/510300_5m.parquet",
-                       "500ETF": "./data/500ETF_5m.parquet"}.get(ETF_NAME)
+                       "500ETF": "./data/500ETF_5m.parquet",
+                       "588000ETF": "./data/588000ETF_5m.parquet",
+                       "159915ETF": "./data/159915ETF_5m.parquet"}.get(ETF_NAME)
         if opt_5m_path and os.path.exists(opt_5m_path):
             print(f"Loading 5m option data from {opt_5m_path}...")
             opt_5m = pd.read_parquet(opt_5m_path)

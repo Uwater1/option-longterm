@@ -8,7 +8,7 @@ Enhanced income strategy for Chinese ETFs: Covered Call + Bull Put Spread on 50E
 source venv/bin/activate                    # Activate Python env (uses system miniconda for rqdatac)
 python3 update_data.py                      # Refresh parquet data from rqdatac
 python3 download_5m_data.py                # Download 5m ETF & option historical data
-python backtest_put.py [50|300|500]           # Run put backtest (uses per-ETF optimal OTM level by default)
+python backtest_put.py [50|300|500|588000|159915] # Run put backtest (uses per-ETF optimal OTM level by default)
 python backtest_put.py 300 --no-filter        # Run put backtest without filter (always buy)
 python backtest_put.py 300 --limit-entry      # Run put backtest with BS mapping limit entry
 python backtest_put.py 50 --level 2           # Explicit OTM level override
@@ -204,6 +204,8 @@ The Engine + Strategy pattern makes the following components reusable across any
 | 300ETF | 56% (44/78) | +19,178 RMB | **+16,868 RMB** | `25 < RSI < 72` AND `MACD Hist < 0` (Sharpe 1.21 → 1.27, Drawdown -2.7k) |
 | 500ETF | 42% (19/45) | +12,201 RMB | **+16,954 RMB** | `RSI > 30` AND `Close < BBU` AND `Close > SMA50` (Sharpe 1.92, Drawdown 0.0!) |
 | 50ETF | 32% (44/136) | +11,922 RMB | **+7,317 RMB** | `30 < RSI < 60` AND `ROC10 < 3%` AND `Vol20 < Vol20_med` (Sharpe 0.53 → 0.58) |
+| 588000ETF | 51% (19/37) | +1,883 RMB | N/A | Default (300ETF filter baseline) |
+| 159915ETF | 40% (18/45) | -932 RMB | N/A | Default (300ETF filter baseline) |
 
 ### Protective Put Mode (PutStrategy, Selective Hedge, v2 Jun 2026)
 | ETF | Baseline (always buy OTM1) | Optimized P&L | OTM Level | Optimized Filter | Placement |
@@ -211,6 +213,8 @@ The Engine + Strategy pattern makes the following components reusable across any
 | 300ETF | -11,044 RMB | **+616 RMB** | OTM1 | `RSI < 60` AND `Vol20 > median` | 41% (32/78) |
 | 50ETF | TBD | **+4,019 RMB** | **OTM2** | `RSI < 50` AND `Close < SMA50` | 43% (59/136) |
 | 500ETF | TBD | **+1,225 RMB** | **OTM2** | `Vol20 > median` AND `MACD Hist < 0` | 31% (14/45) |
+| 588000ETF | N/A | -2,119 RMB | OTM1 | Default (300ETF filter baseline) | 46% (17/37) |
+| 159915ETF | N/A | -5,336 RMB | OTM1 | Default (300ETF filter baseline) | 40% (18/45) |
 
 Put filter/level pipeline: `research_synthetic_no_filter.py` (OTM level comparison) → `optimize_put_filters.py --sweep-levels` (real data, all levels) → update `PutStrategy` filters + `backtest_put.py` defaults. OTM3 has the best per-contract expected return on synthetic data but OTM2 wins on real data for 50/500ETF due to better filter-level combo interactions.
 

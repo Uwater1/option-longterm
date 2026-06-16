@@ -8,11 +8,13 @@ import rqdatac as rq
 from numba_utils import process_synthetic_strikes_loop
 
 # --- Configuration ---
-UNDERLYINGS = ['510050.XSHG', '510300.XSHG', '510500.XSHG']
+UNDERLYINGS = ['510050.XSHG', '510300.XSHG', '510500.XSHG', '588000.XSHG', '159915.XSHE']
 SYMBOL_MAP = {
     '510050.XSHG': '50ETF',
     '510300.XSHG': '300ETF',
     '510500.XSHG': '500ETF',
+    '588000.XSHG': '588000ETF',
+    '159915.XSHE': '159915ETF',
 }
 DATA_DIR = './data'
 RFR_FILE = os.path.join(DATA_DIR, 'interest_free_rate.csv')
@@ -304,7 +306,7 @@ def process_underlying(underlying_symbol):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-e', '--etf', type=str, default='all', choices=['50', '300', '500', 'all'])
+    parser.add_argument('-e', '--etf', type=str, default='all', choices=['50', '300', '500', '588000', '159915', 'all'])
     args = parser.parse_args()
 
     rq.init()
@@ -313,5 +315,5 @@ if __name__ == "__main__":
         for und in UNDERLYINGS:
             process_underlying(und)
     else:
-        symbol = {'50': '510050.XSHG', '300': '510300.XSHG', '500': '510500.XSHG'}[args.etf]
+        symbol = {'50': '510050.XSHG', '300': '510300.XSHG', '500': '510500.XSHG', '588000': '588000.XSHG', '159915': '159915.XSHE'}[args.etf]
         process_underlying(symbol)

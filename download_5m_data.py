@@ -38,6 +38,22 @@ UNDERLYINGS = {
         "etf_5m": "500ETF_5m.parquet",
         "opt_5m": "500ETF_historical_prices_5m.parquet",
     },
+    "588000ETF": {
+        "underlying": "588000.XSHG",
+        "instruments": "588000ETF_instruments.parquet",
+        "prices": "588000ETF_historical_prices.parquet",
+        "etf_1d": "588000ETF_1d.parquet",
+        "etf_5m": "588000ETF_5m.parquet",
+        "opt_5m": "588000ETF_historical_prices_5m.parquet",
+    },
+    "159915ETF": {
+        "underlying": "159915.XSHE",
+        "instruments": "159915ETF_instruments.parquet",
+        "prices": "159915ETF_historical_prices.parquet",
+        "etf_1d": "159915ETF_1d.parquet",
+        "etf_5m": "159915ETF_5m.parquet",
+        "opt_5m": "159915ETF_historical_prices_5m.parquet",
+    },
 }
 
 def get_cycles(opt, etf):

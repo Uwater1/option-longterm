@@ -1,0 +1,73 @@
+{
+  "etf_key": "159915",
+  "features": [
+    "open_ema5_div",
+    "roc5",
+    "prev_open_to_high",
+    "williams_r14",
+    "atr14_norm",
+    "open_ema20_div"
+  ],
+  "model_type": "lightgbm",
+  "quantile": 0.1,
+  "adaptive_quantile": 0.03625,
+  "calibration_offset": -0.11533750232518825,
+  "vol_regime_calibration": {
+    "low_vol_offset": -0.09545420652980055,
+    "high_vol_offset": -0.15854884260450974,
+    "vol_threshold": 0.24085189036181417,
+    "coverage": 89.96840442338072
+  },
+  "cv_comparison": {
+    "statsmodels_cv_loss": 0.08456628944100678,
+    "lightgbm_cv_loss": 0.08025514274381025,
+    "winner": "lightgbm"
+  },
+  "selection_order": [
+    [
+      "open_ema5_div",
+      0.10411715877364217
+    ],
+    [
+      "roc5",
+      0.0867664782808357
+    ],
+    [
+      "prev_open_to_high",
+      0.08426037713610955
+    ],
+    [
+      "williams_r14",
+      0.08208630177920552
+    ],
+    [
+      "atr14_norm",
+      0.08088111448930643
+    ],
+    [
+      "open_ema20_div",
+      0.07985452440526038
+    ]
+  ],
+  "best_set_size": 6,
+  "rolling_coverage": 89.96840442338072,
+  "rolling_mean_pred_offset": 0.4954187699674136,
+  "rolling_pinball_loss": 0.0868862960288714,
+  "rolling_n_predictions": 2532,
+  "statsmodels_coeffs": {
+    "Intercept": 0.23526307938432112,
+    "open_ema5_div": -0.42151864125811356,
+    "roc5": 0.07074409691470807,
+    "prev_open_to_high": 0.12847266430902748,
+    "williams_r14": 0.002910165031306311,
+    "atr14_norm": -0.010246330245381685,
+    "open_ema20_div": 0.010091586606880809
+  },
+  "lgb_model_paths": [
+    "./backtest/open_high_lgb_159915_bag0.txt",
+    "./backtest/open_high_lgb_159915_bag1.txt",
+    "./backtest/open_high_lgb_159915_bag2.txt",
+    "./backtest/open_high_lgb_159915_bag3.txt",
+    "./backtest/open_high_lgb_159915_bag4.txt"
+  ]
+}

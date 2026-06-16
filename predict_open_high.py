@@ -40,6 +40,8 @@ ETF_CONFIG = {
     "50":  {"path": "./data/50ETF_1d.parquet",  "name": "50ETF (510050)"},
     "300": {"path": "./data/510300_1d.parquet",  "name": "300ETF (510300)"},
     "500": {"path": "./data/500ETF_1d.parquet",  "name": "500ETF (510500)"},
+    "588000": {"path": "./data/588000ETF_1d.parquet", "name": "588000ETF (588000)"},
+    "159915": {"path": "./data/159915ETF_1d.parquet", "name": "159915ETF (159915)"},
 }
 
 # ── Candidate feature list ────────────────────────────────────────────────────
@@ -909,7 +911,7 @@ def predict_single(model_meta: dict, features_df: pd.DataFrame,
 def main():
     parser = argparse.ArgumentParser(
         description="Open-to-High P10 Prediction System — 90% fill-rate limit orders")
-    parser.add_argument("-e", "--etf", type=str, required=True, choices=["50", "300", "500"],
+    parser.add_argument("-e", "--etf", type=str, required=True, choices=["50", "300", "500", "588000", "159915"],
                         help="ETF key: 50, 300, or 500")
     parser.add_argument("--predict", action="store_true",
                         help="Only predict today's offset (requires prior training)")

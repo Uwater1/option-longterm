@@ -41,7 +41,7 @@ if __name__ == "__main__":
         etf_choice = clean_argv[1]
 
     # Per-ETF optimized OTM level defaults (from profit-first optimizer sweep)
-    ETF_DEFAULT_LEVELS = {"300": 1, "50": 2, "500": 2}
+    ETF_DEFAULT_LEVELS = {"300": 1, "50": 2, "500": 2, "588000": 1, "159915": 1}
     put_level = level_override if level_override is not None else ETF_DEFAULT_LEVELS.get(etf_choice, 1)
 
     select_underlying(etf_choice)
