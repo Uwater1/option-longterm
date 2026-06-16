@@ -1,0 +1,2 @@
+1. for 159915
+If close < BB Down, AND within 60 days beforehead, close has once > BB Up, them it has 60% chance to go down in the next 30 calener dates with a expected return of -2.93%. For the inverse, it has 60% of going up
