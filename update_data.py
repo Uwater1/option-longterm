@@ -31,6 +31,18 @@ UNDERLYINGS = {
         "prices": "500ETF_historical_prices.parquet",
         "etf_1d": "500ETF_1d.parquet",
     },
+    "588000ETF": {
+        "underlying": "588000.XSHG",
+        "instruments": "588000ETF_instruments.parquet",
+        "prices": "588000ETF_historical_prices.parquet",
+        "etf_1d": "588000ETF_1d.parquet",
+    },
+    "159915ETF": {
+        "underlying": "159915.XSHE",
+        "instruments": "159915ETF_instruments.parquet",
+        "prices": "159915ETF_historical_prices.parquet",
+        "etf_1d": "159915ETF_1d.parquet",
+    },
 }
 
 
@@ -54,10 +66,16 @@ def update_etf_prices(cfg):
     path = os.path.join(DATA_DIR, cfg["etf_1d"])
     underlying = cfg["underlying"]
 
-    existing = pd.read_parquet(path)
-    existing["date"] = pd.to_datetime(existing["date"])
-    last_date = existing["date"].max()
-    start = last_date + pd.Timedelta(days=1)
+    if os.path.exists(path):
+        existing = pd.read_parquet(path)
+        existing["date"] = pd.to_datetime(existing["date"])
+        last_date = existing["date"].max()
+        start = last_date + pd.Timedelta(days=1)
+    else:
+        existing = pd.DataFrame()
+        listed_date_str = rq.instruments(underlying).listed_date
+        start = max(pd.Timestamp("2015-01-05"), pd.Timestamp(listed_date_str))
+        last_date = start - pd.Timedelta(days=1)
 
     today_date = pd.Timestamp.now().date()
     if start.date() > today_date:
@@ -116,11 +134,16 @@ def update_option_prices(cfg, inst):
     path = os.path.join(DATA_DIR, cfg["prices"])
     underlying = cfg["underlying"]
 
-    existing = pd.read_parquet(path)
-    existing["date"] = pd.to_datetime(existing["date"])
-    last_date = existing["date"].max()
+    if os.path.exists(path):
+        existing = pd.read_parquet(path)
+        existing["date"] = pd.to_datetime(existing["date"])
+        last_date = existing["date"].max()
+        start = last_date + pd.Timedelta(days=1)
+    else:
+        existing = pd.DataFrame()
+        last_date = pd.Timestamp("2015-01-01")
+        start = pd.to_datetime(inst["listed_date"].min())
 
-    start = last_date + pd.Timedelta(days=1)
     today = pd.Timestamp.now().strftime("%Y-%m-%d")
 
     today_date = pd.Timestamp.now().date()
@@ -128,10 +151,13 @@ def update_option_prices(cfg, inst):
         print(f"  Option prices: already up to date ({last_date.date()})")
         return
 
-    new_contracts = inst[inst["listed_date"] > last_date]["order_book_id"].tolist()
+    new_contracts = inst[inst["listed_date"] >= start]["order_book_id"].tolist()
 
-    old_contracts = existing["order_book_id"].unique().tolist()
-    contracts_to_update = [c for c in old_contracts if c in inst["order_book_id"].values]
+    if not existing.empty:
+        old_contracts = existing["order_book_id"].unique().tolist()
+        contracts_to_update = [c for c in old_contracts if c in inst["order_book_id"].values]
+    else:
+        contracts_to_update = []
 
     all_new = []
     batch_size = 50
@@ -144,12 +170,13 @@ def update_option_prices(cfg, inst):
             if px is not None and not px.empty:
                 all_new.append(px.reset_index())
 
-    print(f"  Fetching price updates for {len(contracts_to_update)} existing contracts since {start.date()}...")
-    for i in range(0, len(contracts_to_update), batch_size):
-        batch = contracts_to_update[i:i + batch_size]
-        px = rq.get_price(batch, start_date=start.strftime("%Y-%m-%d"), end_date=today)
-        if px is not None and not px.empty:
-            all_new.append(px.reset_index())
+    if contracts_to_update:
+        print(f"  Fetching price updates for {len(contracts_to_update)} existing contracts since {start.date()}...")
+        for i in range(0, len(contracts_to_update), batch_size):
+            batch = contracts_to_update[i:i + batch_size]
+            px = rq.get_price(batch, start_date=start.strftime("%Y-%m-%d"), end_date=today)
+            if px is not None and not px.empty:
+                all_new.append(px.reset_index())
 
     if not all_new:
         print(f"  Option prices: no new data since {last_date.date()}")

@@ -62,6 +62,9 @@ class CallStrategy:
         elif self.etf_choice == "500":
             if pd.notna(rsi) and pd.notna(bbu) and pd.notna(indicators["sma50"]):
                 filter_would_pass = (rsi > 30.0) and (etf_close < bbu) and (etf_close > indicators["sma50"])
+        elif self.etf_choice in ["588000", "159915"]:
+            if pd.notna(rsi) and pd.notna(macd_hist):
+                filter_would_pass = (rsi < 72.0) and (rsi > 25.0) and (macd_hist < 0.0)
         else:  # 300ETF
             if pd.notna(rsi) and pd.notna(macd_hist):
                 filter_would_pass = (rsi < 72.0) and (rsi > 25.0) and (macd_hist < 0.0)
@@ -92,6 +95,8 @@ class CallStrategy:
             elif self.etf_choice == "500":
                 signal_strong = (pd.notna(rsi) and pd.notna(bbu) and pd.notna(sma50)
                                  and rsi > 35 and etf_close < bbu and etf_close > sma50)
+            elif self.etf_choice in ["588000", "159915"]:
+                signal_strong = pd.notna(rsi) and 30 < rsi < 60 and (pd.isna(roc20) or roc20 < 4.0)
             else:  # 300ETF
                 signal_strong = pd.notna(rsi) and 30 < rsi < 60 and (pd.isna(roc20) or roc20 < 4.0)
 
@@ -253,6 +258,9 @@ class PutStrategy:
             # (Optimized: +1,225 RMB at OTM2)
             if pd.notna(vol20) and pd.notna(vol20_median) and pd.notna(macd_hist):
                 filter_would_pass = (vol20 > vol20_median) and (macd_hist < 0)
+        elif self.etf_choice in ["588000", "159915"]:
+            if pd.notna(rsi) and pd.notna(vol20) and pd.notna(vol20_median):
+                filter_would_pass = (rsi < 60.0) and (vol20 > vol20_median)
         else:  # 300ETF
             # Optimized: RSI < 60 AND Vol20 > Vol20_median (net positive on real data)
             if pd.notna(rsi) and pd.notna(vol20) and pd.notna(vol20_median):
