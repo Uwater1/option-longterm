@@ -97,7 +97,8 @@ README.md                      # English README (links to Chinese docs)
 3. **ATM 30d IV Speed Optimization**: Daily 30d IV calculation in `get_30d_iv` is optimized by passing a pre-grouped dictionary of calls instead of running slow boolean filters on the full DataFrame, reducing runtime by ~740x.
 4. **ETF Splits/Consolidations & Post-Adjusted Data (Critical)**: Chinese ETFs undergo historical splits/consolidations (e.g. 500ETF 2015-04-14 ratio 1:0.2803 and 2022-08-29 ratio 1:1.1454). If raw unadjusted prices are used to compute technical indicators (RSI, Bollinger Bands, Vol20, MACD) or forward returns spanning split dates, it creates huge artifacts (e.g., faked > 250% returns). 
    - Database daily parquets (`data/*_1d.parquet`) store both unadjusted prices (`close`, `open`, etc.) and post-adjusted prices (`close_adj`, `open_adj`, etc., using rqdatac's `adjust_type="post"`).
-   - Technical indicators and forward returns in `filter_validation.py`, `predict_open_high.py`, and `backtest_engine.py` are calculated on the post-adjusted columns (`*_adj`).
+   - Technical indicators, forward returns, overnight gaps, and filter evaluations across all backtests, research scripts (`research_*.py`), synthetic option analyses (`eval_synth_*.py`, `optimize_alpha_synthetic.py`), and prediction tools (`predict_open_high.py`) are calculated on the post-adjusted columns (`*_adj`).
+   - Pitfall: `data/*_1d.parquet` contains no `prev_close_adj`. Calculate `prev_close` by shifting `close_adj` (`df['prev_close'] = df['close_adj'].shift(1)`). Shift before taking `.tail()` to avoid boundary `NaN` features.
    - Strike selection, option matching, and leg P&L settlement in option backtests continue to use unadjusted prices to align with unadjusted options strikes and prevent look-ahead bias.
 
 **Backtest Architecture (Engine + Strategy pattern):**

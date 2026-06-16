@@ -57,23 +57,32 @@ def load_data():
     etf["date"] = pd.to_datetime(etf["date"])
     etf = etf.set_index("date").sort_index()
     
-    # Calculate indicators matching backtest_covered_call.py
-    etf["rsi14"] = ta.rsi(etf["close"], length=14)
-    bb = ta.bbands(etf["close"], length=20, std=2)
+    # Calculate indicators using adjusted columns if available
+    if "close_adj" in etf.columns:
+        close_for_ind = etf["close_adj"]
+        high_for_ind = etf["high_adj"]
+        low_for_ind = etf["low_adj"]
+    else:
+        close_for_ind = etf["close"]
+        high_for_ind = etf["high"]
+        low_for_ind = etf["low"]
+
+    etf["rsi14"] = ta.rsi(close_for_ind, length=14)
+    bb = ta.bbands(close_for_ind, length=20, std=2)
     if bb is not None:
         etf["bbu20"] = bb["BBU_20_2.0_2.0"]
         etf["bbl20"] = bb["BBL_20_2.0_2.0"]
     else:
         etf["bbu20"] = np.nan
         etf["bbl20"] = np.nan
-    etf["sma20"] = ta.sma(etf["close"], length=20)
-    etf["sma50"] = ta.sma(etf["close"], length=50)
-    etf["atr20"] = ta.atr(etf["high"], etf["low"], etf["close"], length=20)
-    etf["roc10"] = ta.roc(etf["close"], length=10)
-    etf["roc20"] = ta.roc(etf["close"], length=20)
-    etf["vol20"] = etf["close"].pct_change().rolling(20).std() * np.sqrt(252)
+    etf["sma20"] = ta.sma(close_for_ind, length=20)
+    etf["sma50"] = ta.sma(close_for_ind, length=50)
+    etf["atr20"] = ta.atr(high_for_ind, low_for_ind, close_for_ind, length=20)
+    etf["roc10"] = ta.roc(close_for_ind, length=10)
+    etf["roc20"] = ta.roc(close_for_ind, length=20)
+    etf["vol20"] = close_for_ind.pct_change().rolling(20).std() * np.sqrt(252)
     etf["vol20_median"] = etf["vol20"].rolling(252).median()
-    macd = ta.macd(etf["close"])
+    macd = ta.macd(close_for_ind)
     etf["macd_hist"] = macd.iloc[:, 1] if macd is not None else np.nan
 
     return df, etf
@@ -92,7 +101,7 @@ def compute_combo_pnl_by_date(df, etf):
 
     # Merge additional indicators from etf (skip cols already in df)
     indicator_cols = ["rsi14", "bbu20", "bbl20", "sma20", "sma50", "atr20",
-                      "roc10", "roc20", "vol20", "vol20_median", "macd_hist", "close"]
+                      "roc10", "roc20", "vol20", "vol20_median", "macd_hist", "close", "close_adj"]
     available = [c for c in indicator_cols if c in etf.columns and c not in calls.columns]
     if available:
         calls = calls.merge(etf[available], left_on="Date", right_index=True, how="left")
@@ -192,7 +201,7 @@ def analyze_combos(date_pnl):
 
     # --- Filter-passed dates (matching individual analysis filter) ---
     if "rsi14" in date_pnl.columns and "bbu20" in date_pnl.columns:
-        close = date_pnl["close"] if "close" in date_pnl.columns else date_pnl["s0"]
+        close = date_pnl["close_adj"] if "close_adj" in date_pnl.columns else (date_pnl["close"] if "close" in date_pnl.columns else date_pnl["s0"])
         rsi = date_pnl["rsi14"]
         bbu = date_pnl["bbu20"]
         filt = (rsi < 70) & (rsi > 30) & (close < bbu)
@@ -233,12 +242,12 @@ def analyze_dynamic_signals(date_pnl):
 
     # Copy indicators (already merged in compute_combo_pnl_by_date)
     for col in ["rsi14", "bbu20", "sma20", "sma50", "atr20", "roc10", "roc20",
-                "vol20", "vol20_median", "macd_hist", "close"]:
+                "vol20", "vol20_median", "macd_hist", "close", "close_adj"]:
         if col in date_pnl.columns:
             sub[col] = date_pnl.loc[sub.index, col]
 
     # Compute close-based derived signals
-    close = sub["close"] if "close" in sub.columns else pd.Series(np.nan, index=sub.index)
+    close = sub["close_adj"] if "close_adj" in sub.columns else (sub["close"] if "close" in sub.columns else pd.Series(np.nan, index=sub.index))
     rsi = sub["rsi14"] if "rsi14" in sub.columns else pd.Series(np.nan, index=sub.index)
     bbu = sub["bbu20"] if "bbu20" in sub.columns else pd.Series(np.nan, index=sub.index)
     atr = sub["atr20"] if "atr20" in sub.columns else pd.Series(np.nan, index=sub.index)
@@ -369,9 +378,13 @@ def analyze_synthetic_otm(years=None):
 
     # Merge filter indicators
     if etf is not None:
-        df = df.merge(etf[["rsi14", "bbu20"]], left_on="Date", right_index=True, how="left")
+        cols_to_merge = ["rsi14", "bbu20"]
+        if "close_adj" in etf.columns:
+            cols_to_merge.append("close_adj")
+        df = df.merge(etf[cols_to_merge], left_on="Date", right_index=True, how="left")
         # Define filter: RSI < 70 AND RSI > 30 AND Spot < Upper BB
-        df["Pass Filter"] = (df["rsi14"] < 70.0) & (df["rsi14"] > 30.0) & (df["Underlying Price at Date"] < df["bbu20"])
+        spot_col = "close_adj" if "close_adj" in df.columns else "Underlying Price at Date"
+        df["Pass Filter"] = (df["rsi14"] < 70.0) & (df["rsi14"] > 30.0) & (df[spot_col] < df["bbu20"])
         # Fill NAs with True to be safe (though shouldn't happen for most of the history)
         df["Pass Filter"] = df["Pass Filter"].fillna(True)
     else:

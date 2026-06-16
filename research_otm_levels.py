@@ -51,16 +51,25 @@ def load_data():
     etf = etf.set_index("date").sort_index()
     
     # Calculate indicators
-    etf["sma20"] = ta.sma(etf["close"], length=20)
-    etf["ema20"] = ta.ema(etf["close"], length=20)
-    etf["sma50"] = ta.sma(etf["close"], length=50)
-    etf["rsi14"] = ta.rsi(etf["close"], length=14)
-    etf["atr20"] = ta.atr(etf["high"], etf["low"], etf["close"], length=20)
-    etf["roc10"] = ta.roc(etf["close"], length=10)
-    etf["roc20"] = ta.roc(etf["close"], length=20)
+    if "close_adj" in etf.columns:
+        close_for_ind = etf["close_adj"]
+        high_for_ind = etf["high_adj"]
+        low_for_ind = etf["low_adj"]
+    else:
+        close_for_ind = etf["close"]
+        high_for_ind = etf["high"]
+        low_for_ind = etf["low"]
+
+    etf["sma20"] = ta.sma(close_for_ind, length=20)
+    etf["ema20"] = ta.ema(close_for_ind, length=20)
+    etf["sma50"] = ta.sma(close_for_ind, length=50)
+    etf["rsi14"] = ta.rsi(close_for_ind, length=14)
+    etf["atr20"] = ta.atr(high_for_ind, low_for_ind, close_for_ind, length=20)
+    etf["roc10"] = ta.roc(close_for_ind, length=10)
+    etf["roc20"] = ta.roc(close_for_ind, length=20)
     
     # Bollinger Bands
-    bb = ta.bbands(etf["close"], length=20, std=2)
+    bb = ta.bbands(close_for_ind, length=20, std=2)
     if bb is not None:
         etf["bbu20"] = bb["BBU_20_2.0_2.0"]
         etf["bbl20"] = bb["BBL_20_2.0_2.0"]
@@ -69,9 +78,9 @@ def load_data():
         etf["bbl20"] = np.nan
 
     # Volatility and MACD
-    etf["vol20"] = etf["close"].pct_change().rolling(20).std() * np.sqrt(252)
+    etf["vol20"] = close_for_ind.pct_change().rolling(20).std() * np.sqrt(252)
     etf["vol20_median"] = etf["vol20"].rolling(252).median()
-    macd = ta.macd(etf["close"])
+    macd = ta.macd(close_for_ind)
     etf["macd_hist"] = macd.iloc[:, 1] if macd is not None else np.nan
     
     return inst, opt, etf
@@ -185,7 +194,7 @@ def filter_cycle(etf, entry_date):
     vol20 = etf.loc[idx, "vol20"]
     vol20_median = etf.loc[idx, "vol20_median"]
     macd_hist = etf.loc[idx, "macd_hist"]
-    close = float(etf.loc[idx, "close"])
+    close = float(etf.loc[idx, "close_adj"]) if "close_adj" in etf.columns else float(etf.loc[idx, "close"])
 
     if ETF_NAME == "50ETF":
         if pd.isna(rsi) or pd.isna(roc10) or pd.isna(vol20) or pd.isna(vol20_median):

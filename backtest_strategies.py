@@ -85,7 +85,7 @@ class CallStrategy:
             roc20 = indicators["roc20"]
             bbu = indicators["bbu"]
             sma50 = indicators["sma50"]
-            etf_close = float(etf.loc[entry.normalize(), "close"])
+            etf_close = float(etf.loc[entry.normalize(), "close_adj"]) if "close_adj" in etf.columns else float(etf.loc[entry.normalize(), "close"])
 
             if self.etf_choice == "50":
                 signal_strong = pd.notna(rsi) and rsi > 30 and (pd.isna(roc20) or roc20 < 3.0)

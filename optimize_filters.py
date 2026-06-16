@@ -54,17 +54,30 @@ def run_optimization(etf_choice, no_put_mode, skip_otm4):
     inst, opt, etf = load_data()
     
     # Calculate additional indicators on ETF daily data
-    etf["ema20"] = ta.ema(etf["close"], length=20)
-    etf["roc20"] = ta.roc(etf["close"], length=20)
-    bb = ta.bbands(etf["close"], length=20, std=2)
-    etf["bbu20"] = bb["BBU_20_2.0_2.0"]
-    etf["bbl20"] = bb["BBL_20_2.0_2.0"]
-    etf["sma50"] = ta.sma(etf["close"], length=50)
-    etf["vol20"] = etf["close"].pct_change().rolling(20).std() * np.sqrt(252)
+    if "close_adj" in etf.columns:
+        close_for_ind = etf["close_adj"]
+        high_for_ind = etf["high_adj"]
+        low_for_ind = etf["low_adj"]
+    else:
+        close_for_ind = etf["close"]
+        high_for_ind = etf["high"]
+        low_for_ind = etf["low"]
+
+    etf["ema20"] = ta.ema(close_for_ind, length=20)
+    etf["roc20"] = ta.roc(close_for_ind, length=20)
+    bb = ta.bbands(close_for_ind, length=20, std=2)
+    if bb is not None:
+        etf["bbu20"] = bb["BBU_20_2.0_2.0"]
+        etf["bbl20"] = bb["BBL_20_2.0_2.0"]
+    else:
+        etf["bbu20"] = np.nan
+        etf["bbl20"] = np.nan
+    etf["sma50"] = ta.sma(close_for_ind, length=50)
+    etf["vol20"] = close_for_ind.pct_change().rolling(20).std() * np.sqrt(252)
     etf["vol20_median"] = etf["vol20"].rolling(252).median()
-    macd = ta.macd(etf["close"])
+    macd = ta.macd(close_for_ind)
     etf["macd_hist"] = macd.iloc[:, 1] if macd is not None else np.nan
-    adx = ta.adx(etf["high"], etf["low"], etf["close"], length=14)
+    adx = ta.adx(high_for_ind, low_for_ind, close_for_ind, length=14)
     etf["adx14"] = adx.iloc[:, 0] if adx is not None else np.nan
     
     cycles = get_cycles(opt, etf)
@@ -81,7 +94,7 @@ def run_optimization(etf_choice, no_put_mode, skip_otm4):
         cycle_indicators.append({
             "entry_date": cyc["entry_date"],
             "rsi14": row["rsi14"],
-            "close": row["close"],
+            "close": row["close_adj"] if "close_adj" in etf.columns else row["close"],
             "sma20": row["sma20"],
             "ema20": row["ema20"],
             "bbu20": row["bbu20"],

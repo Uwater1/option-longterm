@@ -18,43 +18,54 @@ inst, opt, etf = r_otm.load_data()
 cycles = r_otm.get_cycles(opt, etf, years=None)
 
 # Pre-calculate indicators for all filters
-etf['sma20'] = ta.sma(etf['close'], length=20)
-etf['ema20'] = ta.ema(etf['close'], length=20)
-etf['rsi14'] = ta.rsi(etf['close'], length=14)
-macd = ta.macd(etf['close'])
+if "close_adj" in etf.columns:
+    etf["close_for_filter"] = etf["close_adj"]
+    etf["open_for_filter"] = etf["open_adj"]
+    etf["high_for_filter"] = etf["high_adj"]
+    etf["low_for_filter"] = etf["low_adj"]
+else:
+    etf["close_for_filter"] = etf["close"]
+    etf["open_for_filter"] = etf["open"]
+    etf["high_for_filter"] = etf["high"]
+    etf["low_for_filter"] = etf["low"]
+
+etf['sma20'] = ta.sma(etf['close_for_filter'], length=20)
+etf['ema20'] = ta.ema(etf['close_for_filter'], length=20)
+etf['rsi14'] = ta.rsi(etf['close_for_filter'], length=14)
+macd = ta.macd(etf['close_for_filter'])
 if macd is not None:
     etf['macd_hist'] = macd.iloc[:, 1] # MACDh_12_26_9
 else:
     etf['macd_hist'] = np.nan
-bbands = ta.bbands(etf['close'], length=20, std=2)
+bbands = ta.bbands(etf['close_for_filter'], length=20, std=2)
 if bbands is not None:
     etf['bb_upper'] = bbands.iloc[:, 2] # BBU_20_2.0
 else:
     etf['bb_upper'] = np.nan
-etf['roc20'] = ta.roc(etf['close'], length=20)
-atr = ta.atr(etf['high'], etf['low'], etf['close'], length=20)
+etf['roc20'] = ta.roc(etf['close_for_filter'], length=20)
+atr = ta.atr(etf['high_for_filter'], etf['low_for_filter'], etf['close_for_filter'], length=20)
 etf['atr20'] = atr
-adx = ta.adx(etf['high'], etf['low'], etf['close'], length=14)
+adx = ta.adx(etf['high_for_filter'], etf['low_for_filter'], etf['close_for_filter'], length=14)
 if adx is not None:
     etf['adx14'] = adx.iloc[:, 0] # ADX_14
 else:
     etf['adx14'] = np.nan
-etf['ema10'] = ta.ema(etf['close'], length=10)
-etf['ema30'] = ta.ema(etf['close'], length=30)
-stoch = ta.stoch(etf['high'], etf['low'], etf['close'], k=14, d=3, smooth_k=3)
+etf['ema10'] = ta.ema(etf['close_for_filter'], length=10)
+etf['ema30'] = ta.ema(etf['close_for_filter'], length=30)
+stoch = ta.stoch(etf['high_for_filter'], etf['low_for_filter'], etf['close_for_filter'], k=14, d=3, smooth_k=3)
 if stoch is not None:
     etf['stoch_k'] = stoch.iloc[:, 0] # STOCHk_14_3_3
 else:
     etf['stoch_k'] = np.nan
-etf['rolling_high_20'] = etf['close'].rolling(20).max()
-etf['rolling_high_252'] = etf['close'].rolling(252).max()
+etf['rolling_high_20'] = etf['close_for_filter'].rolling(20).max()
+etf['rolling_high_252'] = etf['close_for_filter'].rolling(252).max()
 
 # New Indicators for advanced filters
-etf['vol20'] = etf['close'].pct_change().rolling(20).std() * np.sqrt(252)
-etf['roc10'] = ta.roc(etf['close'], length=10)
-etf['roc5'] = ta.roc(etf['close'], length=5)
-etf['sma50'] = ta.sma(etf['close'], length=50)
-bbands_lower = ta.bbands(etf['close'], length=20, std=2)
+etf['vol20'] = etf['close_for_filter'].pct_change().rolling(20).std() * np.sqrt(252)
+etf['roc10'] = ta.roc(etf['close_for_filter'], length=10)
+etf['roc5'] = ta.roc(etf['close_for_filter'], length=5)
+etf['sma50'] = ta.sma(etf['close_for_filter'], length=50)
+bbands_lower = ta.bbands(etf['close_for_filter'], length=20, std=2)
 if bbands_lower is not None:
     etf['bb_lower'] = bbands_lower.iloc[:, 0]
 else:
@@ -63,13 +74,13 @@ if 'bb_upper' in etf.columns and 'bb_lower' in etf.columns:
     etf['bb_width'] = (etf['bb_upper'] - etf['bb_lower']) / etf['sma20']
 else:
     etf['bb_width'] = np.nan
-etf['atr10'] = ta.atr(etf['high'], etf['low'], etf['close'], length=10)
-cci = ta.cci(etf['high'], etf['low'], etf['close'], length=20)
+etf['atr10'] = ta.atr(etf['high_for_filter'], etf['low_for_filter'], etf['close_for_filter'], length=10)
+cci = ta.cci(etf['high_for_filter'], etf['low_for_filter'], etf['close_for_filter'], length=20)
 if cci is not None:
     etf['cci20'] = cci
 else:
     etf['cci20'] = np.nan
-etf['tr'] = ta.true_range(etf['high'], etf['low'], etf['close'])
+etf['tr'] = ta.true_range(etf['high_for_filter'], etf['low_for_filter'], etf['close_for_filter'])
 etf['atr5'] = etf['tr'].rolling(5).mean()
 etf['atr_ratio_5_20'] = etf['atr5'] / etf['atr20']
 
@@ -81,12 +92,12 @@ etf['atr20_q70'] = etf['atr20'].rolling(60).quantile(0.7)
 def f1_sma20(etf, entry_date):
     idx = entry_date.normalize()
     if idx not in etf.index: return False
-    return etf.loc[idx, 'close'] < etf.loc[idx, 'sma20']
+    return etf.loc[idx, 'close_for_filter'] < etf.loc[idx, 'sma20']
 
 def f2_ema20(etf, entry_date):
     idx = entry_date.normalize()
     if idx not in etf.index: return False
-    return etf.loc[idx, 'close'] < etf.loc[idx, 'ema20']
+    return etf.loc[idx, 'close_for_filter'] < etf.loc[idx, 'ema20']
 
 def f3_rsi_overbought(etf, entry_date):
     idx = entry_date.normalize()
@@ -106,7 +117,7 @@ def f5_macd(etf, entry_date):
 def f6_bbands(etf, entry_date):
     idx = entry_date.normalize()
     if idx not in etf.index: return False
-    return etf.loc[idx, 'close'] < etf.loc[idx, 'bb_upper']
+    return etf.loc[idx, 'close_for_filter'] < etf.loc[idx, 'bb_upper']
 
 # skipping f7 IVR and f8 HV because they are not standard pandas-ta
 
@@ -118,7 +129,7 @@ def f9_roc(etf, entry_date):
 def f10_atr_breakout(etf, entry_date):
     idx = entry_date.normalize()
     if idx not in etf.index: return False
-    return etf.loc[idx, 'close'] < (etf.loc[idx, 'sma20'] + etf.loc[idx, 'atr20'])
+    return etf.loc[idx, 'close_for_filter'] < (etf.loc[idx, 'sma20'] + etf.loc[idx, 'atr20'])
 
 def f11_adx(etf, entry_date):
     idx = entry_date.normalize()
@@ -138,17 +149,17 @@ def f15_stoch(etf, entry_date):
 def f16_rolling_high_20(etf, entry_date):
     idx = entry_date.normalize()
     if idx not in etf.index: return False
-    return etf.loc[idx, 'close'] < (0.98 * etf.loc[idx, 'rolling_high_20'])
+    return etf.loc[idx, 'close_for_filter'] < (0.98 * etf.loc[idx, 'rolling_high_20'])
 
 def f17_rolling_high_252(etf, entry_date):
     idx = entry_date.normalize()
     if idx not in etf.index: return False
-    return etf.loc[idx, 'close'] < (0.95 * etf.loc[idx, 'rolling_high_252'])
+    return etf.loc[idx, 'close_for_filter'] < (0.95 * etf.loc[idx, 'rolling_high_252'])
 
 def f20_keltner(etf, entry_date):
     idx = entry_date.normalize()
     if idx not in etf.index: return False
-    return etf.loc[idx, 'close'] < (etf.loc[idx, 'ema20'] + 1.0 * etf.loc[idx, 'atr20'])
+    return etf.loc[idx, 'close_for_filter'] < (etf.loc[idx, 'ema20'] + 1.0 * etf.loc[idx, 'atr20'])
 
 def f21_vol_low(etf, entry_date):
     idx = entry_date.normalize()
@@ -168,7 +179,7 @@ def f23_roc5(etf, entry_date):
 def f24_sma50(etf, entry_date):
     idx = entry_date.normalize()
     if idx not in etf.index: return False
-    return etf.loc[idx, 'close'] > etf.loc[idx, 'sma50']
+    return etf.loc[idx, 'close_for_filter'] > etf.loc[idx, 'sma50']
 
 def f25_bw_expand(etf, entry_date):
     idx = entry_date.normalize()

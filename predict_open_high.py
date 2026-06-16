@@ -99,6 +99,9 @@ def load_and_engineer(etf_key: str) -> pd.DataFrame:
         df["open"] = df["open_adj"]
         df["high"] = df["high_adj"]
         df["low"] = df["low_adj"]
+        df["prev_close"] = df["close"].shift(1)
+    else:
+        df["prev_close"] = df["close"].shift(1)
 
     # ── Target: (high - open) / open * 100 (percent) ──
     df["y"] = (df["high"] - df["open"]) / df["open"] * 100.0

@@ -1,25 +1,5 @@
 
-Pre-calculating daily 30-day IVs...
-  Progress: 0/1805
-  Progress: 100/1805
-  Progress: 200/1805
-  Progress: 300/1805
-  Progress: 400/1805
-  Progress: 500/1805
-  Progress: 600/1805
-  Progress: 700/1805
-  Progress: 800/1805
-  Progress: 900/1805
-  Progress: 1000/1805
-  Progress: 1100/1805
-  Progress: 1200/1805
-  Progress: 1300/1805
-  Progress: 1400/1805
-  Progress: 1500/1805
-  Progress: 1600/1805
-  Progress: 1700/1805
-  Progress: 1800/1805
-  Saved IV cache to ./data/30d_iv_cache_300.parquet
+Loading pre-calculated 30-day IVs from ./data/30d_iv_cache_300.parquet...
 
 ======================================================================
   Covered Call BACKTEST — Cycle Detail  [FILTERED]

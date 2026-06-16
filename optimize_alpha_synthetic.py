@@ -40,19 +40,25 @@ def load_data():
     etf["date"] = pd.to_datetime(etf["date"])
     etf = etf.set_index("date").sort_index()
 
+    # Calculate indicators using adjusted columns if available
+    if "close_adj" in etf.columns:
+        close_for_ind = etf["close_adj"]
+    else:
+        close_for_ind = etf["close"]
+
     # Technical indicators for the filters
-    etf['sma20'] = ta.sma(etf['close'], length=20)
-    etf['ema20'] = ta.ema(etf['close'], length=20)
-    etf['sma50'] = ta.sma(etf['close'], length=50)
-    etf['rsi14'] = ta.rsi(etf['close'], length=14)
-    macd = ta.macd(etf['close'])
+    etf['sma20'] = ta.sma(close_for_ind, length=20)
+    etf['ema20'] = ta.ema(close_for_ind, length=20)
+    etf['sma50'] = ta.sma(close_for_ind, length=50)
+    etf['rsi14'] = ta.rsi(close_for_ind, length=14)
+    macd = ta.macd(close_for_ind)
     if macd is not None:
         etf['macd_hist'] = macd.iloc[:, 1]
-    bbands = ta.bbands(etf['close'], length=20, std=2)
+    bbands = ta.bbands(close_for_ind, length=20, std=2)
     if bbands is not None:
         etf['bb_upper'] = bbands.iloc[:, 2]
-    etf['roc10'] = ta.roc(etf['close'], length=10)
-    etf['vol20'] = etf['close'].pct_change().rolling(20).std() * np.sqrt(252)
+    etf['roc10'] = ta.roc(close_for_ind, length=10)
+    etf['vol20'] = close_for_ind.pct_change().rolling(20).std() * np.sqrt(252)
     etf['vol20_median'] = etf['vol20'].rolling(252).median()
 
     # Pre-merge to align dates
@@ -61,12 +67,13 @@ def load_data():
     return df, etf
 
 def get_filter_mask(df, choice):
+    close_col = 'close_adj' if 'close_adj' in df.columns else 'Underlying Price at Date'
     if choice == "50":
         # RSI < 60 AND RSI > 30 AND ROC10 < 3% AND Vol20 < Vol20_median
         mask = (df['rsi14'] < 60.0) & (df['rsi14'] > 30.0) & (df['roc10'] < 3.0) & (df['vol20'] < df['vol20_median'])
     elif choice == "500":
         # RSI > 30 AND Close < BBU AND Close > SMA50
-        mask = (df['rsi14'] > 30.0) & (df['Underlying Price at Date'] < df['bb_upper']) & (df['Underlying Price at Date'] > df['sma50'])
+        mask = (df['rsi14'] > 30.0) & (df[close_col] < df['bb_upper']) & (df[close_col] > df['sma50'])
     else: # 300ETF
         # RSI < 72 AND RSI > 25 AND MACD Histogram < 0
         mask = (df['rsi14'] < 72.0) & (df['rsi14'] > 25.0) & (df['macd_hist'] < 0.0)
@@ -74,7 +81,7 @@ def get_filter_mask(df, choice):
 
 def precompute_prob_ups(etf, unit):
     dates = etf.index.values
-    closes = etf["close"].values
+    closes = etf["close_adj"].values if "close_adj" in etf.columns else etf["close"].values
     fwd_pt = np.full(len(etf), np.nan)
     for i, dt in enumerate(dates):
         target_dt = dt + np.timedelta64(30, 'D')
