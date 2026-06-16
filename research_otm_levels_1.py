@@ -27,6 +27,16 @@ def select_etf(choice):
         PATH_INST = "./data/500ETF_instruments.parquet"
         PATH_OPT  = "./data/500ETF_historical_prices.parquet"
         PATH_ETF  = "./data/500ETF_1d.parquet"
+    elif choice == "588000":
+        ETF_NAME = "588000ETF"
+        PATH_INST = "./data/588000ETF_instruments.parquet"
+        PATH_OPT  = "./data/588000ETF_historical_prices.parquet"
+        PATH_ETF  = "./data/588000ETF_1d.parquet"
+    elif choice == "159915":
+        ETF_NAME = "159915ETF"
+        PATH_INST = "./data/159915ETF_instruments.parquet"
+        PATH_OPT  = "./data/159915ETF_historical_prices.parquet"
+        PATH_ETF  = "./data/159915ETF_1d.parquet"
     else:
         # Default 300
         ETF_NAME = "300ETF"
@@ -316,7 +326,7 @@ def analyze_otm_levels(years=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Research OTM Alpha (Short Call & Long Put) for each level of options.")
     parser.add_argument("-t", "--years", type=int, help="Limit analysis to the last N years (default: all)")
-    parser.add_argument("-e", "--etf", type=str, choices=["50", "300", "500"], default="300", help="ETF choice: 50, 300, or 500 (default: 300)")
+    parser.add_argument("-e", "--etf", type=str, choices=["50", "300", "500", "588000", "159915"], default="300", help="ETF choice (default: 300)")
     args = parser.parse_args()
     
     select_etf(args.etf)
