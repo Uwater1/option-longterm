@@ -3,43 +3,69 @@
   "features": [
     "open_ema5_div",
     "roc5",
-    "roc10"
+    "williams_r14",
+    "prev_open_to_high",
+    "overnight_gap_from_high"
   ],
   "model_type": "lightgbm",
   "quantile": 0.1,
+  "adaptive_quantile": 0.0525,
+  "calibration_offset": -0.10735238896203866,
+  "vol_regime_calibration": {
+    "low_vol_offset": -0.11433192782574232,
+    "high_vol_offset": -0.09576263487635887,
+    "vol_threshold": 0.17676953783752739,
+    "coverage": 89.96444093243777
+  },
   "cv_comparison": {
-    "statsmodels_cv_loss": 0.07564949506349136,
-    "lightgbm_cv_loss": 0.06358415089059703,
+    "statsmodels_cv_loss": 0.0662341908086497,
+    "lightgbm_cv_loss": 0.05953979780299732,
     "winner": "lightgbm"
   },
   "selection_order": [
     [
       "open_ema5_div",
-      0.0810639491133388
+      0.08046417070256855
     ],
     [
       "roc5",
-      0.06765929053069472
+      0.06656208459912918
+    ],
+    [
+      "williams_r14",
+      0.0620823515928274
+    ],
+    [
+      "prev_open_to_high",
+      0.060860246067538315
+    ],
+    [
+      "overnight_gap_from_high",
+      0.05966314696637236
     ],
     [
       "roc10",
-      0.06294286622949731
-    ],
-    [
-      "rsi14",
-      0.06322146136869913
+      0.05969617400721746
     ]
   ],
-  "best_set_size": 3,
-  "rolling_coverage": 83.86075949367088,
-  "rolling_mean_pred_offset": 0.45239191967032044,
-  "rolling_pinball_loss": 0.07098036762165376,
-  "rolling_n_predictions": 2528,
+  "best_set_size": 5,
+  "rolling_coverage": 89.96444093243777,
+  "rolling_mean_pred_offset": 0.38212873440215206,
+  "rolling_pinball_loss": 0.06957186113888349,
+  "rolling_n_predictions": 2531,
   "statsmodels_coeffs": {
-    "Intercept": 0.19190066114046544,
-    "open_ema5_div": -0.19664432642073848,
-    "roc5": 0.020736967489019875,
-    "roc10": 0.004273661383650484
+    "Intercept": 0.17087938835293492,
+    "open_ema5_div": -0.487451664267331,
+    "roc5": 0.08789168291751082,
+    "williams_r14": 0.0015494925899154771,
+    "prev_open_to_high": 0.16190594361794058,
+    "overnight_gap_from_high": 0.06629481054812025
   },
-  "lgb_model_path": "./backtest/open_high_lgb_500.txt"
+  "lgb_model_paths": [
+    "./backtest/open_high_lgb_500_bag0.txt",
+    "./backtest/open_high_lgb_500_bag1.txt",
+    "./backtest/open_high_lgb_500_bag2.txt",
+    "./backtest/open_high_lgb_500_bag3.txt",
+    "./backtest/open_high_lgb_500_bag4.txt"
+  ]
 }

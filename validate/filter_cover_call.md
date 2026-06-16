@@ -1,6 +1,6 @@
 # Covered Call Filter Validation Report
 
-Generated: `2026-06-15 22:53:37`  
+Generated: `2026-06-15 23:05:06`  
 Primary Horizon: `30` calendar days (~1 option cycle)  
 Horizons Tested: `7d, 14d, 30d`  
 
@@ -115,7 +115,7 @@ The **Covered Call** strategy sells OTM call options against ETF holdings to gen
 | RSI > 35 | 90.8% | +0.524% | +1.891% | -1.367% | 0.0053 | -0.169 | **SIGNIFICANT** |
 | Close < BBU | 94.4% | +0.475% | +3.582% | -3.107% | 0.0001 | -0.386 | **SIGNIFICANT** |
 | Close < BBU+0.5*ATR | 98.5% | +0.562% | +6.556% | -5.993% | 0.0000 | -0.744 | **SIGNIFICANT** |
-| Close > SMA50 | 50.6% | +0.029% | +1.286% | -1.257% | 0.0000 | -0.156 | **SIGNIFICANT** |
+| Close > SMA50 | 50.6% | +0.031% | +1.284% | -1.253% | 0.0000 | -0.155 | **SIGNIFICANT** |
 | ROC10 < 3% | 75.2% | +0.227% | +1.934% | -1.707% | 0.0001 | -0.212 | **SIGNIFICANT** |
 | ROC10 < 7% | 93.0% | +0.491% | +2.762% | -2.272% | 0.0202 | -0.282 | **SIGNIFICANT** |
 | ROC20 < 3% | 67.7% | +0.291% | +1.403% | -1.113% | 0.0025 | -0.138 | **SIGNIFICANT** |

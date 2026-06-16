@@ -59,6 +59,11 @@ def update_etf_prices(cfg):
     last_date = existing["date"].max()
     start = last_date + pd.Timedelta(days=1)
 
+    today_date = pd.Timestamp.now().date()
+    if start.date() > today_date:
+        print(f"  ETF prices: already up to date ({last_date.date()})")
+        return
+
     etf = rq.get_price(
         underlying, start_date=start.strftime("%Y-%m-%d"),
         end_date=pd.Timestamp.now().strftime("%Y-%m-%d"),
@@ -74,7 +79,7 @@ def update_etf_prices(cfg):
         underlying, start_date=start.strftime("%Y-%m-%d"),
         end_date=pd.Timestamp.now().strftime("%Y-%m-%d"),
         frequency="1d",
-        adjust_type="pre"
+        adjust_type="post"
     )
 
     etf = etf.reset_index()
@@ -117,6 +122,11 @@ def update_option_prices(cfg, inst):
 
     start = last_date + pd.Timedelta(days=1)
     today = pd.Timestamp.now().strftime("%Y-%m-%d")
+
+    today_date = pd.Timestamp.now().date()
+    if start.date() > today_date:
+        print(f"  Option prices: already up to date ({last_date.date()})")
+        return
 
     new_contracts = inst[inst["listed_date"] > last_date]["order_book_id"].tolist()
 
