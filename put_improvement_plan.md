@@ -58,9 +58,11 @@ Where:
 * `[x]` **TODO 1: Data Completeness & Sync**
   * Check daily and 5-minute data availability for ETFs and options.
   * Status: **Completed**. Updated daily prices and 5m ETF/option historical data.
-* `[ ]` **TODO 2: Signal / Indicator Enhancement**
+* `[x]` **TODO 2: Signal / Indicator Enhancement**
   * Discover and evaluate daily indicators for predicting worst tail returns (P25/P10). (for Crash)
   * Discover and evaluate daily indicators for negative 14 calendar days, 30 calendar days returns. (for falls)
+  * Write Scripts to massively scan for good filters (pandas-ta_help.py listed all indicator supported by pandas-ta) (Search for things like Best Tradingview indicator if you want more)
+  * Update FINDINGS.md on the best filter.
 * `[ ]` **TODO 3: Engine Architecture Modifications**
   * Extend `backtest_engine.py` to support daily option evaluations and mid-cycle execution.
   * Update `BaseStrategy` to allow dynamic entry check (`should_enter_today()`) and exit check (`should_exit_today()`).
