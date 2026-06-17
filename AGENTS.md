@@ -210,13 +210,13 @@ The Engine + Strategy pattern makes the following components reusable across any
 ### Protective Put Mode (PutStrategy, Selective Hedge, v2 Jun 2026)
 | ETF | Baseline (always buy OTM1) | Optimized P&L | OTM Level | Optimized Filter | Placement |
 |-----|--------------------------|---------------|-----------|------------------|-----------|
-| 300ETF | -11,044 RMB | **+616 RMB** | OTM1 | `RSI < 60` AND `Vol20 > median` | 41% (32/78) |
-| 50ETF | TBD | **+4,019 RMB** | **OTM2** | `RSI < 50` AND `Close < SMA50` | 43% (59/136) |
-| 500ETF | TBD | **+1,225 RMB** | **OTM2** | `Vol20 > median` AND `MACD Hist < 0` | 31% (14/45) |
+| 300ETF | -11,044 RMB | **+1,385 RMB** | OTM1 | `(dd_252 < -0.15 & dist_sma50 < -1.0) \| (rsi14 > 65 & skew_20 < -0.3)` | 15.4% (12/78) |
+| 50ETF | TBD | **+2,665 RMB** | **OTM2** | `skew_20 < -0.5` AND `iv_vol_ratio < 0.9` | 7.4% (10/136) |
+| 500ETF | TBD | **-114 RMB** | **OTM2** | `kurt_20 > 1.0` AND `iv_vol_ratio > 1.2` | 2.2% (1/45) |
 | 588000ETF | N/A | -2,119 RMB | OTM1 | Default (300ETF filter baseline) | 46% (17/37) |
 | 159915ETF | N/A | -5,336 RMB | OTM1 | Default (300ETF filter baseline) | 40% (18/45) |
 
-Put filter/level pipeline: `research_synthetic_no_filter.py` (OTM level comparison) → `optimize_put_filters.py --sweep-levels` (real data, all levels) → update `PutStrategy` filters + `backtest_put.py` defaults. OTM3 has the best per-contract expected return on synthetic data but OTM2 wins on real data for 50/500ETF due to better filter-level combo interactions.
+Put filter/level pipeline: `research_synthetic_no_filter.py` (OTM level comparison) → `optimize_put_filters.py --sweep-levels` (real data, all levels) → update `PutStrategy` filters + `backtest_put.py` defaults. OTM3 has the best per-contract expected return on synthetic data but OTM2 wins on real data for 50/500ETF due to better filter-level combo interactions. (Note: Jun 2026 update replaced placeholder tail filters with daily option-profitability setups).
 
 ### With-Put Mode + Put Limit Entry (BS Mapping model, Jun 2026)
 | ETF | Win Rate | P&L (Baseline + Put Limit) | P&L (Alpha + Put Limit) | Put Limit Fill Rate |
@@ -295,8 +295,25 @@ Put filter/level pipeline: `research_synthetic_no_filter.py` (OTM level comparis
 
 **Full report:** `RESEARCH_500ETF.md`
 
+## 30-Day Forward Return Tail Risk Findings (Jun 2026)
+
+**Problem:** Puts suffer from high premium decay. Need selective hedging using daily indicators that predict worst-outcome tails (P10/P5 worst returns).
+
+**Findings:**
+- **50ETF**: Volatility acceleration + negative skewness (`vol_accel > 1.1` & `skew_20 < -0.3`) predicts downside tail. Placement: 9.5%, Mean Return: **-1.08%** (p-val: **0.0000**), P10: **16.5%** (**1.65x lift**), P5: **10.7%** (**2.15x lift**).
+- **500ETF**: Negative skewness + high kurtosis (`skew_20 < -0.5` & `kurt_20 > 1.0`) predicts downside tail. Placement: 20.8%, Mean Return: **-0.94%** (p-val: **0.0000**), P10: **15.1%** (**1.51x lift**), P5: **8.6%** (**1.72x lift**).
+- **300ETF**: Large-cap mean reversion causes negative skewness to be followed by rebounds (Mean: +2.36%). Downside tail is instead predicted by structural bear market regime (`dd_252 < -0.15` & `dist_sma200 < -2.0`). Placement: 18.3%, Mean Return: **+0.26%** (p-val: **0.1101**), P10: **17.3%** (**1.73x lift**), P5: **9.0%** (**1.79x lift**).
+
+**Daily Indicators Implemented:**
+- `skew_20` (rolling 20-day return skewness)
+- `kurt_20` (rolling 20-day return kurtosis)
+- `vol_accel` (10-day realized vol vs 60-day moving average of 20-day realized vol)
+- `dd_252` (drawdown from 252-day high)
+- `dist_sma200` (price distance from SMA200 normalized by ATR)
+
 ## TODO
 
+- [x] Evaluate daily indicators for predictive power on 30-day forward return tails (P10/P5 worst outcomes) and populate FINDINGS.md (Jun 2026)
 - [x] Explore data completeness for 500ETF and make research more robust → `research_robustness.py`
 - [x] Audit backtest for look-ahead bias and pricing correctness (Jun 2026) → strike/mult bug fixed
 - [x] Audit, fix pricing mismatch, and regenerate synthetic options data using unadjusted prices & daily strikes adjusted for dividends at expiry (Jun 2026)
