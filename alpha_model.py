@@ -105,7 +105,29 @@ class AlphaModel:
         # 11. MACD Histogram (negative histogram = high score)
         ndf["ind_macd_neg"] = 1.0 - roll_pct(ndf["macd_hist"])
 
+        # 12. Volume OBV Divergence (OBV slope negative = high score)
+        if "volume" in ndf.columns and ndf["volume"].notna().any():
+            try:
+                ndf["obv"] = ta.obv(ndf[close_col], ndf["volume"])
+                ndf["obv_slope"] = ndf["obv"].rolling(10).mean() - ndf["obv"].rolling(30).mean()
+                ndf["ind_obv_divergence"] = 1.0 - roll_pct(ndf["obv_slope"])
+            except Exception:
+                ndf["ind_obv_divergence"] = np.nan
+        else:
+            ndf["ind_obv_divergence"] = np.nan
+
+        # 13. Volume Spike (high volume relative to SMA = high score)
+        if "volume" in ndf.columns and ndf["volume"].notna().any():
+            try:
+                ndf["volume_ratio"] = ndf["volume"] / ndf["volume"].rolling(20).mean()
+                ndf["ind_volume_spike"] = roll_pct(ndf["volume_ratio"])
+            except Exception:
+                ndf["ind_volume_spike"] = np.nan
+        else:
+            ndf["ind_volume_spike"] = np.nan
+
         return ndf
+
 
     def compute_regime_score(self, df, regime_key):
         """

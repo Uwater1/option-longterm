@@ -1,6 +1,6 @@
 # Protective Put — 4-Type Alpha Model Report
 
-> **Status**: Alpha model implemented & optimized. Pending: walk-forward validation, engine integration, backtest comparison.
+> **Status**: Alpha model implemented & optimized. Walk-forward validation implemented. Pending: engine integration, backtest comparison.
 
 ---
 
@@ -116,7 +116,7 @@ Several regimes converged to near-single-factor models:
 
 The optimizer found one indicator dominates the objective. Correct in-sample, **fragile out-of-sample**.
 
-**Fixes**: Cap max weight at 50% in optimizer, or add uncorrelated indicator families (volume, macro).
+**Fix**: Capping max weight at 50% (`--max-weight 0.5`) in the optimizer is now implemented, forcing diversification.
 
 ### 4.2 Missed Crash Events (False Negatives)
 
@@ -124,35 +124,24 @@ The threshold misses some crash events by design (precision over recall — fals
 
 ![Improvement Areas 300ETF](backtest/alpha_improvement_areas_300.png)
 
-**Fixes**:
-1. Lower threshold when options are cheap (low IV) — false hedge cost is low
-2. Dynamic threshold modulated by IV level
-3. Early-warning indicators that fire 1–2 days before the regime score triggers
+**Fix**: Dynamic thresholding modulated by option cost (`iv_vol_ratio`) is now implemented: $T_t = T_{base} + \gamma \times (\text{iv\_vol\_ratio}_t - 1.0)$. $\gamma$ is optimized via grid search.
 
-### 4.3 No Out-of-Sample Validation
+### 4.3 Out-of-Sample Validation
 
-The optimizer runs on full-sample data. Walk-forward validation is needed:
+**Status**: Implemented. Expanding window walk-forward validation (Train: prior history expanding, Test: 1 year OOS) is supported via the `--walk-forward` flag to detect and quantify overfitting.
 
-```
-For each fold:
-  Train on [t-504, t-252]  (1 year before test)
-  Optimize weights/thresholds
-  Evaluate on [t-252, t]   (1 year test period)
-  Record out-of-sample lift
-```
-
-If OOS lift degrades >40% from in-sample → overfit, needs regularization.
 
 ### 4.4 Improvement Roadmap
 
 | Improvement | Difficulty | Impact | Description |
 |-------------|------------|--------|-------------|
-| Walk-forward validation | Medium | High | Confirm OOS stability, detect overfitting |
-| Volume/money flow indicators | Low | Medium | Add `OBV`, `MFI`, `VWAP` as normalized columns |
-| Dynamic threshold (IV-aware) | Low | Medium | Lower threshold when IV < 20th pctl (cheap puts) |
+| Walk-forward validation | Implemented | High | Chronological OOS validation (`--walk-forward`) |
+| Volume/money flow indicators | Implemented | Medium | Added `ind_obv_divergence`, `ind_volume_spike` |
+| Dynamic threshold (IV-aware) | Implemented | Medium | Modulates threshold based on option cost |
 | Active exit rules (TP/SL) | Medium | High | Close put at 2x premium or after 7d with no drop |
 | Macro signals | High | High | Credit spread, sector rotation, VIX futures |
 | Multi-DTE selection | High | Medium | Match regime horizon to option DTE |
+
 
 ---
 
@@ -260,13 +249,15 @@ Lock in option gains before mean reversion or decay erodes them:
 
 * `[x]` **TODO 1: Data Completeness & Sync** — Updated daily + 5m data for all ETFs.
 * `[x]` **TODO 2: Signal / Indicator Enhancement** — Scanned ~30 indicators, identified tail-risk predictors, updated FINDINGS.md.
-* `[~]` **TODO 3: Alpha Model Integration & Weight Optimization**
+* `[x]` **TODO 3: Alpha Model Integration & Weight Optimization**
   * ✅ 4-Type Decision Matrix → `alpha_model.py`
-  * ✅ 11 normalized indicators in `compute_normalized_indicators()`
-  * ✅ Random-search weight optimizer → `optimize_put_alpha.py`
+  * ✅ 13 normalized indicators (including OBV divergence, volume spike)
+  * ✅ Random-search weight optimizer with max-weight capping
+  * ✅ Dynamic IV-aware threshold optimization ($\gamma$)
+  * ✅ Walk-forward validation (expanding train window)
   * ✅ Optimized models saved → `backtest/alpha_put_models.json`
   * ✅ Documentation + visualization → this report + `visualize_alpha_model.py`
-  * ⬜ Walk-forward validation (out-of-sample stability check)
+
 * `[ ]` **TODO 4: Engine Architecture Modifications**
   * Extend `backtest_engine.py` for daily option evaluation and mid-cycle execution.
   * Add `should_enter_today()` / `should_exit_today()` to strategy interface.
