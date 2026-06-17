@@ -17,6 +17,7 @@ python research_put_filters.py -e 300 --level 3  # Synthetic eval, bootstrap at 
 python optimize_put_filters.py 300            # Real-data put filter optimizer (grid search, profit-first score)
 python optimize_put_filters.py 300 --sweep-levels  # Sweep OTM levels 1-3, find best (level, filter) combo
 python research_filter_validation.py          # Statistically validates filter indicators on 30-calendar-day forward returns
+python research_indicator_scanner.py           # Massive indicator scan (expanding-window quantiles, known combos, NaN-safe)
 python backtest_covered_call.py --alpha 300   # Run backtest with dynamic alpha mode (indicator-based OTM switching)
 python backtest_covered_call.py 300 --model-offset  # Run backtest with model-predicted limit order offsets (requires prior training)
 python predict_open_high.py -e 300          # Train open-high P10 prediction model (90% fill-rate limit orders)
@@ -67,6 +68,8 @@ numba_utils.py                 # Numba-compiled BS pricing, IV solver, synthetic
 predict_open_high.py           # Open-to-High P10 prediction system (Statsmodels QR + LightGBM quantile, 90% fill-rate limit orders)
 research_open_high.py          # Static open-high distribution analysis (graphical only)
 research_filter_validation.py  # Statistically validates filter indicators (generates charts and markdown report)
+
+research_indicator_scanner.py  # Massive indicator scan: expanding-window quantiles (no look-ahead), NaN-safe eval, known-combo validation
 
 research_otm_levels.py         # OTM level analysis (with RSI<66 + BB filter)
 research_otm_no_filter.py      # OTM baseline (no filter)
@@ -336,3 +339,4 @@ Put filter/level pipeline: `research_synthetic_no_filter.py` (OTM level comparis
 - [ ] Test early roll management for 500ETF — roll calls to higher strikes if underlying rallies >5% mid-cycle
 - [ ] Explore weekly options for 500ETF if available — shorter DTE reduces rally exposure
 - [ ] Revisit conclusions when 500ETF reaches 80+ cycles (~2029)
+- [x] Fix indicator scanner look-ahead bias (expanding-window quantiles), NaN handling, add known-combo validation (`research_indicator_scanner.py`, Jun 2026)

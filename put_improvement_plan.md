@@ -63,12 +63,12 @@ Where:
   * Discover and evaluate daily indicators for negative 14 calendar days, 30 calendar days returns. (for falls)
   * Write Scripts to massively scan for good filters (pandas-ta_help.py listed all indicator supported by pandas-ta) (Search for things like Best Tradingview indicator if you want more)
   * Update FINDINGS.md on the best filter.
-* `[ ]` **TODO 3: Engine Architecture Modifications**
-  * Extend `backtest_engine.py` to support daily option evaluations and mid-cycle execution.
-  * Update `BaseStrategy` to allow dynamic entry check (`should_enter_today()`) and exit check (`should_exit_today()`).
-* `[ ]` **TODO 4: Alpha Model Integration & Weight Optimization**
+* `[ ]` **TODO 3: Alpha Model Integration & Weight Optimization**
   * Implement 4-Type Decision Matrix logic.
   * Backtest multi-indicator weighted score models. Optimize weights ($w_i$), thresholds ($a, b$), and horizons ($m$) per ETF.
+* `[ ]` **TODO 4: Engine Architecture Modifications**
+  * Extend `backtest_engine.py` to support daily option evaluations and mid-cycle execution.
+  * Update `BaseStrategy` to allow dynamic entry check (`should_enter_today()`) and exit check (`should_exit_today()`).
 * `[ ]` **TODO 5: Dynamic DTE / Contract Selection**
   * Build dynamic option selection matching regime horizons ($m$) to DTE.
   * Evaluate near-month vs. next-month performance dynamically.
