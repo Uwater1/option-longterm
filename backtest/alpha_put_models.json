@@ -1,0 +1,212 @@
+{
+  "50": {
+    "reg1": {
+      "weights": {
+        "ind_rsi_high": 0.4570689130099608,
+        "ind_skew_neg": 0.12228644871414124,
+        "ind_roc5_neg": 0.010584980555326239,
+        "ind_macd_neg": 0.010385299362729474,
+        "ind_dist_sma50_neg": 0.3996743583578425
+      },
+      "horizon": 14,
+      "threshold": 0.6403672214731103,
+      "metrics": {
+        "correlation": -0.0722055651194665,
+        "mean_return_triggered": -0.017228651020943175,
+        "mean_return_baseline": 0.0005889073722781931,
+        "placement_rate": 0.09999999999999998
+      }
+    },
+    "reg2": {
+      "weights": {
+        "ind_rsi_low": 0.01674026828598297,
+        "ind_dist_sma50_neg": 0.9429139348010225,
+        "ind_roc20_neg": 0.025994628403541123,
+        "ind_macd_neg": 0.014351168509453477
+      },
+      "horizon": 40,
+      "threshold": 0.7549066675927161,
+      "metrics": {
+        "correlation": -0.0664792819345231,
+        "mean_return_triggered": -0.003940007971895963,
+        "mean_return_baseline": 0.0033065481971198446,
+        "placement_rate": 0.25
+      }
+    },
+    "reg3": {
+      "weights": {
+        "ind_vol_accel_high": 0.3689503609463871,
+        "ind_kurt_high": 0.06548409960784968,
+        "ind_skew_neg": 0.4975872845472624,
+        "ind_iv_vol_low": 0.06797825489850066
+      },
+      "horizon": 5,
+      "threshold": 0.7477824617228848,
+      "metrics": {
+        "correlation": 0.07533801206117137,
+        "lift": 2.685185185185185,
+        "triggered_crash_prob": 0.10943396226415095,
+        "baseline_crash_prob": 0.040754716981132075,
+        "placement_rate": 0.09999999999999998
+      }
+    },
+    "reg4": {
+      "weights": {
+        "ind_dd_deep": 0.04899826980740068,
+        "ind_dist_sma200_neg": 0.4189102333212851,
+        "ind_vol_accel_high": 0.21257780519409136,
+        "ind_kurt_high": 0.2642922862697523,
+        "ind_skew_neg": 0.055221405407470586
+      },
+      "horizon": 40,
+      "threshold": 0.6946727035417908,
+      "metrics": {
+        "correlation": 0.2579002364714567,
+        "lift": 1.7321909198461993,
+        "triggered_crash_prob": 0.5190217391304348,
+        "baseline_crash_prob": 0.2996331023236853,
+        "placement_rate": 0.15000000000000002
+      }
+    }
+  },
+  "300": {
+    "reg1": {
+      "weights": {
+        "ind_rsi_high": 0.6332152482016769,
+        "ind_skew_neg": 0.07687841059190187,
+        "ind_roc5_neg": 0.08145749780010987,
+        "ind_macd_neg": 0.0333853702836698,
+        "ind_dist_sma50_neg": 0.17506347312264164
+      },
+      "horizon": 10,
+      "threshold": 0.5580006226581232,
+      "metrics": {
+        "correlation": -0.03346721085294724,
+        "mean_return_triggered": -0.005800713638410863,
+        "mean_return_baseline": 0.001895157836025471,
+        "placement_rate": 0.09999999999999998
+      }
+    },
+    "reg2": {
+      "weights": {
+        "ind_rsi_low": 0.026140645885047966,
+        "ind_dist_sma50_neg": 0.007266946994823356,
+        "ind_roc20_neg": 0.06513834098324013,
+        "ind_macd_neg": 0.9014540661368885
+      },
+      "horizon": 40,
+      "threshold": 0.859001637263077,
+      "metrics": {
+        "correlation": -0.020725596449239065,
+        "mean_return_triggered": 0.0034832711910390253,
+        "mean_return_baseline": 0.008165972291020774,
+        "placement_rate": 0.09999999999999998
+      }
+    },
+    "reg3": {
+      "weights": {
+        "ind_vol_accel_high": 0.9107156074121088,
+        "ind_kurt_high": 0.0027141138535306157,
+        "ind_skew_neg": 0.07366580839057839,
+        "ind_iv_vol_low": 0.0129044703437821
+      },
+      "horizon": 5,
+      "threshold": 0.8741956610442806,
+      "metrics": {
+        "correlation": 0.13454727661973453,
+        "lift": 4.0949192176870755,
+        "triggered_crash_prob": 0.13690476190476192,
+        "baseline_crash_prob": 0.03343283582089552,
+        "placement_rate": 0.09999999999999998
+      }
+    },
+    "reg4": {
+      "weights": {
+        "ind_dd_deep": 0.1209194191084715,
+        "ind_dist_sma200_neg": 0.3847132751064531,
+        "ind_vol_accel_high": 0.3799339398924062,
+        "ind_kurt_high": 0.035955338490204346,
+        "ind_skew_neg": 0.07847802740246484
+      },
+      "horizon": 21,
+      "threshold": 0.7592049724587786,
+      "metrics": {
+        "correlation": 0.1922999791706848,
+        "lift": 2.365444214876033,
+        "triggered_crash_prob": 0.38392857142857145,
+        "baseline_crash_prob": 0.16230717639168343,
+        "placement_rate": 0.15000000000000002
+      }
+    }
+  },
+  "500": {
+    "reg1": {
+      "weights": {
+        "ind_rsi_high": 0.49593347537481414,
+        "ind_skew_neg": 0.15468867681986723,
+        "ind_roc5_neg": 0.026907961209845573,
+        "ind_macd_neg": 0.001184869881392177,
+        "ind_dist_sma50_neg": 0.321285016714081
+      },
+      "horizon": 14,
+      "threshold": 0.6046954930687112,
+      "metrics": {
+        "correlation": -0.10388216448504849,
+        "mean_return_triggered": -0.025365384335696205,
+        "mean_return_baseline": 0.0003356354641503552,
+        "placement_rate": 0.09999999999999998
+      }
+    },
+    "reg2": {
+      "weights": {
+        "ind_rsi_low": 0.00047838797008735337,
+        "ind_dist_sma50_neg": 0.06429472931031857,
+        "ind_roc20_neg": 0.019461926681318898,
+        "ind_macd_neg": 0.9157649560382751
+      },
+      "horizon": 21,
+      "threshold": 0.8302929441771479,
+      "metrics": {
+        "correlation": -0.07152476220813303,
+        "mean_return_triggered": -0.0057045613039693995,
+        "mean_return_baseline": 0.0007648382229161201,
+        "placement_rate": 0.15000000000000002
+      }
+    },
+    "reg3": {
+      "weights": {
+        "ind_vol_accel_high": 0.025595108437871814,
+        "ind_kurt_high": 0.06021255253068399,
+        "ind_skew_neg": 0.2666540192013872,
+        "ind_iv_vol_low": 0.647538319830057
+      },
+      "horizon": 5,
+      "threshold": 0.6773397263496103,
+      "metrics": {
+        "correlation": 0.09278937871382621,
+        "lift": 1.6333826429980274,
+        "triggered_crash_prob": 0.1282051282051282,
+        "baseline_crash_prob": 0.07849056603773585,
+        "placement_rate": 0.25
+      }
+    },
+    "reg4": {
+      "weights": {
+        "ind_dd_deep": 0.8749380205528753,
+        "ind_dist_sma200_neg": 0.09558055350074865,
+        "ind_vol_accel_high": 0.004114669519633991,
+        "ind_kurt_high": 0.01219757639801522,
+        "ind_skew_neg": 0.013169180028726777
+      },
+      "horizon": 40,
+      "threshold": 0.909053247256013,
+      "metrics": {
+        "correlation": 0.1274897349549282,
+        "lift": 1.5399335022902183,
+        "triggered_crash_prob": 0.6585365853658537,
+        "baseline_crash_prob": 0.427639624949042,
+        "placement_rate": 0.09999999999999998
+      }
+    }
+  }
+}
