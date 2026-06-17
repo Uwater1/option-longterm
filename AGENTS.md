@@ -128,6 +128,5 @@ numba_utils.py                 # Numba BS functions & IV solver
 - **Tail Risk (Puts)**: Vol acceleration + negative skewness predict downside. Detailed in [FINDINGS.md](file:///home/hallo/Documents/option-longterm/FINDINGS.md).
 
 ## TODO
-- [ ] Test early roll management for 500ETF — roll calls to higher strikes if underlying rallies >5% mid-cycle
-- [ ] Explore weekly options for 500ETF if available — shorter DTE reduces rally exposure
-- [ ] Revisit conclusions when 500ETF reaches 80+ cycles (~2029)
+- [ ] Improve put buy strategy: [put_improvement_plan.md](file:///home/hallo/Documents/option-longterm/put_improvement_plan.md)
+- [ ] TBD
