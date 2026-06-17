@@ -15,46 +15,61 @@
 ## 3. Deep Technical Insights & Solutions
 
 ### A. Dynamic Entry Timing (Daily Signal Scanning)
-* **Concept**: Instead of a binary decision on Day 1 of the cycle, run daily scanning. Enter put position ONLY when the ETF triggers a defined crash condition during the cycle.
-* **Triggers**:
-  1. **Momentum Breakdown**: ETF close crosses below SMA20 or SMA50, or MACD Hist crosses below zero.
-  2. **Vol Spike**: Daily return volatility crosses the 20-day rolling 80th percentile.
-  3. **Overbought Reversal**: RSI14 drops below 50 from above 70.
-* **Action**: When triggered, enter put leg. If no trigger occurs during the cycle, do not hedge.
+* **Concept**: Run daily scans. Enter put positions only when specific alpha conditions trigger.
+* **Execution**: Evaluate indicator score daily. If threshold met, execute long put entry.
 
-### B. Dynamic DTE (Maturity) Selection
-* **Concept**: Compare premium efficiency and decay profiles of different maturities.
-* **Mechanics**:
-  * If a crash signal triggers:
-    * **Option A**: Buy front-month contract (standard monthly expiry).
-    * **Option B**: Buy next-month contract (if front-month has < 10 DTE remaining).
-    * **Option C (Short-term)**: If available, buy weekly or short-dated contract with ~10 DTE.
-* **Trade-off**: Shorter DTE offers higher Delta/Premium ratio but faces accelerated Theta decay. Long DTE has slower decay but requires larger cash outlay.
+### B. Multi-Dimensional Option Buying Matrix (4-Type Alpha Model)
+To maximize hedging efficiency and minimize premium decay, entry decisions map behavior expectation (**How**) against horizon (**When**). Each quadrant runs a dedicated Alpha Model with optimized weightings.
+
+#### 1. The Decision Matrix
+
+| Horizon (When) \ Expected Behavior (How) | **Type 1: Falling (Expected Return < -a% in m days)** | **Type 2: Crash (Chance of >5% drop in m days is >= b%)** |
+| :--- | :--- | :--- |
+| **Type 1: Short-Term** <br> *m < 14 calendar days* | **Regime 1: Short-Term Fall** <br> *Action: Buy ATM or OTM1 Put* | **Regime 3: Short-Term Crash** <br> *Action: Buy OTM2 or OTM3 Put* |
+| **Type 2: Medium-Term** <br> *14 <= m <= 40 calendar days* | **Regime 2: Medium-Term Fall** <br> *Action: Buy ATM or OTM1 Put* | **Regime 4: Medium-Term Crash** <br> *Action: Buy OTM2 or OTM3 Put* |
+
+#### 2. Weighted Alpha Model Framework
+For each regime, trigger condition uses a combined weighted score of multiple normalized indicators:
+$$\text{Alpha Score} = \sum (w_i \times I_i)$$
+
+Where:
+* $I_i$: Normalized technical/statistical indicators (range $[0, 1]$ or $[-1, 1]$).
+* $w_i$: Relative weight of indicator $i$, optimized per ETF.
+* **Candidate Indicator Families**:
+  * *Momentum*: RSI, MACD Histogram, SMA crossovers, ROC.
+  * *Volatility / Risk Structure*: Skewness (`skew_20`), Kurtosis (`kurt_20`), Volatility Acceleration (`vol_accel`), IV-RV ratio (`iv_vol_ratio`).
+  * *Structural Drawdown*: Realized drawdown (`dd_252`), distance to key moving averages (SMA50, SMA200).
+
+#### 3. Regime Specifications & Instrument Selection
+* **Regime 1 (Short-Term Fall)**: Protects against minor correction. High-delta near-term option captures short-term drop.
+* **Regime 2 (Medium-Term Fall)**: Protects against ongoing down-trend. Medium DTE protects over weeks.
+* **Regime 3 (Short-Term Crash)**: Lottery-like protection. Deep OTM near-term options expand dynamically under vol spikes.
+* **Regime 4 (Medium-Term Crash)**: Systemic risk buffer. Deep OTM medium-term options hold value through multi-week declines.
 
 ### C. Active Exit Management (Take Profit & Stop Loss)
-* **Concept**: Option prices are highly non-linear. Lock in gains on sudden drops.
-* **Rules to Test**:
-  1. **Premium Multiplier**: Exit put if its price reaches 2x or 3x the entry price.
-  2. **ETF Target Support**: Exit put if the underlying ETF drops to a major support line (e.g., Bollinger Band Lower or SMA200) where a bounce is statistically likely.
-  3. **Time-based Exit**: If the market does not drop within 5 days of entry, cut the position to limit Theta loss.
+* **Concept**: Lock in option gains before mean reversion or decay erodes them.
+* **Rules**:
+  * **Premium Multiplier**: Exit if put premium reaches a target multiple (e.g., 2x or 3x).
+  * **Underlying Support Target**: Close put if ETF hits support indicators.
+  * **Time-based Decay Cut**: Exit position if expected drop fails to materialize within $T$ days to limit Theta burn.
 
 ## 4. Implementation Checklist & Progress
 
 * `[x]` **TODO 1: Data Completeness & Sync**
   * Check daily and 5-minute data availability for ETFs and options.
-  * Run system-wide data updates via `download_5m_data.py`.
-  * Status: **Completed**. Updated daily prices up to 2026-06-15 and downloading 5m ETF & option historical data.
-* `[x]` **TODO 2: Signal / Indicator Enhancement**
-  * Evaluate daily indicators for predictive power on 30-day forward return tails (e.g., P10/P5 worst outcomes).
-  * IMPORTANT: Populate FINDINGS.md with Indicator found before proceeding
-  * Note: Previous research shows that single Traditional method, like MACD, RSI, cannot find these.
-  * Status: **Completed**. Evaluated daily return skewness, kurtosis, volatility acceleration, and drawdowns. Identified powerful predictors and populated FINDINGS.md. Integrated indicators into backtest_engine.py and backtest_strategies.py.
+  * Status: **Completed**. Updated daily prices and 5m ETF/option historical data.
+* `[ ]` **TODO 2: Signal / Indicator Enhancement**
+  * Evaluate daily indicators for predicting worst tail returns (P25/P10).
+  * Evaluate daily indicators for negative 14 calendar days, 30 calendar days returns.
 * `[ ]` **TODO 3: Engine Architecture Modifications**
   * Extend `backtest_engine.py` to support daily option evaluations and mid-cycle execution.
   * Update `BaseStrategy` to allow dynamic entry check (`should_enter_today()`) and exit check (`should_exit_today()`).
-* `[ ]` **TODO 4: Dynamic DTE / Contract Selection**
-  * Implement logic to load both near-month and next-month contracts.
-  * Evaluate performance differences between short-dated (10 DTE) and standard-dated (40 DTE) put purchases under identical triggers.
-* `[ ]` **TODO 5: Walkthrough & Optimization**
-  * Run multi-criteria grid search on dynamic triggers and exit rules.
+* `[ ]` **TODO 4: Alpha Model Integration & Weight Optimization**
+  * Implement 4-Type Decision Matrix logic.
+  * Backtest multi-indicator weighted score models. Optimize weights ($w_i$), thresholds ($a, b$), and horizons ($m$) per ETF.
+* `[ ]` **TODO 5: Dynamic DTE / Contract Selection**
+  * Build dynamic option selection matching regime horizons ($m$) to DTE.
+  * Evaluate near-month vs. next-month performance dynamically.
+* `[ ]` **TODO 6: Walkthrough & Optimization**
+  * Run multi-criteria grid search on dynamic triggers, weights, and exit rules.
   * Compile results, compare with static baseline, and update default strategies.
