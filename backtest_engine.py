@@ -170,6 +170,26 @@ def load_data():
     macd = ta.macd(close_for_ind)
     etf["macd_hist"] = macd.iloc[:, 1] if macd is not None else np.nan
 
+    # Tail risk indicators
+    etf["skew_20"] = close_for_ind.pct_change().rolling(20).skew()
+    etf["kurt_20"] = close_for_ind.pct_change().rolling(20).kurt()
+    etf["vol10"] = close_for_ind.pct_change().rolling(10).std() * np.sqrt(252)
+    etf["vol_accel"] = etf["vol10"] / etf["vol20"].rolling(60).mean()
+    etf["dd_252"] = (close_for_ind - close_for_ind.rolling(252).max()) / close_for_ind.rolling(252).max()
+    etf["sma200"] = ta.sma(close_for_ind, length=200)
+    etf["dist_sma200"] = (close_for_ind - etf["sma200"]) / etf["atr20"]
+    etf["dist_sma50"] = (close_for_ind - etf["sma50"]) / etf["atr20"]
+
+    # Load 30d IV if cache exists
+    if os.path.exists(PATH_IV_CACHE):
+        daily_ivs = pd.read_parquet(PATH_IV_CACHE).iloc[:, 0]
+        daily_ivs.index = pd.to_datetime(daily_ivs.index)
+        etf["iv"] = daily_ivs.reindex(etf.index).ffill()
+        etf["iv_vol_ratio"] = etf["iv"] / etf["vol20"]
+    else:
+        etf["iv"] = np.nan
+        etf["iv_vol_ratio"] = np.nan
+
     return inst, opt, etf
 
 
@@ -535,6 +555,9 @@ def run_backtest(strategy, opt, etf):
         daily_ivs.to_frame("iv").to_parquet(PATH_IV_CACHE)
         print(f"  Saved IV cache to {PATH_IV_CACHE}")
 
+    etf["iv"] = daily_ivs.reindex(etf.index).ffill()
+    etf["iv_vol_ratio"] = etf["iv"] / etf["vol20"]
+
     # Load 5m data if strategy needs it
     opt_5m, etf_5m = None, None
     if strategy.needs_5m():
@@ -626,6 +649,13 @@ def _execute_cycle(strategy, cyc, opt, etf, daily_ivs, opt_5m, etf_5m):
         "vol20": etf.loc[idx, "vol20"],
         "vol20_median": etf.loc[idx, "vol20_median"],
         "macd_hist": etf.loc[idx, "macd_hist"],
+        "skew_20": etf.loc[idx, "skew_20"],
+        "kurt_20": etf.loc[idx, "kurt_20"],
+        "vol_accel": etf.loc[idx, "vol_accel"],
+        "dd_252": etf.loc[idx, "dd_252"],
+        "dist_sma200": etf.loc[idx, "dist_sma200"],
+        "dist_sma50": etf.loc[idx, "dist_sma50"],
+        "iv_vol_ratio": etf.loc[idx, "iv_vol_ratio"],
     }
 
     # 1. Evaluate filter

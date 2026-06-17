@@ -236,8 +236,7 @@ class PutStrategy:
     def evaluate_filter(self, etf, idx, etf_close, indicators):
         """
         Returns (filter_passed, filter_would_pass).
-        Optimized via optimize_put_filters.py (real data) + research_put_filters.py (synthetic).
-        Buy puts when indicators suggest vulnerability (low RSI, high vol, below trend).
+        Updated with tail-risk indicators (skewness, kurtosis, vol acceleration, drawdowns).
         """
         rsi = indicators["rsi"]
         bbl = indicators["bbl"]
@@ -246,25 +245,38 @@ class PutStrategy:
         vol20_median = indicators["vol20_median"]
         macd_hist = indicators["macd_hist"]
         roc10 = indicators["roc10"]
+        skew_20 = indicators.get("skew_20")
+        kurt_20 = indicators.get("kurt_20")
+        vol_accel = indicators.get("vol_accel")
+        dd_252 = indicators.get("dd_252")
+        dist_sma200 = indicators.get("dist_sma200")
+        dist_sma50 = indicators.get("dist_sma50")
+        iv_vol_ratio = indicators.get("iv_vol_ratio")
 
         filter_would_pass = False
         if self.etf_choice == "50":
-            # 50ETF OTM2: RSI < 50 AND Close < SMA50
-            # (Optimized: +4,019 RMB at OTM2 vs +2,306 at OTM1)
-            if pd.notna(rsi) and pd.notna(sma50):
-                filter_would_pass = (rsi < 50.0) and (etf_close < sma50)
+            # 50ETF: VRP Compression + Negative Skewness
+            if pd.notna(skew_20) and pd.notna(iv_vol_ratio):
+                filter_would_pass = (skew_20 < -0.5) and (iv_vol_ratio < 0.9)
         elif self.etf_choice == "500":
-            # 500ETF OTM2: VolHigh AND MACD<0 (no RSI threshold)
-            # (Optimized: +1,225 RMB at OTM2)
-            if pd.notna(vol20) and pd.notna(vol20_median) and pd.notna(macd_hist):
-                filter_would_pass = (vol20 > vol20_median) and (macd_hist < 0)
+            # 500ETF: Kurtosis Expansion + Expensive IV
+            if pd.notna(kurt_20) and pd.notna(iv_vol_ratio):
+                filter_would_pass = (kurt_20 > 1.0) and (iv_vol_ratio > 1.2)
         elif self.etf_choice in ["588000", "159915"]:
-            if pd.notna(rsi) and pd.notna(vol20) and pd.notna(vol20_median):
-                filter_would_pass = (rsi < 60.0) and (vol20 > vol20_median)
+            # Baseline / fallback: Negative Skewness + High Kurtosis
+            if pd.notna(skew_20) and pd.notna(kurt_20):
+                filter_would_pass = (skew_20 < -0.3) and (kurt_20 > 1.0)
         else:  # 300ETF
-            # Optimized: RSI < 60 AND Vol20 > Vol20_median (net positive on real data)
-            if pd.notna(rsi) and pd.notna(vol20) and pd.notna(vol20_median):
-                filter_would_pass = (rsi < 60.0) and (vol20 > vol20_median)
+            # 300ETF: Bear Market Trend OR Overbought Reversal
+            cond_bear = False
+            if pd.notna(dd_252) and pd.notna(dist_sma50):
+                cond_bear = (dd_252 < -0.15) and (dist_sma50 < -1.0)
+            
+            cond_reversal = False
+            if pd.notna(rsi) and pd.notna(skew_20):
+                cond_reversal = (rsi > 65) and (skew_20 < -0.3)
+                
+            filter_would_pass = cond_bear or cond_reversal
 
         if self.no_filter:
             filter_passed = True
