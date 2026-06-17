@@ -65,7 +65,10 @@ Where:
   * Update FINDINGS.md on the best filter.
 * `[ ]` **TODO 3: Alpha Model Integration & Weight Optimization**
   * Implement 4-Type Decision Matrix logic.
+  * Using the results and code from TODO2, turn useful indicator into alpha model code.
   * Backtest multi-indicator weighted score models. Optimize weights ($w_i$), thresholds ($a, b$), and horizons ($m$) per ETF.
+  * Evaluate the alpha model using alpha score vs 14 or 30d return (for Fall), or p25/p10 (for Crash)
+  * Update FINDINGS.md, remove legacy parts and document the alpha model logic.
 * `[ ]` **TODO 4: Engine Architecture Modifications**
   * Extend `backtest_engine.py` to support daily option evaluations and mid-cycle execution.
   * Update `BaseStrategy` to allow dynamic entry check (`should_enter_today()`) and exit check (`should_exit_today()`).
