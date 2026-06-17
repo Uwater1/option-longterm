@@ -25,8 +25,8 @@ To maximize hedging efficiency and minimize premium decay, entry decisions map b
 
 | Horizon (When) \ Expected Behavior (How) | **Type 1: Falling (Expected Return < -a% in m days)** | **Type 2: Crash (Chance of >5% drop in m days is >= b%)** |
 | :--- | :--- | :--- |
-| **Type 1: Short-Term** <br> *m < 14 calendar days* | **Regime 1: Short-Term Fall** <br> *Action: Buy ATM or OTM1 Put* | **Regime 3: Short-Term Crash** <br> *Action: Buy OTM2 or OTM3 Put* |
-| **Type 2: Medium-Term** <br> *14 <= m <= 40 calendar days* | **Regime 2: Medium-Term Fall** <br> *Action: Buy ATM or OTM1 Put* | **Regime 4: Medium-Term Crash** <br> *Action: Buy OTM2 or OTM3 Put* |
+| **Type 1: Short-Term** <br> *m <= 14 calendar days* | **Regime 1: Short-Term Fall** <br> *Action: Buy ATM or OTM1 Put* | **Regime 3: Short-Term Crash** <br> *Action: Buy OTM2 or OTM3 Put* |
+| **Type 2: Medium-Term** <br> *14 < m <= 40 calendar days* | **Regime 2: Medium-Term Fall** <br> *Action: Buy ATM or OTM1 Put* | **Regime 4: Medium-Term Crash** <br> *Action: Buy OTM2 or OTM3 Put* |
 
 #### 2. Weighted Alpha Model Framework
 For each regime, trigger condition uses a combined weighted score of multiple normalized indicators:
@@ -46,7 +46,7 @@ Where:
 * **Regime 3 (Short-Term Crash)**: Lottery-like protection. Deep OTM near-term options expand dynamically under vol spikes.
 * **Regime 4 (Medium-Term Crash)**: Systemic risk buffer. Deep OTM medium-term options hold value through multi-week declines.
 
-### C. Active Exit Management (Take Profit & Stop Loss)
+### C. Active Exit Management (Take Profit & Stop Loss) (Optional: leave it for now)
 * **Concept**: Lock in option gains before mean reversion or decay erodes them.
 * **Rules**:
   * **Premium Multiplier**: Exit if put premium reaches a target multiple (e.g., 2x or 3x).
@@ -59,8 +59,8 @@ Where:
   * Check daily and 5-minute data availability for ETFs and options.
   * Status: **Completed**. Updated daily prices and 5m ETF/option historical data.
 * `[ ]` **TODO 2: Signal / Indicator Enhancement**
-  * Evaluate daily indicators for predicting worst tail returns (P25/P10).
-  * Evaluate daily indicators for negative 14 calendar days, 30 calendar days returns.
+  * Discover and evaluate daily indicators for predicting worst tail returns (P25/P10). (for Crash)
+  * Discover and evaluate daily indicators for negative 14 calendar days, 30 calendar days returns. (for falls)
 * `[ ]` **TODO 3: Engine Architecture Modifications**
   * Extend `backtest_engine.py` to support daily option evaluations and mid-cycle execution.
   * Update `BaseStrategy` to allow dynamic entry check (`should_enter_today()`) and exit check (`should_exit_today()`).
