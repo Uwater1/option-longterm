@@ -72,68 +72,80 @@
   "300": {
     "reg1": {
       "weights": {
-        "ind_rsi_high": 0.6332152482016769,
-        "ind_skew_neg": 0.07687841059190187,
-        "ind_roc5_neg": 0.08145749780010987,
-        "ind_macd_neg": 0.0333853702836698,
-        "ind_dist_sma50_neg": 0.17506347312264164
+        "ind_rsi_high": 0.10585099098757292,
+        "ind_skew_neg": 0.005609642503665702,
+        "ind_roc5_neg": 0.11031243044011886,
+        "ind_macd_neg": 0.022050060939185427,
+        "ind_dist_sma50_neg": 0.007933054358648453,
+        "ind_obv_divergence": 0.35071436657291993,
+        "ind_volume_spike": 0.39752945419788877
       },
-      "horizon": 10,
-      "threshold": 0.5580006226581232,
+      "horizon": 5,
+      "threshold": 0.7203729859758509,
+      "gamma": 0.05,
       "metrics": {
-        "correlation": -0.03346721085294724,
-        "mean_return_triggered": -0.005800713638410863,
-        "mean_return_baseline": 0.001895157836025471,
+        "correlation": 0.013172855773162327,
+        "mean_return_triggered": -0.00255853962987778,
+        "mean_return_baseline": 0.0011557225658929526,
         "placement_rate": 0.09999999999999998
       }
     },
     "reg2": {
       "weights": {
-        "ind_rsi_low": 0.026140645885047966,
-        "ind_dist_sma50_neg": 0.007266946994823356,
-        "ind_roc20_neg": 0.06513834098324013,
-        "ind_macd_neg": 0.9014540661368885
+        "ind_rsi_low": 0.04108841148863987,
+        "ind_dist_sma50_neg": 0.08230815656644702,
+        "ind_roc20_neg": 0.08511217092647465,
+        "ind_macd_neg": 0.5000576196228559,
+        "ind_obv_divergence": 0.03222142020805435,
+        "ind_volume_spike": 0.2592122211875282
       },
       "horizon": 40,
-      "threshold": 0.859001637263077,
+      "threshold": 0.6630247602793299,
+      "gamma": 0.05,
       "metrics": {
-        "correlation": -0.020725596449239065,
-        "mean_return_triggered": 0.0034832711910390253,
+        "correlation": 0.0008435922033757319,
+        "mean_return_triggered": 0.003347330069025328,
         "mean_return_baseline": 0.008165972291020774,
-        "placement_rate": 0.09999999999999998
+        "placement_rate": 0.19999999999999996
       }
     },
     "reg3": {
       "weights": {
-        "ind_vol_accel_high": 0.9107156074121088,
-        "ind_kurt_high": 0.0027141138535306157,
-        "ind_skew_neg": 0.07366580839057839,
-        "ind_iv_vol_low": 0.0129044703437821
+        "ind_vol_accel_high": 0.39135090692596447,
+        "ind_kurt_high": 0.05175430351589134,
+        "ind_skew_neg": 0.12657233741224808,
+        "ind_iv_vol_low": 0.007262793480596755,
+        "ind_obv_divergence": 0.05582754470413683,
+        "ind_volume_spike": 0.3672321139611625
       },
       "horizon": 5,
-      "threshold": 0.8741956610442806,
+      "threshold": 0.7424346033959759,
+      "gamma": 0.15,
       "metrics": {
-        "correlation": 0.13454727661973453,
-        "lift": 4.0949192176870755,
-        "triggered_crash_prob": 0.13690476190476192,
+        "correlation": 0.10820390134753056,
+        "lift": 3.6429716117216118,
+        "triggered_crash_prob": 0.12179487179487179,
         "baseline_crash_prob": 0.03343283582089552,
         "placement_rate": 0.09999999999999998
       }
     },
     "reg4": {
       "weights": {
-        "ind_dd_deep": 0.1209194191084715,
-        "ind_dist_sma200_neg": 0.3847132751064531,
-        "ind_vol_accel_high": 0.3799339398924062,
-        "ind_kurt_high": 0.035955338490204346,
-        "ind_skew_neg": 0.07847802740246484
+        "ind_dd_deep": 0.028754697763709376,
+        "ind_dist_sma200_neg": 0.5000754088431575,
+        "ind_vol_accel_high": 0.3324414554890009,
+        "ind_kurt_high": 0.04420133546822303,
+        "ind_skew_neg": 0.03980253386211695,
+        "ind_obv_divergence": 0.02594676665281931,
+        "ind_volume_spike": 0.02877780192097286
       },
       "horizon": 21,
-      "threshold": 0.7592049724587786,
+      "threshold": 0.7503924156489491,
+      "gamma": 0.0,
       "metrics": {
-        "correlation": 0.1922999791706848,
-        "lift": 2.365444214876033,
-        "triggered_crash_prob": 0.38392857142857145,
+        "correlation": 0.17959809136468258,
+        "lift": 2.2829287190082646,
+        "triggered_crash_prob": 0.3705357142857143,
         "baseline_crash_prob": 0.16230717639168343,
         "placement_rate": 0.15000000000000002
       }

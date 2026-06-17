@@ -35,8 +35,10 @@ python eval_synth_filters.py -e 500        # Eval synthetic filters (bootstrap)
 python eval_synth_combinations.py -e 300   # Search synthetic filter combos
 python evaluate_combinations.py -e 300     # Search real filter combos
 python3 diagnose_500etf.py -e 500           # 500ETF multi-variant diagnostics
-python3 research_robustness.py -e 500       # Robustness tests (bootstrap, LOOCV)
 python3 optimize_put_alpha.py -e all        # Optimize put alpha weights/horizons
+python3 optimize_put_alpha.py -e 300 --max-weight 0.5 # Run with weight cap (regularization)
+python3 optimize_put_alpha.py -e 300 --walk-forward   # Run expanding window walk-forward validation
+
 ```
 
 ## Project Structure
@@ -90,7 +92,11 @@ numba_utils.py                 # Numba BS functions & IV solver
 - 4 regimes: ST/MT Fall, ST/MT Crash.
 - Rolling 252-day percentile rank: Normalizes indicators to `[0.0, 1.0]` (no look-ahead).
 - Score calculation: Weighted sum of active normalized indicators. Rescale weights if indicator missing.
+- **Regularization**: Capped maximum weight (`--max-weight 0.5`) to prevent single-indicator dominance.
+- **Dynamic Threshold**: Trigger threshold adjusted daily based on option cost: $T_t = T_{base} + \gamma \times (\text{iv\_vol\_ratio}_t - 1.0)$.
+- **OOS Validation**: Expanding window walk-forward validation (`--walk-forward`) checks chronological test year stability.
 - Config stored in `backtest/alpha_put_models.json`.
+
 
 ### Scoring
 - **Call filters**: 6-component score (Sharpe 20%, P&L 15%, MaxDD 15%, WinRate 15%, Placement 15%, FilterLift 20%).
