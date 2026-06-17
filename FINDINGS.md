@@ -1,4 +1,4 @@
-# Bollinger Band Mean Reversion Findings
+# First: Bollinger Band Mean Reversion Findings
 
 Analysis of the pattern:
 - **Condition 1 (Bearish Mean Reversion):** Close < BB Down (20, 2), and within the lookback window beforehand, close was once > BB Up (20, 2). Target is the probability and return of going **down** in the next 30 calendar days.

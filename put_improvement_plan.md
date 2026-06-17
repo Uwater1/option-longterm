@@ -45,7 +45,9 @@
   * Run system-wide data updates via `download_5m_data.py`.
   * Status: **Completed**. Updated daily prices up to 2026-06-15 and downloading 5m ETF & option historical data.
 * `[ ]` **TODO 2: Signal / Indicator Enhancement**
-  * Evaluate daily indicators (MACD, RSI, Volatility regimes, EMA crosses) for predictive power on 30-day forward return tails (e.g., P10/P5 worst outcomes).
+  * Evaluate daily indicators for predictive power on 30-day forward return tails (e.g., P10/P5 worst outcomes).
+  * IMPORTANT: Populate FINDINGS.md with Indicator found before proceeding
+  * Note: Previous research shows that single Traditional method, like MACD, RSI, cannot find these.
 * `[ ]` **TODO 3: Engine Architecture Modifications**
   * Extend `backtest_engine.py` to support daily option evaluations and mid-cycle execution.
   * Update `BaseStrategy` to allow dynamic entry check (`should_enter_today()`) and exit check (`should_exit_today()`).
