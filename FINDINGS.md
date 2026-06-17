@@ -287,3 +287,75 @@ The v1 results remain useful as upper-bound estimates; v2 results are the more r
 | 50ETF | `skew_20 < -0.5 & iv_vol_ratio < 0.9` | Cannot re-validate (no iv_vol_ratio). Keep as-is. |
 | 300ETF | `(dd_252 < -0.15 & dist_sma50 < -1.0) OR (rsi14 > 65 & skew_20 < -0.3)` | **Validated** — both combos confirmed under expanding quantiles. Keep as-is. |
 | 500ETF | `kurt_20 > 1.0 & iv_vol_ratio > 1.2` | Cannot re-validate (no iv_vol_ratio). `skew_20 < -0.5 AND close > sma50` is a promising alternative (2.19x P10 lift). |
+
+---
+
+## 8. 4-Type Decision Matrix Alpha Model Parameters & Results (June 2026)
+
+We ran a systematic optimization using the multi-indicator rolling 252-day percentile rank framework. Below are the optimal parameters (horizons, trigger thresholds, and weights) along with predictive performance.
+
+### 8.1 50ETF Parameters & Results:
+* **Regime 1: Short-Term Fall**
+  * Horizon: **14 calendar days**
+  * Threshold: **0.6404** (Top 10% placement)
+  * Indicators & Weights: `ind_rsi_high: 45.7%`, `ind_dist_sma50_neg: 40.0%`, `ind_skew_neg: 12.2%`, `ind_roc5_neg: 1.1%`, `ind_macd_neg: 1.0%`
+  * Performance: Triggered mean return **-1.72%** (vs +0.06% baseline)
+* **Regime 2: Medium-Term Fall**
+  * Horizon: **40 calendar days**
+  * Threshold: **0.7549** (Top 25% placement)
+  * Indicators & Weights: `ind_dist_sma50_neg: 94.3%`, `ind_roc20_neg: 2.6%`, `ind_rsi_low: 1.7%`, `ind_macd_neg: 1.4%`
+  * Performance: Triggered mean return **-0.39%** (vs +0.33% baseline)
+* **Regime 3: Short-Term Crash**
+  * Horizon: **5 calendar days**
+  * Threshold: **0.7478** (Top 10% placement)
+  * Indicators & Weights: `ind_skew_neg: 49.8%`, `ind_vol_accel_high: 36.9%`, `ind_iv_vol_low: 6.8%`, `ind_kurt_high: 6.5%`
+  * Performance: Triggered crash probability **10.94%** (vs 4.08% baseline, **2.69x lift**)
+* **Regime 4: Medium-Term Crash**
+  * Horizon: **40 calendar days**
+  * Threshold: **0.6947** (Top 15% placement)
+  * Indicators & Weights: `ind_dist_sma200_neg: 41.9%`, `ind_kurt_high: 26.4%`, `ind_vol_accel_high: 21.3%`, `ind_skew_neg: 5.5%`, `ind_dd_deep: 4.9%`
+  * Performance: Triggered crash probability **51.90%** (vs 29.96% baseline, **1.73x lift**)
+
+### 8.2 300ETF Parameters & Results:
+* **Regime 1: Short-Term Fall**
+  * Horizon: **10 calendar days**
+  * Threshold: **0.5580** (Top 10% placement)
+  * Indicators & Weights: `ind_rsi_high: 63.3%`, `ind_dist_sma50_neg: 17.5%`, `ind_roc5_neg: 8.1%`, `ind_skew_neg: 7.7%`, `ind_macd_neg: 3.3%`
+  * Performance: Triggered mean return **-0.58%** (vs +0.19% baseline)
+* **Regime 2: Medium-Term Fall**
+  * Horizon: **40 calendar days**
+  * Threshold: **0.8590** (Top 10% placement)
+  * Indicators & Weights: `ind_macd_neg: 90.1%`, `ind_roc20_neg: 6.5%`, `ind_rsi_low: 2.6%`, `ind_dist_sma50_neg: 0.7%`
+  * Performance: Triggered mean return **+0.35%** (vs +0.82% baseline)
+* **Regime 3: Short-Term Crash**
+  * Horizon: **5 calendar days**
+  * Threshold: **0.8742** (Top 10% placement)
+  * Indicators & Weights: `ind_vol_accel_high: 91.1%`, `ind_skew_neg: 7.4%`, `ind_iv_vol_low: 1.3%`, `ind_kurt_high: 0.3%`
+  * Performance: Triggered crash probability **13.69%** (vs 3.34% baseline, **4.09x lift**)
+* **Regime 4: Medium-Term Crash**
+  * Horizon: **21 calendar days**
+  * Threshold: **0.7592** (Top 15% placement)
+  * Indicators & Weights: `ind_dist_sma200_neg: 38.5%`, `ind_vol_accel_high: 38.0%`, `ind_dd_deep: 12.1%`, `ind_skew_neg: 7.8%`, `ind_kurt_high: 3.6%`
+  * Performance: Triggered crash probability **38.39%** (vs 16.23% baseline, **2.37x lift**)
+
+### 8.3 500ETF Parameters & Results:
+* **Regime 1: Short-Term Fall**
+  * Horizon: **14 calendar days**
+  * Threshold: **0.6047** (Top 10% placement)
+  * Indicators & Weights: `ind_rsi_high: 49.6%`, `ind_dist_sma50_neg: 32.1%`, `ind_skew_neg: 15.5%`, `ind_roc5_neg: 2.7%`, `ind_macd_neg: 0.1%`
+  * Performance: Triggered mean return **-2.54%** (vs +0.03% baseline)
+* **Regime 2: Medium-Term Fall**
+  * Horizon: **21 calendar days**
+  * Threshold: **0.8303** (Top 15% placement)
+  * Indicators & Weights: `ind_macd_neg: 91.6%`, `ind_dist_sma50_neg: 6.4%`, `ind_roc20_neg: 1.9%`, `ind_rsi_low: 0.0%`
+  * Performance: Triggered mean return **-0.57%** (vs +0.08% baseline)
+* **Regime 3: Short-Term Crash**
+  * Horizon: **5 calendar days**
+  * Threshold: **0.6773** (Top 25% placement)
+  * Indicators & Weights: `ind_iv_vol_low: 64.8%`, `ind_skew_neg: 26.7%`, `ind_kurt_high: 6.0%`, `ind_vol_accel_high: 2.6%`
+  * Performance: Triggered crash probability **12.82%** (vs 7.85% baseline, **1.63x lift**)
+* **Regime 4: Medium-Term Crash**
+  * Horizon: **40 calendar days**
+  * Threshold: **0.9091** (Top 10% placement)
+  * Indicators & Weights: `ind_dd_deep: 87.5%`, `ind_dist_sma200_neg: 9.6%`, `ind_skew_neg: 1.3%`, `ind_kurt_high: 1.2%`, `ind_vol_accel_high: 0.4%`
+  * Performance: Triggered crash probability **65.85%** (vs 42.76% baseline, **1.54x lift**)
