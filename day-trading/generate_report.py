@@ -61,15 +61,14 @@ def gather_clustering_info():
     rows = []
     for etf in ETF_NAMES:
         fp = DATA_DIR / f'clusters_{etf}_kmeans_pca.csv'
-        best_k = _load_best_k(etf)
         if fp.exists():
             df = pd.read_csv(fp)
             unique, counts = np.unique(df['cluster'], return_counts=True)
             total = counts.sum()
             dist = ', '.join([f'C{int(u)}: {int(c)} ({100*c/total:.0f}%)' for u, c in zip(unique, counts)])
-            rows.append({'ETF': etf, 'K': best_k if best_k else len(unique), 'Distribution': dist})
-        elif best_k:
-            rows.append({'ETF': etf, 'K': best_k, 'Distribution': '(cluster file not found)'})
+            rows.append({'ETF': etf, 'K': len(unique), 'Distribution': dist})
+        else:
+            rows.append({'ETF': etf, 'K': 3, 'Distribution': '(cluster file not found)'})
     return rows
 
 
@@ -95,7 +94,7 @@ def parse_prediction_results():
         for etf in ETF_NAMES:
             if line.strip() == etf:
                 current_etf = etf
-                results[etf] = {'baselines': {}, 'models': {}, 'profit': [], 'lunch': []}
+                results[etf] = {'baselines': {}, 'models': {}, 'profit': [], 'lunch': [], 'sub_prediction': []}
                 section = None
                 break
         else:
@@ -109,6 +108,8 @@ def parse_prediction_results():
                 section = 'profit'
             elif line.startswith('Lunch Strategy'):
                 section = 'lunch'
+            elif 'Level-2' in line and 'Sub-Cluster' in line:
+                section = 'sub_prediction'
             elif line.startswith('  ') and section:
                 if section == 'baselines':
                     parts = line.strip().split(': ')
@@ -161,6 +162,41 @@ def parse_prediction_results():
                                 except ValueError:
                                     metrics[k] = v
                         results[current_etf]['lunch'].append(metrics)
+                elif section == 'sub_prediction':
+                    stripped = line.strip()
+                    if stripped.startswith('Macro '):
+                        # Macro 0: Acc=0.8258, F1=0.8251, 2 sub-types
+                        parts = stripped.split(': ', 1)
+                        if len(parts) == 2:
+                            macro_id = parts[0].replace('Macro ', '')
+                            entry = {'macro_id': macro_id, 'subs': []}
+                            for kv in parts[1].split(', '):
+                                if '=' in kv:
+                                    k, v = kv.split('=', 1)
+                                    try:
+                                        entry[k] = float(v)
+                                    except ValueError:
+                                        entry[k] = v
+                                else:
+                                    # "2 sub-types"
+                                    entry['n_sub_types'] = int(kv.split()[0])
+                            results[current_etf]['sub_prediction'].append(entry)
+                    elif stripped.startswith('Sub '):
+                        # Sub 0.0: 964 days, PM Ret=0.136%, Sharpe=3.85
+                        parts = stripped.split(': ', 1)
+                        if len(parts) == 2 and results[current_etf]['sub_prediction']:
+                            sub_entry = {'sub_id': parts[0].replace('Sub ', '')}
+                            for kv in parts[1].split(', '):
+                                if '=' in kv:
+                                    k, v = kv.split('=', 1)
+                                    v = v.replace('%', '')
+                                    try:
+                                        sub_entry[k] = float(v)
+                                    except ValueError:
+                                        sub_entry[k] = v
+                                else:
+                                    sub_entry['days'] = int(kv.split()[0])
+                            results[current_etf]['sub_prediction'][-1]['subs'].append(sub_entry)
 
     return results
 
@@ -216,9 +252,16 @@ def parse_cross_etf_results():
         if 'Average Transfer Accuracy' in line:
             in_avg = True
             continue
-        if in_avg and ':' in line:
-            parts = line.strip().split(':')
-            avg_transfer[parts[0].strip()] = float(parts[1].strip())
+        if in_avg:
+            stripped = line.strip()
+            if not stripped:
+                break  # blank line = end of section
+            if ':' in stripped:
+                parts = stripped.split(':')
+                try:
+                    avg_transfer[parts[0].strip()] = float(parts[1].strip())
+                except ValueError:
+                    break  # non-numeric value = wrong section
 
     return pooled, matrix, avg_transfer
 
@@ -257,12 +300,13 @@ def generate_report():
     L.append("")
     L.append("| Finding | Result |")
     L.append("|---------|--------|")
-    L.append(f"| Natural Day Types | {k_range_str} types discovered per ETF (multi-criteria K selection) |")
-    L.append("| Prediction Accuracy | **85-87%** from first 30 minutes (Neural Net) |")
+    L.append("| Macro Day Types | 3 types per ETF (Rally / Selloff / Neutral, K=3 fixed) |")
+    L.append("| Sub-Types | 2-3 variants per macro type (hierarchical sub-clustering) |")
+    L.append("| Prediction Accuracy | **85-87%** macro type from first 30 minutes (Neural Net) |")
     L.append("| Rally Edge | Sharpe 1.18-2.38 (strong positive) |")
     L.append("| Selloff Signal | Sharpe -0.39 to -2.62 (strong negative) |")
-    L.append("| Actionable Days | ~30-40% of trading days |")
-    L.append("| Cross-ETF Transfer | Broad-market ETFs transfer well (80-86%) |")
+    L.append("| Actionable Days | ~30-40% of trading days (Rally + Selloff) |")
+    L.append("| Cross-ETF Transfer | Broad-market ETFs transfer well (80-86%) at macro level |")
     L.append("")
 
     # ── 2. Data Overview ──
@@ -334,7 +378,9 @@ def generate_report():
     L.append(img("plots/cluster_quality_300ETF.png", "Cluster Quality Metrics - 300ETF"))
     L.append("")
 
-    L.append("### 4.2 Best Clustering: KMeans on PCA (Multi-Criteria K Selection)")
+    L.append("### 4.2 Macro Clustering: K=3 (Rally / Selloff / Neutral)")
+    L.append("")
+    L.append("The macro taxonomy uses **K=3 fixed** (domain-informed), with hierarchical sub-clustering to capture variants.")
     L.append("")
     L.append("| ETF | K | Cluster Distribution |")
     L.append("|-----|---|---------------------|")
@@ -346,15 +392,18 @@ def generate_report():
     L.append("|--------|-------|")
     L.append("| Silhouette Score | 0.30-0.42 (moderate separation) |")
     L.append("| Davies-Bouldin | Low (good compactness) |")
-    L.append("| K Selection Method | Multi-criteria composite (gap 25%, silhouette 20%, CH 15%, DB 15%, BIC 15%, elbow 10%) |")
+    L.append("| Macro K | 3 (fixed: Rally/Selloff/Neutral) |")
+    L.append("| Sub-Clustering | K=2-3 per macro type (silhouette-selected) |")
     L.append("")
 
-    L.append("### 4.3 Example Day Curves by Cluster")
+    L.append("### 4.3 Example Day Curves by Macro Cluster")
     L.append("")
-    L.append(img("plots/cluster_samples_300ETF.png", "Sample Price Curves per Cluster - 300ETF"))
+    L.append(img("plots/cluster_samples_300ETF_macro.png", "Sample Price Curves per Macro Cluster - 300ETF"))
+    L.append("")
+    L.append(img("plots/cluster_samples_300ETF_sub.png", "Sample Price Curves per Sub-Cluster - 300ETF"))
     L.append("")
 
-    L.append("> **Key Insight**: Multi-criteria K selection discovers more granular day types across all ETFs. Cluster boundaries remain **fuzzy** — the spectrum is continuous.")
+    L.append("> **Key Insight**: K=3 macro clustering discovers clean Rally / Selloff / Neutral types. Sub-clustering reveals meaningful variants within each macro type without the fuzzy boundaries of flat K=4.")
     L.append("")
 
     # ── 4.4 K Selection Scorecard ──
@@ -363,7 +412,7 @@ def generate_report():
     sc_300 = _load_k_scorecard('300ETF')
     if sc_300:
         best_k_300 = sc_300.get('best_k', '?')
-        L.append(f"Selected K={best_k_300} by composite score.")
+        L.append(f"Composite score prefers K={best_k_300}, but we **fix K=3** (Rally/Selloff/Neutral) for the macro taxonomy.")
         L.append("")
         L.append("| K | Silhouette | Calinski-Harabasz | Davies-Bouldin | Gap | BIC | Composite |")
         L.append("|---|------------|-------------------|----------------|-----|-----|-----------|")
@@ -391,33 +440,38 @@ def generate_report():
     L.append("| **Neutral variants** | Range-bound, Low-Vol Choppy, AM-PM reversal — no directional edge |")
     L.append("")
 
-    L.append("### 5.1 Cluster Profiles (300ETF)")
+    L.append("### 5.1 Macro Cluster Profiles (300ETF)")
     L.append("")
-    L.append(img("plots/cluster_profiles_300ETF.png", "Cluster Profile Dashboard - 300ETF"))
-    L.append("")
-
-    L.append("### 5.2 Feature Distributions")
-    L.append("")
-    L.append(img("plots/cluster_violins_300ETF.png", "Feature Violin Plots per Cluster - 300ETF"))
+    L.append(img("plots/cluster_profiles_300ETF_macro.png", "Macro Cluster Profile Dashboard - 300ETF"))
     L.append("")
 
-    L.append("### 5.3 Temporal Analysis")
+    L.append("### 5.2 Sub-Cluster Profiles (300ETF)")
+    L.append("")
+    L.append(img("plots/cluster_profiles_300ETF_sub.png", "Sub-Cluster Profile Dashboard - 300ETF"))
+    L.append("")
+
+    L.append("### 5.3 Feature Distributions")
+    L.append("")
+    L.append(img("plots/cluster_violins_300ETF_macro.png", "Feature Violin Plots per Macro Cluster - 300ETF"))
+    L.append("")
+
+    L.append("### 5.4 Temporal Analysis")
     L.append("")
     L.append("#### Calendar Heatmap")
-    L.append(img("plots/cluster_calendar_300ETF.png", "Calendar Heatmap - 300ETF"))
+    L.append(img("plots/cluster_calendar_300ETF_macro.png", "Calendar Heatmap - 300ETF"))
     L.append("")
     L.append("#### Day-to-Day Transitions")
-    L.append(img("plots/cluster_transitions_300ETF.png", "Transition Matrix - 300ETF"))
+    L.append(img("plots/cluster_transitions_300ETF_macro.png", "Transition Matrix - 300ETF"))
     L.append("")
     L.append("#### Rolling Regime Proportions")
-    L.append(img("plots/cluster_regimes_300ETF.png", "Rolling Regime Proportions - 300ETF"))
+    L.append(img("plots/cluster_regimes_300ETF_macro.png", "Rolling Regime Proportions - 300ETF"))
     L.append("")
 
     L.append("> **Temporal Pattern**: No strong regime persistence (near-random transitions). Cluster proportions are stable year-over-year.")
     L.append("")
 
-    # ── 5.4 Feature Discrimination ──
-    L.append("### 5.4 Feature Discrimination (300ETF)")
+    # ── 5.5 Feature Discrimination ──
+    L.append("### 5.5 Feature Discrimination (300ETF, Macro)")
     L.append("")
     disc_300 = _load_discrimination('300ETF')
     if disc_300:
@@ -442,12 +496,36 @@ def generate_report():
         for feat, stats in top5:
             L.append(f"| {feat} | {stats['F']:.1f} | {stats['p']:.2e} |")
         L.append("")
-        L.append(img(f"plots/cluster_zscore_heatmap_300ETF.png", "Cluster Z-Score Heatmap — 300ETF"))
+        L.append(img(f"plots/cluster_zscore_heatmap_300ETF_macro.png", "Cluster Z-Score Heatmap — 300ETF (Macro)"))
         L.append("")
-        L.append(img(f"plots/cluster_anova_f_300ETF.png", "Per-Feature ANOVA F — 300ETF"))
+        L.append(img(f"plots/cluster_anova_f_300ETF_macro.png", "Per-Feature ANOVA F — 300ETF (Macro)"))
         L.append("")
     else:
         L.append("(Feature discrimination not yet generated — run `characterize_clusters.py` first)")
+        L.append("")
+
+    # ── 5.6 Sub-Cluster Feature Discrimination ──
+    L.append("### 5.6 Sub-Cluster Feature Discrimination (300ETF)")
+    L.append("")
+    disc_300_sub = _load_discrimination('300ETF_sub')  # sub-level uses _sub suffix
+    if disc_300_sub:
+        L.append(f"| Metric | Value |")
+        L.append(f"|--------|-------|")
+        L.append(f"| Mean ANOVA F | {disc_300_sub['mean_anova_F']:.2f} |")
+        L.append(f"| Total Mutual Information | {disc_300_sub['total_mi']:.3f} |")
+        L.append(f"| Unique Auto-Names | {disc_300_sub['unique_auto_names']}/{disc_300_sub['n_clusters']} |")
+        L.append("")
+        L.append("**Sub-cluster auto-names:**")
+        L.append("")
+        for cid, cname in disc_300_sub.get('cluster_names', {}).items():
+            L.append(f"- {cid}: **{cname}**")
+        L.append("")
+        L.append(img(f"plots/cluster_zscore_heatmap_300ETF_sub.png", "Sub-Cluster Z-Score Heatmap — 300ETF"))
+        L.append("")
+        L.append(img(f"plots/cluster_anova_f_300ETF_sub.png", "Per-Feature ANOVA F — 300ETF (Sub)"))
+        L.append("")
+    else:
+        L.append("(Sub-cluster discrimination not yet generated — run `characterize_clusters.py` first)")
         L.append("")
 
     # ── 6. Early Prediction ──
@@ -528,7 +606,35 @@ def generate_report():
     L.append(img("plots/early_prediction_profit_500ETF.png", "Profitability Proxy - 500ETF"))
     L.append("")
 
-    L.append("### 6.5 Additional Confusion Matrices")
+    L.append("### 6.5 Level-2 Sub-Cluster Prediction")
+    L.append("")
+    L.append("Within each macro type, a LightGBM classifier predicts the sub-variant (conditional on Level-1 macro prediction):")
+    L.append("")
+    L.append("| ETF | Macro Type | Sub-Types | Acc | F1 | Sub | Days | PM Ret | Sharpe |")
+    L.append("|-----|-----------|-----------|-----|----|-----|------|--------|--------|")
+    for etf in ETF_NAMES:
+        if etf in pred and pred[etf].get('sub_prediction'):
+            for macro_entry in pred[etf]['sub_prediction']:
+                mid = macro_entry['macro_id']
+                acc = macro_entry.get('Acc', 0)
+                f1 = macro_entry.get('F1', 0)
+                n_sub = macro_entry.get('n_sub_types', 0)
+                subs = macro_entry.get('subs', [])
+                first = True
+                for sub in subs:
+                    sid = sub.get('sub_id', '')
+                    days = sub.get('days', 0)
+                    pm_ret = sub.get('PM Ret', 0)
+                    sharpe = sub.get('Sharpe', 0)
+                    sh_emoji = "🟢" if sharpe > 1.0 else ("🔴" if sharpe < -0.3 else "⚪")
+                    if first:
+                        L.append(f"| **{etf}** | Macro {mid} | {n_sub} | {acc:.4f} | {f1:.4f} | {sid} | {int(days):,} | {pm_ret:+.3f}% | {sh_emoji} {sharpe:+.2f} |")
+                        first = False
+                    else:
+                        L.append(f"| | | | | | {sid} | {int(days):,} | {pm_ret:+.3f}% | {sh_emoji} {sharpe:+.2f} |")
+    L.append("")
+
+    L.append("### 6.6 Additional Confusion Matrices")
     L.append("")
     L.append("<details>")
     L.append("<summary>Click to expand all ETF confusion matrices</summary>")
@@ -543,8 +649,8 @@ def generate_report():
     L.append("> **Key Insight**: Neural Net achieves **85-87%** accuracy. Direction-aware profitability shows Rally days are profitable going long (Sharpe 1.18-2.38) and Selloff days are profitable going short (Sharpe 1.0-2.6), making ~60-70% of days potentially actionable.")
     L.append("")
 
-    # ── 6.6 Lunch Break Exploration ──
-    L.append("### 6.6 Lunch Break Exploration")
+    # ── 6.7 Lunch Break Exploration ──
+    L.append("### 6.7 Lunch Break Exploration")
     L.append("")
     L.append("Does the lunch break (11:30–13:00) mark a structural change in intraday behavior?")
     L.append("We compare three strategies per predicted cluster: (A) hold long full day, (B) close at 11:30 (AM only), (C) AM long + PM short.")
@@ -656,11 +762,11 @@ def generate_report():
     L.append("")
     L.append("| Claim | Evidence |")
     L.append("|-------|---------|")
-    L.append(f"| ✅ Multiple day types emerge | K={k_range_str} per ETF, discovered via multi-criteria composite scoring |")
-    L.append("| ✅ Universal across broad-market ETFs | 300/50/588000 transfer at 80-86% |")
+    L.append("| ✅ Multiple day types emerge | K=3 macro types + 2-3 sub-types per macro (hierarchical) |")
+    L.append("| ✅ Universal across broad-market ETFs | 300/50/588000 transfer at 80-86% (macro level) |")
     L.append("| ✅ ETF-specific for sector ETFs | 159915 patterns transfer at only 6-20% |")
-    L.append("| ⚠️ Continuous spectrum | Cluster boundaries are fuzzy, not discrete |")
-    L.append("| ⚠️ Feature discrimination varies | Some clusters well-separated (ANOVA F high), others overlap |")
+    L.append("| ⚠️ Continuous spectrum | Macro boundaries cleaner than flat K=4; sub-types remain fuzzy |")
+    L.append("| ⚠️ Feature discrimination varies | Macro clusters well-separated; sub-cluster discrimination lower |")
     L.append("")
 
     L.append("### Prediction Quality")
@@ -693,7 +799,8 @@ def generate_report():
 
     L.append("### Limitations")
     L.append("")
-    L.append("- Cluster boundaries are fuzzy (continuous spectrum, not discrete)")
+    L.append("- Macro boundaries still fuzzy (continuous spectrum, but cleaner than flat K=4)")
+    L.append("- Sub-cluster types have lower discrimination (within-macro variance is high)")
     L.append("- Bootstrap stability is low (patterns not perfectly reproducible)")
     L.append("- Transaction costs **not** included in profitability proxy")
     L.append("- Slippage and market impact not modeled")

@@ -31,19 +31,21 @@ PLOTS_DIR = OUTPUT_DIR / 'plots'
 MODELS_DIR = OUTPUT_DIR / 'models'
 
 
+MACRO_K = 3  # Fixed macro taxonomy
+
+
 def _load_best_k(etf_name):
     """Load selected K from best_k_{etf}.json (saved by discover_patterns.py)."""
     path = DATA_DIR / f'best_k_{etf_name}.json'
     if path.exists():
         with open(path) as f:
             return json.load(f)['best_k']
-    return 4  # fallback minimum
+    return MACRO_K  # fallback
 
 
 def _consensus_k():
-    """Compute consensus K across ETFs (median of per-ETF best_k values)."""
-    ks = [_load_best_k(e) for e in ETF_NAMES]
-    return int(np.median(ks))
+    """Consensus K for cross-ETF comparison = MACRO_K (fixed)."""
+    return MACRO_K
 
 
 # ============================================================
@@ -81,7 +83,7 @@ def load_etf_data(etf_name):
 def cluster_etf(price_curves, k=None):
     """Run KMeans on PCA of price curves.
 
-    If k is None, load best_k for the ETF (not applicable in cross-ETF context).
+    Uses MACRO_K by default for cross-ETF consistency.
     """
     from sklearn.decomposition import PCA
 
@@ -89,7 +91,7 @@ def cluster_etf(price_curves, k=None):
     X_pca = pca.fit_transform(price_curves)
 
     if k is None:
-        k = 4
+        k = MACRO_K
     km = KMeans(n_clusters=k, random_state=42, n_init=10)
     labels = km.fit_predict(X_pca)
 
@@ -100,16 +102,13 @@ def cluster_etf(price_curves, k=None):
 # Cross-ETF Analysis
 # ============================================================
 def cross_etf_clustering():
-    """Compare clusters across ETFs using consensus K."""
+    """Compare clusters across ETFs using macro K=3."""
     print("\n" + "="*60)
-    print("Cross-ETF Clustering Comparison")
+    print("Cross-ETF Clustering Comparison (Macro K=3)")
     print("="*60)
 
-    # Per-ETF best_k and consensus
-    per_etf_k = {e: _load_best_k(e) for e in ETF_NAMES}
-    consensus = _consensus_k()
-    print(f"  Per-ETF best K: {per_etf_k}")
-    print(f"  Consensus K for cross-ETF comparison: {consensus}")
+    consensus = MACRO_K
+    print(f"  Macro K for cross-ETF comparison: {consensus}")
 
     etf_results = {}
 
@@ -397,6 +396,112 @@ def transfer_test():
     return results
 
 
+def sub_cluster_transfer():
+    """Test whether sub-types within each macro type transfer across broad-market ETFs.
+
+    For each macro cluster (0,1,2): load sub-cluster labels from each ETF,
+    align by centroid similarity, measure transfer accuracy.
+    """
+    print("\n" + "="*60)
+    print("Sub-Cluster Transfer (within macro types)")
+    print("="*60)
+
+    from sklearn.decomposition import PCA
+    ref_etf = '300ETF'
+    macro_names = {0: 'Rally/Selloff/Neutral', 1: 'Rally/Selloff/Neutral', 2: 'Rally/Selloff/Neutral'}
+
+    # Load macro + sub labels per ETF
+    etf_sub = {}
+    etf_pca = {}
+    for etf_name in ETF_NAMES:
+        price_curves, _ = load_etf_data(etf_name)
+        pca = PCA(n_components=8)
+        etf_pca[etf_name] = pca.fit_transform(price_curves)
+
+        # Load macro labels
+        macro_path = DATA_DIR / f'clusters_{etf_name}_kmeans_pca.csv'
+        sub_path = DATA_DIR / f'clusters_{etf_name}_sub.csv'
+        if not macro_path.exists() or not sub_path.exists():
+            print(f"  {etf_name}: missing macro or sub labels, skipping")
+            continue
+        macro_df = pd.read_csv(macro_path, parse_dates=['date']).set_index('date')['cluster']
+        sub_df = pd.read_csv(sub_path, parse_dates=['date']).set_index('date')['cluster'].astype(str)
+        common = macro_df.index.intersection(sub_df.index)
+        etf_sub[etf_name] = pd.DataFrame({
+            'macro': macro_df.loc[common],
+            'sub': sub_df.loc[common],
+        })
+
+    if ref_etf not in etf_sub:
+        print("  Reference ETF missing, skipping sub-cluster transfer")
+        return {}
+
+    transfer_results = {}
+    for macro_id in sorted(etf_sub[ref_etf]['macro'].unique()):
+        macro_id_int = int(macro_id)
+        print(f"\n  Macro {macro_id_int}:")
+        # Get sub-labels and PCA embeddings for this macro cluster per ETF
+        macro_sub = {}
+        for etf_name, df in etf_sub.items():
+            mask = df['macro'] == macro_id
+            if mask.sum() < 20:
+                continue
+            macro_sub[etf_name] = {
+                'sub_labels': df.loc[mask, 'sub'].values,
+                'pca': etf_pca[etf_name][mask.values] if mask.values.dtype == bool
+                     else etf_pca[etf_name][np.where(mask.values)[0]],
+            }
+
+        if ref_etf not in macro_sub or len(macro_sub) < 2:
+            continue
+
+        # Train LightGBM on ref ETF sub-types, predict on others
+        ref_data = macro_sub[ref_etf]
+        from sklearn.preprocessing import LabelEncoder
+        le = LabelEncoder()
+        y_ref = le.fit_transform(ref_data['sub_labels'])
+        X_ref = ref_data['pca']
+
+        if len(np.unique(y_ref)) < 2:
+            print(f"    < 2 sub-types in ref, skipping")
+            continue
+
+        scaler = StandardScaler()
+        X_ref_scaled = scaler.fit_transform(X_ref)
+        model = lgb.LGBMClassifier(n_estimators=150, max_depth=5, learning_rate=0.05,
+                                    random_state=42, verbose=-1)
+        model.fit(X_ref_scaled, y_ref)
+
+        transfer_results[macro_id_int] = {}
+        for test_etf, test_data in macro_sub.items():
+            X_test = scaler.transform(test_data['pca'])
+            # Map test sub-labels to ref encoding for accuracy
+            test_sub_labels = test_data['sub_labels']
+            # Use Hungarian alignment if label sets differ
+            try:
+                y_test = le.transform(test_sub_labels)
+            except ValueError:
+                # Different label set — use accuracy as a rough proxy
+                # (encode what we can, mark rest as -1)
+                y_test = np.full(len(test_sub_labels), -1)
+                for i, lbl in enumerate(test_sub_labels):
+                    if lbl in le.classes_:
+                        y_test[i] = le.transform([lbl])[0]
+                valid = y_test >= 0
+                if valid.sum() < 10:
+                    transfer_results[macro_id_int][test_etf] = None
+                    continue
+                X_test = X_test[valid]
+                y_test = y_test[valid]
+
+            preds = model.predict(X_test)
+            acc = accuracy_score(y_test, preds)
+            transfer_results[macro_id_int][test_etf] = acc
+            print(f"    {ref_etf} -> {test_etf}: {acc:.4f}")
+
+    return transfer_results
+
+
 def main():
     PLOTS_DIR.mkdir(exist_ok=True)
     MODELS_DIR.mkdir(exist_ok=True)
@@ -410,8 +515,11 @@ def main():
     # 2) Pooled model
     pooled_acc, model_pooled, scaler_pooled = run_pooled_model()
     
-    # 3) Transfer test
+    # 3) Transfer test (macro-level, K=3)
     transfer_results = transfer_test()
+    
+    # 4) Sub-cluster transfer (within macro types)
+    sub_transfer = sub_cluster_transfer()
     
     # Summary
     print("\n" + "="*60)
@@ -453,6 +561,14 @@ def main():
                             for test_etf in ETF_NAMES if test_etf != train_etf]
             avg_transfer = np.mean(transfer_accs)
             f.write(f"  {train_etf}: {avg_transfer:.4f}\n")
+
+        if sub_transfer:
+            f.write("\nSub-Cluster Transfer (within macro types, ref=300ETF):\n")
+            for macro_id, etf_accs in sub_transfer.items():
+                f.write(f"  Macro {macro_id}:\n")
+                for test_etf, acc in etf_accs.items():
+                    acc_str = f"{acc:.4f}" if acc is not None else "n/a"
+                    f.write(f"    -> {test_etf}: {acc_str}\n")
     
     print("\nCross-ETF validation complete!")
 

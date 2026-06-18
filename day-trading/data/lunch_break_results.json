@@ -11,7 +11,7 @@
     "cusum_cp_stat": 0.001196211553025355,
     "cusum_p": 0.57,
     "cusum_near_lunch": true,
-    "am_pm_AMI": 0.3035539043238702
+    "am_pm_AMI": 0.3026372607862371
   },
   {
     "etf": "50ETF",
@@ -25,7 +25,7 @@
     "cusum_cp_stat": 0.00023380651608629547,
     "cusum_p": 0.21,
     "cusum_near_lunch": false,
-    "am_pm_AMI": 0.31015551949775544
+    "am_pm_AMI": 0.3099549727226604
   },
   {
     "etf": "500ETF",
@@ -39,7 +39,7 @@
     "cusum_cp_stat": 0.0025857741521070256,
     "cusum_p": 0.415,
     "cusum_near_lunch": true,
-    "am_pm_AMI": 0.27570884254174205
+    "am_pm_AMI": 0.3278988093394694
   },
   {
     "etf": "588000ETF",
@@ -53,7 +53,7 @@
     "cusum_cp_stat": 0.0023743434949232266,
     "cusum_p": 0.66,
     "cusum_near_lunch": false,
-    "am_pm_AMI": 0.3334417412563268
+    "am_pm_AMI": 0.335502519352008
   },
   {
     "etf": "159915ETF",
@@ -67,6 +67,6 @@
     "cusum_cp_stat": 0.0029052373007498427,
     "cusum_p": 0.81,
     "cusum_near_lunch": true,
-    "am_pm_AMI": 0.3292359776785041
+    "am_pm_AMI": 0.3542037308394524
   }
 ]

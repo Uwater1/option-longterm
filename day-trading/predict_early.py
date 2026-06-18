@@ -40,7 +40,12 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Early Features Extraction
 # ============================================================
 def extract_early_features(etf_name):
-    """Extract features available at 10:00 AM (first 6 bars)"""
+    """Extract features available at 10:00 AM (first 6 bars).
+
+    Returns (X, y_macro, y_sub, pm_returns):
+      - y_macro : int array (K=3 macro labels)
+      - y_sub   : str array (composite 'macro.sub' labels), or None
+    """
     
     # Load paths
     paths_npz = np.load(DATA_DIR / f'paths_{etf_name}.npz', allow_pickle=True)
@@ -53,28 +58,36 @@ def extract_early_features(etf_name):
     features_df = pd.read_csv(DATA_DIR / f'features_{etf_name}.csv',
                               index_col='date', parse_dates=True)
     
-    # Load cluster labels
+    # Load macro labels (K=3)
     cluster_file = DATA_DIR / f'clusters_{etf_name}_kmeans_pca.csv'
     if not cluster_file.exists():
-        return None, None, None
+        return None, None, None, None
     
     cluster_df = pd.read_csv(cluster_file, parse_dates=['date'])
     cluster_df = cluster_df.set_index('date')['cluster']
+
+    # Load sub-cluster labels (optional, hierarchical)
+    sub_file = DATA_DIR / f'clusters_{etf_name}_sub.csv'
+    sub_df = None
+    if sub_file.exists():
+        sub_df = pd.read_csv(sub_file, parse_dates=['date'])
+        sub_df = sub_df.set_index('date')['cluster'].astype(str)
     
-    # Align: find dates present in all three sources
+    # Align: find dates present in all sources
     date_set_paths = set(dates)
     date_set_feat = set(features_df.index)
     date_set_clust = set(cluster_df.index)
     common = sorted(date_set_paths & date_set_feat & date_set_clust)
     
     if len(common) == 0:
-        return None, None, None
+        return None, None, None, None
     
     # Build aligned arrays using index lookups
     path_idx_map = {d: i for i, d in enumerate(dates)}
     
     early_features = []
     y_list = []
+    y_sub_list = []
     pm_returns_list = []
     
     for d in common:
@@ -119,13 +132,19 @@ def extract_early_features(etf_name):
         
         early_features.append(feat_dict)
         y_list.append(int(cluster_label))
+        # Sub-cluster label (empty string if not available)
+        if sub_df is not None and d in sub_df.index:
+            y_sub_list.append(str(sub_df.loc[d]))
+        else:
+            y_sub_list.append('')
         pm_returns_list.append(pm_return)
     
     X = pd.DataFrame(early_features)
-    y = np.array(y_list)
+    y_macro = np.array(y_list)
+    y_sub = np.array(y_sub_list, dtype=object)
     pm_returns = np.array(pm_returns_list)
     
-    return X, y, pm_returns
+    return X, y_macro, y_sub, pm_returns
 
 
 # ============================================================
@@ -353,13 +372,13 @@ def lunch_break_prediction(etf_name, best_preds, pm_returns):
 # Main Prediction Pipeline
 # ============================================================
 def predict_etf(etf_name):
-    """Run early prediction for one ETF"""
+    """Run early prediction for one ETF (two-level: macro + sub)."""
     print(f"\n{'='*60}")
     print(f"Early Prediction: {etf_name}")
     print('='*60)
     
-    # Extract features
-    X, y, pm_returns = extract_early_features(etf_name)
+    # Extract features (macro + sub labels)
+    X, y, y_sub, pm_returns = extract_early_features(etf_name)
     if X is None:
         print(f"  [SKIP] No data for {etf_name}")
         return None
@@ -368,9 +387,12 @@ def predict_etf(etf_name):
     nan_mask = np.isnan(X.values).any(axis=1) | np.isnan(y) | np.isnan(pm_returns)
     X = X[~nan_mask].values
     y = y[~nan_mask]
+    y_sub = y_sub[~nan_mask] if y_sub is not None else None
     pm_returns = pm_returns[~nan_mask]
     
-    print(f"  Samples: {len(X)}, Features: {X.shape[1]}, Classes: {len(np.unique(y))}")
+    print(f"  Samples: {len(X)}, Features: {X.shape[1]}, "
+          f"Macro classes: {len(np.unique(y))}, "
+          f"Sub classes: {len(np.unique(y_sub)) if y_sub is not None else 'n/a'}")
     
     # Standardize
     scaler = StandardScaler()
@@ -565,11 +587,78 @@ def predict_etf(etf_name):
     for s in lunch_results['strategy_matrix']:
         print(f"    Cluster {s['cluster']}: best_action={s['best_action']} (Sharpe={s['best_sharpe']:.2f})")
 
+    # ---- LEVEL-2: SUB-CLUSTER PREDICTION ----
+    sub_results = None
+    if y_sub is not None and len(np.unique(y_sub)) > 1:
+        print("\n  Level-2: Sub-Cluster Prediction (within each macro type):")
+        sub_results = {}
+        for macro_id in sorted(np.unique(y)):
+            macro_mask = y == macro_id
+            X_macro = X_scaled[macro_mask]
+            y_sub_macro = y_sub[macro_mask]
+            pm_sub = pm_returns[macro_mask]
+
+            unique_sub = np.unique(y_sub_macro)
+            unique_sub = unique_sub[unique_sub != '']  # drop empty
+            if len(unique_sub) < 2:
+                print(f"    Macro {macro_id}: < 2 sub-types, skipping")
+                continue
+
+            # Filter out empty labels
+            valid = y_sub_macro != ''
+            X_macro = X_macro[valid]
+            y_sub_macro = y_sub_macro[valid]
+            pm_sub = pm_sub[valid]
+
+            from sklearn.preprocessing import LabelEncoder
+            le = LabelEncoder()
+            y_sub_enc = le.fit_transform(y_sub_macro)
+
+            # LightGBM sub-classifier (5-fold CV)
+            skf_sub = StratifiedKFold(n_splits=min(5, min(np.bincount(y_sub_enc))),
+                                       shuffle=True, random_state=42)
+            sub_preds = np.zeros(len(y_sub_enc), dtype=int)
+            for train_idx, val_idx in skf_sub.split(X_macro, y_sub_enc):
+                sub_model = lgb.LGBMClassifier(
+                    n_estimators=150, max_depth=5, learning_rate=0.05,
+                    num_leaves=20, random_state=42, verbose=-1
+                )
+                sub_model.fit(X_macro[train_idx], y_sub_enc[train_idx])
+                sub_preds[val_idx] = sub_model.predict(X_macro[val_idx])
+
+            sub_acc = accuracy_score(y_sub_enc, sub_preds)
+            sub_f1 = f1_score(y_sub_enc, sub_preds, average='macro')
+            print(f"    Macro {macro_id}: {len(y_sub_enc)} days, "
+                  f"{len(unique_sub)} sub-types, Acc={sub_acc:.4f}, F1={sub_f1:.4f}")
+
+            # Profitability per sub-cluster
+            sub_profit = []
+            for sub_id_enc in sorted(np.unique(sub_preds)):
+                sub_mask = sub_preds == sub_id_enc
+                sub_label = le.inverse_transform([sub_id_enc])[0]
+                sub_pm = pm_sub[sub_mask]
+                mean_ret = sub_pm.mean()
+                sharpe = mean_ret / (sub_pm.std() + 1e-10) * np.sqrt(252)
+                sub_profit.append({
+                    'sub_cluster': sub_label,
+                    'n_days': int(sub_mask.sum()),
+                    'pm_return': float(mean_ret),
+                    'sharpe': float(sharpe),
+                })
+
+            sub_results[str(macro_id)] = {
+                'accuracy': sub_acc,
+                'f1': sub_f1,
+                'n_sub_types': len(unique_sub),
+                'profit': sub_profit,
+            }
+
     return {
         'baselines': {'majority': acc_majority, 'prev_day': acc_prev, 'gap_only': acc_gap},
         'models': results,
         'profit': profit_analysis,
         'lunch': lunch_results,
+        'sub_results': sub_results,
     }
 
 
@@ -639,6 +728,15 @@ def main():
                            f"am_only={s['am_only_sharpe']:.2f} "
                            f"am_long_pm_short={s['am_long_pm_short_sharpe']:.2f} "
                            f"best={s['best_action']}({s['best_sharpe']:.2f})\n")
+
+            if results.get('sub_results'):
+                f.write("\nLevel-2 Sub-Cluster Prediction:\n")
+                for macro_id, sr in results['sub_results'].items():
+                    f.write(f"  Macro {macro_id}: Acc={sr['accuracy']:.4f}, "
+                           f"F1={sr['f1']:.4f}, {sr['n_sub_types']} sub-types\n")
+                    for p in sr['profit']:
+                        f.write(f"    Sub {p['sub_cluster']}: {p['n_days']} days, "
+                               f"PM Ret={p['pm_return']*100:.3f}%, Sharpe={p['sharpe']:.2f}\n")
     
     print("\nEarly prediction complete!")
 
