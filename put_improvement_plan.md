@@ -280,9 +280,10 @@ Lock in option gains before mean reversion or decay erodes them:
   * ✅ Optimized models saved → `backtest/alpha_put_models.json`, `backtest/alpha_ml_models/`
   * ✅ **Honest OOS result: 4 of 12 cells deployable** (beat static filter). See §4.3 + `backtest/alpha_phase_comparison.md`.
 
-* `[ ]` **TODO 4: Engine Architecture Modifications**
-  * Extend `backtest_engine.py` for daily option evaluation and mid-cycle execution.
-  * Add `should_enter_today()` / `should_exit_today()` to strategy interface.
+* `[x]` **TODO 4: Engine Architecture Modifications / Dedicated Daily Runner**
+  * ✅ Created new daily position-tracking protective put backtester from scratch (`backtest_put.py`).
+  * ✅ Implemented daily indicator evaluation, mid-cycle entries, and clean hold-to-expiry/settlement logic.
+  * ✅ Decoupled from Call Strategy to prevent risk or regressions in the existing engine.
 * `[ ]` **TODO 5: Dynamic DTE / Contract Selection**
   * Match regime horizon ($m$) to option DTE dynamically.
   * Evaluate near-month vs next-month performance.
