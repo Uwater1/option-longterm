@@ -290,86 +290,22 @@ The v1 results remain useful as upper-bound estimates; v2 results are the more r
 
 ---
 
-## 8. 4-Type Decision Matrix Alpha Model Parameters & Results (June 2026)
+## 8. 4-Type Decision Matrix Alpha Model — SUPERSEDED
 
-We ran a systematic optimization using the multi-indicator rolling 252-day percentile rank framework. Below are the optimal parameters (horizons, trigger thresholds, and weights) along with predictive performance.
-
-### 8.1 50ETF Parameters & Results:
-* **Regime 1: Short-Term Fall**
-  * Horizon: **14 calendar days**
-  * Threshold: **0.6404** (Top 10% placement)
-  * Indicators & Weights: `ind_rsi_high: 45.7%`, `ind_dist_sma50_neg: 40.0%`, `ind_skew_neg: 12.2%`, `ind_roc5_neg: 1.1%`, `ind_macd_neg: 1.0%`
-  * Performance: Triggered mean return **-1.72%** (vs +0.06% baseline)
-* **Regime 2: Medium-Term Fall**
-  * Horizon: **40 calendar days**
-  * Threshold: **0.7549** (Top 25% placement)
-  * Indicators & Weights: `ind_dist_sma50_neg: 94.3%`, `ind_roc20_neg: 2.6%`, `ind_rsi_low: 1.7%`, `ind_macd_neg: 1.4%`
-  * Performance: Triggered mean return **-0.39%** (vs +0.33% baseline)
-* **Regime 3: Short-Term Crash**
-  * Horizon: **5 calendar days**
-  * Threshold: **0.7478** (Top 10% placement)
-  * Indicators & Weights: `ind_skew_neg: 49.8%`, `ind_vol_accel_high: 36.9%`, `ind_iv_vol_low: 6.8%`, `ind_kurt_high: 6.5%`
-  * Performance: Triggered crash probability **10.94%** (vs 4.08% baseline, **2.69x lift**)
-* **Regime 4: Medium-Term Crash**
-  * Horizon: **40 calendar days**
-  * Threshold: **0.6947** (Top 15% placement)
-  * Indicators & Weights: `ind_dist_sma200_neg: 41.9%`, `ind_kurt_high: 26.4%`, `ind_vol_accel_high: 21.3%`, `ind_skew_neg: 5.5%`, `ind_dd_deep: 4.9%`
-  * Performance: Triggered crash probability **51.90%** (vs 29.96% baseline, **1.73x lift**)
-
-### 8.2 300ETF Parameters & Results:
-* **Regime 1: Short-Term Fall**
-  * Horizon: **10 calendar days**
-  * Threshold: **0.5580** (Top 10% placement)
-  * Indicators & Weights: `ind_rsi_high: 63.3%`, `ind_dist_sma50_neg: 17.5%`, `ind_roc5_neg: 8.1%`, `ind_skew_neg: 7.7%`, `ind_macd_neg: 3.3%`
-  * Performance: Triggered mean return **-0.58%** (vs +0.19% baseline)
-* **Regime 2: Medium-Term Fall**
-  * Horizon: **40 calendar days**
-  * Threshold: **0.8590** (Top 10% placement)
-  * Indicators & Weights: `ind_macd_neg: 90.1%`, `ind_roc20_neg: 6.5%`, `ind_rsi_low: 2.6%`, `ind_dist_sma50_neg: 0.7%`
-  * Performance: Triggered mean return **+0.35%** (vs +0.82% baseline)
-* **Regime 3: Short-Term Crash**
-  * Horizon: **5 calendar days**
-  * Threshold: **0.8742** (Top 10% placement)
-  * Indicators & Weights: `ind_vol_accel_high: 91.1%`, `ind_skew_neg: 7.4%`, `ind_iv_vol_low: 1.3%`, `ind_kurt_high: 0.3%`
-  * Performance: Triggered crash probability **13.69%** (vs 3.34% baseline, **4.09x lift**)
-* **Regime 4: Medium-Term Crash**
-  * Horizon: **21 calendar days**
-  * Threshold: **0.7592** (Top 15% placement)
-  * Indicators & Weights: `ind_dist_sma200_neg: 38.5%`, `ind_vol_accel_high: 38.0%`, `ind_dd_deep: 12.1%`, `ind_skew_neg: 7.8%`, `ind_kurt_high: 3.6%`
-  * Performance: Triggered crash probability **38.39%** (vs 16.23% baseline, **2.37x lift**)
-
-### 8.3 500ETF Parameters & Results:
-* **Regime 1: Short-Term Fall**
-  * Horizon: **14 calendar days**
-  * Threshold: **0.6047** (Top 10% placement)
-  * Indicators & Weights: `ind_rsi_high: 49.6%`, `ind_dist_sma50_neg: 32.1%`, `ind_skew_neg: 15.5%`, `ind_roc5_neg: 2.7%`, `ind_macd_neg: 0.1%`
-  * Performance: Triggered mean return **-2.54%** (vs +0.03% baseline)
-* **Regime 2: Medium-Term Fall**
-  * Horizon: **21 calendar days**
-  * Threshold: **0.8303** (Top 15% placement)
-  * Indicators & Weights: `ind_macd_neg: 91.6%`, `ind_dist_sma50_neg: 6.4%`, `ind_roc20_neg: 1.9%`, `ind_rsi_low: 0.0%`
-  * Performance: Triggered mean return **-0.57%** (vs +0.08% baseline)
-* **Regime 3: Short-Term Crash**
-  * Horizon: **5 calendar days**
-  * Threshold: **0.6773** (Top 25% placement)
-  * Indicators & Weights: `ind_iv_vol_low: 64.8%`, `ind_skew_neg: 26.7%`, `ind_kurt_high: 6.0%`, `ind_vol_accel_high: 2.6%`
-  * Performance: Triggered crash probability **12.82%** (vs 7.85% baseline, **1.63x lift**)
-* **Regime 4: Medium-Term Crash**
-  * Horizon: **40 calendar days**
-  * Threshold: **0.9091** (Top 10% placement)
-  * Indicators & Weights: `ind_dd_deep: 87.5%`, `ind_dist_sma200_neg: 9.6%`, `ind_skew_neg: 1.3%`, `ind_kurt_high: 1.2%`, `ind_vol_accel_high: 0.4%`
-  * Performance: Triggered crash probability **65.85%** (vs 42.76% baseline, **1.54x lift**)
-
-> ⚠️ **§8 numbers above are IN-SAMPLE and partly artifacts.** See §9 for bias-corrected OOS results.
+> ⚠️ The original §8 (in-sample per-regime weights/horizons/lifts from the first optimization run) has been **removed**: those numbers were artifacts of a sign-inverted crash-event test and a noise-chasing objective, and the model configs were never re-validated OOS. The bias-corrected, walk-forward OOS results and the 3-phase comparison live in **§9** below.
+>
+> Current deployable model artifacts:
+> - `backtest/alpha_put_models.json` — Phase 1 weights + OOS metrics (regenerated under `--select-by-oos`).
+> - `backtest/alpha_ml_models/` — Phase 2 LightGBM bags + manifests.
+> - `backtest/validate_pnl_phase{1,2,3}.json` — put P&L per phase.
+> - `backtest/alpha_phase_comparison.md` — winner per ETF×regime.
 
 ---
 
 ## 9. Phase 1 OOS Overhaul — Bias-Corrected Results (June 2026)
 
-The §8 results were re-examined and found to be overfit / artifact-prone:
-
 ### 9.1 Bugs found & fixed in the optimizer
-1. **Crash-event sign inversion**: crash target was `-worst_dd` (non-negative), but the crash test was `target <= -0.05` — **never true**, so every original crash lift silently computed to ~0/baseline. The "4.09x" / "2.69x" lifts in §8.2/§8.1 were in-sample noise-chasing on a broken metric.
+1. **Crash-event sign inversion**: crash target was `-worst_dd` (non-negative), but the crash test was `target <= -0.05` — **never true**, so every original crash lift silently computed to ~0/baseline. The "4.09x" / "2.69x" lifts in the original §8 were in-sample noise-chasing on a broken metric.
 2. **RSI normalization**: `ind_rsi_high = rsi14/100` (raw) → replaced with rolling-percentile rank (distribution drift across regimes broke comparability).
 3. **Objective chased noise**: `obj = -corr - 200*mean_ret_trig` let isolated historical windows dominate (corr weight 1 vs 200). Replaced with composite: Spearman rank + log-placement + complexity penalty.
 4. **Walk-forward was diagnostic only**: never drove selection. Now `--select-by-oos` picks the config with best mean OOS across purged expanding folds.
