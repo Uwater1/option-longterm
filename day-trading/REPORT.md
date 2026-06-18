@@ -1,7 +1,7 @@
 # Price Action Day-Type Discovery Research
 
 ### A-Share ETF Intraday Pattern Analysis
-*Generated: 2026-06-18 14:52:09*
+*Generated: 2026-06-18 15:14:24*
 
 ---
 
@@ -15,7 +15,7 @@ day-type patterns in Chinese A-share ETFs, rather than imposing predefined acade
 | Finding | Result |
 |---------|--------|
 | Macro Day Types | 3 types per ETF (Rally / Selloff / Neutral, K=3 fixed) |
-| Sub-Types | 2-3 variants per macro type (hierarchical sub-clustering) |
+| Sub-Types | 2 variants per split macro; K=1 for degenerate (size guard) |
 | Prediction Accuracy | **85-87%** macro type from first 30 minutes (Neural Net) |
 | Rally Edge | Sharpe 1.18-2.38 (strong positive) |
 | Selloff Signal | Sharpe -0.39 to -2.62 (strong negative) |
@@ -98,7 +98,8 @@ The macro taxonomy uses **K=3 fixed** (domain-informed), with hierarchical sub-c
 | Silhouette Score | 0.30-0.42 (moderate separation) |
 | Davies-Bouldin | Low (good compactness) |
 | Macro K | 3 (fixed: Rally/Selloff/Neutral) |
-| Sub-Clustering | K=2-3 per macro type (silhouette-selected) |
+| Sub-Clustering | K=2 per macro type (silhouette-selected; K=1 if degenerate split) |
+| Size Guard | min 50 days AND 10% of parent; else collapse to K=1 |
 
 ### 4.3 Example Day Curves by Macro Cluster
 
@@ -106,7 +107,31 @@ The macro taxonomy uses **K=3 fixed** (domain-informed), with hierarchical sub-c
 
 ![Sample Price Curves per Sub-Cluster - 300ETF](plots/cluster_samples_300ETF_sub.png)
 
-> **Key Insight**: K=3 macro clustering discovers clean Rally / Selloff / Neutral types. Sub-clustering reveals meaningful variants within each macro type without the fuzzy boundaries of flat K=4.
+> **Key Insight**: K=3 macro clustering discovers clean Rally / Selloff / Neutral types. Sub-clustering reveals meaningful variants within each macro type; a size guard prevents degenerate splits (tiny outlier pockets collapse to K=1).
+
+### 4.5 Sub-Cluster Structure Overview
+
+Hierarchical sub-clustering with size guard (min 50 days & 10% of parent):
+
+| ETF | Macro | N | Sub-K | Silhouette | Sub-Sizes | Reason |
+|-----|-------|---|-------|------------|-----------|--------|
+| **300ETF** | Macro 0 (Neutral) | 1,814 | 2 | 0.352 | 966 / 848 | ✅ silhouette best |
+| **300ETF** | Macro 1 (AM-Up Rally) | 502 | 2 | 0.527 | 418 / 84 | ✅ silhouette best |
+| **300ETF** | Macro 2 (Selloff AM-Down) | 466 | 1 | — | 466 | ⚠ degenerate_split (smallest=38<50) |
+| **50ETF** | Macro 0 (Neutral) | 1,738 | 2 | 0.349 | 946 / 792 | ✅ silhouette best |
+| **50ETF** | Macro 1 (AM-Up Rally) | 435 | 2 | 0.543 | 367 / 68 | ✅ silhouette best |
+| **50ETF** | Macro 2 (AM-Down Selloff) | 608 | 2 | 0.631 | 63 / 545 | ✅ silhouette best |
+| **500ETF** | Macro 0 (Neutral) | 1,895 | 2 | 0.371 | 931 / 964 | ✅ silhouette best |
+| **500ETF** | Macro 1 (Selloff AM-Down) | 389 | 1 | — | 389 | ⚠ degenerate_split (smallest=24<50) |
+| **500ETF** | Macro 2 (AM-Up Rally) | 497 | 2 | 0.580 | 426 / 71 | ✅ silhouette best |
+| **588000ETF** | Macro 0 (Neutral) | 745 | 2 | 0.347 | 383 / 362 | ✅ silhouette best |
+| **588000ETF** | Macro 1 (AM-Up Rally) | 214 | 1 | — | 214 | ⚠ degenerate_split (smallest=31<50) |
+| **588000ETF** | Macro 2 (AM-Down Selloff) | 394 | 2 | 0.523 | 322 / 72 | ✅ silhouette best |
+| **159915ETF** | Macro 0 (AM-Up Rally) | 544 | 2 | 0.511 | 444 / 100 | ✅ silhouette best |
+| **159915ETF** | Macro 1 (AM-Down Selloff) | 530 | 1 | — | 530 | ⚠ degenerate_split (smallest=17<53) |
+| **159915ETF** | Macro 2 (Neutral) | 1,707 | 2 | 0.359 | 742 / 965 | ✅ silhouette best |
+
+> **Size Guard**: Macro clusters where the smallest sub-type had fewer than 50 days (or <10% of parent) were collapsed to K=1. These were typically small outlier pockets, not genuine sub-types.
 
 ### 4.4 K Selection Scorecard (300ETF)
 
@@ -114,19 +139,19 @@ Composite score prefers K=4, but we **fix K=3** (Rally/Selloff/Neutral) for the 
 
 | K | Silhouette | Calinski-Harabasz | Davies-Bouldin | Gap | BIC | Composite |
 |---|------------|-------------------|----------------|-----|-----|-----------|
-| 3 | 0.396 | 1746 | 0.880 | 2.931 | -157514 | 0.612 |
-| **4** | 0.357 | 1707 | 0.880 | 2.968 | -157535 | 0.637 |
-| 5 | 0.324 | 1630 | 0.917 | 3.025 | -157257 | deg. |
-| 6 | 0.304 | 1541 | 0.901 | 3.065 | -156992 | deg. |
-| 7 | 0.299 | 1497 | 0.842 | 3.103 | -156712 | deg. |
-| 8 | 0.275 | 1480 | 0.920 | 3.134 | -156534 | deg. |
-| 9 | 0.240 | 1413 | 1.011 | 3.132 | -156215 | deg. |
-| 10 | 0.233 | 1341 | 1.077 | 3.126 | -155977 | deg. |
-| 11 | 0.211 | 1284 | 1.118 | 3.127 | -155782 | deg. |
-| 12 | 0.215 | 1232 | 1.149 | 3.137 | -155493 | deg. |
-| 13 | 0.195 | 1176 | 1.176 | 3.140 | -155225 | deg. |
+| 3 | 0.400 | 1746 | 0.880 | 2.931 | -157514 | 0.612 |
+| **4** | 0.355 | 1707 | 0.880 | 2.968 | -157535 | 0.637 |
+| 5 | 0.326 | 1630 | 0.917 | 3.025 | -157257 | deg. |
+| 6 | 0.309 | 1541 | 0.901 | 3.065 | -156992 | deg. |
+| 7 | 0.301 | 1497 | 0.842 | 3.103 | -156712 | deg. |
+| 8 | 0.276 | 1480 | 0.920 | 3.134 | -156534 | deg. |
+| 9 | 0.243 | 1413 | 1.011 | 3.132 | -156215 | deg. |
+| 10 | 0.237 | 1341 | 1.077 | 3.126 | -155977 | deg. |
+| 11 | 0.219 | 1284 | 1.118 | 3.127 | -155782 | deg. |
+| 12 | 0.218 | 1232 | 1.149 | 3.137 | -155493 | deg. |
+| 13 | 0.193 | 1176 | 1.176 | 3.140 | -155225 | deg. |
 | 14 | 0.206 | 1129 | 1.132 | 3.140 | -154919 | deg. |
-| 15 | 0.209 | 1096 | 1.140 | 3.149 | -154623 | deg. |
+| 15 | 0.207 | 1096 | 1.140 | 3.149 | -154623 | deg. |
 
 ![K Selection Scorecard — 300ETF](plots/cluster_k_selection_300ETF.png)
 
@@ -197,9 +222,9 @@ Day types discovered across all ETFs (auto-profiled by z-score deviation):
 
 | Metric | Value |
 |--------|-------|
-| Mean ANOVA F | 276.96 |
-| Total Mutual Information | 3.700 |
-| Unique Auto-Names | 5/6 |
+| Mean ANOVA F | 255.93 |
+| Total Mutual Information | 3.488 |
+| Unique Auto-Names | 4/5 |
 
 **Sub-cluster auto-names:**
 
@@ -207,8 +232,7 @@ Day types discovered across all ETFs (auto-profiled by z-score deviation):
 - 0.1: **Neutral**
 - 1.0: **AM-Up Rally**
 - 1.1: **Strong-Rally Rally**
-- 2.0: **Deep-DD High-Range**
-- 2.1: **AM-Down Selloff**
+- 2.0: **Selloff AM-Down**
 
 ![Sub-Cluster Z-Score Heatmap — 300ETF](plots/cluster_zscore_heatmap_300ETF_sub.png)
 
@@ -226,11 +250,11 @@ first_bar_return, first_bar_volume, early_vwap_dev, early_skew, early_kurtosis.
 
 | ETF | Majority Baseline | Gap-Only | LightGBM | XGBoost | **Neural Net** |
 |-----|-------------------|----------|----------|---------|----------------|
-| **300ETF** | 65.2% | 54.8% | 84.0% | 84.5% | **85.0%** |
-| **50ETF** | 62.5% | 53.3% | 86.0% | 86.1% | **86.4%** |
-| **500ETF** | 68.1% | 58.5% | 86.0% | 86.4% | **86.9%** |
+| **300ETF** | 65.2% | 54.8% | 84.0% | 84.5% | **85.1%** |
+| **50ETF** | 62.5% | 53.3% | 86.0% | 86.1% | **87.1%** |
+| **500ETF** | 68.1% | 58.5% | 86.0% | 86.4% | **87.2%** |
 | **588000ETF** | 55.1% | 43.7% | 84.1% | 84.9% | **85.9%** |
-| **159915ETF** | 61.4% | 27.6% | 85.4% | 85.6% | **86.2%** |
+| **159915ETF** | 61.4% | 27.6% | 85.4% | 85.6% | **86.4%** |
 
 ### 6.2 Confusion Matrix (300ETF)
 
@@ -242,21 +266,21 @@ Returns conditional on predicted cluster. **Optimal direction** assumes ability 
 
 | ETF | Cluster | Days | Long Return | Long Sharpe | Dir | Opt Return | Opt Sharpe |
 |-----|---------|------|-------------|-------------|-----|------------|------------|
-| **300ETF** | ⚪ Neutral | 1,867 | +0.012% | +0.28 | ↗ long | +0.012% | +0.28 |
-| **300ETF** | 🟢 AM-Up Rally | 465 | +0.088% | +1.33 | ↗ long | +0.088% | +1.33 |
-| **300ETF** | 🔴 Selloff AM-Down | 449 | -0.030% | -0.46 | ↗ long | -0.030% | -0.46 |
-| **50ETF** | ⚪ Neutral | 1,787 | -0.005% | -0.11 | ↗ long | -0.005% | -0.11 |
-| **50ETF** | 🟢 AM-Up Rally | 404 | +0.105% | +1.53 | ↗ long | +0.105% | +1.53 |
-| **50ETF** | ⚪ AM-Down Selloff | 589 | -0.013% | -0.22 | ↗ long | -0.013% | -0.22 |
-| **500ETF** | ⚪ Neutral | 1,940 | +0.023% | +0.47 | ↗ long | +0.023% | +0.47 |
-| **500ETF** | 🔴 Selloff AM-Down | 366 | -0.174% | -2.01 | ↗ long | -0.174% | -2.01 |
-| **500ETF** | 🟢 AM-Up Rally | 474 | +0.162% | +1.93 | ↗ long | +0.162% | +1.93 |
-| **588000ETF** | 🔴 Neutral | 756 | -0.019% | -0.38 | ↗ long | -0.019% | -0.38 |
-| **588000ETF** | 🟢 AM-Up Rally | 209 | +0.185% | +2.07 | ↗ long | +0.185% | +2.07 |
-| **588000ETF** | 🔴 AM-Down Selloff | 387 | -0.178% | -2.68 | ↗ long | -0.178% | -2.68 |
-| **159915ETF** | 🟢 AM-Up Rally | 529 | +0.206% | +2.30 | ↗ long | +0.206% | +2.30 |
-| **159915ETF** | 🔴 AM-Down Selloff | 521 | -0.156% | -1.82 | ↗ long | -0.156% | -1.82 |
-| **159915ETF** | 🔴 Neutral | 1,730 | -0.024% | -0.39 | ↗ long | -0.024% | -0.39 |
+| **300ETF** | ⚪ Neutral | 1,885 | -0.005% | -0.12 | ↗ long | -0.005% | -0.12 |
+| **300ETF** | 🟢 AM-Up Rally | 460 | +0.133% | +2.06 | ↗ long | +0.133% | +2.06 |
+| **300ETF** | ⚪ Selloff AM-Down | 436 | -0.003% | -0.05 | ↗ long | -0.003% | -0.05 |
+| **50ETF** | ⚪ Neutral | 1,784 | -0.004% | -0.10 | ↗ long | -0.004% | -0.10 |
+| **50ETF** | 🟢 AM-Up Rally | 406 | +0.109% | +1.60 | ↗ long | +0.109% | +1.60 |
+| **50ETF** | ⚪ AM-Down Selloff | 590 | -0.018% | -0.30 | ↗ long | -0.018% | -0.30 |
+| **500ETF** | ⚪ Neutral | 1,938 | +0.021% | +0.43 | ↗ long | +0.021% | +0.43 |
+| **500ETF** | 🔴 Selloff AM-Down | 373 | -0.159% | -1.89 | ↗ long | -0.159% | -1.89 |
+| **500ETF** | 🟢 AM-Up Rally | 469 | +0.160% | +1.89 | ↗ long | +0.160% | +1.89 |
+| **588000ETF** | 🔴 Neutral | 748 | -0.023% | -0.45 | ↗ long | -0.023% | -0.45 |
+| **588000ETF** | 🟢 AM-Up Rally | 216 | +0.183% | +2.09 | ↗ long | +0.183% | +2.09 |
+| **588000ETF** | 🔴 AM-Down Selloff | 388 | -0.172% | -2.63 | ↗ long | -0.172% | -2.63 |
+| **159915ETF** | 🟢 AM-Up Rally | 540 | +0.206% | +2.30 | ↗ long | +0.206% | +2.30 |
+| **159915ETF** | 🔴 AM-Down Selloff | 535 | -0.160% | -1.85 | ↗ long | -0.160% | -1.85 |
+| **159915ETF** | 🔴 Neutral | 1,705 | -0.024% | -0.38 | ↗ long | -0.024% | -0.38 |
 
 ### 6.4 Profitability Breakdown
 
@@ -266,7 +290,8 @@ Returns conditional on predicted cluster. **Optimal direction** assumes ability 
 
 ### 6.5 Level-2 Sub-Cluster Prediction
 
-Within each macro type, a LightGBM classifier predicts the sub-variant (conditional on Level-1 macro prediction):
+Within each macro type that has ≥2 sub-types, a LightGBM classifier predicts the sub-variant (conditional on Level-1 macro prediction).
+Macro clusters collapsed to K=1 by the size guard are marked '—' (no prediction needed).
 
 | ETF | Macro Type | Sub-Types | Acc | F1 | Sub | Days | PM Ret | Sharpe |
 |-----|-----------|-----------|-----|----|-----|------|--------|--------|
@@ -274,8 +299,7 @@ Within each macro type, a LightGBM classifier predicts the sub-variant (conditio
 | | | | | | 0.1 | 850 | -0.127% | 🔴 -3.01 |
 | **300ETF** | Macro 1 | 2 | 0.9162 | 0.8422 | 1.0 | 427 | +0.492% | 🟢 +8.73 |
 | | | | | | 1.1 | 74 | +0.414% | 🟢 +5.57 |
-| **300ETF** | Macro 2 | 2 | 0.9378 | 0.7456 | 2.0 | 23 | -0.260% | 🔴 -2.79 |
-| | | | | | 2.1 | 443 | -0.468% | 🔴 -7.25 |
+| **300ETF** | Macro 2 | 1 | — | — | — | 466 | — | ⚪ K=1 (no split) |
 | **50ETF** | Macro 0 | 2 | 0.8205 | 0.8191 | 0.0 | 944 | +0.133% | 🟢 +3.59 |
 | | | | | | 0.1 | 794 | -0.124% | 🔴 -3.70 |
 | **50ETF** | Macro 1 | 2 | 0.9078 | 0.8213 | 1.0 | 370 | +0.482% | 🟢 +7.98 |
@@ -284,22 +308,19 @@ Within each macro type, a LightGBM classifier predicts the sub-variant (conditio
 | | | | | | 2.1 | 562 | -0.309% | 🔴 -5.70 |
 | **500ETF** | Macro 0 | 2 | 0.8189 | 0.8189 | 0.0 | 933 | -0.138% | 🔴 -2.85 |
 | | | | | | 0.1 | 961 | +0.170% | 🟢 +3.70 |
-| **500ETF** | Macro 1 | 2 | 0.9666 | 0.8400 | 1.0 | 370 | -0.610% | 🔴 -8.47 |
-| | | | | | 1.1 | 19 | -0.309% | 🔴 -2.02 |
 | **500ETF** | Macro 2 | 2 | 0.9195 | 0.8275 | 2.0 | 434 | +0.552% | 🟢 +9.06 |
 | | | | | | 2.1 | 63 | +0.230% | 🟢 +1.59 |
+| **500ETF** | Macro 1 | 1 | — | — | — | 389 | — | ⚪ K=1 (no split) |
 | **588000ETF** | Macro 0 | 2 | 0.8081 | 0.8079 | 0.0 | 386 | +0.237% | 🟢 +4.65 |
 | | | | | | 0.1 | 359 | -0.157% | 🔴 -3.45 |
-| **588000ETF** | Macro 1 | 2 | 0.8925 | 0.7601 | 1.0 | 190 | +0.480% | 🟢 +6.07 |
-| | | | | | 1.1 | 24 | +0.481% | 🟢 +3.50 |
 | **588000ETF** | Macro 2 | 2 | 0.8880 | 0.8021 | 2.0 | 330 | -0.485% | 🔴 -9.38 |
 | | | | | | 2.1 | 63 | -0.355% | 🔴 -4.60 |
+| **588000ETF** | Macro 1 | 1 | — | — | — | 214 | — | ⚪ K=1 (no split) |
 | **159915ETF** | Macro 0 | 2 | 0.9044 | 0.8314 | 0.0 | 458 | +0.620% | 🟢 +7.64 |
 | | | | | | 0.1 | 86 | +0.306% | 🟢 +2.35 |
-| **159915ETF** | Macro 1 | 2 | 0.9811 | 0.8481 | 1.0 | 513 | -0.600% | 🔴 -7.49 |
-| | | | | | 1.1 | 17 | -0.421% | 🔴 -2.83 |
 | **159915ETF** | Macro 2 | 2 | 0.8353 | 0.8323 | 2.0 | 735 | -0.171% | 🔴 -3.04 |
 | | | | | | 2.1 | 971 | +0.120% | 🟢 +2.20 |
+| **159915ETF** | Macro 1 | 1 | — | — | — | 530 | — | ⚪ K=1 (no split) |
 
 ### 6.6 Additional Confusion Matrices
 
@@ -331,9 +352,9 @@ We compare three strategies per predicted cluster: (A) hold long full day, (B) c
 
 | Cluster | Full-Day Sharpe | AM-Only Sharpe | AM+Short PM Sharpe | Best Action |
 |---------|-----------------|----------------|--------------------|-------------|
-| C0 | +0.95 | +1.13 | +0.70 | **1.13** (+1.13) |
-| C1 | +0.07 | +0.34 | +0.44 | **0.44** (+0.44) |
-| C2 | -0.45 | -0.31 | +0.02 | **0.02** (+0.02) |
+| C0 | +1.07 | +1.09 | +0.53 | **1.09** (+1.09) |
+| C1 | +0.04 | +0.53 | +0.75 | **0.75** (+0.75) |
+| C2 | -0.87 | -0.47 | +0.21 | **0.21** (+0.21) |
 
 ![Lunch Strategy Comparison — 300ETF](plots/lunch_strategy_300ETF.png)
 
@@ -395,7 +416,7 @@ Can patterns learned from one ETF transfer to another?
 
 | Claim | Evidence |
 |-------|---------|
-| ✅ Multiple day types emerge | K=3 macro types + 2-3 sub-types per macro (hierarchical) |
+| ✅ Multiple day types emerge | K=3 macro types + 2 sub-types per split macro (K=1 size guard for degenerate) |
 | ✅ Universal across broad-market ETFs | 300/50/588000 transfer at 80-86% (macro level) |
 | ✅ ETF-specific for sector ETFs | 159915 patterns transfer at only 6-20% |
 | ⚠️ Continuous spectrum | Macro boundaries cleaner than flat K=4; sub-types remain fuzzy |
@@ -430,6 +451,7 @@ Can patterns learned from one ETF transfer to another?
 
 - Macro boundaries still fuzzy (continuous spectrum, but cleaner than flat K=4)
 - Sub-cluster types have lower discrimination (within-macro variance is high)
+- Sub-clustering uses size guard (K=1 for degenerate splits); some macro types have no meaningful sub-structure
 - Bootstrap stability is low (patterns not perfectly reproducible)
 - Transaction costs **not** included in profitability proxy
 - Slippage and market impact not modeled

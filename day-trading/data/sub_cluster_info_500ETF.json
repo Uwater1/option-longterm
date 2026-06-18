@@ -4,20 +4,21 @@
     "0": {
       "n_days": 1895,
       "sub_k": 2,
-      "silhouette": 0.37123798258211377,
+      "silhouette": 0.3712379825821138,
       "sub_sizes": {
         "0.0": 931,
         "0.1": 964
-      }
+      },
+      "reason": "silhouette_best"
     },
     "1": {
       "n_days": 389,
-      "sub_k": 2,
-      "silhouette": 0.7391294412248668,
+      "sub_k": 1,
+      "silhouette": null,
       "sub_sizes": {
-        "1.0": 365,
-        "1.1": 24
-      }
+        "1.0": 389
+      },
+      "reason": "degenerate_split (smallest=24<50)"
     },
     "2": {
       "n_days": 497,
@@ -26,7 +27,8 @@
       "sub_sizes": {
         "2.0": 426,
         "2.1": 71
-      }
+      },
+      "reason": "silhouette_best"
     }
   },
   "etf": "500ETF"
