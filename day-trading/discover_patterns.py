@@ -34,6 +34,7 @@ ETF_NAMES = ['300ETF', '50ETF', '500ETF', '588000ETF', '159915ETF']
 PRIMARY_ETF = '300ETF'
 
 OUTPUT_DIR = Path(__file__).resolve().parent
+DATA_DIR = OUTPUT_DIR / 'data'
 PLOTS_DIR = OUTPUT_DIR / 'plots'
 MODELS_DIR = OUTPUT_DIR / 'models'
 
@@ -334,8 +335,8 @@ def process_etf(etf_name):
     print('='*60)
     
     # Load data
-    paths_npz = np.load(OUTPUT_DIR / f'paths_{etf_name}.npz')
-    features_df = pd.read_csv(OUTPUT_DIR / f'features_{etf_name}.csv', index_col='date', parse_dates=True)
+    paths_npz = np.load(DATA_DIR / f'paths_{etf_name}.npz')
+    features_df = pd.read_csv(DATA_DIR / f'features_{etf_name}.csv', index_col='date', parse_dates=True)
     
     price_curves = paths_npz['price']
     
@@ -357,7 +358,7 @@ def process_etf(etf_name):
     # Save embeddings
     for name, emb in embeddings.items():
         pd.DataFrame(emb, index=features_df.index).to_csv(
-            OUTPUT_DIR / f'embeddings_{etf_name}_{name}.csv'
+            DATA_DIR / f'embeddings_{etf_name}_{name}.csv'
         )
     
     # ---- CLUSTERING ----
@@ -389,7 +390,7 @@ def process_etf(etf_name):
             
             # Save cluster labels
             pd.DataFrame({'date': features_df.index, 'cluster': labels}).to_csv(
-                OUTPUT_DIR / f'clusters_{etf_name}_{key}.csv', index=False
+                DATA_DIR / f'clusters_{etf_name}_{key}.csv', index=False
             )
     
     # ---- QUALITY COMPARISON ----

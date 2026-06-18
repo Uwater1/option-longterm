@@ -1,7 +1,7 @@
 # Price Action Day-Type Discovery Research
 
 ### A-Share ETF Intraday Pattern Analysis
-*Generated: 2026-06-18 12:45:46*
+*Generated: 2026-06-18 13:09:32*
 
 ---
 

@@ -27,6 +27,7 @@ import seaborn as sns
 ETF_NAMES = ['300ETF', '50ETF', '500ETF', '588000ETF', '159915ETF']
 
 OUTPUT_DIR = Path(__file__).resolve().parent
+DATA_DIR = OUTPUT_DIR / 'data'
 PLOTS_DIR = OUTPUT_DIR / 'plots'
 MODELS_DIR = OUTPUT_DIR / 'models'
 
@@ -40,18 +41,18 @@ def extract_early_features(etf_name):
     """Extract features available at 10:00 AM (first 6 bars)"""
     
     # Load paths
-    paths_npz = np.load(OUTPUT_DIR / f'paths_{etf_name}.npz', allow_pickle=True)
+    paths_npz = np.load(DATA_DIR / f'paths_{etf_name}.npz', allow_pickle=True)
     price_curves = paths_npz['price']
     volume_curves = paths_npz['volume']
     return_curves = paths_npz['returns']
     dates = pd.to_datetime(paths_npz['dates'])
     
     # Load features
-    features_df = pd.read_csv(OUTPUT_DIR / f'features_{etf_name}.csv', 
+    features_df = pd.read_csv(DATA_DIR / f'features_{etf_name}.csv',
                               index_col='date', parse_dates=True)
     
     # Load cluster labels
-    cluster_file = OUTPUT_DIR / f'clusters_{etf_name}_kmeans_pca.csv'
+    cluster_file = DATA_DIR / f'clusters_{etf_name}_kmeans_pca.csv'
     if not cluster_file.exists():
         return None, None, None
     
@@ -416,7 +417,7 @@ def main():
         print(f"  {etf_name}: {best_model} = {best_acc:.4f} (baseline: {baseline:.4f})")
     
     # Save detailed results
-    with open(OUTPUT_DIR / 'early_prediction_results.txt', 'w') as f:
+    with open(DATA_DIR / 'early_prediction_results.txt', 'w') as f:
         f.write("Early Prediction Results (First 30 Minutes)\n")
         f.write("="*60 + "\n\n")
         

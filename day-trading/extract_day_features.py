@@ -20,6 +20,7 @@ ETF_CONFIG = {
 
 DATA_DIR = Path(__file__).resolve().parent.parent / 'data'
 OUTPUT_DIR = Path(__file__).resolve().parent
+OUT_DATA_DIR = OUTPUT_DIR / 'data'
 
 
 def load_data(etf_name):
@@ -266,12 +267,12 @@ def process_etf(etf_name):
     df_features = pd.DataFrame(all_features)
     df_features = df_features.set_index('date')
     
-    out_csv = OUTPUT_DIR / f'features_{etf_name}.csv'
+    out_csv = OUT_DATA_DIR / f'features_{etf_name}.csv'
     df_features.to_csv(out_csv)
     print(f"  Saved: {out_csv} ({len(df_features)} rows, {len(df_features.columns)} features)")
     
     # Save paths NPZ
-    out_npz = OUTPUT_DIR / f'paths_{etf_name}.npz'
+    out_npz = OUT_DATA_DIR / f'paths_{etf_name}.npz'
     np.savez(
         out_npz,
         price=np.array(all_paths_price),
@@ -289,7 +290,7 @@ def process_etf(etf_name):
 
 
 def main():
-    OUTPUT_DIR.mkdir(exist_ok=True)
+    OUT_DATA_DIR.mkdir(exist_ok=True)
     
     print("Day-Type Discovery: Feature Extraction")
     print("=" * 60)
