@@ -85,7 +85,8 @@ def cusum_on_avg_curve(price_curves):
     boot_stats = []
     for _ in range(n_boot):
         rng = np.random.RandomState(_)
-        shuffled = rng.permutation(price_curves, axis=0)
+        idx = rng.permutation(price_curves.shape[0])
+        shuffled = price_curves[idx]
         avg_shuf = shuffled.mean(axis=0)
         cusum_shuf = np.cumsum(avg_shuf - avg_shuf.mean())
         boot_stats.append(float(np.abs(cusum_shuf).max()))
