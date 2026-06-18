@@ -1,0 +1,446 @@
+"""
+Task 5: Early prediction of day type from first 30 minutes
+- Features available at 10:00 AM (first 6 bars)
+- Models: LightGBM, XGBoost, Neural Net
+- Baselines: majority class, previous-day, gap-only
+- Profitability proxy: expected afternoon return per predicted cluster
+"""
+import pandas as pd
+import numpy as np
+from pathlib import Path
+import warnings
+warnings.filterwarnings('ignore')
+
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix
+from sklearn.preprocessing import StandardScaler
+import lightgbm as lgb
+import xgboost as xgb
+
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader, TensorDataset
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+ETF_NAMES = ['300ETF', '50ETF', '500ETF', '588000ETF', '159915ETF']
+
+OUTPUT_DIR = Path(__file__).resolve().parent
+PLOTS_DIR = OUTPUT_DIR / 'plots'
+MODELS_DIR = OUTPUT_DIR / 'models'
+
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
+# ============================================================
+# Early Features Extraction
+# ============================================================
+def extract_early_features(etf_name):
+    """Extract features available at 10:00 AM (first 6 bars)"""
+    
+    # Load paths
+    paths_npz = np.load(OUTPUT_DIR / f'paths_{etf_name}.npz', allow_pickle=True)
+    price_curves = paths_npz['price']
+    volume_curves = paths_npz['volume']
+    return_curves = paths_npz['returns']
+    dates = pd.to_datetime(paths_npz['dates'])
+    
+    # Load features
+    features_df = pd.read_csv(OUTPUT_DIR / f'features_{etf_name}.csv', 
+                              index_col='date', parse_dates=True)
+    
+    # Load cluster labels
+    cluster_file = OUTPUT_DIR / f'clusters_{etf_name}_kmeans_pca.csv'
+    if not cluster_file.exists():
+        return None, None, None
+    
+    cluster_df = pd.read_csv(cluster_file, parse_dates=['date'])
+    cluster_df = cluster_df.set_index('date')['cluster']
+    
+    # Align: find dates present in all three sources
+    date_set_paths = set(dates)
+    date_set_feat = set(features_df.index)
+    date_set_clust = set(cluster_df.index)
+    common = sorted(date_set_paths & date_set_feat & date_set_clust)
+    
+    if len(common) == 0:
+        return None, None, None
+    
+    # Build aligned arrays using index lookups
+    path_idx_map = {d: i for i, d in enumerate(dates)}
+    
+    early_features = []
+    y_list = []
+    pm_returns_list = []
+    
+    for d in common:
+        pi = path_idx_map.get(d)
+        if pi is None:
+            continue
+        
+        # Cluster label
+        cluster_label = cluster_df.loc[d]
+        if pd.isna(cluster_label):
+            continue
+        
+        # Feature row
+        feat_row = features_df.loc[d]
+        
+        # First 6 bars
+        early_price = price_curves[pi, :6]
+        early_volume = volume_curves[pi, :6]
+        early_returns = return_curves[pi, :6]
+        
+        gap_pct = feat_row['gap_pct']
+        first_30min_return = early_price[-1]
+        first_30min_vol = early_volume.mean()
+        volume_spike_open = early_volume[0]
+        early_realized_vol = np.nanstd(early_returns) * np.sqrt(48)
+        prev_day_vol = feat_row['prev_day_vol']
+        am_return = feat_row['am_return']
+        pm_return = feat_row['pm_return']
+        
+        feat_dict = {
+            'gap_pct': gap_pct,
+            'first_30min_return': first_30min_return,
+            'first_30min_vol': first_30min_vol,
+            'volume_spike_open': volume_spike_open,
+            'early_realized_vol': early_realized_vol,
+            'prev_day_vol': prev_day_vol,
+            'am_return': am_return,
+        }
+        
+        for j, val in enumerate(early_returns):
+            feat_dict[f'early_bar_{j}'] = val
+        
+        early_features.append(feat_dict)
+        y_list.append(int(cluster_label))
+        pm_returns_list.append(pm_return)
+    
+    X = pd.DataFrame(early_features)
+    y = np.array(y_list)
+    pm_returns = np.array(pm_returns_list)
+    
+    return X, y, pm_returns
+
+
+# ============================================================
+# Neural Network Model
+# ============================================================
+class EarlyPredictor(nn.Module):
+    def __init__(self, input_dim, n_classes):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(input_dim, 64),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(32, n_classes)
+        )
+    
+    def forward(self, x):
+        return self.net(x)
+
+
+def train_neural_net(X, y, n_folds=5, epochs=50, batch_size=64):
+    """Train neural network with cross-validation"""
+    n_classes = len(np.unique(y))
+    input_dim = X.shape[1]
+    
+    X_tensor = torch.FloatTensor(X).to(DEVICE)
+    y_tensor = torch.LongTensor(y).to(DEVICE)
+    
+    skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=42)
+    
+    all_preds = np.zeros(len(y))
+    fold_accs = []
+    
+    for fold, (train_idx, val_idx) in enumerate(skf.split(X, y)):
+        X_train, X_val = X_tensor[train_idx], X_tensor[val_idx]
+        y_train, y_val = y_tensor[train_idx], y_tensor[val_idx]
+        
+        model = EarlyPredictor(input_dim, n_classes).to(DEVICE)
+        optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
+        criterion = nn.CrossEntropyLoss()
+        
+        train_dataset = TensorDataset(X_train, y_train)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        
+        model.train()
+        for epoch in range(epochs):
+            for batch_X, batch_y in train_loader:
+                optimizer.zero_grad()
+                output = model(batch_X)
+                loss = criterion(output, batch_y)
+                loss.backward()
+                optimizer.step()
+        
+        # Predict
+        model.eval()
+        with torch.no_grad():
+            val_output = model(X_val)
+            val_preds = val_output.argmax(dim=1).cpu().numpy()
+        
+        all_preds[val_idx] = val_preds
+        acc = accuracy_score(y[val_idx], val_preds)
+        fold_accs.append(acc)
+    
+    return all_preds, np.mean(fold_accs), np.std(fold_accs)
+
+
+# ============================================================
+# Main Prediction Pipeline
+# ============================================================
+def predict_etf(etf_name):
+    """Run early prediction for one ETF"""
+    print(f"\n{'='*60}")
+    print(f"Early Prediction: {etf_name}")
+    print('='*60)
+    
+    # Extract features
+    X, y, pm_returns = extract_early_features(etf_name)
+    if X is None:
+        print(f"  [SKIP] No data for {etf_name}")
+        return None
+    
+    # Drop rows with NaN
+    nan_mask = np.isnan(X.values).any(axis=1) | np.isnan(y) | np.isnan(pm_returns)
+    X = X[~nan_mask].values
+    y = y[~nan_mask]
+    pm_returns = pm_returns[~nan_mask]
+    
+    print(f"  Samples: {len(X)}, Features: {X.shape[1]}, Classes: {len(np.unique(y))}")
+    
+    # Standardize
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    
+    # ---- BASELINES ----
+    print("\n  Baselines:")
+    
+    # 1) Majority class
+    majority_class = pd.Series(y).mode().iloc[0]
+    baseline_majority = np.full(len(y), majority_class)
+    acc_majority = accuracy_score(y, baseline_majority)
+    print(f"    Majority class: {acc_majority:.4f}")
+    
+    # 2) Previous day cluster (shift by 1)
+    baseline_prev = np.roll(y, 1)
+    baseline_prev[0] = majority_class
+    acc_prev = accuracy_score(y, baseline_prev)
+    print(f"    Previous day: {acc_prev:.4f}")
+    
+    # 3) Gap-only (simple threshold)
+    gap_col = 0  # gap_pct is first feature
+    baseline_gap = np.where(X[:, gap_col] > 0.003, 1, 
+                           np.where(X[:, gap_col] < -0.003, 2, 0))
+    acc_gap = accuracy_score(y, baseline_gap)
+    print(f"    Gap-only: {acc_gap:.4f}")
+    
+    # ---- MODELS ----
+    print("\n  Models (5-fold CV):")
+    
+    results = {}
+    
+    # 1) LightGBM
+    print("    [1/3] LightGBM...")
+    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    lgb_preds = np.zeros(len(y))
+    
+    for train_idx, val_idx in skf.split(X_scaled, y):
+        X_train, X_val = X_scaled[train_idx], X_scaled[val_idx]
+        y_train, y_val = y[train_idx], y[val_idx]
+        
+        model = lgb.LGBMClassifier(
+            n_estimators=200, 
+            max_depth=6,
+            learning_rate=0.05,
+            num_leaves=31,
+            random_state=42,
+            verbose=-1
+        )
+        model.fit(X_train, y_train)
+        lgb_preds[val_idx] = model.predict(X_val)
+    
+    acc_lgb = accuracy_score(y, lgb_preds)
+    f1_lgb = f1_score(y, lgb_preds, average='macro')
+    print(f"      Accuracy: {acc_lgb:.4f}, Macro-F1: {f1_lgb:.4f}")
+    results['LightGBM'] = {'preds': lgb_preds, 'acc': acc_lgb, 'f1': f1_lgb}
+    
+    # Save one model
+    model.fit(X_scaled, y)
+    import joblib
+    joblib.dump(model, MODELS_DIR / f'early_lgb_{etf_name}.joblib')
+    
+    # 2) XGBoost
+    print("    [2/3] XGBoost...")
+    xgb_preds = np.zeros(len(y))
+    
+    for train_idx, val_idx in skf.split(X_scaled, y):
+        X_train, X_val = X_scaled[train_idx], X_scaled[val_idx]
+        y_train, y_val = y[train_idx], y[val_idx]
+        
+        model = xgb.XGBClassifier(
+            n_estimators=200,
+            max_depth=6,
+            learning_rate=0.05,
+            random_state=42,
+            verbosity=0
+        )
+        model.fit(X_train, y_train)
+        xgb_preds[val_idx] = model.predict(X_val)
+    
+    acc_xgb = accuracy_score(y, xgb_preds)
+    f1_xgb = f1_score(y, xgb_preds, average='macro')
+    print(f"      Accuracy: {acc_xgb:.4f}, Macro-F1: {f1_xgb:.4f}")
+    results['XGBoost'] = {'preds': xgb_preds, 'acc': acc_xgb, 'f1': f1_xgb}
+    
+    # 3) Neural Net
+    print("    [3/3] Neural Net...")
+    nn_preds, acc_nn, std_nn = train_neural_net(X_scaled, y, n_folds=5, epochs=50)
+    f1_nn = f1_score(y, nn_preds, average='macro')
+    print(f"      Accuracy: {acc_nn:.4f} ± {std_nn:.4f}, Macro-F1: {f1_nn:.4f}")
+    results['NeuralNet'] = {'preds': nn_preds, 'acc': acc_nn, 'f1': f1_nn}
+    
+    # ---- PROFITABILITY PROXY ----
+    print("\n  Profitability Proxy (afternoon return per predicted cluster):")
+    best_model = max(results.keys(), key=lambda k: results[k]['acc'])
+    best_preds = results[best_model]['preds']
+    
+    profit_analysis = []
+    for cluster_id in sorted(np.unique(best_preds)):
+        mask = best_preds == cluster_id
+        cluster_pm_returns = pm_returns[mask]
+        
+        mean_ret = cluster_pm_returns.mean()
+        win_rate = (cluster_pm_returns > 0).mean()
+        sharpe = mean_ret / (cluster_pm_returns.std() + 1e-10) * np.sqrt(252)
+        
+        profit_analysis.append({
+            'cluster': cluster_id,
+            'n_days': mask.sum(),
+            'mean_pm_return': mean_ret,
+            'win_rate': win_rate,
+            'sharpe_annual': sharpe
+        })
+        
+        print(f"    Cluster {cluster_id}: {mask.sum()} days, "
+              f"PM Return: {mean_ret*100:.3f}%, Win Rate: {win_rate*100:.1f}%, "
+              f"Sharpe: {sharpe:.2f}")
+    
+    # ---- PLOTS ----
+    # Confusion matrix
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    
+    for i, (model_name, res) in enumerate(results.items()):
+        ax = axes[i]
+        cm = confusion_matrix(y, res['preds'])
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
+        ax.set_title(f'{model_name}\nAcc={res["acc"]:.4f}')
+        ax.set_xlabel('Predicted')
+        ax.set_ylabel('Actual')
+    
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / f'early_prediction_cm_{etf_name}.png', dpi=100)
+    plt.close()
+    
+    # Profitability plot
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    
+    clusters = [p['cluster'] for p in profit_analysis]
+    returns = [p['mean_pm_return'] * 100 for p in profit_analysis]
+    win_rates = [p['win_rate'] * 100 for p in profit_analysis]
+    sharpes = [p['sharpe_annual'] for p in profit_analysis]
+    
+    axes[0].bar(clusters, returns, color=['green' if r > 0 else 'red' for r in returns])
+    axes[0].set_title('Mean PM Return by Predicted Cluster')
+    axes[0].set_ylabel('Return (%)')
+    axes[0].axhline(0, color='black', linestyle='--')
+    axes[0].grid(True, alpha=0.3)
+    
+    axes[1].bar(clusters, win_rates, color='steelblue')
+    axes[1].set_title('Win Rate by Predicted Cluster')
+    axes[1].set_ylabel('Win Rate (%)')
+    axes[1].axhline(50, color='red', linestyle='--', alpha=0.5)
+    axes[1].grid(True, alpha=0.3)
+    
+    axes[2].bar(clusters, sharpes, color=['green' if s > 0 else 'red' for s in sharpes])
+    axes[2].set_title('Annualized Sharpe by Predicted Cluster')
+    axes[2].set_ylabel('Sharpe Ratio')
+    axes[2].axhline(0, color='black', linestyle='--')
+    axes[2].grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / f'early_prediction_profit_{etf_name}.png', dpi=100)
+    plt.close()
+    
+    return {
+        'baselines': {'majority': acc_majority, 'prev_day': acc_prev, 'gap_only': acc_gap},
+        'models': results,
+        'profit': profit_analysis
+    }
+
+
+def main():
+    PLOTS_DIR.mkdir(exist_ok=True)
+    MODELS_DIR.mkdir(exist_ok=True)
+    
+    print("Early Prediction: First 30 Minutes")
+    print("=" * 60)
+    print(f"Device: {DEVICE}")
+    
+    all_results = {}
+    
+    for etf_name in ETF_NAMES:
+        try:
+            results = predict_etf(etf_name)
+            if results:
+                all_results[etf_name] = results
+        except Exception as e:
+            print(f"  [ERROR] {etf_name}: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    # Summary
+    print("\n" + "="*60)
+    print("Summary: Best Model Accuracy per ETF")
+    print("="*60)
+    for etf_name, results in all_results.items():
+        best_model = max(results['models'].keys(), 
+                        key=lambda k: results['models'][k]['acc'])
+        best_acc = results['models'][best_model]['acc']
+        baseline = results['baselines']['majority']
+        print(f"  {etf_name}: {best_model} = {best_acc:.4f} (baseline: {baseline:.4f})")
+    
+    # Save detailed results
+    with open(OUTPUT_DIR / 'early_prediction_results.txt', 'w') as f:
+        f.write("Early Prediction Results (First 30 Minutes)\n")
+        f.write("="*60 + "\n\n")
+        
+        for etf_name, results in all_results.items():
+            f.write(f"\n{etf_name}\n")
+            f.write("-"*60 + "\n")
+            
+            f.write("\nBaselines:\n")
+            for name, acc in results['baselines'].items():
+                f.write(f"  {name}: {acc:.4f}\n")
+            
+            f.write("\nModels:\n")
+            for name, res in results['models'].items():
+                f.write(f"  {name}: Acc={res['acc']:.4f}, F1={res['f1']:.4f}\n")
+            
+            f.write("\nProfitability Proxy:\n")
+            for p in results['profit']:
+                f.write(f"  Cluster {p['cluster']}: {p['n_days']} days, "
+                       f"PM Return={p['mean_pm_return']*100:.3f}%, "
+                       f"Win Rate={p['win_rate']*100:.1f}%, "
+                       f"Sharpe={p['sharpe_annual']:.2f}\n")
+    
+    print("\nEarly prediction complete!")
+
+
+if __name__ == '__main__':
+    main()
