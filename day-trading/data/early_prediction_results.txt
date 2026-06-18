@@ -6,123 +6,168 @@ Early Prediction Results (First 30 Minutes)
 ------------------------------------------------------------
 
 Baselines:
-  majority: 0.4365
-  prev_day: 0.3948
-  gap_only: 0.3315
+  majority: 0.6523
+  prev_day: 0.5023
+  gap_only: 0.5480
 
 Models:
-  LightGBM: Acc=0.8145, F1=0.7574
-  XGBoost: Acc=0.8188, F1=0.7567
-  NeuralNet: Acc=0.8148, F1=0.7568
+  LightGBM: Acc=0.8400, F1=0.7972
+  XGBoost: Acc=0.8454, F1=0.8056
+  NeuralNet: Acc=0.8497, F1=0.8125
 
 Profitability Proxy:
-  Cluster 0.0: 1232 days, PM Return=-0.000%, Win Rate=50.6%, Sharpe=-0.00, Optimal Dir=long, Opt Return=-0.000%, Opt Sharpe=-0.00
-  Cluster 1.0: 229 days, PM Return=0.126%, Win Rate=54.1%, Sharpe=1.61, Optimal Dir=long, Opt Return=0.126%, Opt Sharpe=1.61
-  Cluster 2.0: 77 days, PM Return=-0.241%, Win Rate=39.0%, Sharpe=-3.03, Optimal Dir=long, Opt Return=-0.241%, Opt Sharpe=-3.03
-  Cluster 3.0: 1243 days, PM Return=0.032%, Win Rate=50.4%, Sharpe=0.70, Optimal Dir=long, Opt Return=0.032%, Opt Sharpe=0.70
+  Cluster 0.0: 1867 days, PM Return=0.012%, Win Rate=50.2%, Sharpe=0.28, Optimal Dir=long, Opt Return=0.012%, Opt Sharpe=0.28
+  Cluster 1.0: 465 days, PM Return=0.088%, Win Rate=53.5%, Sharpe=1.33, Optimal Dir=long, Opt Return=0.088%, Opt Sharpe=1.33
+  Cluster 2.0: 449 days, PM Return=-0.030%, Win Rate=48.8%, Sharpe=-0.46, Optimal Dir=long, Opt Return=-0.030%, Opt Sharpe=-0.46
 
 Lunch Strategy:
-  Cluster 0: full_day=1.30 am_only=1.69 am_long_pm_short=1.13 best=am_only(1.69)
-  Cluster 1: full_day=-0.26 am_only=-0.05 am_long_pm_short=0.22 best=am_long_pm_short(0.22)
-  Cluster 2: full_day=-2.50 am_only=-2.87 am_long_pm_short=-1.62 best=am_long_pm_short(-1.62)
-  Cluster 3: full_day=0.32 am_only=0.40 am_long_pm_short=0.25 best=am_only(0.40)
+  Cluster 0: full_day=0.95 am_only=1.13 am_long_pm_short=0.70 best=am_only(1.13)
+  Cluster 1: full_day=0.07 am_only=0.34 am_long_pm_short=0.44 best=am_long_pm_short(0.44)
+  Cluster 2: full_day=-0.45 am_only=-0.31 am_long_pm_short=0.02 best=am_long_pm_short(0.02)
+
+Level-2 Sub-Cluster Prediction:
+  Macro 0: Acc=0.8258, F1=0.8251, 2 sub-types
+    Sub 0.0: 964 days, PM Ret=0.136%, Sharpe=3.85
+    Sub 0.1: 850 days, PM Ret=-0.127%, Sharpe=-3.01
+  Macro 1: Acc=0.9162, F1=0.8422, 2 sub-types
+    Sub 1.0: 427 days, PM Ret=0.492%, Sharpe=8.73
+    Sub 1.1: 74 days, PM Ret=0.414%, Sharpe=5.57
+  Macro 2: Acc=0.9378, F1=0.7456, 2 sub-types
+    Sub 2.0: 23 days, PM Ret=-0.260%, Sharpe=-2.79
+    Sub 2.1: 443 days, PM Ret=-0.468%, Sharpe=-7.25
 
 50ETF
 ------------------------------------------------------------
 
 Baselines:
-  majority: 0.4500
-  prev_day: 0.3871
-  gap_only: 0.3906
+  majority: 0.6252
+  prev_day: 0.4867
+  gap_only: 0.5335
 
 Models:
-  LightGBM: Acc=0.8129, F1=0.7744
-  XGBoost: Acc=0.8165, F1=0.7736
-  NeuralNet: Acc=0.8201, F1=0.7828
+  LightGBM: Acc=0.8604, F1=0.8342
+  XGBoost: Acc=0.8612, F1=0.8350
+  NeuralNet: Acc=0.8637, F1=0.8383
 
 Profitability Proxy:
-  Cluster 0.0: 1267 days, PM Return=0.011%, Win Rate=48.6%, Sharpe=0.25, Optimal Dir=long, Opt Return=0.011%, Opt Sharpe=0.25
-  Cluster 1.0: 189 days, PM Return=0.142%, Win Rate=47.6%, Sharpe=1.65, Optimal Dir=long, Opt Return=0.142%, Opt Sharpe=1.65
-  Cluster 2.0: 1140 days, PM Return=0.001%, Win Rate=48.2%, Sharpe=0.01, Optimal Dir=long, Opt Return=0.001%, Opt Sharpe=0.01
-  Cluster 3.0: 184 days, PM Return=-0.080%, Win Rate=50.5%, Sharpe=-1.02, Optimal Dir=long, Opt Return=-0.080%, Opt Sharpe=-1.02
+  Cluster 0.0: 1787 days, PM Return=-0.005%, Win Rate=47.8%, Sharpe=-0.11, Optimal Dir=long, Opt Return=-0.005%, Opt Sharpe=-0.11
+  Cluster 1.0: 404 days, PM Return=0.105%, Win Rate=50.0%, Sharpe=1.53, Optimal Dir=long, Opt Return=0.105%, Opt Sharpe=1.53
+  Cluster 2.0: 589 days, PM Return=-0.013%, Win Rate=49.6%, Sharpe=-0.22, Optimal Dir=long, Opt Return=-0.013%, Opt Sharpe=-0.22
 
 Lunch Strategy:
-  Cluster 0: full_day=0.99 am_only=1.20 am_long_pm_short=0.80 best=am_only(1.20)
-  Cluster 1: full_day=-1.15 am_only=-1.89 am_long_pm_short=-1.48 best=full_day_long(-1.15)
-  Cluster 2: full_day=-0.25 am_only=0.13 am_long_pm_short=0.46 best=am_long_pm_short(0.46)
-  Cluster 3: full_day=0.68 am_only=1.30 am_long_pm_short=1.02 best=am_only(1.30)
+  Cluster 0: full_day=0.01 am_only=0.26 am_long_pm_short=0.40 best=am_long_pm_short(0.40)
+  Cluster 1: full_day=0.11 am_only=-0.34 am_long_pm_short=-0.60 best=full_day_long(0.11)
+  Cluster 2: full_day=0.99 am_only=1.81 am_long_pm_short=1.46 best=am_only(1.81)
+
+Level-2 Sub-Cluster Prediction:
+  Macro 0: Acc=0.8205, F1=0.8191, 2 sub-types
+    Sub 0.0: 944 days, PM Ret=0.133%, Sharpe=3.59
+    Sub 0.1: 794 days, PM Ret=-0.124%, Sharpe=-3.70
+  Macro 1: Acc=0.9078, F1=0.8213, 2 sub-types
+    Sub 1.0: 370 days, PM Ret=0.482%, Sharpe=7.98
+    Sub 1.1: 64 days, PM Ret=0.022%, Sharpe=0.25
+  Macro 2: Acc=0.9424, F1=0.8236, 2 sub-types
+    Sub 2.0: 46 days, PM Ret=-0.153%, Sharpe=-1.32
+    Sub 2.1: 562 days, PM Ret=-0.309%, Sharpe=-5.70
 
 500ETF
 ------------------------------------------------------------
 
 Baselines:
-  majority: 0.4421
-  prev_day: 0.4058
-  gap_only: 0.1385
+  majority: 0.6813
+  prev_day: 0.5327
+  gap_only: 0.5853
 
 Models:
-  LightGBM: Acc=0.8198, F1=0.8013
-  XGBoost: Acc=0.8212, F1=0.8034
-  NeuralNet: Acc=0.8216, F1=0.7812
+  LightGBM: Acc=0.8604, F1=0.8128
+  XGBoost: Acc=0.8637, F1=0.8160
+  NeuralNet: Acc=0.8691, F1=0.8252
 
 Profitability Proxy:
-  Cluster 0.0: 104 days, PM Return=-0.274%, Win Rate=37.5%, Sharpe=-2.18, Optimal Dir=long, Opt Return=-0.274%, Opt Sharpe=-2.18
-  Cluster 1.0: 1242 days, PM Return=0.067%, Win Rate=53.4%, Sharpe=1.27, Optimal Dir=long, Opt Return=0.067%, Opt Sharpe=1.27
-  Cluster 2.0: 1209 days, PM Return=-0.026%, Win Rate=49.5%, Sharpe=-0.47, Optimal Dir=long, Opt Return=-0.026%, Opt Sharpe=-0.47
-  Cluster 3.0: 225 days, PM Return=0.149%, Win Rate=59.6%, Sharpe=1.53, Optimal Dir=long, Opt Return=0.149%, Opt Sharpe=1.53
+  Cluster 0.0: 1940 days, PM Return=0.023%, Win Rate=51.9%, Sharpe=0.47, Optimal Dir=long, Opt Return=0.023%, Opt Sharpe=0.47
+  Cluster 1.0: 366 days, PM Return=-0.174%, Win Rate=43.7%, Sharpe=-2.01, Optimal Dir=long, Opt Return=-0.174%, Opt Sharpe=-2.01
+  Cluster 2.0: 474 days, PM Return=0.162%, Win Rate=56.5%, Sharpe=1.93, Optimal Dir=long, Opt Return=0.162%, Opt Sharpe=1.93
 
 Lunch Strategy:
-  Cluster 0: full_day=-4.78 am_only=-3.56 am_long_pm_short=-0.91 best=am_long_pm_short(-0.91)
-  Cluster 1: full_day=1.27 am_only=1.29 am_long_pm_short=0.61 best=am_only(1.29)
-  Cluster 2: full_day=1.18 am_only=1.61 am_long_pm_short=1.18 best=am_only(1.61)
-  Cluster 3: full_day=0.46 am_only=0.83 am_long_pm_short=0.85 best=am_long_pm_short(0.85)
+  Cluster 0: full_day=1.57 am_only=1.75 am_long_pm_short=1.06 best=am_only(1.75)
+  Cluster 1: full_day=-1.64 am_only=-1.28 am_long_pm_short=-0.28 best=am_long_pm_short(-0.28)
+  Cluster 2: full_day=0.08 am_only=0.48 am_long_pm_short=0.65 best=am_long_pm_short(0.65)
+
+Level-2 Sub-Cluster Prediction:
+  Macro 0: Acc=0.8189, F1=0.8189, 2 sub-types
+    Sub 0.0: 933 days, PM Ret=-0.138%, Sharpe=-2.85
+    Sub 0.1: 961 days, PM Ret=0.170%, Sharpe=3.70
+  Macro 1: Acc=0.9666, F1=0.8400, 2 sub-types
+    Sub 1.0: 370 days, PM Ret=-0.610%, Sharpe=-8.47
+    Sub 1.1: 19 days, PM Ret=-0.309%, Sharpe=-2.02
+  Macro 2: Acc=0.9195, F1=0.8275, 2 sub-types
+    Sub 2.0: 434 days, PM Ret=0.552%, Sharpe=9.06
+    Sub 2.1: 63 days, PM Ret=0.230%, Sharpe=1.59
 
 588000ETF
 ------------------------------------------------------------
 
 Baselines:
-  majority: 0.4231
-  prev_day: 0.3284
-  gap_only: 0.1635
+  majority: 0.5510
+  prev_day: 0.4157
+  gap_only: 0.4371
 
 Models:
-  LightGBM: Acc=0.8084, F1=0.8035
-  XGBoost: Acc=0.8047, F1=0.7920
-  NeuralNet: Acc=0.8136, F1=0.8053
+  LightGBM: Acc=0.8410, F1=0.8281
+  XGBoost: Acc=0.8491, F1=0.8371
+  NeuralNet: Acc=0.8587, F1=0.8496
 
 Profitability Proxy:
-  Cluster 0.0: 130 days, PM Return=-0.200%, Win Rate=36.9%, Sharpe=-2.48, Optimal Dir=long, Opt Return=-0.200%, Opt Sharpe=-2.48
-  Cluster 1.0: 588 days, PM Return=-0.103%, Win Rate=39.3%, Sharpe=-1.93, Optimal Dir=long, Opt Return=-0.103%, Opt Sharpe=-1.93
-  Cluster 2.0: 114 days, PM Return=0.260%, Win Rate=55.3%, Sharpe=2.60, Optimal Dir=long, Opt Return=0.260%, Opt Sharpe=2.60
-  Cluster 3.0: 520 days, PM Return=0.024%, Win Rate=45.4%, Sharpe=0.44, Optimal Dir=long, Opt Return=0.024%, Opt Sharpe=0.44
+  Cluster 0.0: 756 days, PM Return=-0.019%, Win Rate=42.9%, Sharpe=-0.38, Optimal Dir=long, Opt Return=-0.019%, Opt Sharpe=-0.38
+  Cluster 1.0: 209 days, PM Return=0.185%, Win Rate=53.6%, Sharpe=2.07, Optimal Dir=long, Opt Return=0.185%, Opt Sharpe=2.07
+  Cluster 2.0: 387 days, PM Return=-0.178%, Win Rate=36.7%, Sharpe=-2.68, Optimal Dir=long, Opt Return=-0.178%, Opt Sharpe=-2.68
 
 Lunch Strategy:
-  Cluster 0: full_day=-1.07 am_only=0.05 am_long_pm_short=1.41 best=am_long_pm_short(1.41)
-  Cluster 1: full_day=-0.92 am_only=0.67 am_long_pm_short=2.14 best=am_long_pm_short(2.14)
-  Cluster 2: full_day=0.66 am_only=2.32 am_long_pm_short=3.05 best=am_long_pm_short(3.05)
-  Cluster 3: full_day=-0.85 am_only=0.27 am_long_pm_short=1.41 best=am_long_pm_short(1.41)
+  Cluster 0: full_day=-1.10 am_only=0.23 am_long_pm_short=1.64 best=am_long_pm_short(1.64)
+  Cluster 1: full_day=0.26 am_only=1.30 am_long_pm_short=1.72 best=am_long_pm_short(1.72)
+  Cluster 2: full_day=-0.75 am_only=0.93 am_long_pm_short=2.42 best=am_long_pm_short(2.42)
+
+Level-2 Sub-Cluster Prediction:
+  Macro 0: Acc=0.8081, F1=0.8079, 2 sub-types
+    Sub 0.0: 386 days, PM Ret=0.237%, Sharpe=4.65
+    Sub 0.1: 359 days, PM Ret=-0.157%, Sharpe=-3.45
+  Macro 1: Acc=0.8925, F1=0.7601, 2 sub-types
+    Sub 1.0: 190 days, PM Ret=0.480%, Sharpe=6.07
+    Sub 1.1: 24 days, PM Ret=0.481%, Sharpe=3.50
+  Macro 2: Acc=0.8880, F1=0.8021, 2 sub-types
+    Sub 2.0: 330 days, PM Ret=-0.485%, Sharpe=-9.38
+    Sub 2.1: 63 days, PM Ret=-0.355%, Sharpe=-4.60
 
 159915ETF
 ------------------------------------------------------------
 
 Baselines:
-  majority: 0.4676
-  prev_day: 0.3665
-  gap_only: 0.3324
+  majority: 0.6137
+  prev_day: 0.4752
+  gap_only: 0.2759
 
 Models:
-  LightGBM: Acc=0.8216, F1=0.8034
-  XGBoost: Acc=0.8234, F1=0.8024
-  NeuralNet: Acc=0.8306, F1=0.8073
+  LightGBM: Acc=0.8543, F1=0.8309
+  XGBoost: Acc=0.8561, F1=0.8333
+  NeuralNet: Acc=0.8622, F1=0.8423
 
 Profitability Proxy:
-  Cluster 0.0: 1332 days, PM Return=-0.077%, Win Rate=42.9%, Sharpe=-1.15, Optimal Dir=long, Opt Return=-0.077%, Opt Sharpe=-1.15
-  Cluster 1.0: 155 days, PM Return=-0.179%, Win Rate=43.2%, Sharpe=-1.81, Optimal Dir=long, Opt Return=-0.179%, Opt Sharpe=-1.81
-  Cluster 2.0: 283 days, PM Return=0.293%, Win Rate=59.4%, Sharpe=2.83, Optimal Dir=long, Opt Return=0.293%, Opt Sharpe=2.83
-  Cluster 3.0: 1010 days, PM Return=0.033%, Win Rate=48.8%, Sharpe=0.51, Optimal Dir=long, Opt Return=0.033%, Opt Sharpe=0.51
+  Cluster 0.0: 529 days, PM Return=0.206%, Win Rate=56.5%, Sharpe=2.30, Optimal Dir=long, Opt Return=0.206%, Opt Sharpe=2.30
+  Cluster 1.0: 521 days, PM Return=-0.156%, Win Rate=43.0%, Sharpe=-1.82, Optimal Dir=long, Opt Return=-0.156%, Opt Sharpe=-1.82
+  Cluster 2.0: 1730 days, PM Return=-0.024%, Win Rate=44.9%, Sharpe=-0.39, Optimal Dir=long, Opt Return=-0.024%, Opt Sharpe=-0.39
 
 Lunch Strategy:
-  Cluster 0: full_day=1.10 am_only=1.18 am_long_pm_short=0.71 best=am_only(1.18)
-  Cluster 1: full_day=-0.59 am_only=-0.22 am_long_pm_short=0.27 best=am_long_pm_short(0.27)
-  Cluster 2: full_day=0.43 am_only=1.06 am_long_pm_short=1.19 best=am_long_pm_short(1.19)
-  Cluster 3: full_day=0.36 am_only=1.80 am_long_pm_short=2.43 best=am_long_pm_short(2.43)
+  Cluster 0: full_day=0.84 am_only=2.03 am_long_pm_short=2.14 best=am_long_pm_short(2.14)
+  Cluster 1: full_day=1.14 am_only=0.84 am_long_pm_short=0.12 best=full_day_long(1.14)
+  Cluster 2: full_day=0.31 am_only=1.11 am_long_pm_short=1.49 best=am_long_pm_short(1.49)
+
+Level-2 Sub-Cluster Prediction:
+  Macro 0: Acc=0.9044, F1=0.8314, 2 sub-types
+    Sub 0.0: 458 days, PM Ret=0.620%, Sharpe=7.64
+    Sub 0.1: 86 days, PM Ret=0.306%, Sharpe=2.35
+  Macro 1: Acc=0.9811, F1=0.8481, 2 sub-types
+    Sub 1.0: 513 days, PM Ret=-0.600%, Sharpe=-7.49
+    Sub 1.1: 17 days, PM Ret=-0.421%, Sharpe=-2.83
+  Macro 2: Acc=0.8353, F1=0.8323, 2 sub-types
+    Sub 2.0: 735 days, PM Ret=-0.171%, Sharpe=-3.04
+    Sub 2.1: 971 days, PM Ret=0.120%, Sharpe=2.20

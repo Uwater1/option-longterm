@@ -33,6 +33,7 @@ import json
 # Configuration
 ETF_NAMES = ['300ETF', '50ETF', '500ETF', '588000ETF', '159915ETF']
 PRIMARY_ETF = '300ETF'
+MACRO_K = 3  # Fixed macro taxonomy: Rally / Selloff / Neutral
 
 OUTPUT_DIR = Path(__file__).resolve().parent
 DATA_DIR = OUTPUT_DIR / 'data'
@@ -471,6 +472,71 @@ def run_clustering(data_dict, data_name, best_k=None):
     return results
 
 
+# ============================================================
+# Hierarchical Sub-Clustering
+# ============================================================
+def run_sub_clustering(data, macro_labels, k_sub_range=range(2, 4)):
+    """Sub-cluster within each macro cluster.
+
+    For each macro cluster, sweeps K in k_sub_range, selects the best
+    sub-K via silhouette score, and fits a final KMeans.
+
+    Returns
+    -------
+    sub_labels : np.ndarray of str
+        Composite labels like "0.0", "0.1", "1.0" (macro.sub).
+    sub_info : dict
+        Metadata: per-macro sub-K, sub-silhouette, sub-cluster sizes.
+    """
+    n = len(macro_labels)
+    sub_labels = np.empty(n, dtype=object)
+    sub_info = {'macro_k': int(np.max(macro_labels) + 1), 'macros': {}}
+
+    for macro_id in sorted(set(macro_labels)):
+        mask = macro_labels == macro_id
+        subset = data[mask]
+        n_sub = len(subset)
+
+        if n_sub < 10:
+            # Too few points — treat as single sub-cluster
+            sub_labels[mask] = [f"{macro_id}.0"] * n_sub
+            sub_info['macros'][str(macro_id)] = {
+                'n_days': int(n_sub), 'sub_k': 1, 'silhouette': None
+            }
+            continue
+
+        best_k, best_sil, best_labels = 2, -1, None
+        for k in k_sub_range:
+            if k >= n_sub:
+                continue
+            km = KMeans(n_clusters=k, random_state=42, n_init=10, max_iter=300)
+            lbl = km.fit_predict(subset)
+            sil = silhouette_score(subset, lbl, sample_size=min(2000, n_sub))
+            print(f"      Macro {macro_id}, sub-K={k}: sil={sil:.4f}")
+            if sil > best_sil:
+                best_k, best_sil, best_labels = k, sil, lbl
+
+        if best_labels is None:
+            best_labels = np.zeros(n_sub, dtype=int)
+            best_k, best_sil = 1, None
+
+        # Assign composite labels
+        sub_labels[mask] = [f"{macro_id}.{int(s)}" for s in best_labels]
+
+        _, counts = np.unique(best_labels, return_counts=True)
+        sub_info['macros'][str(macro_id)] = {
+            'n_days': int(n_sub),
+            'sub_k': int(best_k),
+            'silhouette': float(best_sil) if best_sil is not None else None,
+            'sub_sizes': {f"{macro_id}.{i}": int(c) for i, c in enumerate(counts)},
+        }
+        sil_str = f"{best_sil:.4f}" if best_sil is not None else "n/a"
+        print(f"      Macro {macro_id}: sub-K={best_k}, "
+              f"sil={sil_str}, sizes={dict(zip(range(best_k), counts))}")
+
+    return sub_labels, sub_info
+
+
 def evaluate_clustering(labels, data, labels_name, data_name):
     """Evaluate cluster quality"""
     # Filter noise points for metrics
@@ -567,12 +633,50 @@ def process_etf(etf_name):
 
     # Multi-criteria K selection on PCA embeddings (top 8 PCs)
     pca_repr = embeddings['pca'][:, :8]
-    best_k, k_scorecard = select_best_k(pca_repr, k_range=range(4, 16), etf_name=etf_name)
+    best_k, k_scorecard = select_best_k(pca_repr, k_range=range(3, 16), etf_name=etf_name)
 
     # Save best_k for downstream scripts (cross_etf_validation, etc.)
     best_k_path = DATA_DIR / f'best_k_{etf_name}.json'
     with open(best_k_path, 'w') as f:
         json.dump({'etf': etf_name, 'best_k': int(best_k)}, f)
+
+    # ---- MACRO CLUSTERING (K=3 fixed) ----
+    print("\n" + "="*40)
+    print(f"Macro Clustering (K={MACRO_K} fixed)")
+    print("="*40)
+    km_macro = KMeans(n_clusters=MACRO_K, random_state=42, n_init=10, max_iter=300)
+    macro_labels = km_macro.fit_predict(pca_repr)
+    macro_sil = silhouette_score(pca_repr, macro_labels, sample_size=min(2000, len(pca_repr)))
+    _, macro_counts = np.unique(macro_labels, return_counts=True)
+    print(f"  Macro K={MACRO_K}, Silhouette={macro_sil:.4f}")
+    for cid, cnt in enumerate(macro_counts):
+        print(f"    Macro {cid}: {cnt} days ({cnt/len(macro_labels)*100:.1f}%)")
+
+    # Save macro labels as primary clustering (overwrites KMeans PCA)
+    macro_label_path = DATA_DIR / f'clusters_{etf_name}_kmeans_pca.csv'
+    pd.DataFrame({'date': features_df.index, 'cluster': macro_labels}).to_csv(
+        macro_label_path, index=False
+    )
+    # Also save as explicit macro file
+    pd.DataFrame({'date': features_df.index, 'cluster': macro_labels}).to_csv(
+        DATA_DIR / f'clusters_{etf_name}_macro.csv', index=False
+    )
+
+    # ---- SUB-CLUSTERING (hierarchical) ----
+    print("\n" + "="*40)
+    print("Sub-Clustering (within each macro)")
+    print("="*40)
+    sub_labels, sub_info = run_sub_clustering(pca_repr, macro_labels)
+
+    # Save sub-cluster labels
+    pd.DataFrame({'date': features_df.index, 'cluster': sub_labels}).to_csv(
+        DATA_DIR / f'clusters_{etf_name}_sub.csv', index=False
+    )
+    # Save sub-cluster metadata
+    sub_info['etf'] = etf_name
+    with open(DATA_DIR / f'sub_cluster_info_{etf_name}.json', 'w') as f:
+        json.dump(sub_info, f, indent=2, default=str)
+    print(f"  Saved sub-cluster info: sub_cluster_info_{etf_name}.json")
 
     # Data representations to cluster
     representations = {
@@ -600,6 +704,12 @@ def process_etf(etf_name):
             pd.DataFrame({'date': features_df.index, 'cluster': labels}).to_csv(
                 DATA_DIR / f'clusters_{etf_name}_{key}.csv', index=False
             )
+    
+    # Re-save macro labels (K=3) as primary kmeans_pca output
+    # (run_clustering above overwrites kmeans_pca.csv with best_k labels — fix that here)
+    pd.DataFrame({'date': features_df.index, 'cluster': macro_labels}).to_csv(
+        DATA_DIR / f'clusters_{etf_name}_kmeans_pca.csv', index=False
+    )
     
     # ---- QUALITY COMPARISON ----
     print("\n  Cluster Quality Summary:")
@@ -646,9 +756,9 @@ def process_etf(etf_name):
         best_data = df_metrics.loc[best_idx, 'data']
         best_repr = representations[best_data]
 
-        # Define cluster function for bootstrap — use selected best_k
+        # Define cluster function for bootstrap — use macro K=3
         def cluster_func(data):
-            km = KMeans(n_clusters=int(best_k), random_state=42)
+            km = KMeans(n_clusters=MACRO_K, random_state=42)
             return km.fit_predict(data)
         
         ami_mean, ami_std = bootstrap_stability(best_repr, cluster_func, n_boot=50)
@@ -656,13 +766,13 @@ def process_etf(etf_name):
     
     # ---- TEMPORAL STABILITY ----
     print("\n  Temporal stability analysis...")
-    # Use best clustering for temporal analysis
+    # Use macro labels (K=3) for temporal analysis
     if best_idx is not None:
-        best_key = f"{best_method}_{best_data}"
-        best_labels = all_cluster_results[best_key]
+        best_key = f"macro_k{MACRO_K}"
+        best_labels_arr = macro_labels
         
         # Year-by-year cluster proportions
-        features_df['cluster'] = best_labels
+        features_df['cluster'] = best_labels_arr
         features_df['year'] = features_df.index.year
         
         year_props = features_df.groupby('year')['cluster'].value_counts(normalize=True).unstack(fill_value=0)
@@ -675,8 +785,9 @@ def process_etf(etf_name):
         plt.tight_layout()
         plt.savefig(PLOTS_DIR / f'cluster_temporal_{etf_name}.png', dpi=100, bbox_inches='tight')
         plt.close()
-    
-    return df_metrics
+
+    # Return macro labels + sub info alongside metrics
+    return df_metrics, macro_labels, sub_labels, sub_info
 
 
 def main():
@@ -686,13 +797,16 @@ def main():
     print("Day-Type Discovery: Embeddings + Clustering")
     print("=" * 60)
     print(f"Device: {DEVICE}")
+    print(f"Macro K: {MACRO_K} (fixed)")
     
     all_metrics = {}
+    all_sub_info = {}
     
     for etf_name in ETF_NAMES:
         try:
-            metrics = process_etf(etf_name)
+            metrics, macro_labels, sub_labels, sub_info = process_etf(etf_name)
             all_metrics[etf_name] = metrics
+            all_sub_info[etf_name] = sub_info
         except Exception as e:
             print(f"  [ERROR] {etf_name}: {e}")
             import traceback
@@ -700,13 +814,23 @@ def main():
     
     # ---- SUMMARY ----
     print("\n" + "="*60)
-    print("Summary: Best clustering per ETF")
+    print("Summary: Macro Clustering (K=3)")
     print("="*60)
     for etf_name, metrics in all_metrics.items():
         if metrics is not None and not metrics.empty:
             best = metrics.loc[metrics['silhouette'].idxmax()]
             print(f"  {etf_name}: {best['method']}_{best['data']} "
                   f"(K={best['n_clusters']:.0f}, Sil={best['silhouette']:.4f})")
+    
+    print("\n" + "="*60)
+    print("Summary: Sub-Clustering (hierarchical)")
+    print("="*60)
+    for etf_name, info in all_sub_info.items():
+        print(f"  {etf_name}:")
+        for macro_id, minfo in info['macros'].items():
+            sil_str = f"{minfo['silhouette']:.4f}" if minfo['silhouette'] is not None else "n/a"
+            print(f"    Macro {macro_id}: sub-K={minfo['sub_k']}, "
+                  f"sil={sil_str}, sizes={minfo.get('sub_sizes', {})}")
     
     print("\nPattern discovery complete!")
 

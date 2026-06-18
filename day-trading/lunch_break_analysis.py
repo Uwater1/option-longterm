@@ -98,7 +98,7 @@ def cusum_on_avg_curve(price_curves):
 # ============================================================
 # AM vs PM Regime Comparison
 # ============================================================
-def am_pm_clustering(price_curves, n_clusters=4):
+def am_pm_clustering(price_curves, n_clusters=3):
     """Cluster AM bars and PM bars separately, compare labels.
 
     Returns AMI between AM-only and PM-only cluster assignments.
@@ -157,7 +157,7 @@ def analyze_etf(etf_name):
     print(f"  CUSUM change-point: bar {cp_idx} (stat={cp_stat:.3f}, p={cp_p:.4f}, near_lunch={near_lunch})")
 
     # 4) AM vs PM clustering AMI
-    am_labels, pm_labels, ami = am_pm_clustering(price_curves, n_clusters=4)
+    am_labels, pm_labels, ami = am_pm_clustering(price_curves, n_clusters=3)
     results['am_pm_AMI'] = ami
     print(f"  AM/PM clustering AMI: {ami:.4f} (0=independent, 1=identical)")
 
