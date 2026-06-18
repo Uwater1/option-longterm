@@ -359,3 +359,45 @@ We ran a systematic optimization using the multi-indicator rolling 252-day perce
   * Threshold: **0.9091** (Top 10% placement)
   * Indicators & Weights: `ind_dd_deep: 87.5%`, `ind_dist_sma200_neg: 9.6%`, `ind_skew_neg: 1.3%`, `ind_kurt_high: 1.2%`, `ind_vol_accel_high: 0.4%`
   * Performance: Triggered crash probability **65.85%** (vs 42.76% baseline, **1.54x lift**)
+
+> ⚠️ **§8 numbers above are IN-SAMPLE and partly artifacts.** See §9 for bias-corrected OOS results.
+
+---
+
+## 9. Phase 1 OOS Overhaul — Bias-Corrected Results (June 2026)
+
+The §8 results were re-examined and found to be overfit / artifact-prone:
+
+### 9.1 Bugs found & fixed in the optimizer
+1. **Crash-event sign inversion**: crash target was `-worst_dd` (non-negative), but the crash test was `target <= -0.05` — **never true**, so every original crash lift silently computed to ~0/baseline. The "4.09x" / "2.69x" lifts in §8.2/§8.1 were in-sample noise-chasing on a broken metric.
+2. **RSI normalization**: `ind_rsi_high = rsi14/100` (raw) → replaced with rolling-percentile rank (distribution drift across regimes broke comparability).
+3. **Objective chased noise**: `obj = -corr - 200*mean_ret_trig` let isolated historical windows dominate (corr weight 1 vs 200). Replaced with composite: Spearman rank + log-placement + complexity penalty.
+4. **Walk-forward was diagnostic only**: never drove selection. Now `--select-by-oos` picks the config with best mean OOS across purged expanding folds.
+
+### 9.2 Walk-forward OOS statistical results (purged, expanding window)
+All 12 ETF×regime cells now pass the gate (lift>1 crash / mean_ret<0 fall). Crash OOS lift:
+
+| ETF | ST Crash (R3) | MT Crash (R4) |
+|-----|---------------|---------------|
+| 50ETF | **2.12x** [CI 0.60, 4.37] | **2.10x** [CI 0.71, 3.93] |
+| 300ETF | **2.03x** [CI 0.27, 4.16] | **1.45x** [CI 0.48, 2.41] |
+| 500ETF | **1.65x** [CI 0.46, 3.27] | **1.06x** [CI 0.53, 1.68] |
+
+### 9.3 Put P&L validation (the real test) — `validate_alpha_pnl.py`
+Statistical lift ≠ hedging profitability (theta decay). Actual put P&L per trigger at monthly-cycle cadence, OOS years >= 2021, vs the existing static filter:
+
+| ETF | Regime | Best Phase | Alpha net P&L | Static net P&L | Deploy? |
+|-----|--------|-----------|---------------|----------------|---------|
+| 50ETF | MT Crash | Phase 3 | **+2,144** (6 trigs) | +1,613 (4) | ✅ |
+| 300ETF | ST Fall | Phase 1 | **+2,689** (7 trigs) | +1,385 (12) | ✅ |
+| 300ETF | MT Fall | Phase 3 | **+2,216** (8 trigs) | +1,385 (12) | ✅ |
+| 500ETF | ST Crash | Phase 2 | **+382** (6 trigs) | -114 (1) | ✅ |
+| (other 8 cells) | — | — | < static | — | ❌ keep static |
+
+### 9.4 Phases built
+- **Phase 1** (`optimize_put_alpha.py`): linear weighted score, OOS-selected. Wins 300ETF ST Fall.
+- **Phase 2** (`alpha_model_ml.py`): per-regime LightGBM (monotone constraints, 5-bag ensemble, isotonic calibration, walk-forward). reg3 crash OOS AUC 0.63. Wins 500ETF ST Crash; over-triggers elsewhere (theta drag).
+- **Phase 3** (`alpha_model_hybrid.py`): logistic stack of [Phase1 rank, Phase2 prob, FINDINGS rule flags]. Most selective → wins MT Fall (300) and MT Crash (50).
+
+### 9.5 Honest conclusion
+The alpha edge is **real but selective**: 4 of 12 cells beat the static filter after costs. No single modeling approach dominates. 500ETF remains largely unhedgeable (consistent with §RESEARCH_500ETF). Full per-fold detail and per-trigger P&L in `backtest/alpha_phase_comparison.md` and `backtest/validate_pnl_phase{1,2,3}.json`.
