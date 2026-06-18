@@ -21,12 +21,14 @@ Outputs:
   - plots/{diagnostic}_{ETF}.png
 
 Usage:
-    python train_model.py -e all                # full run, n_trials=60
-    python train_model.py -e 300 --quick        # smoke test, n_trials=20
-    python train_model.py -e 300 --trials 100   # custom trials
+    python train_model.py -e all --gpu             # full run with GPU, n_trials=60
+    python train_model.py -e all                   # full run, CPU, n_trials=60
+    python train_model.py -e 300 --gpu --quick     # smoke test, GPU, n_trials=20
+    python train_model.py -e 300 --trials 100      # custom trials
 """
 import argparse
 import json
+import time
 import warnings
 from pathlib import Path
 
@@ -43,6 +45,29 @@ from sklearn.inspection import permutation_importance
 import xgboost as xgb
 import optuna
 import joblib
+
+# GPU detection: try CUDA, fall back to CPU
+_USE_GPU = False
+def _detect_gpu(force: bool = False):
+    global _USE_GPU
+    try:
+        X_test = np.random.randn(10, 2)
+        y_test = np.random.randn(10)
+        dmat = xgb.DMatrix(X_test, label=y_test)
+        xgb.train({"device": "cuda", "tree_method": "hist"}, dmat, num_boost_round=1)
+        _USE_GPU = True
+        print("[GPU] CUDA device detected \u2014 using GPU acceleration")
+    except Exception as e:
+        _USE_GPU = False
+        if force:
+            raise RuntimeError(f"--gpu requested but CUDA not available: {e}")
+        print("[GPU] No CUDA device \u2014 using CPU")
+
+def _xgb_device_kwargs():
+    """Return XGBoost kwargs for current device."""
+    if _USE_GPU:
+        return {"device": "cuda", "tree_method": "hist"}
+    return {"n_jobs": -1}
 
 warnings.filterwarnings("ignore")
 optuna.logging.set_verbosity(optuna.logging.WARNING)
@@ -146,6 +171,7 @@ def long_short_sharpe(returns: np.ndarray, preds: np.ndarray, n_quant: int = 5) 
 # Optuna objective
 # ============================================================
 def make_objective(X, y, n_splits, gap):
+    dev_kwargs = _xgb_device_kwargs()
     def objective(trial: optuna.Trial) -> float:
         params = {
             "n_estimators": trial.suggest_int("n_estimators", 100, 500, step=50),
@@ -165,7 +191,7 @@ def make_objective(X, y, n_splits, gap):
             Xte = scaler.transform(X[test_idx])
             model = xgb.XGBRegressor(
                 **params, objective="reg:squarederror",
-                random_state=42, verbosity=0, n_jobs=-1,
+                random_state=42, verbosity=0, **dev_kwargs,
             )
             model.fit(Xtr, y[train_idx])
             preds = model.predict(Xte)
@@ -178,6 +204,8 @@ def make_objective(X, y, n_splits, gap):
 # Train + evaluate one ETF
 # ============================================================
 def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
+    dev_kwargs = _xgb_device_kwargs()
+    t0 = time.time()
     feat_path = DATA_DIR / f"features_{etf_name}.parquet"
     if not feat_path.exists():
         print(f"  [SKIP] {etf_name}: missing {feat_path.name}. Run build_features.py first.")
@@ -231,7 +259,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
     X_ho_s = scaler.transform(X_ho)
     final_model = xgb.XGBRegressor(
         **best_params, objective="reg:squarederror",
-        random_state=42, verbosity=0, n_jobs=-1,
+        random_state=42, verbosity=0, **dev_kwargs,
     )
     final_model.fit(X_dev_s, y_dev)
     preds_ho = final_model.predict(X_ho_s)
@@ -268,7 +296,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
         Xte = sc.transform(X[test_idx])
         m = xgb.XGBRegressor(
             **best_params, objective="reg:squarederror",
-            random_state=42, verbosity=0, n_jobs=-1,
+            random_state=42, verbosity=0, **dev_kwargs,
         )
         m.fit(Xtr, y[train_idx])
         wf_preds[test_idx] = m.predict(Xte) / Y_SCALE
@@ -349,7 +377,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
             Xte = sc.transform(X[test_idx])
             m = xgb.XGBRegressor(
                 **best_params, objective="reg:squarederror",
-                random_state=42, verbosity=0, n_jobs=-1,
+                random_state=42, verbosity=0, **dev_kwargs,
             )
             m.fit(Xtr, y[train_idx])
             preds = m.predict(Xte) / Y_SCALE
@@ -377,6 +405,9 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
     _plot_diagnostics(etf_name, dates_ho, y_ho_raw, preds_ho_raw,
                       wf_df, gain_imp, perm_imp, optuna_param_imp,
                       purge_sens, yearly_ic, study)
+
+    elapsed = time.time() - t0
+    print(f"  [{etf_name}] done in {elapsed:.0f}s ({elapsed/60:.1f}min)")
 
     return {
         "etf": etf_name,
@@ -407,6 +438,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
             "sharpe_ann": float(y_raw.mean() / y_raw.std() * np.sqrt(252)),
         },
         "y_scale": Y_SCALE,
+        "elapsed_sec": elapsed,
     }
 
 
@@ -536,7 +568,10 @@ def main():
     ap.add_argument("--quick", action="store_true", help="smoke test (20 trials)")
     ap.add_argument("--splits", type=int, default=DEFAULT_N_SPLITS)
     ap.add_argument("--gap", type=int, default=DEFAULT_PURGE_GAP)
+    ap.add_argument("--gpu", action="store_true", help="use CUDA GPU for XGBoost")
     args = ap.parse_args()
+
+    _detect_gpu(force=args.gpu)  # auto-detect CUDA; --gpu forces error if missing
 
     if args.quick:
         args.trials = min(args.trials, 20)
@@ -551,6 +586,7 @@ def main():
     print(f"  trials={args.trials}  splits={args.splits}  purge_gap={args.gap}  "
           f"holdout_frac={HOLDOUT_FRACTION}")
 
+    t_start = time.time()
     all_results = {}
     for etf in etfs:
         try:
@@ -579,7 +615,9 @@ def main():
     # Save combined results
     with open(DATA_DIR / "results_all.json", "w") as f:
         json.dump(all_results, f, indent=2, default=str)
-    print(f"\nCombined results → {DATA_DIR / 'results_all.json'}")
+    total_time = time.time() - t_start
+    print(f"\nTotal wall time: {total_time:.0f}s ({total_time/60:.1f}min)")
+    print(f"Combined results → {DATA_DIR / 'results_all.json'}")
 
 
 if __name__ == "__main__":

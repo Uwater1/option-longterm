@@ -1,4 +1,7 @@
 Plan: Day-Model XGBoost PM Return Predictor
+
+Status: COMPLETE (all 5 ETFs trained with GPU in 9.4 min)
+
 Goal
 Build an XGBoost regression model per ETF (5 ETFs) that predicts PM return (13:00–15:00 log return) using:
 - Early-bar features from first 6 five-minute bars (9:30–10:00) — the REPORT.md §6 idea
@@ -84,9 +87,23 @@ Overfitting Risk Mitigations (built-in)
 5. Per-fold stability of top features checked
 6. Year-by-year OOS breakdown (regime shift diagnostic)
 7. Linear regression baseline (isolates XGBoost-specific overfitting)
-Runtime Estimate
-- ~10 min per ETF × 5 ETFs = ~50 min for full Optuna search
-- Can be reduced to ~20 min by lowering n_trials=30
+## TODO (Completed)
+- [x] Phase 1: build_features.py — feature engineering (all 5 ETFs)
+- [x] Phase 2: train_model.py — Optuna + XGBoost + OOS eval (all 5 ETFs, GPU-accelerated)
+- [x] Phase 3: generate_report.py — write REPORT.md
+- [x] GPU support: auto-detect CUDA, `--gpu` flag, `device="cuda"` + `tree_method="hist"`
+
+## Runtime (GPU)
+- ~1.4–2.6 min per ETF × 5 ETFs = 9.4 min total (vs ~50 min estimated on CPU)
+
+## Results Summary
+| ETF | Holdout IC | Holdout Dir | L/S Sharpe | Ridge IC | IS-OOS Gap |
+|-----|-----------|-------------|-----------|----------|------------|
+| 300ETF | -0.0075 | 0.482 | +0.47 | +0.0327 | +0.9617 |
+| 50ETF | +0.0134 | 0.513 | +1.09 | +0.1062 | +0.5928 |
+| 500ETF | +0.0728 | 0.513 | +1.24 | +0.0896 | +0.2207 |
+| 588000ETF | -0.0809 | 0.484 | -0.83 | -0.1125 | +0.7096 |
+| 159915ETF | +0.1172 | 0.566 | +1.82 | +0.1349 | +0.1321 |
 Dependencies Verified
 - ✅ optuna 4.9.0, xgboost 3.3.0, lightgbm 4.6.0, pandas_ta, all ETF parquets present
 - ✅ Reuses extract_day_features.py's ETF_CONFIG mapping (300ETF→510300)
