@@ -8,10 +8,10 @@ Covered Call + Bull Put Spread on 50/300/500/588000/159915 ETF.
 source venv/bin/activate                    # Activate env
 python3 update_data.py                      # Pull ETF/option data from rqdatac
 python3 download_5m_data.py                # Download 5m data
-python backtest_put.py [50|300|500|588000|159915] # Run put backtest
-python backtest_put.py 300 --no-filter        # Run without filter
-python backtest_put.py 300 --limit-entry      # Run with BS limit entry
-python backtest_put.py 50 --level 2           # Override OTM level
+python backtest_put.py [50|300|500] --alpha    # Run new daily alpha-hedging backtest
+python backtest_put.py 300 --no-filter         # Run daily baseline (hedge every cycle)
+python backtest_put.py 300 --limit-entry       # Run daily backtest with BS limit entry
+python backtest_put.py 300                     # Run daily static filter backtest
 python research_put_filters.py -e 300         # Evaluate put filters (synthetic)
 python research_put_filters.py -e 300 --level 3  # Eval put filters OTM3
 python optimize_put_filters.py 300            # Optimize put filters (real data)
@@ -59,7 +59,8 @@ data/                          # Parquet files
 backtest_engine.py                # Core backtest engine
 backtest_strategies.py            # CallStrategy & PutStrategy definitions
 backtest_covered_call.py          # Covered call script
-backtest_put.py                   # Protective put script
+backtest_put.py                   # Daily protective put script (new 4-regime)
+backtest_put_old.py               # Cycle-centric put script (old)
 alpha_model.py                 # 4-Type Decision Matrix indicators & scoring
 optimize_put_alpha.py          # Weight/horizon optimizer for puts
 predict_open_high.py           # Open-to-High prediction pipeline
@@ -81,7 +82,9 @@ numba_utils.py                 # Numba BS functions & IV solver
 - Dynamic Alpha Mode (`--alpha`): Signal strong -> Combo A (OTM2+OTM3). Signal weak -> Combo B (OTM4). `roc20` protect against sharp rally.
 
 ### Put Strategy (Selective Hedge)
-- Filter pass -> buy put. Filter fail -> skip (P&L = 0).
+- Cadence: Daily indicator scanning. Mid-cycle entry, holds to expiry.
+- Trigger: Dynamic alpha threshold or daily static filter.
+- OTM Level: Level 1 (OTM1/ATM) for Fall regimes (`reg1`/`reg2`), Level 2 (OTM2) for Crash regimes (`reg3`/`reg4`).
 - Level defaults: optimal OTM levels per ETF set by sweep optimizer.
 
 ### Limit Entry Models (Black-Scholes Mapping)
