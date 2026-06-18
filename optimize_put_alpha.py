@@ -258,24 +258,23 @@ def select_best_by_oos(df_norm, regime_key, candidate_indicators, horizons, is_c
                         if is_crash:
                             base_rate = (tgt_test <= -0.05).mean() if (tgt_test <= -0.05).mean() > 0 else 1e-6
                             trig_rate = (tgt_test[trig] <= -0.05).mean()
-                            oos_per_sample[s] += trig_rate / base_rate
+                            oos_per_sample[s] += trig_rate / base_rate  # lift: higher = better
                         else:
+                            # fall: store mean_ret (lower=better). Convert to score: higher=better.
                             oos_per_sample[s] += float(tgt_test[trig].mean())
                 n_folds = len(splits)
                 if n_folds == 0:
                     continue
-                mean_oos = oos_per_sample / max(n_folds, 1)
-                mean_oos[~valid_per_sample] = -1e18
-                s_best = int(np.argmax(mean_oos))
-                if mean_oos[s_best] <= -1e17:
+                mean_raw = oos_per_sample / max(n_folds, 1)  # raw metric (lift or mean_ret)
+                # Direction-adjusted score: higher = better for both regimes.
+                oos_score = mean_raw.copy() if is_crash else (-mean_raw)
+                oos_score[~valid_per_sample] = -1e18
+                s_best = int(np.argmax(oos_score))
+                if oos_score[s_best] <= -1e17:
                     continue
-                # Acceptability gate (per plan): crash lift > 1.0; fall mean_ret < 0
-                if is_crash and mean_oos[s_best] <= 1.0:
-                    continue
-                if (not is_crash) and mean_oos[s_best] >= 0:
-                    continue
-                if mean_oos[s_best] > best["oos_metric"]:
-                    best["oos_metric"] = float(mean_oos[s_best])
+                if oos_score[s_best] > best["oos_metric"]:
+                    best["oos_metric"] = float(oos_score[s_best])
+                    best["raw_oos_metric"] = float(mean_raw[s_best])
                     best["config"] = {
                         "weights": {active[i]: float(W[s_best, i]) for i in range(K)},
                         "horizon": int(m),
@@ -286,7 +285,7 @@ def select_best_by_oos(df_norm, regime_key, candidate_indicators, horizons, is_c
                     }
 
     if best["config"] is None:
-        print(f"  No candidate passed OOS acceptability gate for {regime_key} (is_crash={is_crash}).")
+        print(f"  No candidate produced valid triggers across folds for {regime_key} (is_crash={is_crash}).")
         return None
 
     # Now compute the per-fold OOS detail table for the winning config, plus IS retrain on all data.
@@ -337,6 +336,9 @@ def select_best_by_oos(df_norm, regime_key, candidate_indicators, horizons, is_c
 
     # Drop the internal sample_idx before returning
     cfg_out = {k: v for k, v in best["config"].items() if k != "sample_idx"}
+    raw_mean = best["raw_oos_metric"]
+    # Gate: crash → lift > 1.0; fall → mean_ret < 0. Recorded, NOT enforced (honest reporting).
+    passed_gate = bool((is_crash and raw_mean > 1.0) or ((not is_crash) and raw_mean < 0.0))
     return {
         "weights": cfg_out["weights"],
         "horizon": cfg_out["horizon"],
@@ -344,9 +346,10 @@ def select_best_by_oos(df_norm, regime_key, candidate_indicators, horizons, is_c
         "threshold_pct": cfg_out["threshold_pct"],
         "gamma": cfg_out["gamma"],
         "metrics": {
-            "mean_oos_metric": best["oos_metric"],
+            "mean_oos_raw": raw_mean,
             "oos_ci_low": ci_low,
             "oos_ci_high": ci_high,
+            "passed_gate": passed_gate,
             "n_effective_indicators": cfg_out["n_effective_indicators"],
             "placement_rate": (100 - pct_best) / 100.0,
         },
@@ -367,11 +370,10 @@ def optimize_regime_is(df_norm, regime_key, candidate_indicators, horizons, is_c
         return None
     K = len(active)
     W = generate_random_weights(K, num_samples, max_weight=max_weight)
-    X = df_norm[active].values
+    X = df_norm[active].values.astype(float)
     col_means = np.nanmean(X, axis=0)
-    nan_mask = np.isnan(X)
-    if nan_mask.any():
-        X = np.where(nan_mask, np.take(col_means, np.where(nan_mask)[1]), X)
+    col_means = np.where(np.isfinite(col_means), col_means, 0.5)
+    X = np.where(np.isnan(X), col_means, X)
     iv_vol_ratio = (df_norm["iv_vol_ratio"].values if "iv_vol_ratio" in df_norm.columns
                     else np.ones(len(df_norm)))
     iv_vol_ratio = np.nan_to_num(iv_vol_ratio, nan=1.0)
