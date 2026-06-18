@@ -39,100 +39,64 @@ To maximize hedging efficiency and minimize premium decay, entry decisions map *
 
 $$\text{Alpha Score} = \sum (w_i \times I_i)$$
 
-- $I_i$: Indicator normalized via **rolling 252-day percentile rank** → [0.0, 1.0]. Look-ahead free.
-- $w_i$: Weight optimized per ETF per regime via random-search (Dirichlet sampling × horizon grid).
+- $I_i$: Indicator normalized via **rolling 252-day percentile rank** (or expanding-window with `--expanding-pct`) → [0.0, 1.0]. Look-ahead free.
+- $w_i$: Weight optimized per ETF per regime via random-search (Dirichlet sampling × horizon grid), selected by mean OOS metric across walk-forward folds (`--select-by-oos`).
 
-**Indicator families** (11 total in `alpha_model.py`):
+**Indicator families** (18 total in `alpha_model.py`):
 
 | Family | Indicators | Normalized Column |
 |--------|-----------|-------------------|
 | Momentum | RSI, MACD Histogram, ROC5, ROC20 | `ind_rsi_high/low`, `ind_macd_neg`, `ind_roc5_neg`, `ind_roc20_neg` |
-| Volatility | Skewness, Kurtosis, Vol Accel, IV/RV Ratio | `ind_skew_neg`, `ind_kurt_high`, `ind_vol_accel_high`, `ind_iv_vol_low` |
-| Structural | Drawdown, Dist-SMA50, Dist-SMA200 | `ind_dd_deep`, `ind_dist_sma50_neg`, `ind_dist_sma200_neg` |
+| Volatility | Skewness, Kurtosis, Vol Accel, IV/RV Ratio, Vol-of-vol, Vol Term Structure | `ind_skew_neg`, `ind_kurt_high`, `ind_vol_accel_high`, `ind_iv_vol_low`, `ind_vol_of_vol_high`, `ind_term_structure_neg` |
+| Structural | Drawdown, Dist-SMA50, Dist-SMA200, ATR Ratio, Range Expansion | `ind_dd_deep`, `ind_dist_sma50_neg`, `ind_dist_sma200_neg`, `ind_atr_ratio_high`, `ind_range_expansion_high` |
+| Flow / Divergence | OBV Divergence, Volume Spike, RSI Divergence | `ind_obv_divergence`, `ind_volume_spike`, `ind_rsi_divergence_neg` |
 
 ### 2.3 Optimized Parameters & Performance
 
-Results from `optimize_put_alpha.py` → `backtest/alpha_put_models.json`.
+> The original §2.3 in-sample tables (Fall/Crash lifts) were **artifacts of a sign-inverted crash-event test** and have been removed. See §4.1 for the corrected, walk-forward OOS results and §4.3 for put P&L validation (the real test).
 
-#### Fall Regimes — Score vs Forward Return
-
-| ETF | Regime | Horizon | Threshold | Placement | Baseline Return | Triggered Return | Diff |
-|-----|--------|---------|-----------|-----------|-----------------|------------------|------|
-| 50ETF | ST Fall (R1) | 14d | 0.640 | Top 10% | +0.06% | **-1.72%** | **-1.78%** |
-| 50ETF | MT Fall (R2) | 40d | 0.755 | Top 25% | +0.33% | -0.39% | -0.72% |
-| 300ETF | ST Fall (R1) | 10d | 0.558 | Top 10% | +0.19% | -0.58% | -0.77% |
-| 300ETF | MT Fall (R2) | 40d | 0.859 | Top 10% | +0.82% | +0.35% | -0.47% |
-| 500ETF | ST Fall (R1) | 14d | 0.605 | Top 10% | +0.03% | **-2.54%** | **-2.57%** |
-| 500ETF | MT Fall (R2) | 21d | 0.830 | Top 15% | +0.08% | -0.57% | -0.65% |
-
-![Alpha Regimes Summary 300ETF](backtest/alpha_regimes_summary_300.png)
-
-#### Crash Regimes — Score vs Worst Drawdown
-
-| ETF | Regime | Horizon | Threshold | Placement | Baseline Crash % | Triggered Crash % | Lift |
-|-----|--------|---------|-----------|-----------|------------------|-------------------|------|
-| 50ETF | ST Crash (R3) | 5d | 0.748 | Top 10% | 4.08% | **10.94%** | **2.69x** |
-| 50ETF | MT Crash (R4) | 40d | 0.695 | Top 15% | 29.96% | **51.90%** | **1.73x** |
-| 300ETF | ST Crash (R3) | 5d | 0.874 | Top 10% | 3.34% | **13.69%** | **4.09x** |
-| 300ETF | MT Crash (R4) | 21d | 0.759 | Top 15% | 16.23% | **38.39%** | **2.37x** |
-| 500ETF | ST Crash (R3) | 5d | 0.677 | Top 25% | 7.85% | **12.82%** | **1.63x** |
-| 500ETF | MT Crash (R4) | 40d | 0.909 | Top 10% | 42.76% | **65.85%** | **1.54x** |
-
-![Alpha Score vs Return 50ETF Reg1](backtest/alpha_score_vs_return_50_reg1.png)
-
-![Cross-ETF Comparison](backtest/alpha_cross_etf_comparison.png)
 
 ---
 
-## 3. Why It Works
+## 3. Three Phases — How It Works
 
-The core mechanism: **no single indicator is reliable, but a weighted combination of look-ahead-free normalized signals creates a statistically separable regime**.
+The alpha model evolved through three phases, each addressing the previous phase's OOS weakness. The validator (`validate_alpha_pnl.py`) compares all three on identical OOS put P&L.
 
-| Design Choice | Why It Matters |
-|---------------|---------------|
-| **Percentile rank normalization** | Removes distribution differences between indicators. RSI [0–100] and skewness [-3, +3] become comparable [0, 1] scales. |
-| **252-day rolling window** | Adapts to regime changes without look-ahead bias. The model "forgets" old market conditions. |
-| **Multi-indicator ensemble** | Reduces false positives. A single noisy indicator rarely pushes the score above threshold alone. |
-| **Per-ETF optimization** | Captures ETF-specific microstructure (300ETF vol_accel dominance vs 500ETF iv_vol_ratio dominance). |
-| **Dirichlet weight sampling** | Ensures weights sum to 1.0 and explores the full simplex uniformly. |
+| Phase | File | Mechanism | Best when |
+|-------|------|-----------|-----------|
+| **1. Linear weighted score** | `alpha_model.py` + `optimize_put_alpha.py` | Dirichlet-weighted sum of 18 rolling-pct indicators; weights selected by mean OOS across purged walk-forward folds | Few high-quality triggers needed (e.g. 300ETF ST Fall) |
+| **2. LightGBM classifier** | `alpha_model_ml.py` | Per-regime monotone (+1) bagged (×5) LGB, isotonic-calibrated, walk-forward expanding training | Daily-cadence crash AUC is good (reg3 AUC 0.63), but over-triggers at cycle cadence |
+| **3. Rule-anchored hybrid** | `alpha_model_hybrid.py` | L2-regularized logistic stack of [Phase1 rank, Phase2 prob, FINDINGS rule flags] | Selective fall/crash entries where validated rules add robustness (300ETF MT Fall, 50ETF MT Crash) |
+
+**Core design choices (all phases)**:
+- **Percentile rank normalization** — removes distribution differences; RSI [0–100] and skewness [-3, +3] become comparable [0,1]. Look-ahead-free.
+- **252-day rolling window** (or expanding) — adapts to regime changes without look-ahead.
+- **Walk-forward as selection objective** — final configs chosen by mean OOS, not best IS.
+- **Purged folds** — train rows whose forward target leaks into test are dropped.
+
+**Anti-overfit devices**:
+- Phase 1: max-weight cap 0.5; composite objective (Spearman + complexity penalty).
+- Phase 2: shallow trees (num_leaves=8, depth=3), min_child_samples=50, monotone constraints, bagging, isotonic calibration.
+- Phase 3: strong L2 (C=0.5); rule anchoring on FINDINGS-validated signals (p<0.001 for the strongest).
 
 ---
 
 ## 4. Known Weaknesses & Improvement Areas
 
-![Weight Importance](backtest/alpha_weight_importance.png)
+The original optimizer had two overfit modes that are now resolved (see §4.2 for the fixes):
 
-### 4.1 Single-Indicator Dominance (Fragility Risk)
+1. **Single-indicator dominance** — pre-cap runs converged to near-single-factor models (e.g. 50ETF MT Fall 94.3% on `ind_dist_sma50_neg`), correct in-sample but fragile OOS. **Fixed**: `--max-weight 0.5` enforced on all ETFs; all 12 cells now ≤0.5 max weight.
+2. **Missed crash events** — static percentile thresholds dropped rare crashes. **Fixed**: dynamic IV-aware threshold $T_t = T_{base} + \gamma \times (\text{iv\_vol\_ratio}_t - 1.0)$, $\gamma$ optimized via grid search.
 
-Several regimes converged to near-single-factor models:
+These were diagnostic problems of the *linear* optimizer. Phases 2/3 add the non-linear modeling capacity the linear score lacked.
 
-| ETF | Regime | Top Indicator | Weight | Risk |
-|-----|--------|---------------|--------|------|
-| 50ETF | MT Fall (R2) | `ind_dist_sma50_neg` | **94.3%** | Near-single-factor |
-| 300ETF | MT Fall (R2) | `ind_macd_neg` | **90.1%** | MACD-only |
-| 300ETF | ST Crash (R3) | `ind_vol_accel_high` | **91.1%** | Vol accel only |
-| 500ETF | MT Fall (R2) | `ind_macd_neg` | **91.6%** | MACD-only |
-| 500ETF | MT Crash (R4) | `ind_dd_deep` | **87.5%** | Drawdown only |
-
-The optimizer found one indicator dominates the objective. Correct in-sample, **fragile out-of-sample**.
-
-**Fix**: Capping max weight at 50% (`--max-weight 0.5`) in the optimizer is now implemented, forcing diversification.
-
-### 4.2 Missed Crash Events (False Negatives)
-
-The threshold misses some crash events by design (precision over recall — false hedges are expensive), but improvements are possible:
-
-![Improvement Areas 300ETF](backtest/alpha_improvement_areas_300.png)
-
-**Fix**: Dynamic thresholding modulated by option cost (`iv_vol_ratio`) is now implemented: $T_t = T_{base} + \gamma \times (\text{iv\_vol\_ratio}_t - 1.0)$. $\gamma$ is optimized via grid search.
-
-### 4.3 Out-of-Sample Validation
+### 4.1 Out-of-Sample Validation
 
 **Status**: Implemented AND used as the selection objective.
 
 Walk-forward validation (expanding train window, purged by horizon) is available via `--walk-forward` (diagnostic) and `--select-by-oos` (selection). The Phase 1 overhaul selects final configs by **mean OOS metric across folds**, not best in-sample.
 
-**Critical fix found during overhaul**: the original crash-event test was sign-inverted (`target = -worst_dd` made `target <= -0.05` unreachable), so ALL original crash lifts silently computed to ~0 and the "4.09x lift" in §2.3 was an in-sample artifact. After fixing, real walk-forward OOS results:
+**Critical fix found during overhaul**: the original crash-event test was sign-inverted (`target = -worst_dd` made `target <= -0.05` unreachable), so ALL original crash lifts silently computed to ~0 and the "4.09x lift" in the original §2.3 was an in-sample artifact. After fixing, real walk-forward OOS results:
 
 | ETF | Regime | OOS lift (crash) / mean_ret (fall) | 95% CI | Gate |
 |-----|--------|-----------------------------------|--------|------|
@@ -143,10 +107,10 @@ Walk-forward validation (expanding train window, purged by horizon) is available
 | 500ETF | ST Crash | 1.65x | [0.46, 3.27] | PASS |
 | 500ETF | MT Crash | 1.06x | [0.53, 1.68] | PASS |
 
-Statistical signal now genuinely above random (was worse-than-random before). Whether it translates to profitable put hedging is tested separately by `validate_alpha_pnl.py` (see §4.5).
+Statistical signal now genuinely above random (was worse-than-random before). Whether it translates to profitable put hedging is tested separately by `validate_alpha_pnl.py` (see §4.3).
 
 
-### 4.4 Improvement Roadmap
+### 4.2 Improvement Roadmap
 
 | Improvement | Difficulty | Impact | Description |
 |-------------|------------|--------|-------------|
@@ -164,9 +128,9 @@ Statistical signal now genuinely above random (was worse-than-random before). Wh
 | Multi-DTE selection | High | Medium | Match regime horizon to option DTE |
 
 
-### 4.5 Put P&L Validation Results (the real test)
+### 4.3 Put P&L Validation Results (the real test)
 
-Statistical lift (§4.3) measures whether the score ranks forward risk correctly. It does **not** measure whether hedging is profitable after theta decay. `validate_alpha_pnl.py` computes actual put option P&L per trigger at monthly-cycle cadence (fair comparison vs baselines) over OOS years (>= 2021).
+Statistical lift (§4.1) measures whether the score ranks forward risk correctly. It does **not** measure whether hedging is profitable after theta decay. `validate_alpha_pnl.py` computes actual put option P&L per trigger at monthly-cycle cadence (fair comparison vs baselines) over OOS years (>= 2021).
 
 Three model phases were built and compared; the best deployable phase per cell is:
 
@@ -192,90 +156,96 @@ Three model phases were built and compared; the best deployable phase per cell i
 
 ## 5. Extension Guide — Where to Plug New Alphas
 
-The architecture has **3 well-defined extension points**:
-
-![Architecture Diagram](backtest/alpha_architecture.png)
+The architecture has well-defined extension points across all 3 phases.
 
 ### 5.1 Add Indicator (`alpha_model.py`)
 
 **File**: `alpha_model.py` → `compute_normalized_indicators()`
 
 ```python
-# Example: adding OBV-based divergence
+# Example: adding a new divergence indicator
 def compute_normalized_indicators(self, df):
     ndf = df.copy()
     # ... existing indicators ...
-    
-    # NEW: OBV divergence
-    ndf["obv"] = ta.obv(ndf[close_col])
-    ndf["obv_slope"] = ndf["obv"].rolling(10).mean() - ndf["obv"].rolling(30).mean()
-    ndf["ind_obv_divergence"] = roll_pct(-ndf["obv_slope"])  # bearish = high
-    
+
+    # NEW: bearish divergence — higher value = more bearish
+    ndf["ind_new_signal"] = self._rp(ndf["raw_new_value"])  # _rp = rolling/expanding pct rank
     return ndf
 ```
 
 **Rules**:
-- Prefix with `ind_` (score 0→1, where 1 = bearish)
-- Use `roll_pct()` for look-ahead-free normalization
-- No future data (no `.shift(-n)`, no full-sample statistics)
+- Prefix with `ind_` (score 0→1, where 1 = bearish).
+- Use `self._rp()` (rolling 252-day or expanding-window percentile rank) for look-ahead-free normalization.
+- No future data (no `.shift(-n)`, no full-sample statistics).
+- Higher value must mean more bearish (Phase 2/3 rely on this for monotone constraints +1).
 
 ### 5.2 Register in Optimizer (`optimize_put_alpha.py`)
 
-**File**: `optimize_put_alpha.py` → `regime_configs` dict
+**File**: `optimize_put_alpha.py` → `regime_configs` dict (Phase 1); feature list in `alpha_model_ml.py` `FEATURES` (Phase 2); `compute_rule_flags()` in `alpha_model_hybrid.py` (Phase 3 rules).
 
 ```python
+# Phase 1: add to regime_configs indicators list
 regime_configs = {
     "reg3": {
         "indicators": [
-            "ind_vol_accel_high", "ind_kurt_high", "ind_skew_neg", 
-            "ind_iv_vol_low",
-            "ind_obv_divergence",   # <-- ADD HERE
+            "ind_vol_accel_high", "ind_kurt_high", "ind_skew_neg",
+            "ind_iv_vol_low", "ind_new_signal",   # <-- ADD HERE
         ],
-        "horizons": [5, 10, 14],
+        "horizons": [5, 14],
         "is_crash": True
     },
 }
 ```
 
-Re-run: `python optimize_put_alpha.py -e all`
+Re-run with OOS selection (recommended):
+```bash
+python optimize_put_alpha.py -e all --select-by-oos --max-weight 0.5
+```
 
-The optimizer automatically assigns weights based on predictive power.
+For Phase 2, also add the indicator name to the `FEATURES` list in `alpha_model_ml.py` (monotone constraints are auto-assigned +1).
 
-### 5.3 Integrate into Backtest (`backtest_strategies.py`)
+### 5.3 Validate with P&L (`validate_alpha_pnl.py`)
+
+After any model change, run the P&L validator to confirm the statistical lift translates to hedging profit:
+
+```bash
+python validate_alpha_pnl.py -e all --phase 1 --cadence cycle   # fair monthly cadence
+python validate_alpha_pnl.py -e 300 --phase 2 --cadence cycle
+python validate_alpha_pnl.py -e 300 --phase 3 --cadence cycle
+python compare_alpha_phases.py                                   # cross-phase winner table
+```
+
+A variant is **deployable** only if: net P&L>0 AND Sharpe>0 AND per-trigger>0 AND beats the static filter.
+
+### 5.4 Integrate into Backtest (`backtest_strategies.py`)
 
 **File**: `backtest_strategies.py` → `PutStrategy.evaluate_filter()`
 
+After TODO 4 (daily scanning) lands, wire the winning phase per cell:
+
 ```python
-# After TODO 4 (daily scanning) is complete
 def evaluate_filter(self, etf, idx, etf_close, indicators, alpha_scores=None):
     if alpha_scores is not None:
-        reg3_score = alpha_scores.get("score_reg3", 0)
-        reg1_score = alpha_scores.get("score_reg1", 0)
-        threshold_reg3 = self.model_config["reg3"]["threshold"]
-        threshold_reg1 = self.model_config["reg1"]["threshold"]
-        
-        filter_would_pass = (reg3_score > threshold_reg3) or (reg1_score > threshold_reg1)
+        # Use the per-ETF-per-regime winner from backtest/alpha_phase_comparison.md
+        reg_key = self.deployed_regime  # e.g. "reg1" for 300ETF ST Fall
+        score = alpha_scores.get(f"score_{reg_key}", 0)
+        threshold = self.model_config[reg_key]["threshold"]
+        filter_would_pass = score > threshold
         return filter_would_pass, filter_would_pass
-    
     # Fallback to existing static filter...
 ```
 
-**Notes**:
-- Currently runs once/month. After daily scanning (TODO 4), runs daily.
-- `alpha_scores` from `AlphaModel.compute_all_scores()` pre-computed on ETF DataFrame.
-- Multiple regimes can fire simultaneously; engine picks appropriate contract (TODO 5).
-
-### 5.4 Adding a New Alpha — Checklist
+### 5.5 Adding a New Alpha — Checklist
 
 ```
 1. Compute raw indicator in alpha_model.py → compute_normalized_indicators()
-2. Add normalized column prefixed with ind_
-3. Add to optimizer regime_configs in optimize_put_alpha.py
-4. Re-run optimizer: python optimize_put_alpha.py -e all
-5. Check new weight in backtest/alpha_put_models.json
-6. Update PutStrategy.evaluate_filter() in backtest_strategies.py
-7. Backtest: python backtest_put.py <etf>
-8. Compare with baseline static filter results
+2. Add normalized column prefixed with ind_ (bearish-positive scale)
+3. Phase 1: add to optimize_put_alpha.py regime_configs indicators
+4. Phase 2: add to alpha_model_ml.py FEATURES list
+5. Re-run: python optimize_put_alpha.py -e all --select-by-oos --max-weight 0.5
+6. Validate: python validate_alpha_pnl.py -e all --phase 1 --cadence cycle
+7. Compare: python compare_alpha_phases.py
+8. If deployable: wire into PutStrategy.evaluate_filter() (after TODO 4)
 ```
 
 ---
@@ -308,7 +278,7 @@ Lock in option gains before mean reversion or decay erodes them:
   * ✅ Phase 3 rule-anchored hybrid (`alpha_model_hybrid.py`, logistic stack on FINDINGS rules)
   * ✅ Put P&L validator (`validate_alpha_pnl.py`) — real option P&L vs 3 baselines
   * ✅ Optimized models saved → `backtest/alpha_put_models.json`, `backtest/alpha_ml_models/`
-  * ✅ **Honest OOS result: 4 of 12 cells deployable** (beat static filter). See §4.5 + `backtest/alpha_phase_comparison.md`.
+  * ✅ **Honest OOS result: 4 of 12 cells deployable** (beat static filter). See §4.3 + `backtest/alpha_phase_comparison.md`.
 
 * `[ ]` **TODO 4: Engine Architecture Modifications**
   * Extend `backtest_engine.py` for daily option evaluation and mid-cycle execution.
