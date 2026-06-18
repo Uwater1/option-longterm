@@ -9,13 +9,14 @@ from datetime import datetime
 
 ETF_NAMES = ['300ETF', '50ETF', '500ETF', '588000ETF', '159915ETF']
 OUTPUT_DIR = Path(__file__).resolve().parent
+DATA_DIR = OUTPUT_DIR / 'data'
 PLOTS_DIR = OUTPUT_DIR / 'plots'
 
 
 def gather_data_summary():
     rows = []
     for etf in ETF_NAMES:
-        fp = OUTPUT_DIR / f'features_{etf}.csv'
+        fp = DATA_DIR / f'features_{etf}.csv'
         if fp.exists():
             df = pd.read_csv(fp, parse_dates=['date'])
             rows.append({
@@ -31,7 +32,7 @@ def gather_data_summary():
 def gather_clustering_info():
     rows = []
     for etf in ETF_NAMES:
-        fp = OUTPUT_DIR / f'clusters_{etf}_kmeans_pca.csv'
+        fp = DATA_DIR / f'clusters_{etf}_kmeans_pca.csv'
         if fp.exists():
             df = pd.read_csv(fp)
             unique, counts = np.unique(df['cluster'], return_counts=True)
@@ -43,7 +44,7 @@ def gather_clustering_info():
 
 def parse_prediction_results():
     """Parse early_prediction_results.txt into structured dict."""
-    fp = OUTPUT_DIR / 'early_prediction_results.txt'
+    fp = DATA_DIR / 'early_prediction_results.txt'
     if not fp.exists():
         return {}
 
@@ -114,7 +115,7 @@ def parse_prediction_results():
 
 
 def parse_cross_etf_results():
-    fp = OUTPUT_DIR / 'cross_etf_results.txt'
+    fp = DATA_DIR / 'cross_etf_results.txt'
     if not fp.exists():
         return None, None, None
 

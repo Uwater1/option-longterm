@@ -25,6 +25,7 @@ import seaborn as sns
 ETF_NAMES = ['300ETF', '50ETF', '500ETF', '588000ETF', '159915ETF']
 
 OUTPUT_DIR = Path(__file__).resolve().parent
+DATA_DIR = OUTPUT_DIR / 'data'
 PLOTS_DIR = OUTPUT_DIR / 'plots'
 MODELS_DIR = OUTPUT_DIR / 'models'
 
@@ -47,8 +48,8 @@ def align_clusters(centroids_a, centroids_b):
 
 def load_etf_data(etf_name):
     """Load paths and features for one ETF"""
-    paths_npz = np.load(OUTPUT_DIR / f'paths_{etf_name}.npz', allow_pickle=True)
-    features_df = pd.read_csv(OUTPUT_DIR / f'features_{etf_name}.csv', 
+    paths_npz = np.load(DATA_DIR / f'paths_{etf_name}.npz', allow_pickle=True)
+    features_df = pd.read_csv(DATA_DIR / f'features_{etf_name}.csv',
                               index_col='date', parse_dates=True)
     
     price_curves = paths_npz['price']
@@ -153,16 +154,16 @@ def cross_etf_clustering():
 # ============================================================
 def extract_early_features_for_model(etf_name):
     """Extract early features for prediction"""
-    paths_npz = np.load(OUTPUT_DIR / f'paths_{etf_name}.npz', allow_pickle=True)
+    paths_npz = np.load(DATA_DIR / f'paths_{etf_name}.npz', allow_pickle=True)
     price_curves = paths_npz['price']
     volume_curves = paths_npz['volume']
     return_curves = paths_npz['returns']
     dates = pd.to_datetime(paths_npz['dates'])
     
-    features_df = pd.read_csv(OUTPUT_DIR / f'features_{etf_name}.csv', 
+    features_df = pd.read_csv(DATA_DIR / f'features_{etf_name}.csv',
                               index_col='date', parse_dates=True)
     
-    cluster_file = OUTPUT_DIR / f'clusters_{etf_name}_kmeans_pca.csv'
+    cluster_file = DATA_DIR / f'clusters_{etf_name}_kmeans_pca.csv'
     cluster_df = pd.read_csv(cluster_file, parse_dates=['date']).set_index('date')['cluster']
     
     # Align
@@ -344,7 +345,7 @@ def main():
         print(f"    {train_etf}: {avg_transfer:.4f}")
     
     # Save results
-    with open(OUTPUT_DIR / 'cross_etf_results.txt', 'w') as f:
+    with open(DATA_DIR / 'cross_etf_results.txt', 'w') as f:
         f.write("Cross-ETF Validation Results\n")
         f.write("="*60 + "\n\n")
         

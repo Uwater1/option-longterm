@@ -17,6 +17,7 @@ from scipy import stats
 ETF_NAMES = ['300ETF', '50ETF', '500ETF', '588000ETF', '159915ETF']
 
 OUTPUT_DIR = Path(__file__).resolve().parent
+DATA_DIR = OUTPUT_DIR / 'data'
 PLOTS_DIR = OUTPUT_DIR / 'plots'
 
 
@@ -33,7 +34,7 @@ def load_best_clusters(etf_name):
     ]
     
     for fname in candidates:
-        path = OUTPUT_DIR / fname
+        path = DATA_DIR / fname
         if path.exists():
             df = pd.read_csv(path, parse_dates=['date'])
             return df.set_index('date')['cluster'], fname
