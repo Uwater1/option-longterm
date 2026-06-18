@@ -1,18 +1,21 @@
 """
 Task 4: Characterize discovered clusters
 - Profile each cluster with paths, features, samples
-- Auto-name clusters
+- Auto-name clusters (z-score profiling)
+- Feature discrimination scoring (ANOVA F, mutual information)
 - Temporal analysis (transitions, regimes)
 """
 import pandas as pd
 import numpy as np
 from pathlib import Path
 import warnings
+import json
 warnings.filterwarnings('ignore')
 
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
+from sklearn.feature_selection import mutual_info_classif
 
 ETF_NAMES = ['300ETF', '50ETF', '500ETF', '588000ETF', '159915ETF']
 
@@ -62,24 +65,25 @@ def characterize_cluster_paths(price_curves, dates, cluster_labels, cluster_id):
 
 
 def auto_name_cluster(features_cluster, features_all):
-    """Generate descriptive name based on dominant characteristics"""
-    overall_mean = features_all.mean()
-    overall_std = features_all.std()
-    
-    cluster_mean = features_cluster.mean()
-    
-    # Find features that deviate > 1 std from overall mean
+    """Generate descriptive name based on z-score deviation from overall mean.
+
+    Returns (name: str, top_feats: list of (feat_name, z_score)).
+    """
+    overall_mean = features_all.mean(numeric_only=True)
+    overall_std = features_all.std(numeric_only=True)
+    cluster_mean = features_cluster.mean(numeric_only=True)
+
+    # z-score per feature
     deviations = (cluster_mean - overall_mean) / (overall_std + 1e-10)
-    
-    # Top 3 most deviated features
-    top_feats = deviations.abs().nlargest(3)
-    
+    top_feats = deviations.abs().nlargest(5)
+
     name_parts = []
+    top_feat_list = []
     for feat in top_feats.index:
         dev = deviations[feat]
-        if abs(dev) < 0.5:
+        top_feat_list.append((feat, float(dev)))
+        if abs(dev) < 1.0:
             continue
-        
         if feat == 'gap_pct':
             name_parts.append('Gap-Up' if dev > 0 else 'Gap-Down')
         elif feat == 'intraday_return':
@@ -96,11 +100,118 @@ def auto_name_cluster(features_cluster, features_all):
             name_parts.append('PM-Up' if dev > 0 else 'PM-Down')
         elif feat == 'volume_spike_open':
             name_parts.append('Open-Spike' if dev > 0 else 'Quiet-Open')
-    
-    if not name_parts:
-        return 'Neutral'
-    
-    return ' '.join(name_parts[:2])
+        elif feat == 'max_drawdown_intra':
+            name_parts.append('Deep-DD' if dev < 0 else 'Shallow-DD')
+        elif feat == 'max_rally_intra':
+            name_parts.append('Strong-Rally' if dev > 0 else 'Weak-Rally')
+        elif feat == 'first_30min_return':
+            name_parts.append('Fast-Open' if dev > 0 else 'Slow-Open')
+        elif feat == 'last_30min_return':
+            name_parts.append('Late-Push' if dev > 0 else 'Fade-Close')
+        elif feat == 'volume_ratio_am_pm':
+            name_parts.append('AM-Heavy-Vol' if dev > 0 else 'PM-Heavy-Vol')
+        elif feat == 'vol_of_vol':
+            name_parts.append('Vol-Accel' if dev > 0 else 'Vol-Stable')
+
+    name = ' '.join(name_parts[:2]) if name_parts else 'Neutral'
+    return name, top_feat_list
+
+
+def compute_feature_discrimination(etf_name, cluster_labels, features_df):
+    """Compute ANOVA F-test, mutual information, z-score heatmap, and auto-profiles.
+
+    Returns dict with discrimination summary; saves JSON + plots.
+    """
+    numeric_cols = features_df.select_dtypes(include=[np.number]).columns.tolist()
+    unique_clusters = sorted(cluster_labels.unique())
+    n_clusters = len(unique_clusters)
+
+    # --- ANOVA F-test per feature ---
+    anova_results = {}
+    for feat in numeric_cols:
+        groups = [features_df.loc[cluster_labels == c, feat].dropna().values for c in unique_clusters]
+        groups = [g for g in groups if len(g) > 1]
+        if len(groups) >= 2:
+            f_stat, p_val = stats.f_oneway(*groups)
+            anova_results[feat] = {'F': float(f_stat), 'p': float(p_val)}
+        else:
+            anova_results[feat] = {'F': 0.0, 'p': 1.0}
+
+    mean_f = np.mean([v['F'] for v in anova_results.values()])
+
+    # --- Mutual information ---
+    X = features_df[numeric_cols].fillna(0).values
+    y_labels = cluster_labels.values.astype(int)
+    mi_scores = mutual_info_classif(X, y_labels, random_state=42)
+    mi_dict = {feat: float(s) for feat, s in zip(numeric_cols, mi_scores)}
+    total_mi = float(np.sum(mi_scores))
+
+    # --- Z-score profiles per cluster ---
+    overall_mean = features_df[numeric_cols].mean()
+    overall_std = features_df[numeric_cols].std()
+    z_profiles = {}
+    cluster_names = {}
+    for c in unique_clusters:
+        mask = cluster_labels == c
+        cluster_feats = features_df.loc[mask, numeric_cols]
+        z = (cluster_feats.mean() - overall_mean) / (overall_std + 1e-10)
+        z_profiles[int(c)] = {feat: float(z[feat]) for feat in numeric_cols}
+
+        name, top = auto_name_cluster(cluster_feats, features_df[numeric_cols])
+        cluster_names[int(c)] = name
+
+    # Unique auto-names count
+    unique_names = len(set(cluster_names.values()))
+
+    discrimination = {
+        'etf': etf_name,
+        'n_clusters': n_clusters,
+        'mean_anova_F': mean_f,
+        'total_mi': total_mi,
+        'unique_auto_names': unique_names,
+        'per_feature_anova': anova_results,
+        'per_feature_mi': mi_dict,
+        'cluster_z_profiles': z_profiles,
+        'cluster_names': cluster_names,
+    }
+
+    out_path = DATA_DIR / f'cluster_discrimination_{etf_name}.json'
+    with open(out_path, 'w') as f:
+        json.dump(discrimination, f, indent=2, default=str)
+    print(f"  Saved discrimination scorecard: {out_path}")
+
+    # --- Plot: z-score heatmap ---
+    z_matrix = pd.DataFrame(z_profiles).T  # rows=clusters, cols=features
+    z_matrix.index.name = 'Cluster'
+
+    fig, ax = plt.subplots(figsize=(max(10, len(numeric_cols) * 0.5), max(4, n_clusters * 0.6)))
+    sns.heatmap(
+        z_matrix, annot=True, fmt='.1f', cmap='RdBu_r', center=0,
+        xticklabels=numeric_cols,
+        yticklabels=[f"C{c}: {cluster_names[int(c)]}" for c in z_matrix.index],
+        ax=ax, cbar_kws={'label': 'z-score'},
+        annot_kws={'size': 7},
+    )
+    ax.set_title(f'Cluster Feature Profiles (z-scores) — {etf_name}')
+    ax.tick_params(axis='x', rotation=45, labelsize=7)
+    ax.tick_params(axis='y', rotation=0, labelsize=8)
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / f'cluster_zscore_heatmap_{etf_name}.png', dpi=120)
+    plt.close()
+
+    # --- Plot: ANOVA F bar chart ---
+    f_vals = [anova_results[f]['F'] for f in numeric_cols]
+    fig, ax = plt.subplots(figsize=(max(10, len(numeric_cols) * 0.4), 5))
+    colors = ['steelblue' if v < np.percentile(f_vals, 75) else 'orange' for v in f_vals]
+    ax.barh(numeric_cols, f_vals, color=colors)
+    ax.set_xlabel('ANOVA F-statistic (higher = more discriminative)')
+    ax.set_title(f'Per-Feature Cluster Discrimination (ANOVA F) — {etf_name}')
+    ax.grid(True, alpha=0.3, axis='x')
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / f'cluster_anova_f_{etf_name}.png', dpi=120)
+    plt.close()
+
+    return discrimination
 
 
 def plot_cluster_profiles(etf_name, price_curves, dates, cluster_labels, features_df):
@@ -131,7 +242,7 @@ def plot_cluster_profiles(etf_name, price_curves, dates, cluster_labels, feature
         
         # Auto-name
         cluster_feats = features_df.iloc[mask]
-        name = auto_name_cluster(cluster_feats, features_df)
+        name, _ = auto_name_cluster(cluster_feats, features_df)
         cluster_names[cid] = name
         
         ax.set_title(f'Cluster {cid}: {name}\n({mask.sum()} days, {mask.mean()*100:.1f}%)')
@@ -300,8 +411,8 @@ def process_etf(etf_name):
     
     print(f"  Loaded: {cluster_file}")
     
-    paths_npz = np.load(OUTPUT_DIR / f'paths_{etf_name}.npz', allow_pickle=True)
-    features_df = pd.read_csv(OUTPUT_DIR / f'features_{etf_name}.csv', index_col='date', parse_dates=True)
+    paths_npz = np.load(DATA_DIR / f'paths_{etf_name}.npz', allow_pickle=True)
+    features_df = pd.read_csv(DATA_DIR / f'features_{etf_name}.csv', index_col='date', parse_dates=True)
     
     price_curves = paths_npz['price']
     dates = pd.to_datetime(paths_npz['dates'])
@@ -325,16 +436,20 @@ def process_etf(etf_name):
     for cid, count in cluster_counts.items():
         print(f"    Cluster {cid}: {count} days ({count/len(cluster_labels)*100:.1f}%)")
     
+    # Compute feature discrimination
+    print("\n  Computing feature discrimination scores...")
+    discrimination = compute_feature_discrimination(etf_name, cluster_labels, features_df)
+
     # Plot profiles
     print("\n  Generating profile plots...")
     cluster_names = plot_cluster_profiles(etf_name, price_curves, dates, cluster_labels, features_df)
-    
+
     # Temporal analysis
     if cluster_names:
         print("  Generating temporal analysis plots...")
         plot_temporal_analysis(etf_name, dates, cluster_labels, cluster_names)
-    
-    return cluster_names
+
+    return cluster_names, discrimination
 
 
 def main():
@@ -344,26 +459,34 @@ def main():
     print("=" * 60)
     
     all_names = {}
-    
+    all_discrimination = {}
+
     for etf_name in ETF_NAMES:
         try:
-            names = process_etf(etf_name)
-            if names:
+            result = process_etf(etf_name)
+            if result:
+                names, discrimination = result
                 all_names[etf_name] = names
+                all_discrimination[etf_name] = discrimination
         except Exception as e:
             print(f"  [ERROR] {etf_name}: {e}")
             import traceback
             traceback.print_exc()
-    
+
     # Summary
     print("\n" + "="*60)
-    print("Summary: Cluster Names")
+    print("Summary: Cluster Names + Discrimination")
     print("="*60)
     for etf_name, names in all_names.items():
         print(f"\n  {etf_name}:")
         for cid, name in names.items():
             print(f"    Cluster {cid}: {name}")
-    
+        if etf_name in all_discrimination:
+            d = all_discrimination[etf_name]
+            print(f"    mean_ANOVA_F={d['mean_anova_F']:.2f}  "
+                  f"total_MI={d['total_mi']:.3f}  "
+                  f"unique_names={d['unique_auto_names']}/{d['n_clusters']}")
+
     print("\nCluster characterization complete!")
 
 

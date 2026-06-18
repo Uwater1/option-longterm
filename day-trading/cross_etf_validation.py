@@ -1,6 +1,6 @@
 """
 Task 6: Cross-ETF Validation
-- Cluster each ETF independently, compare shapes
+- Cluster each ETF independently with selected K, compare shapes
 - Align clusters across ETFs (Hungarian algorithm)
 - Pooled model: train on all ETFs, compare with per-ETF
 - Transfer test: train on ETF A, predict on ETF B
@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import warnings
+import json
 warnings.filterwarnings('ignore')
 
 from sklearn.cluster import KMeans
@@ -28,6 +29,21 @@ OUTPUT_DIR = Path(__file__).resolve().parent
 DATA_DIR = OUTPUT_DIR / 'data'
 PLOTS_DIR = OUTPUT_DIR / 'plots'
 MODELS_DIR = OUTPUT_DIR / 'models'
+
+
+def _load_best_k(etf_name):
+    """Load selected K from best_k_{etf}.json (saved by discover_patterns.py)."""
+    path = DATA_DIR / f'best_k_{etf_name}.json'
+    if path.exists():
+        with open(path) as f:
+            return json.load(f)['best_k']
+    return 4  # fallback minimum
+
+
+def _consensus_k():
+    """Compute consensus K across ETFs (median of per-ETF best_k values)."""
+    ks = [_load_best_k(e) for e in ETF_NAMES]
+    return int(np.median(ks))
 
 
 # ============================================================
@@ -62,16 +78,21 @@ def load_etf_data(etf_name):
     return price_curves, features_df
 
 
-def cluster_etf(price_curves, k=3):
-    """Run KMeans on PCA of price curves"""
+def cluster_etf(price_curves, k=None):
+    """Run KMeans on PCA of price curves.
+
+    If k is None, load best_k for the ETF (not applicable in cross-ETF context).
+    """
     from sklearn.decomposition import PCA
-    
+
     pca = PCA(n_components=8)
     X_pca = pca.fit_transform(price_curves)
-    
+
+    if k is None:
+        k = 4
     km = KMeans(n_clusters=k, random_state=42, n_init=10)
     labels = km.fit_predict(X_pca)
-    
+
     return labels, km.cluster_centers_, pca
 
 
@@ -79,18 +100,24 @@ def cluster_etf(price_curves, k=3):
 # Cross-ETF Analysis
 # ============================================================
 def cross_etf_clustering():
-    """Compare clusters across ETFs"""
+    """Compare clusters across ETFs using consensus K."""
     print("\n" + "="*60)
     print("Cross-ETF Clustering Comparison")
     print("="*60)
-    
+
+    # Per-ETF best_k and consensus
+    per_etf_k = {e: _load_best_k(e) for e in ETF_NAMES}
+    consensus = _consensus_k()
+    print(f"  Per-ETF best K: {per_etf_k}")
+    print(f"  Consensus K for cross-ETF comparison: {consensus}")
+
     etf_results = {}
-    
+
     for etf_name in ETF_NAMES:
         print(f"\n  {etf_name}:")
         price_curves, features_df = load_etf_data(etf_name)
-        labels, centroids, pca = cluster_etf(price_curves, k=3)
-        
+        labels, centroids, pca = cluster_etf(price_curves, k=consensus)
+
         etf_results[etf_name] = {
             'labels': labels,
             'centroids': centroids,
@@ -98,40 +125,44 @@ def cross_etf_clustering():
             'price_curves': price_curves,
             'features_df': features_df,
         }
-        
+
         # Cluster distribution
         unique, counts = np.unique(labels, return_counts=True)
         for u, c in zip(unique, counts):
             print(f"    Cluster {u}: {c} days ({c/len(labels)*100:.1f}%)")
-    
+
     # Align clusters to 300ETF as reference
     ref_etf = '300ETF'
     ref_centroids = etf_results[ref_etf]['centroids']
-    
+
     print(f"\n  Aligning clusters to {ref_etf} reference...")
-    
+
     alignment_map = {}
     for etf_name in ETF_NAMES:
         if etf_name == ref_etf:
-            alignment_map[etf_name] = {0: 0, 1: 1, 2: 2}
+            alignment_map[etf_name] = {i: i for i in range(consensus)}
             continue
-        
+
         mapping = align_clusters(ref_centroids, etf_results[etf_name]['centroids'])
         alignment_map[etf_name] = mapping
         print(f"    {etf_name}: {mapping}")
-    
+
     # Plot aligned centroids
-    fig, axes = plt.subplots(len(ETF_NAMES), 3, figsize=(15, 4*len(ETF_NAMES)), squeeze=False)
-    
+    fig, axes = plt.subplots(len(ETF_NAMES), consensus, figsize=(5*consensus, 4*len(ETF_NAMES)), squeeze=False)
+
     for i, etf_name in enumerate(ETF_NAMES):
         centroids = etf_results[etf_name]['centroids']
         mapping = alignment_map[etf_name]
-        
-        for aligned_id in range(3):
+
+        for aligned_id in range(consensus):
             # Find which original cluster maps to this aligned_id
-            orig_id = [k for k, v in mapping.items() if v == aligned_id][0]
+            orig_id = [k for k, v in mapping.items() if v == aligned_id]
+            if not orig_id:
+                axes[i, aligned_id].axis('off')
+                continue
+            orig_id = orig_id[0]
             centroid = centroids[orig_id]
-            
+
             ax = axes[i, aligned_id]
             ax.plot(centroid, 'b-', linewidth=2)
             ax.axhline(0, color='gray', linestyle='--', alpha=0.3)
@@ -141,30 +172,72 @@ def cross_etf_clustering():
             if aligned_id == 0:
                 ax.set_ylabel('Normalized Price')
             ax.grid(True, alpha=0.3)
-    
+
     plt.tight_layout()
     plt.savefig(PLOTS_DIR / 'cross_etf_alignment.png', dpi=150)
     plt.close()
-    
+
     return etf_results, alignment_map
 
 
 # ============================================================
 # Early Prediction Models
 # ============================================================
-def extract_early_features_for_model(etf_name):
-    """Extract early features for prediction"""
+def _build_consensus_labels(consensus_k):
+    """Re-cluster each ETF with consensus_k, then align to 300ETF reference.
+
+    Returns dict {etf_name: aligned_labels_array}.
+    """
+    ref_etf = '300ETF'
+    ref_centroids = None
+    etf_centroids = {}
+    etf_price = {}
+
+    for etf_name in ETF_NAMES:
+        price_curves, _ = load_etf_data(etf_name)
+        etf_price[etf_name] = price_curves
+        labels, centroids, _ = cluster_etf(price_curves, k=consensus_k)
+        etf_centroids[etf_name] = centroids
+        if etf_name == ref_etf:
+            ref_centroids = centroids
+
+    # Align each ETF to reference
+    aligned = {}
+    for etf_name in ETF_NAMES:
+        centroids = etf_centroids[etf_name]
+        if etf_name == ref_etf:
+            mapping = {i: i for i in range(consensus_k)}
+        else:
+            mapping = align_clusters(ref_centroids, centroids)
+        # Build aligned labels
+        labels, _, _ = cluster_etf(etf_price[etf_name], k=consensus_k)
+        inv_map = {v: k for k, v in mapping.items()}
+        aligned[etf_name] = np.array([inv_map.get(int(l), int(l)) for l in labels])
+    return aligned
+
+
+def extract_early_features_for_model(etf_name, consensus_labels=None):
+    """Extract early features for prediction.
+
+    If consensus_labels is provided, use those instead of the per-ETF cluster file.
+    """
     paths_npz = np.load(DATA_DIR / f'paths_{etf_name}.npz', allow_pickle=True)
     price_curves = paths_npz['price']
     volume_curves = paths_npz['volume']
     return_curves = paths_npz['returns']
     dates = pd.to_datetime(paths_npz['dates'])
-    
+
     features_df = pd.read_csv(DATA_DIR / f'features_{etf_name}.csv',
                               index_col='date', parse_dates=True)
-    
-    cluster_file = DATA_DIR / f'clusters_{etf_name}_kmeans_pca.csv'
-    cluster_df = pd.read_csv(cluster_file, parse_dates=['date']).set_index('date')['cluster']
+
+    if consensus_labels is not None:
+        # Use aligned labels (array aligned to price_curves index)
+        date_to_label = dict(zip(dates, consensus_labels))
+        cluster_df = pd.Series(date_to_label)
+        cluster_df.index.name = 'date'
+    else:
+        cluster_file = DATA_DIR / f'clusters_{etf_name}_kmeans_pca.csv'
+        cluster_df = pd.read_csv(cluster_file, parse_dates=['date']).set_index('date')['cluster']
     
     # Align
     date_set_paths = set(dates)
@@ -176,13 +249,18 @@ def extract_early_features_for_model(etf_name):
     
     early_features = []
     y_list = []
-    
+
     for d in common:
         pi = path_idx_map.get(d)
         if pi is None:
             continue
-        
-        cluster_label = cluster_df.loc[d]
+
+        if consensus_labels is not None:
+            cluster_label = date_to_label.get(d)
+            if cluster_label is None:
+                continue
+        else:
+            cluster_label = cluster_df.loc[d]
         if pd.isna(cluster_label):
             continue
         
@@ -219,16 +297,20 @@ def extract_early_features_for_model(etf_name):
 
 
 def run_pooled_model():
-    """Train model on all ETFs combined"""
+    """Train model on all ETFs combined using consensus-aligned labels."""
     print("\n" + "="*60)
-    print("Pooled Model (All ETFs)")
+    print("Pooled Model (All ETFs, consensus labels)")
     print("="*60)
-    
+
+    consensus = _consensus_k()
+    print(f"  Consensus K: {consensus}")
+    aligned = _build_consensus_labels(consensus)
+
     all_X = []
     all_y = []
-    
+
     for etf_name in ETF_NAMES:
-        X, y = extract_early_features_for_model(etf_name)
+        X, y = extract_early_features_for_model(etf_name, consensus_labels=aligned[etf_name])
         all_X.append(X)
         all_y.append(y)
         print(f"  {etf_name}: {len(X)} samples")
@@ -260,33 +342,38 @@ def run_pooled_model():
 
 
 def transfer_test():
-    """Train on ETF A, predict on ETF B"""
+    """Train on ETF A, predict on ETF B (consensus-aligned labels)."""
     print("\n" + "="*60)
     print("Transfer Test (Train A -> Predict B)")
     print("="*60)
-    
+
+    consensus = _consensus_k()
+    aligned = _build_consensus_labels(consensus)
+
     results = {}
-    
+
     for train_etf in ETF_NAMES:
-        X_train, y_train = extract_early_features_for_model(train_etf)
+        X_train, y_train = extract_early_features_for_model(
+            train_etf, consensus_labels=aligned[train_etf])
         scaler = StandardScaler()
         X_train_scaled = scaler.fit_transform(X_train)
-        
+
         model = lgb.LGBMClassifier(n_estimators=200, max_depth=6, learning_rate=0.05,
                                     random_state=42, verbose=-1)
         model.fit(X_train_scaled, y_train)
-        
+
         results[train_etf] = {}
-        
+
         for test_etf in ETF_NAMES:
-            X_test, y_test = extract_early_features_for_model(test_etf)
+            X_test, y_test = extract_early_features_for_model(
+                test_etf, consensus_labels=aligned[test_etf])
             X_test_scaled = scaler.transform(X_test)
-            
+
             preds = model.predict(X_test_scaled)
             acc = accuracy_score(y_test, preds)
-            
+
             results[train_etf][test_etf] = acc
-            
+
             if train_etf == test_etf:
                 print(f"  {train_etf} -> {test_etf}: {acc:.4f} (self)")
             else:
