@@ -301,7 +301,7 @@ def generate_report():
     L.append("| Finding | Result |")
     L.append("|---------|--------|")
     L.append("| Macro Day Types | 3 types per ETF (Rally / Selloff / Neutral, K=3 fixed) |")
-    L.append("| Sub-Types | 2-3 variants per macro type (hierarchical sub-clustering) |")
+    L.append("| Sub-Types | 2 variants per split macro; K=1 for degenerate (size guard) |")
     L.append("| Prediction Accuracy | **85-87%** macro type from first 30 minutes (Neural Net) |")
     L.append("| Rally Edge | Sharpe 1.18-2.38 (strong positive) |")
     L.append("| Selloff Signal | Sharpe -0.39 to -2.62 (strong negative) |")
@@ -393,7 +393,8 @@ def generate_report():
     L.append("| Silhouette Score | 0.30-0.42 (moderate separation) |")
     L.append("| Davies-Bouldin | Low (good compactness) |")
     L.append("| Macro K | 3 (fixed: Rally/Selloff/Neutral) |")
-    L.append("| Sub-Clustering | K=2-3 per macro type (silhouette-selected) |")
+    L.append("| Sub-Clustering | K=2 per macro type (silhouette-selected; K=1 if degenerate split) |")
+    L.append("| Size Guard | min 50 days AND 10% of parent; else collapse to K=1 |")
     L.append("")
 
     L.append("### 4.3 Example Day Curves by Macro Cluster")
@@ -403,7 +404,44 @@ def generate_report():
     L.append(img("plots/cluster_samples_300ETF_sub.png", "Sample Price Curves per Sub-Cluster - 300ETF"))
     L.append("")
 
-    L.append("> **Key Insight**: K=3 macro clustering discovers clean Rally / Selloff / Neutral types. Sub-clustering reveals meaningful variants within each macro type without the fuzzy boundaries of flat K=4.")
+    L.append("> **Key Insight**: K=3 macro clustering discovers clean Rally / Selloff / Neutral types. Sub-clustering reveals meaningful variants within each macro type; a size guard prevents degenerate splits (tiny outlier pockets collapse to K=1).")
+    L.append("")
+
+    # ── 4.5 Sub-Cluster Structure Overview ──
+    L.append("### 4.5 Sub-Cluster Structure Overview")
+    L.append("")
+    L.append("Hierarchical sub-clustering with size guard (min 50 days & 10% of parent):")
+    L.append("")
+    L.append("| ETF | Macro | N | Sub-K | Silhouette | Sub-Sizes | Reason |")
+    L.append("|-----|-------|---|-------|------------|-----------|--------|")
+    for etf in ETF_NAMES:
+        info_path = DATA_DIR / f'sub_cluster_info_{etf}.json'
+        # Load auto-names from discrimination JSON
+        disc = _load_discrimination(etf)
+        auto_names = disc.get('cluster_names', {}) if disc else {}
+        if info_path.exists():
+            with open(info_path) as f:
+                sinfo = json.load(f)
+            for mid in sorted(sinfo.get('macros', {}).keys()):
+                m = sinfo['macros'][mid]
+                n_days = m['n_days']
+                sub_k = m['sub_k']
+                sil = m.get('silhouette')
+                sil_str = f"{sil:.3f}" if sil is not None else "\u2014"
+                sizes = m.get('sub_sizes', {})
+                sizes_str = ' / '.join([str(v) for v in sizes.values()])
+                reason = m.get('reason', 'unknown')
+                # Shorten reason for display
+                if 'degenerate' in reason:
+                    reason_short = f"\u26a0 {reason}"
+                elif reason == 'silhouette_best':
+                    reason_short = "\u2705 silhouette best"
+                else:
+                    reason_short = reason
+                macro_name = auto_names.get(str(mid), auto_names.get(int(mid) if str(mid).isdigit() else mid, f'C{mid}'))
+                L.append(f"| **{etf}** | Macro {mid} ({macro_name}) | {n_days:,} | {sub_k} | {sil_str} | {sizes_str} | {reason_short} |")
+    L.append("")
+    L.append("> **Size Guard**: Macro clusters where the smallest sub-type had fewer than 50 days (or <10% of parent) were collapsed to K=1. These were typically small outlier pockets, not genuine sub-types.")
     L.append("")
 
     # ── 4.4 K Selection Scorecard ──
@@ -608,14 +646,27 @@ def generate_report():
 
     L.append("### 6.5 Level-2 Sub-Cluster Prediction")
     L.append("")
-    L.append("Within each macro type, a LightGBM classifier predicts the sub-variant (conditional on Level-1 macro prediction):")
+    L.append("Within each macro type that has ≥2 sub-types, a LightGBM classifier predicts the sub-variant (conditional on Level-1 macro prediction).")
+    L.append("Macro clusters collapsed to K=1 by the size guard are marked '—' (no prediction needed).")
     L.append("")
     L.append("| ETF | Macro Type | Sub-Types | Acc | F1 | Sub | Days | PM Ret | Sharpe |")
     L.append("|-----|-----------|-----------|-----|----|-----|------|--------|--------|")
     for etf in ETF_NAMES:
-        if etf in pred and pred[etf].get('sub_prediction'):
-            for macro_entry in pred[etf]['sub_prediction']:
+        if etf in pred:
+            # Build set of macros that have sub_prediction data
+            pred_macros = {me['macro_id'] for me in pred[etf].get('sub_prediction', [])}
+            # Load sub_cluster_info to know all macros
+            info_path = DATA_DIR / f'sub_cluster_info_{etf}.json'
+            all_macros = []
+            if info_path.exists():
+                with open(info_path) as f:
+                    sinfo = json.load(f)
+                all_macros = sorted(sinfo.get('macros', {}).keys())
+            # Show predicted macros first, then K=1 ones
+            shown = set()
+            for macro_entry in pred[etf].get('sub_prediction', []):
                 mid = macro_entry['macro_id']
+                shown.add(mid)
                 acc = macro_entry.get('Acc', 0)
                 f1 = macro_entry.get('F1', 0)
                 n_sub = macro_entry.get('n_sub_types', 0)
@@ -632,6 +683,12 @@ def generate_report():
                         first = False
                     else:
                         L.append(f"| | | | | | {sid} | {int(days):,} | {pm_ret:+.3f}% | {sh_emoji} {sharpe:+.2f} |")
+            # Show K=1 macros (no sub-prediction)
+            for mid in all_macros:
+                if mid not in shown:
+                    m = sinfo['macros'][mid]
+                    n_days = m['n_days']
+                    L.append(f"| **{etf}** | Macro {mid} | 1 | — | — | — | {n_days:,} | — | ⚪ K=1 (no split) |")
     L.append("")
 
     L.append("### 6.6 Additional Confusion Matrices")
@@ -762,7 +819,7 @@ def generate_report():
     L.append("")
     L.append("| Claim | Evidence |")
     L.append("|-------|---------|")
-    L.append("| ✅ Multiple day types emerge | K=3 macro types + 2-3 sub-types per macro (hierarchical) |")
+    L.append("| ✅ Multiple day types emerge | K=3 macro types + 2 sub-types per split macro (K=1 size guard for degenerate) |")
     L.append("| ✅ Universal across broad-market ETFs | 300/50/588000 transfer at 80-86% (macro level) |")
     L.append("| ✅ ETF-specific for sector ETFs | 159915 patterns transfer at only 6-20% |")
     L.append("| ⚠️ Continuous spectrum | Macro boundaries cleaner than flat K=4; sub-types remain fuzzy |")
@@ -801,6 +858,7 @@ def generate_report():
     L.append("")
     L.append("- Macro boundaries still fuzzy (continuous spectrum, but cleaner than flat K=4)")
     L.append("- Sub-cluster types have lower discrimination (within-macro variance is high)")
+    L.append("- Sub-clustering uses size guard (K=1 for degenerate splits); some macro types have no meaningful sub-structure")
     L.append("- Bootstrap stability is low (patterns not perfectly reproducible)")
     L.append("- Transaction costs **not** included in profitability proxy")
     L.append("- Slippage and market impact not modeled")

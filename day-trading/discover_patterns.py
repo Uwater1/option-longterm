@@ -475,11 +475,14 @@ def run_clustering(data_dict, data_name, best_k=None):
 # ============================================================
 # Hierarchical Sub-Clustering
 # ============================================================
-def run_sub_clustering(data, macro_labels, k_sub_range=range(2, 4)):
+def run_sub_clustering(data, macro_labels, k_sub_range=range(2, 4),
+                       min_frac=0.10, min_days=50):
     """Sub-cluster within each macro cluster.
 
     For each macro cluster, sweeps K in k_sub_range, selects the best
-    sub-K via silhouette score, and fits a final KMeans.
+    sub-K via silhouette score.  If the smallest sub-cluster is too
+    small (< min_frac of parent AND < min_days), collapses to K=1
+    (no split).
 
     Returns
     -------
@@ -501,11 +504,13 @@ def run_sub_clustering(data, macro_labels, k_sub_range=range(2, 4)):
             # Too few points — treat as single sub-cluster
             sub_labels[mask] = [f"{macro_id}.0"] * n_sub
             sub_info['macros'][str(macro_id)] = {
-                'n_days': int(n_sub), 'sub_k': 1, 'silhouette': None
+                'n_days': int(n_sub), 'sub_k': 1, 'silhouette': None,
+                'sub_sizes': {f"{macro_id}.0": int(n_sub)},
+                'reason': 'too_few_points'
             }
             continue
 
-        best_k, best_sil, best_labels = 2, -1, None
+        best_k, best_sil, best_labels = None, -1, None
         for k in k_sub_range:
             if k >= n_sub:
                 continue
@@ -516,9 +521,24 @@ def run_sub_clustering(data, macro_labels, k_sub_range=range(2, 4)):
             if sil > best_sil:
                 best_k, best_sil, best_labels = k, sil, lbl
 
+        # ── Size guard: reject degenerate splits ──
+        reason = 'silhouette_best'
+        if best_labels is not None and best_k is not None and best_k >= 2:
+            _, counts = np.unique(best_labels, return_counts=True)
+            smallest = int(counts.min())
+            threshold = max(min_days, int(n_sub * min_frac))
+            if smallest < threshold:
+                print(f"      Macro {macro_id}: REJECT K={best_k} "
+                      f"(smallest={smallest} < threshold={threshold}), "
+                      f"collapsing to K=1")
+                best_k, best_sil, best_labels = 1, None, None
+                reason = f'degenerate_split (smallest={smallest}<{threshold})'
+
         if best_labels is None:
             best_labels = np.zeros(n_sub, dtype=int)
             best_k, best_sil = 1, None
+            if reason == 'silhouette_best':
+                reason = 'no_valid_k'
 
         # Assign composite labels
         sub_labels[mask] = [f"{macro_id}.{int(s)}" for s in best_labels]
@@ -529,10 +549,12 @@ def run_sub_clustering(data, macro_labels, k_sub_range=range(2, 4)):
             'sub_k': int(best_k),
             'silhouette': float(best_sil) if best_sil is not None else None,
             'sub_sizes': {f"{macro_id}.{i}": int(c) for i, c in enumerate(counts)},
+            'reason': reason,
         }
         sil_str = f"{best_sil:.4f}" if best_sil is not None else "n/a"
         print(f"      Macro {macro_id}: sub-K={best_k}, "
-              f"sil={sil_str}, sizes={dict(zip(range(best_k), counts))}")
+              f"sil={sil_str}, sizes={dict(zip(range(best_k), counts))} "
+              f"[{reason}]")
 
     return sub_labels, sub_info
 

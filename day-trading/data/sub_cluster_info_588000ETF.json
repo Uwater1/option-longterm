@@ -4,29 +4,31 @@
     "0": {
       "n_days": 745,
       "sub_k": 2,
-      "silhouette": 0.3466345326180453,
+      "silhouette": 0.3466345326180452,
       "sub_sizes": {
         "0.0": 383,
         "0.1": 362
-      }
+      },
+      "reason": "silhouette_best"
     },
     "1": {
       "n_days": 214,
-      "sub_k": 2,
-      "silhouette": 0.5791034952321118,
+      "sub_k": 1,
+      "silhouette": null,
       "sub_sizes": {
-        "1.0": 183,
-        "1.1": 31
-      }
+        "1.0": 214
+      },
+      "reason": "degenerate_split (smallest=31<50)"
     },
     "2": {
       "n_days": 394,
       "sub_k": 2,
-      "silhouette": 0.5230683853566213,
+      "silhouette": 0.5230683853566214,
       "sub_sizes": {
         "2.0": 322,
         "2.1": 72
-      }
+      },
+      "reason": "silhouette_best"
     }
   },
   "etf": "588000ETF"

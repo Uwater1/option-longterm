@@ -8,16 +8,17 @@
       "sub_sizes": {
         "0.0": 444,
         "0.1": 100
-      }
+      },
+      "reason": "silhouette_best"
     },
     "1": {
       "n_days": 530,
-      "sub_k": 2,
-      "silhouette": 0.7761088180952425,
+      "sub_k": 1,
+      "silhouette": null,
       "sub_sizes": {
-        "1.0": 513,
-        "1.1": 17
-      }
+        "1.0": 530
+      },
+      "reason": "degenerate_split (smallest=17<53)"
     },
     "2": {
       "n_days": 1707,
@@ -26,7 +27,8 @@
       "sub_sizes": {
         "2.0": 742,
         "2.1": 965
-      }
+      },
+      "reason": "silhouette_best"
     }
   },
   "etf": "159915ETF"
