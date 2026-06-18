@@ -507,8 +507,8 @@ def predict_etf(etf_name):
         short_win_rate = (cluster_pm_returns < 0).mean()
         short_sharpe = short_mean / std_ret * np.sqrt(252)
 
-        # Optimal direction: pick direction with higher absolute Sharpe
-        if abs(long_sharpe) >= abs(short_sharpe):
+        # Optimal direction: long if Sharpe is positive, else short
+        if long_sharpe >= 0:
             opt_dir = 'long'
             opt_return = mean_ret
             opt_win_rate = long_win_rate
