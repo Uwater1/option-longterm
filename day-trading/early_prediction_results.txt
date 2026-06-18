@@ -1,0 +1,93 @@
+Early Prediction Results (First 30 Minutes)
+============================================================
+
+
+300ETF
+------------------------------------------------------------
+
+Baselines:
+  majority: 0.6523
+  prev_day: 0.5023
+  gap_only: 0.5480
+
+Models:
+  LightGBM: Acc=0.8400, F1=0.7972
+  XGBoost: Acc=0.8454, F1=0.8056
+  NeuralNet: Acc=0.8533, F1=0.8188
+
+Profitability Proxy:
+  Cluster 0.0: 1844 days, PM Return=0.017%, Win Rate=50.5%, Sharpe=0.41
+  Cluster 1.0: 474 days, PM Return=0.111%, Win Rate=53.6%, Sharpe=1.64
+  Cluster 2.0: 463 days, PM Return=-0.072%, Win Rate=47.3%, Sharpe=-1.04
+
+50ETF
+------------------------------------------------------------
+
+Baselines:
+  majority: 0.6252
+  prev_day: 0.4867
+  gap_only: 0.5335
+
+Models:
+  LightGBM: Acc=0.8604, F1=0.8342
+  XGBoost: Acc=0.8612, F1=0.8350
+  NeuralNet: Acc=0.8629, F1=0.8374
+
+Profitability Proxy:
+  Cluster 0.0: 1750 days, PM Return=0.002%, Win Rate=47.9%, Sharpe=0.05
+  Cluster 1.0: 430 days, PM Return=0.086%, Win Rate=50.0%, Sharpe=1.18
+  Cluster 2.0: 600 days, PM Return=-0.023%, Win Rate=49.2%, Sharpe=-0.39
+
+500ETF
+------------------------------------------------------------
+
+Baselines:
+  majority: 0.6813
+  prev_day: 0.5327
+  gap_only: 0.5853
+
+Models:
+  LightGBM: Acc=0.8604, F1=0.8128
+  XGBoost: Acc=0.8637, F1=0.8160
+  NeuralNet: Acc=0.8716, F1=0.8271
+
+Profitability Proxy:
+  Cluster 0.0: 1953 days, PM Return=0.019%, Win Rate=51.8%, Sharpe=0.39
+  Cluster 1.0: 353 days, PM Return=-0.159%, Win Rate=43.3%, Sharpe=-1.79
+  Cluster 2.0: 474 days, PM Return=0.161%, Win Rate=57.2%, Sharpe=1.91
+
+588000ETF
+------------------------------------------------------------
+
+Baselines:
+  majority: 0.5510
+  prev_day: 0.4157
+  gap_only: 0.4371
+
+Models:
+  LightGBM: Acc=0.8410, F1=0.8281
+  XGBoost: Acc=0.8491, F1=0.8371
+  NeuralNet: Acc=0.8573, F1=0.8491
+
+Profitability Proxy:
+  Cluster 0.0: 746 days, PM Return=-0.026%, Win Rate=42.6%, Sharpe=-0.53
+  Cluster 1.0: 215 days, PM Return=0.199%, Win Rate=54.0%, Sharpe=2.23
+  Cluster 2.0: 391 days, PM Return=-0.173%, Win Rate=36.8%, Sharpe=-2.62
+
+159915ETF
+------------------------------------------------------------
+
+Baselines:
+  majority: 0.6137
+  prev_day: 0.4752
+  gap_only: 0.2759
+
+Models:
+  LightGBM: Acc=0.8543, F1=0.8309
+  XGBoost: Acc=0.8561, F1=0.8333
+  NeuralNet: Acc=0.8612, F1=0.8412
+
+Profitability Proxy:
+  Cluster 0.0: 520 days, PM Return=0.216%, Win Rate=57.5%, Sharpe=2.38
+  Cluster 1.0: 534 days, PM Return=-0.129%, Win Rate=42.7%, Sharpe=-1.55
+  Cluster 2.0: 1726 days, PM Return=-0.033%, Win Rate=44.8%, Sharpe=-0.53
