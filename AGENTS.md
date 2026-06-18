@@ -35,9 +35,18 @@ python eval_synth_filters.py -e 500        # Eval synthetic filters (bootstrap)
 python eval_synth_combinations.py -e 300   # Search synthetic filter combos
 python evaluate_combinations.py -e 300     # Search real filter combos
 python3 diagnose_500etf.py -e 500           # 500ETF multi-variant diagnostics
-python3 optimize_put_alpha.py -e all        # Optimize put alpha weights/horizons
+python3 optimize_put_alpha.py -e all        # Optimize put alpha weights/horizons (IS objective)
 python3 optimize_put_alpha.py -e 300 --max-weight 0.5 # Run with weight cap (regularization)
-python3 optimize_put_alpha.py -e 300 --walk-forward   # Run expanding window walk-forward validation
+python3 optimize_put_alpha.py -e 300 --walk-forward   # Walk-forward diagnostic (per-fold IS-opt → OOS)
+python3 optimize_put_alpha.py -e all --select-by-oos  # **SELECT by mean OOS across purged folds (recommended)**
+python3 optimize_put_alpha.py -e 300 --select-by-oos --expanding-pct  # Adaptive expanding-window percentiles
+python alpha_model_ml.py -e all              # Train Phase 2 LightGBM regime models (monotone+bagged+isotonic)
+python alpha_model_hybrid.py -e 300          # Phase 3 rule-anchored hybrid AUC report
+python validate_alpha_pnl.py -e all --phase 1 --cadence cycle  # Put P&L validation, Phase 1, cycle cadence
+python validate_alpha_pnl.py -e 300 --phase 2 --cadence cycle  # Put P&L validation, Phase 2 (ML)
+python validate_alpha_pnl.py -e 300 --phase 3 --cadence cycle  # Put P&L validation, Phase 3 (hybrid)
+python validate_alpha_pnl.py -e 300 --phase 1 --cadence daily  # Daily-cadence (needs TODO 4)
+python compare_alpha_phases.py               # Cross-phase comparison → backtest/alpha_phase_comparison.md
 
 ```
 
@@ -60,11 +69,17 @@ backtest_engine.py                # Core backtest engine
 backtest_strategies.py            # CallStrategy & PutStrategy definitions
 backtest_covered_call.py          # Covered call script
 backtest_put.py                   # Protective put script
-alpha_model.py                 # 4-Type Decision Matrix indicators & scoring
-optimize_put_alpha.py          # Weight/horizon optimizer for puts
+alpha_model.py                 # 4-Type Decision Matrix indicators & scoring (Phase 1)
+optimize_put_alpha.py          # Weight/horizon optimizer (OOS-select + IS objective)
+alpha_model_ml.py              # Phase 2 LightGBM regime models (monotone+bagged+isotonic)
+alpha_model_hybrid.py          # Phase 3 rule-anchored hybrid (logistic stack)
+validate_alpha_pnl.py          # Put P&L validator vs 3 baselines (real option prices)
+compare_alpha_phases.py        # Cross-phase P&L comparison report
 predict_open_high.py           # Open-to-High prediction pipeline
 numba_utils.py                 # Numba BS functions & IV solver
 ```
+
+> Also: `backtest/alpha_put_models.json` (Phase 1 weights+OOS), `backtest/alpha_ml_models/` (Phase 2 bags+manifests), `backtest/validate_pnl_phase{1,2,3}.json`, `backtest/alpha_phase_comparison.md`.
 
 ## Architecture
 
@@ -90,12 +105,20 @@ numba_utils.py                 # Numba BS functions & IV solver
 
 ### Put Alpha Model (4-Type Decision Matrix)
 - 4 regimes: ST/MT Fall, ST/MT Crash.
-- Rolling 252-day percentile rank: Normalizes indicators to `[0.0, 1.0]` (no look-ahead).
+- Rolling 252-day percentile rank: Normalizes indicators to `[0.0, 1.0]` (no look-ahead). `--expanding-pct` switches to adaptive expanding-window percentiles.
 - Score calculation: Weighted sum of active normalized indicators. Rescale weights if indicator missing.
 - **Regularization**: Capped maximum weight (`--max-weight 0.5`) to prevent single-indicator dominance.
 - **Dynamic Threshold**: Trigger threshold adjusted daily based on option cost: $T_t = T_{base} + \gamma \times (\text{iv\_vol\_ratio}_t - 1.0)$.
 - **OOS Validation**: Expanding window walk-forward validation (`--walk-forward`) checks chronological test year stability.
+- **OOS Selection** (recommended): `--select-by-oos` picks final config by mean OOS metric across **purged** expanding folds (drops train rows whose forward target leaks into test), not best in-sample.
 - Config stored in `backtest/alpha_put_models.json`.
+
+### Put Alpha Model — 3 Phases (OOS-validated)
+**Phase 1** (`alpha_model.py` + `optimize_put_alpha.py`): linear weighted score. New composite objective (Spearman rank + log placement + complexity penalty). 18 normalized indicators incl. ATR ratio, vol-of-vol, range expansion, vol term structure, RSI divergence.
+**Phase 2** (`alpha_model_ml.py`): per-regime LightGBM binary classifier (crash→`worst_dd<=-0.05`, fall→`fwd_ret<0`). Monotone constraints (+1 all features), 5-bag bootstrap ensemble, isotonic calibration, walk-forward expanding training. Outputs calibrated probability; threshold = avg per-fold train p85.
+**Phase 3** (`alpha_model_hybrid.py`): logistic stack of [Phase1 rank, Phase2 prob, FINDINGS rule flags]. L2-reg (C=0.5), walk-forward. Rule anchoring = anti-overfit.
+**Validator** (`validate_alpha_pnl.py`): real put option P&L per trigger vs 3 baselines (no-hedge / all-hedge / static filter). `--cadence cycle` (fair, monthly) or `daily` (needs TODO 4). Deployable = net P&L>0 AND Sharpe>0 AND per-trig>0 AND beats static filter.
+**Result**: 4 of 12 ETF×regime cells deployable. See `backtest/alpha_phase_comparison.md`. Run `python compare_alpha_phases.py` to regenerate.
 
 
 ### Scoring

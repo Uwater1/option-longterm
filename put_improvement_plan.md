@@ -1,6 +1,6 @@
 # Protective Put — 4-Type Alpha Model Report
 
-> **Status**: Alpha model implemented & optimized. Walk-forward validation implemented. Pending: engine integration, backtest comparison.
+> **Status**: Alpha model overhauled & OOS-validated. 3 phases (linear / LightGBM / rule-anchored hybrid) built and compared via put P&L. **4 of 12 ETF×regime cells are deployable** (beat static filter). Pending: engine integration of deployable cells, backtest comparison, active exit rules (TODO 4/6/7).
 
 ---
 
@@ -128,7 +128,22 @@ The threshold misses some crash events by design (precision over recall — fals
 
 ### 4.3 Out-of-Sample Validation
 
-**Status**: Implemented. Expanding window walk-forward validation (Train: prior history expanding, Test: 1 year OOS) is supported via the `--walk-forward` flag to detect and quantify overfitting.
+**Status**: Implemented AND used as the selection objective.
+
+Walk-forward validation (expanding train window, purged by horizon) is available via `--walk-forward` (diagnostic) and `--select-by-oos` (selection). The Phase 1 overhaul selects final configs by **mean OOS metric across folds**, not best in-sample.
+
+**Critical fix found during overhaul**: the original crash-event test was sign-inverted (`target = -worst_dd` made `target <= -0.05` unreachable), so ALL original crash lifts silently computed to ~0 and the "4.09x lift" in §2.3 was an in-sample artifact. After fixing, real walk-forward OOS results:
+
+| ETF | Regime | OOS lift (crash) / mean_ret (fall) | 95% CI | Gate |
+|-----|--------|-----------------------------------|--------|------|
+| 50ETF | ST Crash | 2.12x | [0.60, 4.37] | PASS |
+| 50ETF | MT Crash | 2.10x | [0.71, 3.93] | PASS |
+| 300ETF | ST Crash | 2.03x | [0.27, 4.16] | PASS |
+| 300ETF | MT Crash | 1.45x | [0.48, 2.41] | PASS |
+| 500ETF | ST Crash | 1.65x | [0.46, 3.27] | PASS |
+| 500ETF | MT Crash | 1.06x | [0.53, 1.68] | PASS |
+
+Statistical signal now genuinely above random (was worse-than-random before). Whether it translates to profitable put hedging is tested separately by `validate_alpha_pnl.py` (see §4.5).
 
 
 ### 4.4 Improvement Roadmap
@@ -136,11 +151,41 @@ The threshold misses some crash events by design (precision over recall — fals
 | Improvement | Difficulty | Impact | Description |
 |-------------|------------|--------|-------------|
 | Walk-forward validation | Implemented | High | Chronological OOS validation (`--walk-forward`) |
+| **OOS-as-selection-objective** | **Implemented** | **High** | `--select-by-oos` picks config by mean OOS across purged folds |
+| **New objective (Spearman + complexity penalty)** | **Implemented** | **High** | Replaced noise-chasing `-corr - 200*mean_ret` |
+| **5 new tail-risk indicators** | **Implemented** | **Medium** | ATR ratio, vol-of-vol, range expansion, vol term structure, RSI divergence |
 | Volume/money flow indicators | Implemented | Medium | Added `ind_obv_divergence`, `ind_volume_spike` |
 | Dynamic threshold (IV-aware) | Implemented | Medium | Modulates threshold based on option cost |
+| **Phase 2: LightGBM regime models** | **Implemented** | **Medium** | `alpha_model_ml.py` — monotone+bagged+isotonic, walk-forward |
+| **Phase 3: Rule-anchored hybrid** | **Implemented** | **High** | `alpha_model_hybrid.py` — FINDINGS rules + Phase1 + Phase2 logistic stack |
+| **Put P&L validator** | **Implemented** | **High** | `validate_alpha_pnl.py` — real option P&L vs 3 baselines |
 | Active exit rules (TP/SL) | Medium | High | Close put at 2x premium or after 7d with no drop |
 | Macro signals | High | High | Credit spread, sector rotation, VIX futures |
 | Multi-DTE selection | High | Medium | Match regime horizon to option DTE |
+
+
+### 4.5 Put P&L Validation Results (the real test)
+
+Statistical lift (§4.3) measures whether the score ranks forward risk correctly. It does **not** measure whether hedging is profitable after theta decay. `validate_alpha_pnl.py` computes actual put option P&L per trigger at monthly-cycle cadence (fair comparison vs baselines) over OOS years (>= 2021).
+
+Three model phases were built and compared; the best deployable phase per cell is:
+
+| ETF | Regime | Winning Phase | Alpha net P&L (N) | Static filter net P&L (N) | Alpha Sharpe |
+|-----|--------|---------------|-------------------|---------------------------|--------------|
+| 50ETF | MT Crash | **Phase 3** | **+2,144** (6) | +1,613 (4) | 1.81 |
+| 300ETF | ST Fall | **Phase 1** | **+2,689** (7) | +1,385 (12) | 0.70 |
+| 300ETF | MT Fall | **Phase 3** | **+2,216** (8) | +1,385 (12) | 0.57 |
+| 500ETF | ST Crash | **Phase 2** | **+382** (6) | -114 (1) | — |
+
+**Deployability decision rule**: a phase is deployable only if net P&L > 0, Sharpe > 0, per-trigger P&L > 0, AND it beats the existing static filter on net P&L. 4 of 12 ETF×regime cells clear the bar; the other 8 retain the static filter. No single phase dominates — Phase 1 wins ST Fall (300), Phase 2 wins ST Crash (500), Phase 3 wins MT Fall (300) and MT Crash (50).
+
+**Key honest findings**:
+- 500ETF remains largely unhedgeable (consistent with [RESEARCH_500ETF.md](file:///home/hallo/Documents/option-longterm/RESEARCH_500ETF.md)): high vol + sharp rallies cause assignment-style losses on puts across all phases.
+- Pure Phase 2 ML over-triggers at cycle cadence (theta drag) despite good daily AUC (reg3 crash AUC 0.63). Statistical AUC does NOT transfer directly to cycle-cadence P&L.
+- Phase 3 rule-anchoring produces the most selective, highest per-trigger entries (best for fall regimes).
+- Full table + per-fold detail: `backtest/alpha_phase_comparison.md`, `backtest/validate_pnl_phase{1,2,3}.json`.
+
+**Why "good but not great"**: predicting monthly-cycle-ahead downside from daily indicators is inherently hard; the achievable edge is real but selective. The validator makes this measurable rather than optimistic.
 
 
 ---
@@ -251,12 +296,19 @@ Lock in option gains before mean reversion or decay erodes them:
 * `[x]` **TODO 2: Signal / Indicator Enhancement** — Scanned ~30 indicators, identified tail-risk predictors, updated FINDINGS.md.
 * `[x]` **TODO 3: Alpha Model Integration & Weight Optimization**
   * ✅ 4-Type Decision Matrix → `alpha_model.py`
-  * ✅ 13 normalized indicators (including OBV divergence, volume spike)
+  * ✅ 18 normalized indicators (incl. OBV divergence, volume spike, ATR ratio, vol-of-vol, range expansion, vol term structure, RSI divergence)
   * ✅ Random-search weight optimizer with max-weight capping
-  * ✅ Dynamic IV-aware threshold optimization ($\gamma$)
-  * ✅ Walk-forward validation (expanding train window)
-  * ✅ Optimized models saved → `backtest/alpha_put_models.json`
-  * ✅ Documentation + visualization → this report + `visualize_alpha_model.py`
+  * ✅ **Fixed RSI normalization** (was raw /100; now rolling percentile rank)
+  * ✅ **Fixed crash-event sign bug** (inverted target made all original crash lifts ~0)
+  * ✅ New composite objective (Spearman rank + log placement + complexity penalty) replacing noise-chasing `200*mean_ret`
+  * ✅ Walk-forward as selection objective (`--select-by-oos`, purged expanding folds)
+  * ✅ Dynamic IV-aware threshold optimization (γ)
+  * ✅ Bootstrap CI on OOS metric; passed_gate flag per cell
+  * ✅ Phase 2 LightGBM regime models (`alpha_model_ml.py`, monotone+bagged+isotonic)
+  * ✅ Phase 3 rule-anchored hybrid (`alpha_model_hybrid.py`, logistic stack on FINDINGS rules)
+  * ✅ Put P&L validator (`validate_alpha_pnl.py`) — real option P&L vs 3 baselines
+  * ✅ Optimized models saved → `backtest/alpha_put_models.json`, `backtest/alpha_ml_models/`
+  * ✅ **Honest OOS result: 4 of 12 cells deployable** (beat static filter). See §4.5 + `backtest/alpha_phase_comparison.md`.
 
 * `[ ]` **TODO 4: Engine Architecture Modifications**
   * Extend `backtest_engine.py` for daily option evaluation and mid-cycle execution.

@@ -86,40 +86,43 @@ def composite_objective_is(scores, target, is_crash, triggered, baseline,
                            n_effective_indicators):
     """
     Scores: np.array of regime scores (precomputed).
-    Target: fwd_ret (fall) or -worst_dd (crash).
-    Triggered: bool mask.
-    Baseline: baseline crash prob (crash) or baseline mean ret (fall).
+    Target: fwd_ret (fall) OR worst_dd (crash). In BOTH cases negative = bad outcome,
+            so a good predictive score has NEGATIVE Spearman correlation with target.
+    Triggered: bool mask. Baseline: unused (kept for signature compat).
     """
     n_trig = int(triggered.sum())
     if n_trig < MIN_TRIGGERED:
         return -1e9
-    placement = n_trig / len(scores)
+    # Drop NaN targets from correlation / mean computation.
+    valid = ~np.isnan(target) & ~np.isnan(scores)
+    if valid.sum() < MIN_TRIGGERED:
+        return -1e9
+    sc_v, tg_v = scores[valid], target[valid]
+    trig_v = triggered[valid]
+    placement = trig_v.mean()
+
+    corr_s, _ = spearmanr(sc_v, tg_v)
+    if np.isnan(corr_s):
+        corr_s = 0.0
 
     if is_crash:
-        # target = -worst_dd (so higher = worse drawdown)
-        corr_s, _ = spearmanr(scores, target)
-        if np.isnan(corr_s):
-            corr_s = 0.0
-        trig_crash = target[triggered].mean()  # mean of -worst_dd over triggers
-        # lift vs baseline crash rate (baseline is mean of crash indicator over all)
-        baseline_crash_rate = (target <= -0.05).mean()
-        trig_crash_rate = (target[triggered] <= -0.05).mean()
+        # target = worst_dd (<=0). crash event = target <= -0.05.
+        baseline_crash_rate = (tg_v <= -0.05).mean()
+        trig_crash_rate = (tg_v[trig_v] <= -0.05).mean() if trig_v.sum() > 0 else 0.0
         lift = trig_crash_rate / baseline_crash_rate if baseline_crash_rate > 0 else 1.0
-        obj = 2.0 * corr_s + math.log(max(lift, 1e-6)) - 0.1 * n_effective_indicators
+        # Good model: high score → deep drawdown → negative corr → reward (-corr).
+        obj = (-2.0 * corr_s
+               + math.log(max(lift, 1e-6))
+               - 0.1 * n_effective_indicators)
         return obj
     else:
-        # target = fwd_ret (we want triggers to have LOW fwd_ret)
-        corr_s, _ = spearmanr(scores, target)
-        if np.isnan(corr_s):
-            corr_s = 0.0
-        mean_ret_trig = target[triggered].mean()
-        # Penalize up-moves on triggers; reward correct (negative) direction
-        obj = (-corr_s                            # generalizable rank power (lower corr → higher obj)
-               - 2.0 * max(mean_ret_trig, 0.0)    # penalize positive fwd_ret when triggered
-               - 0.5 * (1.0 if mean_ret_trig < 0 else 0.0) * (-1)  # reward negative dir → +0.5
+        # target = fwd_ret. Good model: high score → negative fwd_ret → negative corr.
+        mean_ret_trig = float(tg_v[trig_v].mean()) if trig_v.sum() > 0 else 0.0
+        obj = (-corr_s                              # reward negative corr (generalizable rank power)
+               - 2.0 * max(mean_ret_trig, 0.0)      # penalize positive fwd_ret when triggered
+               + 0.5 * (1.0 if mean_ret_trig < 0 else 0.0)  # reward correct (negative) direction
                - 0.3 * math.log(max(placement / 0.10, 1e-6))
                - 0.1 * n_effective_indicators)
-        # NB: reward term: if mean_ret_trig < 0, add +0.5 (the *(-1) flips sign)
         return obj
 
 
@@ -129,26 +132,28 @@ def _threshold_aware(scores, iv_vol_ratio, thresh_base, gamma):
 
 
 def _evaluate_candidate(scores, target, iv_vol_ratio, thresh_base, gamma, is_crash):
-    """Compute IS metric for a single candidate. Returns (obj, triggered, metric_dict)."""
+    """Compute metric for a single candidate. target = fwd_ret (fall) or worst_dd (crash).
+    Returns (triggered, metric_dict)."""
     thr_t = _threshold_aware(scores, iv_vol_ratio, thresh_base, gamma)
     triggered = scores > thr_t
     n_trig = int(triggered.sum())
     if n_trig < MIN_TRIGGERED:
-        return -1e9, triggered, None
-
+        return triggered, None
+    valid = ~np.isnan(target)
     if is_crash:
-        baseline_crash_rate = (target <= -0.05).mean()
-        trig_crash_rate = (target[triggered] <= -0.05).mean()
-        lift = trig_crash_rate / baseline_crash_rate if baseline_crash_rate > 0 else 1.0
+        # crash event: worst_dd <= -0.05
+        base_rate = (target[valid] <= -0.05).mean()
+        trig_rate = (target[triggered & valid] <= -0.05).mean() if (triggered & valid).sum() > 0 else 0.0
+        lift = trig_rate / base_rate if base_rate > 0 else 1.0
         metric = {"lift": float(lift),
-                  "triggered_crash_prob": float(trig_crash_rate),
-                  "baseline_crash_prob": float(baseline_crash_rate)}
+                  "triggered_crash_prob": float(trig_rate),
+                  "baseline_crash_prob": float(base_rate)}
     else:
-        mean_ret_trig = float(target[triggered].mean())
-        mean_ret_all = float(target.mean())
+        mean_ret_trig = float(target[triggered & valid].mean()) if (triggered & valid).sum() > 0 else 0.0
+        mean_ret_all = float(target[valid].mean())
         metric = {"mean_return_triggered": mean_ret_trig,
                   "mean_return_baseline": mean_ret_all}
-    return None, triggered, metric  # obj computed by caller (needs n_effective)
+    return triggered, metric
 
 
 def _make_fold_splits(df_norm, min_train_rows=MIN_TRAIN_ROWS):
@@ -221,7 +226,7 @@ def select_best_by_oos(df_norm, regime_key, candidate_indicators, horizons, is_c
 
     for m in horizons:
         fwd_ret, worst_dd = compute_forward_targets(df_norm, m)
-        target_crash = -worst_dd  # higher = worse
+        target_crash = worst_dd  # non-positive; crash event = worst_dd <= -0.05
         target_fall = fwd_ret
         # Precompute scores for all samples: (N, S)
         scores_all = X @ W.T  # (N, S)
@@ -256,12 +261,15 @@ def select_best_by_oos(df_norm, regime_key, candidate_indicators, horizons, is_c
                             continue
                         valid_per_sample[s] = True
                         if is_crash:
-                            base_rate = (tgt_test <= -0.05).mean() if (tgt_test <= -0.05).mean() > 0 else 1e-6
-                            trig_rate = (tgt_test[trig] <= -0.05).mean()
+                            vmask = ~np.isnan(tgt_test)
+                            base_rate = (tgt_test[vmask] <= -0.05).mean()
+                            base_rate = base_rate if base_rate > 0 else 1e-6
+                            trig_rate = (tgt_test[trig & vmask] <= -0.05).mean() if (trig & vmask).sum() > 0 else 0.0
                             oos_per_sample[s] += trig_rate / base_rate  # lift: higher = better
                         else:
-                            # fall: store mean_ret (lower=better). Convert to score: higher=better.
-                            oos_per_sample[s] += float(tgt_test[trig].mean())
+                            # fall: store mean_ret (lower=better). NaN targets masked.
+                            vmask = ~np.isnan(tgt_test)
+                            oos_per_sample[s] += float(tgt_test[trig & vmask].mean()) if (trig & vmask).sum() > 0 else 0.0
                 n_folds = len(splits)
                 if n_folds == 0:
                     continue
@@ -294,7 +302,7 @@ def select_best_by_oos(df_norm, regime_key, candidate_indicators, horizons, is_c
     gamma_best = best["config"]["gamma"]
     pct_best = best["config"]["threshold_pct"]
     fwd_ret, worst_dd, scores_all = fwd_cache[m_best]
-    target = -worst_dd if is_crash else fwd_ret
+    target = worst_dd if is_crash else fwd_ret  # negative = bad outcome
 
     fold_table = []
     for (train_idx, test_idx) in splits:
@@ -308,22 +316,25 @@ def select_best_by_oos(df_norm, regime_key, candidate_indicators, horizons, is_c
         trig = scores_all[test_idx, best["config"]["sample_idx"]] > thr_t
         n_trig = int(trig.sum())
         yr = int(dates_arr[test_idx[0]].year)
+        tgt_test = target[test_idx]
+        vmask = ~np.isnan(tgt_test)
         if is_crash:
-            base_rate = float((target[test_idx] <= -0.05).mean())
-            trig_rate = float((target[test_idx][trig] <= -0.05).mean()) if n_trig > 0 else 0.0
+            base_rate = float((tgt_test[vmask] <= -0.05).mean())
+            trig_rate = float((tgt_test[trig & vmask] <= -0.05).mean()) if (trig & vmask).sum() > 0 else 0.0
             metric_v = trig_rate / base_rate if base_rate > 0 else 0.0
             fold_table.append({"test_year": yr, "n_triggered": n_trig,
                                "metric": float(metric_v), "is_lift": True})
         else:
-            metric_v = float(target[test_idx][trig].mean()) if n_trig > 0 else 0.0
+            metric_v = float(tgt_test[trig & vmask].mean()) if (trig & vmask).sum() > 0 else 0.0
             fold_table.append({"test_year": yr, "n_triggered": n_trig,
                                "metric": float(metric_v), "is_lift": False})
 
     # Retrain threshold on ALL data for the deployed model
     final_thr = float(np.percentile(scores_all[:, best["config"]["sample_idx"]], pct_best))
 
-    # Bootstrap CI on the mean OOS metric (resample fold metrics)
-    fold_metrics = np.array([f["metric"] for f in fold_table])
+    # Bootstrap CI on the mean OOS metric (resample fold metrics; drop NaN folds)
+    fold_metrics = np.array([f["metric"] for f in fold_table], dtype=float)
+    fold_metrics = fold_metrics[np.isfinite(fold_metrics)]
     if len(fold_metrics) >= 2:
         rng = np.random.RandomState(123)
         bs = []
@@ -381,7 +392,7 @@ def optimize_regime_is(df_norm, regime_key, candidate_indicators, horizons, is_c
     best = {"obj": -1e18, "result": None}
     for m in horizons:
         fwd_ret, worst_dd = compute_forward_targets(df_norm, m)
-        target = -worst_dd if is_crash else fwd_ret
+        target = worst_dd if is_crash else fwd_ret  # both: negative = bad outcome
         scores_all = X @ W.T
         for gi, gamma in enumerate(GAMMAS):
             for pct in THRESHOLD_PCTS:
@@ -397,8 +408,8 @@ def optimize_regime_is(df_norm, regime_key, candidate_indicators, horizons, is_c
                                                  None, n_eff)
                     if obj > best["obj"]:
                         best["obj"] = obj
-                        _, _, metric = _evaluate_candidate(sc, target, iv_vol_ratio,
-                                                           thr_base, gamma, is_crash)
+                        _, metric = _evaluate_candidate(sc, target, iv_vol_ratio,
+                                                        thr_base, gamma, is_crash)
                         best["result"] = {
                             "weights": {active[i]: float(W[s, i]) for i in range(K)},
                             "horizon": int(m),
@@ -424,7 +435,7 @@ def evaluate_model_oos(test_df_norm, weights, active_indicators, horizon, thresh
     """Evaluate a deployed config on a test fold. Returns metric or None."""
     active = [ind for ind in active_indicators if ind in test_df_norm.columns]
     fwd_ret, worst_dd = compute_forward_targets(test_df_norm, horizon)
-    target = -worst_dd if is_crash else fwd_ret
+    target = worst_dd if is_crash else fwd_ret  # negative = bad outcome
     sc = np.zeros(len(test_df_norm))
     total_w = 0.0
     for ind, w in weights.items():
@@ -440,15 +451,16 @@ def evaluate_model_oos(test_df_norm, weights, active_indicators, horizon, thresh
     iv_vol_ratio = np.nan_to_num(iv_vol_ratio, nan=1.0)
     thr_t = _threshold_aware(sc, iv_vol_ratio, threshold, gamma)
     trig = sc > thr_t
-    n_trig = int(trig.sum())
+    vmask = ~np.isnan(target)
+    n_trig = int((trig & vmask).sum())
     if n_trig < 5:
         return None
     if is_crash:
-        base_rate = (target <= -0.05).mean()
-        trig_rate = (target[trig] <= -0.05).mean()
+        base_rate = (target[vmask] <= -0.05).mean()
+        trig_rate = (target[trig & vmask] <= -0.05).mean()
         return float(trig_rate / base_rate) if base_rate > 0 else None
     else:
-        return float(target[trig].mean())
+        return float(target[trig & vmask].mean())
 
 
 def run_walk_forward_validation(df_norm, regime_configs, etf_choice, num_samples, max_weight):
@@ -607,8 +619,9 @@ def main():
                 print(f"    Gamma      : {res['gamma']:.2f}")
                 wf = res.get("walk_forward_folds")
                 if wf:
-                    print(f"    WF folds   : {len(wf)} (mean OOS={res['metrics']['mean_oos_metric']:.4f}, "
-                          f"CI=[{res['metrics']['oos_ci_low']:.4f}, {res['metrics']['oos_ci_high']:.4f}])")
+                    gate = "PASS" if res["metrics"].get("passed_gate") else "FAIL"
+                    print(f"    WF folds   : {len(wf)} (mean raw OOS={res['metrics']['mean_oos_raw']:.4f}, "
+                          f"CI=[{res['metrics']['oos_ci_low']:.4f}, {res['metrics']['oos_ci_high']:.4f}], gate={gate})")
                 print(f"    Weights    :")
                 for ind, w in res["weights"].items():
                     print(f"      {ind:<28}: {w:.3f}")

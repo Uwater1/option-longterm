@@ -2,142 +2,790 @@
   "50": {
     "reg1": {
       "weights": {
-        "ind_rsi_high": 0.4570689130099608,
-        "ind_skew_neg": 0.12228644871414124,
-        "ind_roc5_neg": 0.010584980555326239,
-        "ind_macd_neg": 0.010385299362729474,
-        "ind_dist_sma50_neg": 0.3996743583578425
+        "ind_rsi_high": 0.19266486838974384,
+        "ind_skew_neg": 0.386979207761047,
+        "ind_roc5_neg": 0.01894463452472767,
+        "ind_macd_neg": 0.035618591475474415,
+        "ind_dist_sma50_neg": 0.08972229604833983,
+        "ind_obv_divergence": 0.053629538005084146,
+        "ind_volume_spike": 0.04395321343508815,
+        "ind_atr_ratio_high": 0.03591758583524831,
+        "ind_term_structure_neg": 0.07306109282386392,
+        "ind_rsi_divergence_neg": 0.06950897170138284
       },
       "horizon": 14,
-      "threshold": 0.6403672214731103,
+      "threshold": 0.6201611353360476,
+      "threshold_pct": 85.0,
+      "gamma": 0.0,
       "metrics": {
-        "correlation": -0.0722055651194665,
-        "mean_return_triggered": -0.017228651020943175,
-        "mean_return_baseline": 0.0005889073722781931,
-        "placement_rate": 0.09999999999999998
-      }
+        "mean_oos_raw": -0.005609536538084833,
+        "oos_ci_low": -0.01490263352972862,
+        "oos_ci_high": 0.008582176017354856,
+        "passed_gate": true,
+        "n_effective_indicators": 6.0,
+        "placement_rate": 0.15
+      },
+      "walk_forward_folds": [
+        {
+          "test_year": 2021,
+          "n_triggered": 34,
+          "metric": -0.030583054181774733,
+          "is_lift": false
+        },
+        {
+          "test_year": 2022,
+          "n_triggered": 40,
+          "metric": -0.005892972685400253,
+          "is_lift": false
+        },
+        {
+          "test_year": 2023,
+          "n_triggered": 44,
+          "metric": -0.0054075264136867396,
+          "is_lift": false
+        },
+        {
+          "test_year": 2024,
+          "n_triggered": 61,
+          "metric": -0.006735859534850112,
+          "is_lift": false
+        },
+        {
+          "test_year": 2025,
+          "n_triggered": 48,
+          "metric": 0.014962193587202842,
+          "is_lift": false
+        },
+        {
+          "test_year": 2026,
+          "n_triggered": 5,
+          "metric": 0.01638656491239222,
+          "is_lift": false
+        }
+      ],
+      "selection_mode": "oos"
     },
     "reg2": {
       "weights": {
-        "ind_rsi_low": 0.01674026828598297,
-        "ind_dist_sma50_neg": 0.9429139348010225,
-        "ind_roc20_neg": 0.025994628403541123,
-        "ind_macd_neg": 0.014351168509453477
+        "ind_rsi_low": 0.015973544282604325,
+        "ind_dist_sma50_neg": 0.06983610365350293,
+        "ind_roc20_neg": 0.056654190425890524,
+        "ind_macd_neg": 0.11624154470944675,
+        "ind_obv_divergence": 0.2722843105691632,
+        "ind_volume_spike": 0.011251781982988106,
+        "ind_atr_ratio_high": 0.010391960809255082,
+        "ind_term_structure_neg": 0.26195925159839345,
+        "ind_vol_of_vol_high": 0.033011318700382944,
+        "ind_rsi_divergence_neg": 0.15239599326837266
       },
       "horizon": 40,
-      "threshold": 0.7549066675927161,
+      "threshold": 0.633583391007817,
+      "threshold_pct": 85.0,
+      "gamma": 0.1,
       "metrics": {
-        "correlation": -0.0664792819345231,
-        "mean_return_triggered": -0.003940007971895963,
-        "mean_return_baseline": 0.0033065481971198446,
-        "placement_rate": 0.25
-      }
+        "mean_oos_raw": -0.00976705303536988,
+        "oos_ci_low": -0.01751700873293163,
+        "oos_ci_high": 0.043534904863560986,
+        "passed_gate": true,
+        "n_effective_indicators": 6.0,
+        "placement_rate": 0.15
+      },
+      "walk_forward_folds": [
+        {
+          "test_year": 2021,
+          "n_triggered": 42,
+          "metric": -0.030033548831926,
+          "is_lift": false
+        },
+        {
+          "test_year": 2022,
+          "n_triggered": 95,
+          "metric": -0.009344465113783632,
+          "is_lift": false
+        },
+        {
+          "test_year": 2023,
+          "n_triggered": 47,
+          "metric": -0.01860106213609659,
+          "is_lift": false
+        },
+        {
+          "test_year": 2024,
+          "n_triggered": 17,
+          "metric": 0.08357878067441071,
+          "is_lift": false
+        },
+        {
+          "test_year": 2025,
+          "n_triggered": 25,
+          "metric": 0.035526129701391046,
+          "is_lift": false
+        },
+        {
+          "test_year": 2026,
+          "n_triggered": 34,
+          "metric": -0.0006232421304130584,
+          "is_lift": false
+        }
+      ],
+      "selection_mode": "oos"
     },
     "reg3": {
       "weights": {
-        "ind_vol_accel_high": 0.3689503609463871,
-        "ind_kurt_high": 0.06548409960784968,
-        "ind_skew_neg": 0.4975872845472624,
-        "ind_iv_vol_low": 0.06797825489850066
+        "ind_vol_accel_high": 0.10042767180808344,
+        "ind_kurt_high": 0.2471606736031066,
+        "ind_skew_neg": 0.09526543408588604,
+        "ind_iv_vol_low": 0.17933328893424655,
+        "ind_obv_divergence": 0.15371886671694537,
+        "ind_volume_spike": 0.03905597656168592,
+        "ind_atr_ratio_high": 0.0801815318409239,
+        "ind_range_expansion_high": 0.01486344457517436,
+        "ind_term_structure_neg": 0.06708173779190017,
+        "ind_vol_of_vol_high": 0.022911374082047742
       },
-      "horizon": 5,
-      "threshold": 0.7477824617228848,
+      "horizon": 14,
+      "threshold": 0.6271344414966922,
+      "threshold_pct": 85.0,
+      "gamma": 0.0,
       "metrics": {
-        "correlation": 0.07533801206117137,
-        "lift": 2.685185185185185,
-        "triggered_crash_prob": 0.10943396226415095,
-        "baseline_crash_prob": 0.040754716981132075,
-        "placement_rate": 0.09999999999999998
-      }
+        "mean_oos_raw": 2.1225614871784226,
+        "oos_ci_low": 0.6044086021505376,
+        "oos_ci_high": 4.374021697388633,
+        "passed_gate": true,
+        "n_effective_indicators": 7.0,
+        "placement_rate": 0.15
+      },
+      "walk_forward_folds": [
+        {
+          "test_year": 2021,
+          "n_triggered": 35,
+          "metric": 2.2564285714285717,
+          "is_lift": true
+        },
+        {
+          "test_year": 2022,
+          "n_triggered": 62,
+          "metric": 1.2064516129032257,
+          "is_lift": true
+        },
+        {
+          "test_year": 2023,
+          "n_triggered": 37,
+          "metric": 0.872072072072072,
+          "is_lift": true
+        },
+        {
+          "test_year": 2024,
+          "n_triggered": 50,
+          "metric": 0.8066666666666666,
+          "is_lift": true
+        },
+        {
+          "test_year": 2025,
+          "n_triggered": 32,
+          "metric": 7.59375,
+          "is_lift": true
+        },
+        {
+          "test_year": 2026,
+          "n_triggered": 38,
+          "metric": 0.0,
+          "is_lift": true
+        }
+      ],
+      "selection_mode": "oos"
     },
     "reg4": {
       "weights": {
-        "ind_dd_deep": 0.04899826980740068,
-        "ind_dist_sma200_neg": 0.4189102333212851,
-        "ind_vol_accel_high": 0.21257780519409136,
-        "ind_kurt_high": 0.2642922862697523,
-        "ind_skew_neg": 0.055221405407470586
+        "ind_dd_deep": 0.038037044994270026,
+        "ind_dist_sma200_neg": 0.01676510148763734,
+        "ind_vol_accel_high": 0.09705493226164374,
+        "ind_kurt_high": 0.4422894178559145,
+        "ind_skew_neg": 0.05268192600452401,
+        "ind_obv_divergence": 0.10757007069629274,
+        "ind_volume_spike": 0.05715410238889025,
+        "ind_atr_ratio_high": 0.04729667216788617,
+        "ind_term_structure_neg": 0.04417160507145359,
+        "ind_vol_of_vol_high": 0.05874814579753794,
+        "ind_range_expansion_high": 0.0382309812739496
       },
-      "horizon": 40,
-      "threshold": 0.6946727035417908,
+      "horizon": 21,
+      "threshold": 0.6521695883729777,
+      "threshold_pct": 85.0,
+      "gamma": 0.1,
       "metrics": {
-        "correlation": 0.2579002364714567,
-        "lift": 1.7321909198461993,
-        "triggered_crash_prob": 0.5190217391304348,
-        "baseline_crash_prob": 0.2996331023236853,
-        "placement_rate": 0.15000000000000002
-      }
+        "mean_oos_raw": 2.0975475179357836,
+        "oos_ci_low": 0.7088659147869674,
+        "oos_ci_high": 3.9328085872758005,
+        "passed_gate": true,
+        "n_effective_indicators": 6.0,
+        "placement_rate": 0.15
+      },
+      "walk_forward_folds": [
+        {
+          "test_year": 2021,
+          "n_triggered": 37,
+          "metric": 2.4762959680992465,
+          "is_lift": true
+        },
+        {
+          "test_year": 2022,
+          "n_triggered": 80,
+          "metric": 1.1523809523809525,
+          "is_lift": true
+        },
+        {
+          "test_year": 2023,
+          "n_triggered": 48,
+          "metric": 1.6805555555555556,
+          "is_lift": true
+        },
+        {
+          "test_year": 2024,
+          "n_triggered": 40,
+          "metric": 0.7960526315789473,
+          "is_lift": true
+        },
+        {
+          "test_year": 2025,
+          "n_triggered": 30,
+          "metric": 6.48,
+          "is_lift": true
+        },
+        {
+          "test_year": 2026,
+          "n_triggered": 37,
+          "metric": 0.0,
+          "is_lift": true
+        }
+      ],
+      "selection_mode": "oos"
     }
   },
-  "300": {},
+  "300": {
+    "reg1": {
+      "weights": {
+        "ind_rsi_high": 0.043017722897035315,
+        "ind_skew_neg": 0.233749238459023,
+        "ind_roc5_neg": 0.026278797489841448,
+        "ind_macd_neg": 0.0004125482617994713,
+        "ind_dist_sma50_neg": 0.24300653824214793,
+        "ind_obv_divergence": 0.046923704689432154,
+        "ind_volume_spike": 0.06355780294707161,
+        "ind_atr_ratio_high": 0.07019621776660849,
+        "ind_term_structure_neg": 0.22389922431728562,
+        "ind_rsi_divergence_neg": 0.048958204929754834
+      },
+      "horizon": 14,
+      "threshold": 0.6748810259561768,
+      "threshold_pct": 90.0,
+      "gamma": 0.1,
+      "metrics": {
+        "mean_oos_raw": -0.0035201118538584707,
+        "oos_ci_low": -0.006012621996728502,
+        "oos_ci_high": 0.015212177201980965,
+        "passed_gate": true,
+        "n_effective_indicators": 5.0,
+        "placement_rate": 0.1
+      },
+      "walk_forward_folds": [
+        {
+          "test_year": 2021,
+          "n_triggered": 50,
+          "metric": -0.012370612737044975,
+          "is_lift": false
+        },
+        {
+          "test_year": 2022,
+          "n_triggered": 44,
+          "metric": -0.008750058386105847,
+          "is_lift": false
+        },
+        {
+          "test_year": 2023,
+          "n_triggered": 16,
+          "metric": -0.001289291876181915,
+          "is_lift": false
+        },
+        {
+          "test_year": 2024,
+          "n_triggered": 29,
+          "metric": 0.010005931087724424,
+          "is_lift": false
+        },
+        {
+          "test_year": 2025,
+          "n_triggered": 15,
+          "metric": 0.01491566865203648,
+          "is_lift": false
+        },
+        {
+          "test_year": 2026,
+          "n_triggered": 13,
+          "metric": 0.026360671104527847,
+          "is_lift": false
+        }
+      ],
+      "selection_mode": "oos"
+    },
+    "reg2": {
+      "weights": {
+        "ind_rsi_low": 0.060709381563152504,
+        "ind_dist_sma50_neg": 0.024124747061217245,
+        "ind_roc20_neg": 0.04794967206461366,
+        "ind_macd_neg": 0.19036789844226998,
+        "ind_obv_divergence": 0.08096316932112732,
+        "ind_volume_spike": 0.16622295104633925,
+        "ind_atr_ratio_high": 0.12759775532908754,
+        "ind_term_structure_neg": 0.13222660013284637,
+        "ind_vol_of_vol_high": 0.04744286844127517,
+        "ind_rsi_divergence_neg": 0.12239495659807102
+      },
+      "horizon": 40,
+      "threshold": 0.6227246266892204,
+      "threshold_pct": 85.0,
+      "gamma": 0.0,
+      "metrics": {
+        "mean_oos_raw": -0.009604359787865866,
+        "oos_ci_low": -0.011572220086713384,
+        "oos_ci_high": 0.04221641498145146,
+        "passed_gate": true,
+        "n_effective_indicators": 7.0,
+        "placement_rate": 0.15
+      },
+      "walk_forward_folds": [
+        {
+          "test_year": 2021,
+          "n_triggered": 36,
+          "metric": -0.026923239717461207,
+          "is_lift": false
+        },
+        {
+          "test_year": 2022,
+          "n_triggered": 63,
+          "metric": -0.014784251720339493,
+          "is_lift": false
+        },
+        {
+          "test_year": 2023,
+          "n_triggered": 36,
+          "metric": -0.0159186672893945,
+          "is_lift": false
+        },
+        {
+          "test_year": 2024,
+          "n_triggered": 18,
+          "metric": 0.05102750659925658,
+          "is_lift": false
+        },
+        {
+          "test_year": 2025,
+          "n_triggered": 29,
+          "metric": 0.031086447354043614,
+          "is_lift": false
+        },
+        {
+          "test_year": 2026,
+          "n_triggered": 28,
+          "metric": 0.06395305129456719,
+          "is_lift": false
+        }
+      ],
+      "selection_mode": "oos"
+    },
+    "reg3": {
+      "weights": {
+        "ind_vol_accel_high": 0.007532881184220591,
+        "ind_kurt_high": 0.5000435942770389,
+        "ind_skew_neg": 0.012503353522671973,
+        "ind_iv_vol_low": 0.07815319875598002,
+        "ind_obv_divergence": 0.20707960948266046,
+        "ind_volume_spike": 0.031313353655630566,
+        "ind_atr_ratio_high": 0.09228883570561451,
+        "ind_range_expansion_high": 0.030076550789942473,
+        "ind_term_structure_neg": 0.025319513557611386,
+        "ind_vol_of_vol_high": 0.015689109068629133
+      },
+      "horizon": 5,
+      "threshold": 0.6775078174884046,
+      "threshold_pct": 85.0,
+      "gamma": 0.0,
+      "metrics": {
+        "mean_oos_raw": 2.0265426497277677,
+        "oos_ci_low": 0.26535087719298245,
+        "oos_ci_high": 4.158121597096188,
+        "passed_gate": true,
+        "n_effective_indicators": 4.0,
+        "placement_rate": 0.15
+      },
+      "walk_forward_folds": [
+        {
+          "test_year": 2021,
+          "n_triggered": 14,
+          "metric": 0.0,
+          "is_lift": true
+        },
+        {
+          "test_year": 2022,
+          "n_triggered": 95,
+          "metric": 1.5921052631578947,
+          "is_lift": true
+        },
+        {
+          "test_year": 2023,
+          "n_triggered": 58,
+          "metric": 4.172413793103448,
+          "is_lift": true
+        },
+        {
+          "test_year": 2024,
+          "n_triggered": 55,
+          "metric": 0.0,
+          "is_lift": true
+        },
+        {
+          "test_year": 2025,
+          "n_triggered": 38,
+          "metric": 6.394736842105262,
+          "is_lift": true
+        },
+        {
+          "test_year": 2026,
+          "n_triggered": 34,
+          "metric": 0.0,
+          "is_lift": true
+        }
+      ],
+      "selection_mode": "oos"
+    },
+    "reg4": {
+      "weights": {
+        "ind_dd_deep": 0.014616112290411178,
+        "ind_dist_sma200_neg": 0.018879045957625153,
+        "ind_vol_accel_high": 0.004401561730363899,
+        "ind_kurt_high": 0.3447630177155628,
+        "ind_skew_neg": 0.14568497762138483,
+        "ind_obv_divergence": 0.05259334929539752,
+        "ind_volume_spike": 0.08970421869677139,
+        "ind_atr_ratio_high": 0.058101575507784185,
+        "ind_term_structure_neg": 0.11924164641468601,
+        "ind_vol_of_vol_high": 0.1330827802841075,
+        "ind_range_expansion_high": 0.018931714485905575
+      },
+      "horizon": 21,
+      "threshold": 0.6494992318355503,
+      "threshold_pct": 85.0,
+      "gamma": 0.0,
+      "metrics": {
+        "mean_oos_raw": 1.44745174350484,
+        "oos_ci_low": 0.4836916401861629,
+        "oos_ci_high": 2.4112118468235173,
+        "passed_gate": true,
+        "n_effective_indicators": 7.0,
+        "placement_rate": 0.15
+      },
+      "walk_forward_folds": [
+        {
+          "test_year": 2021,
+          "n_triggered": 31,
+          "metric": 3.3005093378607806,
+          "is_lift": true
+        },
+        {
+          "test_year": 2022,
+          "n_triggered": 77,
+          "metric": 1.2416225749559084,
+          "is_lift": true
+        },
+        {
+          "test_year": 2023,
+          "n_triggered": 30,
+          "metric": 2.482051282051282,
+          "is_lift": true
+        },
+        {
+          "test_year": 2024,
+          "n_triggered": 71,
+          "metric": 1.6605272661610688,
+          "is_lift": true
+        },
+        {
+          "test_year": 2025,
+          "n_triggered": 33,
+          "metric": 0.0,
+          "is_lift": true
+        },
+        {
+          "test_year": 2026,
+          "n_triggered": 19,
+          "metric": 0.0,
+          "is_lift": true
+        }
+      ],
+      "selection_mode": "oos"
+    }
+  },
   "500": {
     "reg1": {
       "weights": {
-        "ind_rsi_high": 0.49593347537481414,
-        "ind_skew_neg": 0.15468867681986723,
-        "ind_roc5_neg": 0.026907961209845573,
-        "ind_macd_neg": 0.001184869881392177,
-        "ind_dist_sma50_neg": 0.321285016714081
+        "ind_rsi_high": 0.05421061877392097,
+        "ind_skew_neg": 0.17729355062992283,
+        "ind_roc5_neg": 0.025754727850202514,
+        "ind_macd_neg": 0.18594058232398528,
+        "ind_dist_sma50_neg": 0.11191935823656848,
+        "ind_obv_divergence": 0.026021244770410654,
+        "ind_volume_spike": 0.007074172277572477,
+        "ind_atr_ratio_high": 0.15599131268840644,
+        "ind_term_structure_neg": 0.025844737509288156,
+        "ind_rsi_divergence_neg": 0.22994969493972225
       },
       "horizon": 14,
-      "threshold": 0.6046954930687112,
+      "threshold": 0.6671108631214472,
+      "threshold_pct": 90.0,
+      "gamma": 0.0,
       "metrics": {
-        "correlation": -0.10388216448504849,
-        "mean_return_triggered": -0.025365384335696205,
-        "mean_return_baseline": 0.0003356354641503552,
-        "placement_rate": 0.09999999999999998
-      }
+        "mean_oos_raw": -0.006431086225242474,
+        "oos_ci_low": -0.012065181288678587,
+        "oos_ci_high": 0.01737795390718046,
+        "passed_gate": true,
+        "n_effective_indicators": 6.0,
+        "placement_rate": 0.1
+      },
+      "walk_forward_folds": [
+        {
+          "test_year": 2021,
+          "n_triggered": 25,
+          "metric": 0.004885763328243417,
+          "is_lift": false
+        },
+        {
+          "test_year": 2022,
+          "n_triggered": 20,
+          "metric": 0.01540168529076651,
+          "is_lift": false
+        },
+        {
+          "test_year": 2023,
+          "n_triggered": 17,
+          "metric": 0.002390973485419087,
+          "is_lift": false
+        },
+        {
+          "test_year": 2024,
+          "n_triggered": 33,
+          "metric": -0.014585517643933515,
+          "is_lift": false
+        },
+        {
+          "test_year": 2025,
+          "n_triggered": 21,
+          "metric": 0.03308497306587173,
+          "is_lift": false
+        },
+        {
+          "test_year": 2026,
+          "n_triggered": 33,
+          "metric": -0.024000999707521332,
+          "is_lift": false
+        }
+      ],
+      "selection_mode": "oos"
     },
     "reg2": {
       "weights": {
-        "ind_rsi_low": 0.00047838797008735337,
-        "ind_dist_sma50_neg": 0.06429472931031857,
-        "ind_roc20_neg": 0.019461926681318898,
-        "ind_macd_neg": 0.9157649560382751
+        "ind_rsi_low": 0.11436293695029312,
+        "ind_dist_sma50_neg": 0.032898578633148545,
+        "ind_roc20_neg": 0.056538647704948895,
+        "ind_macd_neg": 0.023688460032282883,
+        "ind_obv_divergence": 0.000948600993135666,
+        "ind_volume_spike": 0.011097498171518552,
+        "ind_atr_ratio_high": 0.18844048776103475,
+        "ind_term_structure_neg": 0.004502250042866689,
+        "ind_vol_of_vol_high": 0.06749214926007291,
+        "ind_rsi_divergence_neg": 0.500030390450698
       },
-      "horizon": 21,
-      "threshold": 0.8302929441771479,
+      "horizon": 40,
+      "threshold": 0.6619113330706495,
+      "threshold_pct": 85.0,
+      "gamma": 0.0,
       "metrics": {
-        "correlation": -0.07152476220813303,
-        "mean_return_triggered": -0.0057045613039693995,
-        "mean_return_baseline": 0.0007648382229161201,
-        "placement_rate": 0.15000000000000002
-      }
+        "mean_oos_raw": -0.007050202390904173,
+        "oos_ci_low": -0.024592462663970843,
+        "oos_ci_high": 0.015595829003575068,
+        "passed_gate": true,
+        "n_effective_indicators": 5.0,
+        "placement_rate": 0.15
+      },
+      "walk_forward_folds": [
+        {
+          "test_year": 2021,
+          "n_triggered": 32,
+          "metric": 0.02259919103944274,
+          "is_lift": false
+        },
+        {
+          "test_year": 2022,
+          "n_triggered": 59,
+          "metric": 0.0014755804670216616,
+          "is_lift": false
+        },
+        {
+          "test_year": 2023,
+          "n_triggered": 34,
+          "metric": -0.04290738687257236,
+          "is_lift": false
+        },
+        {
+          "test_year": 2024,
+          "n_triggered": 80,
+          "metric": 0.0010245750741282467,
+          "is_lift": false
+        },
+        {
+          "test_year": 2025,
+          "n_triggered": 12,
+          "metric": 0.02327170758320067,
+          "is_lift": false
+        },
+        {
+          "test_year": 2026,
+          "n_triggered": 36,
+          "metric": -0.024493174053445328,
+          "is_lift": false
+        }
+      ],
+      "selection_mode": "oos"
     },
     "reg3": {
       "weights": {
-        "ind_vol_accel_high": 0.025595108437871814,
-        "ind_kurt_high": 0.06021255253068399,
-        "ind_skew_neg": 0.2666540192013872,
-        "ind_iv_vol_low": 0.647538319830057
+        "ind_vol_accel_high": 0.07102661930629314,
+        "ind_kurt_high": 0.020530016464891006,
+        "ind_skew_neg": 0.027953443002535827,
+        "ind_iv_vol_low": 0.07530129375899122,
+        "ind_obv_divergence": 0.0384608439148701,
+        "ind_volume_spike": 0.45146089892488805,
+        "ind_atr_ratio_high": 0.17483269021073453,
+        "ind_range_expansion_high": 0.1207406091662134,
+        "ind_term_structure_neg": 0.0016150047554323453,
+        "ind_vol_of_vol_high": 0.01807858049515046
       },
       "horizon": 5,
-      "threshold": 0.6773397263496103,
+      "threshold": 0.6832815401387273,
+      "threshold_pct": 85.0,
+      "gamma": 0.1,
       "metrics": {
-        "correlation": 0.09278937871382621,
-        "lift": 1.6333826429980274,
-        "triggered_crash_prob": 0.1282051282051282,
-        "baseline_crash_prob": 0.07849056603773585,
-        "placement_rate": 0.25
-      }
+        "mean_oos_raw": 1.6478067496368416,
+        "oos_ci_low": 0.4643499595133848,
+        "oos_ci_high": 3.2678067496368417,
+        "passed_gate": true,
+        "n_effective_indicators": 5.0,
+        "placement_rate": 0.15
+      },
+      "walk_forward_folds": [
+        {
+          "test_year": 2021,
+          "n_triggered": 30,
+          "metric": 4.86,
+          "is_lift": true
+        },
+        {
+          "test_year": 2022,
+          "n_triggered": 54,
+          "metric": 2.2407407407407405,
+          "is_lift": true
+        },
+        {
+          "test_year": 2023,
+          "n_triggered": 29,
+          "metric": 0.0,
+          "is_lift": true
+        },
+        {
+          "test_year": 2024,
+          "n_triggered": 61,
+          "metric": 1.7248752672843903,
+          "is_lift": true
+        },
+        {
+          "test_year": 2025,
+          "n_triggered": 26,
+          "metric": 0.0,
+          "is_lift": true
+        },
+        {
+          "test_year": 2026,
+          "n_triggered": 36,
+          "metric": 1.0612244897959184,
+          "is_lift": true
+        }
+      ],
+      "selection_mode": "oos"
     },
     "reg4": {
       "weights": {
-        "ind_dd_deep": 0.8749380205528753,
-        "ind_dist_sma200_neg": 0.09558055350074865,
-        "ind_vol_accel_high": 0.004114669519633991,
-        "ind_kurt_high": 0.01219757639801522,
-        "ind_skew_neg": 0.013169180028726777
+        "ind_dd_deep": 0.0200738126023957,
+        "ind_dist_sma200_neg": 0.1464553092041218,
+        "ind_vol_accel_high": 0.07848319006445005,
+        "ind_kurt_high": 0.03377583382905512,
+        "ind_skew_neg": 0.08094537923302154,
+        "ind_obv_divergence": 0.07370307986868307,
+        "ind_volume_spike": 0.01808142065273425,
+        "ind_atr_ratio_high": 0.011261739410905289,
+        "ind_term_structure_neg": 0.10519240910991967,
+        "ind_vol_of_vol_high": 0.09696431078942373,
+        "ind_range_expansion_high": 0.3350635152352897
       },
-      "horizon": 40,
-      "threshold": 0.909053247256013,
+      "horizon": 21,
+      "threshold": 0.6597915233696914,
+      "threshold_pct": 85.0,
+      "gamma": 0.0,
       "metrics": {
-        "correlation": 0.1274897349549282,
-        "lift": 1.5399335022902183,
-        "triggered_crash_prob": 0.6585365853658537,
-        "baseline_crash_prob": 0.427639624949042,
-        "placement_rate": 0.09999999999999998
-      }
+        "mean_oos_raw": 1.056473683143303,
+        "oos_ci_low": 0.5297717200583745,
+        "oos_ci_high": 1.6802690600874053,
+        "passed_gate": true,
+        "n_effective_indicators": 7.0,
+        "placement_rate": 0.15
+      },
+      "walk_forward_folds": [
+        {
+          "test_year": 2021,
+          "n_triggered": 35,
+          "metric": 2.1820408163265306,
+          "is_lift": true
+        },
+        {
+          "test_year": 2022,
+          "n_triggered": 98,
+          "metric": 0.9982631350412505,
+          "is_lift": true
+        },
+        {
+          "test_year": 2023,
+          "n_triggered": 38,
+          "metric": 0.6213093709884467,
+          "is_lift": true
+        },
+        {
+          "test_year": 2024,
+          "n_triggered": 68,
+          "metric": 1.315217391304348,
+          "is_lift": true
+        },
+        {
+          "test_year": 2025,
+          "n_triggered": 9,
+          "metric": 0.0,
+          "is_lift": true
+        },
+        {
+          "test_year": 2026,
+          "n_triggered": 37,
+          "metric": 1.2220113851992411,
+          "is_lift": true
+        }
+      ],
+      "selection_mode": "oos"
     }
   }
 }
