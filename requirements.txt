@@ -9,4 +9,6 @@ statsmodels>=0.14.0
 scikit-learn>=1.3.0
 seaborn
 xgboost
-torch
+optuna
+
+# Don't add torch here, it's not needed most of the time
