@@ -31,6 +31,8 @@ DATA_DIR = OUTPUT_DIR / 'data'
 PLOTS_DIR = OUTPUT_DIR / 'plots'
 MODELS_DIR = OUTPUT_DIR / 'models'
 
+BAR_LUNCH = 24  # index of first PM bar (13:00)
+
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -193,6 +195,161 @@ def train_neural_net(X, y, n_folds=5, epochs=50, batch_size=64):
 
 
 # ============================================================
+# Lunch Break Prediction Analysis
+# ============================================================
+def lunch_break_prediction(etf_name, best_preds, pm_returns):
+    """Lunch-aware profitability analysis.
+
+    Returns dict with:
+    - close_before_noon: AM-only return per predicted cluster
+    - pm_continuation: PM-only return per predicted cluster (already in pm_returns)
+    - pm_independent: PM-only clustering profitability
+    - strategy_matrix: AM-pred -> optimal PM action
+    """
+    # Load price curves for AM return computation
+    paths_npz = np.load(DATA_DIR / f'paths_{etf_name}.npz', allow_pickle=True)
+    price_curves = paths_npz['price']
+    return_curves = paths_npz['returns']
+    dates = pd.to_datetime(paths_npz['dates'])
+
+    features_df = pd.read_csv(DATA_DIR / f'features_{etf_name}.csv',
+                              index_col='date', parse_dates=True)
+
+    # Align dates
+    date_set = set(features_df.index) & set(dates)
+    common = sorted(date_set)
+    path_idx_map = {d: i for i, d in enumerate(dates)}
+
+    # AM return: sum of log returns bars 0..23 (AM session)
+    am_returns_arr = []
+    pm_returns_arr = []
+    valid_preds = []
+    for d in common:
+        pi = path_idx_map.get(d)
+        if pi is None:
+            continue
+        am_ret = float(return_curves[pi, :BAR_LUNCH].sum())  # log-return sum
+        pm_ret = float(return_curves[pi, BAR_LUNCH:].sum())
+        am_returns_arr.append(am_ret)
+        pm_returns_arr.append(pm_ret)
+
+    am_returns_arr = np.array(am_returns_arr)
+    pm_returns_arr = np.array(pm_returns_arr)
+
+    # Map predictions to aligned indices
+    # best_preds is aligned to the predict_etf's filtered set; use pm_returns as proxy length
+    n = min(len(best_preds), len(am_returns_arr), len(pm_returns_arr))
+    best_preds = best_preds[:n]
+    am_returns_arr = am_returns_arr[:n]
+    pm_returns_arr = pm_returns_arr[:n]
+
+    # --- Close-before-noon: AM return per predicted cluster ---
+    close_before_noon = []
+    for cluster_id in sorted(np.unique(best_preds)):
+        mask = best_preds == cluster_id
+        am_ret = am_returns_arr[mask]
+        mean_am = am_ret.mean()
+        wr_am = (am_ret > 0).mean()
+        sharpe_am = mean_am / (am_ret.std() + 1e-10) * np.sqrt(252)
+        close_before_noon.append({
+            'cluster': int(cluster_id),
+            'n_days': int(mask.sum()),
+            'am_return': mean_am,
+            'am_win_rate': wr_am,
+            'am_sharpe': sharpe_am,
+        })
+
+    # --- PM continuation: PM return per predicted cluster ---
+    pm_continuation = []
+    for cluster_id in sorted(np.unique(best_preds)):
+        mask = best_preds == cluster_id
+        pm_ret = pm_returns_arr[mask]
+        mean_pm = pm_ret.mean()
+        wr_pm = (pm_ret > 0).mean()
+        sharpe_pm = mean_pm / (pm_ret.std() + 1e-10) * np.sqrt(252)
+        pm_continuation.append({
+            'cluster': int(cluster_id),
+            'n_days': int(mask.sum()),
+            'pm_return': mean_pm,
+            'pm_win_rate': wr_pm,
+            'pm_sharpe': sharpe_pm,
+        })
+
+    # --- Strategy matrix: AM-pred -> optimal PM action ---
+    # For each cluster: compare (a) hold through PM, (b) close AM + short PM, (c) skip PM
+    strategy_matrix = []
+    for cluster_id in sorted(np.unique(best_preds)):
+        mask = best_preds == cluster_id
+        am_ret = am_returns_arr[mask]
+        pm_ret = pm_returns_arr[mask]
+
+        # Option A: long full-day (AM + PM)
+        full_day = am_ret + pm_ret
+        sharpe_full = full_day.mean() / (full_day.std() + 1e-10) * np.sqrt(252)
+
+        # Option B: AM only (close at 11:30)
+        sharpe_am = am_ret.mean() / (am_ret.std() + 1e-10) * np.sqrt(252)
+
+        # Option C: AM + short PM (close AM long, enter short at 13:00)
+        short_pm = am_ret + (-pm_ret)
+        sharpe_short = short_pm.mean() / (short_pm.std() + 1e-10) * np.sqrt(252)
+
+        # Pick best
+        options = {'full_day_long': sharpe_full, 'am_only': sharpe_am, 'am_long_pm_short': sharpe_short}
+        best_action = max(options, key=options.get)
+
+        strategy_matrix.append({
+            'cluster': int(cluster_id),
+            'full_day_sharpe': sharpe_full,
+            'am_only_sharpe': sharpe_am,
+            'am_long_pm_short_sharpe': sharpe_short,
+            'best_action': best_action,
+            'best_sharpe': options[best_action],
+        })
+
+    # --- Plot: strategy comparison ---
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+    ax = axes[0]
+    cluster_ids = [s['cluster'] for s in strategy_matrix]
+    x = np.arange(len(cluster_ids))
+    w = 0.25
+    ax.bar(x - w, [s['full_day_sharpe'] for s in strategy_matrix], w, label='Full Day Long', color='steelblue')
+    ax.bar(x,     [s['am_only_sharpe'] for s in strategy_matrix], w, label='AM Only', color='orange')
+    ax.bar(x + w, [s['am_long_pm_short_sharpe'] for s in strategy_matrix], w, label='AM Long + PM Short', color='purple')
+    ax.set_xticks(x)
+    ax.set_xticklabels([f'C{c}' for c in cluster_ids])
+    ax.axhline(0, color='black', linewidth=0.5)
+    ax.set_ylabel('Annualized Sharpe')
+    ax.set_title(f'{etf_name}: Lunch Strategy Comparison per Predicted Cluster')
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.3, axis='y')
+
+    ax = axes[1]
+    am_means = [c['am_return'] * 100 for c in close_before_noon]
+    pm_means = [c['pm_return'] * 100 for c in pm_continuation]
+    ax.bar(x - 0.15, am_means, 0.3, label='AM return (%)', color='orange')
+    ax.bar(x + 0.15, pm_means, 0.3, label='PM return (%)', color='steelblue')
+    ax.axhline(0, color='black', linewidth=0.5)
+    ax.set_xticks(x)
+    ax.set_xticklabels([f'C{c}' for c in cluster_ids])
+    ax.set_ylabel('Return (%)')
+    ax.set_title(f'{etf_name}: AM vs PM Return per Predicted Cluster')
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.3, axis='y')
+
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / f'lunch_strategy_{etf_name}.png', dpi=120)
+    plt.close()
+
+    return {
+        'close_before_noon': close_before_noon,
+        'pm_continuation': pm_continuation,
+        'strategy_matrix': strategy_matrix,
+    }
+
+
+# ============================================================
 # Main Prediction Pipeline
 # ============================================================
 def predict_etf(etf_name):
@@ -310,27 +467,51 @@ def predict_etf(etf_name):
     print("\n  Profitability Proxy (afternoon return per predicted cluster):")
     best_model = max(results.keys(), key=lambda k: results[k]['acc'])
     best_preds = results[best_model]['preds']
-    
+
     profit_analysis = []
     for cluster_id in sorted(np.unique(best_preds)):
         mask = best_preds == cluster_id
         cluster_pm_returns = pm_returns[mask]
-        
+
         mean_ret = cluster_pm_returns.mean()
-        win_rate = (cluster_pm_returns > 0).mean()
-        sharpe = mean_ret / (cluster_pm_returns.std() + 1e-10) * np.sqrt(252)
-        
+        std_ret = cluster_pm_returns.std() + 1e-10
+
+        # Long metrics
+        long_win_rate = (cluster_pm_returns > 0).mean()
+        long_sharpe = mean_ret / std_ret * np.sqrt(252)
+
+        # Short metrics (negate returns)
+        short_mean = -mean_ret
+        short_win_rate = (cluster_pm_returns < 0).mean()
+        short_sharpe = short_mean / std_ret * np.sqrt(252)
+
+        # Optimal direction: pick direction with higher absolute Sharpe
+        if abs(long_sharpe) >= abs(short_sharpe):
+            opt_dir = 'long'
+            opt_return = mean_ret
+            opt_win_rate = long_win_rate
+            opt_sharpe = long_sharpe
+        else:
+            opt_dir = 'short'
+            opt_return = short_mean
+            opt_win_rate = short_win_rate
+            opt_sharpe = short_sharpe
+
         profit_analysis.append({
             'cluster': cluster_id,
             'n_days': mask.sum(),
             'mean_pm_return': mean_ret,
-            'win_rate': win_rate,
-            'sharpe_annual': sharpe
+            'win_rate': long_win_rate,
+            'sharpe_annual': long_sharpe,
+            'optimal_direction': opt_dir,
+            'optimal_return': opt_return,
+            'optimal_win_rate': opt_win_rate,
+            'optimal_sharpe': opt_sharpe,
         })
-        
+
         print(f"    Cluster {cluster_id}: {mask.sum()} days, "
-              f"PM Return: {mean_ret*100:.3f}%, Win Rate: {win_rate*100:.1f}%, "
-              f"Sharpe: {sharpe:.2f}")
+              f"PM Return: {mean_ret*100:.3f}%, Win Rate: {long_win_rate*100:.1f}%, "
+              f"Sharpe: {long_sharpe:.2f} | Optimal: {opt_dir} Sharpe={opt_sharpe:.2f}")
     
     # ---- PLOTS ----
     # Confusion matrix
@@ -378,10 +559,17 @@ def predict_etf(etf_name):
     plt.savefig(PLOTS_DIR / f'early_prediction_profit_{etf_name}.png', dpi=100)
     plt.close()
     
+    # ---- LUNCH BREAK ANALYSIS ----
+    print("\n  Lunch Break Prediction Analysis...")
+    lunch_results = lunch_break_prediction(etf_name, best_preds, pm_returns)
+    for s in lunch_results['strategy_matrix']:
+        print(f"    Cluster {s['cluster']}: best_action={s['best_action']} (Sharpe={s['best_sharpe']:.2f})")
+
     return {
         'baselines': {'majority': acc_majority, 'prev_day': acc_prev, 'gap_only': acc_gap},
         'models': results,
-        'profit': profit_analysis
+        'profit': profit_analysis,
+        'lunch': lunch_results,
     }
 
 
@@ -438,7 +626,19 @@ def main():
                 f.write(f"  Cluster {p['cluster']}: {p['n_days']} days, "
                        f"PM Return={p['mean_pm_return']*100:.3f}%, "
                        f"Win Rate={p['win_rate']*100:.1f}%, "
-                       f"Sharpe={p['sharpe_annual']:.2f}\n")
+                       f"Sharpe={p['sharpe_annual']:.2f}, "
+                       f"Optimal Dir={p['optimal_direction']}, "
+                       f"Opt Return={p['optimal_return']*100:.3f}%, "
+                       f"Opt Sharpe={p['optimal_sharpe']:.2f}\n")
+
+            if 'lunch' in results:
+                lr = results['lunch']
+                f.write("\nLunch Strategy:\n")
+                for s in lr.get('strategy_matrix', []):
+                    f.write(f"  Cluster {s['cluster']}: full_day={s['full_day_sharpe']:.2f} "
+                           f"am_only={s['am_only_sharpe']:.2f} "
+                           f"am_long_pm_short={s['am_long_pm_short_sharpe']:.2f} "
+                           f"best={s['best_action']}({s['best_sharpe']:.2f})\n")
     
     print("\nEarly prediction complete!")
 

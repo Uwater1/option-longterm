@@ -28,6 +28,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 import matplotlib.pyplot as plt
 import seaborn as sns
+import json
 
 # Configuration
 ETF_NAMES = ['300ETF', '50ETF', '500ETF', '588000ETF', '159915ETF']
@@ -218,13 +219,200 @@ def compute_embeddings(price_curves, features_df):
 
 
 # ============================================================
+# Multi-Criteria K Selection
+# ============================================================
+def _gap_statistic(data, k, n_refs=5):
+    """Compute gap statistic for a given K using uniform reference datasets."""
+    n, d = data.shape
+    log_wks = []
+    for ref_i in range(n_refs):
+        rng = np.random.RandomState(ref_i)
+        ref = rng.uniform(data.min(axis=0), data.max(axis=0), size=(n, d))
+        km_ref = KMeans(n_clusters=k, random_state=ref_i, n_init=5, max_iter=200).fit(ref)
+        log_wks.append(np.log(max(km_ref.inertia_, 1e-30)))
+    log_wk_ref = np.mean(log_wks)
+
+    km = KMeans(n_clusters=k, random_state=42, n_init=10, max_iter=300).fit(data)
+    log_wk_data = np.log(max(km.inertia_, 1e-30))
+    gap = log_wk_ref - log_wk_data
+
+    s_k = np.std(log_wks) * np.sqrt(1 + 1.0 / n_refs) if len(log_wks) > 1 else 0.0
+    return gap, s_k, km.inertia_, km.labels_
+
+
+def _find_elbow(ks, inertias):
+    """Find elbow (knee) in inertia curve via maximum curvature."""
+    if len(ks) < 4:
+        return ks[0]
+    y = np.array(inertias)
+    # second difference as curvature proxy
+    d2 = np.diff(y, n=2)
+    # elbow is where curvature magnitude is maximum (most negative d2)
+    elbow_idx = int(np.argmin(d2)) + 1  # +1 because diff shrinks array
+    return ks[min(elbow_idx, len(ks) - 1)]
+
+
+def select_best_k(data, k_range=range(4, 16), etf_name=''):
+    """
+    Select optimal K via multi-criteria composite score.
+
+    Metrics (higher-is-better after normalization):
+      - Silhouette score          (weight 0.20)
+      - Calinski-Harabasz index   (weight 0.15)
+      - 1 - Davies-Bouldin index  (weight 0.15)
+      - Gap statistic             (weight 0.25)
+      - BIC (lower=better)        (weight 0.15)
+      - Elbow proximity           (weight 0.10)
+
+    Rejects any K where a cluster has < 3% of total samples.
+    """
+    n_samples = len(data)
+    ks = list(k_range)
+    scorecard = []
+    inertias = []
+    gaps = []
+
+    print(f"  Computing metrics for K={ks[0]}..{ks[-1]} ({len(ks)} candidates)...")
+
+    for k in ks:
+        # Gap statistic (also runs KMeans and returns inertia + labels)
+        gap, gap_se, inertia, labels = _gap_statistic(data, k, n_refs=5)
+        inertias.append(inertia)
+        gaps.append(gap)
+
+        # Cluster metrics
+        sil = silhouette_score(data, labels, sample_size=min(2000, n_samples))
+        ch = calinski_harabasz_score(data, labels)
+        db = davies_bouldin_score(data, labels)
+
+        # Minimum cluster fraction
+        _, counts = np.unique(labels, return_counts=True)
+        min_frac = counts.min() / n_samples
+
+        # GMM BIC
+        gmm = GaussianMixture(n_components=k, random_state=42, covariance_type='full', max_iter=200)
+        gmm.fit(data)
+        bic = gmm.bic(data)
+        aic = gmm.aic(data)
+
+        scorecard.append({
+            'k': k,
+            'silhouette': sil,
+            'calinski_harabasz': ch,
+            'davies_bouldin': db,
+            'gap': gap,
+            'gap_se': gap_se,
+            'inertia': inertia,
+            'bic': bic,
+            'aic': aic,
+            'min_frac': min_frac,
+        })
+        print(f"    K={k:2d}: sil={sil:.3f}  CH={ch:.0f}  DB={db:.3f}  gap={gap:.3f}  BIC={bic:.0f}  min%={min_frac:.1%}")
+
+    # Elbow detection
+    elbow_k = _find_elbow(ks, inertias)
+    print(f"  Elbow detected at K={elbow_k}")
+
+    # --- Normalize each metric to [0, 1] rank space (higher = better) ---
+    metrics = {
+        'silhouette':          [s['silhouette'] for s in scorecard],
+        'calinski_harabasz':   [s['calinski_harabasz'] for s in scorecard],
+        'davies_bouldin':      [-s['davies_bouldin'] for s in scorecard],   # lower DB → higher score
+        'gap':                 gaps,
+        'bic':                 [-s['bic'] for s in scorecard],              # lower BIC → higher score
+    }
+
+    def _rank_norm(values):
+        """Convert values to rank-based [0,1] scores (higher rank = higher score)."""
+        arr = np.array(values, dtype=float)
+        order = arr.argsort().argsort().astype(float)
+        rng = order.max() - order.min()
+        return order / rng if rng > 0 else np.full(len(arr), 0.5)
+
+    rn = {name: _rank_norm(vals) for name, vals in metrics.items()}
+
+    # Elbow proximity: give a boost to K near elbow_k
+    elbow_scores = []
+    for s in scorecard:
+        dist = abs(s['k'] - elbow_k)
+        elbow_scores.append(1.0 / (1.0 + dist))
+    rn['elbow'] = _rank_norm(elbow_scores)
+
+    # Composite score
+    weights = {
+        'silhouette': 0.20,
+        'calinski_harabasz': 0.15,
+        'davies_bouldin': 0.15,
+        'gap': 0.25,
+        'bic': 0.15,
+        'elbow': 0.10,
+    }
+
+    best_k, best_score = ks[0], -1.0
+    for i, s in enumerate(scorecard):
+        # Degenerate cluster guard: reject K where any cluster < 3%
+        if s['min_frac'] < 0.03:
+            s['composite'] = -999.0
+            continue
+        score = sum(weights[m] * rn[m][i] for m in weights)
+        s['composite'] = float(score)
+        if score > best_score:
+            best_score, best_k = score, s['k']
+
+    print(f"  Best K selected: {best_k}  (composite score: {best_score:.3f})")
+
+    # Save scorecard JSON
+    sc_path = DATA_DIR / f'k_selection_scorecard_{etf_name}.json'
+    with open(sc_path, 'w') as f:
+        json.dump({'best_k': int(best_k), 'scorecard': scorecard}, f, indent=2, default=str)
+    print(f"  Saved scorecard: {sc_path}")
+
+    # Plot composite score vs K
+    valid = [s for s in scorecard if s['composite'] > -998]
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+    ax = axes[0]
+    for s in valid:
+        color = 'green' if s['k'] == best_k else 'steelblue'
+        marker = 'o' if s['k'] == best_k else 's'
+        ax.scatter(s['k'], s['composite'], c=color, s=120, marker=marker, zorder=5)
+        ax.annotate(f"K={s['k']}", (s['k'], s['composite']),
+                    textcoords='offset points', xytext=(0, 8), fontsize=8, ha='center')
+    ax.set_xlabel('Number of Clusters (K)')
+    ax.set_ylabel('Composite Score (higher = better)')
+    ax.set_title(f'K Selection — {etf_name}  (best K={best_k})')
+    ax.grid(True, alpha=0.3)
+
+    ax = axes[1]
+    ax.plot(ks, inertias, 'bo-', linewidth=1.5)
+    ax.axvline(best_k, color='green', linestyle='--', label=f'Selected K={best_k}')
+    ax.axvline(elbow_k, color='orange', linestyle=':', alpha=0.7, label=f'Elbow K={elbow_k}')
+    ax.set_xlabel('K')
+    ax.set_ylabel('Inertia')
+    ax.set_title('Inertia Curve (elbow detection)')
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / f'cluster_k_selection_{etf_name}.png', dpi=120)
+    plt.close()
+
+    return best_k, scorecard
+
+
+# ============================================================
 # Clustering Functions
 # ============================================================
-def run_clustering(data_dict, data_name):
-    """Run multiple clustering algorithms on one representation"""
-    print(f"\n  Clustering: {data_name} (shape: {data_dict.shape})...")
+def run_clustering(data_dict, data_name, best_k=None):
+    """Run multiple clustering algorithms on one representation.
+
+    If best_k is provided (from select_best_k), it is used as the primary K
+    for KMeans / GMM / Spectral.  A silhouette sweep is still run for metrics.
+    """
+    print(f"\n  Clustering: {data_name} (shape: {data_dict.shape})" +
+          (f"  [using K={best_k}]" if best_k else ""))
     results = {}
-    
+
     # 1) HDBSCAN
     print("    [1/4] HDBSCAN...")
     clusterer = hdbscan.HDBSCAN(min_cluster_size=30, min_samples=5, cluster_selection_method='eom')
@@ -233,42 +421,53 @@ def run_clustering(data_dict, data_name):
     n_noise = (labels_hdbscan == -1).sum()
     print(f"      Found {n_clusters} clusters, {n_noise} noise points")
     results['hdbscan'] = labels_hdbscan
-    
-    # 2) KMeans (sweep K)
-    print("    [2/4] KMeans (sweep K=3..12)...")
-    best_k, best_score, best_labels = 3, -1, None
+
+    # 2) KMeans (silhouette sweep kept for metrics; primary K from best_k)
+    print("    [2/4] KMeans...")
+    sweep_best_k, sweep_best_score, sweep_best_labels = 3, -1, None
     for k in range(3, 13):
         km = KMeans(n_clusters=k, random_state=42, n_init=10, max_iter=300)
         labels_k = km.fit_predict(data_dict)
         score = silhouette_score(data_dict, labels_k, sample_size=min(2000, len(data_dict)))
-        if score > best_score:
-            best_k, best_score, best_labels = k, score, labels_k
-    print(f"      Best K={best_k}, Silhouette={best_score:.4f}")
-    results['kmeans'] = best_labels
-    
-    # 3) Gaussian Mixture (sweep K by BIC)
-    print("    [3/4] Gaussian Mixture (sweep K=3..12)...")
-    best_k, best_bic, best_labels = 3, float('inf'), None
+        if score > sweep_best_score:
+            sweep_best_k, sweep_best_score, sweep_best_labels = k, score, labels_k
+    print(f"      Silhouette-best K={sweep_best_k}, Sil={sweep_best_score:.4f}")
+
+    # Use externally-selected K if provided, otherwise fall back to sweep
+    primary_k = best_k if best_k else sweep_best_k
+    if primary_k != sweep_best_k:
+        km_primary = KMeans(n_clusters=primary_k, random_state=42, n_init=10, max_iter=300)
+        labels_primary = km_primary.fit_predict(data_dict)
+        sil_primary = silhouette_score(data_dict, labels_primary, sample_size=min(2000, len(data_dict)))
+        print(f"      Using selected K={primary_k}, Sil={sil_primary:.4f}")
+        results['kmeans'] = labels_primary
+    else:
+        results['kmeans'] = sweep_best_labels
+
+    # 3) Gaussian Mixture (use same primary_k; BIC sweep kept for info)
+    print("    [3/4] Gaussian Mixture...")
+    bic_best_k, bic_best_bic = 3, float('inf')
     for k in range(3, 13):
         gmm = GaussianMixture(n_components=k, random_state=42, covariance_type='full')
         gmm.fit(data_dict)
         bic = gmm.bic(data_dict)
-        if bic < best_bic:
-            best_k, best_bic = k, bic
-            best_labels = gmm.predict(data_dict)
-    print(f"      Best K={best_k}, BIC={best_bic:.1f}")
-    results['gmm'] = best_labels
-    
-    # 4) Spectral Clustering (K=best KMeans K)
+        if bic < bic_best_bic:
+            bic_best_k, bic_best_bic = k, bic
+    print(f"      BIC-best K={bic_best_k}, BIC={bic_best_bic:.1f}")
+    gmm_primary = GaussianMixture(n_components=primary_k, random_state=42, covariance_type='full')
+    gmm_primary.fit(data_dict)
+    results['gmm'] = gmm_primary.predict(data_dict)
+
+    # 4) Spectral Clustering (use primary_k)
     print("    [4/4] Spectral Clustering...")
     try:
-        spec = SpectralClustering(n_clusters=best_k, random_state=42, affinity='nearest_neighbors')
+        spec = SpectralClustering(n_clusters=primary_k, random_state=42, affinity='nearest_neighbors')
         labels_spec = spec.fit_predict(data_dict)
         results['spectral'] = labels_spec
-        print(f"      Spectral K={best_k}")
+        print(f"      Spectral K={primary_k}")
     except Exception as e:
         print(f"      Spectral failed: {e}")
-    
+
     return results
 
 
@@ -365,7 +564,16 @@ def process_etf(etf_name):
     print("\n" + "="*40)
     print("Clustering Phase")
     print("="*40)
-    
+
+    # Multi-criteria K selection on PCA embeddings (top 8 PCs)
+    pca_repr = embeddings['pca'][:, :8]
+    best_k, k_scorecard = select_best_k(pca_repr, k_range=range(4, 16), etf_name=etf_name)
+
+    # Save best_k for downstream scripts (cross_etf_validation, etc.)
+    best_k_path = DATA_DIR / f'best_k_{etf_name}.json'
+    with open(best_k_path, 'w') as f:
+        json.dump({'etf': etf_name, 'best_k': int(best_k)}, f)
+
     # Data representations to cluster
     representations = {
         'raw_curves': price_curves,
@@ -378,7 +586,7 @@ def process_etf(etf_name):
     all_cluster_results = {}
     
     for repr_name, repr_data in representations.items():
-        cluster_results = run_clustering(repr_data, repr_name)
+        cluster_results = run_clustering(repr_data, repr_name, best_k=best_k)
         
         for method_name, labels in cluster_results.items():
             metrics = evaluate_clustering(labels, repr_data, method_name, repr_name)
@@ -437,10 +645,10 @@ def process_etf(etf_name):
         best_method = df_metrics.loc[best_idx, 'method']
         best_data = df_metrics.loc[best_idx, 'data']
         best_repr = representations[best_data]
-        
-        # Define cluster function for bootstrap
+
+        # Define cluster function for bootstrap — use selected best_k
         def cluster_func(data):
-            km = KMeans(n_clusters=int(df_metrics.loc[best_idx, 'n_clusters']), random_state=42)
+            km = KMeans(n_clusters=int(best_k), random_state=42)
             return km.fit_predict(data)
         
         ami_mean, ami_std = bootstrap_stability(best_repr, cluster_func, n_boot=50)
