@@ -1,0 +1,72 @@
+[
+  {
+    "etf": "300ETF",
+    "n_days": 2782,
+    "chow_F": 2.700986241956279,
+    "chow_p": 0.10034274983609169,
+    "chow_mean_diff": 1.5332315087876863e-05,
+    "levene_stat": 2.1326519515592777,
+    "levene_p": 0.14424758283044747,
+    "cusum_cp_idx": 25,
+    "cusum_cp_stat": 0.001196211553025355,
+    "cusum_p": 0.57,
+    "cusum_near_lunch": true,
+    "am_pm_AMI": 0.3035539043238702
+  },
+  {
+    "etf": "50ETF",
+    "n_days": 2781,
+    "chow_F": 2.101954842431687,
+    "chow_p": 0.14716757381538245,
+    "chow_mean_diff": 1.3326182639525449e-05,
+    "levene_stat": 4.358569351421936,
+    "levene_p": 0.036868625123892836,
+    "cusum_cp_idx": 3,
+    "cusum_cp_stat": 0.00023380651608629547,
+    "cusum_p": 0.21,
+    "cusum_near_lunch": false,
+    "am_pm_AMI": 0.31015551949775544
+  },
+  {
+    "etf": "500ETF",
+    "n_days": 2781,
+    "chow_F": 5.50130476557802,
+    "chow_p": 0.01903778999065743,
+    "chow_mean_diff": 2.7538501756205608e-05,
+    "levene_stat": 8.590480310954188,
+    "levene_p": 0.003393011526737901,
+    "cusum_cp_idx": 22,
+    "cusum_cp_stat": 0.0025857741521070256,
+    "cusum_p": 0.415,
+    "cusum_near_lunch": true,
+    "am_pm_AMI": 0.27570884254174205
+  },
+  {
+    "etf": "588000ETF",
+    "n_days": 1353,
+    "chow_F": 16.949891843060264,
+    "chow_p": 3.9597948033283835e-05,
+    "chow_mean_diff": 7.662878157107645e-05,
+    "levene_stat": 15.418688436063727,
+    "levene_p": 8.828441777113358e-05,
+    "cusum_cp_idx": 35,
+    "cusum_cp_stat": 0.0023743434949232266,
+    "cusum_p": 0.66,
+    "cusum_near_lunch": false,
+    "am_pm_AMI": 0.3334417412563268
+  },
+  {
+    "etf": "159915ETF",
+    "n_days": 2781,
+    "chow_F": 18.487296785138,
+    "chow_p": 1.7405429428778212e-05,
+    "chow_mean_diff": 6.122948775351129e-05,
+    "levene_stat": 15.409953076571755,
+    "levene_p": 8.757704134515117e-05,
+    "cusum_cp_idx": 21,
+    "cusum_cp_stat": 0.0029052373007498427,
+    "cusum_p": 0.81,
+    "cusum_near_lunch": true,
+    "am_pm_AMI": 0.3292359776785041
+  }
+]
