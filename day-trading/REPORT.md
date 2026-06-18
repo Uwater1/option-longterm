@@ -343,6 +343,24 @@ Macro clusters collapsed to K=1 by the size guard are marked '—' (no predictio
 
 > **Key Insight**: Neural Net achieves **85-87%** accuracy. Direction-aware profitability shows Rally days are profitable going long (Sharpe 1.18-2.38) and Selloff days are profitable going short (Sharpe 1.0-2.6), making ~60-70% of days potentially actionable.
 
+### 6.8 Day-Level Indicator Ablation
+
+Does adding prior-day technical indicators (RSI14, MACD histogram, SMA20/50 distance, ATR14, ROC10, Bollinger %B, 20-day vol) improve macro cluster prediction?
+
+These 8 day-level features (same as day-model/build_features.py, shifted by 1 day to avoid look-ahead) were appended to the 13 early-bar features, yielding 21 total features.
+
+| ETF | Early-Only (NN) | Early+Day (NN) | Delta | Verdict |
+|-----|-----------------|----------------|-------|---------|
+| **300ETF** | 85.0% | 84.8% | -0.2% | No change |
+| **50ETF** | 86.6% | 86.5% | -0.1% | No change |
+| **500ETF** | 87.5% | 86.9% | -0.6% | No change |
+| **588000ETF** | 85.2% | 85.9% | +0.7% | Marginal |
+| **159915ETF** | 86.3% | 85.1% | -1.1% | Worse |
+
+**Mean delta: -0.26%** (threshold for significance: +0.5%).
+
+> **Ablation Insight**: Day-level technical indicators do **not** improve day-type classification. The intraday price action (first 6 bars) already captures the relevant regime information; prior-day RSI/MACD/SMA are redundant for cluster prediction. Only 588000ETF showed marginal improvement, likely due to its shorter history and higher sensitivity to trend context. Early-only features remain the recommended configuration.
+
 ### 6.7 Lunch Break Exploration
 
 Does the lunch break (11:30–13:00) mark a structural change in intraday behavior?

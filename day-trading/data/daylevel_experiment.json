@@ -1,0 +1,237 @@
+{
+  "300ETF": {
+    "n_samples": 2732,
+    "n_early_features": 13,
+    "n_combined_features": 21,
+    "early": {
+      "LightGBM": {
+        "acc": 0.8448,
+        "f1": 0.8035
+      },
+      "XGBoost": {
+        "acc": 0.8466,
+        "f1": 0.8044
+      },
+      "NeuralNet": {
+        "acc": 0.8499,
+        "f1": 0.8128
+      }
+    },
+    "combined": {
+      "LightGBM": {
+        "acc": 0.8452,
+        "f1": 0.8029
+      },
+      "XGBoost": {
+        "acc": 0.84,
+        "f1": 0.7972
+      },
+      "NeuralNet": {
+        "acc": 0.8481,
+        "f1": 0.8109
+      }
+    },
+    "deltas": {
+      "LightGBM": {
+        "delta_acc": 0.0004,
+        "delta_f1": -0.0006
+      },
+      "XGBoost": {
+        "delta_acc": -0.0066,
+        "delta_f1": -0.0072
+      },
+      "NeuralNet": {
+        "delta_acc": -0.0018,
+        "delta_f1": -0.002
+      }
+    }
+  },
+  "50ETF": {
+    "n_samples": 2731,
+    "n_early_features": 13,
+    "n_combined_features": 21,
+    "early": {
+      "LightGBM": {
+        "acc": 0.8638,
+        "f1": 0.8373
+      },
+      "XGBoost": {
+        "acc": 0.8645,
+        "f1": 0.8377
+      },
+      "NeuralNet": {
+        "acc": 0.8656,
+        "f1": 0.8401
+      }
+    },
+    "combined": {
+      "LightGBM": {
+        "acc": 0.8682,
+        "f1": 0.843
+      },
+      "XGBoost": {
+        "acc": 0.8649,
+        "f1": 0.8379
+      },
+      "NeuralNet": {
+        "acc": 0.8645,
+        "f1": 0.8388
+      }
+    },
+    "deltas": {
+      "LightGBM": {
+        "delta_acc": 0.0044,
+        "delta_f1": 0.0057
+      },
+      "XGBoost": {
+        "delta_acc": 0.0004,
+        "delta_f1": 0.0002
+      },
+      "NeuralNet": {
+        "delta_acc": -0.0011,
+        "delta_f1": -0.0013
+      }
+    }
+  },
+  "500ETF": {
+    "n_samples": 2731,
+    "n_early_features": 13,
+    "n_combined_features": 21,
+    "early": {
+      "LightGBM": {
+        "acc": 0.8656,
+        "f1": 0.8175
+      },
+      "XGBoost": {
+        "acc": 0.859,
+        "f1": 0.8091
+      },
+      "NeuralNet": {
+        "acc": 0.8748,
+        "f1": 0.8332
+      }
+    },
+    "combined": {
+      "LightGBM": {
+        "acc": 0.8634,
+        "f1": 0.8147
+      },
+      "XGBoost": {
+        "acc": 0.866,
+        "f1": 0.8188
+      },
+      "NeuralNet": {
+        "acc": 0.8693,
+        "f1": 0.8262
+      }
+    },
+    "deltas": {
+      "LightGBM": {
+        "delta_acc": -0.0022,
+        "delta_f1": -0.0028
+      },
+      "XGBoost": {
+        "delta_acc": 0.007,
+        "delta_f1": 0.0097
+      },
+      "NeuralNet": {
+        "delta_acc": -0.0055,
+        "delta_f1": -0.007
+      }
+    }
+  },
+  "588000ETF": {
+    "n_samples": 1303,
+    "n_early_features": 13,
+    "n_combined_features": 21,
+    "early": {
+      "LightGBM": {
+        "acc": 0.8419,
+        "f1": 0.8298
+      },
+      "XGBoost": {
+        "acc": 0.8534,
+        "f1": 0.841
+      },
+      "NeuralNet": {
+        "acc": 0.8519,
+        "f1": 0.8412
+      }
+    },
+    "combined": {
+      "LightGBM": {
+        "acc": 0.8465,
+        "f1": 0.8369
+      },
+      "XGBoost": {
+        "acc": 0.8557,
+        "f1": 0.8449
+      },
+      "NeuralNet": {
+        "acc": 0.8588,
+        "f1": 0.8473
+      }
+    },
+    "deltas": {
+      "LightGBM": {
+        "delta_acc": 0.0046,
+        "delta_f1": 0.0071
+      },
+      "XGBoost": {
+        "delta_acc": 0.0023,
+        "delta_f1": 0.0039
+      },
+      "NeuralNet": {
+        "delta_acc": 0.0069,
+        "delta_f1": 0.0061
+      }
+    }
+  },
+  "159915ETF": {
+    "n_samples": 2731,
+    "n_early_features": 13,
+    "n_combined_features": 21,
+    "early": {
+      "LightGBM": {
+        "acc": 0.8583,
+        "f1": 0.8354
+      },
+      "XGBoost": {
+        "acc": 0.8491,
+        "f1": 0.8259
+      },
+      "NeuralNet": {
+        "acc": 0.8627,
+        "f1": 0.8414
+      }
+    },
+    "combined": {
+      "LightGBM": {
+        "acc": 0.855,
+        "f1": 0.8315
+      },
+      "XGBoost": {
+        "acc": 0.8532,
+        "f1": 0.8296
+      },
+      "NeuralNet": {
+        "acc": 0.8513,
+        "f1": 0.8288
+      }
+    },
+    "deltas": {
+      "LightGBM": {
+        "delta_acc": -0.0033,
+        "delta_f1": -0.0039
+      },
+      "XGBoost": {
+        "delta_acc": 0.004,
+        "delta_f1": 0.0037
+      },
+      "NeuralNet": {
+        "delta_acc": -0.0113,
+        "delta_f1": -0.0126
+      }
+    }
+  }
+}
