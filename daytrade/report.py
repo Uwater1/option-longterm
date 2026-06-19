@@ -192,7 +192,7 @@ def plot_yearly_sharpe_per_side(data: dict, configs: dict):
                     if t >= pd.Timestamp(HOLDOUT_START)})
     fig, axes = plt.subplots(1, 2, figsize=(13, 5), sharey=True)
     for ax, side, sign in [(axes[0], "Long", 1), (axes[1], "Short", -1)]:
-        deployed = [etf for etf in configs if configs[etf].get(side)]
+        deployed = [etf for etf in configs if configs[etf].get(side.lower())]
         if not deployed:
             ax.set_title(f"{side}: no deployments")
             continue
