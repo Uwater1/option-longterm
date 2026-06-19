@@ -80,6 +80,7 @@ predict_open_high.py           # Open-to-High prediction pipeline
 numba_utils.py                 # Numba BS functions & IV solver
 day-model/                     # Day-Model PM session return predictor
 ├── REPORT.md                  # Comprehensive PM return prediction report
+├── AGENTS.md                  # Feature expansion and workflow guide
 ├── build_features.py          # Early-bar + day-level feature engineering
 ├── train_model.py             # Optuna-tuned linear model training & feature selection
 └── generate_report.py         # Report markdown generator
