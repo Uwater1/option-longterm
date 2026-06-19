@@ -279,7 +279,7 @@ def generate_report():
     L.append("# Price Action Day-Type Discovery Research")
     L.append("")
     L.append("### A-Share ETF Intraday Pattern Analysis")
-    L.append(f"*Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*")
+    L.append(f"*Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}* (by day-trading/generate_report.py)")
     L.append("")
     L.append("---")
     L.append("")

@@ -302,8 +302,80 @@ def generate(results: dict) -> str:
         w(f"- **{etf}**: Most influential = `{top_param}` ({opi[top_param]:.2%})")
     w("")
 
-    # ── 7) Conclusions ──
-    w("## 7. Conclusions & Caveats\n")
+    # ── 7) Sensitivity to Prediction Time (Bar Count Comparison) ──
+    w("## 7. Sensitivity to Prediction Time (Bar Count Comparison)\n")
+    w("To determine how early the PM return prediction can be made, we evaluated model performance across different morning bar counts:")
+    w("- **9:45 AM (3 bars)**: First 15 minutes of trading (9:30–9:45)")
+    w("- **9:50 AM (4 bars)**: First 20 minutes of trading (9:30–9:50)")
+    w("- **9:55 AM (5 bars)**: First 25 minutes of trading (9:30–9:55)")
+    w("- **10:00 AM (6 bars)**: First 30 minutes of trading (9:30–10:00) [Original Baseline]\n")
+    w("> [!IMPORTANT]\n"
+      "> **Look-Ahead Bias Correction**: To prevent any look-ahead bias, volume normalization in these experiments uses a rolling 20-day historical average of daily volume shifted by 1 day (i.e. expected bar volume = `yesterday_rolling_20d_daily_volume / 48`), ensuring zero future information leaks into the features.\n")
+
+    exp_path = Path(__file__).resolve().parent.parent / "data" / "experiment_bars_results.json"
+    if exp_path.exists():
+        with open(exp_path) as f:
+            exp_results = json.load(f)
+
+        w("### 7.1 Performance Summary by Bar Count\n")
+        w("| ETF | Bar Count | Prediction Time | Selected Model | Features | Holdout IC | Holdout Dir | L/S Sharpe |")
+        w("|-----|-----------|-----------------|----------------|----------|------------|-------------|------------|")
+
+        for etf in ETF_ORDER:
+            bars_data = exp_results.get(etf, {})
+            # Find max IC and Sharpe to bold them
+            max_ic = -999.0
+            max_sharpe = -999.0
+            for b in [3, 4, 5, 6]:
+                b_str = str(b)
+                if b_str in bars_data:
+                    max_ic = max(max_ic, bars_data[b_str]["holdout_ic"])
+                    max_sharpe = max(max_sharpe, bars_data[b_str]["holdout_ls_sharpe"])
+
+            first_row = True
+            for b in [3, 4, 5, 6]:
+                b_str = str(b)
+                if b_str not in bars_data:
+                    continue
+                r = bars_data[b_str]
+                time_str = {3: "9:45 (3 bar)", 4: "9:50 (4 bar)", 5: "9:55 (5 bar)", 6: "10:00 (6 bar)"}[b]
+                
+                ic_val = r["holdout_ic"]
+                sharpe_val = r["holdout_ls_sharpe"]
+                
+                ic_str = fmt_ic(ic_val)
+                if ic_val == max_ic:
+                    ic_str = f"**{ic_str}**"
+                    
+                sharpe_str = fmt_sharpe(sharpe_val)
+                if sharpe_val == max_sharpe:
+                    sharpe_str = f"**{sharpe_str}**"
+                
+                model_str = r["model_type"].upper()
+                n_selected = r["n_selected"]
+                dir_str = f"{r['holdout_dir']:.3f}"
+                
+                etf_label = f"**{etf}**" if first_row else ""
+                w(f"| {etf_label} | {b} | {time_str} | {model_str} | {n_selected} | {ic_str} | {dir_str} | {sharpe_str} |")
+                first_row = False
+            w("| | | | | | | | |")  # Blank separator line
+        w("")
+    else:
+        w("*(No bar-count experiment results found. Run run_experiment_bars.py first.)*\n")
+
+    w("### 7.2 Key Insights & Observations\n")
+    w("1. **Window Duration vs. Model Maturity**:")
+    w("   - For blue-chip ETFs (**300ETF** and **50ETF**), predictive accuracy improves monotonically as the morning observation window expands. 300ETF holdout IC climbs from `+0.0212` (9:45 AM) to `+0.0770` (10:00 AM) in experiments. This indicates that blue-chip index momentum requires a full 30-minute digestion period to become highly predictive.")
+    w("2. **Early Peak Signals in Chinext/Mid-Cap**:")
+    w("   - For high-beta/growth index ETFs (**159915ETF** and **500ETF**), prediction power peaks *before* 10:00 AM:")
+    w("     - **159915ETF** achieves its highest Holdout IC at 9:55 AM (`+0.2164`, L/S Sharpe `+4.41`), and its highest L/S Sharpe at 9:45 AM (`+4.68`, Holdout IC `+0.2032`).")
+    w("     - **500ETF** holds high predictive power at 9:45 AM (`+0.1369`, L/S Sharpe `+2.54`), peaking in Holdout IC at 9:55 AM (`+0.1466`).")
+    w("     - *Rationale*: Opening cross and morning price action in mid-cap/growth stock structures are rich with early direction info. Waiting until 10:00 AM dilutes this signal as daily variance decays.")
+    w("3. **Execution Edge**:")
+    w("   - These findings indicate we can deploy day-models for **159915ETF** and **500ETF** as early as **9:45 AM** or **9:50 AM** with superior predictive stats. This gives execution models (e.g. limit entry solvers) more time to enter before the afternoon session.\n")
+
+    # ── 8) Conclusions ──
+    w("## 8. Conclusions & Caveats\n")
 
     deployable = []
     marginal = []

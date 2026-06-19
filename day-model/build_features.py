@@ -383,7 +383,7 @@ def compute_daylevel_indicators(df_1d: pd.DataFrame, margin_cache: pd.DataFrame,
 # ============================================================
 # Early-bar features (first 6 bars of 5m data)
 # ============================================================
-def extract_day_early_features(day_5m: pd.DataFrame, prev_close: float) -> dict:
+def extract_day_early_features(day_5m: pd.DataFrame, prev_close: float, expected_bar_vol: float) -> dict:
     """Extract early features from first 6 bars of one trading day (computable by 10:00 AM)."""
     bars = day_5m.head(EARLY_BARS)
     if len(bars) < EARLY_BARS or prev_close <= 0 or prev_close is None or np.isnan(prev_close):
@@ -402,19 +402,16 @@ def extract_day_early_features(day_5m: pd.DataFrame, prev_close: float) -> dict:
     # Bar log returns
     bar_ret = np.log(cl / np.maximum(op, 1e-10))
 
-    full_day_vol = day_5m["volume"].mean()
-    full_day_vol = full_day_vol if full_day_vol > 0 else 1.0
-
     gap_pct = (day_open - prev_close) / prev_close
     first_30min_return = (cl[-1] - day_open) / day_open
     early_realized_vol = float(np.nanstd(bar_ret) * np.sqrt(BARS_PER_DAY))
     early_range = (hi.max() - lo.min()) / day_open
-    early_volume_ratio = vol.mean() / full_day_vol
+    early_volume_ratio = vol.mean() / expected_bar_vol
     early_trend = _linear_slope(cl) / day_open
     early_momentum = (cl[-1] - cl[0]) / cl[0] if cl[0] > 0 else 0.0
     gap_direction = float(np.sign(gap_pct))
     first_bar_return = (cl[0] - op[0]) / op[0] if op[0] > 0 else 0.0
-    first_bar_volume = vol[0] / full_day_vol
+    first_bar_volume = vol[0] / expected_bar_vol
     
     # VWAP of first 6 bars
     vwap = (cl * vol).sum() / max(vol.sum(), 1.0)
@@ -447,7 +444,7 @@ def extract_day_early_features(day_5m: pd.DataFrame, prev_close: float) -> dict:
     for i in range(6):
         res[f"bar_ret_{i}"] = float(np.log(cl[i] / max(op[i], 1e-10)))
     for i in range(6):
-        res[f"bar_vol_{i}"] = float(vol[i] / full_day_vol)
+        res[f"bar_vol_{i}"] = float(vol[i] / expected_bar_vol)
     for i in range(6):
         res[f"bar_rng_{i}"] = float((hi[i] - lo[i]) / max(op[i], 1e-10))
     for i in range(6):
@@ -463,7 +460,7 @@ def extract_day_early_features(day_5m: pd.DataFrame, prev_close: float) -> dict:
     res["cl_pos_in_range"] = float((cl[-1] - lo.min()) / (hi.max() - lo.min() + 1e-8))
     res["body_to_range_ratio"] = float(abs(cl[-1] - op[0]) / (hi.max() - lo.min() + 1e-8))
     res["total_path_length"] = float(np.sum(np.abs(bar_ret)))
-    res["volume_slope"] = float(_linear_slope(vol) / full_day_vol)
+    res["volume_slope"] = float(_linear_slope(vol) / expected_bar_vol)
 
     return res
 
@@ -584,14 +581,27 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
     # ── Per-day early features + PM return ──
     df_1d_sorted = df_1d.sort_values("date").reset_index(drop=True).copy()
     df_1d_sorted["prev_close_adj"] = df_1d_sorted["close_adj"].shift(1)
+    df_1d_sorted["rolling_volume_20d"] = df_1d_sorted["volume"].rolling(20).mean()
+    df_1d_sorted["expected_daily_volume"] = df_1d_sorted["rolling_volume_20d"].shift(1)
     df_1d_sorted["date"] = pd.to_datetime(df_1d_sorted["date"])
     prev_close_map = df_1d_sorted.set_index("date")["prev_close_adj"].to_dict()
+    expected_vol_map = df_1d_sorted.set_index("date")["expected_daily_volume"].to_dict()
+
+    fallback_daily_vol = df_1d_sorted["volume"].median()
+    if pd.isna(fallback_daily_vol) or fallback_daily_vol <= 0:
+        fallback_daily_vol = 1000000.0
 
     rows = []
     for date, day_df in df_5m.groupby("date", sort=True):
         date_ts = pd.Timestamp(date)
         prev_close = prev_close_map.get(date_ts, np.nan)
-        early = extract_day_early_features(day_df, prev_close)
+        
+        expected_daily_vol = expected_vol_map.get(date_ts, np.nan)
+        if pd.isna(expected_daily_vol) or expected_daily_vol <= 0:
+            expected_daily_vol = fallback_daily_vol
+        expected_bar_vol = expected_daily_vol / 48.0
+        
+        early = extract_day_early_features(day_df, prev_close, expected_bar_vol)
         early["date"] = date_ts
         early["pm_return"] = compute_pm_return(day_df)
         
