@@ -108,7 +108,7 @@ def generate(results: dict) -> str:
     w("- **Day-level**: Technical indicators and 3rd party flows shifted by 1 day (no look-ahead).")
     w("- **Yesterday**: Shifted full-day and early-bar features from day t-1 (no look-ahead).")
     w("- **Target**: `pm_return` = sum of log returns over bars 24–47 (13:00–15:00 session).")
-    w("- **Warmup**: First 60 rows dropped (SMA50/ATR14 burn-in).\n")dropped (SMA50/ATR14 burn-in).\n")
+    w("- **Warmup**: First 60 rows dropped (SMA50/ATR14 burn-in).\n")
 
     # ── 3) Methodology ──
     w("## 3. Methodology\n")
