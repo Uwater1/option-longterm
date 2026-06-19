@@ -78,6 +78,11 @@ validate_alpha_pnl.py          # Put P&L validator vs 3 baselines (real option p
 compare_alpha_phases.py        # Cross-phase P&L comparison report
 predict_open_high.py           # Open-to-High prediction pipeline
 numba_utils.py                 # Numba BS functions & IV solver
+day-model/                     # Day-Model PM session return predictor
+├── REPORT.md                  # Comprehensive PM return prediction report
+├── build_features.py          # Early-bar + day-level feature engineering
+├── train_model.py             # Optuna-tuned linear model training & feature selection
+└── generate_report.py         # Report markdown generator
 ```
 
 > Also: `backtest/alpha_put_models.json` (Phase 1 weights+OOS), `backtest/alpha_ml_models/` (Phase 2 bags+manifests), `backtest/validate_pnl_phase{1,2,3}.json`, `backtest/alpha_phase_comparison.md`.

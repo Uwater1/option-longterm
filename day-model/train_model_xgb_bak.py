@@ -1,21 +1,29 @@
 """
-Phase 2: Train Optuna-tuned linear regression predicting PM return per ETF.
-Supports Ridge, Lasso, ElasticNet, HuberRegressor with automated feature selection.
+Phase 2: Train Optuna-tuned XGBoost regression predicting PM return per ETF.
 
 Validation: Purged TimeSeriesSplit walk-forward (gap=N between train and test).
 Optuna objective: mean Spearman rank IC across folds (robust to outliers).
-Hyperparameters and feature subsets tuned per-ETF; final OOS metrics reported on the last holdout fold
+Hyperparameters tuned per-ETF; final OOS metrics reported on the last holdout fold
 plus walk-forward aggregation.
 
+Also computes overfitting diagnostics:
+  - IS vs OOS IC gap per fold
+  - Year-by-year OOS IC
+  - Permutation importance vs gain importance
+  - Purge-gap sensitivity (gap=0 vs 5 vs 10)
+  - Optuna hyperparameter importance
+
 Outputs:
-  - models/linear_{ETF}.joblib                     (trained best linear model, full data)
-  - models/scaler_{ETF}.joblib                     (StandardScaler + features metadata)
+  - models/xgb_{ETF}.json                          (trained model, full data)
+  - models/scaler_{ETF}.joblib                     (StandardScaler)
   - data/results_{ETF}.json                        (all metrics + diagnostics)
   - data/optuna_study_{ETF}.sqlite3                (Optuna history)
   - plots/{diagnostic}_{ETF}.png
 
 Usage:
-    python train_model.py -e all                   # full run, CPU, n_trials=100
+    python train_model.py -e all --gpu             # full run with GPU, n_trials=60
+    python train_model.py -e all                   # full run, CPU, n_trials=60
+    python train_model.py -e 300 --gpu --quick     # smoke test, GPU, n_trials=20
     python train_model.py -e 300 --trials 100      # custom trials
 """
 import argparse
@@ -32,11 +40,34 @@ import matplotlib.pyplot as plt
 from scipy.stats import spearmanr
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import TimeSeriesSplit
-from sklearn.linear_model import Ridge, Lasso, ElasticNet, HuberRegressor
-from sklearn.feature_selection import RFE
+from sklearn.linear_model import Ridge
 from sklearn.inspection import permutation_importance
+import xgboost as xgb
 import optuna
 import joblib
+
+# GPU detection: try CUDA, fall back to CPU
+_USE_GPU = False
+def _detect_gpu(force: bool = False):
+    global _USE_GPU
+    try:
+        X_test = np.random.randn(10, 2)
+        y_test = np.random.randn(10)
+        dmat = xgb.DMatrix(X_test, label=y_test)
+        xgb.train({"device": "cuda", "tree_method": "hist"}, dmat, num_boost_round=1)
+        _USE_GPU = True
+        print("[GPU] CUDA device detected \u2014 using GPU acceleration")
+    except Exception as e:
+        _USE_GPU = False
+        if force:
+            raise RuntimeError(f"--gpu requested but CUDA not available: {e}")
+        print("[GPU] No CUDA device \u2014 using CPU")
+
+def _xgb_device_kwargs():
+    """Return XGBoost kwargs for current device."""
+    if _USE_GPU:
+        return {"device": "cuda", "tree_method": "hist"}
+    return {"n_jobs": -1}
 
 warnings.filterwarnings("ignore")
 optuna.logging.set_verbosity(optuna.logging.WARNING)
@@ -71,7 +102,7 @@ FEATURES = EARLY_FEATURES + DAY_FEATURES
 TARGET = "pm_return"
 
 # Defaults
-DEFAULT_TRIALS = 100
+DEFAULT_TRIALS = 60
 DEFAULT_N_SPLITS = 5
 DEFAULT_PURGE_GAP = 5
 HOLDOUT_FRACTION = 0.20   # last 20% of data is the final OOS holdout
@@ -87,6 +118,7 @@ def purged_tssplit(n: int, n_splits: int, gap: int):
     """
     tscv = TimeSeriesSplit(n_splits=n_splits)
     for train_idx, test_idx in tscv.split(np.arange(n)):
+        # Train excludes the last `gap` rows that could leak into test
         if gap > 0:
             train_end = train_idx[-1] - gap
             if train_end < 1:
@@ -139,46 +171,31 @@ def long_short_sharpe(returns: np.ndarray, preds: np.ndarray, n_quant: int = 5) 
 # Optuna objective
 # ============================================================
 def make_objective(X, y, n_splits, gap):
+    dev_kwargs = _xgb_device_kwargs()
     def objective(trial: optuna.Trial) -> float:
-        model_type = trial.suggest_categorical("model_type", ["ridge", "lasso", "elasticnet", "huber"])
-        n_features = trial.suggest_int("n_features", 5, len(FEATURES))
-
-        if model_type == "ridge":
-            alpha = trial.suggest_float("ridge_alpha", 1e-3, 1e4, log=True)
-            model = Ridge(alpha=alpha, random_state=42)
-        elif model_type == "lasso":
-            alpha = trial.suggest_float("lasso_alpha", 1e-5, 10.0, log=True)
-            model = Lasso(alpha=alpha, random_state=42, max_iter=5000)
-        elif model_type == "elasticnet":
-            alpha = trial.suggest_float("en_alpha", 1e-5, 10.0, log=True)
-            l1_ratio = trial.suggest_float("en_l1_ratio", 0.0, 1.0)
-            model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, random_state=42, max_iter=5000)
-        elif model_type == "huber":
-            alpha = trial.suggest_float("huber_alpha", 1e-4, 1e4, log=True)
-            epsilon = trial.suggest_float("huber_epsilon", 1.0, 2.0)
-            model = HuberRegressor(alpha=alpha, epsilon=epsilon, max_iter=2000)
-
+        params = {
+            "n_estimators": trial.suggest_int("n_estimators", 100, 500, step=50),
+            "max_depth": trial.suggest_int("max_depth", 3, 7),
+            "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.1, log=True),
+            "subsample": trial.suggest_float("subsample", 0.6, 1.0),
+            "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 1.0),
+            "min_child_weight": trial.suggest_int("min_child_weight", 1, 10),
+            "gamma": trial.suggest_float("gamma", 0.0, 2.0),
+            "reg_alpha": trial.suggest_float("reg_alpha", 1e-3, 1.0, log=True),
+            "reg_lambda": trial.suggest_float("reg_lambda", 1.0, 10.0, log=True),
+        }
         ics = []
         for train_idx, test_idx in purged_tssplit(len(y), n_splits, gap):
-            # Scale train features
             scaler = StandardScaler().fit(X[train_idx])
-            Xtr_s = scaler.transform(X[train_idx])
-            Xte_s = scaler.transform(X[test_idx])
-
-            # Feature selection via RFE on training data
-            if n_features < len(FEATURES):
-                # Using Ridge as a fast, stable feature selector estimator
-                selector = RFE(estimator=Ridge(alpha=1.0, random_state=42), n_features_to_select=n_features)
-                Xtr_sel = selector.fit_transform(Xtr_s, y[train_idx])
-                Xte_sel = selector.transform(Xte_s)
-            else:
-                Xtr_sel = Xtr_s
-                Xte_sel = Xte_s
-
-            model.fit(Xtr_sel, y[train_idx])
-            preds = model.predict(Xte_sel)
+            Xtr = scaler.transform(X[train_idx])
+            Xte = scaler.transform(X[test_idx])
+            model = xgb.XGBRegressor(
+                **params, objective="reg:squarederror",
+                random_state=42, verbosity=0, **dev_kwargs,
+            )
+            model.fit(Xtr, y[train_idx])
+            preds = model.predict(Xte)
             ics.append(spearman_ic(y[test_idx], preds))
-
         return float(np.mean(ics)) if ics else -1.0
     return objective
 
@@ -187,6 +204,7 @@ def make_objective(X, y, n_splits, gap):
 # Train + evaluate one ETF
 # ============================================================
 def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
+    dev_kwargs = _xgb_device_kwargs()
     t0 = time.time()
     feat_path = DATA_DIR / f"features_{etf_name}.parquet"
     if not feat_path.exists():
@@ -196,7 +214,8 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
     feat = pd.read_parquet(feat_path).sort_index()
     feat = feat.dropna(subset=FEATURES + [TARGET]).copy()
     X = feat[FEATURES].values
-    # Scale target by 100 (PM return → % form)
+    # Scale target by 100 (PM return → % form) so hyperparameters like gamma
+    # behave naturally. IC and direction accuracy are scale-invariant.
     Y_SCALE = 100.0
     y_raw = feat[TARGET].values
     y = y_raw * Y_SCALE
@@ -222,7 +241,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
         study_path.unlink()
     storage = f"sqlite:///{study_path}"
     study = optuna.create_study(
-        study_name=f"linear_{etf_name}", direction="maximize",
+        study_name=f"xgb_{etf_name}", direction="maximize",
         storage=storage, load_if_exists=False,
         sampler=optuna.samplers.TPESampler(seed=42),
         pruner=optuna.pruners.MedianPruner(n_warmup_steps=10),
@@ -238,36 +257,18 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
     scaler = StandardScaler().fit(X_dev)
     X_dev_s = scaler.transform(X_dev)
     X_ho_s = scaler.transform(X_ho)
+    final_model = xgb.XGBRegressor(
+        **best_params, objective="reg:squarederror",
+        random_state=42, verbosity=0, **dev_kwargs,
+    )
+    final_model.fit(X_dev_s, y_dev)
+    preds_ho = final_model.predict(X_ho_s)
 
-    # Feature selection via RFE on full dev dataset
-    n_features = best_params["n_features"]
-    if n_features < len(FEATURES):
-        selector = RFE(estimator=Ridge(alpha=1.0, random_state=42), n_features_to_select=n_features)
-        X_dev_sel = selector.fit_transform(X_dev_s, y_dev)
-        X_ho_sel = selector.transform(X_ho_s)
-        selected_features = [FEATURES[i] for i in range(len(FEATURES)) if selector.support_[i]]
-    else:
-        X_dev_sel = X_dev_s
-        X_ho_sel = X_ho_s
-        selected_features = FEATURES.copy()
-
-    # Re-create final model with best parameters
-    model_type = best_params["model_type"]
-    if model_type == "ridge":
-        final_model = Ridge(alpha=best_params["ridge_alpha"], random_state=42)
-    elif model_type == "lasso":
-        final_model = Lasso(alpha=best_params["lasso_alpha"], random_state=42, max_iter=5000)
-    elif model_type == "elasticnet":
-        final_model = ElasticNet(alpha=best_params["en_alpha"], l1_ratio=best_params["en_l1_ratio"], random_state=42, max_iter=5000)
-    elif model_type == "huber":
-        final_model = HuberRegressor(alpha=best_params["huber_alpha"], epsilon=best_params["huber_epsilon"], max_iter=2000)
-
-    final_model.fit(X_dev_sel, y_dev)
-    preds_ho = final_model.predict(X_ho_sel)
-    preds_is = final_model.predict(X_dev_sel)
+    # IS fit (train) predictions for overfitting diagnostic
+    preds_is = final_model.predict(X_dev_s)
 
     # ── 4) Metrics ──
-    # Undo target scaling
+    # NOTE: y was scaled x100 for training; undo for reporting RMSE in original units.
     preds_ho_raw = preds_ho / Y_SCALE
     preds_is_raw = preds_is / Y_SCALE
     y_ho_raw = y_ho / Y_SCALE
@@ -291,29 +292,15 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
     wf_oos_ic_per_fold = []
     for train_idx, test_idx in purged_tssplit(n, n_splits, gap):
         sc = StandardScaler().fit(X[train_idx])
-        Xtr_s = sc.transform(X[train_idx])
-        Xte_s = sc.transform(X[test_idx])
-
-        if n_features < len(FEATURES):
-            sel = RFE(estimator=Ridge(alpha=1.0, random_state=42), n_features_to_select=n_features)
-            Xtr_sel = sel.fit_transform(Xtr_s, y[train_idx])
-            Xte_sel = sel.transform(Xte_s)
-        else:
-            Xtr_sel = Xtr_s
-            Xte_sel = Xte_s
-
-        if model_type == "ridge":
-            m = Ridge(alpha=best_params["ridge_alpha"], random_state=42)
-        elif model_type == "lasso":
-            m = Lasso(alpha=best_params["lasso_alpha"], random_state=42, max_iter=5000)
-        elif model_type == "elasticnet":
-            m = ElasticNet(alpha=best_params["en_alpha"], l1_ratio=best_params["en_l1_ratio"], random_state=42, max_iter=5000)
-        elif model_type == "huber":
-            m = HuberRegressor(alpha=best_params["huber_alpha"], epsilon=best_params["huber_epsilon"], max_iter=2000)
-
-        m.fit(Xtr_sel, y[train_idx])
-        wf_preds[test_idx] = m.predict(Xte_sel) / Y_SCALE
-        wf_is_ic_per_fold.append(spearman_ic(y[train_idx] / Y_SCALE, m.predict(Xtr_sel) / Y_SCALE))
+        Xtr = sc.transform(X[train_idx])
+        Xte = sc.transform(X[test_idx])
+        m = xgb.XGBRegressor(
+            **best_params, objective="reg:squarederror",
+            random_state=42, verbosity=0, **dev_kwargs,
+        )
+        m.fit(Xtr, y[train_idx])
+        wf_preds[test_idx] = m.predict(Xte) / Y_SCALE
+        wf_is_ic_per_fold.append(spearman_ic(y[train_idx] / Y_SCALE, m.predict(Xtr) / Y_SCALE))
         wf_oos_ic_per_fold.append(spearman_ic(y[test_idx] / Y_SCALE, wf_preds[test_idx]))
 
     wf_valid = ~np.isnan(wf_preds)
@@ -334,12 +321,12 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
 
     # ── 7) Baselines (on holdout, unscaled units) ──
     baselines = {}
-    # B1: predict 0
+    # B1: predict 0 (no-skill)
     baselines["zero"] = {
         "ic": 0.0, "dir": 0.5,
         "rmse": float(np.sqrt(np.mean(y_ho_raw ** 2))),
     }
-    # B2: yesterday's PM return
+    # B2: yesterday's PM return (autocorrelation baseline)
     full_y_raw = pd.Series(y_raw, index=dates)
     ylag = full_y_raw.shift(1).reindex(dates_ho).values
     valid_lag = ~np.isnan(ylag)
@@ -348,41 +335,37 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
         "dir": direction_accuracy(y_ho_raw[valid_lag], ylag[valid_lag]) if valid_lag.sum() > 5 else 0.5,
         "rmse": float(np.sqrt(np.mean((y_ho_raw[valid_lag] - ylag[valid_lag]) ** 2))) if valid_lag.sum() > 5 else 0.0,
     }
-    # B3: first_30min_return
+    # B3: first_30min_return as prediction (momentum baseline)
     col = FEATURES.index("first_30min_return")
     baselines["first_30min_mom"] = {
         "ic": spearman_ic(y_ho_raw, X_ho[:, col]),
         "dir": direction_accuracy(y_ho_raw, X_ho[:, col]),
         "rmse": float(np.sqrt(np.mean((y_ho_raw - X_ho[:, col]) ** 2))),
     }
-    # B4: Baseline Ridge regression (alpha=1.0) on all features
-    ridge_base = Ridge(alpha=1.0, random_state=42)
-    ridge_base.fit(X_dev_s, y_dev)
-    ridge_base_ho = ridge_base.predict(X_ho_s) / Y_SCALE
+    # B4: Ridge regression on same features (controls for XGBoost-specific overfitting)
+    ridge = Ridge(alpha=1.0, random_state=42)
+    ridge.fit(X_dev_s, y_dev)
+    ridge_ho = ridge.predict(X_ho_s) / Y_SCALE
     baselines["ridge"] = {
-        "ic": spearman_ic(y_ho_raw, ridge_base_ho),
-        "dir": direction_accuracy(y_ho_raw, ridge_base_ho),
-        "rmse": float(np.sqrt(np.mean((y_ho_raw - ridge_base_ho) ** 2))),
-        "ls_sharpe": long_short_sharpe(y_ho_raw, ridge_base_ho)["ls_sharpe"],
+        "ic": spearman_ic(y_ho_raw, ridge_ho),
+        "dir": direction_accuracy(y_ho_raw, ridge_ho),
+        "rmse": float(np.sqrt(np.mean((y_ho_raw - ridge_ho) ** 2))),
+        "ls_sharpe": long_short_sharpe(y_ho_raw, ridge_ho)["ls_sharpe"],
     }
 
-    # ── 8) Feature Coefficients & Permutation Importance ──
-    coefs = np.zeros(len(FEATURES))
-    if n_features < len(FEATURES):
-        support_indices = np.where(selector.support_)[0]
-        coefs[support_indices] = final_model.coef_
-    else:
-        coefs = final_model.coef_
-    coef_imp = dict(zip(FEATURES, coefs.tolist()))
+    print(f"  Baselines: zero={baselines['zero']['ic']:.3f}  "
+          f"yesterday={baselines['yesterday_pm']['ic']:.3f}  "
+          f"first_30m={baselines['first_30min_mom']['ic']:.3f}  "
+          f"ridge={baselines['ridge']['ic']:.3f}")
 
-    # Permutation importance on holdout
+    # ── 8) Feature importances ──
+    gain_imp = dict(zip(FEATURES, final_model.feature_importances_.tolist()))
+    # Permutation importance on holdout (XGBoost expects scaled y for loss)
     perm = permutation_importance(
-        final_model, X_ho_sel, y_ho, n_repeats=10, random_state=42,
+        final_model, X_ho_s, y_ho, n_repeats=10, random_state=42,
         scoring="neg_mean_squared_error", n_jobs=-1,
     )
-    perm_imp_sel = dict(zip(selected_features, perm.importances_mean.tolist()))
-    # Map back to all features with 0.0 for pruned ones
-    perm_imp = {feat: perm_imp_sel.get(feat, 0.0) for feat in FEATURES}
+    perm_imp = dict(zip(FEATURES, perm.importances_mean.tolist()))
 
     # ── 9) Purge-gap sensitivity ──
     purge_sens = {}
@@ -390,28 +373,14 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
         ics_g = []
         for train_idx, test_idx in purged_tssplit(n, n_splits, g):
             sc = StandardScaler().fit(X[train_idx])
-            Xtr_s = sc.transform(X[train_idx])
-            Xte_s = sc.transform(X[test_idx])
-
-            if n_features < len(FEATURES):
-                sel = RFE(estimator=Ridge(alpha=1.0, random_state=42), n_features_to_select=n_features)
-                Xtr_sel = sel.fit_transform(Xtr_s, y[train_idx])
-                Xte_sel = sel.transform(Xte_s)
-            else:
-                Xtr_sel = Xtr_s
-                Xte_sel = Xte_s
-
-            if model_type == "ridge":
-                m = Ridge(alpha=best_params["ridge_alpha"], random_state=42)
-            elif model_type == "lasso":
-                m = Lasso(alpha=best_params["lasso_alpha"], random_state=42, max_iter=5000)
-            elif model_type == "elasticnet":
-                m = ElasticNet(alpha=best_params["en_alpha"], l1_ratio=best_params["en_l1_ratio"], random_state=42, max_iter=5000)
-            elif model_type == "huber":
-                m = HuberRegressor(alpha=best_params["huber_alpha"], epsilon=best_params["huber_epsilon"], max_iter=2000)
-
-            m.fit(Xtr_sel, y[train_idx])
-            preds = m.predict(Xte_sel) / Y_SCALE
+            Xtr = sc.transform(X[train_idx])
+            Xte = sc.transform(X[test_idx])
+            m = xgb.XGBRegressor(
+                **best_params, objective="reg:squarederror",
+                random_state=42, verbosity=0, **dev_kwargs,
+            )
+            m.fit(Xtr, y[train_idx])
+            preds = m.predict(Xte) / Y_SCALE
             ics_g.append(spearman_ic(y_raw[test_idx], preds))
         purge_sens[g] = {"mean_ic": float(np.mean(ics_g)) if ics_g else 0.0,
                          "n_folds": len(ics_g)}
@@ -424,13 +393,9 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
         optuna_param_imp = {}
 
     # ── 11) Save model + scaler ──
-    joblib.dump(final_model, MODELS_DIR / f"linear_{etf_name}.joblib")
-    joblib.dump({"scaler": scaler,
-                 "features": FEATURES,
-                 "selected_features": selected_features,
-                 "best_params": best_params,
-                 "best_model_type": model_type,
-                 "holdout_ic": holdout_ic,
+    final_model.save_model(str(MODELS_DIR / f"xgb_{etf_name}.json"))
+    joblib.dump({"scaler": scaler, "features": FEATURES,
+                 "best_params": best_params, "holdout_ic": holdout_ic,
                  "train_end_date": str(dates_dev[-1].date()),
                  "holdout_start_date": str(dates_ho[0].date()),
                  "y_scale": Y_SCALE},
@@ -438,7 +403,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
 
     # ── 12) Plots ──
     _plot_diagnostics(etf_name, dates_ho, y_ho_raw, preds_ho_raw,
-                      wf_df, coef_imp, perm_imp, optuna_param_imp,
+                      wf_df, gain_imp, perm_imp, optuna_param_imp,
                       purge_sens, yearly_ic, study)
 
     elapsed = time.time() - t0
@@ -448,8 +413,6 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
         "etf": etf_name,
         "n_samples": int(n),
         "n_features": len(FEATURES),
-        "selected_features": selected_features,
-        "n_selected_features": len(selected_features),
         "date_range": [str(dates[0].date()), str(dates[-1].date())],
         "holdout_n": int(len(X_ho)),
         "holdout_range": [str(dates_ho[0].date()), str(dates_ho[-1].date())],
@@ -465,7 +428,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
         "walk_forward_oos_ic_per_fold": wf_oos_ic_per_fold,
         "yearly_ic": yearly_ic,
         "baselines": baselines,
-        "coefficient_importance": coef_imp,
+        "gain_importance": gain_imp,
         "permutation_importance": perm_imp,
         "purge_sensitivity": purge_sens,
         "optuna_param_importance": optuna_param_imp,
@@ -483,7 +446,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
 # Plots
 # ============================================================
 def _plot_diagnostics(etf, dates_ho, y_ho, preds_ho, wf_df,
-                      coef_imp, perm_imp, optuna_imp, purge_sens,
+                      gain_imp, perm_imp, optuna_imp, purge_sens,
                       yearly_ic, study):
     # 1) Predicted vs Actual scatter on holdout
     fig, axes = plt.subplots(1, 2, figsize=(13, 5))
@@ -505,6 +468,7 @@ def _plot_diagnostics(etf, dates_ho, y_ho, preds_ho, wf_df,
     if valid.sum() > 50:
         idx_top = np.where((q == q[valid].max()) & valid)[0]
         idx_bot = np.where((q == q[valid].min()) & valid)[0]
+        # Daily L/S PnL: long top, short bottom (position-size=1 unit each side)
         ls = np.zeros(len(y_ho))
         ls[idx_top] = y_ho[idx_top]
         ls[idx_bot] = -y_ho[idx_bot]
@@ -522,6 +486,7 @@ def _plot_diagnostics(etf, dates_ho, y_ho, preds_ho, wf_df,
     fig, ax = plt.subplots(figsize=(12, 4))
     wf_v = wf_df.dropna(subset=["pred"]).copy()
     if len(wf_v) > 90:
+        # Manual rolling Spearman IC over a 90-day window
         y_arr = wf_v["y"].values
         p_arr = wf_v["pred"].values
         dates_arr = wf_v["date"].values
@@ -543,10 +508,10 @@ def _plot_diagnostics(etf, dates_ho, y_ho, preds_ho, wf_df,
     plt.savefig(PLOTS_DIR / f"ic_timeseries_{etf}.png", dpi=110)
     plt.close()
 
-    # 4) Feature importance: coefficients vs permutation (side by side)
+    # 4) Feature importance: gain vs permutation (side by side)
     fig, axes = plt.subplots(1, 2, figsize=(13, 6))
     for ax, imp, title in [
-        (axes[0], coef_imp, "Standardized Coefficient"),
+        (axes[0], gain_imp, "Gain Importance"),
         (axes[1], perm_imp, "Permutation Importance (OOS)"),
     ]:
         s = pd.Series(imp).sort_values()
@@ -584,7 +549,7 @@ def _plot_diagnostics(etf, dates_ho, y_ho, preds_ho, wf_df,
     plt.savefig(PLOTS_DIR / f"purge_sensitivity_{etf}.png", dpi=110)
     plt.close()
 
-    # 7) Optuna param importance
+    # 7) Optuna param importance (if any)
     if optuna_imp:
         fig, ax = plt.subplots(figsize=(8, 5))
         s = pd.Series(optuna_imp).sort_values()
@@ -603,8 +568,10 @@ def main():
     ap.add_argument("--quick", action="store_true", help="smoke test (20 trials)")
     ap.add_argument("--splits", type=int, default=DEFAULT_N_SPLITS)
     ap.add_argument("--gap", type=int, default=DEFAULT_PURGE_GAP)
-    ap.add_argument("--gpu", action="store_true", help="ignored, kept for compatibility")
+    ap.add_argument("--gpu", action="store_true", help="use CUDA GPU for XGBoost")
     args = ap.parse_args()
+
+    _detect_gpu(force=args.gpu)  # auto-detect CUDA; --gpu forces error if missing
 
     if args.quick:
         args.trials = min(args.trials, 20)
@@ -615,7 +582,7 @@ def main():
     else:
         etfs = [ETF_CLI_MAP.get(etf_arg, etf_arg)]
 
-    print(f"Training Linear day-models for: {etfs}")
+    print(f"Training XGBoost day-models for: {etfs}")
     print(f"  trials={args.trials}  splits={args.splits}  purge_gap={args.gap}  "
           f"holdout_frac={HOLDOUT_FRACTION}")
 
@@ -633,16 +600,17 @@ def main():
             import traceback; traceback.print_exc()
 
     # Summary
-    print("\n" + "=" * 80)
-    print(f"{'ETF':<10} {'Model Type':<12} {'Features':<8} {'Holdout IC':>10} {'Holdout Dir':>12} {'L/S Sharpe':>12} {'Ridge IC':>10}")
-    print("-" * 80)
+    print("\n" + "=" * 70)
+    print(f"{'ETF':<10} {'Holdout IC':>12} {'Holdout Dir':>12} {'L/S Sharpe':>12} "
+          f"{'Ridge IC':>10} {'Gap IS-OOS':>12}")
+    print("-" * 70)
     for etf, r in all_results.items():
-        best_model = r["best_params"]["model_type"]
-        n_sel_feats = r["n_selected_features"]
+        gap = r["is_ic"] - r["holdout_ic"]
         ridge_ic = r["baselines"]["ridge"]["ic"]
-        print(f"{etf:<10} {best_model:<12} {n_sel_feats:<8d} {r['holdout_ic']:>10.4f} {r['holdout_dir_acc']:>12.3f} "
-              f"{r['holdout_long_short']['ls_sharpe']:>12.2f} {ridge_ic:>10.4f}")
-    print("=" * 80)
+        print(f"{etf:<10} {r['holdout_ic']:>12.4f} {r['holdout_dir_acc']:>12.3f} "
+              f"{r['holdout_long_short']['ls_sharpe']:>12.2f} {ridge_ic:>10.4f} "
+              f"{gap:>+12.4f}")
+    print("=" * 70)
 
     # Save combined results
     with open(DATA_DIR / "results_all.json", "w") as f:
