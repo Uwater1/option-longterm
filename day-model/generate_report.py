@@ -11,6 +11,7 @@ Usage:
 import argparse
 import json
 from pathlib import Path
+import sys
 
 import numpy as np
 import pandas as pd
@@ -22,6 +23,10 @@ PLOTS_DIR = HERE / "plots"
 REPORT_PATH = HERE / "REPORT.md"
 
 ETF_ORDER = ["300ETF", "50ETF", "500ETF", "588000ETF", "159915ETF"]
+
+# Import features list
+sys.path.append(str(HERE))
+from build_features import EARLY_FEATURES, DAY_FEATURES, YESTERDAY_FEATURES, FEATURES
 
 
 def load_results(path: Path) -> dict:
@@ -65,23 +70,25 @@ def generate(results: dict) -> str:
     # ── 1) Executive Summary ──
     w("## 1. Executive Summary\n")
     w("Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting PM session return (13:00–15:00) "
-      "from early-bar features (first 30 min) + prior-day technical indicators, with feature pruning via Recursive Feature Elimination (RFE).\n")
+      "from early-bar features (first 30 min) + prior-day technical indicators. Features are robustly selected using Lasso-based Block Bootstrap Stability Selection "
+      "(block length 20 days), with the stability selection threshold tuned as a walk-forward CV hyperparameter.\n")
     w("**Validation**: Purged walk-forward TimeSeriesSplit (gap=5 days, 5 folds). "
       "Optuna TPE hyperparameter search (100 trials). 20% holdout never used in tuning.\n")
 
     # Summary table
-    w("\n| ETF | Model | Features | Samples | Holdout IC | Holdout Dir | L/S Sharpe | Ridge Base IC | IS-OOS Gap |")
-    w("|-----|-------|----------|---------|-----------|-------------|-----------|---------------|------------|")
+    w("\n| ETF | Model | Threshold | Features | Samples | Holdout IC | Holdout Dir | L/S Sharpe | Ridge Base IC | IS-OOS Gap |")
+    w("|-----|-------|-----------|----------|---------|-----------|-------------|-----------|---------------|------------|")
     for etf in ETF_ORDER:
         r = results.get(etf)
         if not r:
-            w(f"| {etf} | — | — | — | *not trained* | | | | |")
+            w(f"| {etf} | — | — | — | — | *not trained* | | | | |")
             continue
         gap_val = r["is_ic"] - r["holdout_ic"]
         best_model = r["best_params"]["model_type"].upper()
+        threshold = r["best_params"]["stability_threshold"]
         n_feats = r["n_selected_features"]
         ridge_ic = r["baselines"]["ridge"]["ic"]
-        w(f"| {etf} | {best_model} | {n_feats}/21 | {r['n_samples']} | {fmt_ic(r['holdout_ic'])} "
+        w(f"| {etf} | {best_model} | {threshold:.2f} | {n_feats}/{r['n_features']} | {r['n_samples']} | {fmt_ic(r['holdout_ic'])} "
           f"| {r['holdout_dir_acc']:.3f} "
           f"| {fmt_sharpe(r['holdout_long_short']['ls_sharpe'])} "
           f"| {fmt_ic(ridge_ic)} "
@@ -93,33 +100,34 @@ def generate(results: dict) -> str:
     w("### Feature Groups\n")
     w("| Group | Count | Features |")
     w("|-------|-------|----------|")
-    w("| Early-bar (13) | 13 | gap_pct, first_30min_return, early_realized_vol, early_range, "
-      "early_volume_ratio, early_trend, early_momentum, gap_direction, "
-      "first_bar_return, first_bar_volume, early_vwap_dev, early_skew, early_kurtosis |")
-    w("| Day-level (8) | 8 | rsi14, macd_hist, sma20_dist, sma50_dist, "
-      "atr14_norm, roc10, bb_pctb, vol20 |")
+    w(f"| Early-bar ({len(EARLY_FEATURES)}) | {len(EARLY_FEATURES)} | {', '.join(EARLY_FEATURES[:15])}... and {len(EARLY_FEATURES) - 15} more (total {len(EARLY_FEATURES)}) |")
+    w(f"| Day-level ({len(DAY_FEATURES)}) | {len(DAY_FEATURES)} | {', '.join(DAY_FEATURES[:15])}... and {len(DAY_FEATURES) - 15} more (total {len(DAY_FEATURES)}) |")
+    w(f"| Yesterday ({len(YESTERDAY_FEATURES)}) | {len(YESTERDAY_FEATURES)} | {', '.join(YESTERDAY_FEATURES[:15])}... and {len(YESTERDAY_FEATURES) - 15} more (total {len(YESTERDAY_FEATURES)}) |")
     w("")
-    w("- **Early-bar**: First 6 five-minute bars (9:30–10:00). All computable by 10:00 AM.")
-    w("- **Day-level**: Computed on `close_adj` shifted by 1 day (no look-ahead).")
+    w("- **Early-bar**: First 6 five-minute bars (9:30–10:00) plus price action features. All computable by 10:00 AM.")
+    w("- **Day-level**: Technical indicators and 3rd party flows shifted by 1 day (no look-ahead).")
+    w("- **Yesterday**: Shifted full-day and early-bar features from day t-1 (no look-ahead).")
     w("- **Target**: `pm_return` = sum of log returns over bars 24–47 (13:00–15:00 session).")
-    w("- **Warmup**: First 60 rows dropped (SMA50/ATR14 burn-in).\n")
+    w("- **Warmup**: First 60 rows dropped (SMA50/ATR14 burn-in).\n")dropped (SMA50/ATR14 burn-in).\n")
 
     # ── 3) Methodology ──
     w("## 3. Methodology\n")
     w("### Purged Walk-Forward Validation & Feature Selection\n")
-    w("- **TimeSeriesSplit** (5 folds, expanding window)")
-    w("- **Purge gap**: 5 trading days between train and test (no short-term leakage)")
-    w("- **Feature Selection**: Recursive Feature Elimination (RFE) using standard Ridge estimator, selecting $N$ features where $5 \\le N \\le 21$ (tuned via Optuna)")
-    w("- **Optuna objective**: mean Spearman rank IC across folds")
-    w("- **n_trials**: 100\n")
+    w("- **TimeSeriesSplit**: 5 folds expanding window.")
+    w("- **Purge gap**: 5 trading days between train and test.")
+    w("- **Stability Selection**: 50 block bootstrap trials (block length 20 days) using `LassoCV` as the base selector. Stability scores computed on the dev set.\n")
+    w("- **Tuning**: The stability selection threshold is searched via Optuna in walk-forward CV over $[0.40, 0.90]$ to find the globally most robust subset.\n")
+    w("- **Optuna objective**: mean Spearman rank IC across folds (100 trials)\n")
+
     w("### Search Space\n")
-    w("| Model | Parameters | Range |")
-    w("|-------|------------|-------|")
-    w("| **All** | n_features | 5–21 |")
-    w("| **Ridge** | alpha | $10^{-3}$–$10^4$ (log) |")
-    w("| **Lasso** | alpha | $10^{-5}$–$10^1$ (log) |")
-    w("| **ElasticNet** | alpha, l1_ratio | alpha: $10^{-5}$–$10^1$ (log), l1_ratio: 0.0–1.0 |")
-    w("| **HuberRegressor**| alpha, epsilon | alpha: $10^{-4}$–$10^4$ (log), epsilon: 1.0–2.0 |")
+    w("| Parameter | Range / Options |")
+    w("|-----------|-----------------|")
+    w("| model_type | ridge, lasso, elasticnet, huber |")
+    w("| stability_threshold | 0.40–0.90 (step 0.05) |")
+    w("| **Ridge** alpha | $10^{-3}$–$10^4$ (log) |")
+    w("| **Lasso** alpha | $10^{-5}$–$1.0$ (log) |")
+    w("| **ElasticNet** alpha, l1_ratio | alpha: $10^{-5}$–$1.0$ (log), l1_ratio: 0.0–1.0 |")
+    w("| **HuberRegressor** alpha, epsilon | alpha: $10^{-4}$–$10^4$ (log), epsilon: 1.0–2.0 |")
     w("")
 
     # ── 4) Results per ETF ──
@@ -132,12 +140,25 @@ def generate(results: dict) -> str:
 
         w(f"### {etf}\n")
         w(f"- **Selected Model**: {r['best_params']['model_type'].upper()}")
+        w(f"- **Tuned Stability Threshold**: {r['best_params']['stability_threshold']:.2f}")
         w(f"- **Samples**: {r['n_samples']} ({r['date_range'][0]} → {r['date_range'][1]})")
         w(f"- **Holdout**: {r['holdout_n']} days ({r['holdout_range'][0]} → {r['holdout_range'][1]})")
         w(f"- **Target stats**: mean={r['target_stats']['mean_pct']:.4f}%, "
           f"std={r['target_stats']['std_pct']:.4f}%, "
           f"Sharpe={r['target_stats']['sharpe_ann']:.2f}")
         w(f"- **Selected features ({r['n_selected_features']})**: `{', '.join(r['selected_features'])}`\n")
+
+        # Feature Stability Scores Table
+        w("#### Feature Stability Scores (Block Bootstrap)\n")
+        w("| Feature | Stability Score | Status |")
+        w("|---------|-----------------|--------|")
+        # Sort stability scores descending
+        sorted_scores = sorted(r["stability_scores"].items(), key=lambda x: x[1], reverse=True)
+        threshold = r['best_params']['stability_threshold']
+        for feat, score in sorted_scores:
+            status = "**Selected**" if score >= threshold or feat in r['selected_features'] else "Pruned"
+            w(f"| {feat} | {score:.1%} | {status} |")
+        w("")
 
         # Metrics table
         w("#### Metrics\n")
@@ -266,7 +287,6 @@ def generate(results: dict) -> str:
         w(f"\n**{etf}**:\n")
         w("| Rank | Standardized Coefficient (Abs) | Permutation Importance |")
         w("|------|--------------------------------|----------------------|")
-        # Align index
         for rank, ((gf, gv), (pf, pv)) in enumerate(zip(gi.items(), pi.items()), 1):
             w(f"| {rank} | {gf} ({r['coefficient_importance'][gf]:+.4f}) | {pf} ({pv:+.6f}) |")
     w("")
@@ -314,7 +334,7 @@ def generate(results: dict) -> str:
 
     w("\n**Key caveats**:\n")
     w("1. PM return prediction is inherently noisy (low signal-to-noise ratio)")
-    w("2. Feature selection helps reduce variance, but coefficients can be unstable across regimes")
+    w("2. Feature selection using block bootstrap stability scores handles highly correlated features much better than greedy RFE")
     w("3. HuberRegressor handles extreme outlier days much better than standard MSE-based models")
     w("4. Transaction costs and execution slippage are not modeled here")
     w("")
@@ -341,7 +361,7 @@ def main():
     for etf in ETF_ORDER:
         r = results.get(etf)
         if r:
-            print(f"  {etf} ({r['best_params']['model_type'].upper()}, {r['n_selected_features']} feats): IC={r['holdout_ic']:+.4f}  "
+            print(f"  {etf} ({r['best_params']['model_type'].upper()}, threshold={r['best_params']['stability_threshold']:.2f}, {r['n_selected_features']} feats): IC={r['holdout_ic']:+.4f}  "
                   f"Dir={r['holdout_dir_acc']:.3f}  "
                   f"L/S={r['holdout_long_short']['ls_sharpe']:+.2f}")
 

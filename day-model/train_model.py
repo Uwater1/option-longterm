@@ -1,11 +1,11 @@
 """
 Phase 2: Train Optuna-tuned linear regression predicting PM return per ETF.
-Supports Ridge, Lasso, ElasticNet, HuberRegressor with automated feature selection.
+Supports Ridge, Lasso, ElasticNet, HuberRegressor.
+Uses Lasso-based Block Bootstrap Stability Selection to select robust feature subsets,
+and tunes the selection threshold as a walk-forward CV hyperparameter.
 
 Validation: Purged TimeSeriesSplit walk-forward (gap=N between train and test).
 Optuna objective: mean Spearman rank IC across folds (robust to outliers).
-Hyperparameters and feature subsets tuned per-ETF; final OOS metrics reported on the last holdout fold
-plus walk-forward aggregation.
 
 Outputs:
   - models/linear_{ETF}.joblib                     (trained best linear model, full data)
@@ -32,11 +32,11 @@ import matplotlib.pyplot as plt
 from scipy.stats import spearmanr
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import TimeSeriesSplit
-from sklearn.linear_model import Ridge, Lasso, ElasticNet, HuberRegressor
-from sklearn.feature_selection import RFE
+from sklearn.linear_model import Ridge, Lasso, ElasticNet, HuberRegressor, LassoCV
 from sklearn.inspection import permutation_importance
 import optuna
 import joblib
+from joblib import Parallel, delayed
 
 warnings.filterwarnings("ignore")
 optuna.logging.set_verbosity(optuna.logging.WARNING)
@@ -56,18 +56,10 @@ PLOTS_DIR = HERE / "plots"
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Feature columns (must match build_features.py output)
-EARLY_FEATURES = [
-    "gap_pct", "first_30min_return", "early_realized_vol", "early_range",
-    "early_volume_ratio", "early_trend", "early_momentum", "gap_direction",
-    "first_bar_return", "first_bar_volume", "early_vwap_dev",
-    "early_skew", "early_kurtosis",
-]
-DAY_FEATURES = [
-    "rsi14", "macd_hist", "sma20_dist", "sma50_dist",
-    "atr14_norm", "roc10", "bb_pctb", "vol20",
-]
-FEATURES = EARLY_FEATURES + DAY_FEATURES
+# Feature columns (imported from build_features.py)
+import sys
+sys.path.append(str(Path(__file__).resolve().parent))
+from build_features import EARLY_FEATURES, DAY_FEATURES, YESTERDAY_FEATURES, FEATURES
 TARGET = "pm_return"
 
 # Defaults
@@ -75,6 +67,8 @@ DEFAULT_TRIALS = 100
 DEFAULT_N_SPLITS = 5
 DEFAULT_PURGE_GAP = 5
 HOLDOUT_FRACTION = 0.20   # last 20% of data is the final OOS holdout
+BLOCK_SIZE = 20           # Block bootstrap contiguous length (approx 1 calendar month)
+N_BOOTSTRAPS = 50         # Number of bootstrap trials for stability selection
 
 
 # ============================================================
@@ -125,7 +119,6 @@ def long_short_sharpe(returns: np.ndarray, preds: np.ndarray, n_quant: int = 5) 
     r = returns[valid]
     top = r[q == q.max()]
     bot = r[q == q.min()]
-    # Long top quintile + short bottom quintile
     ls = np.concatenate([top, -bot])
     return {
         "ls_mean": float(ls.mean()),
@@ -136,21 +129,78 @@ def long_short_sharpe(returns: np.ndarray, preds: np.ndarray, n_quant: int = 5) 
 
 
 # ============================================================
+# Lasso-based Block Bootstrap Stability Selection
+# ============================================================
+def _run_bootstrap_trial(X, y, block_size, random_seed):
+    N, D = X.shape
+    n_blocks = int(np.ceil(N / block_size))
+    
+    # Use a localized RNG to preserve cross-process independence
+    rng = np.random.default_rng(random_seed)
+    start_indices = rng.integers(0, N - block_size + 1, size=n_blocks)
+    
+    boot_indices = []
+    for start in start_indices:
+        boot_indices.extend(range(start, start + block_size))
+    boot_indices = boot_indices[:N]
+    
+    X_boot = X[boot_indices]
+    y_boot = y[boot_indices]
+    
+    scaler = StandardScaler()
+    X_boot_s = scaler.fit_transform(X_boot)
+    
+    # Fit LassoCV to automatically select best L1 penalty
+    lasso = LassoCV(cv=5, random_state=random_seed, max_iter=3000)
+    lasso.fit(X_boot_s, y_boot)
+    
+    return np.abs(lasso.coef_) > 1e-5
+
+
+def compute_stability_scores(X, y, features, block_size=BLOCK_SIZE, n_bootstraps=N_BOOTSTRAPS):
+    N, D = X.shape
+    print(f"  [Stability Selection] Running {n_bootstraps} block bootstrap trials (block_size={block_size}) ...")
+    
+    # Parallel execution across all CPU cores
+    results = Parallel(n_jobs=-1)(
+        delayed(_run_bootstrap_trial)(X, y, block_size, 42 + i)
+        for i in range(n_bootstraps)
+    )
+    
+    selection_counts = np.sum(results, axis=0)
+    scores = selection_counts / n_bootstraps
+    
+    sorted_idx = np.argsort(scores)[::-1]
+    print("  Feature stability scores:")
+    for idx in sorted_idx:
+        print(f"    {features[idx]:<20} : {scores[idx]:.2%}")
+        
+    return scores
+
+
+# ============================================================
 # Optuna objective
 # ============================================================
-def make_objective(X, y, n_splits, gap):
+def make_objective(X, y, n_splits, gap, stability_scores):
     def objective(trial: optuna.Trial) -> float:
         model_type = trial.suggest_categorical("model_type", ["ridge", "lasso", "elasticnet", "huber"])
-        n_features = trial.suggest_int("n_features", 5, len(FEATURES))
+        # Suggest stability selection threshold as a hyperparameter
+        stability_threshold = trial.suggest_float("stability_threshold", 0.4, 0.9, step=0.05)
+
+        # Select indices where score >= threshold
+        selected_indices = np.where(stability_scores >= stability_threshold)[0]
+        # Keep at least 3 features to prevent empty subsets
+        if len(selected_indices) < 3:
+            selected_indices = np.argsort(stability_scores)[::-1][:3]
 
         if model_type == "ridge":
             alpha = trial.suggest_float("ridge_alpha", 1e-3, 1e4, log=True)
             model = Ridge(alpha=alpha, random_state=42)
         elif model_type == "lasso":
-            alpha = trial.suggest_float("lasso_alpha", 1e-5, 10.0, log=True)
+            alpha = trial.suggest_float("lasso_alpha", 1e-5, 1.0, log=True)
             model = Lasso(alpha=alpha, random_state=42, max_iter=5000)
         elif model_type == "elasticnet":
-            alpha = trial.suggest_float("en_alpha", 1e-5, 10.0, log=True)
+            alpha = trial.suggest_float("en_alpha", 1e-5, 1.0, log=True)
             l1_ratio = trial.suggest_float("en_l1_ratio", 0.0, 1.0)
             model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, random_state=42, max_iter=5000)
         elif model_type == "huber":
@@ -160,20 +210,12 @@ def make_objective(X, y, n_splits, gap):
 
         ics = []
         for train_idx, test_idx in purged_tssplit(len(y), n_splits, gap):
-            # Scale train features
             scaler = StandardScaler().fit(X[train_idx])
             Xtr_s = scaler.transform(X[train_idx])
             Xte_s = scaler.transform(X[test_idx])
 
-            # Feature selection via RFE on training data
-            if n_features < len(FEATURES):
-                # Using Ridge as a fast, stable feature selector estimator
-                selector = RFE(estimator=Ridge(alpha=1.0, random_state=42), n_features_to_select=n_features)
-                Xtr_sel = selector.fit_transform(Xtr_s, y[train_idx])
-                Xte_sel = selector.transform(Xte_s)
-            else:
-                Xtr_sel = Xtr_s
-                Xte_sel = Xte_s
+            Xtr_sel = Xtr_s[:, selected_indices]
+            Xte_sel = Xte_s[:, selected_indices]
 
             model.fit(Xtr_sel, y[train_idx])
             preds = model.predict(Xte_sel)
@@ -196,11 +238,11 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
     feat = pd.read_parquet(feat_path).sort_index()
     feat = feat.dropna(subset=FEATURES + [TARGET]).copy()
     X = feat[FEATURES].values
-    # Scale target by 100 (PM return → % form)
     Y_SCALE = 100.0
     y_raw = feat[TARGET].values
     y = y_raw * Y_SCALE
     dates = feat.index
+    full_y_raw = pd.Series(y_raw, index=dates)
     n = len(feat)
 
     print(f"\n[{etf_name}] {n} samples, {len(FEATURES)} features, "
@@ -215,7 +257,10 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
     X_ho, y_ho, dates_ho = X[holdout_idx], y[holdout_idx], dates[holdout_idx]
     print(f"  dev (Optuna): {len(X_dev)}, holdout (final OOS): {len(X_ho)}")
 
-    # ── 2) Optuna hyperparameter search on dev set with purged TS-CV ──
+    # ── 2) Stability Selection on dev set ──
+    stability_scores = compute_stability_scores(X_dev, y_dev, FEATURES)
+
+    # ── 3) Optuna hyperparameter search on dev set with stability scoring ──
     print(f"  Optuna: {n_trials} trials, {n_splits} folds, purge_gap={gap} ...")
     study_path = DATA_DIR / f"optuna_study_{etf_name}.sqlite3"
     if study_path.exists():
@@ -227,31 +272,28 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
         sampler=optuna.samplers.TPESampler(seed=42),
         pruner=optuna.pruners.MedianPruner(n_warmup_steps=10),
     )
-    obj = make_objective(X_dev, y_dev, n_splits, gap)
+    obj = make_objective(X_dev, y_dev, n_splits, gap, stability_scores)
     study.optimize(obj, n_trials=n_trials, show_progress_bar=False)
 
     best_params = study.best_params
     best_cv_ic = study.best_value
     print(f"  best CV IC: {best_cv_ic:.4f}  params: {best_params}")
 
-    # ── 3) Final model: train on all dev data, evaluate on holdout ──
+    # ── 4) Final model: train on all dev data, evaluate on holdout ──
     scaler = StandardScaler().fit(X_dev)
     X_dev_s = scaler.transform(X_dev)
     X_ho_s = scaler.transform(X_ho)
 
-    # Feature selection via RFE on full dev dataset
-    n_features = best_params["n_features"]
-    if n_features < len(FEATURES):
-        selector = RFE(estimator=Ridge(alpha=1.0, random_state=42), n_features_to_select=n_features)
-        X_dev_sel = selector.fit_transform(X_dev_s, y_dev)
-        X_ho_sel = selector.transform(X_ho_s)
-        selected_features = [FEATURES[i] for i in range(len(FEATURES)) if selector.support_[i]]
-    else:
-        X_dev_sel = X_dev_s
-        X_ho_sel = X_ho_s
-        selected_features = FEATURES.copy()
+    best_threshold = best_params["stability_threshold"]
+    selected_indices = np.where(stability_scores >= best_threshold)[0]
+    if len(selected_indices) < 3:
+        selected_indices = np.argsort(stability_scores)[::-1][:3]
+    selected_features = [FEATURES[i] for i in selected_indices]
+    print(f"  Final selected features ({len(selected_features)}): {selected_features}")
 
-    # Re-create final model with best parameters
+    X_dev_sel = X_dev_s[:, selected_indices]
+    X_ho_sel = X_ho_s[:, selected_indices]
+
     model_type = best_params["model_type"]
     if model_type == "ridge":
         final_model = Ridge(alpha=best_params["ridge_alpha"], random_state=42)
@@ -266,8 +308,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
     preds_ho = final_model.predict(X_ho_sel)
     preds_is = final_model.predict(X_dev_sel)
 
-    # ── 4) Metrics ──
-    # Undo target scaling
+    # ── 5) Metrics ──
     preds_ho_raw = preds_ho / Y_SCALE
     preds_is_raw = preds_is / Y_SCALE
     y_ho_raw = y_ho / Y_SCALE
@@ -285,7 +326,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
     print(f"  OVERFITTING GAP: IS IC={is_ic:.4f} vs OOS IC={holdout_ic:.4f}  "
           f"(gap={is_ic - holdout_ic:+.4f})")
 
-    # ── 5) Walk-forward OOS predictions across all folds (purged) ──
+    # ── 6) Walk-forward OOS predictions across all folds (purged) ──
     wf_preds = np.full(n, np.nan)
     wf_is_ic_per_fold = []
     wf_oos_ic_per_fold = []
@@ -294,13 +335,8 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
         Xtr_s = sc.transform(X[train_idx])
         Xte_s = sc.transform(X[test_idx])
 
-        if n_features < len(FEATURES):
-            sel = RFE(estimator=Ridge(alpha=1.0, random_state=42), n_features_to_select=n_features)
-            Xtr_sel = sel.fit_transform(Xtr_s, y[train_idx])
-            Xte_sel = sel.transform(Xte_s)
-        else:
-            Xtr_sel = Xtr_s
-            Xte_sel = Xte_s
+        Xtr_sel = Xtr_s[:, selected_indices]
+        Xte_sel = Xte_s[:, selected_indices]
 
         if model_type == "ridge":
             m = Ridge(alpha=best_params["ridge_alpha"], random_state=42)
@@ -319,7 +355,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
     wf_valid = ~np.isnan(wf_preds)
     wf_overall_ic = spearman_ic(y_raw[wf_valid], wf_preds[wf_valid])
 
-    # ── 6) Year-by-year OOS IC ──
+    # ── 7) Year-by-year OOS IC ──
     wf_df = pd.DataFrame({"date": dates, "y": y_raw, "pred": wf_preds})
     wf_df["year"] = wf_df["date"].dt.year
     yearly_ic = {}
@@ -332,15 +368,12 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
                 "ls_sharpe": long_short_sharpe(g["y"].values, g["pred"].values)["ls_sharpe"],
             }
 
-    # ── 7) Baselines (on holdout, unscaled units) ──
+    # ── 8) Baselines (on holdout, unscaled units) ──
     baselines = {}
-    # B1: predict 0
     baselines["zero"] = {
         "ic": 0.0, "dir": 0.5,
         "rmse": float(np.sqrt(np.mean(y_ho_raw ** 2))),
     }
-    # B2: yesterday's PM return
-    full_y_raw = pd.Series(y_raw, index=dates)
     ylag = full_y_raw.shift(1).reindex(dates_ho).values
     valid_lag = ~np.isnan(ylag)
     baselines["yesterday_pm"] = {
@@ -348,14 +381,12 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
         "dir": direction_accuracy(y_ho_raw[valid_lag], ylag[valid_lag]) if valid_lag.sum() > 5 else 0.5,
         "rmse": float(np.sqrt(np.mean((y_ho_raw[valid_lag] - ylag[valid_lag]) ** 2))) if valid_lag.sum() > 5 else 0.0,
     }
-    # B3: first_30min_return
     col = FEATURES.index("first_30min_return")
     baselines["first_30min_mom"] = {
         "ic": spearman_ic(y_ho_raw, X_ho[:, col]),
         "dir": direction_accuracy(y_ho_raw, X_ho[:, col]),
         "rmse": float(np.sqrt(np.mean((y_ho_raw - X_ho[:, col]) ** 2))),
     }
-    # B4: Baseline Ridge regression (alpha=1.0) on all features
     ridge_base = Ridge(alpha=1.0, random_state=42)
     ridge_base.fit(X_dev_s, y_dev)
     ridge_base_ho = ridge_base.predict(X_ho_s) / Y_SCALE
@@ -366,25 +397,19 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
         "ls_sharpe": long_short_sharpe(y_ho_raw, ridge_base_ho)["ls_sharpe"],
     }
 
-    # ── 8) Feature Coefficients & Permutation Importance ──
+    # ── 9) Standardized Coefficients & Permutation Importance ──
     coefs = np.zeros(len(FEATURES))
-    if n_features < len(FEATURES):
-        support_indices = np.where(selector.support_)[0]
-        coefs[support_indices] = final_model.coef_
-    else:
-        coefs = final_model.coef_
+    coefs[selected_indices] = final_model.coef_
     coef_imp = dict(zip(FEATURES, coefs.tolist()))
 
-    # Permutation importance on holdout
     perm = permutation_importance(
         final_model, X_ho_sel, y_ho, n_repeats=10, random_state=42,
         scoring="neg_mean_squared_error", n_jobs=-1,
     )
     perm_imp_sel = dict(zip(selected_features, perm.importances_mean.tolist()))
-    # Map back to all features with 0.0 for pruned ones
     perm_imp = {feat: perm_imp_sel.get(feat, 0.0) for feat in FEATURES}
 
-    # ── 9) Purge-gap sensitivity ──
+    # ── 10) Purge-gap sensitivity ──
     purge_sens = {}
     for g in [0, 5, 10]:
         ics_g = []
@@ -393,13 +418,8 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
             Xtr_s = sc.transform(X[train_idx])
             Xte_s = sc.transform(X[test_idx])
 
-            if n_features < len(FEATURES):
-                sel = RFE(estimator=Ridge(alpha=1.0, random_state=42), n_features_to_select=n_features)
-                Xtr_sel = sel.fit_transform(Xtr_s, y[train_idx])
-                Xte_sel = sel.transform(Xte_s)
-            else:
-                Xtr_sel = Xtr_s
-                Xte_sel = Xte_s
+            Xtr_sel = Xtr_s[:, selected_indices]
+            Xte_sel = Xte_s[:, selected_indices]
 
             if model_type == "ridge":
                 m = Ridge(alpha=best_params["ridge_alpha"], random_state=42)
@@ -416,18 +436,19 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
         purge_sens[g] = {"mean_ic": float(np.mean(ics_g)) if ics_g else 0.0,
                          "n_folds": len(ics_g)}
 
-    # ── 10) Optuna hyperparameter importance ──
+    # ── 11) Optuna hyperparameter importance ──
     try:
         optuna_param_imp = optuna.importance.get_param_importances(study)
         optuna_param_imp = {k: float(v) for k, v in optuna_param_imp.items()}
     except Exception:
         optuna_param_imp = {}
 
-    # ── 11) Save model + scaler ──
+    # ── 12) Save model + scaler ──
     joblib.dump(final_model, MODELS_DIR / f"linear_{etf_name}.joblib")
     joblib.dump({"scaler": scaler,
                  "features": FEATURES,
                  "selected_features": selected_features,
+                 "stability_scores": dict(zip(FEATURES, stability_scores.tolist())),
                  "best_params": best_params,
                  "best_model_type": model_type,
                  "holdout_ic": holdout_ic,
@@ -436,7 +457,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
                  "y_scale": Y_SCALE},
                 MODELS_DIR / f"scaler_{etf_name}.joblib")
 
-    # ── 12) Plots ──
+    # ── 13) Plots ──
     _plot_diagnostics(etf_name, dates_ho, y_ho_raw, preds_ho_raw,
                       wf_df, coef_imp, perm_imp, optuna_param_imp,
                       purge_sens, yearly_ic, study)
@@ -450,6 +471,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
         "n_features": len(FEATURES),
         "selected_features": selected_features,
         "n_selected_features": len(selected_features),
+        "stability_scores": dict(zip(FEATURES, stability_scores.tolist())),
         "date_range": [str(dates[0].date()), str(dates[-1].date())],
         "holdout_n": int(len(X_ho)),
         "holdout_range": [str(dates_ho[0].date()), str(dates_ho[-1].date())],
@@ -485,7 +507,6 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
 def _plot_diagnostics(etf, dates_ho, y_ho, preds_ho, wf_df,
                       coef_imp, perm_imp, optuna_imp, purge_sens,
                       yearly_ic, study):
-    # 1) Predicted vs Actual scatter on holdout
     fig, axes = plt.subplots(1, 2, figsize=(13, 5))
     ax = axes[0]
     ax.scatter(preds_ho * 100, y_ho * 100, alpha=0.3, s=10, c="steelblue")
@@ -498,7 +519,6 @@ def _plot_diagnostics(etf, dates_ho, y_ho, preds_ho, wf_df,
     ax.set_title(f"{etf} Holdout: IC={ic:.3f}")
     ax.grid(alpha=0.3)
 
-    # 2) Cumulative long-short on holdout (top quintile - bottom quintile)
     ax = axes[1]
     q = pd.qcut(preds_ho, 5, labels=False, duplicates="drop")
     valid = ~np.isnan(q)
@@ -518,7 +538,6 @@ def _plot_diagnostics(etf, dates_ho, y_ho, preds_ho, wf_df,
     plt.savefig(PLOTS_DIR / f"holdout_scatter_{etf}.png", dpi=110)
     plt.close()
 
-    # 3) Walk-forward rolling IC (90-day rolling)
     fig, ax = plt.subplots(figsize=(12, 4))
     wf_v = wf_df.dropna(subset=["pred"]).copy()
     if len(wf_v) > 90:
@@ -543,7 +562,6 @@ def _plot_diagnostics(etf, dates_ho, y_ho, preds_ho, wf_df,
     plt.savefig(PLOTS_DIR / f"ic_timeseries_{etf}.png", dpi=110)
     plt.close()
 
-    # 4) Feature importance: coefficients vs permutation (side by side)
     fig, axes = plt.subplots(1, 2, figsize=(13, 6))
     for ax, imp, title in [
         (axes[0], coef_imp, "Standardized Coefficient"),
@@ -557,7 +575,6 @@ def _plot_diagnostics(etf, dates_ho, y_ho, preds_ho, wf_df,
     plt.savefig(PLOTS_DIR / f"feature_importance_{etf}.png", dpi=110)
     plt.close()
 
-    # 5) Year-by-year IC bar
     if yearly_ic:
         fig, ax = plt.subplots(figsize=(9, 4))
         yrs = sorted(yearly_ic.keys())
@@ -571,7 +588,6 @@ def _plot_diagnostics(etf, dates_ho, y_ho, preds_ho, wf_df,
         plt.savefig(PLOTS_DIR / f"yearly_ic_{etf}.png", dpi=110)
         plt.close()
 
-    # 6) Purge gap sensitivity
     fig, ax = plt.subplots(figsize=(6, 4))
     keys = sorted(purge_sens.keys())
     ax.plot(keys, [purge_sens[k]["mean_ic"] for k in keys], "o-", color="purple")
@@ -584,7 +600,6 @@ def _plot_diagnostics(etf, dates_ho, y_ho, preds_ho, wf_df,
     plt.savefig(PLOTS_DIR / f"purge_sensitivity_{etf}.png", dpi=110)
     plt.close()
 
-    # 7) Optuna param importance
     if optuna_imp:
         fig, ax = plt.subplots(figsize=(8, 5))
         s = pd.Series(optuna_imp).sort_values()
@@ -632,19 +647,18 @@ def main():
             print(f"  [ERROR] {etf}: {e}")
             import traceback; traceback.print_exc()
 
-    # Summary
-    print("\n" + "=" * 80)
-    print(f"{'ETF':<10} {'Model Type':<12} {'Features':<8} {'Holdout IC':>10} {'Holdout Dir':>12} {'L/S Sharpe':>12} {'Ridge IC':>10}")
-    print("-" * 80)
+    print("\n" + "=" * 90)
+    print(f"{'ETF':<10} {'Model Type':<12} {'Threshold':<10} {'Features':<8} {'Holdout IC':>10} {'Holdout Dir':>12} {'L/S Sharpe':>12} {'Ridge IC':>10}")
+    print("-" * 90)
     for etf, r in all_results.items():
-        best_model = r["best_params"]["model_type"]
+        best_model = r["best_params"]["model_type"].upper()
+        threshold = r["best_params"]["stability_threshold"]
         n_sel_feats = r["n_selected_features"]
         ridge_ic = r["baselines"]["ridge"]["ic"]
-        print(f"{etf:<10} {best_model:<12} {n_sel_feats:<8d} {r['holdout_ic']:>10.4f} {r['holdout_dir_acc']:>12.3f} "
+        print(f"{etf:<10} {best_model:<12} {threshold:<10.2f} {n_sel_feats:<8d} {r['holdout_ic']:>10.4f} {r['holdout_dir_acc']:>12.3f} "
               f"{r['holdout_long_short']['ls_sharpe']:>12.2f} {ridge_ic:>10.4f}")
-    print("=" * 80)
+    print("=" * 90)
 
-    # Save combined results
     with open(DATA_DIR / "results_all.json", "w") as f:
         json.dump(all_results, f, indent=2, default=str)
     total_time = time.time() - t_start
