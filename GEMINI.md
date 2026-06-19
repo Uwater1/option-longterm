@@ -81,10 +81,15 @@ numba_utils.py                 # Numba BS functions & IV solver
 day-model/                     # Day-Model PM session return predictor
 ├── REPORT.md                  # Comprehensive PM return prediction report
 ├── AGENTS.md                  # Feature expansion and workflow guide
-├── build_features.py          # Early-bar + day-level feature engineering
+├── build_features.py          # Early-bar + day-level feature engineering (127 features, local caching)
 ├── train_model.py             # Optuna-tuned linear model training & feature selection
 └── generate_report.py         # Report markdown generator
 ```
+
+### Day-Model Caching & Features (New)
+- **Data Caching**: Ricequant 3rd-party data (Securities Margin, Capital Flow, Northbound Connect Quota) is cached locally to `data/securities_margin.parquet`, `data/capital_flow.parquet`, and `data/stock_connect_quota.parquet` to prevent slow network calls and minimize API quota usage.
+- **127 Features**: Expanded feature space includes 50 early-bar intraday features, 55 day-level features (including technical indicators and 3rd party margin/flow), and 22 yesterday's features (shifted by 1 day to prevent leakage).
+
 
 > Also: `backtest/alpha_put_models.json` (Phase 1 weights+OOS), `backtest/alpha_ml_models/` (Phase 2 bags+manifests), `backtest/validate_pnl_phase{1,2,3}.json`, `backtest/alpha_phase_comparison.md`.
 

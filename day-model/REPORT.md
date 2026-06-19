@@ -11,11 +11,11 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | ETF | Model | Threshold | Features | Samples | Holdout IC | Holdout Dir | L/S Sharpe | Ridge Base IC | IS-OOS Gap |
 |-----|-------|-----------|----------|---------|-----------|-------------|-----------|---------------|------------|
-| 300ETF | HUBER | 0.50 | 4/21 | 2722 | +0.0374 | 0.506 | +1.58 | +0.0327 | +0.0350 |
-| 50ETF | HUBER | 0.65 | 3/21 | 2721 | +0.0839 | 0.533 | +1.52 | +0.1062 | -0.0502 |
-| 500ETF | ELASTICNET | 0.50 | 8/21 | 2721 | +0.0717 | 0.540 | +0.74 | +0.0896 | -0.0092 |
-| 588000ETF | LASSO | 0.80 | 5/21 | 1293 | -0.1373 | 0.446 | -2.18 | -0.1125 | +0.2645 |
-| 159915ETF | HUBER | 0.90 | 5/21 | 2721 | +0.1078 | 0.570 | +1.35 | +0.1349 | +0.0305 |
+| 300ETF | RIDGE | 0.45 | 18/127 | 2722 | +0.0854 | 0.511 | +2.07 | +0.0459 | +0.0609 |
+| 50ETF | HUBER | 0.45 | 22/127 | 2721 | +0.0195 | 0.522 | +0.72 | -0.0046 | +0.1419 |
+| 500ETF | HUBER | 0.60 | 7/127 | 2719 | +0.1295 | 0.554 | +1.95 | -0.0274 | +0.0321 |
+| 588000ETF | ELASTICNET | 0.60 | 28/127 | 1293 | -0.0167 | 0.527 | -0.40 | -0.0536 | +0.2522 |
+| 159915ETF | HUBER | 0.85 | 14/127 | 2719 | +0.1906 | 0.571 | +3.26 | +0.1092 | +0.0232 |
 
 ## 2. Data & Features
 
@@ -23,11 +23,13 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Group | Count | Features |
 |-------|-------|----------|
-| Early-bar (13) | 13 | gap_pct, first_30min_return, early_realized_vol, early_range, early_volume_ratio, early_trend, early_momentum, gap_direction, first_bar_return, first_bar_volume, early_vwap_dev, early_skew, early_kurtosis |
-| Day-level (8) | 8 | rsi14, macd_hist, sma20_dist, sma50_dist, atr14_norm, roc10, bb_pctb, vol20 |
+| Early-bar (50) | 50 | gap_pct, first_30min_return, early_realized_vol, early_range, early_volume_ratio, early_trend, early_momentum, gap_direction, first_bar_return, first_bar_volume, early_vwap_dev, early_skew, early_kurtosis, bar_ret_0, bar_ret_1... and 35 more (total 50) |
+| Day-level (55) | 55 | rsi14, macd_hist, sma20_dist, sma50_dist, atr14_norm, roc10, bb_pctb, vol20, sma10_dist, sma100_dist, sma200_dist, ema12_dist, ema26_dist, rsi5, rsi21... and 40 more (total 55) |
+| Yesterday (22) | 22 | yesterday_pm_return, yesterday_am_return, yesterday_gap_pct, yesterday_first_30min_return, yesterday_early_realized_vol, yesterday_early_range, yesterday_early_volume_ratio, yesterday_early_trend, yesterday_early_momentum, yesterday_first_bar_return, yesterday_first_bar_volume, yesterday_early_vwap_dev, yesterday_early_skew, yesterday_early_kurtosis, yesterday_day_range... and 7 more (total 22) |
 
-- **Early-bar**: First 6 five-minute bars (9:30–10:00). All computable by 10:00 AM.
-- **Day-level**: Computed on `close_adj` shifted by 1 day (no look-ahead).
+- **Early-bar**: First 6 five-minute bars (9:30–10:00) plus price action features. All computable by 10:00 AM.
+- **Day-level**: Technical indicators and 3rd party flows shifted by 1 day (no look-ahead).
+- **Yesterday**: Shifted full-day and early-bar features from day t-1 (no look-ahead).
 - **Target**: `pm_return` = sum of log returns over bars 24–47 (13:00–15:00 session).
 - **Warmup**: First 60 rows dropped (SMA50/ATR14 burn-in).
 
@@ -58,56 +60,161 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 ### 300ETF
 
-- **Selected Model**: HUBER
-- **Tuned Stability Threshold**: 0.50
+- **Selected Model**: RIDGE
+- **Tuned Stability Threshold**: 0.45
 - **Samples**: 2722 (2015-04-07 → 2026-06-17)
 - **Holdout**: 544 days (2024-03-19 → 2026-06-17)
 - **Target stats**: mean=0.0245%, std=0.8148%, Sharpe=0.48
-- **Selected features (4)**: `gap_pct, early_realized_vol, first_bar_return, early_skew`
+- **Selected features (18)**: `early_skew, bar_rng_0, bar_rng_1, bar_rng_3, bar_vwap_dev_0, max_up_ret, vol5, short_repayment_quantity, yesterday_pm_return, yesterday_am_return, yesterday_early_realized_vol, yesterday_early_trend, yesterday_first_bar_return, yesterday_early_skew, yesterday_day_close_pos, yesterday_day_vwap_dev, yesterday_day_skew, yesterday_day_kurtosis`
 
 #### Feature Stability Scores (Block Bootstrap)
 
 | Feature | Stability Score | Status |
 |---------|-----------------|--------|
-| first_bar_return | 80.0% | **Selected** |
-| early_realized_vol | 68.0% | **Selected** |
-| gap_pct | 58.0% | **Selected** |
-| early_skew | 58.0% | **Selected** |
-| first_bar_volume | 48.0% | Pruned |
-| early_range | 44.0% | Pruned |
-| roc10 | 44.0% | Pruned |
-| early_vwap_dev | 40.0% | Pruned |
-| atr14_norm | 40.0% | Pruned |
-| early_trend | 38.0% | Pruned |
-| early_momentum | 38.0% | Pruned |
-| vol20 | 38.0% | Pruned |
-| early_kurtosis | 36.0% | Pruned |
-| early_volume_ratio | 34.0% | Pruned |
-| first_30min_return | 32.0% | Pruned |
-| sma20_dist | 32.0% | Pruned |
-| macd_hist | 30.0% | Pruned |
-| bb_pctb | 28.0% | Pruned |
+| bar_rng_3 | 64.0% | **Selected** |
+| yesterday_day_skew | 60.0% | **Selected** |
+| yesterday_first_bar_return | 58.0% | **Selected** |
+| bar_rng_0 | 56.0% | **Selected** |
+| vol5 | 56.0% | **Selected** |
+| bar_vwap_dev_0 | 52.0% | **Selected** |
+| max_up_ret | 52.0% | **Selected** |
+| short_repayment_quantity | 52.0% | **Selected** |
+| yesterday_am_return | 50.0% | **Selected** |
+| bar_rng_1 | 48.0% | **Selected** |
+| yesterday_early_realized_vol | 48.0% | **Selected** |
+| yesterday_day_close_pos | 48.0% | **Selected** |
+| yesterday_day_vwap_dev | 48.0% | **Selected** |
+| early_skew | 46.0% | **Selected** |
+| yesterday_pm_return | 46.0% | **Selected** |
+| yesterday_early_trend | 46.0% | **Selected** |
+| yesterday_early_skew | 46.0% | **Selected** |
+| yesterday_day_kurtosis | 46.0% | **Selected** |
+| body_to_range_ratio | 44.0% | Pruned |
+| roc5 | 44.0% | Pruned |
+| volume_sma_ratio | 44.0% | Pruned |
+| northbound_net | 44.0% | Pruned |
+| yesterday_day_late_mom | 44.0% | Pruned |
+| bar_rng_2 | 42.0% | Pruned |
+| bar_rng_5 | 42.0% | Pruned |
+| margin_net_buy | 42.0% | Pruned |
+| yesterday_early_kurtosis | 42.0% | Pruned |
+| yesterday_day_range | 42.0% | Pruned |
+| early_realized_vol | 40.0% | Pruned |
+| yesterday_first_bar_volume | 40.0% | Pruned |
+| yesterday_early_vwap_dev | 40.0% | Pruned |
+| yesterday_day_realized_vol | 40.0% | Pruned |
+| bar_rng_4 | 38.0% | Pruned |
+| bar_body_rng_5 | 38.0% | Pruned |
+| buy_on_margin_value | 38.0% | Pruned |
+| gap_pct | 36.0% | Pruned |
+| early_range | 36.0% | Pruned |
+| bar_body_rng_0 | 36.0% | Pruned |
+| bar_body_rng_2 | 36.0% | Pruned |
+| bar_vwap_dev_1 | 36.0% | Pruned |
+| bar_vwap_dev_2 | 36.0% | Pruned |
+| cl_pos_in_range | 36.0% | Pruned |
+| bb_width | 36.0% | Pruned |
+| volume_sma_ratio_long | 36.0% | Pruned |
+| yesterday_gap_pct | 36.0% | Pruned |
+| yesterday_early_range | 36.0% | Pruned |
+| early_kurtosis | 34.0% | Pruned |
+| bar_ret_1 | 34.0% | Pruned |
+| bar_vol_3 | 34.0% | Pruned |
+| bar_vol_4 | 34.0% | Pruned |
+| bar_vol_5 | 34.0% | Pruned |
+| bar_body_rng_1 | 34.0% | Pruned |
+| macd_hist | 34.0% | Pruned |
+| roc10 | 34.0% | Pruned |
+| sma100_dist | 34.0% | Pruned |
+| sma200_dist | 34.0% | Pruned |
+| bar_ret_5 | 32.0% | Pruned |
+| bar_vol_1 | 32.0% | Pruned |
+| bar_vol_2 | 32.0% | Pruned |
+| num_up_bars | 32.0% | Pruned |
+| vol10 | 32.0% | Pruned |
+| vol_ratio_5_20 | 32.0% | Pruned |
+| vol_ratio_10_60 | 32.0% | Pruned |
+| margin_short_ratio | 32.0% | Pruned |
+| capital_net_ratio | 32.0% | Pruned |
+| yesterday_day_pm_am_vol_ratio | 32.0% | Pruned |
+| early_vwap_dev | 30.0% | Pruned |
+| bar_ret_4 | 30.0% | Pruned |
+| bar_vwap_dev_5 | 30.0% | Pruned |
+| yesterday_early_volume_ratio | 30.0% | Pruned |
+| bar_ret_3 | 28.0% | Pruned |
+| bar_body_rng_3 | 28.0% | Pruned |
+| bar_body_rng_4 | 28.0% | Pruned |
+| bar_vwap_dev_3 | 28.0% | Pruned |
+| bar_vwap_dev_4 | 28.0% | Pruned |
+| vol60 | 28.0% | Pruned |
+| vol_gk20 | 28.0% | Pruned |
+| first_30min_return | 26.0% | Pruned |
+| first_bar_return | 26.0% | Pruned |
+| first_bar_volume | 26.0% | Pruned |
+| bar_ret_2 | 26.0% | Pruned |
+| total_path_length | 26.0% | Pruned |
 | sma50_dist | 26.0% | Pruned |
-| rsi14 | 24.0% | Pruned |
+| cci14 | 26.0% | Pruned |
+| capital_buy_value | 26.0% | Pruned |
+| capital_net_value | 26.0% | Pruned |
+| yesterday_early_momentum | 26.0% | Pruned |
+| volume_slope | 24.0% | Pruned |
+| bb_pctb | 24.0% | Pruned |
+| sma10_dist | 24.0% | Pruned |
+| ema12_dist | 24.0% | Pruned |
+| rsi5 | 24.0% | Pruned |
+| willr14 | 24.0% | Pruned |
+| mfi14 | 24.0% | Pruned |
+| aroon_osc | 24.0% | Pruned |
+| vol_pk20 | 24.0% | Pruned |
+| short_sell_quantity | 24.0% | Pruned |
+| bar_vol_0 | 22.0% | Pruned |
+| vol20 | 22.0% | Pruned |
+| short_balance | 22.0% | Pruned |
+| early_momentum | 20.0% | Pruned |
+| rsi21 | 20.0% | Pruned |
+| roc20 | 20.0% | Pruned |
+| roc60 | 20.0% | Pruned |
+| stoch_d | 20.0% | Pruned |
+| margin_balance | 20.0% | Pruned |
+| short_balance_quantity | 20.0% | Pruned |
+| vol_gk10 | 18.0% | Pruned |
+| margin_repayment | 18.0% | Pruned |
+| capital_buy_volume | 18.0% | Pruned |
+| yesterday_first_30min_return | 18.0% | Pruned |
+| early_trend | 16.0% | Pruned |
+| bar_ret_0 | 14.0% | Pruned |
+| stoch_k | 14.0% | Pruned |
+| northbound_buy | 14.0% | Pruned |
+| northbound_sell | 14.0% | Pruned |
+| max_down_ret | 12.0% | Pruned |
+| rsi14 | 12.0% | Pruned |
+| sma20_dist | 12.0% | Pruned |
+| ema26_dist | 12.0% | Pruned |
+| atr14_norm | 10.0% | Pruned |
+| capital_sell_volume | 10.0% | Pruned |
+| vol_pk10 | 8.0% | Pruned |
+| total_balance | 8.0% | Pruned |
+| capital_sell_value | 8.0% | Pruned |
+| early_volume_ratio | 4.0% | Pruned |
 | gap_direction | 0.0% | Pruned |
 
 #### Metrics
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | +0.0374 | +0.0327 | +0.0000 | -0.0787 | +0.0468 |
-| Dir Acc | 0.506 | 0.524 | 0.500 | 0.478 | 0.507 |
-| RMSE | 0.6168% | 0.6096% | 0.6187% | 0.8840% | 0.7349% |
-| L/S Sharpe | +1.58 | +1.51 | — | — | — |
+| IC | +0.0854 | +0.0459 | +0.0000 | -0.0787 | +0.0468 |
+| Dir Acc | 0.511 | 0.517 | 0.500 | 0.478 | 0.507 |
+| RMSE | 0.6140% | 0.6615% | 0.6187% | 0.8840% | 0.7349% |
+| L/S Sharpe | +2.07 | +1.39 | — | — | — |
 
 #### Best Hyperparameters
 
 ```json
 {
-  "model_type": "huber",
-  "stability_threshold": 0.5,
-  "huber_alpha": 8965.030254539577,
-  "huber_epsilon": 1.4576635730871272
+  "model_type": "ridge",
+  "stability_threshold": 0.45,
+  "ridge_alpha": 3965.971821190073
 }
 ```
 
@@ -115,27 +222,27 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.1606 | +0.0578 |
-| 2 | 0.0960 | +0.0584 |
-| 3 | 0.0885 | -0.0196 |
-| 4 | 0.0690 | +0.0467 |
-| 5 | 0.0748 | +0.0379 |
-| **Overall** | — | +0.0430 |
+| 1 | 0.2189 | +0.0960 |
+| 2 | 0.1874 | +0.1244 |
+| 3 | 0.1793 | +0.0947 |
+| 4 | 0.1595 | +0.0926 |
+| 5 | 0.1472 | +0.0734 |
+| **Overall** | — | +0.0922 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2017 | +0.0461 | 0.577 | 215 | +0.48 |
-| 2018 | +0.0182 | 0.502 | 243 | -0.93 |
-| 2019 | +0.0754 | 0.529 | 244 | +1.36 |
-| 2020 | +0.0780 | 0.572 | 243 | +2.98 |
-| 2021 | +0.0988 | 0.551 | 243 | +1.13 |
-| 2022 | -0.0721 | 0.446 | 242 | -0.48 |
-| 2023 | +0.0372 | 0.541 | 242 | +0.81 |
-| 2024 | +0.1797 | 0.483 | 242 | +5.00 |
-| 2025 | +0.0757 | 0.535 | 243 | +1.58 |
-| 2026 | -0.0684 | 0.528 | 108 | -1.74 |
+| 2017 | +0.1293 | 0.586 | 215 | +1.66 |
+| 2018 | +0.0417 | 0.494 | 243 | +0.11 |
+| 2019 | +0.1600 | 0.557 | 244 | +3.92 |
+| 2020 | +0.0749 | 0.560 | 243 | +1.71 |
+| 2021 | +0.0639 | 0.547 | 243 | +1.05 |
+| 2022 | +0.1409 | 0.483 | 242 | +2.78 |
+| 2023 | +0.1204 | 0.554 | 242 | +2.61 |
+| 2024 | +0.1124 | 0.496 | 242 | +2.35 |
+| 2025 | -0.0408 | 0.502 | 243 | -0.47 |
+| 2026 | +0.1552 | 0.546 | 108 | +3.09 |
 
 #### Diagnostic Plots
 
@@ -160,55 +267,161 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 ### 50ETF
 
 - **Selected Model**: HUBER
-- **Tuned Stability Threshold**: 0.65
+- **Tuned Stability Threshold**: 0.45
 - **Samples**: 2721 (2015-04-07 → 2026-06-16)
 - **Holdout**: 544 days (2024-03-18 → 2026-06-16)
 - **Target stats**: mean=0.0167%, std=0.7701%, Sharpe=0.34
-- **Selected features (3)**: `first_bar_return, first_bar_volume, early_realized_vol`
+- **Selected features (22)**: `bar_ret_3, bar_ret_5, bar_rng_0, bar_rng_3, bar_rng_4, bar_rng_5, bar_body_rng_0, bar_body_rng_1, num_up_bars, body_to_range_ratio, sma100_dist, short_repayment_quantity, margin_net_buy, capital_buy_value, yesterday_pm_return, yesterday_early_volume_ratio, yesterday_early_trend, yesterday_early_vwap_dev, yesterday_early_kurtosis, yesterday_day_close_pos, yesterday_day_late_mom, yesterday_day_skew`
 
 #### Feature Stability Scores (Block Bootstrap)
 
 | Feature | Stability Score | Status |
 |---------|-----------------|--------|
-| first_bar_return | 58.0% | **Selected** |
-| first_bar_volume | 56.0% | **Selected** |
-| early_realized_vol | 50.0% | **Selected** |
-| early_trend | 40.0% | Pruned |
-| sma20_dist | 40.0% | Pruned |
-| vol20 | 40.0% | Pruned |
-| sma50_dist | 38.0% | Pruned |
-| early_range | 36.0% | Pruned |
-| early_vwap_dev | 36.0% | Pruned |
-| early_momentum | 34.0% | Pruned |
-| early_skew | 34.0% | Pruned |
-| bb_pctb | 34.0% | Pruned |
-| gap_pct | 32.0% | Pruned |
-| early_volume_ratio | 30.0% | Pruned |
-| early_kurtosis | 30.0% | Pruned |
-| macd_hist | 30.0% | Pruned |
+| num_up_bars | 64.0% | **Selected** |
+| bar_rng_3 | 60.0% | **Selected** |
+| capital_buy_value | 58.0% | **Selected** |
+| bar_ret_3 | 56.0% | **Selected** |
+| short_repayment_quantity | 56.0% | **Selected** |
+| margin_net_buy | 54.0% | **Selected** |
+| yesterday_pm_return | 54.0% | **Selected** |
+| bar_rng_4 | 52.0% | **Selected** |
+| sma100_dist | 50.0% | **Selected** |
+| yesterday_early_volume_ratio | 50.0% | **Selected** |
+| yesterday_early_trend | 50.0% | **Selected** |
+| bar_rng_5 | 48.0% | **Selected** |
+| yesterday_early_kurtosis | 48.0% | **Selected** |
+| yesterday_day_late_mom | 48.0% | **Selected** |
+| bar_ret_5 | 46.0% | **Selected** |
+| bar_rng_0 | 46.0% | **Selected** |
+| bar_body_rng_0 | 46.0% | **Selected** |
+| bar_body_rng_1 | 46.0% | **Selected** |
+| body_to_range_ratio | 46.0% | **Selected** |
+| yesterday_early_vwap_dev | 46.0% | **Selected** |
+| yesterday_day_close_pos | 46.0% | **Selected** |
+| yesterday_day_skew | 46.0% | **Selected** |
+| first_bar_volume | 44.0% | Pruned |
+| bar_vol_3 | 44.0% | Pruned |
+| max_up_ret | 44.0% | Pruned |
+| vol5 | 44.0% | Pruned |
+| vol_gk10 | 44.0% | Pruned |
+| yesterday_early_realized_vol | 44.0% | Pruned |
+| yesterday_day_realized_vol | 44.0% | Pruned |
+| bar_vol_4 | 42.0% | Pruned |
+| bar_vwap_dev_2 | 42.0% | Pruned |
+| sma200_dist | 42.0% | Pruned |
+| roc5 | 42.0% | Pruned |
+| vol_ratio_5_20 | 42.0% | Pruned |
+| vol_pk20 | 42.0% | Pruned |
+| short_sell_quantity | 42.0% | Pruned |
+| yesterday_early_range | 42.0% | Pruned |
+| yesterday_day_pm_am_vol_ratio | 42.0% | Pruned |
+| early_vwap_dev | 40.0% | Pruned |
+| bar_body_rng_3 | 40.0% | Pruned |
+| bb_width | 40.0% | Pruned |
+| margin_short_ratio | 40.0% | Pruned |
+| capital_net_ratio | 40.0% | Pruned |
+| yesterday_am_return | 40.0% | Pruned |
+| yesterday_first_bar_volume | 40.0% | Pruned |
+| yesterday_day_vwap_dev | 40.0% | Pruned |
+| yesterday_day_kurtosis | 40.0% | Pruned |
+| early_kurtosis | 38.0% | Pruned |
+| bar_body_rng_4 | 38.0% | Pruned |
+| macd_hist | 38.0% | Pruned |
+| volume_sma_ratio | 38.0% | Pruned |
+| volume_sma_ratio_long | 38.0% | Pruned |
+| northbound_net | 38.0% | Pruned |
+| yesterday_early_skew | 38.0% | Pruned |
+| yesterday_day_range | 38.0% | Pruned |
+| early_skew | 36.0% | Pruned |
+| bar_ret_4 | 36.0% | Pruned |
+| bar_vol_0 | 36.0% | Pruned |
+| bar_body_rng_5 | 36.0% | Pruned |
+| bar_vwap_dev_1 | 36.0% | Pruned |
+| vol_ratio_10_60 | 36.0% | Pruned |
+| margin_balance | 36.0% | Pruned |
+| early_realized_vol | 34.0% | Pruned |
+| bar_ret_2 | 34.0% | Pruned |
+| bar_vol_5 | 34.0% | Pruned |
+| bar_rng_2 | 34.0% | Pruned |
+| bar_vwap_dev_0 | 34.0% | Pruned |
+| bar_vwap_dev_4 | 34.0% | Pruned |
+| margin_repayment | 34.0% | Pruned |
+| bar_ret_1 | 32.0% | Pruned |
+| bar_rng_1 | 32.0% | Pruned |
+| bar_vwap_dev_5 | 32.0% | Pruned |
+| cl_pos_in_range | 32.0% | Pruned |
+| total_path_length | 32.0% | Pruned |
+| rsi5 | 32.0% | Pruned |
+| mfi14 | 32.0% | Pruned |
+| vol60 | 32.0% | Pruned |
+| capital_net_value | 32.0% | Pruned |
+| yesterday_gap_pct | 32.0% | Pruned |
+| bar_vol_1 | 30.0% | Pruned |
+| bar_vol_2 | 30.0% | Pruned |
+| sma20_dist | 30.0% | Pruned |
+| roc10 | 30.0% | Pruned |
+| aroon_osc | 30.0% | Pruned |
+| roc20 | 28.0% | Pruned |
+| roc60 | 28.0% | Pruned |
+| buy_on_margin_value | 28.0% | Pruned |
+| northbound_sell | 28.0% | Pruned |
+| yesterday_first_30min_return | 28.0% | Pruned |
+| yesterday_early_momentum | 28.0% | Pruned |
+| first_bar_return | 26.0% | Pruned |
+| sma50_dist | 26.0% | Pruned |
 | atr14_norm | 26.0% | Pruned |
-| roc10 | 26.0% | Pruned |
-| rsi14 | 22.0% | Pruned |
-| first_30min_return | 20.0% | Pruned |
+| bb_pctb | 26.0% | Pruned |
+| sma10_dist | 26.0% | Pruned |
+| stoch_d | 26.0% | Pruned |
+| vol10 | 26.0% | Pruned |
+| early_range | 24.0% | Pruned |
+| bar_body_rng_2 | 24.0% | Pruned |
+| volume_slope | 24.0% | Pruned |
+| ema12_dist | 24.0% | Pruned |
+| short_balance_quantity | 24.0% | Pruned |
+| first_30min_return | 22.0% | Pruned |
+| max_down_ret | 22.0% | Pruned |
+| cci14 | 22.0% | Pruned |
+| stoch_k | 22.0% | Pruned |
+| short_balance | 22.0% | Pruned |
+| gap_pct | 20.0% | Pruned |
+| vol20 | 20.0% | Pruned |
+| vol_gk20 | 20.0% | Pruned |
+| total_balance | 20.0% | Pruned |
+| capital_sell_volume | 20.0% | Pruned |
+| yesterday_first_bar_return | 20.0% | Pruned |
+| early_momentum | 18.0% | Pruned |
+| willr14 | 18.0% | Pruned |
+| capital_buy_volume | 18.0% | Pruned |
+| bar_vwap_dev_3 | 16.0% | Pruned |
+| rsi21 | 16.0% | Pruned |
+| capital_sell_value | 16.0% | Pruned |
+| early_trend | 14.0% | Pruned |
+| rsi14 | 14.0% | Pruned |
+| vol_pk10 | 14.0% | Pruned |
+| bar_ret_0 | 12.0% | Pruned |
+| ema26_dist | 10.0% | Pruned |
+| northbound_buy | 10.0% | Pruned |
+| early_volume_ratio | 4.0% | Pruned |
 | gap_direction | 0.0% | Pruned |
 
 #### Metrics
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | +0.0839 | +0.1062 | +0.0000 | +0.0523 | -0.0271 |
-| Dir Acc | 0.533 | 0.539 | 0.500 | 0.506 | 0.449 |
-| RMSE | 0.5567% | 0.5519% | 0.5598% | 0.7697% | 0.7018% |
-| L/S Sharpe | +1.52 | +2.32 | — | — | — |
+| IC | +0.0195 | -0.0046 | +0.0000 | +0.0523 | -0.0271 |
+| Dir Acc | 0.522 | 0.494 | 0.500 | 0.506 | 0.449 |
+| RMSE | 0.5624% | 0.5914% | 0.5598% | 0.7697% | 0.7018% |
+| L/S Sharpe | +0.72 | +0.52 | — | — | — |
 
 #### Best Hyperparameters
 
 ```json
 {
   "model_type": "huber",
-  "stability_threshold": 0.65,
-  "huber_alpha": 0.00025114335241190993,
-  "huber_epsilon": 1.8434409465376835
+  "stability_threshold": 0.45,
+  "huber_alpha": 102.89827896910064,
+  "huber_epsilon": 1.4512704039280453
 }
 ```
 
@@ -216,27 +429,27 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.0686 | +0.0637 |
-| 2 | 0.0600 | +0.0478 |
-| 3 | 0.0300 | +0.0056 |
-| 4 | 0.0208 | +0.1188 |
-| 5 | 0.0370 | +0.0689 |
-| **Overall** | — | +0.0543 |
+| 1 | 0.2004 | +0.0485 |
+| 2 | 0.2037 | +0.1610 |
+| 3 | 0.2090 | +0.1017 |
+| 4 | 0.1926 | +0.0393 |
+| 5 | 0.1630 | -0.0008 |
+| **Overall** | — | +0.0694 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2017 | +0.0319 | 0.514 | 216 | -0.17 |
-| 2018 | +0.0358 | 0.551 | 243 | +0.01 |
-| 2019 | +0.0865 | 0.516 | 244 | +3.58 |
-| 2020 | -0.0119 | 0.519 | 243 | -1.10 |
-| 2021 | +0.0407 | 0.551 | 243 | +0.28 |
-| 2022 | -0.0235 | 0.471 | 242 | -0.90 |
-| 2023 | +0.1113 | 0.550 | 242 | +2.65 |
-| 2024 | +0.1684 | 0.562 | 242 | +3.78 |
-| 2025 | +0.0655 | 0.523 | 243 | +0.65 |
-| 2026 | -0.0312 | 0.542 | 107 | -1.05 |
+| 2017 | +0.0503 | 0.537 | 216 | +2.24 |
+| 2018 | +0.1402 | 0.523 | 243 | +2.51 |
+| 2019 | +0.1379 | 0.549 | 244 | +1.03 |
+| 2020 | +0.1510 | 0.564 | 243 | +3.86 |
+| 2021 | +0.1163 | 0.572 | 243 | +1.94 |
+| 2022 | +0.0674 | 0.475 | 242 | +1.97 |
+| 2023 | +0.0289 | 0.517 | 242 | +0.25 |
+| 2024 | +0.1355 | 0.562 | 242 | +2.08 |
+| 2025 | -0.0807 | 0.502 | 243 | -1.89 |
+| 2026 | -0.1147 | 0.439 | 107 | -4.12 |
 
 #### Diagnostic Plots
 
@@ -260,56 +473,162 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 ### 500ETF
 
-- **Selected Model**: ELASTICNET
-- **Tuned Stability Threshold**: 0.50
-- **Samples**: 2721 (2015-04-07 → 2026-06-16)
-- **Holdout**: 544 days (2024-03-18 → 2026-06-16)
-- **Target stats**: mean=0.0095%, std=0.9738%, Sharpe=0.15
-- **Selected features (8)**: `gap_pct, early_realized_vol, early_range, early_trend, first_bar_return, early_skew, macd_hist, sma50_dist`
+- **Selected Model**: HUBER
+- **Tuned Stability Threshold**: 0.60
+- **Samples**: 2719 (2015-04-07 → 2026-06-16)
+- **Holdout**: 543 days (2024-03-19 → 2026-06-16)
+- **Target stats**: mean=0.0095%, std=0.9742%, Sharpe=0.16
+- **Selected features (7)**: `early_skew, roc5, volume_sma_ratio, yesterday_am_return, yesterday_day_late_mom, yesterday_day_vwap_dev, yesterday_day_skew`
 
 #### Feature Stability Scores (Block Bootstrap)
 
 | Feature | Stability Score | Status |
 |---------|-----------------|--------|
-| gap_pct | 64.0% | **Selected** |
-| sma50_dist | 62.0% | **Selected** |
-| early_range | 60.0% | **Selected** |
-| early_skew | 58.0% | **Selected** |
-| early_realized_vol | 54.0% | **Selected** |
-| macd_hist | 54.0% | **Selected** |
-| early_trend | 52.0% | **Selected** |
-| first_bar_return | 50.0% | **Selected** |
-| early_kurtosis | 48.0% | Pruned |
-| rsi14 | 46.0% | Pruned |
-| early_volume_ratio | 44.0% | Pruned |
-| roc10 | 44.0% | Pruned |
-| first_bar_volume | 42.0% | Pruned |
-| sma20_dist | 42.0% | Pruned |
-| vol20 | 42.0% | Pruned |
-| atr14_norm | 40.0% | Pruned |
-| early_momentum | 38.0% | Pruned |
-| first_30min_return | 36.0% | Pruned |
-| early_vwap_dev | 36.0% | Pruned |
-| bb_pctb | 28.0% | Pruned |
-| gap_direction | 10.0% | Pruned |
+| volume_sma_ratio | 82.0% | **Selected** |
+| yesterday_day_vwap_dev | 74.0% | **Selected** |
+| yesterday_day_skew | 72.0% | **Selected** |
+| yesterday_day_late_mom | 70.0% | **Selected** |
+| early_skew | 62.0% | **Selected** |
+| roc5 | 62.0% | **Selected** |
+| yesterday_am_return | 62.0% | **Selected** |
+| vol_ratio_10_60 | 60.0% | Pruned |
+| bar_ret_4 | 58.0% | Pruned |
+| bar_vol_2 | 58.0% | Pruned |
+| bar_vol_4 | 58.0% | Pruned |
+| bar_rng_5 | 58.0% | Pruned |
+| short_repayment_quantity | 58.0% | Pruned |
+| sma200_dist | 56.0% | Pruned |
+| short_sell_quantity | 56.0% | Pruned |
+| yesterday_early_realized_vol | 56.0% | Pruned |
+| bar_rng_4 | 54.0% | Pruned |
+| body_to_range_ratio | 54.0% | Pruned |
+| roc60 | 54.0% | Pruned |
+| yesterday_early_range | 54.0% | Pruned |
+| yesterday_early_vwap_dev | 54.0% | Pruned |
+| gap_pct | 52.0% | Pruned |
+| early_kurtosis | 52.0% | Pruned |
+| bar_vol_3 | 52.0% | Pruned |
+| macd_hist | 52.0% | Pruned |
+| yesterday_first_bar_return | 52.0% | Pruned |
+| yesterday_early_skew | 52.0% | Pruned |
+| bar_rng_2 | 50.0% | Pruned |
+| yesterday_day_kurtosis | 50.0% | Pruned |
+| bar_rng_1 | 48.0% | Pruned |
+| bar_body_rng_0 | 48.0% | Pruned |
+| bar_vwap_dev_1 | 48.0% | Pruned |
+| margin_balance | 48.0% | Pruned |
+| northbound_net | 48.0% | Pruned |
+| yesterday_pm_return | 48.0% | Pruned |
+| yesterday_first_bar_volume | 48.0% | Pruned |
+| bar_ret_2 | 46.0% | Pruned |
+| bar_ret_3 | 46.0% | Pruned |
+| bar_vwap_dev_0 | 46.0% | Pruned |
+| yesterday_early_kurtosis | 46.0% | Pruned |
+| yesterday_day_range | 46.0% | Pruned |
+| bar_vol_5 | 44.0% | Pruned |
+| bar_rng_0 | 44.0% | Pruned |
+| bar_rng_3 | 44.0% | Pruned |
+| vol5 | 44.0% | Pruned |
+| capital_net_value | 44.0% | Pruned |
+| bar_body_rng_1 | 42.0% | Pruned |
+| num_up_bars | 42.0% | Pruned |
+| sma10_dist | 42.0% | Pruned |
+| sma100_dist | 42.0% | Pruned |
+| volume_sma_ratio_long | 42.0% | Pruned |
+| early_range | 40.0% | Pruned |
+| bar_ret_1 | 40.0% | Pruned |
+| bar_ret_5 | 40.0% | Pruned |
+| bar_body_rng_3 | 40.0% | Pruned |
+| roc10 | 40.0% | Pruned |
+| vol_gk10 | 40.0% | Pruned |
+| margin_net_buy | 40.0% | Pruned |
+| yesterday_early_trend | 40.0% | Pruned |
+| yesterday_day_pm_am_vol_ratio | 40.0% | Pruned |
+| early_vwap_dev | 38.0% | Pruned |
+| bar_body_rng_4 | 38.0% | Pruned |
+| bar_body_rng_5 | 38.0% | Pruned |
+| bar_vwap_dev_2 | 38.0% | Pruned |
+| aroon_osc | 38.0% | Pruned |
+| buy_on_margin_value | 38.0% | Pruned |
+| capital_buy_volume | 38.0% | Pruned |
+| capital_net_ratio | 38.0% | Pruned |
+| max_up_ret | 36.0% | Pruned |
+| cl_pos_in_range | 36.0% | Pruned |
+| stoch_d | 36.0% | Pruned |
+| mfi14 | 36.0% | Pruned |
+| margin_repayment | 36.0% | Pruned |
+| yesterday_day_realized_vol | 36.0% | Pruned |
+| yesterday_day_close_pos | 36.0% | Pruned |
+| first_30min_return | 34.0% | Pruned |
+| bar_vol_1 | 34.0% | Pruned |
+| bar_body_rng_2 | 34.0% | Pruned |
+| sma50_dist | 34.0% | Pruned |
+| ema12_dist | 34.0% | Pruned |
+| bb_width | 34.0% | Pruned |
+| yesterday_first_30min_return | 34.0% | Pruned |
+| yesterday_early_volume_ratio | 34.0% | Pruned |
+| yesterday_early_momentum | 34.0% | Pruned |
+| first_bar_volume | 32.0% | Pruned |
+| bar_vwap_dev_5 | 32.0% | Pruned |
+| bb_pctb | 32.0% | Pruned |
+| vol_ratio_5_20 | 32.0% | Pruned |
+| margin_short_ratio | 32.0% | Pruned |
+| capital_sell_value | 32.0% | Pruned |
+| yesterday_gap_pct | 32.0% | Pruned |
+| early_realized_vol | 30.0% | Pruned |
+| volume_slope | 30.0% | Pruned |
+| vol20 | 30.0% | Pruned |
+| roc20 | 30.0% | Pruned |
+| bar_vol_0 | 26.0% | Pruned |
+| total_path_length | 26.0% | Pruned |
+| rsi5 | 26.0% | Pruned |
+| bar_vwap_dev_4 | 24.0% | Pruned |
+| vol60 | 24.0% | Pruned |
+| early_momentum | 22.0% | Pruned |
+| max_down_ret | 22.0% | Pruned |
+| rsi21 | 22.0% | Pruned |
+| rsi14 | 20.0% | Pruned |
+| vol10 | 20.0% | Pruned |
+| short_balance_quantity | 20.0% | Pruned |
+| northbound_sell | 20.0% | Pruned |
+| early_trend | 18.0% | Pruned |
+| bar_ret_0 | 18.0% | Pruned |
+| willr14 | 18.0% | Pruned |
+| vol_pk20 | 18.0% | Pruned |
+| bar_vwap_dev_3 | 16.0% | Pruned |
+| stoch_k | 16.0% | Pruned |
+| atr14_norm | 12.0% | Pruned |
+| cci14 | 12.0% | Pruned |
+| vol_gk20 | 12.0% | Pruned |
+| first_bar_return | 10.0% | Pruned |
+| capital_buy_value | 10.0% | Pruned |
+| early_volume_ratio | 8.0% | Pruned |
+| gap_direction | 8.0% | Pruned |
+| sma20_dist | 8.0% | Pruned |
+| short_balance | 8.0% | Pruned |
+| capital_sell_volume | 8.0% | Pruned |
+| vol_pk10 | 6.0% | Pruned |
+| northbound_buy | 6.0% | Pruned |
+| ema26_dist | 4.0% | Pruned |
+| total_balance | 4.0% | Pruned |
 
 #### Metrics
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | +0.0717 | +0.0896 | +0.0000 | -0.0938 | +0.0588 |
-| Dir Acc | 0.540 | 0.493 | 0.500 | 0.450 | 0.533 |
-| RMSE | 0.7624% | 0.7615% | 0.7600% | 1.0946% | 0.9964% |
-| L/S Sharpe | +0.74 | +1.14 | — | — | — |
+| IC | +0.1295 | -0.0274 | +0.0000 | -0.0981 | +0.0579 |
+| Dir Acc | 0.554 | 0.488 | 0.500 | 0.449 | 0.532 |
+| RMSE | 0.7534% | 1.0223% | 0.7598% | 1.0952% | 0.9970% |
+| L/S Sharpe | +1.95 | +0.61 | — | — | — |
 
 #### Best Hyperparameters
 
 ```json
 {
-  "model_type": "elasticnet",
-  "stability_threshold": 0.5,
-  "en_alpha": 1.5042398426133465e-05,
-  "en_l1_ratio": 0.326703555696136
+  "model_type": "huber",
+  "stability_threshold": 0.6000000000000001,
+  "huber_alpha": 0.000729704635902581,
+  "huber_epsilon": 1.9986983208106979
 }
 ```
 
@@ -317,27 +636,27 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.0732 | +0.0548 |
-| 2 | 0.0727 | +0.0690 |
-| 3 | 0.0707 | +0.0192 |
-| 4 | 0.0551 | +0.0687 |
-| 5 | 0.0714 | +0.0421 |
-| **Overall** | — | +0.0572 |
+| 1 | 0.2110 | +0.1307 |
+| 2 | 0.1885 | +0.2262 |
+| 3 | 0.2063 | +0.0798 |
+| 4 | 0.1804 | +0.1066 |
+| 5 | 0.1659 | +0.1023 |
+| **Overall** | — | +0.1304 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2017 | +0.0833 | 0.556 | 216 | +1.76 |
-| 2018 | +0.0212 | 0.490 | 243 | -0.09 |
-| 2019 | +0.0672 | 0.561 | 244 | -0.16 |
-| 2020 | +0.0660 | 0.543 | 243 | +1.42 |
-| 2021 | +0.0011 | 0.514 | 243 | -0.90 |
-| 2022 | +0.0714 | 0.492 | 242 | +2.10 |
-| 2023 | +0.0016 | 0.483 | 242 | +0.23 |
-| 2024 | +0.0067 | 0.533 | 242 | +0.29 |
-| 2025 | +0.0874 | 0.556 | 243 | +1.08 |
-| 2026 | +0.1203 | 0.542 | 107 | +1.18 |
+| 2017 | +0.1589 | 0.542 | 216 | +2.76 |
+| 2018 | +0.1173 | 0.535 | 243 | +2.66 |
+| 2019 | +0.2075 | 0.570 | 244 | +3.06 |
+| 2020 | +0.1745 | 0.560 | 243 | +4.74 |
+| 2021 | +0.0632 | 0.547 | 243 | +0.19 |
+| 2022 | +0.1740 | 0.533 | 242 | +4.32 |
+| 2023 | +0.0668 | 0.496 | 242 | +1.28 |
+| 2024 | +0.1406 | 0.562 | 242 | +2.46 |
+| 2025 | +0.0040 | 0.519 | 243 | -0.77 |
+| 2026 | +0.1894 | 0.607 | 107 | +4.98 |
 
 #### Diagnostic Plots
 
@@ -361,55 +680,162 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 ### 588000ETF
 
-- **Selected Model**: LASSO
-- **Tuned Stability Threshold**: 0.80
+- **Selected Model**: ELASTICNET
+- **Tuned Stability Threshold**: 0.60
 - **Samples**: 1293 (2021-02-09 → 2026-06-16)
 - **Holdout**: 258 days (2025-05-26 → 2026-06-16)
 - **Target stats**: mean=-0.0391%, std=0.9366%, Sharpe=-0.66
-- **Selected features (5)**: `early_realized_vol, early_volume_ratio, early_vwap_dev, early_skew, sma20_dist`
+- **Selected features (28)**: `gap_pct, early_vwap_dev, early_skew, early_kurtosis, bar_ret_5, bar_vol_1, bar_vol_5, bar_rng_2, bar_rng_4, bar_vwap_dev_0, bar_vwap_dev_5, body_to_range_ratio, total_path_length, sma50_dist, sma10_dist, sma100_dist, cci14, volume_sma_ratio, margin_net_buy, capital_net_ratio, yesterday_pm_return, yesterday_am_return, yesterday_gap_pct, yesterday_first_bar_volume, yesterday_early_vwap_dev, yesterday_early_kurtosis, yesterday_day_range, yesterday_day_late_mom`
 
 #### Feature Stability Scores (Block Bootstrap)
 
 | Feature | Stability Score | Status |
 |---------|-----------------|--------|
-| early_volume_ratio | 96.0% | **Selected** |
-| early_skew | 90.0% | **Selected** |
-| early_vwap_dev | 88.0% | **Selected** |
-| early_realized_vol | 84.0% | **Selected** |
-| sma20_dist | 80.0% | **Selected** |
-| gap_pct | 78.0% | Pruned |
-| early_kurtosis | 76.0% | Pruned |
-| sma50_dist | 76.0% | Pruned |
-| atr14_norm | 72.0% | Pruned |
-| bb_pctb | 72.0% | Pruned |
-| early_range | 62.0% | Pruned |
-| first_bar_return | 60.0% | Pruned |
-| first_bar_volume | 60.0% | Pruned |
-| first_30min_return | 52.0% | Pruned |
-| early_trend | 50.0% | Pruned |
-| rsi14 | 48.0% | Pruned |
-| macd_hist | 46.0% | Pruned |
-| vol20 | 44.0% | Pruned |
-| early_momentum | 42.0% | Pruned |
-| roc10 | 40.0% | Pruned |
+| bar_vwap_dev_0 | 96.0% | **Selected** |
+| bar_vol_5 | 88.0% | **Selected** |
+| yesterday_early_vwap_dev | 88.0% | **Selected** |
+| yesterday_gap_pct | 86.0% | **Selected** |
+| margin_net_buy | 84.0% | **Selected** |
+| gap_pct | 80.0% | **Selected** |
+| early_skew | 80.0% | **Selected** |
+| yesterday_day_late_mom | 78.0% | **Selected** |
+| bar_rng_2 | 76.0% | **Selected** |
+| early_vwap_dev | 74.0% | **Selected** |
+| sma10_dist | 74.0% | **Selected** |
+| bar_vol_1 | 72.0% | **Selected** |
+| volume_sma_ratio | 72.0% | **Selected** |
+| capital_net_ratio | 70.0% | **Selected** |
+| yesterday_pm_return | 70.0% | **Selected** |
+| bar_vwap_dev_5 | 68.0% | **Selected** |
+| body_to_range_ratio | 68.0% | **Selected** |
+| cci14 | 68.0% | **Selected** |
+| bar_rng_4 | 66.0% | **Selected** |
+| total_path_length | 66.0% | **Selected** |
+| yesterday_am_return | 66.0% | **Selected** |
+| yesterday_early_kurtosis | 66.0% | **Selected** |
+| yesterday_day_range | 66.0% | **Selected** |
+| early_kurtosis | 64.0% | **Selected** |
+| bar_ret_5 | 62.0% | **Selected** |
+| sma50_dist | 62.0% | **Selected** |
+| sma100_dist | 62.0% | **Selected** |
+| yesterday_first_bar_volume | 62.0% | **Selected** |
+| bar_body_rng_5 | 60.0% | Pruned |
+| yesterday_day_skew | 60.0% | Pruned |
+| bar_ret_4 | 58.0% | Pruned |
+| bar_vol_2 | 58.0% | Pruned |
+| margin_short_ratio | 58.0% | Pruned |
+| capital_net_value | 58.0% | Pruned |
+| yesterday_day_realized_vol | 58.0% | Pruned |
+| yesterday_day_close_pos | 58.0% | Pruned |
+| yesterday_day_vwap_dev | 58.0% | Pruned |
+| yesterday_day_kurtosis | 58.0% | Pruned |
+| bar_vol_4 | 56.0% | Pruned |
+| bar_rng_0 | 56.0% | Pruned |
+| bar_rng_3 | 56.0% | Pruned |
+| bar_rng_5 | 56.0% | Pruned |
+| num_up_bars | 56.0% | Pruned |
+| volume_sma_ratio_long | 56.0% | Pruned |
+| yesterday_early_realized_vol | 56.0% | Pruned |
+| yesterday_day_pm_am_vol_ratio | 56.0% | Pruned |
+| bar_vol_3 | 54.0% | Pruned |
+| bar_rng_1 | 54.0% | Pruned |
+| roc5 | 54.0% | Pruned |
+| vol_ratio_10_60 | 54.0% | Pruned |
+| northbound_net | 54.0% | Pruned |
+| max_up_ret | 52.0% | Pruned |
+| yesterday_early_skew | 52.0% | Pruned |
+| mfi14 | 50.0% | Pruned |
+| northbound_sell | 48.0% | Pruned |
+| yesterday_early_range | 48.0% | Pruned |
+| vol60 | 46.0% | Pruned |
+| aroon_osc | 44.0% | Pruned |
+| vol_ratio_5_20 | 44.0% | Pruned |
+| yesterday_early_volume_ratio | 44.0% | Pruned |
+| bar_body_rng_1 | 42.0% | Pruned |
+| bar_body_rng_3 | 42.0% | Pruned |
+| roc10 | 42.0% | Pruned |
+| short_sell_quantity | 42.0% | Pruned |
+| bar_ret_3 | 40.0% | Pruned |
+| bar_body_rng_0 | 40.0% | Pruned |
+| atr14_norm | 40.0% | Pruned |
+| roc20 | 40.0% | Pruned |
+| stoch_d | 40.0% | Pruned |
+| vol5 | 40.0% | Pruned |
+| max_down_ret | 38.0% | Pruned |
+| bb_width | 38.0% | Pruned |
+| yesterday_early_trend | 38.0% | Pruned |
+| early_realized_vol | 36.0% | Pruned |
+| bar_ret_2 | 36.0% | Pruned |
+| sma200_dist | 36.0% | Pruned |
+| capital_buy_value | 36.0% | Pruned |
+| bar_ret_1 | 34.0% | Pruned |
+| bar_vwap_dev_1 | 34.0% | Pruned |
+| roc60 | 34.0% | Pruned |
+| short_repayment_quantity | 34.0% | Pruned |
+| yesterday_first_bar_return | 34.0% | Pruned |
+| bar_body_rng_4 | 32.0% | Pruned |
+| northbound_buy | 32.0% | Pruned |
+| yesterday_first_30min_return | 32.0% | Pruned |
+| vol_gk10 | 30.0% | Pruned |
+| first_bar_volume | 28.0% | Pruned |
+| bb_pctb | 28.0% | Pruned |
+| buy_on_margin_value | 28.0% | Pruned |
+| short_balance | 28.0% | Pruned |
+| yesterday_early_momentum | 28.0% | Pruned |
+| bar_body_rng_2 | 26.0% | Pruned |
+| rsi5 | 26.0% | Pruned |
+| bar_vol_0 | 24.0% | Pruned |
+| cl_pos_in_range | 24.0% | Pruned |
+| first_30min_return | 22.0% | Pruned |
+| rsi21 | 22.0% | Pruned |
+| vol_gk20 | 22.0% | Pruned |
+| bar_vwap_dev_3 | 20.0% | Pruned |
+| vol20 | 20.0% | Pruned |
+| willr14 | 20.0% | Pruned |
+| margin_balance | 20.0% | Pruned |
+| bar_vwap_dev_4 | 18.0% | Pruned |
+| stoch_k | 18.0% | Pruned |
+| vol10 | 18.0% | Pruned |
+| bar_vwap_dev_2 | 16.0% | Pruned |
+| macd_hist | 16.0% | Pruned |
+| sma20_dist | 16.0% | Pruned |
+| total_balance | 16.0% | Pruned |
+| first_bar_return | 14.0% | Pruned |
+| volume_slope | 14.0% | Pruned |
+| early_trend | 12.0% | Pruned |
+| bar_ret_0 | 12.0% | Pruned |
+| early_range | 10.0% | Pruned |
+| early_volume_ratio | 10.0% | Pruned |
+| ema12_dist | 10.0% | Pruned |
+| capital_buy_volume | 10.0% | Pruned |
+| capital_sell_value | 10.0% | Pruned |
+| vol_pk10 | 8.0% | Pruned |
+| vol_pk20 | 8.0% | Pruned |
+| rsi14 | 6.0% | Pruned |
+| margin_repayment | 4.0% | Pruned |
+| short_balance_quantity | 4.0% | Pruned |
+| capital_sell_volume | 4.0% | Pruned |
+| ema26_dist | 2.0% | Pruned |
+| early_momentum | 0.0% | Pruned |
 | gap_direction | 0.0% | Pruned |
 
 #### Metrics
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | -0.1373 | -0.1125 | +0.0000 | -0.1046 | -0.0291 |
-| Dir Acc | 0.446 | 0.453 | 0.500 | 0.450 | 0.492 |
-| RMSE | 1.1194% | 1.1347% | 1.0403% | 1.5540% | 1.5099% |
-| L/S Sharpe | -2.18 | -1.21 | — | — | — |
+| IC | -0.0167 | -0.0536 | +0.0000 | -0.1046 | -0.0291 |
+| Dir Acc | 0.527 | 0.457 | 0.500 | 0.450 | 0.492 |
+| RMSE | 1.1348% | 1.3282% | 1.0403% | 1.5540% | 1.5099% |
+| L/S Sharpe | -0.40 | +0.37 | — | — | — |
 
 #### Best Hyperparameters
 
 ```json
 {
-  "model_type": "lasso",
-  "stability_threshold": 0.8,
-  "lasso_alpha": 0.005708158595135544
+  "model_type": "elasticnet",
+  "stability_threshold": 0.6000000000000001,
+  "en_alpha": 0.011124993887951821,
+  "en_l1_ratio": 0.412018024288793
 }
 ```
 
@@ -417,22 +843,22 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.1315 | +0.0407 |
-| 2 | 0.0673 | +0.1501 |
-| 3 | 0.1007 | +0.1254 |
-| 4 | 0.1039 | +0.2355 |
-| 5 | 0.1304 | -0.1704 |
-| **Overall** | — | +0.0505 |
+| 1 | 0.3174 | +0.1917 |
+| 2 | 0.2774 | +0.1182 |
+| 3 | 0.2489 | +0.1192 |
+| 4 | 0.2242 | +0.2304 |
+| 5 | 0.2360 | -0.0365 |
+| **Overall** | — | +0.1129 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2022 | +0.0393 | 0.560 | 241 | -0.08 |
-| 2023 | +0.1538 | 0.541 | 242 | +3.54 |
-| 2024 | +0.2022 | 0.566 | 242 | +3.52 |
-| 2025 | +0.0557 | 0.519 | 243 | +0.92 |
-| 2026 | -0.2666 | 0.346 | 107 | -5.82 |
+| 2022 | +0.1964 | 0.602 | 241 | +4.08 |
+| 2023 | +0.0971 | 0.545 | 242 | +1.89 |
+| 2024 | +0.1943 | 0.583 | 242 | +5.09 |
+| 2025 | +0.0938 | 0.584 | 243 | -0.42 |
+| 2026 | -0.0766 | 0.458 | 107 | -1.41 |
 
 #### Diagnostic Plots
 
@@ -457,11 +883,11 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 ### 159915ETF
 
 - **Selected Model**: HUBER
-- **Tuned Stability Threshold**: 0.90
-- **Samples**: 2721 (2015-04-07 → 2026-06-16)
-- **Holdout**: 544 days (2024-03-18 → 2026-06-16)
-- **Target stats**: mean=-0.0077%, std=1.1359%, Sharpe=-0.11
-- **Selected features (5)**: `gap_pct, first_bar_return, first_bar_volume, macd_hist, roc10`
+- **Tuned Stability Threshold**: 0.85
+- **Samples**: 2719 (2015-04-07 → 2026-06-16)
+- **Holdout**: 543 days (2024-03-19 → 2026-06-16)
+- **Target stats**: mean=-0.0079%, std=1.1363%, Sharpe=-0.11
+- **Selected features (14)**: `gap_pct, first_bar_volume, bar_vol_0, bar_rng_1, num_up_bars, cl_pos_in_range, macd_hist, yesterday_am_return, yesterday_gap_pct, yesterday_early_kurtosis, yesterday_day_pm_am_vol_ratio, yesterday_day_late_mom, yesterday_day_vwap_dev, yesterday_day_skew`
 
 #### Feature Stability Scores (Block Bootstrap)
 
@@ -469,43 +895,149 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 |---------|-----------------|--------|
 | gap_pct | 100.0% | **Selected** |
 | first_bar_volume | 100.0% | **Selected** |
-| first_bar_return | 92.0% | **Selected** |
-| macd_hist | 92.0% | **Selected** |
-| roc10 | 90.0% | **Selected** |
-| early_range | 86.0% | Pruned |
-| early_vwap_dev | 82.0% | Pruned |
-| early_realized_vol | 80.0% | Pruned |
-| early_kurtosis | 80.0% | Pruned |
-| sma50_dist | 80.0% | Pruned |
-| early_skew | 72.0% | Pruned |
-| early_trend | 70.0% | Pruned |
-| vol20 | 70.0% | Pruned |
-| early_volume_ratio | 66.0% | Pruned |
-| sma20_dist | 62.0% | Pruned |
-| rsi14 | 58.0% | Pruned |
-| atr14_norm | 58.0% | Pruned |
-| bb_pctb | 58.0% | Pruned |
-| early_momentum | 42.0% | Pruned |
-| first_30min_return | 40.0% | Pruned |
+| yesterday_gap_pct | 98.0% | **Selected** |
+| yesterday_day_vwap_dev | 96.0% | **Selected** |
+| num_up_bars | 92.0% | **Selected** |
+| yesterday_am_return | 92.0% | **Selected** |
+| bar_vol_0 | 90.0% | **Selected** |
+| yesterday_day_late_mom | 90.0% | **Selected** |
+| yesterday_day_skew | 90.0% | **Selected** |
+| bar_rng_1 | 88.0% | **Selected** |
+| cl_pos_in_range | 88.0% | **Selected** |
+| macd_hist | 88.0% | **Selected** |
+| yesterday_early_kurtosis | 88.0% | **Selected** |
+| yesterday_day_pm_am_vol_ratio | 88.0% | **Selected** |
+| volume_sma_ratio_long | 84.0% | Pruned |
+| yesterday_early_volume_ratio | 84.0% | Pruned |
+| yesterday_day_realized_vol | 84.0% | Pruned |
+| early_skew | 82.0% | Pruned |
+| bar_rng_5 | 80.0% | Pruned |
+| bar_body_rng_5 | 80.0% | Pruned |
+| northbound_net | 80.0% | Pruned |
+| yesterday_first_bar_volume | 80.0% | Pruned |
+| bar_ret_1 | 78.0% | Pruned |
+| bar_vol_2 | 78.0% | Pruned |
+| bar_vol_4 | 78.0% | Pruned |
+| body_to_range_ratio | 78.0% | Pruned |
+| early_kurtosis | 76.0% | Pruned |
+| roc10 | 76.0% | Pruned |
+| yesterday_early_realized_vol | 76.0% | Pruned |
+| yesterday_early_skew | 76.0% | Pruned |
+| bar_vol_1 | 74.0% | Pruned |
+| bar_rng_0 | 74.0% | Pruned |
+| bar_body_rng_3 | 74.0% | Pruned |
+| yesterday_early_vwap_dev | 74.0% | Pruned |
+| sma50_dist | 72.0% | Pruned |
+| aroon_osc | 72.0% | Pruned |
+| yesterday_day_kurtosis | 72.0% | Pruned |
+| bar_rng_3 | 70.0% | Pruned |
+| cci14 | 70.0% | Pruned |
+| yesterday_early_trend | 70.0% | Pruned |
+| early_vwap_dev | 68.0% | Pruned |
+| vol5 | 68.0% | Pruned |
+| short_sell_quantity | 68.0% | Pruned |
+| margin_short_ratio | 68.0% | Pruned |
+| bar_ret_2 | 66.0% | Pruned |
+| bar_ret_5 | 66.0% | Pruned |
+| bar_rng_4 | 66.0% | Pruned |
+| bar_body_rng_0 | 66.0% | Pruned |
+| bar_vol_3 | 64.0% | Pruned |
+| bar_vol_5 | 64.0% | Pruned |
+| sma200_dist | 64.0% | Pruned |
+| roc5 | 64.0% | Pruned |
+| yesterday_day_range | 64.0% | Pruned |
+| yesterday_day_close_pos | 64.0% | Pruned |
+| bar_ret_3 | 62.0% | Pruned |
+| vol_ratio_5_20 | 62.0% | Pruned |
+| short_repayment_quantity | 62.0% | Pruned |
+| margin_net_buy | 62.0% | Pruned |
+| yesterday_pm_return | 62.0% | Pruned |
+| yesterday_early_range | 62.0% | Pruned |
+| early_range | 60.0% | Pruned |
+| bar_body_rng_2 | 60.0% | Pruned |
+| max_up_ret | 60.0% | Pruned |
+| volume_sma_ratio | 60.0% | Pruned |
+| bar_vwap_dev_0 | 58.0% | Pruned |
+| roc20 | 58.0% | Pruned |
+| roc60 | 58.0% | Pruned |
+| vol_ratio_10_60 | 58.0% | Pruned |
+| capital_net_ratio | 58.0% | Pruned |
+| early_realized_vol | 56.0% | Pruned |
+| rsi5 | 56.0% | Pruned |
+| capital_buy_value | 56.0% | Pruned |
+| bar_ret_4 | 54.0% | Pruned |
+| yesterday_early_momentum | 54.0% | Pruned |
+| bar_rng_2 | 52.0% | Pruned |
+| vol20 | 52.0% | Pruned |
+| capital_net_value | 52.0% | Pruned |
+| bar_body_rng_1 | 50.0% | Pruned |
+| bar_body_rng_4 | 50.0% | Pruned |
+| total_path_length | 50.0% | Pruned |
+| stoch_d | 50.0% | Pruned |
+| bb_width | 50.0% | Pruned |
+| vol_gk20 | 50.0% | Pruned |
+| yesterday_first_bar_return | 50.0% | Pruned |
+| sma20_dist | 48.0% | Pruned |
+| first_bar_return | 46.0% | Pruned |
+| sma10_dist | 46.0% | Pruned |
+| sma100_dist | 46.0% | Pruned |
+| vol60 | 46.0% | Pruned |
+| buy_on_margin_value | 46.0% | Pruned |
+| short_balance_quantity | 46.0% | Pruned |
+| northbound_buy | 46.0% | Pruned |
+| mfi14 | 44.0% | Pruned |
+| early_trend | 42.0% | Pruned |
+| total_balance | 40.0% | Pruned |
+| yesterday_first_30min_return | 40.0% | Pruned |
+| vol_gk10 | 38.0% | Pruned |
+| capital_sell_volume | 38.0% | Pruned |
+| bb_pctb | 34.0% | Pruned |
+| margin_repayment | 34.0% | Pruned |
+| margin_balance | 32.0% | Pruned |
+| stoch_k | 28.0% | Pruned |
+| vol10 | 28.0% | Pruned |
+| capital_sell_value | 28.0% | Pruned |
+| atr14_norm | 24.0% | Pruned |
+| willr14 | 24.0% | Pruned |
+| short_balance | 24.0% | Pruned |
+| bar_ret_0 | 22.0% | Pruned |
+| ema12_dist | 22.0% | Pruned |
+| rsi21 | 22.0% | Pruned |
+| max_down_ret | 20.0% | Pruned |
+| vol_pk10 | 20.0% | Pruned |
+| vol_pk20 | 20.0% | Pruned |
+| early_momentum | 18.0% | Pruned |
+| rsi14 | 18.0% | Pruned |
+| northbound_sell | 18.0% | Pruned |
+| first_30min_return | 16.0% | Pruned |
+| capital_buy_volume | 16.0% | Pruned |
+| ema26_dist | 8.0% | Pruned |
+| early_volume_ratio | 4.0% | Pruned |
+| bar_vwap_dev_2 | 2.0% | Pruned |
+| bar_vwap_dev_5 | 2.0% | Pruned |
 | gap_direction | 0.0% | Pruned |
+| bar_vwap_dev_1 | 0.0% | Pruned |
+| bar_vwap_dev_3 | 0.0% | Pruned |
+| bar_vwap_dev_4 | 0.0% | Pruned |
+| volume_slope | 0.0% | Pruned |
 
 #### Metrics
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | +0.1078 | +0.1349 | +0.0000 | -0.1574 | +0.0692 |
-| Dir Acc | 0.570 | 0.583 | 0.500 | 0.414 | 0.531 |
-| RMSE | 0.9602% | 0.9682% | 1.0043% | 1.4921% | 1.2758% |
-| L/S Sharpe | +1.35 | +2.11 | — | — | — |
+| IC | +0.1906 | +0.1092 | +0.0000 | -0.1612 | +0.0677 |
+| Dir Acc | 0.571 | 0.541 | 0.500 | 0.413 | 0.530 |
+| RMSE | 0.9488% | 1.0932% | 1.0048% | 1.4929% | 1.2770% |
+| L/S Sharpe | +3.26 | +2.70 | — | — | — |
 
 #### Best Hyperparameters
 
 ```json
 {
   "model_type": "huber",
-  "stability_threshold": 0.9,
-  "huber_alpha": 7.530395926504481,
-  "huber_epsilon": 1.007984806902894
+  "stability_threshold": 0.8500000000000001,
+  "huber_alpha": 0.23365701739784514,
+  "huber_epsilon": 1.6777452428201527
 }
 ```
 
@@ -513,27 +1045,27 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.1928 | +0.1225 |
-| 2 | 0.1534 | +0.0985 |
-| 3 | 0.1455 | +0.0682 |
-| 4 | 0.1298 | +0.1725 |
-| 5 | 0.1439 | +0.0926 |
-| **Overall** | — | +0.0918 |
+| 1 | 0.2807 | +0.1786 |
+| 2 | 0.2484 | +0.2233 |
+| 3 | 0.2476 | +0.1626 |
+| 4 | 0.2308 | +0.1687 |
+| 5 | 0.2203 | +0.1669 |
+| **Overall** | — | +0.1774 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2017 | +0.0860 | 0.551 | 216 | +2.44 |
-| 2018 | +0.1261 | 0.564 | 243 | +1.22 |
-| 2019 | +0.1331 | 0.512 | 244 | +3.38 |
-| 2020 | +0.0718 | 0.506 | 243 | +2.75 |
-| 2021 | +0.1702 | 0.568 | 243 | +3.77 |
-| 2022 | -0.0667 | 0.479 | 242 | -0.94 |
-| 2023 | +0.1473 | 0.579 | 242 | +1.51 |
-| 2024 | +0.1593 | 0.599 | 242 | +2.84 |
-| 2025 | +0.1055 | 0.539 | 243 | +1.94 |
-| 2026 | +0.0978 | 0.607 | 107 | +0.97 |
+| 2017 | +0.1232 | 0.530 | 217 | +2.13 |
+| 2018 | +0.2029 | 0.539 | 243 | +3.37 |
+| 2019 | +0.2087 | 0.582 | 244 | +5.89 |
+| 2020 | +0.1943 | 0.568 | 243 | +4.43 |
+| 2021 | +0.1436 | 0.562 | 242 | +3.21 |
+| 2022 | +0.1771 | 0.583 | 242 | +4.55 |
+| 2023 | +0.1155 | 0.533 | 242 | +2.52 |
+| 2024 | +0.2887 | 0.599 | 242 | +5.29 |
+| 2025 | +0.1026 | 0.535 | 243 | +1.84 |
+| 2026 | +0.1300 | 0.551 | 107 | +1.13 |
 
 #### Diagnostic Plots
 
@@ -566,11 +1098,11 @@ Four baselines evaluated on the same holdout set:
 
 | ETF | Best Linear IC > Ridge Base IC? | Best Linear IC > Mom IC? | Best Baseline |
 |-----|---------------------------------|--------------------------|---------------|
-| 300ETF | Yes | No | first_30min_mom (IC=+0.0468) |
-| 50ETF | No | Yes | ridge (IC=+0.1062) |
-| 500ETF | No | Yes | ridge (IC=+0.0896) |
-| 588000ETF | No | No | zero (IC=+0.0000) |
-| 159915ETF | No | Yes | ridge (IC=+0.1349) |
+| 300ETF | Yes | Yes | first_30min_mom (IC=+0.0468) |
+| 50ETF | Yes | Yes | yesterday_pm (IC=+0.0523) |
+| 500ETF | Yes | Yes | first_30min_mom (IC=+0.0579) |
+| 588000ETF | Yes | Yes | zero (IC=+0.0000) |
+| 159915ETF | Yes | Yes | ridge (IC=+0.1092) |
 
 ## 6. Risk of Overfitting
 
@@ -578,11 +1110,11 @@ Four baselines evaluated on the same holdout set:
 
 | ETF | IS IC | OOS IC | Gap | Assessment |
 |-----|-------|--------|-----|-----------|
-| 300ETF | 0.0725 | 0.0374 | +0.0350 | Low |
-| 50ETF | 0.0338 | 0.0839 | -0.0502 | Low |
-| 500ETF | 0.0626 | 0.0717 | -0.0092 | Low |
-| 588000ETF | 0.1273 | -0.1373 | +0.2645 | Moderate |
-| 159915ETF | 0.1383 | 0.1078 | +0.0305 | Low |
+| 300ETF | 0.1462 | 0.0854 | +0.0609 | Low |
+| 50ETF | 0.1614 | 0.0195 | +0.1419 | Low |
+| 500ETF | 0.1616 | 0.1295 | +0.0321 | Low |
+| 588000ETF | 0.2355 | -0.0167 | +0.2522 | Moderate |
+| 159915ETF | 0.2138 | 0.1906 | +0.0232 | Low |
 
 ### 6.2 Regime Breakdown (Year-by-Year)
 
@@ -594,11 +1126,11 @@ If IC drops sharply as purge gap increases from 0→5→10, it indicates short-t
 
 | ETF | Gap=0 | Gap=5 | Gap=10 | Delta(0→10) |
 |-----|-------|-------|--------|------------|
-| 300ETF | +0.0360 | +0.0362 | +0.0366 | -0.0006 |
-| 50ETF | +0.0617 | +0.0609 | +0.0603 | +0.0014 |
-| 500ETF | +0.0514 | +0.0508 | +0.0512 | +0.0002 |
-| 588000ETF | +0.0731 | +0.0762 | +0.0745 | -0.0015 |
-| 159915ETF | +0.1112 | +0.1108 | +0.1107 | +0.0005 |
+| 300ETF | +0.0965 | +0.0962 | +0.0963 | +0.0002 |
+| 50ETF | +0.0694 | +0.0699 | +0.0694 | +0.0001 |
+| 500ETF | +0.1290 | +0.1291 | +0.1299 | -0.0009 |
+| 588000ETF | +0.1260 | +0.1246 | +0.1195 | +0.0065 |
+| 159915ETF | +0.1796 | +0.1800 | +0.1800 | -0.0003 |
 
 ### 6.4 Feature Importance Stability
 
@@ -611,67 +1143,67 @@ Compare standardized coefficients vs permutation importance (OOS) across feature
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | first_bar_return (+0.0115) | first_bar_return (+0.002098) |
-| 2 | gap_pct (+0.0081) | early_skew (+0.000177) |
-| 3 | early_skew (-0.0041) | early_realized_vol (+0.000120) |
-| 4 | early_realized_vol (-0.0034) | gap_pct (+0.000063) |
-| 5 | first_30min_return (+0.0000) | first_30min_return (+0.000000) |
+| 1 | bar_rng_3 (-0.0214) | bar_rng_0 (+0.003823) |
+| 2 | max_up_ret (+0.0201) | bar_rng_3 (+0.001829) |
+| 3 | bar_rng_0 (-0.0190) | yesterday_am_return (+0.001431) |
+| 4 | yesterday_early_trend (+0.0167) | yesterday_early_trend (+0.001198) |
+| 5 | yesterday_day_skew (-0.0157) | max_up_ret (+0.001090) |
 
 **50ETF**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | first_bar_volume (-0.0239) | first_bar_return (+0.002788) |
-| 2 | first_bar_return (+0.0236) | first_bar_volume (+0.001893) |
-| 3 | early_realized_vol (-0.0155) | early_realized_vol (+0.000678) |
-| 4 | gap_pct (+0.0000) | gap_pct (+0.000000) |
-| 5 | first_30min_return (+0.0000) | first_30min_return (+0.000000) |
+| 1 | margin_net_buy (-0.0669) | yesterday_early_vwap_dev (+0.007500) |
+| 2 | yesterday_early_vwap_dev (+0.0588) | yesterday_day_late_mom (+0.007258) |
+| 3 | bar_ret_5 (-0.0492) | capital_buy_value (+0.001319) |
+| 4 | yesterday_pm_return (-0.0491) | bar_rng_3 (+0.000886) |
+| 5 | yesterday_day_late_mom (+0.0410) | bar_rng_0 (+0.000873) |
 
 **500ETF**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | early_realized_vol (+0.1157) | early_range (+0.014823) |
-| 2 | early_range (-0.1063) | early_skew (+0.002340) |
-| 3 | macd_hist (+0.0363) | early_trend (+0.000884) |
-| 4 | first_bar_return (+0.0315) | first_bar_return (+0.000815) |
-| 5 | early_skew (+0.0285) | early_volume_ratio (+0.000000) |
+| 1 | yesterday_day_vwap_dev (-0.2076) | yesterday_day_vwap_dev (+0.057155) |
+| 2 | yesterday_day_late_mom (+0.1296) | yesterday_day_late_mom (+0.023352) |
+| 3 | yesterday_am_return (+0.1159) | yesterday_am_return (+0.020219) |
+| 4 | volume_sma_ratio (+0.0745) | volume_sma_ratio (+0.007855) |
+| 5 | yesterday_day_skew (-0.0539) | early_skew (+0.002335) |
 
 **588000ETF**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | early_vwap_dev (+0.1198) | early_skew (+0.008047) |
-| 2 | early_realized_vol (-0.1086) | first_30min_return (+0.000000) |
-| 3 | sma20_dist (-0.0928) | early_range (+0.000000) |
-| 4 | early_skew (+0.0621) | early_trend (+0.000000) |
-| 5 | early_volume_ratio (-0.0325) | gap_pct (+0.000000) |
+| 1 | sma10_dist (-0.2758) | sma10_dist (+0.100231) |
+| 2 | cci14 (+0.1499) | cci14 (+0.062578) |
+| 3 | total_path_length (-0.1227) | bar_rng_4 (+0.035079) |
+| 4 | yesterday_pm_return (-0.1077) | yesterday_day_late_mom (+0.017232) |
+| 5 | bar_rng_4 (+0.0809) | yesterday_pm_return (+0.016653) |
 
 **159915ETF**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | gap_pct (+0.1332) | gap_pct (+0.127900) |
-| 2 | first_bar_return (+0.0853) | first_bar_return (+0.025633) |
-| 3 | first_bar_volume (-0.0673) | first_bar_volume (+0.008024) |
-| 4 | roc10 (+0.0458) | macd_hist (+0.002207) |
-| 5 | macd_hist (-0.0090) | first_30min_return (+0.000000) |
+| 1 | yesterday_day_vwap_dev (-0.2653) | yesterday_day_vwap_dev (+0.150113) |
+| 2 | yesterday_am_return (+0.1637) | gap_pct (+0.113844) |
+| 3 | gap_pct (+0.1228) | yesterday_am_return (+0.039442) |
+| 4 | yesterday_day_late_mom (+0.1156) | yesterday_day_late_mom (+0.024162) |
+| 5 | yesterday_gap_pct (+0.0782) | yesterday_gap_pct (+0.011814) |
 
 ### 6.6 Hyperparameter Sensitivity
 
 Optuna parameter importance shows which parameters most affect CV IC.
 
-- **300ETF**: Most influential = `stability_threshold` (76.86%)
-- **50ETF**: Most influential = `stability_threshold` (64.06%)
-- **500ETF**: Most influential = `stability_threshold` (98.02%)
-- **588000ETF**: Most influential = `stability_threshold` (67.06%)
-- **159915ETF**: Most influential = `model_type` (70.05%)
+- **300ETF**: Most influential = `stability_threshold` (68.29%)
+- **50ETF**: Most influential = `model_type` (57.99%)
+- **500ETF**: Most influential = `stability_threshold` (78.88%)
+- **588000ETF**: Most influential = `stability_threshold` (93.07%)
+- **159915ETF**: Most influential = `stability_threshold` (60.32%)
 
 ## 7. Conclusions & Caveats
 
-**Potentially deployable** (IC>0.03, L/S Sharpe>0.5, beats Ridge Base): 300ETF
+**Potentially deployable** (IC>0.03, L/S Sharpe>0.5, beats Ridge Base): 300ETF, 500ETF, 159915ETF
 
-**Marginal** (positive IC but weak Sharpe or below Ridge Base): 50ETF, 500ETF, 159915ETF
+**Marginal** (positive IC but weak Sharpe or below Ridge Base): 50ETF
 
 **Weak/Not recommended** (negative IC or no edge): 588000ETF
 
