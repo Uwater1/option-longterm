@@ -8,6 +8,7 @@ Covered Call + Bull Put Spread on 50/300/500/588000/159915 ETF.
 source venv/bin/activate                    # Activate env
 python3 update_data.py                      # Pull ETF/option data from rqdatac
 python3 download_5m_data.py                # Download 5m data
+python3 download_1m_data.py                # Download 1m data (zstd level 5 compressed)
 python backtest_put.py [50|300|500] --alpha    # Run new daily alpha-hedging backtest
 python backtest_put.py 300 --no-filter         # Run daily baseline (hedge every cycle)
 python backtest_put.py 300 --limit-entry       # Run daily backtest with BS limit entry
@@ -62,6 +63,7 @@ data/                          # Parquet files
 ├── {ETF}_historical_prices.parquet  # Daily correct strike/multiplier
 ├── {ETF}_1d.parquet           # Underlying daily (unadjusted + post-adjusted)
 ├── {ETF}_5m.parquet           # 5m ETF prices
+├── {ETF}_1m.parquet           # 1m ETF prices (zstd level 5 compressed)
 ├── {ETF}_historical_prices_5m.parquet # 5m Option prices
 └── 30d_iv_cache_{N}.parquet   # ATM IV cache
 
