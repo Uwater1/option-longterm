@@ -167,7 +167,7 @@ day-model/                     # Day-Model PM session return predictor
 - `RISK_FREE = 0.02`
 
 ## Data Dependencies
-- `rqdatac` needed. Run `python3 update_data.py` and `python3 download_5m_data.py`.
+- `rqdatac` needed. Run `python3 update_data.py`, `python3 download_5m_data.py`, and `python3 download_1m_data.py`.
 
 ## Research Notes
 - **500ETF**: Volatility too high (~26.8%). Sharp rallies cause major assignment loss. Raising RSI threshold to 70 helps slightly. Detailed in [RESEARCH_500ETF.md](file:///home/hallo/Documents/option-longterm/RESEARCH_500ETF.md).
