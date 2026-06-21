@@ -45,8 +45,8 @@ def _sharpe(rets):
 def _max_dd_bps(rets):
     if len(rets) == 0:
         return float("nan")
-    cum = np.cumsum(rets)
-    return float(np.min(np.minimum.accumulate(cum) - cum) * 1e4)
+    cum = np.insert(np.cumsum(rets), 0, 0.0)
+    return float(np.min(cum - np.maximum.accumulate(cum)) * 1e4)
 
 
 def _trading_day_counts(etf: str) -> tuple[int, int]:

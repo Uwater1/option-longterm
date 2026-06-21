@@ -86,6 +86,15 @@ day-model/                     # Day-Model PM session return predictor
 ├── build_features.py          # Early-bar + day-level feature engineering (127 features, local caching)
 ├── train_model.py             # Optuna-tuned linear model training & feature selection
 └── generate_report.py         # Report markdown generator
+daytrade/                      # Frozen-Linear Intraday Alpha Strategy
+├── AGENTS.md                  # Strategy details, parameters, and developer guide
+├── REPORT.md                  # Calibration and performance report (with corrected drawdown metrics)
+├── __init__.py                # Strategy parameters and paths
+├── scores.py                  # Frozen score compute + IC verification
+├── rules.py                   # Masked expanding percentile signal rules
+├── backtest.py                # Daily 5m intraday simulator
+├── calibrate.py               # Independent per-side threshold optimizer
+└── report.py                  # Report generator
 ```
 
 ### Day-Model Caching & Features (New)

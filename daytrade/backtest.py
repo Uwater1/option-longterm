@@ -216,10 +216,10 @@ def _metrics_from_rets(rets: np.ndarray) -> dict:
         return {"n": 0, "sharpe": float("nan"), "pnl_bps": 0.0,
                 "max_dd_bps": float("nan"), "win_rate": float("nan"),
                 "mean_ret_bps": float("nan")}
-    cum = np.cumsum(rets)
+    cum = np.insert(np.cumsum(rets), 0, 0.0)
     sharpe = (float(np.mean(rets) / np.std(rets, ddof=1) * np.sqrt(252))
               if n > 1 and np.std(rets, ddof=1) > 0 else float("nan"))
-    max_dd = float(np.min(np.minimum.accumulate(cum) - cum))
+    max_dd = float(np.min(cum - np.maximum.accumulate(cum)))
     return {
         "n": n,
         "sharpe": sharpe,
@@ -266,8 +266,8 @@ def _summarize(trades: pd.DataFrame, etf: str, cost_bps: float) -> dict:
     rets = trades["net_ret"].values
     n = len(rets)
     wins = (rets > 0).sum()
-    cum = np.cumsum(rets)
-    max_dd = float(np.min(np.minimum.accumulate(cum) - cum)) if n else float("nan")
+    cum = np.insert(np.cumsum(rets), 0, 0.0)
+    max_dd = float(np.min(cum - np.maximum.accumulate(cum))) if n else float("nan")
     sharpe = float(np.mean(rets) / np.std(rets, ddof=1) * np.sqrt(252)) if n > 1 and np.std(rets, ddof=1) > 0 else float("nan")
     long_rets = trades.loc[trades["direction"] > 0, "net_ret"]
     short_rets = trades.loc[trades["direction"] < 0, "net_ret"]
