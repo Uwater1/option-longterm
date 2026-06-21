@@ -83,10 +83,25 @@ numba_utils.py                 # Numba BS functions & IV solver
 day-model/                     # Day-Model PM session return predictor
 ├── REPORT.md                  # Comprehensive PM return prediction report
 ├── AGENTS.md                  # Feature expansion and workflow guide
-├── build_features.py          # Early-bar + day-level feature engineering
+├── build_features.py          # Early-bar + day-level feature engineering (127 features, local caching)
 ├── train_model.py             # Optuna-tuned linear model training & feature selection
 └── generate_report.py         # Report markdown generator
+daytrade/                      # Frozen-Linear Intraday Alpha Strategy
+├── AGENTS.md                  # Strategy details, parameters, and developer guide
+├── REPORT.md                  # Calibration and performance report (with corrected drawdown metrics)
+├── __init__.py                # Strategy parameters and paths
+├── scores.py                  # Frozen score compute + IC verification
+├── rules.py                   # Masked expanding percentile signal rules
+├── backtest.py                # Daily 5m intraday simulator
+├── calibrate.py               # Independent per-side threshold optimizer
+└── report.py                  # Report generator
 ```
+
+### Day-Model Caching & Features (New)
+- **Data Caching**: Ricequant 3rd-party data (Securities Margin, Capital Flow, Northbound Connect Quota) is cached locally to `data/securities_margin.parquet`, `data/capital_flow.parquet`, and `data/stock_connect_quota.parquet` to prevent slow network calls and minimize API quota usage.
+- **127 Features**: Expanded feature space includes 50 early-bar intraday features, 55 day-level features (including technical indicators and 3rd party margin/flow), and 22 yesterday's features (shifted by 1 day to prevent leakage).
+- **Look-Ahead Bias Correction**: Normalizing early-morning volume features using a rolling 20-day historical daily volume shifted by 1 day (i.e. expected bar volume = `yesterday_rolling_20d_daily_volume / 48`) instead of the current day's full volume, ensuring strict chronological boundaries and eliminating look-ahead leakage.
+
 
 > Also: `backtest/alpha_put_models.json` (Phase 1 weights+OOS), `backtest/alpha_ml_models/` (Phase 2 bags+manifests), `backtest/validate_pnl_phase{1,2,3}.json`, `backtest/alpha_phase_comparison.md`.
 

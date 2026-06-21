@@ -69,7 +69,7 @@ def _score(side_metrics: dict, n_baseline: int) -> float:
         0.15 * s1(sharpe) +
         0.10 * s3(max_dd) +
         0.05 * s4(wr) +
-        0.05 * s1(sharpe)
+        0.05 * (1.0 - s5(n, n_baseline))
     )
 
 
@@ -114,8 +114,8 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
         oos_rets = oos["net_ret"].values
         oos_sharpe = _sharpe(oos_rets)
         oos_pnl = float(oos_rets.sum() * 1e4)
-        oos_max_dd = float(np.min(np.minimum.accumulate(np.cumsum(oos_rets))
-                                  - np.cumsum(oos_rets)) * 1e4)
+        oos_cum = np.insert(np.cumsum(oos_rets), 0, 0.0)
+        oos_max_dd = float(np.min(oos_cum - np.maximum.accumulate(oos_cum)) * 1e4)
         oos_wr = float((oos_rets > 0).mean())
         n_oos = len(oos)
         side_metrics = {"pnl_bps": oos_pnl, "sharpe": oos_sharpe,

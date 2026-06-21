@@ -93,7 +93,7 @@ day-model/data/features_{ETF}.parquet   ─┘                                  
 ### Eligibility & Scoring
 
 Calibration grid: `threshold_pct ∈ {50,60,70,80,90}`, `conviction_pct ∈ {40,50,60,70}`, run independently for long & short. Selection objective is profit-first composite (per AGENTS.md put convention):
-- P&L 35%, FilterLift 30%, Sharpe 15%, MaxDD 10%, WinRate 5%, Placement 5%
+- P&L 35%, FilterLift 30% (selectivity rate, `s5`), Sharpe 15%, MaxDD 10%, WinRate 5%, Placement 5% (trades kept fraction, `1.0 - s5`)
 - Hard eligibility guard: OOS P&L > 0 AND OOS Sharpe > 0 AND OOS n ≥ 20
 
 Selection is by **holdout** (2024-03-19+), never in-sample — matches day-model window.
@@ -275,6 +275,8 @@ Ordered roughly by expected value / implementation cost.
 - Per-side eligibility uses holdout (2024-03+) only; earlier years may behave differently. Year-by-year table is the honest diagnostic.
 - Single `cost_bps` for both long and short; real shorts via options carry different (likely higher) cost.
 - No position sizing in v1 — drawdowns are per-unit-notional and 159915 will dominate any naive portfolio combination.
+- Drawdown Calculation: Drawdown was historically calculated with a buggy formula `minimum.accumulate(cum) - cum`. This was corrected to `cum - maximum.accumulate(cum)` with inception `0.0` prepended to measure drawdown from the start of trading.
+
 
 ---
 
