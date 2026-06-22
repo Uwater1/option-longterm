@@ -8,7 +8,7 @@ This guide details how to add new features, run the training pipeline, and lever
 # Default: single symmetric model (predicts raw pm_return)
 python day-model/train_model.py -e all
 
-# Dual asymmetric models (for daytrade hybrid mode)
+# Dual asymmetric models (for daytrade hybrid/dual mode)
 python day-model/train_model.py -e all --side both --trials 100
 # Produces: linear_{ETF}_long.joblib, linear_{ETF}_short.joblib
 
@@ -16,13 +16,17 @@ python day-model/train_model.py -e all --side both --trials 100
 python day-model/train_model.py -e 300 --side long
 ```
 
-**`--side` parameter** controls the training target and feature selection:
+**`--side` parameter** controls the training target, feature selection, and Optuna objective:
 
-| Side | Stability target | Training target | Sample weights | Optuna objective |
+| Side | Stability target (Phase 2.4) | Training target | Sample weights | Optuna objective (Phase 2.5) |
 |:---|:---|:---|:---|:---|
-| `single` (default) | `pm_return` | `pm_return` | uniform | overall Spearman IC |
-| `long` | `max(0, pm_return)` | `pm_return` (raw) | up-weight positive days (λ=0.5) | upside IC (`pred` vs `max(0,y)`) |
-| `short` | `max(0, -pm_return)` | `pm_return` (raw) | up-weight negative days (λ=0.5) | downside IC (`-pred` vs `max(0,-y)`) |
+| `single` (default) | `pm_return` (raw) | `pm_return` | uniform | overall Spearman IC |
+| `long` | `max(0, pm_return)` (clipped) | `pm_return` (raw) | up-weight positive days (λ=0.5) | **tail-weighted IC** (50% overall + 50% top-30% tail) |
+| `short` | `max(0, -pm_return)` (clipped) | `pm_return` (raw) | up-weight negative days (λ=0.5) | **tail-weighted IC** (50% overall + 50% top-30% tail) |
+
+**Phase 2.4 fix**: Stability selection now uses the asymmetric clipped target (`y_clip_dev`) for dual models, so feature selection isolates regime-specific tail drivers instead of overall variance.
+
+**Phase 2.5 fix**: Optuna objective for dual models blends 50% overall IC with 50% tail IC (computed on the top-30% of predictions by conviction). This aligns optimisation with the trading tail where signals fire.
 
 Output files use suffix: `linear_{ETF}.joblib` (single) or `linear_{ETF}_long.joblib` / `linear_{ETF}_short.joblib` (dual).
 

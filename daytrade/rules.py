@@ -19,10 +19,19 @@ Signal Modes
     fewer trades.  Dual models must be trained first via
     ``python day-model/train_model.py --side both``.
 
+**dual** (v2, true independent execution)
+    Each side-specialist model fires **independently** based on its own
+    rank-normalised score — no single-model sign gate.  Scores are converted
+    to walk-forward percentile ranks via ``expanding_pct_rank`` (fixes the
+    threshold-dilution root cause of v1).  When both sides fire, the side
+    with the higher normalised margin wins.  This is a genuine dual system:
+    the long model can fire on any day regardless of the short model.
+
 Thresholds are always walk-forward (expanding percentile, no look-ahead).
 """
 from __future__ import annotations
 
+import bisect
 import numpy as np
 import pandas as pd
 
@@ -76,6 +85,41 @@ def expanding_pct_masked(
     return pd.Series(out, index=series.index)
 
 
+def expanding_pct_rank(series: pd.Series, min_periods: int = 60) -> pd.Series:
+    """Walk-forward percentile rank of each value relative to prior history.
+
+    For each row *t*, returns the fraction of prior non-NaN values that are
+    **strictly less than** ``series[t]``.  Output is in ``[0, 1]``.
+
+    This normalises any score distribution to a uniform ``[0, 1]`` scale,
+    making percentile thresholds directly interpretable regardless of the raw
+    distribution shape.  A threshold of ``0.9`` selects exactly the top 10 %
+    of historical scores — no dilution from a wider positive base (the v1
+    dual-model root cause).
+
+    Uses ``bisect`` on a maintained sorted buffer for O(N log N) performance.
+
+    Parameters
+    ----------
+    series : pd.Series
+        Raw scores (may contain NaN for days when the side is inactive).
+    min_periods : int
+        Minimum number of valid prior observations before the rank is valid.
+    """
+    vals = series.values
+    n = len(vals)
+    out = np.full(n, np.nan, dtype=float)
+    sorted_buf: list[float] = []  # maintained sorted (via bisect.insort)
+    for i in range(n):
+        v = vals[i]
+        if np.isnan(v):
+            continue
+        if len(sorted_buf) >= min_periods:
+            out[i] = bisect.bisect_left(sorted_buf, v) / len(sorted_buf)
+        bisect.insort(sorted_buf, float(v))
+    return pd.Series(out, index=series.index)
+
+
 # ---------------------------------------------------------------------------
 # Main signal generator (single-mode default, hybrid optional)
 # ---------------------------------------------------------------------------
@@ -94,7 +138,7 @@ def get_long_short_signals(
 
     Parameters
     ----------
-    mode : {"single", "hybrid"}
+    mode : {"single", "hybrid", "dual"}
         ``"single"`` (default) uses the frozen single-model signed score.
         Sign determines direction; magnitude determines conviction.
         Long and short are mutually exclusive.
@@ -103,6 +147,11 @@ def get_long_short_signals(
         side score to form a combined conviction.  Requires dual models
         (``linear_{ETF}_long.joblib`` etc.).  Conflict resolution picks the
         side with the higher normalised margin when both fire.
+
+        ``"dual"`` (v2) lets each side-specialist model fire independently on
+        its own rank-normalised score.  No single-model sign gate.  Requires
+        dual models.  Conflict resolution picks the side with the higher
+        normalised margin when both fire.
 
     Returns
     -------
@@ -128,8 +177,15 @@ def get_long_short_signals(
             short_threshold_pct, short_conviction_pct,
             min_periods, long_enabled, short_enabled,
         )
+    elif mode == "dual":
+        return _signals_dual(
+            etf,
+            long_threshold_pct, long_conviction_pct,
+            short_threshold_pct, short_conviction_pct,
+            min_periods, long_enabled, short_enabled,
+        )
     else:
-        raise ValueError(f"mode must be 'single' or 'hybrid', got {mode!r}")
+        raise ValueError(f"mode must be 'single', 'hybrid', or 'dual', got {mode!r}")
 
 
 def _signals_single(
@@ -275,6 +331,98 @@ def _signals_hybrid(
     })
 
 
+def _signals_dual(
+    etf,
+    long_threshold_pct, long_conviction_pct,
+    short_threshold_pct, short_conviction_pct,
+    min_periods, long_enabled, short_enabled,
+) -> pd.DataFrame:
+    """Dual mode (v2): true independent execution with rank normalisation.
+
+    Each side-specialist model fires independently based on its own
+    rank-normalised score.  No single-model sign gate — the long model can
+    fire on any day regardless of what the short model says, and vice versa.
+
+    Key differences from v1 hybrid mode:
+      1. Scores are normalised via ``expanding_pct_rank`` to [0, 1] before
+         thresholding (fixes threshold-dilution root cause).
+      2. No single-model direction gate (fixes fake-dual root cause).
+      3. Conflict resolution via margin on rank space when both fire.
+
+    The percentile threshold ``long_thr=0.9`` selects exactly the top 10 %
+    of historical long-scores — no dilution from a wider positive base.
+
+    Parameters
+    ----------
+    long_threshold_pct, short_threshold_pct : float
+        Percentile cutoff in [0, 100].  ``90`` = top 10 % of scores.
+    long_conviction_pct, short_conviction_pct : float
+        Additional conviction floor in [0, 100].  Typically ≤ threshold.
+    """
+    long_dual = compute_scores(etf, "long", dropna=True)
+    short_dual = compute_scores(etf, "short", dropna=True)
+
+    common_idx = long_dual.index.intersection(short_dual.index)
+    long_dual = long_dual.loc[common_idx]
+    short_dual = short_dual.loc[common_idx]
+
+    # Rank-normalise each side independently (Phase 1 fix: no dilution)
+    long_rank = expanding_pct_rank(long_dual, min_periods=min_periods)
+    short_rank = expanding_pct_rank(short_dual, min_periods=min_periods)
+
+    long_thr = long_threshold_pct / 100.0
+    long_conv = long_conviction_pct / 100.0
+    short_thr = short_threshold_pct / 100.0
+    short_conv = short_conviction_pct / 100.0
+
+    long_fires = (
+        long_enabled
+        & long_rank.notna()
+        & (long_rank >= long_thr)
+        & (long_rank >= long_conv)
+    )
+    short_fires = (
+        short_enabled
+        & short_rank.notna()
+        & (short_rank >= short_thr)
+        & (short_rank >= short_conv)
+    )
+
+    # Conflict resolution via normalised margin in rank space
+    eps = 1e-12
+    long_margin = long_rank / max(long_thr, eps)
+    short_margin = short_rank / max(short_thr, eps)
+    both_fire = long_fires & short_fires
+
+    direction = pd.Series(0, index=common_idx, dtype=int)
+    direction[long_fires & ~both_fire] = 1
+    direction[short_fires & ~both_fire] = -1
+    direction[both_fire & (long_margin >= short_margin)] = 1
+    direction[both_fire & (long_margin < short_margin)] = -1
+
+    fired_score = pd.Series(np.nan, index=common_idx, dtype=float)
+    fired_score[direction > 0] = long_dual[direction > 0]
+    fired_score[direction < 0] = short_dual[direction < 0]
+
+    return pd.DataFrame({
+        "long_score": long_dual,
+        "short_score": short_dual,
+        "long_rank": long_rank,
+        "short_rank": short_rank,
+        "long_threshold": pd.Series(long_thr, index=common_idx),
+        "long_conviction_thr": pd.Series(long_conv, index=common_idx),
+        "long_fires": long_fires,
+        "long_margin": long_margin,
+        "short_threshold": pd.Series(short_thr, index=common_idx),
+        "short_conviction_thr": pd.Series(short_conv, index=common_idx),
+        "short_fires": short_fires,
+        "short_margin": short_margin,
+        "both_fire": both_fire,
+        "direction": direction,
+        "fired_score": fired_score,
+    })
+
+
 # ---------------------------------------------------------------------------
 # Legacy symmetric-threshold signal generator (backward compat)
 # ---------------------------------------------------------------------------
@@ -320,7 +468,7 @@ def get_signals(
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser()
-    ap.add_argument("--mode", default="single", choices=["single", "hybrid"])
+    ap.add_argument("--mode", default="single", choices=["single", "hybrid", "dual"])
     args = ap.parse_args()
     print(f"Mode: {args.mode}")
     print(f"{'ETF':<12} {'N':>5} {'Long':>6} {'Short':>6} {'Both':>6} "
@@ -333,5 +481,11 @@ if __name__ == "__main__":
         longs = int(s["long_fires"].sum())
         shorts = int(s["short_fires"].sum())
         both = int(s["both_fire"].sum())
+        if "score" in s.columns:
+            mean_s = s["score"].abs().mean()
+        elif "fired_score" in s.columns:
+            mean_s = s["fired_score"].mean()
+        else:
+            mean_s = float("nan")
         print(f"{etf:<12} {n:>5} {longs:>6} {shorts:>6} {both:>6} "
-              f"{s['score'].abs().mean():>8.4f}")
+              f"{mean_s:>8.4f}")

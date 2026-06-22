@@ -6,101 +6,54 @@
       "long": null,
       "short": {
         "threshold_pct": 50.0,
-        "conviction_pct": 80.0,
-        "n_full": 68,
-        "n_oos": 34,
-        "oos_sharpe": 0.6739204679561119,
-        "oos_pnl_bps": 170.90139962924226,
-        "oos_max_dd_bps": -574.7754799871552,
-        "oos_win_rate": 0.5294117647058824,
-        "is_sharpe": -1.3358108878038428,
-        "is_pnl_bps": -215.05462495329533,
-        "score": 0.35037492083455324,
-        "eligible": true
-      },
-      "long_meta": {
-        "n_eligible": 0,
-        "n_total": 36
-      },
-      "short_meta": {
-        "n_eligible": 14,
-        "n_total": 20
+        "conviction_pct": 90.0,
+        "n_full": 67,
+        "n_oos": 24,
+        "oos_sharpe": 1.36025184979196,
+        "oos_pnl_bps": 351.01865183078473,
+        "oos_max_dd_bps": -657.7840445731587,
+        "oos_win_rate": 0.5833333333333334,
+        "is_sharpe": 2.512462069503917,
+        "is_pnl_bps": 1174.7584982203905,
+        "score": 0.47843398108449403,
+        "eligible": true,
+        "_mode": "dual"
       }
     },
     "300ETF": {
-      "long": {
-        "threshold_pct": 50.0,
-        "conviction_pct": 80.0,
-        "n_full": 140,
-        "n_oos": 25,
-        "oos_sharpe": 0.1675940600134858,
-        "oos_pnl_bps": 40.356929296983694,
-        "oos_max_dd_bps": -605.6338460240606,
-        "oos_win_rate": 0.48,
-        "is_sharpe": 2.5766069756592493,
-        "is_pnl_bps": 2357.941352164028,
-        "score": 0.3466533821754909,
-        "eligible": true
-      },
-      "short": {
-        "threshold_pct": 50.0,
-        "conviction_pct": 90.0,
-        "n_full": 84,
-        "n_oos": 23,
-        "oos_sharpe": 2.2062790841545343,
-        "oos_pnl_bps": 441.0197682175217,
-        "oos_max_dd_bps": -286.6514254975788,
-        "oos_win_rate": 0.5217391304347826,
-        "is_sharpe": -2.9016490002988125,
-        "is_pnl_bps": -1245.1931395291726,
-        "score": 0.483927885323603,
-        "eligible": true
-      },
-      "long_meta": {
-        "n_eligible": 8,
-        "n_total": 20
-      },
-      "short_meta": {
-        "n_eligible": 18,
-        "n_total": 30
-      }
+      "long": null,
+      "short": null
     },
     "500ETF": {
       "long": {
         "threshold_pct": 50.0,
-        "conviction_pct": 40.0,
-        "n_full": 502,
-        "n_oos": 101,
-        "oos_sharpe": 2.8792885029095565,
-        "oos_pnl_bps": 2487.1218066359734,
-        "oos_max_dd_bps": -1064.4559712485752,
-        "oos_win_rate": 0.5346534653465347,
-        "is_sharpe": 2.4767284065378785,
-        "is_pnl_bps": 7800.916595035783,
-        "score": 0.724576251894915,
-        "eligible": true
+        "conviction_pct": 60.0,
+        "n_full": 365,
+        "n_oos": 94,
+        "oos_sharpe": 3.6792884650727573,
+        "oos_pnl_bps": 3324.0430874188837,
+        "oos_max_dd_bps": -915.5352664027605,
+        "oos_win_rate": 0.5851063829787234,
+        "is_sharpe": 3.4339617426741973,
+        "is_pnl_bps": 8691.154758827251,
+        "score": 0.7922011051667396,
+        "eligible": true,
+        "_mode": "hybrid"
       },
       "short": {
-        "threshold_pct": 95.0,
-        "conviction_pct": 40.0,
-        "n_full": 40,
-        "n_oos": 20,
-        "oos_sharpe": 4.879947115395617,
-        "oos_pnl_bps": 768.8608228701344,
-        "oos_max_dd_bps": -479.01376522209216,
-        "oos_win_rate": 0.75,
-        "is_sharpe": -1.5120042325931524,
-        "is_pnl_bps": -295.2126593622738,
-        "score": 0.605400914115889,
-        "eligible": true
-      },
-      "long_meta": {
-        "n_eligible": 20,
-        "n_total": 20
-      },
-      "short_meta": {
-        "n_eligible": 36,
-        "n_total": 36
+        "threshold_pct": 50.0,
+        "conviction_pct": 90.0,
+        "n_full": 122,
+        "n_oos": 58,
+        "oos_sharpe": 5.138222261685638,
+        "oos_pnl_bps": 2127.716653832952,
+        "oos_max_dd_bps": -318.4173008243673,
+        "oos_win_rate": 0.6206896551724138,
+        "is_sharpe": 1.6478892339663185,
+        "is_pnl_bps": 765.1997622595954,
+        "score": 0.7184280211394221,
+        "eligible": true,
+        "_mode": "single"
       }
     },
     "588000ETF": {
@@ -108,127 +61,113 @@
         "threshold_pct": 50.0,
         "conviction_pct": 90.0,
         "n_full": 64,
-        "n_oos": 35,
-        "oos_sharpe": 3.5123670340776365,
-        "oos_pnl_bps": 2490.984792759118,
-        "oos_max_dd_bps": -797.8167399823404,
-        "oos_win_rate": 0.4857142857142857,
-        "is_sharpe": 4.11922870039535,
-        "is_pnl_bps": 1154.0772799094775,
-        "score": 0.7711728050241831,
-        "eligible": true
+        "n_oos": 27,
+        "oos_sharpe": 1.8040529083707606,
+        "oos_pnl_bps": 891.2258115971844,
+        "oos_max_dd_bps": -853.6494783172766,
+        "oos_win_rate": 0.4444444444444444,
+        "is_sharpe": 1.2304390938366891,
+        "is_pnl_bps": 421.9939577652607,
+        "score": 0.5279873228879026,
+        "eligible": true,
+        "_mode": "single"
       },
-      "short": null,
-      "long_meta": {
-        "n_eligible": 36,
-        "n_total": 36
-      },
-      "short_meta": {
-        "n_eligible": 0,
-        "n_total": 36
-      }
+      "short": null
     },
     "159915ETF": {
       "long": {
         "threshold_pct": 50.0,
         "conviction_pct": 90.0,
-        "n_full": 104,
+        "n_full": 83,
         "n_oos": 32,
-        "oos_sharpe": 8.587079154974683,
-        "oos_pnl_bps": 3558.2664378995223,
-        "oos_max_dd_bps": -265.4630076439074,
-        "oos_win_rate": 0.78125,
-        "is_sharpe": 4.75865307814238,
-        "is_pnl_bps": 2652.037397644212,
-        "score": 0.8401113269463754,
-        "eligible": true
+        "oos_sharpe": 6.37041914194963,
+        "oos_pnl_bps": 3492.161728754808,
+        "oos_max_dd_bps": -542.4394461517346,
+        "oos_win_rate": 0.6875,
+        "is_sharpe": 7.098851973457293,
+        "is_pnl_bps": 2847.3429658521936,
+        "score": 0.8540341156872241,
+        "eligible": true,
+        "_mode": "single"
       },
       "short": {
         "threshold_pct": 50.0,
         "conviction_pct": 80.0,
-        "n_full": 172,
-        "n_oos": 49,
-        "oos_sharpe": 6.164984302206781,
-        "oos_pnl_bps": 2723.8863509616285,
-        "oos_max_dd_bps": -450.36183449661706,
-        "oos_win_rate": 0.7142857142857143,
-        "is_sharpe": 4.909478650239588,
-        "is_pnl_bps": 6146.672688199324,
-        "score": 0.799391890913282,
-        "eligible": true
-      },
-      "long_meta": {
-        "n_eligible": 30,
-        "n_total": 30
-      },
-      "short_meta": {
-        "n_eligible": 30,
-        "n_total": 30
+        "n_full": 178,
+        "n_oos": 61,
+        "oos_sharpe": 4.825081370705647,
+        "oos_pnl_bps": 2714.1404718395106,
+        "oos_max_dd_bps": -618.8976264015822,
+        "oos_win_rate": 0.6721311475409836,
+        "is_sharpe": 6.001632483442597,
+        "is_pnl_bps": 6520.110410879742,
+        "score": 0.8060388151753953,
+        "eligible": true,
+        "_mode": "hybrid"
       }
     }
   },
   "combined_metrics": {
     "50ETF": {
       "etf": "50ETF",
-      "n_trades": 68,
+      "n_trades": 67,
       "long_n": 0,
-      "short_n": 68,
-      "combined_sharpe": -0.10454693807147393,
-      "combined_pnl_bps": -44.1532253240531,
-      "combined_max_dd_bps": -671.7477495575032,
-      "combined_win_rate": 0.5147058823529411,
+      "short_n": 67,
+      "combined_sharpe": 2.1173139684832147,
+      "combined_pnl_bps": 1525.7771500511749,
+      "combined_max_dd_bps": -908.4416500182291,
+      "combined_win_rate": 0.582089552238806,
       "long_sharpe": NaN,
       "long_pnl_bps": 0.0,
       "long_max_dd_bps": NaN,
       "long_win_rate": NaN,
       "long_mean_ret_bps": NaN,
-      "short_sharpe": -0.10454693807147393,
-      "short_pnl_bps": -44.1532253240531,
-      "short_max_dd_bps": -671.7477495575032,
-      "short_win_rate": 0.5147058823529411,
-      "short_mean_ret_bps": -0.649312137118428,
+      "short_sharpe": 2.1173139684832147,
+      "short_pnl_bps": 1525.7771500511749,
+      "short_max_dd_bps": -908.4416500182291,
+      "short_win_rate": 0.582089552238806,
+      "short_mean_ret_bps": 22.772793284345894,
       "cost_bps": 15.0
     },
     "300ETF": {
       "etf": "300ETF",
-      "n_trades": 224,
-      "long_n": 140,
-      "short_n": 84,
-      "combined_sharpe": 0.8868991428674934,
-      "combined_pnl_bps": 1594.124910149361,
-      "combined_max_dd_bps": -2064.3627738244545,
-      "combined_win_rate": 0.48660714285714285,
-      "long_sharpe": 2.0749074687849056,
-      "long_pnl_bps": 2398.2982814610114,
-      "long_max_dd_bps": -1082.3374875332893,
-      "long_win_rate": 0.4857142857142857,
-      "long_mean_ret_bps": 17.130702010435797,
-      "short_sharpe": -1.267497118782672,
-      "short_pnl_bps": -804.173371311651,
-      "short_max_dd_bps": -1821.806680296542,
-      "short_win_rate": 0.4880952380952381,
-      "short_mean_ret_bps": -9.573492515614893,
-      "cost_bps": 15.0
+      "n_trades": 0,
+      "long_n": 0,
+      "short_n": 0,
+      "combined_sharpe": NaN,
+      "combined_pnl_bps": 0.0,
+      "combined_max_dd_bps": NaN,
+      "combined_win_rate": NaN,
+      "long_sharpe": NaN,
+      "long_pnl_bps": 0.0,
+      "long_max_dd_bps": NaN,
+      "long_win_rate": NaN,
+      "long_mean_ret_bps": NaN,
+      "short_sharpe": NaN,
+      "short_pnl_bps": 0.0,
+      "short_max_dd_bps": NaN,
+      "short_win_rate": NaN,
+      "short_mean_ret_bps": NaN
     },
     "500ETF": {
       "etf": "500ETF",
-      "n_trades": 542,
-      "long_n": 502,
-      "short_n": 40,
-      "combined_sharpe": 2.464562068575399,
-      "combined_pnl_bps": 10761.686565179618,
-      "combined_max_dd_bps": -1603.5121322391515,
-      "combined_win_rate": 0.551660516605166,
-      "long_sharpe": 2.5642925499917095,
-      "long_pnl_bps": 10288.038401671758,
-      "long_max_dd_bps": -1603.5121322391515,
-      "long_win_rate": 0.545816733067729,
-      "long_mean_ret_bps": 20.494100401736567,
-      "short_sharpe": 1.3276806503566518,
-      "short_pnl_bps": 473.6481635078608,
-      "short_max_dd_bps": -919.2297517186182,
-      "short_win_rate": 0.625,
-      "short_mean_ret_bps": 11.84120408769652,
+      "n_trades": 487,
+      "long_n": 365,
+      "short_n": 122,
+      "combined_sharpe": 3.4407211831611852,
+      "combined_pnl_bps": 14908.114262338686,
+      "combined_max_dd_bps": -900.7873533611954,
+      "combined_win_rate": 0.5770020533880903,
+      "long_sharpe": 3.5030057805528507,
+      "long_pnl_bps": 12015.197846246136,
+      "long_max_dd_bps": -915.5352664027583,
+      "long_win_rate": 0.5698630136986301,
+      "long_mean_ret_bps": 32.91835026368804,
+      "short_sharpe": 3.287333361045582,
+      "short_pnl_bps": 2892.9164160925475,
+      "short_max_dd_bps": -617.9096385343263,
+      "short_win_rate": 0.5983606557377049,
+      "short_mean_ret_bps": 23.712429640102847,
       "cost_bps": 15.0
     },
     "588000ETF": {
@@ -236,15 +175,15 @@
       "n_trades": 64,
       "long_n": 64,
       "short_n": 0,
-      "combined_sharpe": 3.504933475903347,
-      "combined_pnl_bps": 3645.0620726685956,
-      "combined_max_dd_bps": -797.8167399823404,
-      "combined_win_rate": 0.515625,
-      "long_sharpe": 3.504933475903347,
-      "long_pnl_bps": 3645.0620726685956,
-      "long_max_dd_bps": -797.8167399823404,
-      "long_win_rate": 0.515625,
-      "long_mean_ret_bps": 56.95409488544681,
+      "combined_sharpe": 1.4976403803868694,
+      "combined_pnl_bps": 1313.2197693624453,
+      "combined_max_dd_bps": -853.6494783172766,
+      "combined_win_rate": 0.46875,
+      "long_sharpe": 1.4976403803868694,
+      "long_pnl_bps": 1313.2197693624453,
+      "long_max_dd_bps": -853.6494783172766,
+      "long_win_rate": 0.46875,
+      "long_mean_ret_bps": 20.519058896288207,
       "short_sharpe": NaN,
       "short_pnl_bps": 0.0,
       "short_max_dd_bps": NaN,
@@ -254,23 +193,23 @@
     },
     "159915ETF": {
       "etf": "159915ETF",
-      "n_trades": 276,
-      "long_n": 104,
-      "short_n": 172,
-      "combined_sharpe": 5.565948761111247,
-      "combined_pnl_bps": 15080.862874704686,
-      "combined_max_dd_bps": -1286.1875734009077,
-      "combined_win_rate": 0.6811594202898551,
-      "long_sharpe": 6.079188427574699,
-      "long_pnl_bps": 6210.303835543734,
-      "long_max_dd_bps": -313.4859565694298,
-      "long_win_rate": 0.6826923076923077,
-      "long_mean_ret_bps": 59.714459957151284,
-      "short_sharpe": 5.242706054505759,
-      "short_pnl_bps": 8870.55903916095,
-      "short_max_dd_bps": -1178.2930704583482,
-      "short_win_rate": 0.6802325581395349,
-      "short_mean_ret_bps": 51.573017669540405,
+      "n_trades": 261,
+      "long_n": 83,
+      "short_n": 178,
+      "combined_sharpe": 5.784089353126327,
+      "combined_pnl_bps": 15573.755577326252,
+      "combined_max_dd_bps": -658.0449249225651,
+      "combined_win_rate": 0.6819923371647509,
+      "long_sharpe": 6.208248354301406,
+      "long_pnl_bps": 6339.504694607003,
+      "long_max_dd_bps": -542.4394461517346,
+      "long_win_rate": 0.6746987951807228,
+      "long_mean_ret_bps": 76.37957463381932,
+      "short_sharpe": 5.612321032078095,
+      "short_pnl_bps": 9234.25088271925,
+      "short_max_dd_bps": -618.8976264015799,
+      "short_win_rate": 0.6853932584269663,
+      "short_mean_ret_bps": 51.87781394786096,
       "cost_bps": 15.0
     }
   },
@@ -279,259 +218,195 @@
       "cost_bps": 5.0,
       "etf": "50ETF",
       "side": "short",
-      "n_oos": 34,
-      "oos_sharpe": 2.0146523730321655,
-      "oos_pnl_bps": 510.9013996292422
-    },
-    {
-      "cost_bps": 5.0,
-      "etf": "300ETF",
-      "side": "long",
-      "n_oos": 25,
-      "oos_sharpe": 1.205792846027242,
-      "oos_pnl_bps": 290.35692929698376
-    },
-    {
-      "cost_bps": 5.0,
-      "etf": "300ETF",
-      "side": "short",
-      "n_oos": 23,
-      "oos_sharpe": 3.356894602834094,
-      "oos_pnl_bps": 671.0197682175217
+      "n_oos": 24,
+      "oos_sharpe": 2.290289163328925,
+      "oos_pnl_bps": 591.0186518307847
     },
     {
       "cost_bps": 5.0,
       "etf": "500ETF",
       "side": "long",
-      "n_oos": 101,
-      "oos_sharpe": 4.048544218564296,
-      "oos_pnl_bps": 3497.121806635974
+      "n_oos": 94,
+      "oos_sharpe": 4.719747648727305,
+      "oos_pnl_bps": 4264.043087418884
     },
     {
       "cost_bps": 5.0,
       "etf": "500ETF",
       "side": "short",
-      "n_oos": 20,
-      "oos_sharpe": 6.149343856714527,
-      "oos_pnl_bps": 968.8608228701345
+      "n_oos": 58,
+      "oos_sharpe": 6.538864074780948,
+      "oos_pnl_bps": 2707.716653832952
     },
     {
       "cost_bps": 5.0,
       "etf": "588000ETF",
       "side": "long",
-      "n_oos": 35,
-      "oos_sharpe": 4.005878060520122,
-      "oos_pnl_bps": 2840.9847927591186
+      "n_oos": 27,
+      "oos_sharpe": 2.350597093830531,
+      "oos_pnl_bps": 1161.2258115971847
     },
     {
       "cost_bps": 5.0,
       "etf": "159915ETF",
       "side": "long",
       "n_oos": 32,
-      "oos_sharpe": 9.35932748925456,
-      "oos_pnl_bps": 3878.2664378995223
+      "oos_sharpe": 6.954164765366321,
+      "oos_pnl_bps": 3812.1617287548083
     },
     {
       "cost_bps": 5.0,
       "etf": "159915ETF",
       "side": "short",
-      "n_oos": 49,
-      "oos_sharpe": 7.274003519185074,
-      "oos_pnl_bps": 3213.8863509616285
+      "n_oos": 61,
+      "oos_sharpe": 5.909512949199306,
+      "oos_pnl_bps": 3324.140471839511
     },
     {
       "cost_bps": 15.0,
       "etf": "50ETF",
       "side": "short",
-      "n_oos": 34,
-      "oos_sharpe": 0.6739204679561119,
-      "oos_pnl_bps": 170.90139962924226
-    },
-    {
-      "cost_bps": 15.0,
-      "etf": "300ETF",
-      "side": "long",
-      "n_oos": 25,
-      "oos_sharpe": 0.1675940600134858,
-      "oos_pnl_bps": 40.356929296983694
-    },
-    {
-      "cost_bps": 15.0,
-      "etf": "300ETF",
-      "side": "short",
-      "n_oos": 23,
-      "oos_sharpe": 2.2062790841545343,
-      "oos_pnl_bps": 441.0197682175217
+      "n_oos": 24,
+      "oos_sharpe": 1.36025184979196,
+      "oos_pnl_bps": 351.01865183078473
     },
     {
       "cost_bps": 15.0,
       "etf": "500ETF",
       "side": "long",
-      "n_oos": 101,
-      "oos_sharpe": 2.8792885029095565,
-      "oos_pnl_bps": 2487.1218066359734
+      "n_oos": 94,
+      "oos_sharpe": 3.6792884650727573,
+      "oos_pnl_bps": 3324.0430874188837
     },
     {
       "cost_bps": 15.0,
       "etf": "500ETF",
       "side": "short",
-      "n_oos": 20,
-      "oos_sharpe": 4.879947115395617,
-      "oos_pnl_bps": 768.8608228701344
+      "n_oos": 58,
+      "oos_sharpe": 5.138222261685638,
+      "oos_pnl_bps": 2127.716653832952
     },
     {
       "cost_bps": 15.0,
       "etf": "588000ETF",
       "side": "long",
-      "n_oos": 35,
-      "oos_sharpe": 3.5123670340776365,
-      "oos_pnl_bps": 2490.984792759118
+      "n_oos": 27,
+      "oos_sharpe": 1.8040529083707606,
+      "oos_pnl_bps": 891.2258115971844
     },
     {
       "cost_bps": 15.0,
       "etf": "159915ETF",
       "side": "long",
       "n_oos": 32,
-      "oos_sharpe": 8.587079154974683,
-      "oos_pnl_bps": 3558.2664378995223
+      "oos_sharpe": 6.37041914194963,
+      "oos_pnl_bps": 3492.161728754808
     },
     {
       "cost_bps": 15.0,
       "etf": "159915ETF",
       "side": "short",
-      "n_oos": 49,
-      "oos_sharpe": 6.164984302206781,
-      "oos_pnl_bps": 2723.8863509616285
+      "n_oos": 61,
+      "oos_sharpe": 4.825081370705647,
+      "oos_pnl_bps": 2714.1404718395106
     },
     {
       "cost_bps": 30.0,
       "etf": "50ETF",
       "side": "short",
-      "n_oos": 34,
-      "oos_sharpe": -1.337177389657969,
-      "oos_pnl_bps": -339.0986003707576
-    },
-    {
-      "cost_bps": 30.0,
-      "etf": "300ETF",
-      "side": "long",
-      "n_oos": 25,
-      "oos_sharpe": -1.3897041190071475,
-      "oos_pnl_bps": -334.6430707030161
-    },
-    {
-      "cost_bps": 30.0,
-      "etf": "300ETF",
-      "side": "short",
-      "n_oos": 23,
-      "oos_sharpe": 0.4803558061351961,
-      "oos_pnl_bps": 96.01976821752193
+      "n_oos": 24,
+      "oos_sharpe": -0.03480412051348763,
+      "oos_pnl_bps": -8.981348169215183
     },
     {
       "cost_bps": 30.0,
       "etf": "500ETF",
       "side": "long",
-      "n_oos": 101,
-      "oos_sharpe": 1.1254049294274489,
-      "oos_pnl_bps": 972.1218066359738
+      "n_oos": 94,
+      "oos_sharpe": 2.118599689590937,
+      "oos_pnl_bps": 1914.0430874188842
     },
     {
       "cost_bps": 30.0,
       "etf": "500ETF",
       "side": "short",
-      "n_oos": 20,
-      "oos_sharpe": 2.975852003417256,
-      "oos_pnl_bps": 468.86082287013477
+      "n_oos": 58,
+      "oos_sharpe": 3.0372595420426762,
+      "oos_pnl_bps": 1257.7166538329527
     },
     {
       "cost_bps": 30.0,
       "etf": "588000ETF",
       "side": "long",
-      "n_oos": 35,
-      "oos_sharpe": 2.77210049441391,
-      "oos_pnl_bps": 1965.9847927591186
+      "n_oos": 27,
+      "oos_sharpe": 0.9842366301811066,
+      "oos_pnl_bps": 486.2258115971847
     },
     {
       "cost_bps": 30.0,
       "etf": "159915ETF",
       "side": "long",
       "n_oos": 32,
-      "oos_sharpe": 7.428706653554868,
-      "oos_pnl_bps": 3078.2664378995223
+      "oos_sharpe": 5.494800706824594,
+      "oos_pnl_bps": 3012.1617287548074
     },
     {
       "cost_bps": 30.0,
       "etf": "159915ETF",
       "side": "short",
-      "n_oos": 49,
-      "oos_sharpe": 4.501455476739344,
-      "oos_pnl_bps": 1988.8863509616283
+      "n_oos": 61,
+      "oos_sharpe": 3.198434002965159,
+      "oos_pnl_bps": 1799.140471839511
     }
   ],
   "cluster_confusion": [
     {
       "etf": "50ETF",
       "side": "short",
-      "n_oos": 34,
-      "Rally%": 8.823529411764707,
-      "Selloff%": 50.0,
-      "Neutral%": 41.1764705882353
-    },
-    {
-      "etf": "300ETF",
-      "side": "long",
-      "n_oos": 25,
-      "Rally%": 32.0,
-      "Selloff%": 16.0,
-      "Neutral%": 52.0
-    },
-    {
-      "etf": "300ETF",
-      "side": "short",
-      "n_oos": 23,
-      "Rally%": 13.043478260869565,
-      "Selloff%": 26.08695652173913,
-      "Neutral%": 60.869565217391305
+      "n_oos": 24,
+      "Rally%": 25.0,
+      "Selloff%": 37.5,
+      "Neutral%": 37.5
     },
     {
       "etf": "500ETF",
       "side": "long",
-      "n_oos": 101,
-      "Rally%": 35.64356435643565,
-      "Selloff%": 7.920792079207921,
-      "Neutral%": 56.43564356435643
+      "n_oos": 94,
+      "Rally%": 42.5531914893617,
+      "Selloff%": 10.638297872340425,
+      "Neutral%": 46.808510638297875
     },
     {
       "etf": "500ETF",
       "side": "short",
-      "n_oos": 20,
-      "Rally%": 20.0,
-      "Selloff%": 30.0,
-      "Neutral%": 50.0
+      "n_oos": 58,
+      "Rally%": 8.620689655172415,
+      "Selloff%": 32.758620689655174,
+      "Neutral%": 58.62068965517241
     },
     {
       "etf": "588000ETF",
       "side": "long",
-      "n_oos": 35,
-      "Rally%": 40.0,
-      "Selloff%": 11.428571428571429,
-      "Neutral%": 48.57142857142857
+      "n_oos": 27,
+      "Rally%": 40.74074074074074,
+      "Selloff%": 11.11111111111111,
+      "Neutral%": 48.148148148148145
     },
     {
       "etf": "159915ETF",
       "side": "long",
       "n_oos": 32,
-      "Rally%": 46.875,
-      "Selloff%": 3.125,
-      "Neutral%": 50.0
+      "Rally%": 40.625,
+      "Selloff%": 6.25,
+      "Neutral%": 53.125
     },
     {
       "etf": "159915ETF",
       "side": "short",
-      "n_oos": 49,
-      "Rally%": 10.204081632653061,
-      "Selloff%": 36.734693877551024,
-      "Neutral%": 53.06122448979592
+      "n_oos": 61,
+      "Rally%": 11.475409836065573,
+      "Selloff%": 37.704918032786885,
+      "Neutral%": 50.81967213114754
     }
   ]
 }

@@ -198,7 +198,35 @@ def _side_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str) -> float:
     return spearman_ic(target, y_pred)
 
 
-def make_objective(X, y, sample_w, n_splits, gap, stability_scores, side="single"):
+def _tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str,
+             top_frac: float = 0.3) -> float:
+    """Tail-weighted Spearman IC — IC computed only on the top predictions.
+
+    Phase 2.5 fix: overall IC optimises for rank correlation across ALL
+    predictions, but trading only fires on the top tail.  This function
+    computes IC on the top ``top_frac`` of predictions by conviction.
+
+    For ``long``/``short``: top = highest side-oriented prediction.
+    For ``single``: top = highest |prediction| (strongest conviction either way).
+    """
+    n = len(y_pred)
+    if n < 10:
+        return _side_ic(y_true, y_pred, side)
+    if side == "short":
+        oriented = -y_pred
+    elif side == "long":
+        oriented = y_pred
+    else:
+        oriented = np.abs(y_pred)
+    cutoff = np.nanquantile(oriented, 1.0 - top_frac)
+    mask = oriented >= cutoff
+    if mask.sum() < 5:
+        return _side_ic(y_true, y_pred, side)
+    return spearman_ic(y_true[mask], y_pred[mask])
+
+
+def make_objective(X, y, sample_w, n_splits, gap, stability_scores, side="single",
+                   tail_weight: float = 0.0):
     def objective(trial: optuna.Trial) -> float:
         model_type = trial.suggest_categorical("model_type", ["ridge", "lasso", "elasticnet", "huber"])
         # Suggest stability selection threshold as a hyperparameter
@@ -226,6 +254,7 @@ def make_objective(X, y, sample_w, n_splits, gap, stability_scores, side="single
             model = HuberRegressor(alpha=alpha, epsilon=epsilon, max_iter=2000)
 
         ics = []
+        tail_ics = []
         for train_idx, test_idx in purged_tssplit(len(y), n_splits, gap):
             scaler = StandardScaler().fit(X[train_idx])
             Xtr_s = scaler.transform(X[train_idx])
@@ -237,8 +266,12 @@ def make_objective(X, y, sample_w, n_splits, gap, stability_scores, side="single
             model.fit(Xtr_sel, y[train_idx], sample_weight=sample_w[train_idx])
             preds = model.predict(Xte_sel)
             ics.append(_side_ic(y[test_idx], preds, side))
+            tail_ics.append(_tail_ic(y[test_idx], preds, side))
 
-        return float(np.mean(ics)) if ics else -1.0
+        mean_ic = float(np.mean(ics)) if ics else -1.0
+        mean_tail = float(np.mean(tail_ics)) if tail_ics else -1.0
+        # Phase 2.5: blend overall IC with tail IC to align with trading
+        return (1.0 - tail_weight) * mean_ic + tail_weight * mean_tail
     return objective
 
 
@@ -314,8 +347,17 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
     y_clip_dev = y_clip[train_dev_idx]
     print(f"  dev (Optuna): {len(X_dev)}, holdout (final OOS): {len(X_ho)}")
 
-    # ── 2) Stability Selection on dev set (raw target → best overall features) ──
-    stability_scores = compute_stability_scores(X_dev, y_dev, FEATURES)
+    # ── 2) Stability Selection on dev set ──
+    # Phase 2.4 fix: use the asymmetric (clipped) target for dual models so
+    # feature selection isolates regime-specific tail drivers, not overall
+    # variance.  Single model keeps the raw target.
+    if side != "single":
+        stab_target = y_clip_dev
+        print(f"  [Stability Selection] Using ASYMMETRIC target ({clip_label}) "
+              f"for feature pruning (Phase 2.4 fix)")
+    else:
+        stab_target = y_dev
+    stability_scores = compute_stability_scores(X_dev, stab_target, FEATURES)
 
     # ── 3) Optuna hyperparameter search — side-specific objective ──
     print(f"  Optuna: {n_trials} trials, {n_splits} folds, purge_gap={gap} "
@@ -330,7 +372,11 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
         sampler=optuna.samplers.TPESampler(seed=42),
         pruner=optuna.pruners.MedianPruner(n_warmup_steps=10),
     )
-    obj = make_objective(X_dev, y_dev, sw_dev, n_splits, gap, stability_scores, side=side)
+    # Phase 2.5: weight the objective toward the trading tail for dual models
+    # (0.0 for single = pure overall IC, 0.5 for dual = equal weight tail+overall)
+    tail_weight = 0.0 if side == "single" else 0.5
+    obj = make_objective(X_dev, y_dev, sw_dev, n_splits, gap, stability_scores,
+                         side=side, tail_weight=tail_weight)
     study.optimize(obj, n_trials=n_trials, show_progress_bar=False)
 
     best_params = study.best_params
@@ -515,10 +561,8 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
                  "y_scale": Y_SCALE,
                  "side": side,
                  "target": "raw_pm_return",
-                 "stability_target": "pm_return",
-                 "optuna_objective": ("upside_ic" if side == "long"
-                                      else "downside_ic" if side == "short"
-                                      else "overall_ic"),
+                 "stability_target": ("clipped_pm_return" if side != "single" else "pm_return"),
+                 "optuna_objective": ("tail_weighted_ic" if side != "single" else "overall_ic"),
                  "sample_weight_lambda": 0.5 if side != "single" else 0.0},
                 MODELS_DIR / f"scaler_{tag}.joblib")
 

@@ -85,13 +85,23 @@ def _calib_mode() -> str:
 
 def run_deployed_backtest(etf: str, cfg: dict, cost_bps: float,
                           mode: str = "single") -> dict:
-    """Run backtest with deployed long/short configs from calibration."""
+    """Run backtest with deployed long/short configs from calibration.
+
+    For ``mode="mixed"`` (Phase 4 per-side deployment), each side's config
+    carries its own ``_mode`` tag.  We run long and short separately with
+    their respective modes and combine the trades.
+    """
     long_cfg = cfg.get("long")
     short_cfg = cfg.get("short")
     long_thr = long_cfg["threshold_pct"] if long_cfg else 0.0
     long_conv = long_cfg["conviction_pct"] if long_cfg else 0.0
     short_thr = short_cfg["threshold_pct"] if short_cfg else 0.0
     short_conv = short_cfg["conviction_pct"] if short_cfg else 0.0
+
+    if mode == "mixed":
+        return _run_mixed_backtest(
+            etf, long_cfg, short_cfg, cost_bps,
+        )
 
     r = backtest_long_short(
         etf,
@@ -102,6 +112,49 @@ def run_deployed_backtest(etf: str, cfg: dict, cost_bps: float,
         mode=mode,
     )
     return r
+
+
+def _run_mixed_backtest(etf: str, long_cfg: dict | None,
+                        short_cfg: dict | None, cost_bps: float) -> dict:
+    """Run per-side backtests with independent modes, then combine."""
+    from .backtest import _summarize_long_short
+
+    trades_parts = []
+
+    for side_cfg, side, enable in [
+        (long_cfg, "long", True),
+        (short_cfg, "short", False),
+    ]:
+        if not side_cfg:
+            continue
+        side_mode = side_cfg.get("_mode", "single")
+        r = backtest_long_short(
+            etf,
+            long_threshold_pct=side_cfg["threshold_pct"],
+            long_conviction_pct=side_cfg["conviction_pct"],
+            short_threshold_pct=side_cfg["threshold_pct"],
+            short_conviction_pct=side_cfg["conviction_pct"],
+            cost_bps=cost_bps,
+            long_enabled=enable,
+            short_enabled=not enable,
+            mode=side_mode,
+        )
+        if len(r["trades"]) > 0:
+            trades_parts.append(r["trades"])
+
+    if not trades_parts:
+        from .backtest import _empty_long_short_result
+        return _empty_long_short_result(etf)
+
+    import pandas as pd
+    combined_trades = pd.concat(trades_parts).sort_index()
+    # Ensure DatetimeIndex (concat can degrade to object index)
+    combined_trades.index = pd.to_datetime(combined_trades.index)
+    # Remove duplicate dates (shouldn't happen, but safety)
+    combined_trades = combined_trades[~combined_trades.index.duplicated(keep="first")]
+    metrics = _summarize_long_short(combined_trades, etf, cost_bps)
+    metrics["trades"] = combined_trades
+    return metrics
 
 
 def _label_clusters(etf: str) -> pd.DataFrame:
@@ -128,7 +181,12 @@ def cost_sweep_per_side(configs: dict, mode: str = "single") -> pd.DataFrame:
     rows = []
     for cost in [5.0, 15.0, 30.0]:
         for etf, cfg in configs.items():
-            r = run_deployed_backtest(etf, cfg, cost_bps=cost, mode=mode)
+            if mode == "mixed":
+                r = _run_mixed_backtest(
+                    etf, cfg.get("long"), cfg.get("short"), cost,
+                )
+            else:
+                r = run_deployed_backtest(etf, cfg, cost_bps=cost, mode=mode)
             t = r["trades"]
             if len(t) == 0:
                 continue
@@ -152,6 +210,8 @@ def plot_equity_curves(data: dict, cost_bps: float):
     for ax, side, sign in [(axes[0], "Long", 1), (axes[1], "Short", -1)]:
         for etf, r in data.items():
             t = r["trades"]
+            if len(t) == 0 or "direction" not in t.columns:
+                continue
             t = t[t["direction"] == sign]
             if len(t) == 0:
                 continue
@@ -210,6 +270,8 @@ def plot_yearly_sharpe_per_side(data: dict, configs: dict):
         x = np.arange(len(years))
         for i, etf in enumerate(deployed):
             t = data[etf]["trades"]
+            if len(t) == 0 or "direction" not in t.columns:
+                continue
             t = t[(t["direction"] == sign) & (t.index >= pd.Timestamp(HOLDOUT_START))]
             cells = []
             for y in years:
@@ -237,6 +299,8 @@ def cluster_confusion(data: dict) -> pd.DataFrame:
         if cl.empty:
             continue
         t = r["trades"]
+        if len(t) == 0:
+            continue
         oos = t[t.index >= pd.Timestamp(HOLDOUT_START)]
         for side, sign in [("long", 1), ("short", -1)]:
             sd = oos[oos["direction"] == sign]
@@ -287,6 +351,9 @@ def generate():
     L.append("- **Signal**: frozen LASSO/Huber/ElasticNet score from `day-model/models/linear_{ETF}.joblib`")
     L.append("- **Per-side thresholds**: expanding-window percentile of |score| computed only over that side's prior history (no look-ahead)")
     L.append("- **Direction**: `long_model` fires when score>0 & crosses long thresholds; `short_model` fires when score<0 & crosses short thresholds")
+    if mode == "mixed":
+        L.append("- **Mode**: **mixed** (Phase 4 per-side deployment). Each side uses the mode "
+                 "(single/hybrid/dual) that maximises OOS Sharpe. See §2 for per-side mode assignments.")
     L.append("- **Eligibility guard**: each side deployed only if OOS P&L>0 AND OOS Sharpe>0 AND n≥20 (else disabled)")
     L.append("- **Entry bar**: 9:45 close for 159915/500; 10:00 close for 300/50/588000")
     L.append(f"- **Exit bar**: {EXIT_BAR} (5m close at 14:30, better liquidity than 15:00)")
@@ -294,14 +361,26 @@ def generate():
     L.append(f"- **Holdout**: {HOLDOUT_START} onwards (matches day-model)\n")
 
     L.append("\n## 2. Deployed Configurations\n")
-    L.append("| ETF | Long thr | Long conv | Short thr | Short conv |")
-    L.append("|-----|----------|-----------|-----------|------------|")
-    for etf in ETFS:
-        cfg = configs.get(etf, {})
-        lg = cfg.get("long"); sh = cfg.get("short")
-        lstr = f"{lg['threshold_pct']:.0f} | {lg['conviction_pct']:.0f}" if lg else "disabled | —"
-        sstr = f"{sh['threshold_pct']:.0f} | {sh['conviction_pct']:.0f}" if sh else "disabled | —"
-        L.append(f"| **{etf}** | {lstr} | {sstr} |")
+    if mode == "mixed":
+        L.append("| ETF | Long mode | Long thr | Long conv | Short mode | Short thr | Short conv |")
+        L.append("|-----|-----------|----------|-----------|------------|-----------|------------|")
+        for etf in ETFS:
+            cfg = configs.get(etf, {})
+            lg = cfg.get("long"); sh = cfg.get("short")
+            lmode = lg.get("_mode", "?") if lg else "—"
+            lcfg = f"{lg['threshold_pct']:.0f} | {lg['conviction_pct']:.0f}" if lg else "disabled | —"
+            smode = sh.get("_mode", "?") if sh else "—"
+            scfg = f"{sh['threshold_pct']:.0f} | {sh['conviction_pct']:.0f}" if sh else "disabled | —"
+            L.append(f"| **{etf}** | `{lmode}` | {lcfg} | `{smode}` | {scfg} |")
+    else:
+        L.append("| ETF | Long thr | Long conv | Short thr | Short conv |")
+        L.append("|-----|----------|-----------|-----------|------------|")
+        for etf in ETFS:
+            cfg = configs.get(etf, {})
+            lg = cfg.get("long"); sh = cfg.get("short")
+            lstr = f"{lg['threshold_pct']:.0f} | {lg['conviction_pct']:.0f}" if lg else "disabled | —"
+            sstr = f"{sh['threshold_pct']:.0f} | {sh['conviction_pct']:.0f}" if sh else "disabled | —"
+            L.append(f"| **{etf}** | {lstr} | {sstr} |")
 
     L.append("\n## 3. Performance (15 bps round-trip)\n")
     L.append("### 3.1 Per-Side OOS Metrics\n")
@@ -310,6 +389,8 @@ def generate():
     L.append("|-----|------|-------|--------|------|--------|---------|-----------|----------|")
     for etf, r in data.items():
         t = r["trades"]
+        if len(t) == 0 or "direction" not in t.columns:
+            continue
         oos = t[t.index >= pd.Timestamp(HOLDOUT_START)]
         _, n_oos_days = _trading_day_counts(etf)
         for side, sign in [("long", 1), ("short", -1)]:
@@ -384,6 +465,8 @@ def generate():
     L.append("|-----|------|" + "---|" * len(years))
     for etf, r in data.items():
         t = r["trades"]
+        if len(t) == 0 or "direction" not in t.columns:
+            continue
         oos = t[t.index >= pd.Timestamp(HOLDOUT_START)]
         for side, sign in [("long", 1), ("short", -1)]:
             sd = oos[oos["direction"] == sign]
@@ -431,7 +514,49 @@ def generate():
     else:
         L.append("_cluster labels not available_")
 
-    L.append("\n## 5. Verdict\n")
+    L.append("\n## 5. Mode Comparison (Phase 4 Cross-Mode Selection)\n")
+    L.append("Each side deploys the mode with the highest OOS Sharpe. "
+             "This table shows all eligible configs across single/hybrid/dual modes.\n")
+    from .deploy import _load_mode_calibrations, MODE_FILES
+    mode_calibs = _load_mode_calibrations()
+    if mode_calibs:
+        L.append("| ETF | Side | Single | Hybrid | Dual | **Deployed** |")
+        L.append("|-----|------|--------|--------|------|--------------|")
+        for etf in ETFS:
+            for side in ("long", "short"):
+                vals = {}
+                for m, mc in mode_calibs.items():
+                    cfg = mc.get("results", {}).get(etf, {}).get(side)
+                    if cfg and cfg.get("eligible"):
+                        vals[m] = cfg
+                if not vals:
+                    continue
+                cells = {}
+                for m in ("single", "hybrid", "dual"):
+                    c = vals.get(m)
+                    cells[m] = f"{c['oos_sharpe']:+.2f}" if c else "—"
+                deployed_cfg = configs.get(etf, {}).get(side)
+                dep_mode = deployed_cfg.get("_mode", "?") if deployed_cfg else "—"
+                dep_s = (f"{deployed_cfg['oos_sharpe']:+.2f}" if deployed_cfg else "—")
+                L.append(f"| {etf} | `{side}` | {cells['single']} | {cells['hybrid']} | "
+                         f"{cells['dual']} | **{dep_mode}** ({dep_s}) |")
+        # Summary stats
+        total_dep = 0.0
+        total_single = 0.0
+        for etf in ETFS:
+            for side in ("long", "short"):
+                dep_cfg = configs.get(etf, {}).get(side)
+                if dep_cfg:
+                    total_dep += dep_cfg.get("oos_sharpe", 0) or 0
+                sing_cfg = mode_calibs.get("single", {}).get("results", {}).get(etf, {}).get(side)
+                if sing_cfg and sing_cfg.get("eligible"):
+                    total_single += sing_cfg.get("oos_sharpe", 0) or 0
+        improvement = total_dep - total_single
+        L.append(f"\n**Total deployed OOS Sharpe**: {total_dep:+.2f} "
+                 f"(vs single-only {total_single:+.2f}, "
+                 f"Δ = {improvement:+.2f})\n")
+
+    L.append("\n## 6. Verdict\n")
     # Auto-classify based on per-side robustness
     robust_long = []
     robust_short = []
@@ -446,7 +571,7 @@ def generate():
     L.append(f"- **Disabled long**: {', '.join(e for e in ETFS if not configs.get(e,{}).get('long')) or 'none'}")
     L.append(f"- **Disabled short**: {', '.join(e for e in ETFS if not configs.get(e,{}).get('short')) or 'none'}")
 
-    L.append("\n## 6. Caveats\n")
+    L.append("\n## 7. Caveats\n")
     L.append("- Short-side P&L assumes 15bps transaction cost and other execution assumptions similar to the long side (options/margin/borrow costs not modeled)")
     L.append("- Frozen coefficients = no regime adaptation; live IC decay will hurt deployability")
     L.append("- 14:30 exit leaves late-day continuation on the table; v2 will add trailing stop")

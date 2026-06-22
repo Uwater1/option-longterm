@@ -1,44 +1,45 @@
 {
   "cost_bps": 15.0,
-  "mode": "mixed",
+  "mode": "single",
   "results": {
     "50ETF": {
       "long": null,
-      "short": {
-        "threshold_pct": 50.0,
-        "conviction_pct": 90.0,
-        "n_full": 67,
-        "n_oos": 24,
-        "oos_sharpe": 1.36025184979196,
-        "oos_pnl_bps": 351.01865183078473,
-        "oos_max_dd_bps": -657.7840445731587,
-        "oos_win_rate": 0.5833333333333334,
-        "is_sharpe": 2.512462069503917,
-        "is_pnl_bps": 1174.7584982203905,
-        "score": 0.47843398108449403,
-        "eligible": true,
-        "_mode": "dual"
+      "short": null,
+      "long_meta": {
+        "n_eligible": 0,
+        "n_total": 20
+      },
+      "short_meta": {
+        "n_eligible": 0,
+        "n_total": 20
       }
     },
     "300ETF": {
       "long": null,
-      "short": null
+      "short": null,
+      "long_meta": {
+        "n_eligible": 0,
+        "n_total": 30
+      },
+      "short_meta": {
+        "n_eligible": 0,
+        "n_total": 20
+      }
     },
     "500ETF": {
       "long": {
         "threshold_pct": 50.0,
         "conviction_pct": 60.0,
-        "n_full": 365,
-        "n_oos": 94,
-        "oos_sharpe": 3.6792884650727573,
-        "oos_pnl_bps": 3324.0430874188837,
+        "n_full": 384,
+        "n_oos": 81,
+        "oos_sharpe": 3.658884589042165,
+        "oos_pnl_bps": 2926.8474906850342,
         "oos_max_dd_bps": -915.5352664027605,
-        "oos_win_rate": 0.5851063829787234,
-        "is_sharpe": 3.4339617426741973,
-        "is_pnl_bps": 8691.154758827251,
-        "score": 0.7922011051667396,
-        "eligible": true,
-        "_mode": "hybrid"
+        "oos_win_rate": 0.5555555555555556,
+        "is_sharpe": 2.572556457513976,
+        "is_pnl_bps": 6318.899385073933,
+        "score": 0.7919833768418644,
+        "eligible": true
       },
       "short": {
         "threshold_pct": 50.0,
@@ -52,8 +53,15 @@
         "is_sharpe": 1.6478892339663185,
         "is_pnl_bps": 765.1997622595954,
         "score": 0.7184280211394221,
-        "eligible": true,
-        "_mode": "single"
+        "eligible": true
+      },
+      "long_meta": {
+        "n_eligible": 30,
+        "n_total": 30
+      },
+      "short_meta": {
+        "n_eligible": 30,
+        "n_total": 36
       }
     },
     "588000ETF": {
@@ -69,10 +77,17 @@
         "is_sharpe": 1.2304390938366891,
         "is_pnl_bps": 421.9939577652607,
         "score": 0.5279873228879026,
-        "eligible": true,
-        "_mode": "single"
+        "eligible": true
       },
-      "short": null
+      "short": null,
+      "long_meta": {
+        "n_eligible": 18,
+        "n_total": 30
+      },
+      "short_meta": {
+        "n_eligible": 0,
+        "n_total": 36
+      }
     },
     "159915ETF": {
       "long": {
@@ -87,23 +102,29 @@
         "is_sharpe": 7.098851973457293,
         "is_pnl_bps": 2847.3429658521936,
         "score": 0.8540341156872241,
-        "eligible": true,
-        "_mode": "single"
+        "eligible": true
       },
       "short": {
         "threshold_pct": 50.0,
-        "conviction_pct": 80.0,
-        "n_full": 178,
-        "n_oos": 61,
-        "oos_sharpe": 4.825081370705647,
-        "oos_pnl_bps": 2714.1404718395106,
-        "oos_max_dd_bps": -618.8976264015822,
-        "oos_win_rate": 0.6721311475409836,
-        "is_sharpe": 6.001632483442597,
-        "is_pnl_bps": 6520.110410879742,
-        "score": 0.8060388151753953,
-        "eligible": true,
-        "_mode": "hybrid"
+        "conviction_pct": 70.0,
+        "n_full": 332,
+        "n_oos": 91,
+        "oos_sharpe": 3.198545876268783,
+        "oos_pnl_bps": 2405.933655621505,
+        "oos_max_dd_bps": -627.9494708125433,
+        "oos_win_rate": 0.6373626373626373,
+        "is_sharpe": 3.5645608726406195,
+        "is_pnl_bps": 7629.299341051274,
+        "score": 0.7426471329682536,
+        "eligible": true
+      },
+      "long_meta": {
+        "n_eligible": 30,
+        "n_total": 30
+      },
+      "short_meta": {
+        "n_eligible": 30,
+        "n_total": 30
       }
     }
   }
