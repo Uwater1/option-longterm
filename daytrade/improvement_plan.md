@@ -128,6 +128,20 @@ winner = side with higher margin
 
 This is a genuine dual system: each model can fire on any day regardless of the other model's opinion. The long model might fire on a day where the short model is silent — or both might fire and the stronger conviction wins.
 
+### 2.4 Fix stability selection target mismatch
+
+In `train_model.py`, stability selection was run using the symmetric `y_dev` (raw) target instead of the asymmetric `y_clip_dev` target. This selected features that explain overall variance rather than asymmetric tails. We must pass `y_clip_dev` to `compute_stability_scores`.
+
+### 2.5 Align Optuna objective with trading tail
+
+IC computed over the entire dataset optimizes for overall rank correlation. A model with high overall IC may perform poorly in the top tail (where we trade). We should optimize the Optuna objective for Spearman IC computed only on the top quintile/decile of predictions, or optimize for OOS Sharpe of the top-quantile trades directly.
+
+### 2.6 Use skglm for L1-regularized Huber and fast solvers
+
+We should utilize the `skglm` library to solve sparse linear models (L1/L2/MCP/SCAD) compiled via Numba. It provides two key advantages:
+1. **L1-Regularized Huber Regression**: Scikit-learn's `HuberRegressor` only supports L2 (Ridge) regularization. Financial data has heavy outliers (needs Huber loss) and high feature noise/collinearity (needs L1 Lasso sparsity). `skglm`'s modular architecture lets us easily fit a model with Huber datafit and L1 penalty.
+2. **Fast coordinate descent + working sets**: Drastically speeds up block-bootstrap stability selection and Optuna trials, making optimization feasible across large sweeps.
+
 ---
 
 ## 3. v2 Implementation Plan
@@ -145,11 +159,11 @@ This is a genuine dual system: each model can fire on any day regardless of the 
 
 **Effort**: ~2 hours (code + calibration).
 
-### Phase 2: Better model type (fixes clipped-target regression)
+### Phase 2: Better model type (fixes clipped-target regression, selection, and optimization alignment)
 
-**Scope**: `day-model/train_model.py`. Choose one of:
+**Scope**: `day-model/train_model.py`. Choose or combine options:
 
-#### Option A: Two-stage classification + regression (recommended)
+#### Option A: Two-stage classification + regression
 
 ```
 Stage 1 (classifier):  P(pm_return > 0 | features)
@@ -177,7 +191,20 @@ Use `sklearn.linear_model.QuantileRegressor(quantile=0.9)` for long, `quantile=0
 
 Risk: QuantileRegressor is computationally expensive (interior-point solver). May need to reduce feature count or Optuna trials.
 
-**Success metric**: Holdout IC of the long model ≥ single-model IC on at least 3 ETFs.
+#### Option D: L1-regularized Huber and non-convex sparse models via `skglm` (Highly Recommended)
+
+Use `skglm.estimators.GeneralizedLinearEstimator` combining a `Huber` datafit and `L1` (Lasso) penalty. Allows both robust estimation (critical for stock returns with outliers) and sparse feature selection. Can also use non-convex penalties (MCP, SCAD) to reduce shrinkage bias on large coefficients.
+
+**Implementation details**:
+- Import `GeneralizedLinearEstimator` from `skglm.estimators`.
+- Define datafit `Huber(delta=1.35)` and penalty `L1(alpha=alpha)` or `MCPenalty(alpha=alpha, gamma=3.0)`.
+- Use fast coordinate descent and working set solvers to speed up block-bootstrap stability selection and Optuna trials.
+
+#### Other Enhancements in Phase 2:
+1. **Fix Stability Selection Target**: Pass the asymmetric `y_clip_dev` (clipped target) to `compute_stability_scores` instead of the raw `y_dev` to ensure feature selection isolates regime-specific tail drivers.
+2. **Align Optuna Objective**: Update the objective function in `train_model.py` to calculate Spearman IC only on the top/bottom predictions (e.g. top quintile) or optimize validation L/S Sharpe directly.
+
+**Success metric**: Holdout IC / Tail IC of the long model ≥ single-model baseline on at least 3 ETFs.
 
 **Effort**: ~4-8 hours (depending on chosen option).
 
