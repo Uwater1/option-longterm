@@ -65,7 +65,8 @@ data/                          # Parquet files
 ├── {ETF}_5m.parquet           # 5m ETF prices
 ├── {ETF}_1m.parquet           # 1m ETF prices (zstd level 5 compressed)
 ├── {ETF}_historical_prices_5m.parquet # 5m Option prices
-└── 30d_iv_cache_{N}.parquet   # ATM IV cache
+├── 30d_iv_cache_{N}.parquet   # ATM IV cache
+└── rq_vix.parquet             # Ricequant VIX indices cache (all 5 ETFs)
 
 backtest_engine.py                # Core backtest engine
 backtest_strategies.py            # CallStrategy & PutStrategy definitions
@@ -83,7 +84,7 @@ numba_utils.py                 # Numba BS functions & IV solver
 day-model/                     # Day-Model PM session return predictor
 ├── REPORT.md                  # Comprehensive PM return prediction report
 ├── AGENTS.md                  # Feature expansion and workflow guide
-├── build_features.py          # Early-bar + day-level feature engineering (127 features, local caching)
+├── build_features.py          # Early-bar + day-level feature engineering (135 features, local caching)
 ├── train_model.py             # Optuna-tuned linear model training & feature selection
 └── generate_report.py         # Report markdown generator
 daytrade/                      # Frozen-Linear Intraday Alpha Strategy
@@ -98,8 +99,8 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 ```
 
 ### Day-Model Caching & Features (New)
-- **Data Caching**: Ricequant 3rd-party data (Securities Margin, Capital Flow, Northbound Connect Quota) is cached locally to `data/securities_margin.parquet`, `data/capital_flow.parquet`, and `data/stock_connect_quota.parquet` to prevent slow network calls and minimize API quota usage.
-- **127 Features**: Expanded feature space includes 50 early-bar intraday features, 55 day-level features (including technical indicators and 3rd party margin/flow), and 22 yesterday's features (shifted by 1 day to prevent leakage).
+- **Data Caching**: Ricequant 3rd-party data (Securities Margin, Capital Flow, Northbound Connect Quota, and VIX indices) is cached locally to `data/securities_margin.parquet`, `data/capital_flow.parquet`, `data/stock_connect_quota.parquet`, and `data/rq_vix.parquet` to prevent slow network calls and minimize API quota usage.
+- **135 Features**: Expanded feature space includes 50 early-bar intraday features, 63 day-level features (including technical indicators, 3rd party margin/flow, and 8 option-derived factors such as `iv`, `vix`, `vix_iv_spread`, etc.), and 22 yesterday's features (shifted by 1 day to prevent leakage).
 - **Look-Ahead Bias Correction**: Normalizing early-morning volume features using a rolling 20-day historical daily volume shifted by 1 day (i.e. expected bar volume = `yesterday_rolling_20d_daily_volume / 48`) instead of the current day's full volume, ensuring strict chronological boundaries and eliminating look-ahead leakage.
 
 

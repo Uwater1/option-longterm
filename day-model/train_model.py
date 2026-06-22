@@ -271,6 +271,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
     # is used ONLY for stability-selection feature pruning so each side picks
     # features that are relevant to its regime (upside / downside).
     y_raw = feat[TARGET].values
+    n = len(feat)
     if side == "long":
         y_clip_raw = np.maximum(0.0, y_raw)
     elif side == "short":
@@ -291,7 +292,6 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
         sample_w = np.ones(n)
     dates = feat.index
     full_y_raw = pd.Series(y_raw, index=dates)
-    n = len(feat)
 
     tag = etf_name if side == "single" else f"{etf_name}_{side}"
     active = y_clip_raw > 0
