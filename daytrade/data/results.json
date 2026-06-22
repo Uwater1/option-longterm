@@ -5,8 +5,8 @@
     "50ETF": {
       "long": null,
       "short": {
-        "threshold_pct": 80.0,
-        "conviction_pct": 40.0,
+        "threshold_pct": 50.0,
+        "conviction_pct": 80.0,
         "n_full": 68,
         "n_oos": 34,
         "oos_sharpe": 0.6739204679561119,
@@ -20,17 +20,17 @@
       },
       "long_meta": {
         "n_eligible": 0,
-        "n_total": 20
+        "n_total": 36
       },
       "short_meta": {
-        "n_eligible": 10,
-        "n_total": 16
+        "n_eligible": 14,
+        "n_total": 20
       }
     },
     "300ETF": {
       "long": {
-        "threshold_pct": 80.0,
-        "conviction_pct": 40.0,
+        "threshold_pct": 50.0,
+        "conviction_pct": 80.0,
         "n_full": 140,
         "n_oos": 25,
         "oos_sharpe": 0.1675940600134858,
@@ -43,8 +43,8 @@
         "eligible": true
       },
       "short": {
-        "threshold_pct": 90.0,
-        "conviction_pct": 40.0,
+        "threshold_pct": 50.0,
+        "conviction_pct": 90.0,
         "n_full": 84,
         "n_oos": 23,
         "oos_sharpe": 2.2062790841545343,
@@ -57,12 +57,12 @@
         "eligible": true
       },
       "long_meta": {
-        "n_eligible": 4,
-        "n_total": 16
-      },
-      "short_meta": {
         "n_eligible": 8,
         "n_total": 20
+      },
+      "short_meta": {
+        "n_eligible": 18,
+        "n_total": 30
       }
     },
     "500ETF": {
@@ -81,32 +81,32 @@
         "eligible": true
       },
       "short": {
-        "threshold_pct": 90.0,
+        "threshold_pct": 95.0,
         "conviction_pct": 40.0,
-        "n_full": 100,
-        "n_oos": 46,
-        "oos_sharpe": 2.9067072256111164,
-        "oos_pnl_bps": 966.5371228422064,
-        "oos_max_dd_bps": -505.2261045541466,
-        "oos_win_rate": 0.6304347826086957,
-        "is_sharpe": 0.5011033901048776,
-        "is_pnl_bps": 208.1131625162419,
-        "score": 0.6005290600998332,
+        "n_full": 40,
+        "n_oos": 20,
+        "oos_sharpe": 4.879947115395617,
+        "oos_pnl_bps": 768.8608228701344,
+        "oos_max_dd_bps": -479.01376522209216,
+        "oos_win_rate": 0.75,
+        "is_sharpe": -1.5120042325931524,
+        "is_pnl_bps": -295.2126593622738,
+        "score": 0.605400914115889,
         "eligible": true
       },
       "long_meta": {
-        "n_eligible": 16,
-        "n_total": 16
-      },
-      "short_meta": {
         "n_eligible": 20,
         "n_total": 20
+      },
+      "short_meta": {
+        "n_eligible": 36,
+        "n_total": 36
       }
     },
     "588000ETF": {
       "long": {
-        "threshold_pct": 90.0,
-        "conviction_pct": 40.0,
+        "threshold_pct": 50.0,
+        "conviction_pct": 90.0,
         "n_full": 64,
         "n_oos": 35,
         "oos_sharpe": 3.5123670340776365,
@@ -120,18 +120,18 @@
       },
       "short": null,
       "long_meta": {
-        "n_eligible": 20,
-        "n_total": 20
+        "n_eligible": 36,
+        "n_total": 36
       },
       "short_meta": {
         "n_eligible": 0,
-        "n_total": 20
+        "n_total": 36
       }
     },
     "159915ETF": {
       "long": {
-        "threshold_pct": 90.0,
-        "conviction_pct": 40.0,
+        "threshold_pct": 50.0,
+        "conviction_pct": 90.0,
         "n_full": 104,
         "n_oos": 32,
         "oos_sharpe": 8.587079154974683,
@@ -144,8 +144,8 @@
         "eligible": true
       },
       "short": {
-        "threshold_pct": 80.0,
-        "conviction_pct": 40.0,
+        "threshold_pct": 50.0,
+        "conviction_pct": 80.0,
         "n_full": 172,
         "n_oos": 49,
         "oos_sharpe": 6.164984302206781,
@@ -158,12 +158,12 @@
         "eligible": true
       },
       "long_meta": {
-        "n_eligible": 20,
-        "n_total": 20
+        "n_eligible": 30,
+        "n_total": 30
       },
       "short_meta": {
-        "n_eligible": 20,
-        "n_total": 20
+        "n_eligible": 30,
+        "n_total": 30
       }
     }
   },
@@ -212,23 +212,23 @@
     },
     "500ETF": {
       "etf": "500ETF",
-      "n_trades": 602,
+      "n_trades": 542,
       "long_n": 502,
-      "short_n": 100,
-      "combined_sharpe": 2.40919236770929,
-      "combined_pnl_bps": 11462.688687030204,
+      "short_n": 40,
+      "combined_sharpe": 2.464562068575399,
+      "combined_pnl_bps": 10761.686565179618,
       "combined_max_dd_bps": -1603.5121322391515,
-      "combined_win_rate": 0.5548172757475083,
+      "combined_win_rate": 0.551660516605166,
       "long_sharpe": 2.5642925499917095,
       "long_pnl_bps": 10288.038401671758,
       "long_max_dd_bps": -1603.5121322391515,
       "long_win_rate": 0.545816733067729,
       "long_mean_ret_bps": 20.494100401736567,
-      "short_sharpe": 1.5737556022240948,
-      "short_pnl_bps": 1174.650285358448,
-      "short_max_dd_bps": -748.5898124795208,
-      "short_win_rate": 0.6,
-      "short_mean_ret_bps": 11.746502853584477,
+      "short_sharpe": 1.3276806503566518,
+      "short_pnl_bps": 473.6481635078608,
+      "short_max_dd_bps": -919.2297517186182,
+      "short_win_rate": 0.625,
+      "short_mean_ret_bps": 11.84120408769652,
       "cost_bps": 15.0
     },
     "588000ETF": {
@@ -311,9 +311,9 @@
       "cost_bps": 5.0,
       "etf": "500ETF",
       "side": "short",
-      "n_oos": 46,
-      "oos_sharpe": 4.290084327412721,
-      "oos_pnl_bps": 1426.5371228422064
+      "n_oos": 20,
+      "oos_sharpe": 6.149343856714527,
+      "oos_pnl_bps": 968.8608228701345
     },
     {
       "cost_bps": 5.0,
@@ -375,9 +375,9 @@
       "cost_bps": 15.0,
       "etf": "500ETF",
       "side": "short",
-      "n_oos": 46,
-      "oos_sharpe": 2.9067072256111164,
-      "oos_pnl_bps": 966.5371228422064
+      "n_oos": 20,
+      "oos_sharpe": 4.879947115395617,
+      "oos_pnl_bps": 768.8608228701344
     },
     {
       "cost_bps": 15.0,
@@ -439,9 +439,9 @@
       "cost_bps": 30.0,
       "etf": "500ETF",
       "side": "short",
-      "n_oos": 46,
-      "oos_sharpe": 0.8316415729087097,
-      "oos_pnl_bps": 276.53712284220677
+      "n_oos": 20,
+      "oos_sharpe": 2.975852003417256,
+      "oos_pnl_bps": 468.86082287013477
     },
     {
       "cost_bps": 30.0,
@@ -504,10 +504,10 @@
     {
       "etf": "500ETF",
       "side": "short",
-      "n_oos": 46,
-      "Rally%": 17.391304347826086,
-      "Selloff%": 30.434782608695652,
-      "Neutral%": 52.17391304347826
+      "n_oos": 20,
+      "Rally%": 20.0,
+      "Selloff%": 30.0,
+      "Neutral%": 50.0
     },
     {
       "etf": "588000ETF",

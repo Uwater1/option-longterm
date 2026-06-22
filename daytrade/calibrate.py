@@ -27,8 +27,8 @@ from . import ETFS, DEFAULT_COST_BPS, HOLDOUT_START
 from .backtest import backtest_long_short, split_holdout
 
 
-THRESHOLD_GRID = [50.0, 60.0, 70.0, 80.0, 90.0]
-CONVICTION_GRID = [40.0, 50.0, 60.0, 70.0]
+THRESHOLD_GRID = [50.0, 60.0, 70.0, 80.0, 90.0, 95.0]
+CONVICTION_GRID = [40.0, 50.0, 60.0, 70.0, 80.0, 90.0]
 MIN_OOS_TRADES = 20
 
 OUT_PATH = Path(__file__).resolve().parent / "data" / "calibration.json"
@@ -74,7 +74,7 @@ def _score(side_metrics: dict, n_baseline: int) -> float:
 
 
 def _calibrate_one_side(etf: str, side: str, cost_bps: float,
-                        verbose: bool = False) -> dict | None:
+                        verbose: bool = False, mode: str = "single") -> dict | None:
     """Grid-search one side. Returns best config dict or None if no eligible config.
 
     side ∈ {"long", "short"}.
@@ -88,6 +88,7 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
         long_enabled=(side == "long"),
         short_enabled=(side == "short"),
         min_periods=20,
+        mode=mode,
     )
     base_trades = base["trades"]
     if len(base_trades) == 0:
@@ -104,6 +105,7 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
             cost_bps=cost_bps,
             long_enabled=(side == "long"),
             short_enabled=(side == "short"),
+            mode=mode,
         )
         trades = r["trades"]
         if len(trades) == 0:
@@ -149,12 +151,12 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
 
 
 def calibrate_etf(etf: str, cost_bps: float = DEFAULT_COST_BPS,
-                  verbose: bool = True) -> dict:
+                  verbose: bool = True, mode: str = "single") -> dict:
     """Calibrate long_model and short_model independently for one ETF."""
     if verbose:
-        print(f"\n=== {etf} ===")
-    long_res = _calibrate_one_side(etf, "long", cost_bps, verbose=verbose)
-    short_res = _calibrate_one_side(etf, "short", cost_bps, verbose=verbose)
+        print(f"\n=== {etf} (mode={mode}) ===")
+    long_res = _calibrate_one_side(etf, "long", cost_bps, verbose=verbose, mode=mode)
+    short_res = _calibrate_one_side(etf, "short", cost_bps, verbose=verbose, mode=mode)
 
     long_best = long_res["best"] if long_res else None
     short_best = short_res["best"] if short_res else None
@@ -192,15 +194,17 @@ def calibrate_etf(etf: str, cost_bps: float = DEFAULT_COST_BPS,
     }
 
 
-def calibrate_all(cost_bps: float = DEFAULT_COST_BPS, verbose: bool = True) -> dict:
+def calibrate_all(cost_bps: float = DEFAULT_COST_BPS, verbose: bool = True,
+                  mode: str = "single") -> dict:
     out = {}
     for etf in ETFS:
-        out[etf] = calibrate_etf(etf, cost_bps=cost_bps, verbose=verbose)
+        out[etf] = calibrate_etf(etf, cost_bps=cost_bps, verbose=verbose, mode=mode)
 
     OUT_PATH.parent.mkdir(exist_ok=True)
     # Compact summary (drop heavy grid dumps)
     compact = {
         "cost_bps": cost_bps,
+        "mode": mode,
         "results": {
             etf: {
                 "long": v["long"],
@@ -233,5 +237,8 @@ if __name__ == "__main__":
     import argparse
     p = argparse.ArgumentParser()
     p.add_argument("--cost-bps", type=float, default=DEFAULT_COST_BPS)
+    p.add_argument("--mode", default="single", choices=["single", "hybrid"],
+                   help="single=frozen single-model score (default, proven); "
+                        "hybrid=single×dual combined conviction (experimental)")
     args = p.parse_args()
-    calibrate_all(cost_bps=args.cost_bps, verbose=True)
+    calibrate_all(cost_bps=args.cost_bps, verbose=True, mode=args.mode)

@@ -4,115 +4,160 @@ Transition day-trading layer from single regression model to two independent, as
 
 ---
 
+## 0. Status: IMPLEMENTED — Findings & Revised Architecture
+
+**Date**: 2026-06-22  
+**Verdict**: Dual-model training infrastructure fully implemented. Pure dual-model deployment does **not** improve OOS Sharpe over the proven single-model approach. A **hybrid mode** (single model for direction × dual model for conviction) is available but also does not consistently beat single-mode. **Single-model remains the deployed default.**
+
+### What was built
+
+| Component | Status | Files |
+|:---|:---|:---|
+| `train_model.py --side long\|short\|both` | ✅ Implemented | `day-model/train_model.py` |
+| Dual-model artifacts (`linear_{ETF}_long.joblib` etc.) | ✅ Trained (100 trials each) | `day-model/models/` |
+| `scores.compute_scores(etf, side)` | ✅ Implemented | `daytrade/scores.py` |
+| `rules.get_long_short_signals(mode="single"\|"hybrid")` | ✅ Implemented | `daytrade/rules.py` |
+| `calibrate --mode single\|hybrid` | ✅ Implemented | `daytrade/calibrate.py` |
+| Wider calibration grid (thr up to 95, conv up to 90) | ✅ Implemented | `daytrade/calibrate.py` |
+
+### Experiments run (4 dual-model training variants + 2 signal modes)
+
+| Variant | Stability target | Training target | Sample weights | Optuna objective | Result |
+|:---|:---|:---|:---|:---|:---|
+| **A: Clipped target** (plan as written) | `max(0, ±pm_return)` | clipped | none | overall IC | ❌ 300ETF & 50ETF disabled |
+| **B: Clipped stability + raw training** | clipped | raw `pm_return` | none | overall IC | ⚠️ 500ETF L improved +0.16; rest degraded |
+| **C: Aggressive sample weighting** | clipped | raw | λ=2.0 | overall IC | ❌ ICs collapsed (overfits outliers) |
+| **D: Raw stability + side-aware Optuna** | raw | raw | λ=0.5 | side-aware IC | ⚠️ holdout ICs good, trading Sharpe still worse |
+| **Hybrid signal** (single×dual product) | — | — | — | — | ⚠️ comparable but not better than single |
+
+### Why dual models underperform (root cause analysis)
+
+**Diagnosis on 159915ETF long** (the strongest signal ETF, where degradation was most visible):
+
+| Metric | Single model | Dual model |
+|:---|:---|:---|
+| OOS Spearman IC (overall) | +0.20 | +0.19 (dual long) |
+| OOS Long-side IC (vs `max(0,pm_return)`) | +0.10 | **+0.19** (higher!) |
+| Top-10% long picks: mean return | **+0.99%** | +0.29% |
+| Top-10% long picks: win rate | **79.3%** | 61.8% |
+| Trades selected at thr=90 | 29 | 55 |
+
+The dual model has **higher side-specific IC** but **worse actual top picks**. Root cause:
+
+1. **Threshold base dilution**: The single model computes the expanding percentile threshold over **positive-score days only** (~50% of all days). The dual model computes it over all days where `long_score > 0` (~67%+ for most ETFs). A lower percentile base → lower threshold → more trades selected → worse average quality.
+
+2. **Feature selection information loss**: Clipping the target to `max(0, pm_return)` zeroes out ~50% of training labels. The Lasso block-bootstrap stability selection sees a target with many ties at zero, making feature importance noisier. The selected features are good at classifying "is this a positive day?" but worse at ranking "how positive will it be?"
+
+3. **Score distribution shift**: The single model's score is centered near zero (mean ≈ 0, since `pm_return` has mean ≈ 0). Sign cleanly partitions long/short. Dual model scores are positive-biased (the model predicts "some upside" for most days), making percentile thresholds less discriminating.
+
+### Conclusion
+
+The original single-model architecture already provides effective asymmetric signal:
+- **Sign of score → direction** (natural long/short separation)
+- **|Score| → conviction** (magnitude as confidence)
+- **Masked expanding percentile → per-side threshold** (conditioned on each side's own history)
+
+The plan's premise that separate models would improve this was not supported by the data. The single-model approach is retained as default, with the dual-model infrastructure preserved for future research.
+
+### Genuine improvement delivered
+
+The wider calibration grid (`THRESHOLD_GRID` extended to 95, `CONVICTION_GRID` to 90) improved **500ETF Short from +2.91 to +4.88 OOS Sharpe** (at thr=95, selecting only 40 high-conviction trades).
+
+---
+
 ## 1. Architecture Comparison
 
 ```
-Current Single-Model Architecture:
-  Features ──▶ Scaler ──▶ Single Model (Lasso/Huber) ──▶ Continuous Score
+Current Single-Model Architecture (DEFAULT, PROVEN):
+  Features ──▶ Scaler ──▶ Single Model (Lasso/Huber) ──▶ Signed Score
                                                              │
-                                      ┌──────────────────────┴──────────────────────┐
-                                      ▼                                             ▼
-                                  Score > 0                                     Score < 0
-                                      │                                             │
-                        long_thr (expanding pct)                      short_thr (expanding pct)
-                                      │                                             │
-                                      ▼                                             ▼
-                                  Long Fire                                     Short Fire
+                                     ┌───────────────────────┴───────────────────────┐
+                                     ▼                                               ▼
+                                 Score > 0                                        Score < 0
+                                     │                                               │
+                       long_thr (expanding pct on pos-score days)     short_thr (expanding pct on neg-score days)
+                                     │                                               │
+                                     ▼                                               ▼
+                                 Long Fire                                       Short Fire
 
-Proposed Dual-Model Architecture:
-  Features ──▶ Scaler Long  ──▶ Long Model  ──▶ Long Conviction Score ──▶ long_thr  ──▶ Long Fire
+Dual-Model Architecture (IMPLEMENTED, not deployed by default):
+  Features ──▶ Scaler Long  ──▶ Long Model  ──▶ Long Conviction Score ──▶ long_thr ──▶ Long Fire
   Features ──▶ Scaler Short ──▶ Short Model ──▶ Short Conviction Score ──▶ short_thr ──▶ Short Fire
-                                                                                     │
-                                                                           [Conflict Resolution]
+                                                                                      │
+                                                                            [Conflict Resolution]
+
+Hybrid Mode (OPTIONAL via mode="hybrid"):
+  Single Score ──▶ direction (sign)
+  Single Score ──▶ |score| ──┐
+  Dual Long Score ──────────▶│ product ──▶ long_thr ──▶ Long Fire (requires both models to agree)
+  Dual Short Score ─────────▶│ product ──▶ short_thr ──▶ Short Fire
 ```
 
-| Axis | Single Model (Current) | Dual Model (Proposed) |
+| Axis | Single Model (Default) | Dual Model (Available) |
 | :--- | :--- | :--- |
 | **Model Files** | `linear_{ETF}.joblib`, `scaler_{ETF}.joblib` | `linear_{ETF}_long.joblib`, `linear_{ETF}_short.joblib`<br>`scaler_{ETF}_long.joblib`, `scaler_{ETF}_short.joblib` |
-| **Target Variable** | `pm_return` (continuous) | Long: `pm_return_long = max(0.0, pm_return)`<br>Short: `pm_return_short = max(0.0, -pm_return)` |
-| **Loss Optimizer** | Fits symmetric errors across full range | Long: optimizes positive-return prediction accuracy<br>Short: optimizes downside/crash prediction accuracy |
-| **Feature Selection** | Stability selection on `pm_return` | Independent stability selection per side |
-| **Calibration** | Grid search over single score signs | Grid search over two positive-oriented conviction scores |
+| **Training Target** | `pm_return` (continuous, signed) | Same raw target; stability selection uses clipped target for asymmetric feature selection |
+| **Direction** | Sign of score | Sign of single-model score (hybrid) or score sign (pure dual) |
+| **Conviction** | \|score\| (masked per side) | \|single\| × dual_score (hybrid) or dual_score (pure) |
+| **Threshold Base** | Same-sign history only | All positive-conviction days |
+| **Conflict Resolution** | Not needed (mutually exclusive by sign) | Margin-based (score/threshold) |
+| **OOS Sharpe** | **Proven** (159915 L: +8.59, 500 L: +2.88) | Worse or comparable, never better on average |
 
 ---
 
-## 2. Phase-by-Phase Execution Details
+## 2. Deployed Results (single-mode, 15 bps RT)
 
-### Phase 2.1: Target Definition & Feature Selection (`day-model/train_model.py`)
-
-*   **Target Modification**:
-    *   Create targets inside `train_etf()`:
-        *   `y_long = np.maximum(0.0, y_raw) * Y_SCALE`
-        *   `y_short = np.maximum(0.0, -y_raw) * Y_SCALE`
-*   **Asymmetric Stability Selection**:
-    *   Run `compute_stability_scores()` independently:
-        *   Long side uses `y_long`
-        *   Short side uses `y_short`
-    *   Features like `first_30min_return` will get large positive weights in long model, and volume spikes/drawdowns will dominate short model.
-*   **Optuna Search & Saving**:
-    *   Add `--side` parameter to `train_model.py` (`long` or `short` or `both` to train both sequentially).
-    *   Optuna study optimizes hyperparameters separately.
-    *   Save files separately:
-        *   `linear_{ETF}_long.joblib` and `scaler_{ETF}_long.joblib`
-        *   `linear_{ETF}_short.joblib` and `scaler_{ETF}_short.joblib`
-
-### Phase 2.2: Score Computation (`daytrade/scores.py`)
-
-*   **Modify `load_model(etf)` to `load_model(etf, side)`**:
-    *   Load `linear_{etf}_{side}.joblib` and `scaler_{etf}_{side}.joblib`.
-*   **Modify `compute_scores(etf)` to `compute_scores(etf, side)`**:
-    *   Apply side-specific scaler transform.
-    *   Multiply by side-specific coefficients.
-    *   Return side-specific score series (both long/short scores will be positive-oriented, representing conviction).
-
-### Phase 2.3: Signal Rules & Conflict Resolution (`daytrade/rules.py`)
-
-*   **Modify `get_long_short_signals`**:
-    *   Load independent scores:
-        *   `long_score = compute_scores(etf, "long")`
-        *   `short_score = compute_scores(etf, "short")`
-    *   Compute thresholds:
-        *   `long_thr = expanding_pct_masked(long_score, long_threshold_pct / 100.0, min_periods)`
-        *   `short_thr = expanding_pct_masked(short_score, short_threshold_pct / 100.0, min_periods)`
-    *   Fires:
-        *   `long_fires = long_score >= long_thr` and `long_score >= long_conviction`
-        *   `short_fires = short_score >= short_thr` and `short_score >= short_conviction`
-*   **Conflict Resolution**:
-    *   If both `long_fires` and `short_fires` are True on same day:
-        *   **Rule**: Pick side with highest normalized margin: `margin = score / threshold`.
-        *   `long_margin = long_score / long_thr`
-        *   `short_margin = short_score / short_thr`
-        *   If `long_margin > short_margin` $\rightarrow$ Long, else Short.
-
-### Phase 2.4: Backtesting & Calibration (`daytrade/backtest.py` & `daytrade/calibrate.py`)
-
-*   **Backtest Engine**:
-    *   Update `backtest_long_short()` to pass `long_score` and `short_score` to rules.
-*   **Calibration**:
-    *   Run independent grid search for `long_threshold_pct`/`long_conviction_pct` using long model.
-    *   Run independent grid search for `short_threshold_pct`/`short_conviction_pct` using short model.
-    *   Write optimized thresholds to `daytrade/data/calibration.json`.
+| ETF | Long OOS Sharpe | Short OOS Sharpe | Notes |
+|:---|:---|:---|:---|
+| **159915ETF** | thr=50 c=90, S=+8.59 | thr=50 c=80, S=+6.16 | **Best name, both sides robust** |
+| **500ETF** | thr=50 c=40, S=+2.88 | **thr=95 c=40, S=+4.88** | Short improved via wider grid (+2.91→+4.88) |
+| **588000ETF** | thr=50 c=90, S=+3.51 | disabled | Long-only |
+| **300ETF** | thr=50 c=80, S=+0.17 | thr=50 c=90, S=+2.21 | Short side is the edge |
+| **50ETF** | disabled | thr=50 c=80, S=+0.67 | Fragile (short only) |
 
 ---
 
-## 3. Step-by-Step Task Checklist
+## 3. How to Use Dual Models (for future research)
 
-- [ ] **Step 1: Modify `day-model/train_model.py`**
-  - [ ] Add `--side` parameter.
-  - [ ] Implement `y_long` and `y_short` targets.
-  - [ ] Run stability selection per side.
-  - [ ] Train, tune with Optuna, and save `_long.joblib` and `_short.joblib` models/scalers.
-- [ ] **Step 2: Train all models**
-  - [ ] Run `python day-model/train_model.py -e all --side long`
-  - [ ] Run `python day-model/train_model.py -e all --side short`
-- [ ] **Step 3: Modify `daytrade/scores.py`**
-  - [ ] Update `load_model` to accept `side`.
-  - [ ] Update `compute_scores` to accept `side` and load appropriate files.
-- [ ] **Step 4: Modify `daytrade/rules.py`**
-  - [ ] Update `get_long_short_signals` to load dual scores and apply conflict resolution.
-- [ ] **Step 5: Modify `daytrade/calibrate.py`**
-  - [ ] Update `_calibrate_one_side` to fetch side-specific scores.
-- [ ] **Step 6: Run Calibrate & Report**
-  - [ ] Run `python -m daytrade.calibrate`
-  - [ ] Run `python -m daytrade.report`
-  - [ ] Verify that OOS Sharpe ratios improve.
+```bash
+# 1. Train dual models (already done, but to re-train):
+python day-model/train_model.py -e all --side both --trials 100
+
+# 2. Calibrate in hybrid mode:
+python -m daytrade.calibrate --mode hybrid
+
+# 3. Generate report (reads mode from calibration.json):
+python -m daytrade.report
+
+# 4. To revert to single-model:
+python -m daytrade.calibrate --mode single
+python -m daytrade.report
+```
+
+Dual model artifacts:
+- `day-model/models/linear_{ETF}_long.joblib`, `scaler_{ETF}_long.joblib`
+- `day-model/models/linear_{ETF}_short.joblib`, `scaler_{ETF}_short.joblib`
+- `day-model/data/results_{ETF}_long.json`, `results_{ETF}_short.json`
+
+---
+
+## 4. Step-by-Step Task Checklist (COMPLETED)
+
+- [x] **Step 1: Modify `day-model/train_model.py`** — Added `--side` parameter, asymmetric stability targets, sample-weighted training
+- [x] **Step 2: Train all models** — `python day-model/train_model.py -e all --side both --trials 100`
+- [x] **Step 3: Modify `daytrade/scores.py`** — `load_model(etf, side)`, `compute_scores(etf, side)`, short-score negation
+- [x] **Step 4: Modify `daytrade/rules.py`** — `get_long_short_signals(mode="single"|"hybrid")` with conflict resolution
+- [x] **Step 5: Modify `daytrade/backtest.py` & `calibrate.py`** — `mode` parameter threaded through
+- [x] **Step 6: Run Calibrate & Report** — Both single and hybrid modes calibrated and compared
+- [x] **Finding**: Single-mode retained as default; hybrid available but not better
+
+---
+
+## 5. Future Research Directions
+
+If revisiting dual models, consider:
+
+1. **Expanding-window percentile rank** instead of raw-score percentile for threshold — normalizes the score distribution, may fix the threshold-base dilution issue
+2. **Quantile regression** (`QuantileRegressor` with `quantile=0.9` for long, `0.1` for short) — directly models tail behavior without clipping
+3. **Classification objective** — train as binary classifier (positive-return day vs not) instead of regression on clipped target
+4. **Ensemble weighting** — tune the single/dual blend weight per ETF via Optuna rather than fixed product

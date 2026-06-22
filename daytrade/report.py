@@ -75,7 +75,16 @@ def load_best_configs() -> dict:
     return {etf: v for etf, v in data["results"].items()}
 
 
-def run_deployed_backtest(etf: str, cfg: dict, cost_bps: float) -> dict:
+def _calib_mode() -> str:
+    """Read the signal mode from calibration.json (default 'single')."""
+    if not CALIB_PATH.exists():
+        return "single"
+    data = json.load(open(CALIB_PATH))
+    return data.get("mode", "single")
+
+
+def run_deployed_backtest(etf: str, cfg: dict, cost_bps: float,
+                          mode: str = "single") -> dict:
     """Run backtest with deployed long/short configs from calibration."""
     long_cfg = cfg.get("long")
     short_cfg = cfg.get("short")
@@ -90,6 +99,7 @@ def run_deployed_backtest(etf: str, cfg: dict, cost_bps: float) -> dict:
         short_threshold_pct=short_thr, short_conviction_pct=short_conv,
         cost_bps=cost_bps,
         long_enabled=bool(long_cfg), short_enabled=bool(short_cfg),
+        mode=mode,
     )
     return r
 
@@ -114,11 +124,11 @@ def _label_clusters(etf: str) -> pd.DataFrame:
     return cl[["date", "label"]]
 
 
-def cost_sweep_per_side(configs: dict) -> pd.DataFrame:
+def cost_sweep_per_side(configs: dict, mode: str = "single") -> pd.DataFrame:
     rows = []
     for cost in [5.0, 15.0, 30.0]:
         for etf, cfg in configs.items():
-            r = run_deployed_backtest(etf, cfg, cost_bps=cost)
+            r = run_deployed_backtest(etf, cfg, cost_bps=cost, mode=mode)
             t = r["trades"]
             if len(t) == 0:
                 continue
@@ -254,10 +264,11 @@ def generate():
     global data_configs
     configs = load_best_configs()
     data_configs = configs
-    print("Running deployed backtest at 15 bps...")
-    data = {etf: run_deployed_backtest(etf, cfg, DEFAULT_COST_BPS)
+    mode = _calib_mode()
+    print(f"Running deployed backtest at 15 bps (mode={mode})...")
+    data = {etf: run_deployed_backtest(etf, cfg, DEFAULT_COST_BPS, mode=mode)
             for etf, cfg in configs.items()}
-    cost_df = cost_sweep_per_side(configs)
+    cost_df = cost_sweep_per_side(configs, mode=mode)
     cluster_df = cluster_confusion(data)
     eq_split = plot_equity_curves(data, DEFAULT_COST_BPS)
     eq_comb = plot_combined_equity(data, DEFAULT_COST_BPS)
