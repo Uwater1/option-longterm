@@ -84,24 +84,32 @@ numba_utils.py                 # Numba BS functions & IV solver
 day-model/                     # Day-Model PM session return predictor
 ├── REPORT.md                  # Comprehensive PM return prediction report
 ├── AGENTS.md                  # Feature expansion and workflow guide
-├── build_features.py          # Early-bar + day-level feature engineering (135 features, local caching)
-├── train_model.py             # Optuna-tuned linear model training & feature selection
+├── build_features.py          # Early-bar + day-level feature engineering (130 features, local caching)
+├── train_model.py             # Optuna-tuned linear model training & feature selection (Phase 2: stability + tail-IC fixes)
 └── generate_report.py         # Report markdown generator
-daytrade/                      # Frozen-Linear Intraday Alpha Strategy
+daytrade/                      # Frozen-Linear Intraday Alpha Strategy (v2: mixed-mode deployment)
 ├── AGENTS.md                  # Strategy details, parameters, and developer guide
-├── REPORT.md                  # Calibration and performance report (with corrected drawdown metrics)
+├── REPORT.md                  # Calibration and performance report (with mode comparison table)
+├── improvement_plan.md        # Dual-model research findings & v2 results
 ├── __init__.py                # Strategy parameters and paths
 ├── scores.py                  # Frozen score compute + IC verification
-├── rules.py                   # Masked expanding percentile signal rules
+├── rules.py                   # expanding_pct, expanding_pct_masked, expanding_pct_rank signal rules (single/hybrid/dual modes)
 ├── backtest.py                # Daily 5m intraday simulator
-├── calibrate.py               # Independent per-side threshold optimizer
-└── report.py                  # Report generator
+├── calibrate.py               # Independent per-side threshold optimizer (--mode single|hybrid|dual)
+├── deploy.py                  # Phase 4: per-side best-of-mode deployment (picks best mode per ETF × side)
+└── report.py                  # Report generator (supports mode="mixed")
 ```
 
 ### Day-Model Caching & Features (New)
 - **Data Caching**: Ricequant 3rd-party data (Securities Margin, Capital Flow, Northbound Connect Quota, and VIX indices) is cached locally to `data/securities_margin.parquet`, `data/capital_flow.parquet`, `data/stock_connect_quota.parquet`, and `data/rq_vix.parquet` to prevent slow network calls and minimize API quota usage.
-- **135 Features**: Expanded feature space includes 50 early-bar intraday features, 63 day-level features (including technical indicators, 3rd party margin/flow, and 8 option-derived factors such as `iv`, `vix`, `vix_iv_spread`, etc.), and 22 yesterday's features (shifted by 1 day to prevent leakage).
+- **130 Features**: Expanded feature space includes 48 early-bar intraday features, 60 day-level features (including technical indicators, 3rd party margin/flow, and 8 option-derived factors such as `iv`, `vix`, `vix_iv_spread`, etc.), and 22 yesterday's features (shifted by 1 day to prevent leakage).
 - **Look-Ahead Bias Correction**: Normalizing early-morning volume features using a rolling 20-day historical daily volume shifted by 1 day (i.e. expected bar volume = `yesterday_rolling_20d_daily_volume / 48`) instead of the current day's full volume, ensuring strict chronological boundaries and eliminating look-ahead leakage.
+- **VIX/IV Spread Properties**:
+  - `vix_iv_spread = vix - iv`. Proxy for variance risk premium / option skew.
+  - VIX data starts late for some ETFs (e.g. 300ETF in 2019, 500ETF in 2022). Missing values backfilled using `iv + mean_bias`. On backfilled dates, the spread is constant and standardizes to `0.0`.
+  - 50ETF VIX is 100% real (no backfilling). Highly selected, confirming real predictive signal.
+  - Strong positive correlation with `pm_return` historically (~+0.07), but flipped to negative in 2025/2026.
+
 
 
 > Also: `backtest/alpha_put_models.json` (Phase 1 weights+OOS), `backtest/alpha_ml_models/` (Phase 2 bags+manifests), `backtest/validate_pnl_phase{1,2,3}.json`, `backtest/alpha_phase_comparison.md`.
@@ -183,6 +191,7 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 - **500ETF**: Volatility too high (~26.8%). Sharp rallies cause major assignment loss. Raising RSI threshold to 70 helps slightly. Detailed in [RESEARCH_500ETF.md](file:///home/hallo/Documents/option-longterm/RESEARCH_500ETF.md).
 - **Tail Risk (Puts)**: Vol acceleration + negative skewness predict downside. Detailed in [FINDINGS.md](file:///home/hallo/Documents/option-longterm/FINDINGS.md).
 - **Day Trading**: [day-trading/AGENTS.md](file:///home/hallo/Documents/option-longterm/day-trading/AGENTS.md) [day-trading/REPORT.md](file:///home/hallo/Documents/option-longterm/day-trading/REPORT.md)
+- **Daytrade v2**: Mixed-mode deployment (single/hybrid/dual per side) improved total OOS Sharpe from +20.17 to +23.18. Dual mode found independent edge on 50ETF Short. See [daytrade/improvement_plan.md](file:///home/hallo/Documents/option-longterm/daytrade/improvement_plan.md) §8.
 
 ## TODO
 - [ ] Improve put buy strategy: [put_improvement_plan.md](file:///home/hallo/Documents/option-longterm/put_improvement_plan.md)
