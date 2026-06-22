@@ -447,14 +447,14 @@ def generate():
     L.append(f"- **Disabled short**: {', '.join(e for e in ETFS if not configs.get(e,{}).get('short')) or 'none'}")
 
     L.append("\n## 6. Caveats\n")
-    L.append("- Short-side P&L assumes zero execution friction (options/margin costs not modeled)")
+    L.append("- Short-side P&L assumes 15bps transaction cost and other execution assumptions similar to the long side (options/margin/borrow costs not modeled)")
     L.append("- Frozen coefficients = no regime adaptation; live IC decay will hurt deployability")
     L.append("- 14:30 exit leaves late-day continuation on the table; v2 will add trailing stop")
     L.append("- No position sizing (fixed notional); drawdowns are per-unit-notional")
     L.append("- Per-side eligibility uses holdout (2024-03+); earlier years may behave differently")
     L.append("- Single cost assumption (15bps RT) applied to both long and short; real-world shorts via options will carry different (likely higher) cost")
 
-    REPORT_PATH.write_text("\n".join(L))
+    REPORT_PATH.write_text("\n".join(L), encoding="utf-8")
     print(f"Report → {REPORT_PATH}")
 
     out = {
@@ -468,7 +468,7 @@ def generate():
         "cost_sweep": cost_df.to_dict(orient="records"),
         "cluster_confusion": cluster_df.to_dict(orient="records"),
     }
-    RESULTS_PATH.write_text(json.dumps(out, indent=2, default=str))
+    RESULTS_PATH.write_text(json.dumps(out, indent=2, default=str), encoding="utf-8")
     print(f"Results JSON → {RESULTS_PATH}")
 
 

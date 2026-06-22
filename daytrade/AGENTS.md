@@ -290,7 +290,7 @@ Ordered roughly by expected value / implementation cost.
 
 ## 10. Known Caveats
 
-- Short-side P&L assumes zero execution friction. Real option/margin costs will reduce short_model Sharpe; the cost-sensitivity table in REPORT.md gives the break-even sensitivity.
+- Short-side P&L assumes 15bps transaction cost and other execution assumptions similar to the long side. Real option/margin/borrow costs are not modeled (which would reduce short_model Sharpe; the cost-sensitivity table in REPORT.md gives the break-even sensitivity).
 - Frozen coefficients = **no regime adaptation**. Live IC decay (visible in day-model year-by-year tables for 50ETF) will silently erode edge until next retrain.
 - 14:30 exit leaves late-day Rally continuation on the table — visible in the equity curve vs buy-and-hold.
 - Per-side eligibility uses holdout (2024-03+) only; earlier years may behave differently. Year-by-year table is the honest diagnostic.
