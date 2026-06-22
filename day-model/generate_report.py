@@ -27,6 +27,7 @@ ETF_ORDER = ["300ETF", "50ETF", "500ETF", "588000ETF", "159915ETF"]
 # Import features list
 sys.path.append(str(HERE))
 from build_features import EARLY_FEATURES, DAY_FEATURES, YESTERDAY_FEATURES, FEATURES
+TARGET = "pm_return"
 
 
 def load_results(path: Path) -> dict:
@@ -150,14 +151,88 @@ def generate(results: dict) -> str:
 
         # Feature Stability Scores Table
         w("#### Feature Stability Scores (Block Bootstrap)\n")
-        w("| Feature | Stability Score | Status |")
-        w("|---------|-----------------|--------|")
+        w("| Feature | Stability Score | Status | Pearson $r$ | Spearman $\\rho$ | Monotonicity Score | Mutual Info | Quality Rating |")
+        w("|---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|")
+        
+        # Precompute quality metrics if feature data exists
+        feat_quality = {}
+        feat_path = DATA_DIR / f"features_{etf}.parquet"
+        if feat_path.exists():
+            df_feat = pd.read_parquet(feat_path)
+            df_feat = df_feat.dropna(subset=FEATURES + [TARGET])
+            y_data = df_feat[TARGET].values
+            
+            from scipy.stats import pearsonr, spearmanr
+            try:
+                from sklearn.feature_selection import mutual_info_regression
+                has_mi = True
+            except ImportError:
+                has_mi = False
+                
+            for feat_name in r["stability_scores"].keys():
+                if feat_name not in df_feat.columns:
+                    continue
+                x_data = df_feat[feat_name].values
+                p_corr, _ = pearsonr(x_data, y_data)
+                s_corr, _ = spearmanr(x_data, y_data)
+                
+                # Binned Monotonicity Score
+                try:
+                    q_labels = pd.qcut(x_data, 5, labels=False, duplicates='drop')
+                    q_means = [y_data[q_labels == i].mean() for i in sorted(np.unique(q_labels))]
+                    if len(q_means) >= 3:
+                        mono_score, _ = spearmanr(q_means, np.arange(len(q_means)))
+                    else:
+                        mono_score = np.nan
+                except Exception:
+                    mono_score = np.nan
+                
+                # Mutual Info
+                mi_val = 0.0
+                if has_mi:
+                    try:
+                        mi_val = float(mutual_info_regression(x_data.reshape(-1, 1), y_data, random_state=42)[0])
+                    except Exception:
+                        pass
+                        
+                # Rating
+                mono_abs = abs(mono_score) if not np.isnan(mono_score) else 0
+                if np.isnan(mono_score):
+                    rating = "N/A"
+                elif mono_abs >= 0.8:
+                    if abs(s_corr) > 1.5 * abs(p_corr) and abs(s_corr) > 0.01:
+                        rating = "** Non-Linear Monotonic"
+                    else:
+                        rating = "*** Strong Monotonic"
+                elif mono_abs >= 0.5:
+                    rating = "** Moderate Monotonic"
+                else:
+                    rating = "* Non-Monotonic / Weak"
+                    
+                feat_quality[feat_name] = {
+                    "p_corr": p_corr,
+                    "s_corr": s_corr,
+                    "mono": mono_score,
+                    "mi": mi_val,
+                    "rating": rating
+                }
+
         # Sort stability scores descending
         sorted_scores = sorted(r["stability_scores"].items(), key=lambda x: x[1], reverse=True)
         threshold = r['best_params']['stability_threshold']
         for feat, score in sorted_scores:
             status = "**Selected**" if score >= threshold or feat in r['selected_features'] else "Pruned"
-            w(f"| {feat} | {score:.1%} | {status} |")
+            q = feat_quality.get(feat, {"p_corr": np.nan, "s_corr": np.nan, "mono": np.nan, "mi": 0.0, "rating": "N/A"})
+            p_str = f"{q['p_corr']:+.4f}" if not np.isnan(q['p_corr']) else "N/A"
+            s_str = f"{q['s_corr']:+.4f}" if not np.isnan(q['s_corr']) else "N/A"
+            m_str = f"{q['mono']:+.2f}" if not np.isnan(q['mono']) else "N/A"
+            w(f"| {feat} | {score:.1%} | {status} | {p_str} | {s_str} | {m_str} | {q['mi']:.4f} | {q['rating']} |")
+        w("")
+        w("- **Pearson $r$**: Linear correlation coefficient.")
+        w("- **Spearman $\\rho$**: Rank correlation coefficient (overall monotonic relation).")
+        w("- **Monotonicity Score**: Spearman rank correlation of target means across 5 feature quintiles. $\\pm 1.0$ indicates perfect bin-wise monotonicity.")
+        w("- **Mutual Info**: Estimated information gain (captures non-linear dependencies).")
+        w("- **Quality Rating**: Categorized by strength and shape of the monotonic relationship.")
         w("")
 
         # Metrics table
