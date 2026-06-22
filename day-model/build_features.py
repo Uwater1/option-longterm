@@ -23,9 +23,9 @@ warnings.filterwarnings("ignore")
 
 # Feature lists
 EARLY_FEATURES = [
-    # Existing (13)
+    # Existing (11)
     "gap_pct", "first_30min_return", "early_realized_vol", "early_range",
-    "early_volume_ratio", "early_trend", "early_momentum", "gap_direction",
+    "early_trend", "early_momentum",
     "first_bar_return", "first_bar_volume", "early_vwap_dev",
     "early_skew", "early_kurtosis",
     # New bar-by-bar price returns (6)
@@ -44,17 +44,17 @@ EARLY_FEATURES = [
 ]
 
 DAY_FEATURES = [
-    # Existing (8)
-    "rsi14", "macd_hist", "sma20_dist", "sma50_dist",
+    # Existing (7)
+    "macd_hist", "sma20_dist", "sma50_dist",
     "atr14_norm", "roc10", "bb_pctb", "vol20",
-    # New trend/ma dist (5)
-    "sma10_dist", "sma100_dist", "sma200_dist", "ema12_dist", "ema26_dist",
-    # New momentum/osc (12)
+    # New trend/ma dist (4)
+    "sma10_dist", "sma100_dist", "sma200_dist", "ema12_dist",
+    # New momentum/osc (11)
     "rsi5", "rsi21", "roc5", "roc20", "roc60", "cci14", "willr14", "stoch_k", "stoch_d", "mfi14", "aroon_osc",
     # New realized vol/range (6)
     "vol5", "vol10", "vol60", "vol_ratio_5_20", "vol_ratio_10_60", "bb_width",
-    # New advanced vol (4)
-    "vol_pk10", "vol_pk20", "vol_gk10", "vol_gk20",
+    # New advanced vol (3)
+    "vol_pk20", "vol_gk10", "vol_gk20",
     # New volume ratio (2)
     "volume_sma_ratio", "volume_sma_ratio_long",
     # New 3rd party margin (10)
@@ -65,7 +65,10 @@ DAY_FEATURES = [
     "capital_buy_volume", "capital_buy_value", "capital_sell_volume", "capital_sell_value",
     "capital_net_value", "capital_net_ratio",
     # New 3rd party northbound (3)
-    "northbound_buy", "northbound_sell", "northbound_net"
+    "northbound_buy", "northbound_sell", "northbound_net",
+    # New Option Derived Features (8)
+    "iv", "iv_vol_ratio", "vix", "vix_vol_ratio", "vix_iv_spread", "vix_iv_ratio",
+    "iv_diff_1d", "vix_diff_1d"
 ]
 
 YESTERDAY_FEATURES = [
@@ -363,6 +366,56 @@ def compute_daylevel_indicators(df_1d: pd.DataFrame, margin_cache: pd.DataFrame,
             df = df.merge(nb_grouped[nb_cols], on="date", how="left")
         except Exception as e:
             print(f"    [WARN] Failed to merge northbound cache: {e}")
+
+    # 4) Option Derived Features
+    order_book_id = df["order_book_id"].iloc[0]
+    etf_key = {
+        "510050.XSHG": "50",
+        "510300.XSHG": "300",
+        "510500.XSHG": "500",
+        "588000.XSHG": "588000",
+        "159915.XSHE": "159915"
+    }.get(order_book_id, "300")
+
+    # Load calculated ATM 30d IV cache
+    iv_path = DATA_DIR / f"30d_iv_cache_{etf_key}.parquet"
+    if iv_path.exists():
+        iv_df = pd.read_parquet(iv_path)
+        iv_df.columns = ["iv"]
+        iv_df.index = pd.to_datetime(iv_df.index)
+        df = df.merge(iv_df, left_on="date", right_index=True, how="left")
+    else:
+        df["iv"] = np.nan
+
+    # Load Ricequant VIX cache
+    vix_path = DATA_DIR / "rq_vix.parquet"
+    vix_col = f"vix_{etf_key}"
+    if vix_path.exists():
+        vix_df = pd.read_parquet(vix_path)
+        vix_df.index = pd.to_datetime(vix_df.index)
+        if vix_col in vix_df.columns:
+            df = df.merge(vix_df[[vix_col]].rename(columns={vix_col: "vix"}), left_on="date", right_index=True, how="left")
+        else:
+            df["vix"] = np.nan
+    else:
+        df["vix"] = np.nan
+
+    # Backfill VIX before launch date using IV + mean bias on overlapping dates
+    overlap = df[["iv", "vix"]].dropna()
+    if not overlap.empty:
+        mean_bias = (overlap["vix"] - overlap["iv"]).mean()
+    else:
+        mean_bias = {"50": 0.0068, "300": 0.0220, "500": 0.0395}.get(etf_key, 0.02)
+    
+    df["vix"] = df["vix"].fillna(df["iv"] + mean_bias)
+
+    # Compute factors
+    df["iv_vol_ratio"] = df["iv"] / (df["vol20"] + 1e-8)
+    df["vix_vol_ratio"] = df["vix"] / (df["vol20"] + 1e-8)
+    df["vix_iv_spread"] = df["vix"] - df["iv"]
+    df["vix_iv_ratio"] = df["vix"] / (df["iv"] + 1e-8)
+    df["iv_diff_1d"] = df["iv"].diff(1)
+    df["vix_diff_1d"] = df["vix"].diff(1)
 
     # Check and fill missing columns/NaNs robustly
     for col in DAY_FEATURES:
