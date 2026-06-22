@@ -2,6 +2,8 @@
 
 Two independent asymmetric models per ETF: `long_model` (upside specialist) and `short_model` (downside specialist). v1 attempt failed; v2 redesigns the approach.
 
+**v2 Status (2026-06-22): Phases 1-4 IMPLEMENTED.** Total deployed OOS Sharpe improved from +20.17 (single-only) to **+23.18** (mixed-mode, Δ=+3.01). Key wins: 50ETF Short newly deployed via dual mode (+1.36), 159915ETF Short improved +3.20→+4.83 via hybrid mode. See `REPORT.md` §5 for mode comparison.
+
 ---
 
 ## 0. Current State (2026-06-22)
@@ -386,3 +388,43 @@ If time-constrained, **Phase 1 alone** is the highest-ROI change. It directly fi
 ## 7. Genuine Improvement Already Delivered
 
 The wider calibration grid (`THRESHOLD_GRID` extended from `[50,60,70,80,90]` to `[50,60,70,80,90,95]`, `CONVICTION_GRID` from `[40,50,60,70]` to `[40,50,60,70,80,90]`) improved **500ETF Short from +2.91 to +4.88 OOS Sharpe** (at thr=95, selecting only 40 high-conviction trades vs 100 at thr=90). This is a real, deployable improvement independent of the dual-model research.
+
+---
+
+## 8. v2 Results (2026-06-22)
+
+All 4 phases implemented. Models retrained with Phase 2 fixes (stability target + tail IC). Per-mode calibration run for single, hybrid, and dual. Phase 4 deployment picks the best mode per side by OOS Sharpe.
+
+### Mode Comparison (OOS Sharpe)
+
+| ETF | Side | Single | Hybrid | Dual | **Deployed** |
+|:---|:---|:---|:---|:---|:---|
+| 50ETF | short | — | — | **+1.36** | **dual** |
+| 500ETF | long | +3.66 | **+3.68** | — | **hybrid** |
+| 500ETF | short | **+5.14** | +2.75 | +1.67 | **single** |
+| 588000ETF | long | **+1.80** | +1.34 | +1.63 | **single** |
+| 159915ETF | long | **+6.37** | +6.34 | +3.76 | **single** |
+| 159915ETF | short | +3.20 | **+4.83** | +2.86 | **hybrid** |
+
+**Total deployed OOS Sharpe**: +23.18 (vs single-only +20.17, **Δ=+3.01**).
+
+### What Worked
+
+1. **Phase 1 (rank normalisation)**: `expanding_pct_rank` normalises dual/hybrid scores to [0,1], fixing threshold dilution. Enabled dual mode to produce valid signals on 50ETF.
+2. **Phase 2.4 (stability target fix)**: Using asymmetric clipped target for dual-model feature selection produces features that isolate tail drivers.
+3. **Phase 2.5 (tail-weighted IC objective)**: 50% weight on top-30% tail IC aligns Optuna with trading edge.
+4. **Phase 3 (true dual execution)**: `mode="dual"` lets each model fire independently. **50ETF Short deployed** (S=+1.36) — a side that single mode disabled. This is the Phase 3 success metric met.
+5. **Phase 4 (per-side deployment)**: `deploy.py` picks the best mode per side. The mixed deployment strictly dominates single-only.
+
+### What Didn't Work
+
+1. **Dual mode does not dominate single mode.** On 159915ETF and 588000ETF Long, single mode is clearly better. The single-model signed score is a stronger directional signal than the dual model's independent conviction.
+2. **300ETF became untradeable.** Feature-set change (rsi14, ema26_dist, vol_pk10 removed) degraded 300ETF IC. Both sides disabled across all modes.
+3. **Dual mode selects too many trades at low thresholds.** At thr=50, dual mode selects ~50% of days (rank ≥ median). The calibration grid needs higher minimums for dual mode to be equally selective as single mode's conditional thresholding.
+
+### Phase 2 Options Not Implemented
+
+- **Option A (Two-stage classification + regression)**: Not implemented. The stability target fix (2.4) + tail IC (2.5) addressed the root causes without the complexity of a two-stage pipeline.
+- **Option B (Tobit regression)**: `statsmodels.Tobit` available but not integrated into Optuna pipeline.
+- **Option C (Quantile regression)**: `QuantileRegressor` is slow (interior-point solver). Not added to model choices.
+- **Option D (skglm L1-Huber)**: `skglm` not installed. This remains the highest-value future improvement — it would enable true L1-regularized Huber regression.

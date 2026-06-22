@@ -237,8 +237,9 @@ if __name__ == "__main__":
     import argparse
     p = argparse.ArgumentParser()
     p.add_argument("--cost-bps", type=float, default=DEFAULT_COST_BPS)
-    p.add_argument("--mode", default="single", choices=["single", "hybrid"],
+    p.add_argument("--mode", default="single", choices=["single", "hybrid", "dual"],
                    help="single=frozen single-model score (default, proven); "
-                        "hybrid=single×dual combined conviction (experimental)")
+                        "hybrid=single×dual combined conviction (experimental); "
+                        "dual=true independent dual execution with rank normalisation (v2)")
     args = p.parse_args()
     calibrate_all(cost_bps=args.cost_bps, verbose=True, mode=args.mode)

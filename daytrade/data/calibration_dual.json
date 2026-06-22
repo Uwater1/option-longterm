@@ -1,0 +1,131 @@
+{
+  "cost_bps": 15.0,
+  "mode": "dual",
+  "results": {
+    "50ETF": {
+      "long": null,
+      "short": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 90.0,
+        "n_full": 67,
+        "n_oos": 24,
+        "oos_sharpe": 1.36025184979196,
+        "oos_pnl_bps": 351.01865183078473,
+        "oos_max_dd_bps": -657.7840445731587,
+        "oos_win_rate": 0.5833333333333334,
+        "is_sharpe": 2.512462069503917,
+        "is_pnl_bps": 1174.7584982203905,
+        "score": 0.47843398108449403,
+        "eligible": true
+      },
+      "long_meta": {
+        "n_eligible": 0,
+        "n_total": 12
+      },
+      "short_meta": {
+        "n_eligible": 10,
+        "n_total": 30
+      }
+    },
+    "300ETF": {
+      "long": null,
+      "short": null,
+      "long_meta": {
+        "n_eligible": 0,
+        "n_total": 20
+      },
+      "short_meta": {
+        "n_eligible": 0,
+        "n_total": 20
+      }
+    },
+    "500ETF": {
+      "long": null,
+      "short": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 90.0,
+        "n_full": 84,
+        "n_oos": 44,
+        "oos_sharpe": 1.665283350045818,
+        "oos_pnl_bps": 756.1262023117956,
+        "oos_max_dd_bps": -746.5365016700737,
+        "oos_win_rate": 0.6136363636363636,
+        "is_sharpe": 1.2146160164215152,
+        "is_pnl_bps": 707.865125517272,
+        "score": 0.5437174370562835,
+        "eligible": true
+      },
+      "long_meta": {
+        "n_eligible": 0,
+        "n_total": 30
+      },
+      "short_meta": {
+        "n_eligible": 10,
+        "n_total": 30
+      }
+    },
+    "588000ETF": {
+      "long": {
+        "threshold_pct": 95.0,
+        "conviction_pct": 40.0,
+        "n_full": 87,
+        "n_oos": 42,
+        "oos_sharpe": 1.6272125231684147,
+        "oos_pnl_bps": 1507.5338449491794,
+        "oos_max_dd_bps": -1515.8758652743154,
+        "oos_win_rate": 0.5,
+        "is_sharpe": 3.2458136981451107,
+        "is_pnl_bps": 1441.3386425821461,
+        "score": 0.6579025581612393,
+        "eligible": true
+      },
+      "short": null,
+      "long_meta": {
+        "n_eligible": 16,
+        "n_total": 36
+      },
+      "short_meta": {
+        "n_eligible": 0,
+        "n_total": 36
+      }
+    },
+    "159915ETF": {
+      "long": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 90.0,
+        "n_full": 118,
+        "n_oos": 47,
+        "oos_sharpe": 3.7633248664762387,
+        "oos_pnl_bps": 2810.57813352563,
+        "oos_max_dd_bps": -1217.1673355697028,
+        "oos_win_rate": 0.574468085106383,
+        "is_sharpe": 2.939203077537883,
+        "is_pnl_bps": 3485.4486195866702,
+        "score": 0.8722998459466392,
+        "eligible": true
+      },
+      "short": {
+        "threshold_pct": 95.0,
+        "conviction_pct": 40.0,
+        "n_full": 50,
+        "n_oos": 29,
+        "oos_sharpe": 2.8613522708732324,
+        "oos_pnl_bps": 1148.1263585959239,
+        "oos_max_dd_bps": -1148.3145105800268,
+        "oos_win_rate": 0.6896551724137931,
+        "is_sharpe": -2.5831478893207134,
+        "is_pnl_bps": -924.4333949207135,
+        "score": 0.6902182398789263,
+        "eligible": true
+      },
+      "long_meta": {
+        "n_eligible": 36,
+        "n_total": 36
+      },
+      "short_meta": {
+        "n_eligible": 34,
+        "n_total": 36
+      }
+    }
+  }
+}
