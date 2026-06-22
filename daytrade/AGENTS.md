@@ -1,6 +1,8 @@
 # Daytrade — Frozen-Linear Intraday Alpha
 
-Rule-based day-trading layer that consumes day-model trained coefficients as **frozen constants** (no runtime ML) and turns them into per-side deployable signals. Each ETF runs **two independent models**: `long_model` (fires on score > 0) and `short_model` (fires on score < 0), each with its own expanding-percentile thresholds.
+Rule-based day-trading layer that consumes day-model trained coefficients as **frozen constants** (no runtime ML) and turns them into per-side deployable signals. Each ETF uses one signed frozen score where **sign determines direction** (positive → long, negative → short) and **magnitude determines conviction**. Each side has its own expanding-percentile threshold conditioned on that side's prior history.
+
+An optional **hybrid mode** (`mode="hybrid"`) multiplies the single-model magnitude by a dual-model side-specialist score for additional conviction filtering. See `improvement_plan.md` for the full dual-model research findings.
 
 ---
 
@@ -37,16 +39,22 @@ source .venv/bin/activate                              # or system python3 with 
 
 # End-to-end (recommended after any change)
 python -m daytrade.scores        # IC sanity vs day-model report (~5s)
-python -m daytrade.calibrate     # per-side grid search → daytrade/data/calibration.json (~2min)
+python -m daytrade.calibrate     # per-side grid search → daytrade/data/calibration.json (~3min)
 python -m daytrade.report        # deployed backtest + REPORT.md + plots (~10s)
 
 # Ad-hoc inspection
 python -m daytrade.rules         # long/short signal counts at defaults
+python -m daytrade.rules --mode hybrid  # hybrid-mode signal counts
 python -m daytrade.backtest      # 300ETF smoke test with per-side metrics
 
 # Tune at different cost assumption
 python -m daytrade.calibrate --cost-bps 5
 python -m daytrade.calibrate --cost-bps 30
+
+# Experiment with hybrid mode (requires dual models trained first)
+python day-model/train_model.py -e all --side both --trials 100  # train dual models
+python -m daytrade.calibrate --mode hybrid                       # calibrate hybrid
+python -m daytrade.report                                        # generate report
 ```
 
 Outputs:
@@ -66,9 +74,18 @@ A single frozen score is computed per ETF per day (regression on PM return). The
 - `threshold_pct` — expanding percentile cutoff for "tradable"
 - `conviction_pct` — additional conviction floor (typically ≤ threshold)
 
-The expanding percentile for `long_model` is computed **only over prior positive-score days** (conditional on the long regime). Same for shorts. This is more principled than a symmetric cutoff — long and short score magnitudes have different distributions.
+The expanding percentile for the long side is computed **only over prior positive-score days** (conditional on the long regime). Same for shorts. This conditional thresholding is the key insight: long and short score magnitudes have different distributions, so a symmetric cutoff is sub-optimal.
 
 Long & short are **mutually exclusive by construction** (different score signs), so no conflict resolution is needed.
+
+### Signal Modes (`mode` parameter)
+
+| Mode | Direction | Conviction | Threshold base | Conflict resolution | Status |
+|:---|:---|:---|:---|:---|:---|
+| **`single`** (default) | sign of single-model score | \|score\| | same-sign history only | not needed (mutually exclusive) | ✅ Proven, deployed |
+| **`hybrid`** | sign of single-model score | \|single\| × dual_side_score | combined-conviction history | margin-based (score/threshold) | ⚠️ Experimental, not better than single |
+
+Dual-model artifacts (`linear_{ETF}_long.joblib` etc.) are trained via `python day-model/train_model.py --side both`. See `improvement_plan.md` for detailed findings on why single-mode outperforms.
 
 ### Pipeline Flow
 
@@ -92,7 +109,7 @@ day-model/data/features_{ETF}.parquet   ─┘                                  
 
 ### Eligibility & Scoring
 
-Calibration grid: `threshold_pct ∈ {50,60,70,80,90}`, `conviction_pct ∈ {40,50,60,70}`, run independently for long & short. Selection objective is profit-first composite (per AGENTS.md put convention):
+Calibration grid: `threshold_pct ∈ {50,60,70,80,90,95}`, `conviction_pct ∈ {40,50,60,70,80,90}`, run independently for long & short. Selection objective is profit-first composite (per AGENTS.md put convention):
 - P&L 35%, FilterLift 30% (selectivity rate, `s5`), Sharpe 15%, MaxDD 10%, WinRate 5%, Placement 5% (trades kept fraction, `1.0 - s5`)
 - Hard eligibility guard: OOS P&L > 0 AND OOS Sharpe > 0 AND OOS n ≥ 20
 
@@ -105,16 +122,18 @@ Selection is by **holdout** (2024-03-19+), never in-sample — matches day-model
 ```
 daytrade/
 ├── __init__.py         # paths, ETFS, DECISION_BAR, EXIT_BAR, DEFAULT_COST_BPS, HOLDOUT_START
-├── scores.py           # frozen score loader + IC verification
-├── rules.py            # expanding_pct, expanding_pct_masked, get_signals (legacy), get_long_short_signals
-├── backtest.py         # 5m bar sim, per-side summarizer, holdout splitter
-├── calibrate.py        # independent per-side grid search
-├── report.py           # REPORT.md + results.json + 3 plots
+├── scores.py           # frozen score loader (side-aware) + IC verification
+├── rules.py            # expanding_pct, expanding_pct_masked, get_long_short_signals (mode="single"|"hybrid"), get_signals (legacy)
+├── backtest.py         # 5m bar sim, per-side summarizer, holdout splitter (mode-aware)
+├── calibrate.py        # independent per-side grid search (--mode single|hybrid)
+├── report.py           # REPORT.md + results.json + 3 plots (reads mode from calibration.json)
+├── improvement_plan.md # dual-model research findings & revised architecture
 ├── REPORT.md           # latest summary
 ├── AGENTS.md           # this file
 ├── data/
-│   ├── calibration.json    # per-side best configs
-│   └── results.json        # deployed metrics
+│   ├── calibration.json       # per-side best configs (single-mode default)
+│   ├── calibration_hybrid.json # hybrid-mode calibration (saved for comparison)
+│   └── results.json           # deployed metrics
 └── plots/
     ├── equity_combined.png
     ├── equity_curves.png   # per-side panels
@@ -133,8 +152,8 @@ daytrade/
 | `DEFAULT_COST_BPS` | `15.0` | Round-trip cost in basis points |
 | `HOLDOUT_START` | `"2024-03-19"` | OOS cutoff (matches day-model) |
 | `MIN_PERIODS` (rules) | `60` | Min same-side observations before expanding pct is valid |
-| `THRESHOLD_GRID` (calibrate) | `[50,60,70,80,90]` | Calibration grid for threshold_pct |
-| `CONVICTION_GRID` (calibrate) | `[40,50,60,70]` | Calibration grid for conviction_pct |
+| `THRESHOLD_GRID` (calibrate) | `[50,60,70,80,90,95]` | Calibration grid for threshold_pct (95 added: improved 500ETF Short) |
+| `CONVICTION_GRID` (calibrate) | `[40,50,60,70,80,90]` | Calibration grid for conviction_pct |
 | `MIN_OOS_TRADES` (calibrate) | `20` | Below this, side config is rejected |
 
 ---
@@ -145,8 +164,10 @@ All on disk — **no rqdatac needed at runtime**.
 
 | Source | File | Used for |
 |---|---|---|
-| Frozen models | `day-model/models/linear_{ETF}.joblib` | coef + intercept |
-| Frozen scaler bundle | `day-model/models/scaler_{ETF}.joblib` | StandardScaler (fitted on all 127 features) + `selected_features` + `y_scale` (=100, target in %) |
+| Frozen models (single, default) | `day-model/models/linear_{ETF}.joblib` | coef + intercept |
+| Frozen scaler bundle (single) | `day-model/models/scaler_{ETF}.joblib` | StandardScaler (fitted on all 127 features) + `selected_features` + `y_scale` (=100, target in %) |
+| Frozen models (dual, hybrid mode only) | `day-model/models/linear_{ETF}_{long,short}.joblib` | Side-specialist coef + intercept |
+| Frozen scaler bundle (dual) | `day-model/models/scaler_{ETF}_{long,short}.joblib` | Side-specific scaler + features + stability metadata |
 | Feature matrix | `day-model/data/features_{ETF}.parquet` | 127 features × pm_return, indexed by date |
 | 5m bars | `data/{ETF}_5m.parquet` (note: 300ETF → `510300_5m.parquet`) | Entry/exit prices |
 | Day-trading cluster labels | `day-trading/data/clusters_{ETF}_macro.csv` | Diagnostic: Rally/Selloff/Neutral confusion (read-only) |
@@ -210,11 +231,11 @@ Currently one `cost_bps` applies to both sides. For options-based shorts (which 
 
 | ETF | Long | Short | Notes |
 |---|---|---|---|
-| **159915** | thr=90, OOS S=+8.59 | thr=80, OOS S=+6.16 | **Both sides robust. Best name.** |
-| **500** | thr=50, OOS S=+2.88 | thr=90, OOS S=+2.91 | Both sides robust, broad long coverage |
-| **588000** | thr=90, OOS S=+3.51 | disabled | Long-only; shorts don't work |
-| **300** | thr=80, OOS S=+0.17 | thr=90, OOS S=+2.21 | **Edge is on the short side**, not long |
-| **50** | disabled | thr=80, OOS S=+0.67 | Fragile (only short, low Sharpe) |
+| **159915** | thr=50 c=90, OOS S=+8.59 | thr=50 c=80, OOS S=+6.16 | **Both sides robust. Best name.** |
+| **500** | thr=50 c=40, OOS S=+2.88 | **thr=95 c=40, OOS S=+4.88** | Both sides robust. Short improved via wider grid (+2.91→+4.88) |
+| **588000** | thr=50 c=90, OOS S=+3.51 | disabled | Long-only; shorts don't work |
+| **300** | thr=50 c=80, OOS S=+0.17 | thr=50 c=90, OOS S=+2.21 | **Edge is on the short side**, not long |
+| **50** | disabled | thr=50 c=80, OOS S=+0.67 | Fragile (only short, low Sharpe) |
 
 Re-validate after every day-model retrain (see `day-model/AGENTS.md`) and after material market regime change.
 

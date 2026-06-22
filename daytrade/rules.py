@@ -1,8 +1,25 @@
-"""Rule layer: tradable filter + direction from frozen score.
+"""Rule layer: tradable filter + direction from frozen conviction scores.
 
-Both thresholds use expanding-window percentiles (walk-forward safe, no look-ahead).
-A day is tradable iff |score| >= expanding pct(threshold_pct) of prior |score| history.
-Direction = sign(score), but only if |score| also >= expanding pct(min_conviction_pct).
+Signal Modes
+------------
+
+**single** (default, proven)
+    Uses one frozen signed regression score per ETF.  The sign of the score
+    determines direction (positive → long, negative → short); the magnitude
+    determines conviction.  Each side's expanding-percentile threshold is
+    conditioned on that side's own prior history only (positive-score days
+    for long, negative-score days for short).  Long and short are mutually
+    exclusive by construction — no conflict resolution needed.
+
+**hybrid** (experimental, opt-in)
+    Keeps the single model for *direction* but replaces conviction with the
+    product ``|single_score| × dual_side_score``.  This requires **both** the
+    single model (directional accuracy) and the side-specialist model
+    (asymmetric conviction) to agree, reducing false positives at the cost of
+    fewer trades.  Dual models must be trained first via
+    ``python day-model/train_model.py --side both``.
+
+Thresholds are always walk-forward (expanding percentile, no look-ahead).
 """
 from __future__ import annotations
 
@@ -12,7 +29,7 @@ import pandas as pd
 from .scores import compute_scores
 from . import ETFS
 
-MIN_PERIODS_DEFAULT = 252  # 1 year burn-in for expanding percentile
+MIN_PERIODS_DEFAULT = 252  # 1 year burn-in for expanding percentile (legacy)
 
 
 def expanding_pct(series: pd.Series, q: float, min_periods: int = MIN_PERIODS_DEFAULT) -> pd.Series:
@@ -47,17 +64,11 @@ def expanding_pct_masked(
     if len(valid_idx) == 0:
         return pd.Series(out, index=series.index)
 
-    # For each row i, the buffer is all valid_vals[j] where valid_idx[j] < i.
-    # Since valid_idx is sorted and < i means position before cursor, use searchsorted.
-    # Walk through rows that have at least min_periods prior valid values.
-    # The k-th valid value (k >= min_periods - 1) "unlocks" rows in
-    # (valid_idx[k], valid_idx[k+1]] for threshold computation using first k+1 values.
     buf = np.empty(len(valid_idx), dtype=float)
     buf[0] = vals[valid_idx[0]]
     for k in range(1, len(valid_idx)):
         buf[k] = vals[valid_idx[k]]
         if k + 1 >= min_periods:
-            # Apply threshold to rows in (valid_idx[k], valid_idx[k+1]] (or to end)
             start = valid_idx[k] + 1
             end = valid_idx[k + 1] + 1 if k + 1 < len(valid_idx) else n
             thr = np.quantile(buf[:k + 1], q)
@@ -65,6 +76,9 @@ def expanding_pct_masked(
     return pd.Series(out, index=series.index)
 
 
+# ---------------------------------------------------------------------------
+# Main signal generator (single-mode default, hybrid optional)
+# ---------------------------------------------------------------------------
 def get_long_short_signals(
     etf: str,
     long_threshold_pct: float = 70.0,
@@ -74,26 +88,69 @@ def get_long_short_signals(
     min_periods: int = 60,
     long_enabled: bool = True,
     short_enabled: bool = True,
+    mode: str = "single",
 ) -> pd.DataFrame:
-    """Return per-day signal frame with INDEPENDENT long_model / short_model.
+    """Return per-day signal frame with per-side expanding-percentile thresholds.
 
-    Each side uses its own expanding-window percentile computed ONLY over
-    that side's prior history (positive-score days for long, negative for short).
+    Parameters
+    ----------
+    mode : {"single", "hybrid"}
+        ``"single"`` (default) uses the frozen single-model signed score.
+        Sign determines direction; magnitude determines conviction.
+        Long and short are mutually exclusive.
 
-    Columns:
-      score, abs_score,
-      long_threshold, long_conviction, long_fires (bool),
-      short_threshold, short_conviction, short_fires (bool),
-      direction (+1 long, -1 short, 0 none).
+        ``"hybrid"`` multiplies the single-model magnitude by the dual-model
+        side score to form a combined conviction.  Requires dual models
+        (``linear_{ETF}_long.joblib`` etc.).  Conflict resolution picks the
+        side with the higher normalised margin when both fire.
 
-    Long & short are mutually exclusive by construction (different score signs),
+    Returns
+    -------
+    DataFrame indexed by date with columns:
+        score, long_fires, short_fires, both_fire,
+        direction (+1 / -1 / 0), fired_score,
+        long_threshold, long_conviction_thr, long_margin,
+        short_threshold, short_conviction_thr, short_margin.
+    """
+    score = compute_scores(etf, "single", dropna=True)
+
+    if mode == "single":
+        return _signals_single(
+            etf, score,
+            long_threshold_pct, long_conviction_pct,
+            short_threshold_pct, short_conviction_pct,
+            min_periods, long_enabled, short_enabled,
+        )
+    elif mode == "hybrid":
+        return _signals_hybrid(
+            etf, score,
+            long_threshold_pct, long_conviction_pct,
+            short_threshold_pct, short_conviction_pct,
+            min_periods, long_enabled, short_enabled,
+        )
+    else:
+        raise ValueError(f"mode must be 'single' or 'hybrid', got {mode!r}")
+
+
+def _signals_single(
+    etf, score,
+    long_threshold_pct, long_conviction_pct,
+    short_threshold_pct, short_conviction_pct,
+    min_periods, long_enabled, short_enabled,
+) -> pd.DataFrame:
+    """Single-model mode: sign of score → direction, |score| → conviction.
+
+    Threshold for each side is the expanding percentile of |score| computed
+    ONLY over that side's prior history (positive-score days for long,
+    negative-score days for short).  This conditional thresholding is the key
+    insight: long and short score magnitudes have different distributions, so
+    a symmetric cutoff is sub-optimal.
+
+    Long and short are mutually exclusive by construction (different signs),
     so no conflict resolution is needed.
     """
-    score = compute_scores(etf, dropna=True)
-
-    # Masked magnitudes per side
-    pos_mag = score.where(score > 0).abs()  # |score| on long-side days, NaN else
-    neg_mag = score.where(score < 0).abs()  # |score| on short-side days, NaN else
+    pos_mag = score.where(score > 0).abs()   # |score| on long-side days, NaN else
+    neg_mag = score.where(score < 0).abs()   # |score| on short-side days, NaN else
 
     long_thr = expanding_pct_masked(pos_mag, long_threshold_pct / 100.0, min_periods)
     long_conv = expanding_pct_masked(pos_mag, long_conviction_pct / 100.0, min_periods)
@@ -117,19 +174,110 @@ def get_long_short_signals(
     direction[long_fires] = 1
     direction[short_fires] = -1
 
+    fired_score = pd.Series(np.nan, index=score.index, dtype=float)
+    fired_score[long_fires] = score.abs()[long_fires]
+    fired_score[short_fires] = score.abs()[short_fires]
+
     return pd.DataFrame({
         "score": score,
-        "abs_score": score.abs(),
         "long_threshold": long_thr,
-        "long_conviction": long_conv,
+        "long_conviction_thr": long_conv,
         "long_fires": long_fires,
+        "long_margin": score.abs() / long_thr.where(long_thr > 1e-12, 1e-12),
         "short_threshold": short_thr,
-        "short_conviction": short_conv,
+        "short_conviction_thr": short_conv,
         "short_fires": short_fires,
+        "short_margin": score.abs() / short_thr.where(short_thr > 1e-12, 1e-12),
+        "both_fire": pd.Series(False, index=score.index),
         "direction": direction,
+        "fired_score": fired_score,
     })
 
 
+def _signals_hybrid(
+    etf, score,
+    long_threshold_pct, long_conviction_pct,
+    short_threshold_pct, short_conviction_pct,
+    min_periods, long_enabled, short_enabled,
+) -> pd.DataFrame:
+    """Hybrid mode: single model for direction × dual model for conviction.
+
+    Combined conviction = |single_score| × dual_side_score.
+
+    This product is high ONLY when the single model (directional accuracy)
+    and the side-specialist model (asymmetric feature selection) agree on
+    strong conviction.  It reduces false positives but also reduces trade
+    count.  When both sides fire, the side with the higher normalised margin
+    (conviction / threshold) wins.
+    """
+    long_dual = compute_scores(etf, "long", dropna=True)
+    short_dual = compute_scores(etf, "short", dropna=True)
+
+    common_idx = score.index.intersection(long_dual.index).intersection(short_dual.index)
+    score = score.loc[common_idx]
+    long_dual = long_dual.loc[common_idx]
+    short_dual = short_dual.loc[common_idx]
+
+    # Combined conviction (only defined on same-sign days)
+    pos_mag = score.where(score > 0, 0.0).abs()
+    neg_mag = score.where(score < 0, 0.0).abs()
+    long_active = (pos_mag * long_dual).where(pos_mag > 0)
+    short_active = (neg_mag * short_dual).where(neg_mag > 0)
+
+    long_thr = expanding_pct_masked(long_active, long_threshold_pct / 100.0, min_periods)
+    long_conv = expanding_pct_masked(long_active, long_conviction_pct / 100.0, min_periods)
+    short_thr = expanding_pct_masked(short_active, short_threshold_pct / 100.0, min_periods)
+    short_conv = expanding_pct_masked(short_active, short_conviction_pct / 100.0, min_periods)
+
+    long_fires = (
+        long_enabled
+        & (score > 0)
+        & (long_active >= long_thr)
+        & (long_active >= long_conv)
+    )
+    short_fires = (
+        short_enabled
+        & (score < 0)
+        & (short_active >= short_thr)
+        & (short_active >= short_conv)
+    )
+
+    eps = 1e-12
+    long_margin = long_active / long_thr.where(long_thr > eps, eps)
+    short_margin = short_active / short_thr.where(short_thr > eps, eps)
+    both_fire = long_fires & short_fires
+
+    direction = pd.Series(0, index=common_idx, dtype=int)
+    direction[long_fires & ~both_fire] = 1
+    direction[short_fires & ~both_fire] = -1
+    direction[both_fire & (long_margin >= short_margin)] = 1
+    direction[both_fire & (long_margin < short_margin)] = -1
+
+    fired_score = pd.Series(np.nan, index=common_idx, dtype=float)
+    fired_score[direction > 0] = long_active[direction > 0]
+    fired_score[direction < 0] = short_active[direction < 0]
+
+    return pd.DataFrame({
+        "score": score,
+        "long_score": long_dual,
+        "short_score": short_dual,
+        "long_threshold": long_thr,
+        "long_conviction_thr": long_conv,
+        "long_fires": long_fires,
+        "long_margin": long_margin,
+        "short_threshold": short_thr,
+        "short_conviction_thr": short_conv,
+        "short_fires": short_fires,
+        "short_margin": short_margin,
+        "both_fire": both_fire,
+        "direction": direction,
+        "fired_score": fired_score,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Legacy symmetric-threshold signal generator (backward compat)
+# ---------------------------------------------------------------------------
 def get_signals(
     etf: str,
     threshold_pct: float = 70.0,
@@ -137,10 +285,12 @@ def get_signals(
     min_periods: int = MIN_PERIODS_DEFAULT,
     direction_mode: str = "both",
 ) -> pd.DataFrame:
-    """[Legacy] Symmetric-threshold signal generator. Kept for backward compat;
-    new code should use `get_long_short_signals`.
+    """[Legacy] Symmetric-threshold signal generator using single signed score.
+
+    Uses ``expanding_pct`` (not masked) over |score| for both sides together.
+    Prefer ``get_long_short_signals`` for per-side conditional thresholds.
     """
-    score = compute_scores(etf, dropna=True)
+    score = compute_scores(etf, "single", dropna=True)
     abs_score = score.abs()
 
     thr = expanding_pct(abs_score, threshold_pct / 100.0, min_periods=min_periods)
@@ -168,14 +318,20 @@ def get_signals(
 
 
 if __name__ == "__main__":
-    # Long/short signal counts at default symmetric thresholds
-    print(f"{'ETF':<10} {'N':>5} {'Long':>6} {'Short':>6} {'Both':>6} {'Mean|s|':>8}")
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--mode", default="single", choices=["single", "hybrid"])
+    args = ap.parse_args()
+    print(f"Mode: {args.mode}")
+    print(f"{'ETF':<12} {'N':>5} {'Long':>6} {'Short':>6} {'Both':>6} "
+          f"{'MeanS':>8}")
     for etf in ETFS:
-        s = get_long_short_signals(etf)
+        s = get_long_short_signals(etf, mode=args.mode)
         n = len(s)
         if n == 0:
             continue
         longs = int(s["long_fires"].sum())
         shorts = int(s["short_fires"].sum())
-        print(f"{etf:<10} {n:>5} {longs:>6} {shorts:>6} "
-              f"{longs+shorts:>6} {s['abs_score'].mean():>8.4f}")
+        both = int(s["both_fire"].sum())
+        print(f"{etf:<12} {n:>5} {longs:>6} {shorts:>6} {both:>6} "
+              f"{s['score'].abs().mean():>8.4f}")

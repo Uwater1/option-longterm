@@ -2,6 +2,32 @@
 
 This guide details how to add new features, run the training pipeline, and leverage the Lasso Block Bootstrap Stability Selection to automatically filter out noisy inputs.
 
+## Training Modes
+
+```bash
+# Default: single symmetric model (predicts raw pm_return)
+python day-model/train_model.py -e all
+
+# Dual asymmetric models (for daytrade hybrid mode)
+python day-model/train_model.py -e all --side both --trials 100
+# Produces: linear_{ETF}_long.joblib, linear_{ETF}_short.joblib
+
+# Train only one side
+python day-model/train_model.py -e 300 --side long
+```
+
+**`--side` parameter** controls the training target and feature selection:
+
+| Side | Stability target | Training target | Sample weights | Optuna objective |
+|:---|:---|:---|:---|:---|
+| `single` (default) | `pm_return` | `pm_return` | uniform | overall Spearman IC |
+| `long` | `max(0, pm_return)` | `pm_return` (raw) | up-weight positive days (λ=0.5) | upside IC (`pred` vs `max(0,y)`) |
+| `short` | `max(0, -pm_return)` | `pm_return` (raw) | up-weight negative days (λ=0.5) | downside IC (`-pred` vs `max(0,-y)`) |
+
+Output files use suffix: `linear_{ETF}.joblib` (single) or `linear_{ETF}_long.joblib` / `linear_{ETF}_short.joblib` (dual).
+
+**Note**: The `short` side model's coefficients predict raw `pm_return`. At load time (`scores.py`), the short score is **negated** to make it positive-oriented (high = strong downside conviction). This is transparent to the user.
+
 ---
 
 ## 1. How to Add New Features

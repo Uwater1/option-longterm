@@ -1,11 +1,12 @@
 {
   "cost_bps": 15.0,
+  "mode": "single",
   "results": {
     "50ETF": {
       "long": null,
       "short": {
-        "threshold_pct": 80.0,
-        "conviction_pct": 40.0,
+        "threshold_pct": 50.0,
+        "conviction_pct": 80.0,
         "n_full": 68,
         "n_oos": 34,
         "oos_sharpe": 0.6739204679561119,
@@ -19,17 +20,17 @@
       },
       "long_meta": {
         "n_eligible": 0,
-        "n_total": 20
+        "n_total": 36
       },
       "short_meta": {
-        "n_eligible": 10,
-        "n_total": 16
+        "n_eligible": 14,
+        "n_total": 20
       }
     },
     "300ETF": {
       "long": {
-        "threshold_pct": 80.0,
-        "conviction_pct": 40.0,
+        "threshold_pct": 50.0,
+        "conviction_pct": 80.0,
         "n_full": 140,
         "n_oos": 25,
         "oos_sharpe": 0.1675940600134858,
@@ -42,8 +43,8 @@
         "eligible": true
       },
       "short": {
-        "threshold_pct": 90.0,
-        "conviction_pct": 40.0,
+        "threshold_pct": 50.0,
+        "conviction_pct": 90.0,
         "n_full": 84,
         "n_oos": 23,
         "oos_sharpe": 2.2062790841545343,
@@ -56,12 +57,12 @@
         "eligible": true
       },
       "long_meta": {
-        "n_eligible": 4,
-        "n_total": 16
-      },
-      "short_meta": {
         "n_eligible": 8,
         "n_total": 20
+      },
+      "short_meta": {
+        "n_eligible": 18,
+        "n_total": 30
       }
     },
     "500ETF": {
@@ -80,32 +81,32 @@
         "eligible": true
       },
       "short": {
-        "threshold_pct": 90.0,
+        "threshold_pct": 95.0,
         "conviction_pct": 40.0,
-        "n_full": 100,
-        "n_oos": 46,
-        "oos_sharpe": 2.9067072256111164,
-        "oos_pnl_bps": 966.5371228422064,
-        "oos_max_dd_bps": -505.2261045541466,
-        "oos_win_rate": 0.6304347826086957,
-        "is_sharpe": 0.5011033901048776,
-        "is_pnl_bps": 208.1131625162419,
-        "score": 0.6005290600998332,
+        "n_full": 40,
+        "n_oos": 20,
+        "oos_sharpe": 4.879947115395617,
+        "oos_pnl_bps": 768.8608228701344,
+        "oos_max_dd_bps": -479.01376522209216,
+        "oos_win_rate": 0.75,
+        "is_sharpe": -1.5120042325931524,
+        "is_pnl_bps": -295.2126593622738,
+        "score": 0.605400914115889,
         "eligible": true
       },
       "long_meta": {
-        "n_eligible": 16,
-        "n_total": 16
-      },
-      "short_meta": {
         "n_eligible": 20,
         "n_total": 20
+      },
+      "short_meta": {
+        "n_eligible": 36,
+        "n_total": 36
       }
     },
     "588000ETF": {
       "long": {
-        "threshold_pct": 90.0,
-        "conviction_pct": 40.0,
+        "threshold_pct": 50.0,
+        "conviction_pct": 90.0,
         "n_full": 64,
         "n_oos": 35,
         "oos_sharpe": 3.5123670340776365,
@@ -119,18 +120,18 @@
       },
       "short": null,
       "long_meta": {
-        "n_eligible": 20,
-        "n_total": 20
+        "n_eligible": 36,
+        "n_total": 36
       },
       "short_meta": {
         "n_eligible": 0,
-        "n_total": 20
+        "n_total": 36
       }
     },
     "159915ETF": {
       "long": {
-        "threshold_pct": 90.0,
-        "conviction_pct": 40.0,
+        "threshold_pct": 50.0,
+        "conviction_pct": 90.0,
         "n_full": 104,
         "n_oos": 32,
         "oos_sharpe": 8.587079154974683,
@@ -143,8 +144,8 @@
         "eligible": true
       },
       "short": {
-        "threshold_pct": 80.0,
-        "conviction_pct": 40.0,
+        "threshold_pct": 50.0,
+        "conviction_pct": 80.0,
         "n_full": 172,
         "n_oos": 49,
         "oos_sharpe": 6.164984302206781,
@@ -157,12 +158,12 @@
         "eligible": true
       },
       "long_meta": {
-        "n_eligible": 20,
-        "n_total": 20
+        "n_eligible": 30,
+        "n_total": 30
       },
       "short_meta": {
-        "n_eligible": 20,
-        "n_total": 20
+        "n_eligible": 30,
+        "n_total": 30
       }
     }
   }

@@ -3,6 +3,17 @@
 Loads trained coefficients from day-model and produces a per-day score
 that is a direct port of the underlying LASSO/Huber/etc model.
 Runtime = pure arithmetic, no ML fitting.
+
+Dual-Model Architecture
+-----------------------
+Each ETF runs TWO independent models trained by ``day-model/train_model.py --side``:
+
+  * ``side="long"``  -> target ``max(0, pm_return)``, files ``linear_{ETF}_long.joblib``
+  * ``side="short"`` -> target ``max(0, -pm_return)``, files ``linear_{ETF}_short.joblib``
+
+Both scores are **positive-oriented conviction** series.  The legacy
+``side="single"`` path (symmetric target) is retained for backward compat
+and IC diagnostics.
 """
 from __future__ import annotations
 
@@ -21,20 +32,29 @@ warnings.filterwarnings("ignore", message=".*InconsistentVersion.*")
 
 from . import MODEL_DIR, DATA_DIR, ETFS
 
+SIDES = ("single", "long", "short")
 
-def load_model(etf: str) -> dict:
-    """Load frozen model + scaler + selected features for an ETF.
 
-    The scaler_{ETF}.joblib file is a bundle dict containing:
+def _side_suffix(side: str) -> str:
+    if side not in SIDES:
+        raise ValueError(f"side must be one of {SIDES}, got {side!r}")
+    return "" if side == "single" else f"_{side}"
+
+
+def load_model(etf: str, side: str = "single") -> dict:
+    """Load frozen model + scaler + selected features for an ETF side.
+
+    The scaler_{ETF}{_side}.joblib file is a bundle dict containing:
       scaler (StandardScaler), features (full list), selected_features,
       stability_scores, best_params, best_model_type, holdout_ic,
-      train_end_date, holdout_start_date, y_scale.
+      train_end_date, holdout_start_date, y_scale, side.
 
     Returns dict with: model, scaler, features, model_type, intercept, coef,
-    y_scale, holdout_ic (reference from day-model training).
+    y_scale, holdout_ic (reference from day-model training), side.
     """
-    model_path = MODEL_DIR / f"linear_{etf}.joblib"
-    bundle_path = MODEL_DIR / f"scaler_{etf}.joblib"
+    suffix = _side_suffix(side)
+    model_path = MODEL_DIR / f"linear_{etf}{suffix}.joblib"
+    bundle_path = MODEL_DIR / f"scaler_{etf}{suffix}.joblib"
 
     model = joblib.load(model_path)
     bundle = joblib.load(bundle_path)
@@ -46,10 +66,10 @@ def load_model(etf: str) -> dict:
 
     coef = getattr(model, "coef_", None)
     if coef is None:
-        raise ValueError(f"{etf}: model has no coef_")
+        raise ValueError(f"{etf}({side}): model has no coef_")
     if len(features) != coef.shape[0]:
         raise ValueError(
-            f"{etf}: feature count mismatch ({len(features)} vs coef {coef.shape[0]})"
+            f"{etf}({side}): feature count mismatch ({len(features)} vs coef {coef.shape[0]})"
         )
 
     return {
@@ -63,6 +83,7 @@ def load_model(etf: str) -> dict:
         "holdout_ic_ref": holdout_ic,
         "holdout_start": bundle.get("holdout_start_date"),
         "train_end": bundle.get("train_end_date"),
+        "side": side,
     }
 
 
@@ -71,18 +92,23 @@ def load_features(etf: str) -> pd.DataFrame:
     return pd.read_parquet(DATA_DIR / f"features_{etf}.parquet")
 
 
-def compute_scores(etf: str, dropna: bool = True) -> pd.Series:
-    """Compute frozen-linear score for every day in the feature parquet.
+def compute_scores(etf: str, side: str = "single", dropna: bool = True) -> pd.Series:
+    """Compute frozen-linear conviction score for every day.
 
     score_t = intercept + (scaler.transform(X_full)[:, sel_idx] @ coef)
 
+    For ``side="long"`` / ``side="short"`` the score is positive-oriented
+    (higher = stronger conviction for that side).  For ``side="single"``
+    the score is signed (legacy behaviour).
+
     The scaler was fitted on all 127 features; we slice to selected afterwards.
     """
-    info = load_model(etf)
+    info = load_model(etf, side=side)
     df = load_features(etf)
 
     # Reload bundle to get full feature list & selected indices
-    bundle = joblib.load(MODEL_DIR / f"scaler_{etf}.joblib")
+    suffix = _side_suffix(side)
+    bundle = joblib.load(MODEL_DIR / f"scaler_{etf}{suffix}.joblib")
     full_features = list(bundle["features"])
     sel_features = list(bundle["selected_features"])
     sel_idx = [full_features.index(f) for f in sel_features]
@@ -95,7 +121,13 @@ def compute_scores(etf: str, dropna: bool = True) -> pd.Series:
     Xs = Xs_all[:, sel_idx]
     scores = Xs @ info["coef"] + info["intercept"]
 
-    out = pd.Series(np.nan, index=df.index, name=f"{etf}_score", dtype=float)
+    # The short model is trained on raw pm_return; negate its output so the
+    # score is positive-oriented (high = strong downside / short conviction).
+    if side == "short":
+        scores = -scores
+
+    name = f"{etf}_score{suffix}"
+    out = pd.Series(np.nan, index=df.index, name=name, dtype=float)
     out.iloc[mask] = scores
 
     if dropna:
@@ -103,39 +135,50 @@ def compute_scores(etf: str, dropna: bool = True) -> pd.Series:
     return out
 
 
-def verify_ic(etf: str) -> dict:
-    """Compute IC vs pm_return on full history; should match day-model report."""
-    s = compute_scores(etf, dropna=False)
-    df = load_features(etf)
-    valid = ~(s.isna() | df["pm_return"].isna())
-    score = s[valid].values
-    target = df.loc[valid, "pm_return"].values
+def verify_ic(etf: str, side: str = "single") -> dict:
+    """Compute IC vs the appropriate target.
 
-    ic, _ = spearmanr(score, target)
-    dir_acc = float(((np.sign(score) == np.sign(target)) |
-                     (score == 0)).mean()) if len(score) else float("nan")
+    For ``side="long"`` the target is ``max(0, pm_return)``; for
+    ``side="short"`` it is ``max(0, -pm_return)``; for ``single`` it is
+    the raw ``pm_return``.
+    """
+    s = compute_scores(etf, side=side, dropna=False)
+    df = load_features(etf)
+    pm = df["pm_return"]
+    if side == "long":
+        target = np.maximum(0.0, pm.values)
+    elif side == "short":
+        target = np.maximum(0.0, -pm.values)
+    else:
+        target = pm.values
+
+    valid = ~(s.isna() | pm.isna())
+    score = s[valid].values
+    tgt = target[valid.values]
+
+    ic, _ = spearmanr(score, tgt)
     return {
         "etf": etf,
+        "side": side,
         "n": int(valid.sum()),
-        "ic_full": float(ic),
-        "dir_acc_full": dir_acc,
+        "ic_full": float(ic) if not np.isnan(ic) else 0.0,
         "score_mean": float(np.mean(score)),
         "score_std": float(np.std(score)),
+        "score_min": float(np.min(score)),
+        "score_max": float(np.max(score)),
     }
 
 
 def verify_all() -> pd.DataFrame:
-    """Verify all ETFs against report. Day-model holdout IC reference:
-      300: +0.0580, 50: +0.0157, 500: +0.0780, 588000: -0.0139, 159915: +0.1999
-    Note: report IC was on 20% holdout (2024-03-19+) only. Here we compute on full history.
-    """
-    rows = [verify_ic(etf) for etf in ETFS]
-    return pd.DataFrame(rows).set_index("etf")
+    """Verify IC for every ETF on every side (single, long, short)."""
+    rows = []
+    for etf in ETFS:
+        for side in ("long", "short"):
+            rows.append(verify_ic(etf, side))
+    return pd.DataFrame(rows).set_index(["etf", "side"])
 
 
 if __name__ == "__main__":
-    print("Verifying frozen scores match day-model report IC (full history)...")
+    print("Verifying dual-model frozen scores (full history IC)...")
     df = verify_all()
     print(df.to_string())
-    print("\nReference holdout IC (day-model REPORT):")
-    print("  300: +0.0580, 50: +0.0157, 500: +0.0780, 588000: -0.0139, 159915: +0.1999")

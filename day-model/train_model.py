@@ -181,7 +181,24 @@ def compute_stability_scores(X, y, features, block_size=BLOCK_SIZE, n_bootstraps
 # ============================================================
 # Optuna objective
 # ============================================================
-def make_objective(X, y, n_splits, gap, stability_scores):
+def _side_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str) -> float:
+    """Side-aware Spearman IC.
+
+    long  : IC between prediction and max(0, y)  — upside ranking quality
+    short : IC between -prediction and max(0, -y) — downside ranking quality
+    single: IC between prediction and y            — overall ranking quality
+    """
+    if side == "long":
+        target = np.maximum(0.0, y_true)
+    elif side == "short":
+        target = np.maximum(0.0, -y_true)
+        y_pred = -y_pred
+    else:
+        target = y_true
+    return spearman_ic(target, y_pred)
+
+
+def make_objective(X, y, sample_w, n_splits, gap, stability_scores, side="single"):
     def objective(trial: optuna.Trial) -> float:
         model_type = trial.suggest_categorical("model_type", ["ridge", "lasso", "elasticnet", "huber"])
         # Suggest stability selection threshold as a hyperparameter
@@ -217,9 +234,9 @@ def make_objective(X, y, n_splits, gap, stability_scores):
             Xtr_sel = Xtr_s[:, selected_indices]
             Xte_sel = Xte_s[:, selected_indices]
 
-            model.fit(Xtr_sel, y[train_idx])
+            model.fit(Xtr_sel, y[train_idx], sample_weight=sample_w[train_idx])
             preds = model.predict(Xte_sel)
-            ics.append(spearman_ic(y[test_idx], preds))
+            ics.append(_side_ic(y[test_idx], preds, side))
 
         return float(np.mean(ics)) if ics else -1.0
     return objective
@@ -228,7 +245,17 @@ def make_objective(X, y, n_splits, gap, stability_scores):
 # ============================================================
 # Train + evaluate one ETF
 # ============================================================
-def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
+def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
+              side: str = "single") -> dict:
+    """Train one linear model for an ETF.
+
+    side="single" (default): legacy symmetric target ``y = pm_return``.
+    side="long":  asymmetric target ``y = max(0, pm_return)`` (upside specialist).
+    side="short": asymmetric target ``y = max(0, -pm_return)`` (downside specialist).
+    """
+    if side not in ("single", "long", "short"):
+        raise ValueError(f"side must be single|long|short, got {side!r}")
+
     t0 = time.time()
     feat_path = DATA_DIR / f"features_{etf_name}.parquet"
     if not feat_path.exists():
@@ -239,15 +266,43 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
     feat = feat.dropna(subset=FEATURES + [TARGET]).copy()
     X = feat[FEATURES].values
     Y_SCALE = 100.0
+    # Always train on the raw pm_return so the model preserves full regression
+    # signal (including the magnitude of negative returns).  The clipped target
+    # is used ONLY for stability-selection feature pruning so each side picks
+    # features that are relevant to its regime (upside / downside).
     y_raw = feat[TARGET].values
-    y = y_raw * Y_SCALE
+    if side == "long":
+        y_clip_raw = np.maximum(0.0, y_raw)
+    elif side == "short":
+        y_clip_raw = np.maximum(0.0, -y_raw)
+    else:
+        y_clip_raw = y_raw.copy()
+    y = y_raw * Y_SCALE          # training target (raw)
+    y_clip = y_clip_raw * Y_SCALE  # stability-selection target (asymmetric)
+    # Sample weights: gently emphasize the side's active regime without
+    # distorting the overall regression.  lambda=0.5 means a +2σ day gets
+    # only ~2× weight; most days stay near 1×.
+    sigma = float(y_raw.std()) + 1e-10
+    if side == "long":
+        sample_w = 1.0 + 0.5 * np.maximum(0.0, y_raw) / sigma
+    elif side == "short":
+        sample_w = 1.0 + 0.5 * np.maximum(0.0, -y_raw) / sigma
+    else:
+        sample_w = np.ones(n)
     dates = feat.index
     full_y_raw = pd.Series(y_raw, index=dates)
     n = len(feat)
 
-    print(f"\n[{etf_name}] {n} samples, {len(FEATURES)} features, "
+    tag = etf_name if side == "single" else f"{etf_name}_{side}"
+    active = y_clip_raw > 0
+    n_active = int(active.sum())
+    clip_label = "upside" if side == "long" else "downside" if side == "short" else "all"
+    sharpe_str = (f"{y_raw[active].mean()/y_raw[active].std()*np.sqrt(252):.2f}"
+                  if n_active > 5 else "n/a")
+    print(f"\n[{tag}] {n} samples, {len(FEATURES)} features (side={side}), "
           f"target Sharpe={y_raw.mean()/y_raw.std()*np.sqrt(252):.2f} "
-          f"(target scaled x{Y_SCALE:.0f} for training)")
+          f"({clip_label} active-day Sharpe={sharpe_str} on {n_active} days; "
+          f"scaled x{Y_SCALE:.0f})")
 
     # ── 1) Holdout: last 20% is final OOS (never used in Optuna) ──
     holdout_n = int(n * HOLDOUT_FRACTION)
@@ -255,24 +310,27 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
     holdout_idx = np.arange(n - holdout_n, n)
     X_dev, y_dev, dates_dev = X[train_dev_idx], y[train_dev_idx], dates[train_dev_idx]
     X_ho, y_ho, dates_ho = X[holdout_idx], y[holdout_idx], dates[holdout_idx]
+    sw_dev = sample_w[train_dev_idx]
+    y_clip_dev = y_clip[train_dev_idx]
     print(f"  dev (Optuna): {len(X_dev)}, holdout (final OOS): {len(X_ho)}")
 
-    # ── 2) Stability Selection on dev set ──
+    # ── 2) Stability Selection on dev set (raw target → best overall features) ──
     stability_scores = compute_stability_scores(X_dev, y_dev, FEATURES)
 
-    # ── 3) Optuna hyperparameter search on dev set with stability scoring ──
-    print(f"  Optuna: {n_trials} trials, {n_splits} folds, purge_gap={gap} ...")
-    study_path = DATA_DIR / f"optuna_study_{etf_name}.sqlite3"
+    # ── 3) Optuna hyperparameter search — side-specific objective ──
+    print(f"  Optuna: {n_trials} trials, {n_splits} folds, purge_gap={gap} "
+          f"(side={side}) ...")
+    study_path = DATA_DIR / f"optuna_study_{tag}.sqlite3"
     if study_path.exists():
         study_path.unlink()
     storage = f"sqlite:///{study_path}"
     study = optuna.create_study(
-        study_name=f"linear_{etf_name}", direction="maximize",
+        study_name=f"linear_{tag}", direction="maximize",
         storage=storage, load_if_exists=False,
         sampler=optuna.samplers.TPESampler(seed=42),
         pruner=optuna.pruners.MedianPruner(n_warmup_steps=10),
     )
-    obj = make_objective(X_dev, y_dev, n_splits, gap, stability_scores)
+    obj = make_objective(X_dev, y_dev, sw_dev, n_splits, gap, stability_scores, side=side)
     study.optimize(obj, n_trials=n_trials, show_progress_bar=False)
 
     best_params = study.best_params
@@ -304,7 +362,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
     elif model_type == "huber":
         final_model = HuberRegressor(alpha=best_params["huber_alpha"], epsilon=best_params["huber_epsilon"], max_iter=2000)
 
-    final_model.fit(X_dev_sel, y_dev)
+    final_model.fit(X_dev_sel, y_dev, sample_weight=sw_dev)
     preds_ho = final_model.predict(X_ho_sel)
     preds_is = final_model.predict(X_dev_sel)
 
@@ -314,12 +372,12 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
     y_ho_raw = y_ho / Y_SCALE
     y_dev_raw = y_dev / Y_SCALE
 
-    holdout_ic = spearman_ic(y_ho_raw, preds_ho_raw)
+    holdout_ic = _side_ic(y_ho_raw, preds_ho_raw, side)
     holdout_dir = direction_accuracy(y_ho_raw, preds_ho_raw)
     holdout_rmse = float(np.sqrt(np.mean((y_ho_raw - preds_ho_raw) ** 2)))
     holdout_ls = long_short_sharpe(y_ho_raw, preds_ho_raw)
 
-    is_ic = spearman_ic(y_dev_raw, preds_is_raw)
+    is_ic = _side_ic(y_dev_raw, preds_is_raw, side)
 
     print(f"  HOLDOUT: IC={holdout_ic:.4f}  Dir={holdout_dir:.3f}  "
           f"RMSE={holdout_rmse*100:.4f}%  L/S Sharpe={holdout_ls['ls_sharpe']:.2f}")
@@ -347,7 +405,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
         elif model_type == "huber":
             m = HuberRegressor(alpha=best_params["huber_alpha"], epsilon=best_params["huber_epsilon"], max_iter=2000)
 
-        m.fit(Xtr_sel, y[train_idx])
+        m.fit(Xtr_sel, y[train_idx], sample_weight=sample_w[train_idx])
         wf_preds[test_idx] = m.predict(Xte_sel) / Y_SCALE
         wf_is_ic_per_fold.append(spearman_ic(y[train_idx] / Y_SCALE, m.predict(Xtr_sel) / Y_SCALE))
         wf_oos_ic_per_fold.append(spearman_ic(y[test_idx] / Y_SCALE, wf_preds[test_idx]))
@@ -430,7 +488,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
             elif model_type == "huber":
                 m = HuberRegressor(alpha=best_params["huber_alpha"], epsilon=best_params["huber_epsilon"], max_iter=2000)
 
-            m.fit(Xtr_sel, y[train_idx])
+            m.fit(Xtr_sel, y[train_idx], sample_weight=sample_w[train_idx])
             preds = m.predict(Xte_sel) / Y_SCALE
             ics_g.append(spearman_ic(y_raw[test_idx], preds))
         purge_sens[g] = {"mean_ic": float(np.mean(ics_g)) if ics_g else 0.0,
@@ -444,7 +502,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
         optuna_param_imp = {}
 
     # ── 12) Save model + scaler ──
-    joblib.dump(final_model, MODELS_DIR / f"linear_{etf_name}.joblib")
+    joblib.dump(final_model, MODELS_DIR / f"linear_{tag}.joblib")
     joblib.dump({"scaler": scaler,
                  "features": FEATURES,
                  "selected_features": selected_features,
@@ -454,19 +512,28 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int) -> dict:
                  "holdout_ic": holdout_ic,
                  "train_end_date": str(dates_dev[-1].date()),
                  "holdout_start_date": str(dates_ho[0].date()),
-                 "y_scale": Y_SCALE},
-                MODELS_DIR / f"scaler_{etf_name}.joblib")
+                 "y_scale": Y_SCALE,
+                 "side": side,
+                 "target": "raw_pm_return",
+                 "stability_target": "pm_return",
+                 "optuna_objective": ("upside_ic" if side == "long"
+                                      else "downside_ic" if side == "short"
+                                      else "overall_ic"),
+                 "sample_weight_lambda": 0.5 if side != "single" else 0.0},
+                MODELS_DIR / f"scaler_{tag}.joblib")
 
     # ── 13) Plots ──
-    _plot_diagnostics(etf_name, dates_ho, y_ho_raw, preds_ho_raw,
+    _plot_diagnostics(tag, dates_ho, y_ho_raw, preds_ho_raw,
                       wf_df, coef_imp, perm_imp, optuna_param_imp,
                       purge_sens, yearly_ic, study)
 
     elapsed = time.time() - t0
-    print(f"  [{etf_name}] done in {elapsed:.0f}s ({elapsed/60:.1f}min)")
+    print(f"  [{tag}] done in {elapsed:.0f}s ({elapsed/60:.1f}min)")
 
     return {
         "etf": etf_name,
+        "side": side,
+        "tag": tag,
         "n_samples": int(n),
         "n_features": len(FEATURES),
         "selected_features": selected_features,
@@ -619,6 +686,10 @@ def main():
     ap.add_argument("--splits", type=int, default=DEFAULT_N_SPLITS)
     ap.add_argument("--gap", type=int, default=DEFAULT_PURGE_GAP)
     ap.add_argument("--gpu", action="store_true", help="ignored, kept for compatibility")
+    ap.add_argument("--side", default="single",
+                    choices=["single", "long", "short", "both"],
+                    help="single=legacy symmetric model; long/short/both=train "
+                         "asymmetric dual models")
     args = ap.parse_args()
 
     if args.quick:
@@ -630,40 +701,47 @@ def main():
     else:
         etfs = [ETF_CLI_MAP.get(etf_arg, etf_arg)]
 
+    sides = ["long", "short"] if args.side == "both" else [args.side]
+
     print(f"Training Linear day-models for: {etfs}")
     print(f"  trials={args.trials}  splits={args.splits}  purge_gap={args.gap}  "
-          f"holdout_frac={HOLDOUT_FRACTION}")
+          f"holdout_frac={HOLDOUT_FRACTION}  sides={sides}")
 
     t_start = time.time()
     all_results = {}
     for etf in etfs:
-        try:
-            res = train_etf(etf, n_trials=args.trials, n_splits=args.splits, gap=args.gap)
-            if res:
-                all_results[etf] = res
-                with open(DATA_DIR / f"results_{etf}.json", "w") as f:
-                    json.dump(res, f, indent=2, default=str)
-        except Exception as e:
-            print(f"  [ERROR] {etf}: {e}")
-            import traceback; traceback.print_exc()
+        for side in sides:
+            try:
+                res = train_etf(etf, n_trials=args.trials, n_splits=args.splits,
+                                gap=args.gap, side=side)
+                if res:
+                    key = res.get("tag", etf)
+                    all_results[key] = res
+                    suffix = "" if side == "single" else f"_{side}"
+                    with open(DATA_DIR / f"results_{etf}{suffix}.json", "w") as f:
+                        json.dump(res, f, indent=2, default=str)
+            except Exception as e:
+                print(f"  [ERROR] {etf} ({side}): {e}")
+                import traceback; traceback.print_exc()
 
     print("\n" + "=" * 90)
-    print(f"{'ETF':<10} {'Model Type':<12} {'Threshold':<10} {'Features':<8} {'Holdout IC':>10} {'Holdout Dir':>12} {'L/S Sharpe':>12} {'Ridge IC':>10}")
+    print(f"{'Tag':<18} {'Model Type':<12} {'Threshold':<10} {'Features':<8} {'Holdout IC':>10} {'Holdout Dir':>12} {'L/S Sharpe':>12} {'Ridge IC':>10}")
     print("-" * 90)
-    for etf, r in all_results.items():
+    for key, r in all_results.items():
         best_model = r["best_params"]["model_type"].upper()
         threshold = r["best_params"]["stability_threshold"]
         n_sel_feats = r["n_selected_features"]
         ridge_ic = r["baselines"]["ridge"]["ic"]
-        print(f"{etf:<10} {best_model:<12} {threshold:<10.2f} {n_sel_feats:<8d} {r['holdout_ic']:>10.4f} {r['holdout_dir_acc']:>12.3f} "
+        print(f"{key:<18} {best_model:<12} {threshold:<10.2f} {n_sel_feats:<8d} {r['holdout_ic']:>10.4f} {r['holdout_dir_acc']:>12.3f} "
               f"{r['holdout_long_short']['ls_sharpe']:>12.2f} {ridge_ic:>10.4f}")
     print("=" * 90)
 
-    with open(DATA_DIR / "results_all.json", "w") as f:
+    results_tag = "all" + ("" if args.side == "single" else f"_{args.side}")
+    with open(DATA_DIR / f"results_{results_tag}.json", "w") as f:
         json.dump(all_results, f, indent=2, default=str)
     total_time = time.time() - t_start
     print(f"\nTotal wall time: {total_time:.0f}s ({total_time/60:.1f}min)")
-    print(f"Combined results → {DATA_DIR / 'results_all.json'}")
+    print(f"Combined results → {DATA_DIR / f'results_{results_tag}.json'}")
 
 
 if __name__ == "__main__":

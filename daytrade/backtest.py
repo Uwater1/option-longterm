@@ -125,12 +125,16 @@ def backtest_long_short(
     long_enabled: bool = True,
     short_enabled: bool = True,
     min_periods: int = 60,
+    mode: str = "single",
 ) -> dict:
     """Run backtest with INDEPENDENT long_model / short_model thresholds.
 
-    Both sides use the same frozen score but their own expanding percentiles
-    (computed only over their own side's prior history) and can be toggled
-    on/off independently.
+    Parameters
+    ----------
+    mode : {"single", "hybrid"}
+        Signal mode passed through to ``get_long_short_signals``.
+        ``"single"`` (default) uses the frozen single-model signed score.
+        ``"hybrid"`` multiplies single-model magnitude by dual-model side score.
     """
     signals = get_long_short_signals(
         etf,
@@ -141,6 +145,7 @@ def backtest_long_short(
         min_periods=min_periods,
         long_enabled=long_enabled,
         short_enabled=short_enabled,
+        mode=mode,
     )
     signals = signals[signals["direction"] != 0]
     if len(signals) == 0:
@@ -171,7 +176,9 @@ def backtest_long_short(
             "side": "long" if direction > 0 else "short",
             "entry": entry,
             "exit": exit_,
-            "score": row["score"],
+            "score": row.get("fired_score", row.get("score", np.nan)),
+            "long_score": row.get("long_score", np.nan),
+            "short_score": row.get("short_score", np.nan),
             "gross_ret": gross,
             "net_ret": net,
         })

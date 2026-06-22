@@ -1,0 +1,157 @@
+{
+  "cost_bps": 15.0,
+  "mode": "hybrid",
+  "results": {
+    "50ETF": {
+      "long": null,
+      "short": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 80.0,
+        "n_full": 49,
+        "n_oos": 25,
+        "oos_sharpe": 0.09711261771153225,
+        "oos_pnl_bps": 20.37555013802731,
+        "oos_max_dd_bps": -645.6291734916758,
+        "oos_win_rate": 0.52,
+        "is_sharpe": -3.484847609890876,
+        "is_pnl_bps": -359.718351471959,
+        "score": 0.3246715486979503,
+        "eligible": true
+      },
+      "long_meta": {
+        "n_eligible": 0,
+        "n_total": 30
+      },
+      "short_meta": {
+        "n_eligible": 8,
+        "n_total": 20
+      }
+    },
+    "300ETF": {
+      "long": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 80.0,
+        "n_full": 127,
+        "n_oos": 27,
+        "oos_sharpe": 0.10719640231680096,
+        "oos_pnl_bps": 28.144482975822182,
+        "oos_max_dd_bps": -559.7853277451275,
+        "oos_win_rate": 0.5185185185185185,
+        "is_sharpe": 3.4904130131797606,
+        "is_pnl_bps": 2681.769311009832,
+        "score": 0.3449407939577901,
+        "eligible": true
+      },
+      "short": null,
+      "long_meta": {
+        "n_eligible": 8,
+        "n_total": 20
+      },
+      "short_meta": {
+        "n_eligible": 0,
+        "n_total": 20
+      }
+    },
+    "500ETF": {
+      "long": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 80.0,
+        "n_full": 193,
+        "n_oos": 47,
+        "oos_sharpe": 2.806929739008801,
+        "oos_pnl_bps": 1282.0472455848972,
+        "oos_max_dd_bps": -915.5352664027605,
+        "oos_win_rate": 0.5957446808510638,
+        "is_sharpe": 4.113817233162569,
+        "is_pnl_bps": 5194.483034751851,
+        "score": 0.6401032861990749,
+        "eligible": true
+      },
+      "short": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 80.0,
+        "n_full": 212,
+        "n_oos": 103,
+        "oos_sharpe": 1.8374481724037335,
+        "oos_pnl_bps": 1432.1572129983467,
+        "oos_max_dd_bps": -739.6706542940371,
+        "oos_win_rate": 0.5825242718446602,
+        "is_sharpe": 2.1148862757525744,
+        "is_pnl_bps": 1854.3773271007701,
+        "score": 0.5608974266268236,
+        "eligible": true
+      },
+      "long_meta": {
+        "n_eligible": 30,
+        "n_total": 30
+      },
+      "short_meta": {
+        "n_eligible": 30,
+        "n_total": 30
+      }
+    },
+    "588000ETF": {
+      "long": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 80.0,
+        "n_full": 113,
+        "n_oos": 61,
+        "oos_sharpe": 3.063268637007064,
+        "oos_pnl_bps": 3077.747510692393,
+        "oos_max_dd_bps": -503.1585159683616,
+        "oos_win_rate": 0.5081967213114754,
+        "is_sharpe": 3.6578692193860713,
+        "is_pnl_bps": 1793.1703696384773,
+        "score": 0.7855485421305054,
+        "eligible": true
+      },
+      "short": null,
+      "long_meta": {
+        "n_eligible": 36,
+        "n_total": 36
+      },
+      "short_meta": {
+        "n_eligible": 0,
+        "n_total": 36
+      }
+    },
+    "159915ETF": {
+      "long": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 90.0,
+        "n_full": 78,
+        "n_oos": 31,
+        "oos_sharpe": 8.403155540251896,
+        "oos_pnl_bps": 4359.175791347888,
+        "oos_max_dd_bps": -298.28611898017056,
+        "oos_win_rate": 0.7741935483870968,
+        "is_sharpe": 6.175144615701835,
+        "is_pnl_bps": 2477.3502304356894,
+        "score": 0.8431616033343103,
+        "eligible": true
+      },
+      "short": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 80.0,
+        "n_full": 154,
+        "n_oos": 48,
+        "oos_sharpe": 5.0017125311237995,
+        "oos_pnl_bps": 2351.276017365981,
+        "oos_max_dd_bps": -732.3766209866234,
+        "oos_win_rate": 0.6875,
+        "is_sharpe": 4.556396050648929,
+        "is_pnl_bps": 5417.683906632501,
+        "score": 0.7757098133856137,
+        "eligible": true
+      },
+      "long_meta": {
+        "n_eligible": 30,
+        "n_total": 30
+      },
+      "short_meta": {
+        "n_eligible": 30,
+        "n_total": 30
+      }
+    }
+  }
+}
