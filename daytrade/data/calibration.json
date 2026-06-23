@@ -20,6 +20,12 @@
         "warnings": [
           "n<60"
         ],
+        "stop_type": null,
+        "stop_value": null,
+        "stop_oos_sharpe": 4.342029881864945,
+        "stop_oos_pnl_bps": 934.9631962386024,
+        "stop_oos_max_dd_bps": -313.9017057381227,
+        "stop_oos_win_rate": 0.5862068965517241,
         "_mode": "hybrid"
       },
       "short": {
@@ -39,6 +45,12 @@
         "warnings": [
           "n<60"
         ],
+        "stop_type": null,
+        "stop_value": null,
+        "stop_oos_sharpe": 6.470728725594511,
+        "stop_oos_pnl_bps": 1010.8666009535739,
+        "stop_oos_max_dd_bps": -220.33141210374862,
+        "stop_oos_win_rate": 0.65,
         "_mode": "hybrid"
       }
     },
@@ -62,6 +74,12 @@
           "win<=50%",
           "n<60"
         ],
+        "stop_type": null,
+        "stop_value": null,
+        "stop_oos_sharpe": 2.108678129227641,
+        "stop_oos_pnl_bps": 1050.114872225509,
+        "stop_oos_max_dd_bps": -640.5179726866622,
+        "stop_oos_win_rate": 0.4915254237288136,
         "_mode": "hybrid"
       },
       "short": {
@@ -81,6 +99,12 @@
         "warnings": [
           "n<60"
         ],
+        "stop_type": null,
+        "stop_value": null,
+        "stop_oos_sharpe": 5.5320742759231205,
+        "stop_oos_pnl_bps": 1029.2221274320702,
+        "stop_oos_max_dd_bps": -234.44730063316544,
+        "stop_oos_win_rate": 0.5454545454545454,
         "_mode": "dual"
       }
     },
@@ -102,6 +126,12 @@
         "warnings": [
           "n<60"
         ],
+        "stop_type": "pct",
+        "stop_value": 0.01,
+        "stop_oos_sharpe": 2.472334529023025,
+        "stop_oos_pnl_bps": 832.7596250275212,
+        "stop_oos_max_dd_bps": -344.9999999999992,
+        "stop_oos_win_rate": 0.4827586206896552,
         "_mode": "hybrid"
       },
       "short": {
@@ -119,6 +149,12 @@
         "score": 0.3573684151033434,
         "eligible": true,
         "warnings": [],
+        "stop_type": "atr",
+        "stop_value": 1.5,
+        "stop_oos_sharpe": -0.016653904730358545,
+        "stop_oos_pnl_bps": -17.552846438639026,
+        "stop_oos_max_dd_bps": -1348.294703805848,
+        "stop_oos_win_rate": 0.5467625899280576,
         "_mode": "dual"
       }
     },
@@ -142,6 +178,12 @@
           "win<=50%",
           "n<60"
         ],
+        "stop_type": null,
+        "stop_value": null,
+        "stop_oos_sharpe": 5.433221534445495,
+        "stop_oos_pnl_bps": 3469.049462173394,
+        "stop_oos_max_dd_bps": -660.0290457336295,
+        "stop_oos_win_rate": 0.4827586206896552,
         "_mode": "single"
       },
       "short": {
@@ -161,6 +203,12 @@
         "warnings": [
           "n<60"
         ],
+        "stop_type": null,
+        "stop_value": null,
+        "stop_oos_sharpe": 3.872938616038934,
+        "stop_oos_pnl_bps": 1665.058112412363,
+        "stop_oos_max_dd_bps": -961.1017226859176,
+        "stop_oos_win_rate": 0.625,
         "_mode": "hybrid"
       }
     },
@@ -182,6 +230,12 @@
         "warnings": [
           "n<60"
         ],
+        "stop_type": null,
+        "stop_value": null,
+        "stop_oos_sharpe": 6.441183093739922,
+        "stop_oos_pnl_bps": 3253.226312167663,
+        "stop_oos_max_dd_bps": -693.2595164582866,
+        "stop_oos_win_rate": 0.5769230769230769,
         "_mode": "single"
       },
       "short": {
@@ -201,6 +255,12 @@
         "warnings": [
           "n<60"
         ],
+        "stop_type": null,
+        "stop_value": null,
+        "stop_oos_sharpe": 3.4457348732644824,
+        "stop_oos_pnl_bps": 1480.5356857982374,
+        "stop_oos_max_dd_bps": -930.1864497464285,
+        "stop_oos_win_rate": 0.6046511627906976,
         "_mode": "hybrid"
       }
     }

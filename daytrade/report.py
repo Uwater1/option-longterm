@@ -98,10 +98,30 @@ def run_deployed_backtest(etf: str, cfg: dict, cost_bps: float,
     short_thr = short_cfg["threshold_pct"] if short_cfg else 0.0
     short_conv = short_cfg["conviction_pct"] if short_cfg else 0.0
 
+    # Extract stop-loss params from calibration configs
+    long_stop_pct, long_stop_atr_k = None, None
+    if long_cfg:
+        if long_cfg.get("stop_type") == "pct":
+            long_stop_pct = long_cfg["stop_value"]
+        elif long_cfg.get("stop_type") == "atr":
+            long_stop_atr_k = long_cfg["stop_value"]
+    short_stop_pct, short_stop_atr_k = None, None
+    if short_cfg:
+        if short_cfg.get("stop_type") == "pct":
+            short_stop_pct = short_cfg["stop_value"]
+        elif short_cfg.get("stop_type") == "atr":
+            short_stop_atr_k = short_cfg["stop_value"]
+
     if mode == "mixed":
         return _run_mixed_backtest(
             etf, long_cfg, short_cfg, cost_bps,
         )
+
+    # For non-mixed modes, use the dominant stop (long side takes precedence
+    # if both sides have different stop configs; in practice each calibration
+    # run uses one stop per side, and non-mixed modes run both sides together).
+    stop_pct = long_stop_pct or short_stop_pct
+    stop_atr_k = long_stop_atr_k or short_stop_atr_k
 
     r = backtest_long_short(
         etf,
@@ -110,6 +130,8 @@ def run_deployed_backtest(etf: str, cfg: dict, cost_bps: float,
         cost_bps=cost_bps,
         long_enabled=bool(long_cfg), short_enabled=bool(short_cfg),
         mode=mode,
+        stop_pct=stop_pct,
+        stop_atr_k=stop_atr_k,
     )
     return r
 
@@ -128,6 +150,13 @@ def _run_mixed_backtest(etf: str, long_cfg: dict | None,
         if not side_cfg:
             continue
         side_mode = side_cfg.get("_mode", "single")
+        sp, sak = None, None
+        st = side_cfg.get("stop_type")
+        sv = side_cfg.get("stop_value")
+        if st == "pct":
+            sp = sv
+        elif st == "atr":
+            sak = sv
         r = backtest_long_short(
             etf,
             long_threshold_pct=side_cfg["threshold_pct"],
@@ -138,6 +167,8 @@ def _run_mixed_backtest(etf: str, long_cfg: dict | None,
             long_enabled=enable,
             short_enabled=not enable,
             mode=side_mode,
+            stop_pct=sp,
+            stop_atr_k=sak,
         )
         if len(r["trades"]) > 0:
             trades_parts.append(r["trades"])
@@ -598,7 +629,8 @@ def generate():
             for side in ("long", "short"):
                 dep_cfg = configs.get(etf, {}).get(side)
                 if dep_cfg:
-                    total_dep += dep_cfg.get("oos_sharpe", 0) or 0
+                    # Use stop_oos_sharpe (actual post-stop OOS) when available
+                    total_dep += dep_cfg.get("stop_oos_sharpe", dep_cfg.get("oos_sharpe", 0)) or 0
                 sing_cfg = mode_calibs.get("single", {}).get("results", {}).get(etf, {}).get(side)
                 if sing_cfg and sing_cfg.get("eligible"):
                     total_single += sing_cfg.get("oos_sharpe", 0) or 0
@@ -606,6 +638,52 @@ def generate():
         L.append(f"\n**Total deployed OOS Sharpe**: {total_dep:+.2f} "
                  f"(vs single-only {total_single:+.2f}, "
                  f"Δ = {improvement:+.2f})\n")
+
+    # ── 5.5 Stop-Loss Optimisation (Phase 5) ─────────────────────────────────
+    L.append("\n## 5.5 Stop-Loss Optimisation (Phase 5)\n")
+    L.append("Each side's stop-loss is optimised **in-sample** by maximising total IS profit "
+             "on the best (threshold, conviction) pair. The chosen stop is then evaluated OOS. "
+             "Two types are swept: fixed-% from entry and ATR-14 multiples. "
+             "`none` = hold to 14:30 unconditionally (baseline).\n")
+    L.append("| ETF | Side | Stop type | Stop value | OOS Sharpe (w/ stop) | OOS P&L bps | "
+             "OOS MaxDD bps | OOS Win% | Stopped trades |")
+    L.append("|-----|------|-----------|------------|-----------------------|-------------"
+             "|---------------|----------|----------------|")
+    for etf, cfg in configs.items():
+        for side_name in ("long", "short"):
+            side_cfg = cfg.get(side_name)
+            if not side_cfg:
+                continue
+            st = side_cfg.get("stop_type")
+            sv = side_cfg.get("stop_value")
+            if st == "pct":
+                st_label = "fixed-%"
+                sv_label = f"{sv:.2%}"
+            elif st == "atr":
+                st_label = "ATR-14"
+                sv_label = f"{sv:.1f}×"
+            else:
+                st_label = "none"
+                sv_label = "—"
+            # Count stopped trades from the deployed backtest
+            t = data.get(etf, {}).get("trades")
+            sign = 1 if side_name == "long" else -1
+            n_stopped = 0
+            if t is not None and len(t) > 0 and "exit_type" in t.columns:
+                side_trades = t[t["direction"] == sign]
+                n_stopped = int((side_trades["exit_type"] == "stop").sum())
+            oos_s  = side_cfg.get("stop_oos_sharpe",   side_cfg.get("oos_sharpe", float("nan")))
+            oos_p  = side_cfg.get("stop_oos_pnl_bps",  side_cfg.get("oos_pnl_bps", 0.0))
+            oos_dd = side_cfg.get("stop_oos_max_dd_bps", side_cfg.get("oos_max_dd_bps", float("nan")))
+            oos_wr = side_cfg.get("stop_oos_win_rate",  side_cfg.get("oos_win_rate", float("nan")))
+            def _fmt(x, spec="+.2f"):
+                try:
+                    return f"{float(x):{spec}}" if not np.isnan(float(x)) else "—"
+                except (TypeError, ValueError):
+                    return "—"
+            L.append(f"| {etf} | `{side_name}` | {st_label} | {sv_label} | "
+                     f"{_fmt(oos_s)} | {_fmt(oos_p, '+.0f')} | "
+                     f"{_fmt(oos_dd, '+.0f')} | {_fmt(oos_wr, '.1%')} | {n_stopped} |")
 
     L.append("\n## 6. Verdict\n")
     # Auto-classify based on per-side robustness

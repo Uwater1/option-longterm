@@ -24,9 +24,10 @@ Three signal modes are available: **single** (default, proven), **hybrid** (sing
    ▼
   Entry @ open of bar (decision_bar + 1)   <- next-bar open after decision (realistic fill)
    │
-   │  hold (no intraday management in v1)
+   │  hold (or exit early via intraday stop-loss, Phase 5)
    ▼
   Exit @ 14:30 (5m bar 41 close, better liquidity than 15:00)
+         or @ stop price if intraday stop-loss triggered
 ```
 
 Target alignment: model trains on `trade_return = log(close[EXIT_BAR] / open[decision_bar+1])` — exactly the trade P&L captured by the backtest. No window mismatch.
@@ -177,6 +178,8 @@ daytrade/
 | `CONVICTION_GRID` (calibrate) | `[40,50,60,70,80,90]` | Calibration grid for conviction_pct |
 | `MIN_OOS_TRADES` (calibrate) | `20` | Below this, side config is rejected |
 | `expanding_pct_rank` (rules) | `min_periods=60` | Walk-forward percentile rank → [0,1]; used by `mode="dual"` (Phase 1 fix) |
+| `STOP_PCT_GRID` (calibrate) | `[0.003, 0.005, 0.008, 0.010, 0.015]` | Fixed-% stop-loss grid (Phase 5); selected by IS max profit |
+| `STOP_ATR_GRID` (calibrate) | `[0.5, 1.0, 1.5, 2.0]` | ATR-14 multiple stop-loss grid (Phase 5) |
 
 ---
 
@@ -264,13 +267,13 @@ Warning flags (non-blocking): `m`=median<=0, `w`=win<=50%, `n`=n<60. See §3.1/�
 
 | ETF | Long | Short | Notes |
 |---|---|---|---|
-| **159915** | single thr=50 c=80, OOS S=+3.07 [clean] | single thr=95 c=40, OOS S=+4.92 [n] | Both sides robust. |
-| **500** | hybrid thr=50 c=90, OOS S=+5.57 [n] | hybrid thr=50 c=90, OOS S=+4.25 [n] | **Both sides strongest book. Best name by combined Sharpe.** |
-| **588000** | single thr=95 c=40, OOS S=+5.75 [m,w,n] | single thr=50 c=80, OOS S=+3.48 [clean] | Long fragile — heavy-tail dependent. Short is the robust side. |
-| **300** | hybrid thr=50 c=60, OOS S=+3.63 [n] | hybrid thr=50 c=90, OOS S=+2.76 [m,w,n] | **Both sides now deployable** (was disabled under old pm_return target). Short is fragile. |
-| **50** | dual thr=50 c=80, OOS S=+1.44 [m,w,n] | single thr=50 c=90, OOS S=+9.80 [n] | Long is a Sept-2024-stimulus artifact (top-3 winners = 211% of P&L); investigate before sizing. Short side very strong post trade_return fix. |
+| **159915** | single thr=50 c=90, OOS S=+6.44 [n] | hybrid thr=95 c=40, OOS S=+3.45 [n] | Both sides robust. |
+| **500** | hybrid thr=50 c=90, OOS S=+3.80 [n] | dual thr=50 c=80, OOS S=+0.02 — | Long strong. Short barely positive — investigate. |
+| **588000** | single thr=95 c=40, OOS S=+5.43 [m,w,n] | hybrid thr=95 c=40, OOS S=+3.87 [n] | Long fragile — heavy-tail dependent. Short is the robust side. |
+| **300** | hybrid thr=50 c=70, OOS S=+2.11 [m,w,n] | dual thr=95 c=40, OOS S=+5.53 [n] | **Both sides now deployable** (was disabled under old pm_return target). |
+| **50** | hybrid thr=50 c=80, OOS S=+4.34 [n] | hybrid thr=50 c=90, OOS S=+6.47 [n] | Both sides strong via hybrid mode. |
 
-**Total deployed OOS Sharpe**: +44.67 (vs single-only +33.29, Δ=+11.38; vs old pm_return baseline +23.18, Δ=+21.49).
+**Total deployed OOS Sharpe**: +41.46 (vs single-only +28.60, Δ=+12.86; vs old pm_return baseline +23.18, Δ=+18.28).
 
 The move from `pm_return` (13:00→15:00) to `trade_return` (entry-open→14:30-close) as the model target nearly doubled total Sharpe — confirming the original target/strategy mismatch was a major drag. All 10 ETF×side cells now deployable (was 5 of 10).
 
@@ -284,10 +287,7 @@ Ordered roughly by expected value / implementation cost.
 
 ### High priority
 
-1. **Trailing stop / take-profit** — v1 holds to 14:30 unconditionally. Add an intraday rule:
-   - Stop-loss at `-k × ATR14` from entry (k ≈ 1.0–1.5)
-   - Take-profit at `+2 × ATR14` (lock in Rally continuation)
-   - Compare full-hold vs stop-vs-target vs hybrid in report.
+1. **Trailing stop / take-profit** — v1 holds to 14:30 unconditionally. Stop-loss (Phase 5, IS-optimised) is now implemented: `backtest_long_short(... stop_pct=0.01)` for fixed-% or `stop_atr_k=1.5` for ATR-based. Calibrator sweeps `STOP_PCT_GRID=[0.3%, 0.5%, 0.8%, 1.0%, 1.5%]` and `STOP_ATR_GRID=[0.5, 1.0, 1.5, 2.0]`, selecting by IS max profit. Still TODO: take-profit at `+2 × ATR14` (lock in Rally continuation) and combined stop-vs-target-vs-hybrid comparison.
 
 2. **Position sizing** — currently fixed notional. Add:
    - Inverse-volatility sizing: `size_t = k / σ_t` (use `early_realized_vol` as same-day σ)
@@ -354,4 +354,4 @@ Ordered roughly by expected value / implementation cost.
 - [ ] `python -m daytrade.report` — REPORT.md renders, all 3 plots present, mode comparison table (§5) populated
 - [ ] Cost sensitivity: at least 2 sides remain positive at 30 bps (robustness floor)
 - [ ] Cluster confusion: long_model trades ≥30% Rally days, short_model ≥30% Selloff days (sanity that signal direction aligns with discovered day-types)
-- [ ] Total deployed OOS Sharpe ≥ single-only baseline (currently +23.18 vs +20.17)
+- [ ] Total deployed OOS Sharpe ≥ single-only baseline (currently +41.46 vs +28.60)

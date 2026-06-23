@@ -2,7 +2,7 @@
 
 Two independent asymmetric models per ETF: `long_model` (upside specialist) and `short_model` (downside specialist). v1 attempt failed; v2 redesigns the approach.
 
-**v2 Status (2026-06-22): Phases 1-4 IMPLEMENTED.** Total deployed OOS Sharpe improved from +20.17 (single-only) to **+23.18** (mixed-mode, Δ=+3.01). Key wins: 50ETF Short newly deployed via dual mode (+1.36), 159915ETF Short improved +3.20→+4.83 via hybrid mode. See `REPORT.md` §5 for mode comparison.
+**v2 Status (2026-06-23): Phases 1–5 IMPLEMENTED.** Phases 1–4: mixed-mode deployment improved total OOS Sharpe from +28.60 (single-only) to **+41.46** (Δ=+12.86). Phase 5 (stop-loss): IS-optimised stops did **not** improve OOS (total Sharpe +40.10, Δ=−1.36 vs baseline); only 500ETF had stops applied and they degraded performance. Code infrastructure is in place (`backtest.py`, `calibrate.py`, `deploy.py`, `report.py`); see §3 Phase 5 for full results.
 
 ---
 
@@ -243,6 +243,62 @@ Use `skglm.estimators.GeneralizedLinearEstimator` combining a `Huber` datafit an
 
 **Effort**: ~2 hours.
 
+### Phase 5: Stop-Loss Optimisation (IS max-profit → OOS validation)
+
+**Scope**: `daytrade/backtest.py`, `daytrade/calibrate.py`, `daytrade/report.py`.
+
+Currently every trade is held unconditionally from entry-open to bar-41 close (14:30). Phase 5 adds an intraday stop-loss that can exit early when the trade moves against us.
+
+**Two stop types** are supported and swept per ETF × side:
+
+| Type | Grid | Description |
+|------|------|-------------|
+| Fixed-% | `[0.3%, 0.5%, 0.8%, 1.0%, 1.5%]` | Exit if price moves `stop_pct` against entry |
+| ATR-14 multiple | `[0.5×, 1.0×, 1.5×, 2.0×]` | Exit if price moves `k × ATR14` against entry (per-ETF vol-adapted) |
+
+Plus a `none` baseline (hold to 14:30 unconditionally).
+
+**Optimisation procedure** (two-stage, non-joint to keep the grid manageable):
+
+1. **Stage 1** (existing): grid-search `(threshold, conviction)` by OOS composite score.
+2. **Stage 2** (new): on the best `(thr, conv)` pair, sweep all 10 stop configs. **Select by IS max total profit** (not OOS). The chosen stop is then evaluated OOS for honest out-of-sample performance.
+
+**Implementation details**:
+
+- `backtest.py::_day_bars_to_series` now scans 5m bar `low` (long) or `high` (short) between entry and exit. First bar breaching the stop level triggers exit at the stop price. Records `exit_type: "stop" | "target"` per trade.
+- `backtest.py::compute_daily_atr14` computes a rolling 14-day ATR from daily high-low ranges (using prior day's value to prevent look-ahead).
+- `calibrate.py::_calibrate_one_side` runs Stage 2 after Stage 1, stores `stop_type`, `stop_value`, `stop_oos_*` in the calibration JSON.
+- `deploy.py` and `report.py` thread the stop config through to backtest execution and the generated report.
+
+**Success metric**: OOS Sharpe of stopped config ≥ OOS Sharpe of no-stop baseline on at least 3 ETFs.
+
+**Effort**: ~3 hours (code + calibration + report).
+
+#### Phase 5 Results (2026-06-23)
+
+**Finding**: IS-optimised stop-loss did **not** improve total deployed OOS Sharpe. Most ETF×side configs optimised to "no stop" (the baseline was IS-optimal). Only 500ETF had stops selected by IS max-profit, but those stops **degraded** OOS performance.
+
+| ETF | Side | Best stop (IS max-profit) | OOS Sharpe (w/ stop) | OOS Sharpe (no stop) | Δ Sharpe |
+|-----|------|---------------------------|-----------------------|-----------------------|----------|
+| 50ETF | long | none | +4.34 | +4.34 | 0.00 |
+| 50ETF | short | none | +6.47 | +6.47 | 0.00 |
+| 300ETF | long | none | +2.11 | +2.11 | 0.00 |
+| 300ETF | short | none | +5.53 | +5.53 | 0.00 |
+| 500ETF | long | fixed 1.0% | **+2.47** | +3.80 | **−1.33** |
+| 500ETF | short | ATR 1.5× | **−0.02** | +0.02 | **−0.04** |
+| 588000ETF | long | none | +5.43 | +5.43 | 0.00 |
+| 588000ETF | short | none | +3.87 | +3.87 | 0.00 |
+| 159915ETF | long | none | +6.44 | +6.44 | 0.00 |
+| 159915ETF | short | none | +3.45 | +3.45 | 0.00 |
+
+**Total deployed OOS Sharpe (with stops): +40.10** (vs +41.46 no-stop baseline, **Δ = −1.36**).
+
+**Interpretation**:
+- IS max-profit stop selection overfit to in-sample noise. The 500ETF 1.0% stop improved IS profit (+1319bps vs +1272bps no-stop) but hurt OOS Sharpe by −1.33.
+- 8 of 10 sides correctly selected "none" — the IS-optimal choice was no stop.
+- The success metric (OOS Sharpe ≥ baseline on ≥3 ETFs) was **not met**.
+- **Recommendation**: Consider OOS-based stop selection (not IS max-profit) or skip stop-loss entirely. The intraday alpha is already strong enough that early exits destroy edge.
+
 ---
 
 ## 4. Phase Priority & Dependencies
@@ -250,12 +306,15 @@ Use `skglm.estimators.GeneralizedLinearEstimator` combining a `Huber` datafit an
 ```
 Phase 1 (score normalisation)  ────────┐
                                        ├──▶ Phase 3 (true dual)  ──▶ Phase 4 (validation)
-Phase 2 (better model type)    ────────┘
+Phase 2 (better model type)    ────────┘                                      │
+                                                                              ▼
+                                                                     Phase 5 (stop-loss)
 ```
 
 - **Phase 1** and **Phase 2** are independent — can be done in parallel.
 - **Phase 3** depends on both (needs normalised scores from Phase 1 and better models from Phase 2).
 - **Phase 4** depends on Phase 3.
+- **Phase 5** is independent of Phases 1–4 (operates on the deployed signal) — can be run after Phase 4.
 
 If time-constrained, **Phase 1 alone** is the highest-ROI change. It directly fixes the threshold-dilution root cause with minimal code change and no retraining.
 
@@ -391,7 +450,7 @@ The wider calibration grid (`THRESHOLD_GRID` extended from `[50,60,70,80,90]` to
 
 ---
 
-## 8. v2 Results (2026-06-22)
+## 8. v2 Results (2026-06-23 retrain)
 
 All 4 phases implemented. Models retrained with Phase 2 fixes (stability target + tail IC). Per-mode calibration run for single, hybrid, and dual. Phase 4 deployment picks the best mode per side by OOS Sharpe.
 
@@ -399,28 +458,33 @@ All 4 phases implemented. Models retrained with Phase 2 fixes (stability target 
 
 | ETF | Side | Single | Hybrid | Dual | **Deployed** |
 |:---|:---|:---|:---|:---|:---|
-| 50ETF | short | — | — | **+1.36** | **dual** |
-| 500ETF | long | +3.66 | **+3.68** | — | **hybrid** |
-| 500ETF | short | **+5.14** | +2.75 | +1.67 | **single** |
-| 588000ETF | long | **+1.80** | +1.34 | +1.63 | **single** |
-| 159915ETF | long | **+6.37** | +6.34 | +3.76 | **single** |
-| 159915ETF | short | +3.20 | **+4.83** | +2.86 | **hybrid** |
+| 50ETF | long | +2.95 | **+4.34** | +0.42 | **hybrid** |
+| 50ETF | short | +3.86 | **+6.47** | +0.99 | **hybrid** |
+| 300ETF | long | +1.25 | **+2.11** | +0.98 | **hybrid** |
+| 300ETF | short | — | +0.62 | **+5.53** | **dual** |
+| 500ETF | long | +3.06 | **+3.80** | +3.00 | **hybrid** |
+| 500ETF | short | — | — | **+0.02** | **dual** |
+| 588000ETF | long | **+5.43** | +5.36 | +3.25 | **single** |
+| 588000ETF | short | +2.86 | **+3.87** | +2.26 | **hybrid** |
+| 159915ETF | long | **+6.44** | +4.59 | +2.50 | **single** |
+| 159915ETF | short | +2.74 | **+3.45** | +1.20 | **hybrid** |
 
-**Total deployed OOS Sharpe**: +23.18 (vs single-only +20.17, **Δ=+3.01**).
+**Total deployed OOS Sharpe**: +41.46 (vs single-only +28.60, **Δ=+12.86**).
 
 ### What Worked
 
-1. **Phase 1 (rank normalisation)**: `expanding_pct_rank` normalises dual/hybrid scores to [0,1], fixing threshold dilution. Enabled dual mode to produce valid signals on 50ETF.
+1. **Phase 1 (rank normalisation)**: `expanding_pct_rank` normalises dual/hybrid scores to [0,1], fixing threshold dilution.
 2. **Phase 2.4 (stability target fix)**: Using asymmetric clipped target for dual-model feature selection produces features that isolate tail drivers.
 3. **Phase 2.5 (tail-weighted IC objective)**: 50% weight on top-30% tail IC aligns Optuna with trading edge.
-4. **Phase 3 (true dual execution)**: `mode="dual"` lets each model fire independently. **50ETF Short deployed** (S=+1.36) — a side that single mode disabled. This is the Phase 3 success metric met.
-5. **Phase 4 (per-side deployment)**: `deploy.py` picks the best mode per side. The mixed deployment strictly dominates single-only.
+4. **Phase 3 (true dual execution)**: `mode="dual"` lets each model fire independently. **300ETF Short deployed** (S=+5.53) — a side that single mode could not trigger.
+5. **Phase 4 (per-side deployment)**: `deploy.py` picks the best mode per side. Hybrid mode dominates (6/10 deployments).
 
 ### What Didn't Work
 
-1. **Dual mode does not dominate single mode.** On 159915ETF and 588000ETF Long, single mode is clearly better. The single-model signed score is a stronger directional signal than the dual model's independent conviction.
-2. **300ETF became untradeable.** Feature-set change (rsi14, ema26_dist, vol_pk10 removed) degraded 300ETF IC. Both sides disabled across all modes.
+1. **500ETF Short is fragile.** OOS Sharpe +0.02 (essentially flat). Dual mode is the only viable mode but edge is marginal. Needs investigation.
+2. **Dual mode does not dominate single mode.** On 588000ETF Long and 159915ETF Long, single mode is clearly better.
 3. **Dual mode selects too many trades at low thresholds.** At thr=50, dual mode selects ~50% of days (rank ≥ median). The calibration grid needs higher minimums for dual mode to be equally selective as single mode's conditional thresholding.
+4. **Phase 5 (stop-loss): IS max-profit stop selection overfit.** Only 500ETF had stops applied (1.0% fixed long, 1.5×ATR short), and both **degraded** OOS Sharpe (total Δ=−1.36). 8/10 sides correctly selected "no stop". The intraday alpha is strong enough that early exits destroy edge. Recommend: either switch to OOS-based stop selection, or drop stop-loss entirely.
 
 ### Phase 2 Options Not Implemented
 

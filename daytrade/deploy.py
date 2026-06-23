@@ -89,11 +89,26 @@ def deploy(verbose: bool = True) -> dict:
             "short": best_short,
         }
 
+        def _stop_label(cfg):
+            if not cfg:
+                return "—"
+            st = cfg.get("stop_type")
+            sv = cfg.get("stop_value")
+            if st == "pct":
+                return f"{sv:.3f}"
+            elif st == "atr":
+                return f"{sv:.1f}xATR"
+            return "—"
+
         l_str = (f"{best_long_mode} thr={best_long['threshold_pct']:.0f} "
-                 f"c={best_long['conviction_pct']:.0f} S={best_long['oos_sharpe']:+.2f}"
+                 f"c={best_long['conviction_pct']:.0f} "
+                 f"stop={_stop_label(best_long)} "
+                 f"S={best_long['oos_sharpe']:+.2f}"
                  if best_long else "disabled")
         s_str = (f"{best_short_mode} thr={best_short['threshold_pct']:.0f} "
-                 f"c={best_short['conviction_pct']:.0f} S={best_short['oos_sharpe']:+.2f}"
+                 f"c={best_short['conviction_pct']:.0f} "
+                 f"stop={_stop_label(best_short)} "
+                 f"S={best_short['oos_sharpe']:+.2f}"
                  if best_short else "disabled")
         comparison_rows.append((etf, l_str, s_str))
 
@@ -108,12 +123,12 @@ def deploy(verbose: bool = True) -> dict:
     if verbose:
         print(f"Deployed calibration → {out_path}")
         print()
-        print("=" * 80)
-        print(f"{'ETF':<12} {'LONG (mode / cfg / Sharpe)':<35} {'SHORT (mode / cfg / Sharpe)':<35}")
-        print("-" * 80)
+        print("=" * 96)
+        print(f"{'ETF':<12} {'LONG (mode / cfg / stop / Sharpe)':<42} {'SHORT (mode / cfg / stop / Sharpe)':<42}")
+        print("-" * 96)
         for etf, l, s in comparison_rows:
-            print(f"{etf:<12} {l:<35} {s:<35}")
-        print("=" * 80)
+            print(f"{etf:<12} {l:<42} {s:<42}")
+        print("=" * 96)
 
         # Count deployments per mode
         mode_counts = {}
