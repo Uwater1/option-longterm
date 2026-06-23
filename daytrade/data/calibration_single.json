@@ -28,8 +28,8 @@
         "warnings": [
           "n<60"
         ],
-        "stop_type": null,
-        "stop_value": null,
+        "stop_type": "pct",
+        "stop_value": 0.03,
         "stop_oos_sharpe": 2.95485956541145,
         "stop_oos_pnl_bps": 609.7021221916967,
         "stop_oos_max_dd_bps": -311.5801775092769,
@@ -52,10 +52,10 @@
         "warnings": [
           "n<60"
         ],
-        "stop_type": "atr",
-        "stop_value": 1.5,
-        "stop_oos_sharpe": 3.6778976146618847,
-        "stop_oos_pnl_bps": 948.1069254985696,
+        "stop_type": "pct",
+        "stop_value": 0.04,
+        "stop_oos_sharpe": 3.8594847745415697,
+        "stop_oos_pnl_bps": 979.8807957609622,
         "stop_oos_max_dd_bps": -297.0374012144561,
         "stop_oos_win_rate": 0.5757575757575758
       }
@@ -87,8 +87,8 @@
           "median<=0",
           "win<=50%"
         ],
-        "stop_type": null,
-        "stop_value": null,
+        "stop_type": "pct",
+        "stop_value": 0.05,
         "stop_oos_sharpe": 1.2467239636850298,
         "stop_oos_pnl_bps": 1038.5946620029201,
         "stop_oos_max_dd_bps": -790.7725218675588,
@@ -120,10 +120,10 @@
         "score": 0.7035675732712557,
         "eligible": true,
         "warnings": [],
-        "stop_type": null,
-        "stop_value": null,
-        "stop_oos_sharpe": 3.062759596414872,
-        "stop_oos_pnl_bps": 1855.9131675688002,
+        "stop_type": "pct",
+        "stop_value": 0.05,
+        "stop_oos_sharpe": 2.396717224473622,
+        "stop_oos_pnl_bps": 1566.6974812942901,
         "stop_oos_max_dd_bps": -950.5635150071084,
         "stop_oos_win_rate": 0.6
       },
@@ -157,10 +157,10 @@
           "win<=50%",
           "n<60"
         ],
-        "stop_type": null,
-        "stop_value": null,
-        "stop_oos_sharpe": 5.433221534445495,
-        "stop_oos_pnl_bps": 3469.049462173394,
+        "stop_type": "pct",
+        "stop_value": 0.05,
+        "stop_oos_sharpe": 4.4138372811230475,
+        "stop_oos_pnl_bps": 2969.0494621733947,
         "stop_oos_max_dd_bps": -660.0290457336295,
         "stop_oos_win_rate": 0.4827586206896552
       },
@@ -179,12 +179,12 @@
         "score": 0.7871498836521683,
         "eligible": true,
         "warnings": [],
-        "stop_type": "pct",
-        "stop_value": 0.008,
-        "stop_oos_sharpe": -0.20731802041781652,
-        "stop_oos_pnl_bps": -119.91691843409887,
-        "stop_oos_max_dd_bps": -1136.8372766515092,
-        "stop_oos_win_rate": 0.38571428571428573
+        "stop_type": "atr",
+        "stop_value": 3.5,
+        "stop_oos_sharpe": 2.8644996651954036,
+        "stop_oos_pnl_bps": 2318.5805680971785,
+        "stop_oos_max_dd_bps": -1406.1537984616562,
+        "stop_oos_win_rate": 0.6142857142857143
       }
     },
     "159915ETF": {
@@ -213,8 +213,8 @@
         "warnings": [
           "n<60"
         ],
-        "stop_type": null,
-        "stop_value": null,
+        "stop_type": "pct",
+        "stop_value": 0.05,
         "stop_oos_sharpe": 6.441183093739922,
         "stop_oos_pnl_bps": 3253.226312167663,
         "stop_oos_max_dd_bps": -693.2595164582866,
@@ -237,11 +237,11 @@
         "warnings": [
           "n<60"
         ],
-        "stop_type": "atr",
-        "stop_value": 1.0,
-        "stop_oos_sharpe": 1.710512839260269,
-        "stop_oos_pnl_bps": 612.336330348606,
-        "stop_oos_max_dd_bps": -692.2373869186888,
+        "stop_type": "pct",
+        "stop_value": 0.03,
+        "stop_oos_sharpe": 1.12497226504219,
+        "stop_oos_pnl_bps": 493.6400252702973,
+        "stop_oos_max_dd_bps": -930.7877160252681,
         "stop_oos_win_rate": 0.5384615384615384
       }
     }

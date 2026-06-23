@@ -40,14 +40,32 @@ ETF_5M_FILE = {
 }
 
 
+_5M_CACHE = {}
+_GROUPED_BARS_CACHE = {}
+_ATR_CACHE = {}
+
+
 def load_5m(etf: str) -> pd.DataFrame:
     """Load 5m bars; return DataFrame indexed by datetime with [open, high, low, close, volume]."""
+    if etf in _5M_CACHE:
+        return _5M_CACHE[etf]
     path = ETF_5M_DIR / ETF_5M_FILE[etf]
     df = pd.read_parquet(path)
     df = df[["datetime", "open", "high", "low", "close", "volume"]].copy()
     df["datetime"] = pd.to_datetime(df["datetime"])
     df = df.set_index("datetime").sort_index()
+    _5M_CACHE[etf] = df
     return df
+
+
+def get_grouped_bars(etf: str) -> dict:
+    if etf in _GROUPED_BARS_CACHE:
+        return _GROUPED_BARS_CACHE[etf]
+    bars = load_5m(etf)
+    bars["date"] = bars.index.date
+    grouped = {d: g for d, g in bars.groupby("date")}
+    _GROUPED_BARS_CACHE[etf] = grouped
+    return grouped
 
 
 def compute_daily_atr14(bars: pd.DataFrame, window: int = 14) -> pd.Series:
@@ -65,6 +83,15 @@ def compute_daily_atr14(bars: pd.DataFrame, window: int = 14) -> pd.Series:
     # Use prior day's ATR to avoid look-ahead
     daily["atr14"] = daily["atr14"].shift(1)
     return daily["atr14"]
+
+
+def get_daily_atr14(etf: str) -> pd.Series:
+    if etf in _ATR_CACHE:
+        return _ATR_CACHE[etf]
+    bars = load_5m(etf)
+    atr = compute_daily_atr14(bars)
+    _ATR_CACHE[etf] = atr
+    return atr
 
 
 def _day_bars_to_series(
@@ -141,9 +168,7 @@ def backtest_etf(
     if len(signals) == 0:
         return _empty_result(etf)
 
-    bars = load_5m(etf)
-    bars["date"] = bars.index.date
-    by_date = {d: g for d, g in bars.groupby("date")}
+    by_date = get_grouped_bars(etf)
 
     decision_bar = DECISION_BAR[etf]
     exit_bar = EXIT_BAR
@@ -221,15 +246,13 @@ def backtest_long_short(
     if len(signals) == 0:
         return _empty_long_short_result(etf)
 
-    bars = load_5m(etf)
-    bars["date"] = bars.index.date
-    by_date = {d: g for d, g in bars.groupby("date")}
+    by_date = get_grouped_bars(etf)
 
     decision_bar = DECISION_BAR[etf]
     exit_bar = EXIT_BAR
 
     # Pre-compute ATR14 series if ATR-based stop is requested
-    atr_series = compute_daily_atr14(bars) if stop_atr_k is not None else None
+    atr_series = get_daily_atr14(etf) if stop_atr_k is not None else None
 
     rows = []
     for date, row in signals.iterrows():
