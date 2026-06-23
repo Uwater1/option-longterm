@@ -52,10 +52,16 @@ def _day_bars_to_series(day_df: pd.DataFrame, decision_bar: int, exit_bar: int):
     """Extract entry & exit prices from a single day's 48 bars.
 
     Returns (entry_price, exit_price) or (None, None) if bars missing.
+
+    Entry timing matches the new trade_return target in build_features.py:
+        decision at close of bar (decision_bar)
+        entry    at open  of bar (decision_bar + 1)   <- next bar open after decision
+        exit     at close of bar (exit_bar)
     """
-    if len(day_df) <= max(decision_bar, exit_bar):
+    entry_idx = decision_bar + 1
+    if len(day_df) <= max(entry_idx, exit_bar):
         return None, None
-    entry_price = float(day_df.iloc[decision_bar]["close"])
+    entry_price = float(day_df.iloc[entry_idx]["open"])
     exit_price = float(day_df.iloc[exit_bar]["close"])
     if entry_price <= 0 or exit_price <= 0:
         return None, None

@@ -27,7 +27,7 @@ ETF_ORDER = ["300ETF", "50ETF", "500ETF", "588000ETF", "159915ETF"]
 # Import features list
 sys.path.append(str(HERE))
 from build_features import EARLY_FEATURES, DAY_FEATURES, YESTERDAY_FEATURES, FEATURES
-TARGET = "pm_return"
+TARGET = "trade_return"
 
 
 def load_results(path: Path) -> dict:
@@ -105,10 +105,11 @@ def generate(results: dict) -> str:
     w(f"| Day-level ({len(DAY_FEATURES)}) | {len(DAY_FEATURES)} | {', '.join(DAY_FEATURES[:15])}... and {len(DAY_FEATURES) - 15} more (total {len(DAY_FEATURES)}) |")
     w(f"| Yesterday ({len(YESTERDAY_FEATURES)}) | {len(YESTERDAY_FEATURES)} | {', '.join(YESTERDAY_FEATURES[:15])}... and {len(YESTERDAY_FEATURES) - 15} more (total {len(YESTERDAY_FEATURES)}) |")
     w("")
-    w("- **Early-bar**: First 6 five-minute bars (9:30–10:00) plus price action features. All computable by 10:00 AM.")
+    w("- **Early-bar**: First `decision_bar+1` five-minute bars per-ETF (see `DECISION_BAR` in `build_features.py`). Bars beyond `decision_bar` padded with 0.0. Strictly causal — no look-ahead.")
     w("- **Day-level**: Technical indicators and 3rd party flows shifted by 1 day (no look-ahead).")
     w("- **Yesterday**: Shifted full-day and early-bar features from day t-1 (no look-ahead).")
-    w("- **Target**: `pm_return` = sum of log returns over bars 24–47 (13:00–15:00 session).")
+    w("- **Target**: `trade_return` = log(close[EXIT_BAR] / open[decision_bar+1]). Mirrors actual daytrade P&L exactly (entry at next-bar open after decision, exit at 14:30 close).")
+    w("- **Diagnostic target**: `pm_return` (bars 24..47, 13:00→15:00) retained for IC sanity-checks vs the old baseline — do NOT train on it.")
     w("- **Warmup**: First 60 rows dropped (SMA50/ATR14 burn-in).\n")
 
     # ── 3) Methodology ──
@@ -294,7 +295,7 @@ def generate(results: dict) -> str:
     w("## 5. Comparison to Baselines\n")
     w("Four baselines evaluated on the same holdout set:\n")
     w("1. **Zero** (no-skill): Always predicts 0. IC=0 by definition.")
-    w("2. **Yesterday PM return**: Autocorrelation baseline. Tests if PM returns are predictable from prior day.")
+    w("2. **Yesterday trade_return**: Autocorrelation baseline. Tests if trade returns are predictable from prior day.")
     w("3. **First 30-min return**: Momentum baseline. Tests AM-to-PM momentum.")
     w("4. **Ridge Base**: Ridge regression with alpha=1.0 on all 21 features. Controls for tuning/selection lift.\n")
 
@@ -379,7 +380,7 @@ def generate(results: dict) -> str:
 
     # ── 7) Sensitivity to Prediction Time (Bar Count Comparison) ──
     w("## 7. Sensitivity to Prediction Time (Bar Count Comparison)\n")
-    w("To determine how early the PM return prediction can be made, we evaluated model performance across different morning bar counts:")
+    w("To determine how early the trade_return prediction can be made, we evaluated model performance across different morning bar counts (target = `trade_return`: open[early_bars] -> close[EXIT_BAR]):")
     w("- **9:45 AM (3 bars)**: First 15 minutes of trading (9:30–9:45)")
     w("- **9:50 AM (4 bars)**: First 20 minutes of trading (9:30–9:50)")
     w("- **9:55 AM (5 bars)**: First 25 minutes of trading (9:30–9:55)")
@@ -480,7 +481,7 @@ def generate(results: dict) -> str:
           f"{', '.join(weak)}\n")
 
     w("\n**Key caveats**:\n")
-    w("1. PM return prediction is inherently noisy (low signal-to-noise ratio)")
+    w("1. Trade return prediction is inherently noisy (low signal-to-noise ratio)")
     w("2. Feature selection using block bootstrap stability scores handles highly correlated features much better than greedy RFE")
     w("3. HuberRegressor handles extreme outlier days much better than standard MSE-based models")
     w("4. Transaction costs and execution slippage are not modeled here")

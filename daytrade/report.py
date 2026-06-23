@@ -340,22 +340,25 @@ def generate():
 
     L = []
     L.append("# Daytrade — Frozen-Linear Intraday Alpha (Long/Short Model)\n")
-    L.append("*Signal = frozen LASSO/Huber coefficients from day-model. "
+    L.append("*Signal = frozen LASSO/Huber coefficients from day-model (target = `trade_return`, "
+             "log return from entry-open to exit-close). "
              "Each ETF deploys independent `long_model` and `short_model`, "
              "each with its own expanding-percentile thresholds. "
-             "Entry at decision bar (9:45 for 159915/500; 10:00 for 300/50/588000). "
-             f"Exit at 14:30 (5m bar {EXIT_BAR}). "
+             "Decision at close[DECISION_BAR[etf]] -> entry at open[DECISION_BAR[etf]+1] -> "
+             f"exit at close[{EXIT_BAR}] (14:30). "
              f"Cost {DEFAULT_COST_BPS:.0f} bps round-trip.*\n")
 
     L.append("\n## 1. Strategy\n")
     L.append("- **Signal**: frozen LASSO/Huber/ElasticNet score from `day-model/models/linear_{ETF}.joblib`")
+    L.append("- **Model target**: `trade_return` = log(close[EXIT_BAR] / open[decision_bar+1]) — mirrors actual trade P&L exactly")
     L.append("- **Per-side thresholds**: expanding-window percentile of |score| computed only over that side's prior history (no look-ahead)")
     L.append("- **Direction**: `long_model` fires when score>0 & crosses long thresholds; `short_model` fires when score<0 & crosses short thresholds")
     if mode == "mixed":
         L.append("- **Mode**: **mixed** (Phase 4 per-side deployment). Each side uses the mode "
                  "(single/hybrid/dual) that maximises OOS Sharpe. See §2 for per-side mode assignments.")
     L.append("- **Eligibility guard**: each side deployed only if OOS P&L>0 AND OOS Sharpe>0 AND n≥20 (else disabled)")
-    L.append("- **Entry bar**: 9:45 close for 159915/500; 10:00 close for 300/50/588000")
+    L.append("- **Decision/Entry**: per-ETF `DECISION_BAR` (see day-model/build_features.py). "
+             "Decide at close[decision_bar], enter at open[decision_bar+1] (next-bar open, realistic fill).")
     L.append(f"- **Exit bar**: {EXIT_BAR} (5m close at 14:30, better liquidity than 15:00)")
     L.append(f"- **Cost**: {DEFAULT_COST_BPS:.0f} bps round-trip (parametrizable)")
     L.append(f"- **Holdout**: {HOLDOUT_START} onwards (matches day-model)\n")
@@ -385,8 +388,12 @@ def generate():
     L.append("\n## 3. Performance (15 bps round-trip)\n")
     L.append("### 3.1 Per-Side OOS Metrics\n")
     L.append("*Place%* = side trades / total trading days in the period (capital deployment rate).\n")
-    L.append("| ETF | Side | N OOS | Place% | Win% | Sharpe | P&L bps | MaxDD bps | Mean bps |")
-    L.append("|-----|------|-------|--------|------|--------|---------|-----------|----------|")
+    L.append("*Warnings* = non-blocking fragility flags. If any fire, the positive Sharpe may be "
+             "a small-sample / heavy-tail artifact rather than a true edge. Three checks: "
+             "`median<=0` (typical trade loses money), `win<=50%` (loses more often than wins), "
+             "`n<60` (small sample, high multiple-testing risk from grid search).\n")
+    L.append("| ETF | Side | N OOS | Place% | Win% | Sharpe | P&L bps | MaxDD bps | Mean bps | Median bps | Warnings |")
+    L.append("|-----|------|-------|--------|------|--------|---------|-----------|----------|------------|----------|")
     for etf, r in data.items():
         t = r["trades"]
         if len(t) == 0 or "direction" not in t.columns:
@@ -398,11 +405,23 @@ def generate():
             if len(sd) == 0:
                 continue
             rets = sd["net_ret"].values
-            L.append(f"| {etf} | `{side}` | {len(sd)} | "
-                     f"{_placement_rate(len(sd), n_oos_days):.1f}% | "
-                     f"{float((rets>0).mean()):.1%} | "
+            n_sd = len(sd)
+            median_bps = float(np.median(rets) * 1e4)
+            wr = float((rets > 0).mean())
+            warns = []
+            if median_bps <= 0:
+                warns.append("median<=0")
+            if wr <= 0.50:
+                warns.append("win<=50%")
+            if n_sd < 60:
+                warns.append("n<60")
+            warn_str = ", ".join(warns) if warns else "—"
+            L.append(f"| {etf} | `{side}` | {n_sd} | "
+                     f"{_placement_rate(n_sd, n_oos_days):.1f}% | "
+                     f"{wr:.1%} | "
                      f"{_sharpe(rets):+.2f} | {rets.sum()*1e4:+.0f} | "
-                     f"{_max_dd_bps(rets):+.0f} | {np.mean(rets)*1e4:+.1f} |")
+                     f"{_max_dd_bps(rets):+.0f} | {np.mean(rets)*1e4:+.1f} | "
+                     f"{median_bps:+.1f} | {warn_str} |")
 
     L.append("\n### 3.2 Combined (Long+Short) Per ETF\n")
     L.append("| ETF | N (full) | N OOS | L Place% | S Place% | Tot Place% | Win% | "
@@ -500,6 +519,38 @@ def generate():
     L.append("\n### 3.6 Equity Curves\n")
     L.append(f"![equity_combined]({eq_comb.relative_to(PKG_DIR)})\n")
     L.append(f"![equity_per_side]({eq_split.relative_to(PKG_DIR)})\n")
+
+    L.append("\n### 3.7 Fragility Warnings Summary\n")
+    L.append("Non-blocking transparency flags. A side with warnings is still deployed (passes "
+             "the hard guard `Sharpe>0 AND P&L>0 AND n≥20`) but the positive Sharpe may be "
+             "a small-sample / heavy-tail artifact. Investigate before sizing the position.\n")
+    L.append("- `median<=0`: typical OOS trade loses money; positive mean is carried by a few big winners")
+    L.append("- `win<=50%`: side loses more often than it wins")
+    L.append("- `n<60`: small sample; high multiple-testing risk from the 6×6 grid search\n")
+    L.append("| ETF | Side | N OOS | Median bps | Win% | Warnings |")
+    L.append("|-----|------|-------|------------|------|----------|")
+    for etf, r in data.items():
+        t = r["trades"]
+        if len(t) == 0 or "direction" not in t.columns:
+            continue
+        oos = t[t.index >= pd.Timestamp(HOLDOUT_START)]
+        for side, sign in [("long", 1), ("short", -1)]:
+            sd = oos[oos["direction"] == sign]
+            if len(sd) == 0:
+                continue
+            rets = sd["net_ret"].values
+            n_sd = len(sd)
+            median_bps = float(np.median(rets) * 1e4)
+            wr = float((rets > 0).mean())
+            warns = []
+            if median_bps <= 0:
+                warns.append("median<=0")
+            if wr <= 0.50:
+                warns.append("win<=50%")
+            if n_sd < 60:
+                warns.append("n<60")
+            warn_str = ", ".join(warns) if warns else "—"
+            L.append(f"| {etf} | `{side}` | {n_sd} | {median_bps:+.1f} | {wr:.1%} | {warn_str} |")
 
     L.append("\n## 4. Diagnostic: Cluster Confusion (OOS traded days)\n")
     L.append("Of days traded on each side, what fraction belonged to day-trading's "

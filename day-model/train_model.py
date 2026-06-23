@@ -1,8 +1,11 @@
 """
-Phase 2: Train Optuna-tuned linear regression predicting PM return per ETF.
+Phase 2: Train Optuna-tuned linear regression predicting trade_return per ETF.
 Supports Ridge, Lasso, ElasticNet, HuberRegressor.
 Uses Lasso-based Block Bootstrap Stability Selection to select robust feature subsets,
 and tunes the selection threshold as a walk-forward CV hyperparameter.
+
+Target: trade_return = log(close[EXIT_BAR] / open[decision_bar+1])
+        Mirrors actual daytrade P&L (entry at next-bar open after decision, exit at 14:30 close).
 
 Validation: Purged TimeSeriesSplit walk-forward (gap=N between train and test).
 Optuna objective: mean Spearman rank IC across folds (robust to outliers).
@@ -60,7 +63,7 @@ PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 import sys
 sys.path.append(str(Path(__file__).resolve().parent))
 from build_features import EARLY_FEATURES, DAY_FEATURES, YESTERDAY_FEATURES, FEATURES
-TARGET = "pm_return"
+TARGET = "trade_return"
 
 # Defaults
 DEFAULT_TRIALS = 100
@@ -282,9 +285,9 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
               side: str = "single") -> dict:
     """Train one linear model for an ETF.
 
-    side="single" (default): legacy symmetric target ``y = pm_return``.
-    side="long":  asymmetric target ``y = max(0, pm_return)`` (upside specialist).
-    side="short": asymmetric target ``y = max(0, -pm_return)`` (downside specialist).
+    side="single" (default): symmetric target ``y = trade_return``.
+    side="long":  asymmetric stability target ``y = max(0, trade_return)`` (upside specialist).
+    side="short": asymmetric stability target ``y = max(0, -trade_return)`` (downside specialist).
     """
     if side not in ("single", "long", "short"):
         raise ValueError(f"side must be single|long|short, got {side!r}")
@@ -299,7 +302,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
     feat = feat.dropna(subset=FEATURES + [TARGET]).copy()
     X = feat[FEATURES].values
     Y_SCALE = 100.0
-    # Always train on the raw pm_return so the model preserves full regression
+    # Always train on the raw trade_return so the model preserves full regression
     # signal (including the magnitude of negative returns).  The clipped target
     # is used ONLY for stability-selection feature pruning so each side picks
     # features that are relevant to its regime (upside / downside).
@@ -560,8 +563,8 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
                  "holdout_start_date": str(dates_ho[0].date()),
                  "y_scale": Y_SCALE,
                  "side": side,
-                 "target": "raw_pm_return",
-                 "stability_target": ("clipped_pm_return" if side != "single" else "pm_return"),
+                 "target": "raw_trade_return",
+                 "stability_target": ("clipped_trade_return" if side != "single" else "trade_return"),
                  "optuna_objective": ("tail_weighted_ic" if side != "single" else "overall_ic"),
                  "sample_weight_lambda": 0.5 if side != "single" else 0.0},
                 MODELS_DIR / f"scaler_{tag}.joblib")
@@ -625,7 +628,7 @@ def _plot_diagnostics(etf, dates_ho, y_ho, preds_ho, wf_df,
     ax.set_xlim(-lim, lim); ax.set_ylim(-lim, lim)
     ax.axhline(0, color="black", lw=0.5); ax.axvline(0, color="black", lw=0.5)
     ax.plot([-lim, lim], [-lim, lim], "r--", lw=0.8)
-    ax.set_xlabel("Predicted PM return (%)"); ax.set_ylabel("Actual PM return (%)")
+    ax.set_xlabel("Predicted trade return (%)"); ax.set_ylabel("Actual trade return (%)")
     ic = spearman_ic(y_ho, preds_ho)
     ax.set_title(f"{etf} Holdout: IC={ic:.3f}")
     ax.grid(alpha=0.3)

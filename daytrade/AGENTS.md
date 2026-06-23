@@ -11,22 +11,25 @@ Three signal modes are available: **single** (default, proven), **hybrid** (sing
 ```
   9:30 open
    │
-   │  ── collect first N bars ──▶  N=3 for 159915/500 (decision@9:45)
-   │                              N=6 for 300/50/588000 (decision@10:00)
+   │  ── collect first (decision_bar+1) bars ──▶  per-ETF DECISION_BAR
+   │     {300:3 (9:50), 50:2 (9:45), 500:4 (9:55),
+   │      588000:2 (9:45), 159915:4 (9:55)}
    ▼
-  Decision bar close
+  Decision bar close  ->  compute score (causal: features use bars [0..decision_bar] only)
    │
-   │  1) score = intercept + Σ coefᵢ × featureᵢ           [frozen, day-model]
+   │  1) score = intercept + Σ coefᵢ × featureᵢ           [frozen, day-model trained on trade_return]
    │  2) |score| vs expanding pct over same-side history   [walk-forward]
    │  3) long_model.fires  if score>0 & crosses L_thr
    │     short_model.fires if score<0 & crosses S_thr
    ▼
-  Entry @ decision-bar close
+  Entry @ open of bar (decision_bar + 1)   <- next-bar open after decision (realistic fill)
    │
    │  hold (no intraday management in v1)
    ▼
   Exit @ 14:30 (5m bar 41 close, better liquidity than 15:00)
 ```
+
+Target alignment: model trains on `trade_return = log(close[EXIT_BAR] / open[decision_bar+1])` — exactly the trade P&L captured by the backtest. No window mismatch.
 
 Per-side **eligibility guard** (calibration-time): a side deploys only if OOS P&L > 0 AND OOS Sharpe > 0 AND n ≥ 20. If neither side is eligible, the ETF is untradeable.
 
@@ -109,8 +112,8 @@ day-model/data/features_{ETF}.parquet   ─┘                                  
                                                                                       ▼
                                           backtest.backtest_long_short(etf, ...)
                                                                                       │
-                                            entry = close[decision_bar]
-                                            exit  = close[EXIT_BAR=41]  (14:30)
+                                            entry = open[decision_bar + 1]   <- next-bar open after decision close
+                                            exit  = close[EXIT_BAR=41]       (14:30)
                                             net_ret = direction × (exit/entry − 1) − cost
                                                                                       ▼
                                           calibrate.calibrate_all()  →  report.generate()
@@ -120,7 +123,13 @@ day-model/data/features_{ETF}.parquet   ─┘                                  
 
 Calibration grid: `threshold_pct ∈ {50,60,70,80,90,95}`, `conviction_pct ∈ {40,50,60,70,80,90}`, run independently for long & short. Selection objective is profit-first composite (per AGENTS.md put convention):
 - P&L 35%, FilterLift 30% (selectivity rate, `s5`), Sharpe 15%, MaxDD 10%, WinRate 5%, Placement 5% (trades kept fraction, `1.0 - s5`)
-- Hard eligibility guard: OOS P&L > 0 AND OOS Sharpe > 0 AND OOS n ≥ 20
+- **Hard eligibility guard**: OOS P&L > 0 AND OOS Sharpe > 0 AND OOS n ≥ 20
+- **Soft fragility warnings** (non-blocking, transparency only): for each deployed side the calibrator records a `warnings` list flagging any of:
+  - `median<=0` — typical OOS trade loses money (positive mean carried by heavy-tail winners)
+  - `win<=50%` — side loses more often than it wins
+  - `n<60` — small sample; high multiple-testing risk from the 6×6 grid search
+
+  These surface in `REPORT.md` §3.1 ("Warnings" column) and §3.7 (Fragility Warnings Summary) and in each `calibration_*.json` config. They do NOT change deployment — investigate before sizing capital.
 
 Selection is by **holdout** (2024-03-19+), never in-sample — matches day-model window.
 
@@ -159,8 +168,8 @@ daytrade/
 | Parameter | Default | Purpose |
 |---|---|---|
 | `ETFS` | 5 ETFs | Universe of tradable names |
-| `DECISION_BAR` | `{159915:2, 500:2, 300:5, 50:5, 588000:5}` | Per-ETF decision bar index on 5m frame (bar 2 = 9:45, bar 5 = 10:00) |
-| `EXIT_BAR` | `41` | 14:30 close (5m bars are timestamped at END of period) |
+| `DECISION_BAR` | `{300:3, 50:2, 500:4, 588000:2, 159915:4}` | Per-ETF decision bar (close). Single source of truth in `day-model/build_features.py`; imported by `daytrade/__init__.py`. Picked by bar-count experiment with `trade_return` target. |
+| `EXIT_BAR` | `41` | 14:30 close (5m bars are timestamped at END of period). Single source of truth in `day-model/build_features.py`. |
 | `DEFAULT_COST_BPS` | `15.0` | Round-trip cost in basis points |
 | `HOLDOUT_START` | `"2024-03-19"` | OOS cutoff (matches day-model) |
 | `MIN_PERIODS` (rules) | `60` | Min same-side observations before expanding pct is valid |
@@ -181,7 +190,7 @@ All on disk — **no rqdatac needed at runtime**.
 | Frozen scaler bundle (single) | `day-model/models/scaler_{ETF}.joblib` | StandardScaler (fitted on all 130 features) + `selected_features` + `y_scale` (=100, target in %) |
 | Frozen models (dual, hybrid mode only) | `day-model/models/linear_{ETF}_{long,short}.joblib` | Side-specialist coef + intercept |
 | Frozen scaler bundle (dual) | `day-model/models/scaler_{ETF}_{long,short}.joblib` | Side-specific scaler + features + stability metadata |
-| Feature matrix | `day-model/data/features_{ETF}.parquet` | 130 features × pm_return, indexed by date |
+| Feature matrix | `day-model/data/features_{ETF}.parquet` | 130 features × `trade_return` target (+ `pm_return` diagnostic), indexed by date |
 | 5m bars | `data/{ETF}_5m.parquet` (note: 300ETF → `510300_5m.parquet`) | Entry/exit prices |
 | Day-trading cluster labels | `day-trading/data/clusters_{ETF}_macro.csv` | Diagnostic: Rally/Selloff/Neutral confusion (read-only) |
 
@@ -201,13 +210,19 @@ All on disk — **no rqdatac needed at runtime**.
 
 ### B. Change decision / exit bars
 
-Edit `DECISION_BAR[etf]` or `EXIT_BAR` in `__init__.py`. Common alternatives:
+`DECISION_BAR` and `EXIT_BAR` are now defined in `day-model/build_features.py` (single source of truth) and imported by `daytrade/__init__.py`. To change them:
+
+1. Edit `DECISION_BAR[etf]` or `EXIT_BAR` in `day-model/build_features.py`.
+2. Re-run the full pipeline (feature build + retrain + calibrate + deploy + report) — both feature engineering and the backtest must be in sync.
+3. To pick a new `DECISION_BAR` per-ETF from fresh evidence, run `python day-model/run_experiment_bars.py -e 300,50,500,588000,159915 --trials 40` (uses `trade_return` target; results saved to `experiment_bars_results_trade_return.json`).
+
+Common alternatives:
 - `EXIT_BAR = 23` → exit at 11:30 (AM-only, lunch-break strategy)
 - `EXIT_BAR = 47` → exit at 15:00 close (full PM session)
-- `DECISION_BAR[etf] = 0` → enter at 9:35 (first bar close, aggressive)
-- `DECISION_BAR[etf] = 11` → wait until 9:35 + 11×5 = 10:25 (more confirmation)
+- Lower `DECISION_BAR[etf]` → earlier decision, less information, less look-ahead risk
+- Higher `DECISION_BAR[etf]` → later decision, more information, but shorter trade window
 
-Always re-run calibration after changing bars — thresholds are calibrated to the specific entry/exit window. Full pipeline: `python -m daytrade.calibrate --mode single && python -m daytrade.calibrate --mode hybrid && python -m daytrade.calibrate --mode dual && python -m daytrade.deploy && python -m daytrade.report`.
+Always re-run the full pipeline after changing bars — features, model target, and thresholds are all coupled to the specific entry/exit window.
 
 ### C. Change cost assumption
 
@@ -245,15 +260,19 @@ Currently one `cost_bps` applies to both sides. For options-based shorts (which 
 Each side deploys the mode (single/hybrid/dual) that maximises OOS Sharpe.
 Run `python -m daytrade.deploy` to rebuild from per-mode calibration files.
 
+Warning flags (non-blocking): `m`=median<=0, `w`=win<=50%, `n`=n<60. See §3.1/§3.7 in REPORT.md for details. Clean = no flags.
+
 | ETF | Long | Short | Notes |
 |---|---|---|---|
-| **159915** | single thr=50 c=90, OOS S=+6.37 | **hybrid** thr=50 c=80, OOS S=+4.83 | **Both sides robust. Best name.** Short improved via hybrid (+3.20→+4.83). |
-| **500** | **hybrid** thr=50 c=60, OOS S=+3.68 | single thr=50 c=90, OOS S=+5.14 | Both sides robust. |
-| **588000** | single thr=50 c=90, OOS S=+1.80 | disabled | Long-only; shorts don't work |
-| **300** | disabled | disabled | Untradeable (feature-set change degraded edge) |
-| **50** | disabled | **dual** thr=50 c=90, OOS S=+1.36 | **NEW: dual mode found independent short edge** (single/hybrid disabled) |
+| **159915** | single thr=50 c=80, OOS S=+3.07 [clean] | single thr=95 c=40, OOS S=+4.92 [n] | Both sides robust. |
+| **500** | hybrid thr=50 c=90, OOS S=+5.57 [n] | hybrid thr=50 c=90, OOS S=+4.25 [n] | **Both sides strongest book. Best name by combined Sharpe.** |
+| **588000** | single thr=95 c=40, OOS S=+5.75 [m,w,n] | single thr=50 c=80, OOS S=+3.48 [clean] | Long fragile — heavy-tail dependent. Short is the robust side. |
+| **300** | hybrid thr=50 c=60, OOS S=+3.63 [n] | hybrid thr=50 c=90, OOS S=+2.76 [m,w,n] | **Both sides now deployable** (was disabled under old pm_return target). Short is fragile. |
+| **50** | dual thr=50 c=80, OOS S=+1.44 [m,w,n] | single thr=50 c=90, OOS S=+9.80 [n] | Long is a Sept-2024-stimulus artifact (top-3 winners = 211% of P&L); investigate before sizing. Short side very strong post trade_return fix. |
 
-**Total deployed OOS Sharpe**: +23.18 (vs single-only +20.17, Δ=+3.01).
+**Total deployed OOS Sharpe**: +44.67 (vs single-only +33.29, Δ=+11.38; vs old pm_return baseline +23.18, Δ=+21.49).
+
+The move from `pm_return` (13:00→15:00) to `trade_return` (entry-open→14:30-close) as the model target nearly doubled total Sharpe — confirming the original target/strategy mismatch was a major drag. All 10 ETF×side cells now deployable (was 5 of 10).
 
 Re-validate after every day-model retrain (see `day-model/AGENTS.md`) and after material market regime change.
 
