@@ -97,6 +97,9 @@ def load_features(etf: str) -> pd.DataFrame:
     return pd.read_parquet(DATA_DIR / f"features_{etf}.parquet")
 
 
+_SCORES_CACHE = {}
+
+
 def compute_scores(etf: str, side: str = "single", dropna: bool = True) -> pd.Series:
     """Compute frozen-linear conviction score for every day.
 
@@ -108,6 +111,10 @@ def compute_scores(etf: str, side: str = "single", dropna: bool = True) -> pd.Se
 
     The scaler was fitted on all 127 features; we slice to selected afterwards.
     """
+    key = (etf, side, dropna)
+    if key in _SCORES_CACHE:
+        return _SCORES_CACHE[key]
+
     info = load_model(etf, side=side)
     df = load_features(etf)
 
@@ -137,6 +144,7 @@ def compute_scores(etf: str, side: str = "single", dropna: bool = True) -> pd.Se
 
     if dropna:
         out = out.dropna()
+    _SCORES_CACHE[key] = out
     return out
 
 
