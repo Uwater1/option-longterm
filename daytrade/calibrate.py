@@ -31,6 +31,10 @@ THRESHOLD_GRID = [50.0, 60.0, 70.0, 80.0, 90.0, 95.0]
 CONVICTION_GRID = [40.0, 50.0, 60.0, 70.0, 80.0, 90.0]
 MIN_OOS_TRADES = 20
 
+# Stop-loss optimisation grids (Phase 5)
+STOP_PCT_GRID  = [0.003, 0.005, 0.008, 0.010, 0.015]   # fixed % from entry
+STOP_ATR_GRID  = [0.5, 1.0, 1.5, 2.0]                  # ATR-14 multiples
+
 OUT_PATH = Path(__file__).resolve().parent / "data" / "calibration.json"
 
 
@@ -78,6 +82,12 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
     """Grid-search one side. Returns best config dict or None if no eligible config.
 
     side ∈ {"long", "short"}.
+
+    Two-stage optimisation:
+      1. Grid-search (threshold, conviction) by OOS composite score.
+      2. Sweep stop-loss configs (fixed-% + ATR multiples) on the best
+         (threshold, conviction) pair, selecting by **IS max profit**.
+         The chosen stop is then evaluated OOS for transparency.
     """
     # Baseline: that side with the loosest possible thresholds (no filter)
     base = backtest_long_short(
@@ -127,13 +137,13 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
         eligible = (oos_pnl > 0) and (oos_sharpe > 0)
         # Non-blocking fragility warnings (transparency only; do NOT change eligibility).
         # If any of these fire, the positive Sharpe may be a small-sample / heavy-tail artifact.
-        warnings = []
+        warns = []
         if oos_median_bps <= 0:
-            warnings.append("median<=0")
+            warns.append("median<=0")
         if oos_wr <= 0.50:
-            warnings.append("win<=50%")
+            warns.append("win<=50%")
         if n_oos < 60:
-            warnings.append("n<60")
+            warns.append("n<60")
         results.append({
             "threshold_pct": thr, "conviction_pct": conv,
             "n_full": len(trades), "n_oos": n_oos,
@@ -143,7 +153,7 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
             "is_sharpe": _sharpe(is_["net_ret"].values) if len(is_) > 1 else float("nan"),
             "is_pnl_bps": float(is_["net_ret"].sum() * 1e4) if len(is_) else 0.0,
             "score": score, "eligible": eligible,
-            "warnings": warnings,
+            "warnings": warns,
         })
         if verbose:
             print(f"    {side:<5} thr={thr:>4.0f} conv={conv:>4.0f} "
@@ -158,8 +168,100 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
         return {"best": None, "n_eligible": 0, "n_total": len(results),
                 "baseline_oos_n": n_baseline_oos, "grid": results}
     best = max(pool, key=lambda r: (r["score"], r["oos_sharpe"]))
+
+    # ── Stage 2: Stop-loss sweep on best (thr, conv) ─────────────────────
+    best_thr  = best["threshold_pct"]
+    best_conv = best["conviction_pct"]
+
+    stop_configs = [{"stop_type": None, "stop_value": None}]  # baseline: no stop
+    for sp in STOP_PCT_GRID:
+        stop_configs.append({"stop_type": "pct", "stop_value": sp})
+    for ak in STOP_ATR_GRID:
+        stop_configs.append({"stop_type": "atr", "stop_value": ak})
+
+    best_stop     = {"stop_type": None, "stop_value": None}
+    best_stop_is_pnl = -float("inf")
+    stop_results  = []
+
+    for sc in stop_configs:
+        kw = {}
+        if sc["stop_type"] == "pct":
+            kw["stop_pct"] = sc["stop_value"]
+        elif sc["stop_type"] == "atr":
+            kw["stop_atr_k"] = sc["stop_value"]
+
+        r = backtest_long_short(
+            etf,
+            long_threshold_pct=best_thr, long_conviction_pct=best_conv,
+            short_threshold_pct=best_thr, short_conviction_pct=best_conv,
+            cost_bps=cost_bps,
+            long_enabled=(side == "long"),
+            short_enabled=(side == "short"),
+            mode=mode,
+            **kw,
+        )
+        trades = r["trades"]
+        if len(trades) == 0:
+            continue
+        is_, oos = split_holdout(trades)
+        is_pnl  = float(is_["net_ret"].sum() * 1e4) if len(is_) else 0.0
+        n_stopped = int((trades["exit_type"] == "stop").sum()) if "exit_type" in trades.columns else 0
+
+        sr = {
+            "stop_type":  sc["stop_type"],
+            "stop_value": sc["stop_value"],
+            "is_pnl_bps": is_pnl,
+            "is_sharpe":  _sharpe(is_["net_ret"].values) if len(is_) > 1 else float("nan"),
+            "n_stopped":  n_stopped,
+        }
+        if len(oos) > 0:
+            oos_rets = oos["net_ret"].values
+            sr["oos_sharpe"]   = _sharpe(oos_rets)
+            sr["oos_pnl_bps"]  = float(oos_rets.sum() * 1e4)
+            oos_cum = np.insert(np.cumsum(oos_rets), 0, 0.0)
+            sr["oos_max_dd_bps"] = float(np.min(oos_cum - np.maximum.accumulate(oos_cum)) * 1e4)
+            sr["oos_win_rate"]   = float((oos_rets > 0).mean())
+        else:
+            sr["oos_sharpe"]     = float("nan")
+            sr["oos_pnl_bps"]    = 0.0
+            sr["oos_max_dd_bps"] = float("nan")
+            sr["oos_win_rate"]   = float("nan")
+        stop_results.append(sr)
+
+        # Select by IS max profit (the stated optimisation objective)
+        if is_pnl > best_stop_is_pnl:
+            best_stop_is_pnl = is_pnl
+            best_stop = dict(sc)
+
+    # Attach best stop config to the threshold/conviction best
+    best["stop_type"]      = best_stop["stop_type"]
+    best["stop_value"]     = best_stop["stop_value"]
+    best["stop_results"]   = stop_results
+
+    # Populate OOS metrics for the best stop config
+    best_stop_row = next(
+        (sr for sr in stop_results
+         if sr["stop_type"] == best_stop["stop_type"]
+         and sr["stop_value"] == best_stop["stop_value"]),
+        None,
+    )
+    if best_stop_row:
+        best["stop_oos_sharpe"]     = best_stop_row["oos_sharpe"]
+        best["stop_oos_pnl_bps"]    = best_stop_row["oos_pnl_bps"]
+        best["stop_oos_max_dd_bps"] = best_stop_row["oos_max_dd_bps"]
+        best["stop_oos_win_rate"]   = best_stop_row["oos_win_rate"]
+
+    if verbose:
+        st_label = (f"{best_stop['stop_value']:.3f}" if best_stop["stop_type"] == "pct"
+                    else f"{best_stop['stop_value']:.1f}xATR" if best_stop["stop_type"] == "atr"
+                    else "none")
+        print(f"    {side:<5} stop: {st_label} "
+              f"(IS pnl={best_stop_is_pnl:+.0f}bps, "
+              f"OOS S={best.get('stop_oos_sharpe', float('nan')):+.2f})")
+
     return {"best": best, "n_eligible": len(eligible), "n_total": len(results),
-            "baseline_oos_n": n_baseline_oos, "grid": results}
+            "baseline_oos_n": n_baseline_oos, "grid": results,
+            "stop_results": stop_results}
 
 
 def calibrate_etf(etf: str, cost_bps: float = DEFAULT_COST_BPS,
@@ -176,7 +278,11 @@ def calibrate_etf(etf: str, cost_bps: float = DEFAULT_COST_BPS,
     if verbose:
         if long_best:
             b = long_best
-            print(f"  LONG  BEST: thr={b['threshold_pct']:.0f} conv={b['conviction_pct']:.0f}, "
+            st = (f"{b['stop_value']:.3f}" if b.get("stop_type") == "pct"
+                  else f"{b['stop_value']:.1f}xATR" if b.get("stop_type") == "atr"
+                  else "none")
+            print(f"  LONG  BEST: thr={b['threshold_pct']:.0f} conv={b['conviction_pct']:.0f} "
+                  f"stop={st}, "
                   f"n={b['n_full']}, oos_S={b['oos_sharpe']:+.2f}, "
                   f"oos_pnl={b['oos_pnl_bps']:+.0f}bps, sc={b['score']:.3f}")
         else:
@@ -186,7 +292,11 @@ def calibrate_etf(etf: str, cost_bps: float = DEFAULT_COST_BPS,
             print(f"  LONG  : DISABLED (no eligible config{tried})")
         if short_best:
             b = short_best
-            print(f"  SHORT BEST: thr={b['threshold_pct']:.0f} conv={b['conviction_pct']:.0f}, "
+            st = (f"{b['stop_value']:.3f}" if b.get("stop_type") == "pct"
+                  else f"{b['stop_value']:.1f}xATR" if b.get("stop_type") == "atr"
+                  else "none")
+            print(f"  SHORT BEST: thr={b['threshold_pct']:.0f} conv={b['conviction_pct']:.0f} "
+                  f"stop={st}, "
                   f"n={b['n_full']}, oos_S={b['oos_sharpe']:+.2f}, "
                   f"oos_pnl={b['oos_pnl_bps']:+.0f}bps, sc={b['score']:.3f}")
         else:
@@ -213,20 +323,26 @@ def calibrate_all(cost_bps: float = DEFAULT_COST_BPS, verbose: bool = True,
         out[etf] = calibrate_etf(etf, cost_bps=cost_bps, verbose=verbose, mode=mode)
 
     OUT_PATH.parent.mkdir(exist_ok=True)
-    # Compact summary (drop heavy grid dumps)
+    # Compact summary: keep stop fields, drop heavy grid/stop_results dumps
     compact = {
         "cost_bps": cost_bps,
         "mode": mode,
-        "results": {
-            etf: {
-                "long": v["long"],
-                "short": v["short"],
-                "long_meta": v["long_meta"],
-                "short_meta": v["short_meta"],
-            }
-            for etf, v in out.items()
-        },
+        "results": {},
     }
+    for etf, v in out.items():
+        entry = {
+            "long_meta": v["long_meta"],
+            "short_meta": v["short_meta"],
+        }
+        for side_key in ("long", "short"):
+            cfg = v[side_key]
+            if cfg is None:
+                entry[side_key] = None
+            else:
+                # Strip heavy stop_results list; keep the selection fields only
+                clean = {k: val for k, val in cfg.items() if k != "stop_results"}
+                entry[side_key] = clean
+        compact["results"][etf] = entry
     # Always write to calibration_{mode}.json (consumed by deploy.py mixed-mode picker).
     # Also mirror to calibration.json for backward compat / single-shot inspection.
     mode_path = OUT_PATH.parent / f"calibration_{mode}.json"
@@ -237,16 +353,25 @@ def calibrate_all(cost_bps: float = DEFAULT_COST_BPS, verbose: bool = True,
     print(f"\nSaved → {mode_path} (and mirror → {OUT_PATH})")
 
     # Summary
-    print("\n" + "=" * 72)
-    print(f"{'ETF':<10} {'LONG':<30} {'SHORT':<30}")
-    print("-" * 72)
+    print("\n" + "=" * 82)
+    print(f"{'ETF':<10} {'LONG':<35} {'SHORT':<35}")
+    print("-" * 82)
     for etf, v in out.items():
         l = v["long"]; s = v["short"]
+        def _stop_label(cfg):
+            if not cfg:
+                return "disabled"
+            st = cfg.get("stop_type")
+            sv = cfg.get("stop_value")
+            label = (f"{sv:.3f}" if st == "pct"
+                     else f"{sv:.1f}atr" if st == "atr"
+                     else "—")
+            return label
         lstr = (f"thr={l['threshold_pct']:.0f} c={l['conviction_pct']:.0f} "
-                f"S={l['oos_sharpe']:+.2f} n={l['n_full']}" if l else "disabled")
+                f"S={l['oos_sharpe']:+.2f} stop={_stop_label(l)}" if l else "disabled")
         sstr = (f"thr={s['threshold_pct']:.0f} c={s['conviction_pct']:.0f} "
-                f"S={s['oos_sharpe']:+.2f} n={s['n_full']}" if s else "disabled")
-        print(f"{etf:<10} {lstr:<30} {sstr:<30}")
+                f"S={s['oos_sharpe']:+.2f} stop={_stop_label(s)}" if s else "disabled")
+        print(f"{etf:<10} {lstr:<35} {sstr:<35}")
     return out
 
 

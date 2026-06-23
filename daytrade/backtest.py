@@ -14,6 +14,8 @@ Output: per-ETF metrics dict + per-day P&L DataFrame.
 """
 from __future__ import annotations
 
+from typing import Optional
+
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -48,24 +50,80 @@ def load_5m(etf: str) -> pd.DataFrame:
     return df
 
 
-def _day_bars_to_series(day_df: pd.DataFrame, decision_bar: int, exit_bar: int):
+def compute_daily_atr14(bars: pd.DataFrame, window: int = 14) -> pd.Series:
+    """Compute rolling 14-day ATR from 5m bars.
+
+    Uses daily high-low range (proxy for True Range when prev-close is unavailable)
+    and takes a rolling mean over ``window`` prior trading days.
+    Returns a Series indexed by date (datetime.date).
+    """
+    bars = bars.copy()
+    bars["date"] = bars.index.date
+    daily = bars.groupby("date").agg(hi=("high", "max"), lo=("low", "min"))
+    daily["tr"] = daily["hi"] - daily["lo"]
+    daily["atr14"] = daily["tr"].rolling(window=window, min_periods=1).mean()
+    # Use prior day's ATR to avoid look-ahead
+    daily["atr14"] = daily["atr14"].shift(1)
+    return daily["atr14"]
+
+
+def _day_bars_to_series(
+    day_df: pd.DataFrame,
+    decision_bar: int,
+    exit_bar: int,
+    direction: int = 0,
+    stop_pct: Optional[float] = None,
+):
     """Extract entry & exit prices from a single day's 48 bars.
 
-    Returns (entry_price, exit_price) or (None, None) if bars missing.
+    Optionally simulates an intraday stop-loss by scanning 5m bar lows/highs
+    between entry and exit.  Returns (entry_price, exit_price, exit_type)
+    or (None, None, None) if bars are missing.
 
-    Entry timing matches the new trade_return target in build_features.py:
+    Entry timing matches the trade_return target in build_features.py:
         decision at close of bar (decision_bar)
-        entry    at open  of bar (decision_bar + 1)   <- next bar open after decision
-        exit     at close of bar (exit_bar)
+        entry    at open  of bar (decision_bar + 1)
+        exit     at close of bar (exit_bar), or stop price if triggered earlier.
+
+    Parameters
+    ----------
+    direction : {+1, -1, 0}
+        Trade direction.  0 = no stop-loss check (legacy compat).
+    stop_pct : float or None
+        Stop-loss as a fraction of entry price.  None disables the stop.
     """
     entry_idx = decision_bar + 1
     if len(day_df) <= max(entry_idx, exit_bar):
-        return None, None
+        return None, None, None
     entry_price = float(day_df.iloc[entry_idx]["open"])
     exit_price = float(day_df.iloc[exit_bar]["close"])
     if entry_price <= 0 or exit_price <= 0:
-        return None, None
-    return entry_price, exit_price
+        return None, None, None
+
+    exit_type = "target"
+
+    if stop_pct is not None and stop_pct > 0 and direction != 0:
+        scan = day_df.iloc[entry_idx:exit_bar + 1]
+        if direction > 0:  # long: stop hit when bar low <= stop level
+            stop_level = entry_price * (1.0 - stop_pct)
+            hit = scan[scan["low"] <= stop_level]
+            if len(hit) > 0:
+                exit_price = stop_level
+                exit_type = "stop"
+        else:  # short: stop hit when bar high >= stop level
+            stop_level = entry_price * (1.0 + stop_pct)
+            hit = scan[scan["high"] >= stop_level]
+            if len(hit) > 0:
+                exit_price = stop_level
+                exit_type = "stop"
+
+    return entry_price, exit_price, exit_type
+
+
+def _day_bars_to_series_legacy(day_df: pd.DataFrame, decision_bar: int, exit_bar: int):
+    """Backward-compatible wrapper returning (entry, exit) only."""
+    entry, exit_, _ = _day_bars_to_series(day_df, decision_bar, exit_bar)
+    return entry, exit_
 
 
 def backtest_etf(
@@ -96,7 +154,7 @@ def backtest_etf(
         if d not in by_date:
             continue
         day = by_date[d]
-        entry, exit_ = _day_bars_to_series(day, decision_bar, exit_bar)
+        entry, exit_ = _day_bars_to_series_legacy(day, decision_bar, exit_bar)
         if entry is None:
             continue
         direction = int(row["direction"])
@@ -132,15 +190,21 @@ def backtest_long_short(
     short_enabled: bool = True,
     min_periods: int = 60,
     mode: str = "single",
+    stop_pct: Optional[float] = None,
+    stop_atr_k: Optional[float] = None,
 ) -> dict:
     """Run backtest with INDEPENDENT long_model / short_model thresholds.
 
     Parameters
     ----------
-    mode : {"single", "hybrid"}
+    mode : {"single", "hybrid", "dual"}
         Signal mode passed through to ``get_long_short_signals``.
-        ``"single"`` (default) uses the frozen single-model signed score.
-        ``"hybrid"`` multiplies single-model magnitude by dual-model side score.
+    stop_pct : float or None
+        Fixed stop-loss as a fraction of entry (e.g. 0.01 = 1%).
+        Mutually exclusive with ``stop_atr_k``.
+    stop_atr_k : float or None
+        ATR-based stop-loss: ``stop = k * ATR14 / entry``.
+        Mutually exclusive with ``stop_pct``.
     """
     signals = get_long_short_signals(
         etf,
@@ -164,16 +228,36 @@ def backtest_long_short(
     decision_bar = DECISION_BAR[etf]
     exit_bar = EXIT_BAR
 
+    # Pre-compute ATR14 series if ATR-based stop is requested
+    atr_series = compute_daily_atr14(bars) if stop_atr_k is not None else None
+
     rows = []
     for date, row in signals.iterrows():
         d = date.date()
         if d not in by_date:
             continue
         day = by_date[d]
-        entry, exit_ = _day_bars_to_series(day, decision_bar, exit_bar)
+        direction = int(row["direction"])
+
+        # Resolve effective stop percentage for this date
+        effective_stop = None
+        if stop_atr_k is not None and atr_series is not None:
+            atr_val = atr_series.get(d)
+            if atr_val is None or np.isnan(atr_val):
+                atr_val = atr_series.iloc[:atr_series.index.get_loc(d)].max() if len(atr_series) > 0 else None
+            if atr_val is not None and not np.isnan(atr_val):
+                # We need entry to express ATR as pct; get it first
+                entry_tmp, _, _ = _day_bars_to_series(day, decision_bar, exit_bar)
+                if entry_tmp is not None and entry_tmp > 0:
+                    effective_stop = stop_atr_k * atr_val / entry_tmp
+        elif stop_pct is not None:
+            effective_stop = stop_pct
+
+        entry, exit_, exit_type = _day_bars_to_series(
+            day, decision_bar, exit_bar, direction=direction, stop_pct=effective_stop,
+        )
         if entry is None:
             continue
-        direction = int(row["direction"])
         gross = direction * (exit_ / entry - 1.0)
         net = gross - cost_bps / 1e4
         rows.append({
@@ -182,6 +266,7 @@ def backtest_long_short(
             "side": "long" if direction > 0 else "short",
             "entry": entry,
             "exit": exit_,
+            "exit_type": exit_type,
             "score": row.get("fired_score", row.get("score", np.nan)),
             "long_score": row.get("long_score", np.nan),
             "short_score": row.get("short_score", np.nan),
@@ -330,23 +415,30 @@ def summarize_oos(etf: str, trades: pd.DataFrame) -> dict:
 
 
 if __name__ == "__main__":
-    print("Smoke test: 300ETF long_model/short_model backtest (defaults, cost=15bps)")
+    print("Smoke test: 300ETF long/short backtest with stop-loss (cost=15bps)")
     print("=" * 72)
+
+    # Baseline: no stop-loss
     r = backtest_long_short("300ETF")
-    print(f"  combined: n={r['n_trades']}, long={r['long_n']}, short={r['short_n']}")
-    print(f"    Sharpe={r['combined_sharpe']:+.2f}, P&L={r['combined_pnl_bps']:+.0f}bps, "
-          f"MaxDD={r['combined_max_dd_bps']:+.0f}bps, WR={r['combined_win_rate']:.1%}")
-    print(f"  long_model:  n={r['long_n']:>3}, Sharpe={r['long_sharpe']:+.2f}, "
-          f"P&L={r['long_pnl_bps']:+.0f}bps, mean={r['long_mean_ret_bps']:+.1f}bps, "
-          f"WR={r['long_win_rate']:.1%}")
-    print(f"  short_model: n={r['short_n']:>3}, Sharpe={r['short_sharpe']:+.2f}, "
-          f"P&L={r['short_pnl_bps']:+.0f}bps, mean={r['short_mean_ret_bps']:+.1f}bps, "
-          f"WR={r['short_win_rate']:.1%}")
+    print(f"  [no stop] combined: n={r['n_trades']}, Sharpe={r['combined_sharpe']:+.2f}, "
+          f"P&L={r['combined_pnl_bps']:+.0f}bps")
+
+    # With fixed 0.5% stop-loss
+    r2 = backtest_long_short("300ETF", stop_pct=0.005)
+    n_stopped = int((r2["trades"]["exit_type"] == "stop").sum()) if len(r2["trades"]) > 0 else 0
+    print(f"  [stop=0.5%] combined: n={r2['n_trades']}, Sharpe={r2['combined_sharpe']:+.2f}, "
+          f"P&L={r2['combined_pnl_bps']:+.0f}bps, stopped={n_stopped}")
+
+    # With ATR-based stop (k=1.0)
+    r3 = backtest_long_short("300ETF", stop_atr_k=1.0)
+    n_stopped3 = int((r3["trades"]["exit_type"] == "stop").sum()) if len(r3["trades"]) > 0 else 0
+    print(f"  [stop=1.0xATR] combined: n={r3['n_trades']}, Sharpe={r3['combined_sharpe']:+.2f}, "
+          f"P&L={r3['combined_pnl_bps']:+.0f}bps, stopped={n_stopped3}")
 
     is_, oos = split_holdout(r["trades"])
-    print(f"\n  IS  (pre-{HOLDOUT_START}): {len(is_)} trades, P&L={is_['net_ret'].sum()*1e4:+.0f}bps")
-    print(f"  OOS (holdout):           {len(oos)} trades, P&L={oos['net_ret'].sum()*1e4:+.0f}bps")
-    print("\n  Per-year OOS:")
+    print(f"\n  [no stop] IS={len(is_)} trades, P&L={is_['net_ret'].sum()*1e4:+.0f}bps")
+    print(f"  [no stop] OOS={len(oos)} trades, P&L={oos['net_ret'].sum()*1e4:+.0f}bps")
+    print("\n  Per-year OOS (no stop):")
     for y, m in summarize_oos("300ETF", oos).items():
         print(f"    {y}: n={m['n']:>3}, wr={m['win_rate']:.1%}, "
               f"mean={m['mean_ret_bps']:+.1f}bps, sharpe={m['sharpe']:+.2f}")
