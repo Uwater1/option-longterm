@@ -31,9 +31,9 @@ THRESHOLD_GRID = [50.0, 60.0, 70.0, 80.0, 90.0, 95.0]
 CONVICTION_GRID = [40.0, 50.0, 60.0, 70.0, 80.0, 90.0]
 MIN_OOS_TRADES = 20
 
-# Stop-loss optimisation grids (Phase 5)
-STOP_PCT_GRID  = [0.003, 0.005, 0.008, 0.010, 0.015]   # fixed % from entry
-STOP_ATR_GRID  = [0.5, 1.0, 1.5, 2.0]                  # ATR-14 multiples
+# Stop-loss optimisation grids (Phase 5) - expanded for catastrophic protection (wide only to prevent OOS decay)
+STOP_PCT_GRID  = [0.030, 0.040, 0.050]   # fixed % from entry
+STOP_ATR_GRID  = [3.5, 4.0, 5.0]          # ATR-14 multiples
 
 OUT_PATH = Path(__file__).resolve().parent / "data" / "calibration.json"
 
@@ -173,16 +173,27 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
     best_thr  = best["threshold_pct"]
     best_conv = best["conviction_pct"]
 
-    stop_configs = [{"stop_type": None, "stop_value": None}]  # baseline: no stop
+    # First, run the no-stop baseline for this best config to get its baseline IS Sharpe
+    r_base_stop = backtest_long_short(
+        etf,
+        long_threshold_pct=best_thr, long_conviction_pct=best_conv,
+        short_threshold_pct=best_thr, short_conviction_pct=best_conv,
+        cost_bps=cost_bps,
+        long_enabled=(side == "long"),
+        short_enabled=(side == "short"),
+        mode=mode,
+    )
+    is_base, _ = split_holdout(r_base_stop["trades"])
+    base_is_sharpe = _sharpe(is_base["net_ret"].values) if len(is_base) > 1 else float("nan")
+
+    # Generate stop configurations (MANDATORY: no None allowed)
+    stop_configs = []
     for sp in STOP_PCT_GRID:
         stop_configs.append({"stop_type": "pct", "stop_value": sp})
     for ak in STOP_ATR_GRID:
         stop_configs.append({"stop_type": "atr", "stop_value": ak})
 
-    best_stop     = {"stop_type": None, "stop_value": None}
-    best_stop_is_pnl = -float("inf")
     stop_results  = []
-
     for sc in stop_configs:
         kw = {}
         if sc["stop_type"] == "pct":
@@ -206,12 +217,13 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
         is_, oos = split_holdout(trades)
         is_pnl  = float(is_["net_ret"].sum() * 1e4) if len(is_) else 0.0
         n_stopped = int((trades["exit_type"] == "stop").sum()) if "exit_type" in trades.columns else 0
+        is_sh = _sharpe(is_["net_ret"].values) if len(is_) > 1 else float("nan")
 
         sr = {
             "stop_type":  sc["stop_type"],
             "stop_value": sc["stop_value"],
             "is_pnl_bps": is_pnl,
-            "is_sharpe":  _sharpe(is_["net_ret"].values) if len(is_) > 1 else float("nan"),
+            "is_sharpe":  is_sh,
             "n_stopped":  n_stopped,
         }
         if len(oos) > 0:
@@ -228,10 +240,33 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
             sr["oos_win_rate"]   = float("nan")
         stop_results.append(sr)
 
-        # Select by IS max profit (the stated optimisation objective)
-        if is_pnl > best_stop_is_pnl:
-            best_stop_is_pnl = is_pnl
-            best_stop = dict(sc)
+    # Selection rule:
+    # 1. Filter candidates that do not degrade IS Sharpe by more than 0.10 relative to base_is_sharpe
+    non_degrading_candidates = []
+    for sr in stop_results:
+        is_sh = sr["is_sharpe"]
+        if np.isnan(is_sh) or np.isinf(is_sh):
+            is_sh_val = -100.0
+        else:
+            is_sh_val = is_sh
+            
+        base_sh_val = base_is_sharpe if (not np.isnan(base_is_sharpe) and not np.isinf(base_is_sharpe)) else 0.0
+        degradation = base_sh_val - is_sh_val
+        if degradation <= 0.10:
+            non_degrading_candidates.append(sr)
+
+    # 2. Choose best config:
+    # - If we have non-degrading candidates, choose the one that maximizes IS Sharpe (balances risk/return)
+    # - If all candidates degrade Sharpe by > 0.10, we fallback to a safe emergency stop: 4.0x ATR
+    #   (If 4.0x ATR is not in results, fallback to 4.0% pct)
+    best_stop = None
+    if non_degrading_candidates:
+        best_stop_row = max(non_degrading_candidates, key=lambda x: (x["is_sharpe"] if not np.isnan(x["is_sharpe"]) else -100.0, x["is_pnl_bps"]))
+        best_stop = {"stop_type": best_stop_row["stop_type"], "stop_value": best_stop_row["stop_value"]}
+    else:
+        best_stop = {"stop_type": "atr", "stop_value": 4.0}
+        if not any(sr["stop_type"] == "atr" and sr["stop_value"] == 4.0 for sr in stop_results):
+            best_stop = {"stop_type": "pct", "stop_value": 0.040}
 
     # Attach best stop config to the threshold/conviction best
     best["stop_type"]      = best_stop["stop_type"]
@@ -250,13 +285,19 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
         best["stop_oos_pnl_bps"]    = best_stop_row["oos_pnl_bps"]
         best["stop_oos_max_dd_bps"] = best_stop_row["oos_max_dd_bps"]
         best["stop_oos_win_rate"]   = best_stop_row["oos_win_rate"]
+    else:
+        best["stop_oos_sharpe"]     = float("nan")
+        best["stop_oos_pnl_bps"]    = 0.0
+        best["stop_oos_max_dd_bps"] = float("nan")
+        best["stop_oos_win_rate"]   = float("nan")
 
     if verbose:
         st_label = (f"{best_stop['stop_value']:.3f}" if best_stop["stop_type"] == "pct"
                     else f"{best_stop['stop_value']:.1f}xATR" if best_stop["stop_type"] == "atr"
                     else "none")
+        best_pnl_val = best_stop_row["is_pnl_bps"] if best_stop_row else 0.0
         print(f"    {side:<5} stop: {st_label} "
-              f"(IS pnl={best_stop_is_pnl:+.0f}bps, "
+              f"(IS pnl={best_pnl_val:+.0f}bps, "
               f"OOS S={best.get('stop_oos_sharpe', float('nan')):+.2f})")
 
     return {"best": best, "n_eligible": len(eligible), "n_total": len(results),

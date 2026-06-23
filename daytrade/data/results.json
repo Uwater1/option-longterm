@@ -20,8 +20,8 @@
         "warnings": [
           "n<60"
         ],
-        "stop_type": null,
-        "stop_value": null,
+        "stop_type": "pct",
+        "stop_value": 0.025,
         "stop_oos_sharpe": 4.342029881864945,
         "stop_oos_pnl_bps": 934.9631962386024,
         "stop_oos_max_dd_bps": -313.9017057381227,
@@ -45,8 +45,8 @@
         "warnings": [
           "n<60"
         ],
-        "stop_type": null,
-        "stop_value": null,
+        "stop_type": "pct",
+        "stop_value": 0.04,
         "stop_oos_sharpe": 6.470728725594511,
         "stop_oos_pnl_bps": 1010.8666009535739,
         "stop_oos_max_dd_bps": -220.33141210374862,
@@ -74,8 +74,8 @@
           "win<=50%",
           "n<60"
         ],
-        "stop_type": null,
-        "stop_value": null,
+        "stop_type": "pct",
+        "stop_value": 0.05,
         "stop_oos_sharpe": 2.108678129227641,
         "stop_oos_pnl_bps": 1050.114872225509,
         "stop_oos_max_dd_bps": -640.5179726866622,
@@ -99,8 +99,8 @@
         "warnings": [
           "n<60"
         ],
-        "stop_type": null,
-        "stop_value": null,
+        "stop_type": "pct",
+        "stop_value": 0.03,
         "stop_oos_sharpe": 5.5320742759231205,
         "stop_oos_pnl_bps": 1029.2221274320702,
         "stop_oos_max_dd_bps": -234.44730063316544,
@@ -178,10 +178,10 @@
           "win<=50%",
           "n<60"
         ],
-        "stop_type": null,
-        "stop_value": null,
-        "stop_oos_sharpe": 5.433221534445495,
-        "stop_oos_pnl_bps": 3469.049462173394,
+        "stop_type": "pct",
+        "stop_value": 0.05,
+        "stop_oos_sharpe": 4.4138372811230475,
+        "stop_oos_pnl_bps": 2969.0494621733947,
         "stop_oos_max_dd_bps": -660.0290457336295,
         "stop_oos_win_rate": 0.4827586206896552,
         "_mode": "single"
@@ -203,12 +203,12 @@
         "warnings": [
           "n<60"
         ],
-        "stop_type": null,
-        "stop_value": null,
-        "stop_oos_sharpe": 3.872938616038934,
-        "stop_oos_pnl_bps": 1665.058112412363,
-        "stop_oos_max_dd_bps": -961.1017226859176,
-        "stop_oos_win_rate": 0.625,
+        "stop_type": "pct",
+        "stop_value": 0.01,
+        "stop_oos_sharpe": -0.23931356535116738,
+        "stop_oos_pnl_bps": -73.47302462499671,
+        "stop_oos_max_dd_bps": -1024.790629181855,
+        "stop_oos_win_rate": 0.375,
         "_mode": "hybrid"
       }
     },
@@ -230,8 +230,8 @@
         "warnings": [
           "n<60"
         ],
-        "stop_type": null,
-        "stop_value": null,
+        "stop_type": "pct",
+        "stop_value": 0.05,
         "stop_oos_sharpe": 6.441183093739922,
         "stop_oos_pnl_bps": 3253.226312167663,
         "stop_oos_max_dd_bps": -693.2595164582866,
@@ -255,12 +255,12 @@
         "warnings": [
           "n<60"
         ],
-        "stop_type": null,
-        "stop_value": null,
-        "stop_oos_sharpe": 3.4457348732644824,
-        "stop_oos_pnl_bps": 1480.5356857982374,
-        "stop_oos_max_dd_bps": -930.1864497464285,
-        "stop_oos_win_rate": 0.6046511627906976,
+        "stop_type": "pct",
+        "stop_value": 0.025,
+        "stop_oos_sharpe": 0.6944323700716294,
+        "stop_oos_pnl_bps": 328.7035023668035,
+        "stop_oos_max_dd_bps": -977.8709926186363,
+        "stop_oos_win_rate": 0.5581395348837209,
         "_mode": "hybrid"
       }
     }
@@ -292,20 +292,20 @@
       "n_trades": 355,
       "long_n": 278,
       "short_n": 77,
-      "combined_sharpe": 3.326367649411709,
-      "combined_pnl_bps": 10338.617159129059,
-      "combined_max_dd_bps": -1174.6192167200443,
+      "combined_sharpe": 3.6906584229019233,
+      "combined_pnl_bps": 10848.751648848038,
+      "combined_max_dd_bps": -750.1330015089746,
       "combined_win_rate": 0.5633802816901409,
       "long_sharpe": 3.3147879909030697,
       "long_pnl_bps": 6649.450487700215,
       "long_max_dd_bps": -767.9120156672609,
       "long_win_rate": 0.5467625899280576,
       "long_mean_ret_bps": 23.91888664640365,
-      "short_sharpe": 3.724763878574137,
-      "short_pnl_bps": 3689.1666714288435,
-      "short_max_dd_bps": -1174.6192167200443,
+      "short_sharpe": 4.846237229286182,
+      "short_pnl_bps": 4199.301161147824,
+      "short_max_dd_bps": -630.0000000000006,
       "short_win_rate": 0.6233766233766234,
-      "short_mean_ret_bps": 47.91125547310186,
+      "short_mean_ret_bps": 54.536378716205505,
       "cost_bps": 15.0
     },
     "500ETF": {
@@ -334,20 +334,20 @@
       "n_trades": 96,
       "long_n": 50,
       "short_n": 46,
-      "combined_sharpe": 5.327405364859036,
-      "combined_pnl_bps": 8227.805106940648,
-      "combined_max_dd_bps": -1188.501290433648,
-      "combined_win_rate": 0.625,
-      "long_sharpe": 6.161945560139755,
-      "long_pnl_bps": 5721.725416043888,
+      "combined_sharpe": 3.942152565928051,
+      "combined_pnl_bps": 5954.355249444708,
+      "combined_max_dd_bps": -1225.7868498548473,
+      "combined_win_rate": 0.53125,
+      "long_sharpe": 5.3914534410288315,
+      "long_pnl_bps": 5221.72541604389,
       "long_max_dd_bps": -660.0290457336266,
       "long_win_rate": 0.62,
-      "long_mean_ret_bps": 114.43450832087777,
-      "short_sharpe": 4.263883994925273,
-      "short_pnl_bps": 2506.079690896761,
-      "short_max_dd_bps": -961.1017226859176,
-      "short_win_rate": 0.6304347826086957,
-      "short_mean_ret_bps": 54.47999328036437,
+      "long_mean_ret_bps": 104.43450832087778,
+      "short_sharpe": 1.6130617353541215,
+      "short_pnl_bps": 732.6298334008188,
+      "short_max_dd_bps": -1024.790629181855,
+      "short_win_rate": 0.43478260869565216,
+      "short_mean_ret_bps": 15.926735508713453,
       "cost_bps": 15.0
     },
     "159915ETF": {
@@ -355,20 +355,20 @@
       "n_trades": 165,
       "long_n": 99,
       "short_n": 66,
-      "combined_sharpe": 6.244374868621531,
-      "combined_pnl_bps": 12303.07867373881,
-      "combined_max_dd_bps": -991.7414892883713,
-      "combined_win_rate": 0.6303030303030303,
+      "combined_sharpe": 5.502795336394938,
+      "combined_pnl_bps": 11151.246490307378,
+      "combined_max_dd_bps": -1020.8512872316833,
+      "combined_win_rate": 0.6181818181818182,
       "long_sharpe": 6.125558345335663,
       "long_pnl_bps": 8016.592978391956,
       "long_max_dd_bps": -693.2595164582845,
       "long_win_rate": 0.6060606060606061,
       "long_mean_ret_bps": 80.9756866504238,
-      "short_sharpe": 6.640068276519412,
-      "short_pnl_bps": 4286.485695346854,
-      "short_max_dd_bps": -930.1864497464279,
-      "short_win_rate": 0.6666666666666666,
-      "short_mean_ret_bps": 64.94675295980083,
+      "short_sharpe": 4.440557190238389,
+      "short_pnl_bps": 3134.6535119154205,
+      "short_max_dd_bps": -977.8709926186363,
+      "short_win_rate": 0.6363636363636364,
+      "short_mean_ret_bps": 47.49475018053668,
       "cost_bps": 15.0
     }
   },
@@ -426,16 +426,16 @@
       "etf": "588000ETF",
       "side": "long",
       "n_oos": 29,
-      "oos_sharpe": 5.887419222362588,
-      "oos_pnl_bps": 3759.049462173394
+      "oos_sharpe": 4.844956003742338,
+      "oos_pnl_bps": 3259.049462173395
     },
     {
       "cost_bps": 5.0,
       "etf": "588000ETF",
       "side": "short",
       "n_oos": 32,
-      "oos_sharpe": 4.617261200274077,
-      "oos_pnl_bps": 1985.0581124123635
+      "oos_sharpe": 0.802978368365138,
+      "oos_pnl_bps": 246.52697537500325
     },
     {
       "cost_bps": 5.0,
@@ -450,8 +450,8 @@
       "etf": "159915ETF",
       "side": "short",
       "n_oos": 43,
-      "oos_sharpe": 4.446498319709125,
-      "oos_pnl_bps": 1910.5356857982374
+      "oos_sharpe": 1.6028678354095787,
+      "oos_pnl_bps": 758.7035023668037
     },
     {
       "cost_bps": 15.0,
@@ -506,16 +506,16 @@
       "etf": "588000ETF",
       "side": "long",
       "n_oos": 29,
-      "oos_sharpe": 5.433221534445495,
-      "oos_pnl_bps": 3469.049462173394
+      "oos_sharpe": 4.4138372811230475,
+      "oos_pnl_bps": 2969.0494621733947
     },
     {
       "cost_bps": 15.0,
       "etf": "588000ETF",
       "side": "short",
       "n_oos": 32,
-      "oos_sharpe": 3.872938616038934,
-      "oos_pnl_bps": 1665.058112412363
+      "oos_sharpe": -0.23931356535116738,
+      "oos_pnl_bps": -73.47302462499671
     },
     {
       "cost_bps": 15.0,
@@ -530,8 +530,8 @@
       "etf": "159915ETF",
       "side": "short",
       "n_oos": 43,
-      "oos_sharpe": 3.4457348732644824,
-      "oos_pnl_bps": 1480.5356857982374
+      "oos_sharpe": 0.6944323700716294,
+      "oos_pnl_bps": 328.7035023668035
     },
     {
       "cost_bps": 30.0,
@@ -586,16 +586,16 @@
       "etf": "588000ETF",
       "side": "long",
       "n_oos": 29,
-      "oos_sharpe": 4.751925002569855,
-      "oos_pnl_bps": 3034.049462173394
+      "oos_sharpe": 3.767159197194113,
+      "oos_pnl_bps": 2534.049462173395
     },
     {
       "cost_bps": 30.0,
       "etf": "588000ETF",
       "side": "short",
       "n_oos": 32,
-      "oos_sharpe": 2.7564547396862213,
-      "oos_pnl_bps": 1185.0581124123637
+      "oos_sharpe": -1.8027514659256252,
+      "oos_pnl_bps": -553.4730246249965
     },
     {
       "cost_bps": 30.0,
@@ -610,8 +610,8 @@
       "etf": "159915ETF",
       "side": "short",
       "n_oos": 43,
-      "oos_sharpe": 1.944589703597518,
-      "oos_pnl_bps": 835.5356857982376
+      "oos_sharpe": -0.668220827935293,
+      "oos_pnl_bps": -316.2964976331963
     }
   ],
   "cluster_confusion": [

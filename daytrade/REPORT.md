@@ -43,20 +43,20 @@
 | 300ETF | `short` | 22 | 4.0% | 54.5% | +5.53 | +1029 | -234 | +46.8 | +28.9 | n<60 |
 | 500ETF | `long` | 29 | 5.3% | 48.3% | +2.47 | +833 | -345 | +28.7 | -19.2 | median<=0, win<=50%, n<60 |
 | 500ETF | `short` | 139 | 25.6% | 54.7% | -0.02 | -18 | -1348 | -0.1 | +9.5 | — |
-| 588000ETF | `long` | 29 | 5.3% | 48.3% | +5.43 | +3469 | -660 | +119.6 | -0.1 | median<=0, win<=50%, n<60 |
-| 588000ETF | `short` | 32 | 5.9% | 62.5% | +3.87 | +1665 | -961 | +52.0 | +66.6 | n<60 |
+| 588000ETF | `long` | 29 | 5.3% | 48.3% | +4.41 | +2969 | -660 | +102.4 | -0.1 | median<=0, win<=50%, n<60 |
+| 588000ETF | `short` | 32 | 5.9% | 37.5% | -0.24 | -73 | -1025 | -2.3 | -115.0 | median<=0, win<=50%, n<60 |
 | 159915ETF | `long` | 26 | 4.8% | 57.7% | +6.44 | +3253 | -693 | +125.1 | +68.7 | n<60 |
-| 159915ETF | `short` | 43 | 7.9% | 60.5% | +3.45 | +1481 | -930 | +34.4 | +29.7 | n<60 |
+| 159915ETF | `short` | 43 | 7.9% | 55.8% | +0.69 | +329 | -978 | +7.6 | +18.1 | n<60 |
 
 ### 3.2 Combined (Long+Short) Per ETF
 
 | ETF | N (full) | N OOS | L Place% | S Place% | Tot Place% | Win% | Sharpe (full) | P&L bps (full) | OOS Sharpe | OOS P&L bps | OOS MaxDD bps |
 |-----|----------|-------|----------|----------|------------|------|---------------|----------------|------------|-------------|---------------|
 | **50ETF** | 212 | 49 | 5.3% | 3.7% | 9.0% | 58.0% | +5.35 | +7353 | +5.28 | +1946 | -308 |
-| **300ETF** | 355 | 81 | 10.8% | 4.0% | 14.9% | 56.3% | +3.33 | +10339 | +3.04 | +2079 | -715 |
+| **300ETF** | 355 | 81 | 10.8% | 4.0% | 14.9% | 56.3% | +3.69 | +10849 | +3.04 | +2079 | -715 |
 | **500ETF** | 421 | 168 | 5.3% | 25.6% | 30.9% | 53.7% | +1.50 | +6338 | +0.58 | +815 | -1605 |
-| **588000ETF** | 96 | 61 | 5.3% | 5.9% | 11.2% | 62.5% | +5.33 | +8228 | +4.68 | +5134 | -1189 |
-| **159915ETF** | 165 | 69 | 4.8% | 7.9% | 12.7% | 63.0% | +6.24 | +12303 | +4.75 | +4734 | -992 |
+| **588000ETF** | 96 | 61 | 5.3% | 5.9% | 11.2% | 53.1% | +3.94 | +5954 | +2.70 | +2896 | -1226 |
+| **159915ETF** | 165 | 69 | 4.8% | 7.9% | 12.7% | 61.8% | +5.50 | +11151 | +3.45 | +3582 | -1021 |
 
 ### 3.3 Placement Rates (capital deployment frequency)
 
@@ -80,12 +80,12 @@ Fraction of trading days on which each side fires. High Place% × high Sharpe = 
 | 300ETF | `short` | +6.74 | +5.97 | — |
 | 500ETF | `long` | +4.50 | -0.99 | -1.48 |
 | 500ETF | `short` | +1.64 | +0.88 | -3.12 |
-| 588000ETF | `long` | +8.86 | +10.53 | -5.59 |
-| 588000ETF | `short` | +29.93 | +0.42 | +1.06 |
+| 588000ETF | `long` | +6.73 | +10.53 | -5.59 |
+| 588000ETF | `short` | +6.10 | -6.63 | +1.13 |
 | 159915ETF | `long` | +10.23 | -4.04 | +20.12 |
-| 159915ETF | `short` | +5.74 | +8.95 | -9.52 |
+| 159915ETF | `short` | -0.15 | +7.44 | -9.42 |
 
-![yearly_sharpe](plots\yearly_sharpe.png)
+![yearly_sharpe](plots/yearly_sharpe.png)
 
 
 ### 3.5 Cost Sensitivity (OOS Sharpe by side)
@@ -98,16 +98,16 @@ Fraction of trading days on which each side fires. High Place% × high Sharpe = 
 | 300ETF | `short` | +6.71 | +5.53 | +3.76 |
 | 500ETF | `long` | +3.33 | +2.47 | +1.18 |
 | 500ETF | `short` | +1.30 | -0.02 | -1.99 |
-| 588000ETF | `long` | +5.89 | +5.43 | +4.75 |
-| 588000ETF | `short` | +4.62 | +3.87 | +2.76 |
+| 588000ETF | `long` | +4.84 | +4.41 | +3.77 |
+| 588000ETF | `short` | +0.80 | -0.24 | -1.80 |
 | 159915ETF | `long` | +6.96 | +6.44 | +5.67 |
-| 159915ETF | `short` | +4.45 | +3.45 | +1.94 |
+| 159915ETF | `short` | +1.60 | +0.69 | -0.67 |
 
 ### 3.6 Equity Curves
 
-![equity_combined](plots\equity_combined.png)
+![equity_combined](plots/equity_combined.png)
 
-![equity_per_side](plots\equity_curves.png)
+![equity_per_side](plots/equity_curves.png)
 
 
 ### 3.7 Fragility Warnings Summary
@@ -127,9 +127,9 @@ Non-blocking transparency flags. A side with warnings is still deployed (passes 
 | 500ETF | `long` | 29 | -19.2 | 48.3% | median<=0, win<=50%, n<60 |
 | 500ETF | `short` | 139 | +9.5 | 54.7% | — |
 | 588000ETF | `long` | 29 | -0.1 | 48.3% | median<=0, win<=50%, n<60 |
-| 588000ETF | `short` | 32 | +66.6 | 62.5% | n<60 |
+| 588000ETF | `short` | 32 | -115.0 | 37.5% | median<=0, win<=50%, n<60 |
 | 159915ETF | `long` | 26 | +68.7 | 57.7% | n<60 |
-| 159915ETF | `short` | 43 | +29.7 | 60.5% | n<60 |
+| 159915ETF | `short` | 43 | +18.1 | 55.8% | n<60 |
 
 ## 4. Diagnostic: Cluster Confusion (OOS traded days)
 
@@ -165,7 +165,7 @@ Each side deploys the mode with the highest OOS Sharpe. This table shows all eli
 | 159915ETF | `long` | +6.44 | +4.59 | +2.50 | **single** (+6.44) |
 | 159915ETF | `short` | +2.74 | +3.45 | +1.20 | **hybrid** (+3.45) |
 
-**Total deployed OOS Sharpe**: +40.10 (vs single-only +28.60, Δ = +11.50)
+**Total deployed OOS Sharpe**: +32.22 (vs single-only +28.60, Δ = +3.62)
 
 
 ## 5.5 Stop-Loss Optimisation (Phase 5)
@@ -174,16 +174,16 @@ Each side's stop-loss is optimised **in-sample** by maximising total IS profit o
 
 | ETF | Side | Stop type | Stop value | OOS Sharpe (w/ stop) | OOS P&L bps | OOS MaxDD bps | OOS Win% | Stopped trades |
 |-----|------|-----------|------------|-----------------------|-------------|---------------|----------|----------------|
-| 50ETF | `long` | none | — | +4.34 | +935 | -314 | 58.6% | 0 |
-| 50ETF | `short` | none | — | +6.47 | +1011 | -220 | 65.0% | 0 |
-| 300ETF | `long` | none | — | +2.11 | +1050 | -641 | 49.2% | 0 |
-| 300ETF | `short` | none | — | +5.53 | +1029 | -234 | 54.5% | 0 |
+| 50ETF | `long` | fixed-% | 2.50% | +4.34 | +935 | -314 | 58.6% | 0 |
+| 50ETF | `short` | fixed-% | 4.00% | +6.47 | +1011 | -220 | 65.0% | 0 |
+| 300ETF | `long` | fixed-% | 5.00% | +2.11 | +1050 | -641 | 49.2% | 0 |
+| 300ETF | `short` | fixed-% | 3.00% | +5.53 | +1029 | -234 | 54.5% | 4 |
 | 500ETF | `long` | fixed-% | 1.00% | +2.47 | +833 | -345 | 48.3% | 18 |
 | 500ETF | `short` | ATR-14 | 1.5× | -0.02 | -18 | -1348 | 54.7% | 7 |
-| 588000ETF | `long` | none | — | +5.43 | +3469 | -660 | 48.3% | 0 |
-| 588000ETF | `short` | none | — | +3.87 | +1665 | -961 | 62.5% | 0 |
-| 159915ETF | `long` | none | — | +6.44 | +3253 | -693 | 57.7% | 0 |
-| 159915ETF | `short` | none | — | +3.45 | +1481 | -930 | 60.5% | 0 |
+| 588000ETF | `long` | fixed-% | 5.00% | +4.41 | +2969 | -660 | 48.3% | 1 |
+| 588000ETF | `short` | fixed-% | 1.00% | -0.24 | -73 | -1025 | 37.5% | 23 |
+| 159915ETF | `long` | fixed-% | 5.00% | +6.44 | +3253 | -693 | 57.7% | 0 |
+| 159915ETF | `short` | fixed-% | 2.50% | +0.69 | +329 | -978 | 55.8% | 8 |
 
 ## 6. Verdict
 

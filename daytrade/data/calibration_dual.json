@@ -30,11 +30,11 @@
           "win<=50%",
           "n<60"
         ],
-        "stop_type": null,
-        "stop_value": null,
-        "stop_oos_sharpe": 0.42327354170813225,
-        "stop_oos_pnl_bps": 105.92799235971815,
-        "stop_oos_max_dd_bps": -672.5056673191776,
+        "stop_type": "atr",
+        "stop_value": 1.5,
+        "stop_oos_sharpe": 1.125724548152676,
+        "stop_oos_pnl_bps": 258.98921684951256,
+        "stop_oos_max_dd_bps": -568.127190345074,
         "stop_oos_win_rate": 0.4666666666666667
       },
       "short": {
@@ -57,11 +57,11 @@
           "n<60"
         ],
         "stop_type": "pct",
-        "stop_value": 0.008,
-        "stop_oos_sharpe": -0.12830995068027792,
-        "stop_oos_pnl_bps": -30.974835867921794,
-        "stop_oos_max_dd_bps": -432.2157183656426,
-        "stop_oos_win_rate": 0.40540540540540543
+        "stop_value": 0.01,
+        "stop_oos_sharpe": -0.3483714806231654,
+        "stop_oos_pnl_bps": -87.60642703818714,
+        "stop_oos_max_dd_bps": -492.2157183656428,
+        "stop_oos_win_rate": 0.43243243243243246
       }
     },
     "300ETF": {
@@ -88,8 +88,8 @@
         "score": 0.4806183819694364,
         "eligible": true,
         "warnings": [],
-        "stop_type": null,
-        "stop_value": null,
+        "stop_type": "atr",
+        "stop_value": 4.0,
         "stop_oos_sharpe": 0.9786050930827749,
         "stop_oos_pnl_bps": 842.8186234954649,
         "stop_oos_max_dd_bps": -927.9108978962892,
@@ -112,8 +112,8 @@
         "warnings": [
           "n<60"
         ],
-        "stop_type": null,
-        "stop_value": null,
+        "stop_type": "pct",
+        "stop_value": 0.03,
         "stop_oos_sharpe": 5.5320742759231205,
         "stop_oos_pnl_bps": 1029.2221274320702,
         "stop_oos_max_dd_bps": -234.44730063316544,
@@ -203,12 +203,12 @@
           "median<=0",
           "win<=50%"
         ],
-        "stop_type": null,
-        "stop_value": null,
-        "stop_oos_sharpe": 3.2501842869005713,
-        "stop_oos_pnl_bps": 3771.280576302947,
-        "stop_oos_max_dd_bps": -986.6350467300289,
-        "stop_oos_win_rate": 0.4852941176470588
+        "stop_type": "pct",
+        "stop_value": 0.025,
+        "stop_oos_sharpe": 0.94962609524853,
+        "stop_oos_pnl_bps": 990.8640451117867,
+        "stop_oos_max_dd_bps": -1132.83447529751,
+        "stop_oos_win_rate": 0.45588235294117646
       },
       "short": {
         "threshold_pct": 95.0,
@@ -225,12 +225,12 @@
         "score": 0.7419963189787986,
         "eligible": true,
         "warnings": [],
-        "stop_type": null,
-        "stop_value": null,
-        "stop_oos_sharpe": 2.260394043332924,
-        "stop_oos_pnl_bps": 1914.4212646359588,
-        "stop_oos_max_dd_bps": -1897.323073107468,
-        "stop_oos_win_rate": 0.582089552238806
+        "stop_type": "pct",
+        "stop_value": 0.02,
+        "stop_oos_sharpe": 0.9583971243281038,
+        "stop_oos_pnl_bps": 801.3449416724611,
+        "stop_oos_max_dd_bps": -1703.0027424142208,
+        "stop_oos_win_rate": 0.5223880597014925
       }
     },
     "159915ETF": {
@@ -257,11 +257,11 @@
         "score": 0.8279768208210014,
         "eligible": true,
         "warnings": [],
-        "stop_type": null,
-        "stop_value": null,
-        "stop_oos_sharpe": 2.500585844098921,
-        "stop_oos_pnl_bps": 3250.542903373724,
-        "stop_oos_max_dd_bps": -1124.7276351231833,
+        "stop_type": "atr",
+        "stop_value": 2.5,
+        "stop_oos_sharpe": 2.4880044712318092,
+        "stop_oos_pnl_bps": 3238.4031790629474,
+        "stop_oos_max_dd_bps": -1136.86735943396,
         "stop_oos_win_rate": 0.5104166666666666
       },
       "short": {
@@ -279,8 +279,8 @@
         "score": 0.5261140576516711,
         "eligible": true,
         "warnings": [],
-        "stop_type": null,
-        "stop_value": null,
+        "stop_type": "pct",
+        "stop_value": 0.05,
         "stop_oos_sharpe": 1.2025976108378387,
         "stop_oos_pnl_bps": 750.9077600256627,
         "stop_oos_max_dd_bps": -1285.182766441349,
