@@ -31,10 +31,10 @@
           "n<60"
         ],
         "stop_type": "atr",
-        "stop_value": 1.5,
-        "stop_oos_sharpe": 1.125724548152676,
-        "stop_oos_pnl_bps": 258.98921684951256,
-        "stop_oos_max_dd_bps": -568.127190345074,
+        "stop_value": 3.5,
+        "stop_oos_sharpe": 0.1767974331301144,
+        "stop_oos_pnl_bps": 46.082432514158754,
+        "stop_oos_max_dd_bps": -732.351227164737,
         "stop_oos_win_rate": 0.4666666666666667
       },
       "short": {
@@ -57,11 +57,11 @@
           "n<60"
         ],
         "stop_type": "pct",
-        "stop_value": 0.01,
-        "stop_oos_sharpe": -0.3483714806231654,
-        "stop_oos_pnl_bps": -87.60642703818714,
-        "stop_oos_max_dd_bps": -492.2157183656428,
-        "stop_oos_win_rate": 0.43243243243243246
+        "stop_value": 0.04,
+        "stop_oos_sharpe": 0.9914484908222464,
+        "stop_oos_pnl_bps": 272.72515711017826,
+        "stop_oos_max_dd_bps": -547.7520529727465,
+        "stop_oos_win_rate": 0.4864864864864865
       }
     },
     "300ETF": {
@@ -89,10 +89,10 @@
         "eligible": true,
         "warnings": [],
         "stop_type": "atr",
-        "stop_value": 4.0,
-        "stop_oos_sharpe": 0.9786050930827749,
-        "stop_oos_pnl_bps": 842.8186234954649,
-        "stop_oos_max_dd_bps": -927.9108978962892,
+        "stop_value": 3.5,
+        "stop_oos_sharpe": 0.534669060027647,
+        "stop_oos_pnl_bps": 514.2315479204395,
+        "stop_oos_max_dd_bps": -944.1009138911583,
         "stop_oos_win_rate": 0.5217391304347826
       },
       "short": {
@@ -146,12 +146,12 @@
         "warnings": [
           "n<60"
         ],
-        "stop_type": "pct",
-        "stop_value": 0.015,
-        "stop_oos_sharpe": 2.033567292082843,
-        "stop_oos_pnl_bps": 1049.0897078316655,
-        "stop_oos_max_dd_bps": -456.5719330104594,
-        "stop_oos_win_rate": 0.5416666666666666
+        "stop_type": "atr",
+        "stop_value": 3.5,
+        "stop_oos_sharpe": 3.0036565097622776,
+        "stop_oos_pnl_bps": 1505.1392753608209,
+        "stop_oos_max_dd_bps": -527.838066999397,
+        "stop_oos_win_rate": 0.5833333333333334
       },
       "short": {
         "threshold_pct": 50.0,
@@ -169,10 +169,10 @@
         "eligible": true,
         "warnings": [],
         "stop_type": "atr",
-        "stop_value": 1.5,
-        "stop_oos_sharpe": -0.016653904730358545,
-        "stop_oos_pnl_bps": -17.552846438639026,
-        "stop_oos_max_dd_bps": -1348.294703805848,
+        "stop_value": 3.5,
+        "stop_oos_sharpe": 0.021853523262535323,
+        "stop_oos_pnl_bps": 23.051291884620127,
+        "stop_oos_max_dd_bps": -1321.688700579815,
         "stop_oos_win_rate": 0.5467625899280576
       }
     },
@@ -204,11 +204,11 @@
           "win<=50%"
         ],
         "stop_type": "pct",
-        "stop_value": 0.025,
-        "stop_oos_sharpe": 0.94962609524853,
-        "stop_oos_pnl_bps": 990.8640451117867,
-        "stop_oos_max_dd_bps": -1132.83447529751,
-        "stop_oos_win_rate": 0.45588235294117646
+        "stop_value": 0.03,
+        "stop_oos_sharpe": 1.7842207824937097,
+        "stop_oos_pnl_bps": 2138.968721424438,
+        "stop_oos_max_dd_bps": -1009.5862785047905,
+        "stop_oos_win_rate": 0.47058823529411764
       },
       "short": {
         "threshold_pct": 95.0,
@@ -225,12 +225,12 @@
         "score": 0.7419963189787986,
         "eligible": true,
         "warnings": [],
-        "stop_type": "pct",
-        "stop_value": 0.02,
-        "stop_oos_sharpe": 0.9583971243281038,
-        "stop_oos_pnl_bps": 801.3449416724611,
-        "stop_oos_max_dd_bps": -1703.0027424142208,
-        "stop_oos_win_rate": 0.5223880597014925
+        "stop_type": "atr",
+        "stop_value": 3.5,
+        "stop_oos_sharpe": 2.260394043332924,
+        "stop_oos_pnl_bps": 1914.4212646359588,
+        "stop_oos_max_dd_bps": -1897.323073107468,
+        "stop_oos_win_rate": 0.582089552238806
       }
     },
     "159915ETF": {
@@ -258,10 +258,10 @@
         "eligible": true,
         "warnings": [],
         "stop_type": "atr",
-        "stop_value": 2.5,
-        "stop_oos_sharpe": 2.4880044712318092,
-        "stop_oos_pnl_bps": 3238.4031790629474,
-        "stop_oos_max_dd_bps": -1136.86735943396,
+        "stop_value": 3.5,
+        "stop_oos_sharpe": 2.500585844098921,
+        "stop_oos_pnl_bps": 3250.542903373724,
+        "stop_oos_max_dd_bps": -1124.7276351231833,
         "stop_oos_win_rate": 0.5104166666666666
       },
       "short": {

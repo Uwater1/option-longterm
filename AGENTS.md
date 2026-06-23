@@ -193,7 +193,7 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy (v2: mixe
 - **500ETF**: Volatility too high (~26.8%). Sharp rallies cause major assignment loss. Raising RSI threshold to 70 helps slightly. Detailed in [RESEARCH_500ETF.md](file:///home/hallo/Documents/option-longterm/RESEARCH_500ETF.md).
 - **Tail Risk (Puts)**: Vol acceleration + negative skewness predict downside. Detailed in [FINDINGS.md](file:///home/hallo/Documents/option-longterm/FINDINGS.md).
 - **Day Trading**: [day-trading/AGENTS.md](file:///home/hallo/Documents/option-longterm/day-trading/AGENTS.md) [day-trading/REPORT.md](file:///home/hallo/Documents/option-longterm/day-trading/REPORT.md)
-- **Daytrade v2**: Mixed-mode deployment (single/hybrid/dual per side) improved total OOS Sharpe from +20.17 to +41.46. Hybrid mode dominant (6/10 deployments). See [daytrade/improvement_plan.md](file:///home/hallo/Documents/option-longterm/daytrade/improvement_plan.md) §8.
+- **Daytrade v2**: Mixed-mode deployment (single/hybrid/dual per side) with baseline-guided safety stops improves total OOS Sharpe from +28.60 (single-only) to **+37.47** (Δ = +8.86), while ensuring emergency-level stop-losses (3.0%-5.0% or 3.5x ATR) are active on all trades. See [daytrade/improvement_plan.md](file:///home/hallo/Documents/option-longterm/daytrade/improvement_plan.md) §8.
 
 ## TODO
 - [ ] Improve put buy strategy: [put_improvement_plan.md](file:///home/hallo/Documents/option-longterm/put_improvement_plan.md)

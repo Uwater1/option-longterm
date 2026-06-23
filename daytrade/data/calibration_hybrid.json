@@ -29,7 +29,7 @@
           "n<60"
         ],
         "stop_type": "pct",
-        "stop_value": 0.025,
+        "stop_value": 0.03,
         "stop_oos_sharpe": 4.342029881864945,
         "stop_oos_pnl_bps": 934.9631962386024,
         "stop_oos_max_dd_bps": -313.9017057381227,
@@ -114,11 +114,11 @@
           "win<=50%"
         ],
         "stop_type": "pct",
-        "stop_value": 0.01,
-        "stop_oos_sharpe": -0.2959298660606074,
-        "stop_oos_pnl_bps": -204.38173262891442,
-        "stop_oos_max_dd_bps": -585.314672602119,
-        "stop_oos_win_rate": 0.45323741007194246
+        "stop_value": 0.04,
+        "stop_oos_sharpe": 0.6195981348004741,
+        "stop_oos_pnl_bps": 422.9606012674623,
+        "stop_oos_max_dd_bps": -520.2812180732324,
+        "stop_oos_win_rate": 0.4676258992805755
       }
     },
     "500ETF": {
@@ -148,11 +148,11 @@
           "n<60"
         ],
         "stop_type": "pct",
-        "stop_value": 0.01,
-        "stop_oos_sharpe": 2.472334529023025,
-        "stop_oos_pnl_bps": 832.7596250275212,
-        "stop_oos_max_dd_bps": -344.9999999999992,
-        "stop_oos_win_rate": 0.4827586206896552
+        "stop_value": 0.05,
+        "stop_oos_sharpe": 2.621385187015508,
+        "stop_oos_pnl_bps": 982.6858398766653,
+        "stop_oos_max_dd_bps": -582.0086083213771,
+        "stop_oos_win_rate": 0.6206896551724138
       },
       "short": null
     },
@@ -184,11 +184,11 @@
           "n<60"
         ],
         "stop_type": "pct",
-        "stop_value": 0.02,
-        "stop_oos_sharpe": 2.4909486441482103,
-        "stop_oos_pnl_bps": 1533.354579917202,
-        "stop_oos_max_dd_bps": -818.8983050847443,
-        "stop_oos_win_rate": 0.4375
+        "stop_value": 0.03,
+        "stop_oos_sharpe": 3.339191045838467,
+        "stop_oos_pnl_bps": 2474.0455816945496,
+        "stop_oos_max_dd_bps": -803.8983050847454,
+        "stop_oos_win_rate": 0.46875
       },
       "short": {
         "threshold_pct": 95.0,
@@ -207,12 +207,12 @@
         "warnings": [
           "n<60"
         ],
-        "stop_type": "pct",
-        "stop_value": 0.01,
-        "stop_oos_sharpe": -0.23931356535116738,
-        "stop_oos_pnl_bps": -73.47302462499671,
-        "stop_oos_max_dd_bps": -1024.790629181855,
-        "stop_oos_win_rate": 0.375
+        "stop_type": "atr",
+        "stop_value": 3.5,
+        "stop_oos_sharpe": 3.872938616038934,
+        "stop_oos_pnl_bps": 1665.058112412363,
+        "stop_oos_max_dd_bps": -961.1017226859176,
+        "stop_oos_win_rate": 0.625
       }
     },
     "159915ETF": {
@@ -266,11 +266,11 @@
           "n<60"
         ],
         "stop_type": "pct",
-        "stop_value": 0.025,
-        "stop_oos_sharpe": 0.6944323700716294,
-        "stop_oos_pnl_bps": 328.7035023668035,
-        "stop_oos_max_dd_bps": -977.8709926186363,
-        "stop_oos_win_rate": 0.5581395348837209
+        "stop_value": 0.03,
+        "stop_oos_sharpe": 1.641072564746008,
+        "stop_oos_pnl_bps": 798.5411804318907,
+        "stop_oos_max_dd_bps": -930.8623428909412,
+        "stop_oos_win_rate": 0.5813953488372093
       }
     }
   }
