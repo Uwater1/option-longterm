@@ -54,6 +54,9 @@ def load_5m(etf: str) -> pd.DataFrame:
     df = df[["datetime", "open", "high", "low", "close", "volume"]].copy()
     df["datetime"] = pd.to_datetime(df["datetime"])
     df = df.set_index("datetime").sort_index()
+    # Cast to float32 to save memory and speed up numeric checks
+    for col in ["open", "high", "low", "close", "volume"]:
+        df[col] = df[col].astype(np.float32)
     _5M_CACHE[etf] = df
     return df
 
@@ -63,7 +66,14 @@ def get_grouped_bars(etf: str) -> dict:
         return _GROUPED_BARS_CACHE[etf]
     bars = load_5m(etf)
     bars["date"] = bars.index.date
-    grouped = {d: g for d, g in bars.groupby("date")}
+    grouped = {}
+    for d, g in bars.groupby("date"):
+        grouped[d] = {
+            "open": g["open"].values,
+            "high": g["high"].values,
+            "low": g["low"].values,
+            "close": g["close"].values,
+        }
     _GROUPED_BARS_CACHE[etf] = grouped
     return grouped
 
@@ -95,7 +105,7 @@ def get_daily_atr14(etf: str) -> pd.Series:
 
 
 def _day_bars_to_series(
-    day_df: pd.DataFrame,
+    day_data: dict,
     decision_bar: int,
     exit_bar: int,
     direction: int = 0,
@@ -111,45 +121,43 @@ def _day_bars_to_series(
         decision at close of bar (decision_bar)
         entry    at open  of bar (decision_bar + 1)
         exit     at close of bar (exit_bar), or stop price if triggered earlier.
-
-    Parameters
-    ----------
-    direction : {+1, -1, 0}
-        Trade direction.  0 = no stop-loss check (legacy compat).
-    stop_pct : float or None
-        Stop-loss as a fraction of entry price.  None disables the stop.
     """
     entry_idx = decision_bar + 1
-    if len(day_df) <= max(entry_idx, exit_bar):
+    open_arr = day_data["open"]
+    close_arr = day_data["close"]
+    if len(open_arr) <= max(entry_idx, exit_bar):
         return None, None, None
-    entry_price = float(day_df.iloc[entry_idx]["open"])
-    exit_price = float(day_df.iloc[exit_bar]["close"])
+    entry_price = float(open_arr[entry_idx])
+    exit_price = float(close_arr[exit_bar])
     if entry_price <= 0 or exit_price <= 0:
         return None, None, None
 
     exit_type = "target"
 
     if stop_pct is not None and stop_pct > 0 and direction != 0:
-        scan = day_df.iloc[entry_idx:exit_bar + 1]
         if direction > 0:  # long: stop hit when bar low <= stop level
             stop_level = entry_price * (1.0 - stop_pct)
-            hit = scan[scan["low"] <= stop_level]
-            if len(hit) > 0:
+            low_arr = day_data["low"]
+            scan = low_arr[entry_idx:exit_bar + 1]
+            hits = np.where(scan <= stop_level)[0]
+            if len(hits) > 0:
                 exit_price = stop_level
                 exit_type = "stop"
         else:  # short: stop hit when bar high >= stop level
             stop_level = entry_price * (1.0 + stop_pct)
-            hit = scan[scan["high"] >= stop_level]
-            if len(hit) > 0:
+            high_arr = day_data["high"]
+            scan = high_arr[entry_idx:exit_bar + 1]
+            hits = np.where(scan >= stop_level)[0]
+            if len(hits) > 0:
                 exit_price = stop_level
                 exit_type = "stop"
 
     return entry_price, exit_price, exit_type
 
 
-def _day_bars_to_series_legacy(day_df: pd.DataFrame, decision_bar: int, exit_bar: int):
+def _day_bars_to_series_legacy(day_data: dict, decision_bar: int, exit_bar: int):
     """Backward-compatible wrapper returning (entry, exit) only."""
-    entry, exit_, _ = _day_bars_to_series(day_df, decision_bar, exit_bar)
+    entry, exit_, _ = _day_bars_to_series(day_data, decision_bar, exit_bar)
     return entry, exit_
 
 
@@ -269,10 +277,12 @@ def backtest_long_short(
             if atr_val is None or np.isnan(atr_val):
                 atr_val = atr_series.iloc[:atr_series.index.get_loc(d)].max() if len(atr_series) > 0 else None
             if atr_val is not None and not np.isnan(atr_val):
-                # We need entry to express ATR as pct; get it first
-                entry_tmp, _, _ = _day_bars_to_series(day, decision_bar, exit_bar)
-                if entry_tmp is not None and entry_tmp > 0:
-                    effective_stop = stop_atr_k * atr_val / entry_tmp
+                # Retrieve entry_price directly to avoid calling the stop check logic twice
+                entry_idx = decision_bar + 1
+                if len(day["open"]) > entry_idx:
+                    entry_tmp = float(day["open"][entry_idx])
+                    if entry_tmp > 0:
+                        effective_stop = stop_atr_k * atr_val / entry_tmp
         elif stop_pct is not None:
             effective_stop = stop_pct
 

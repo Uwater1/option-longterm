@@ -51,6 +51,8 @@ def expanding_pct(series: pd.Series, q: float, min_periods: int = MIN_PERIODS_DE
     return s.expanding(min_periods=min_periods).quantile(q)
 
 
+_MASKED_PCT_CACHE = {}
+
 def expanding_pct_masked(
     series: pd.Series, q: float, min_periods: int = 60
 ) -> pd.Series:
@@ -64,6 +66,10 @@ def expanding_pct_masked(
     computes np.quantile at each step. O(N × K) where K = buffer length, but
     numpy-quantile on small arrays is fast.
     """
+    key = (series.values.tobytes(), q, min_periods)
+    if key in _MASKED_PCT_CACHE:
+        return _MASKED_PCT_CACHE[key]
+
     vals = series.shift(1).values  # prior values, NaN where condition didn't hold
     n = len(vals)
     out = np.full(n, np.nan, dtype=float)
@@ -71,7 +77,9 @@ def expanding_pct_masked(
     isnan = np.isnan(vals)
     valid_idx = np.where(~isnan)[0]
     if len(valid_idx) == 0:
-        return pd.Series(out, index=series.index)
+        res = pd.Series(out, index=series.index)
+        _MASKED_PCT_CACHE[key] = res
+        return res
 
     buf = np.empty(len(valid_idx), dtype=float)
     buf[0] = vals[valid_idx[0]]
@@ -82,8 +90,12 @@ def expanding_pct_masked(
             end = valid_idx[k + 1] + 1 if k + 1 < len(valid_idx) else n
             thr = np.quantile(buf[:k + 1], q)
             out[start:end] = thr
-    return pd.Series(out, index=series.index)
+    res = pd.Series(out, index=series.index)
+    _MASKED_PCT_CACHE[key] = res
+    return res
 
+
+_RANK_CACHE = {}
 
 def expanding_pct_rank(series: pd.Series, min_periods: int = 60) -> pd.Series:
     """Walk-forward percentile rank of each value relative to prior history.
@@ -106,6 +118,10 @@ def expanding_pct_rank(series: pd.Series, min_periods: int = 60) -> pd.Series:
     min_periods : int
         Minimum number of valid prior observations before the rank is valid.
     """
+    key = (series.values.tobytes(), min_periods)
+    if key in _RANK_CACHE:
+        return _RANK_CACHE[key]
+
     vals = series.values
     n = len(vals)
     out = np.full(n, np.nan, dtype=float)
@@ -117,7 +133,9 @@ def expanding_pct_rank(series: pd.Series, min_periods: int = 60) -> pd.Series:
         if len(sorted_buf) >= min_periods:
             out[i] = bisect.bisect_left(sorted_buf, v) / len(sorted_buf)
         bisect.insort(sorted_buf, float(v))
-    return pd.Series(out, index=series.index)
+    res = pd.Series(out, index=series.index)
+    _RANK_CACHE[key] = res
+    return res
 
 
 # ---------------------------------------------------------------------------

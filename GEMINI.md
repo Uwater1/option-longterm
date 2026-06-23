@@ -194,6 +194,7 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy (v2: mixe
 - **Tail Risk (Puts)**: Vol acceleration + negative skewness predict downside. Detailed in [FINDINGS.md](file:///home/hallo/Documents/option-longterm/FINDINGS.md).
 - **Day Trading**: [day-trading/AGENTS.md](file:///home/hallo/Documents/option-longterm/day-trading/AGENTS.md) [day-trading/REPORT.md](file:///home/hallo/Documents/option-longterm/day-trading/REPORT.md)
 - **Daytrade v2**: Mixed-mode deployment (single/hybrid/dual per side) with baseline-guided safety stops improves total OOS Sharpe from +28.60 (single-only) to **+37.47** (Δ = +8.86), while ensuring emergency-level stop-losses (3.0%-5.0% or 3.5x ATR) are active on all trades. See [daytrade/improvement_plan.md](file:///home/hallo/Documents/option-longterm/daytrade/improvement_plan.md) §8.
+- **Daytrade Optimization**: Vectorized 5m backtests using NumPy array groups (float32) and added caches for model scores, expanding percentiles, and ranks, reducing single-ETF calibration sweeps from 33.7s to 3.4s (10x). Added multiprocessing to run ETF calibrations in parallel, reducing complete 5-ETF sweeps from ~3 minutes to under 6 seconds (30x+ speedup).
 
 ## TODO
 - [ ] Improve put buy strategy: [put_improvement_plan.md](file:///home/hallo/Documents/option-longterm/put_improvement_plan.md)

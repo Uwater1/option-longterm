@@ -22,6 +22,7 @@ import itertools
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from concurrent.futures import ProcessPoolExecutor
 
 from . import ETFS, DEFAULT_COST_BPS, HOLDOUT_START
 from .backtest import backtest_long_short, split_holdout
@@ -357,11 +358,36 @@ def calibrate_etf(etf: str, cost_bps: float = DEFAULT_COST_BPS,
     }
 
 
+def _calibrate_etf_wrapper(args):
+    etf, cost_bps, mode = args
+    # Run with verbose=False to avoid console print scrambling in parallel
+    return etf, calibrate_etf(etf, cost_bps=cost_bps, verbose=False, mode=mode)
+
+
 def calibrate_all(cost_bps: float = DEFAULT_COST_BPS, verbose: bool = True,
                   mode: str = "single") -> dict:
     out = {}
-    for etf in ETFS:
-        out[etf] = calibrate_etf(etf, cost_bps=cost_bps, verbose=verbose, mode=mode)
+    if verbose:
+        print(f"Calibrating {len(ETFS)} ETFs in parallel (mode={mode})...")
+
+    tasks = [(etf, cost_bps, mode) for etf in ETFS]
+    with ProcessPoolExecutor() as executor:
+        results = executor.map(_calibrate_etf_wrapper, tasks)
+        for etf, res in results:
+            out[etf] = res
+            if verbose:
+                print(f"  Finished calibrating {etf}")
+                for side_key in ("long", "short"):
+                    cfg = res[side_key]
+                    if cfg:
+                        st = (f"{cfg['stop_value']:.3f}" if cfg.get("stop_type") == "pct"
+                              else f"{cfg['stop_value']:.1f}xATR" if cfg.get("stop_type") == "atr"
+                              else "none")
+                        print(f"    {side_key.upper()} BEST: thr={cfg['threshold_pct']:.0f} conv={cfg['conviction_pct']:.0f} "
+                              f"stop={st}, n={cfg['n_full']}, oos_S={cfg['oos_sharpe']:+.2f}, "
+                              f"oos_pnl={cfg['oos_pnl_bps']:+.0f}bps, sc={cfg['score']:.3f}")
+                    else:
+                        print(f"    {side_key.upper()} : DISABLED")
 
     OUT_PATH.parent.mkdir(exist_ok=True)
     # Compact summary: keep stop fields, drop heavy grid/stop_results dumps
