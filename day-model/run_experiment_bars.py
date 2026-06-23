@@ -36,6 +36,10 @@ from build_features import (
     YESTERDAY_FEATURES
 )
 
+# Exit bar (5m bar index, END-timestamped). 41 = 14:30 close.
+# Mirrors daytrade/__init__.py EXIT_BAR (single source of truth lives in build_features.py Phase 1).
+EXIT_BAR = 41
+
 # Helper function to generate early features list dynamically
 def get_features_for_bars(early_bars: int):
     early = [
@@ -141,6 +145,26 @@ def extract_day_early_features_param(day_5m: pd.DataFrame, prev_close: float, ea
 
     return res
 
+def compute_trade_return_for_bars(day_5m: pd.DataFrame, early_bars: int, exit_bar: int = EXIT_BAR) -> float:
+    """Entry-to-exit log return = log(close[exit_bar] / open[early_bars]).
+
+    Mirrors actual trade execution:
+        decision at close of bar (early_bars - 1)
+        entry    at open  of bar (early_bars)        <- next bar open after decision
+        exit     at close of bar (exit_bar)
+
+    So the model is trained on exactly what the backtest captures — no window mismatch.
+    """
+    bars = day_5m.reset_index(drop=True)
+    if len(bars) <= exit_bar or early_bars >= len(bars):
+        return np.nan
+    entry_open = float(bars.iloc[early_bars]["open"])
+    exit_close = float(bars.iloc[exit_bar]["close"])
+    if entry_open <= 0 or exit_close <= 0:
+        return np.nan
+    return float(np.log(exit_close / entry_open))
+
+
 def build_features_for_bars(etf_name: str, early_bars: int) -> pd.DataFrame:
     cfg = ETF_CONFIG[etf_name]
     path_5m = DATA_DIR / cfg["file_5m"]
@@ -199,6 +223,7 @@ def build_features_for_bars(etf_name: str, early_bars: int) -> pd.DataFrame:
         early = extract_day_early_features_param(day_df, prev_close, early_bars, expected_bar_vol)
         early["date"] = date_ts
         early["pm_return"] = compute_pm_return(day_df)
+        early["trade_return"] = compute_trade_return_for_bars(day_df, early_bars, EXIT_BAR)
         
         # AM return for diagnostics
         am = day_df.reset_index(drop=True).iloc[:BAR_LUNCH]
@@ -218,7 +243,7 @@ def build_features_for_bars(etf_name: str, early_bars: int) -> pd.DataFrame:
 
     # Shift yesterday features by 1 day
     cols_to_shift = [
-        "pm_return", "am_return",
+        "pm_return", "am_return", "trade_return",
         "gap_pct", "first_30min_return", "early_realized_vol", "early_range",
         "early_volume_ratio", "early_trend", "early_momentum", "first_bar_return",
         "first_bar_volume", "early_vwap_dev", "early_skew", "early_kurtosis",
@@ -235,8 +260,8 @@ def build_features_for_bars(etf_name: str, early_bars: int) -> pd.DataFrame:
     feat = early_df.join(daylevel, how="inner")
     feat = feat.iloc[WARMUP_DAYS:].copy()
 
-    # Drop NaN target
-    feat = feat.dropna(subset=["pm_return"]).copy()
+    # Drop NaN target (either pm_return or trade_return)
+    feat = feat.dropna(subset=["pm_return", "trade_return"]).copy()
     
     return feat
 
@@ -357,9 +382,9 @@ def make_objective(X, y, n_splits, gap, stability_scores):
 
 def train_and_eval(feat: pd.DataFrame, early_bars: int, n_trials: int = 50, n_splits: int = 5, gap: int = 5) -> dict:
     features_list = get_full_features_list(early_bars)
-    feat = feat.dropna(subset=features_list + ["pm_return"]).copy()
+    feat = feat.dropna(subset=features_list + ["trade_return"]).copy()
     X = feat[features_list].values
-    y_raw = feat["pm_return"].values
+    y_raw = feat["trade_return"].values
     Y_SCALE = 100.0
     y = y_raw * Y_SCALE
     dates = feat.index
@@ -471,7 +496,7 @@ def main():
         for bars in bar_configs:
             time_start = time.time()
             bar_time_str = {3: "9:45 (3 bar)", 4: "9:50 (4 bar)", 5: "9:55 (5 bar)", 6: "10:00 (6 bar)"}[bars]
-            print(f"  -> Building features & training for {bar_time_str} ...")
+            print(f"  -> Building features & training for {bar_time_str} (target=trade_return: open[{bars}] -> close[{EXIT_BAR}]) ...")
             try:
                 feat = build_features_for_bars(etf, bars)
                 if feat.empty:
@@ -487,24 +512,26 @@ def main():
                 import traceback
                 traceback.print_exc()
 
-    # Save results to JSON
-    out_path = DATA_DIR / "experiment_bars_results.json"
+    # Save results to JSON (separate file from old pm_return experiment)
+    out_path = DATA_DIR / "experiment_bars_results_trade_return.json"
     with open(out_path, "w") as f:
         json.dump(results, f, indent=2)
     print(f"\nSaved experiment results to {out_path}")
 
     # Generate Markdown Table Comparison
-    print("\n\n=== EXPERIMENT COMPARISON SUMMARY ===")
+    print("\n\n=== EXPERIMENT COMPARISON SUMMARY (target = trade_return: open[early_bars] -> close[EXIT_BAR=41]) ===")
     for etf in results:
         print(f"\n--- {etf} ---")
-        print("| Bar Count | Prediction Time | Selected Model | Features | Holdout IC | Holdout Dir | L/S Sharpe |")
-        print("|-----------|-----------------|----------------|----------|------------|-------------|------------|")
+        print("| Bar Count | Decision Time | Entry Time | Selected Model | Features | Holdout IC | Holdout Dir | L/S Sharpe |")
+        print("|-----------|---------------|------------|----------------|----------|------------|-------------|------------|")
         for bars in bar_configs:
             if bars not in results[etf]:
                 continue
             r = results[etf][bars]
-            time_str = {3: "9:45 (3 bar)", 4: "9:50 (4 bar)", 5: "9:55 (5 bar)", 6: "10:00 (6 bar)"}[bars]
-            print(f"| {bars} | {time_str} | {r['model_type'].upper()} | {r['n_selected']} | {r['holdout_ic']:+.4f} | {r['holdout_dir']:.3f} | {r['holdout_ls_sharpe']:+.2f} |")
+            # bars = early_bars; decision close = bar (bars-1); entry open = bar (bars)
+            decision_str = {3: "9:45 (bar 2 close)", 4: "9:50 (bar 3 close)", 5: "9:55 (bar 4 close)", 6: "10:00 (bar 5 close)"}[bars]
+            entry_str = {3: "9:45 (bar 3 open)", 4: "9:50 (bar 4 open)", 5: "9:55 (bar 5 open)", 6: "10:00 (bar 6 open)"}[bars]
+            print(f"| {bars} | {decision_str} | {entry_str} | {r['model_type'].upper()} | {r['n_selected']} | {r['holdout_ic']:+.4f} | {r['holdout_dir']:.3f} | {r['holdout_ls_sharpe']:+.2f} |")
 
 if __name__ == "__main__":
     main()

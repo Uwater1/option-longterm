@@ -3,107 +3,205 @@
   "mode": "mixed",
   "results": {
     "50ETF": {
-      "long": null,
+      "long": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 80.0,
+        "n_full": 344,
+        "n_oos": 44,
+        "oos_sharpe": 1.4380477847986024,
+        "oos_pnl_bps": 474.90762776637126,
+        "oos_max_dd_bps": -587.206955416762,
+        "oos_win_rate": 0.4090909090909091,
+        "oos_median_bps": -4.769125546323902,
+        "is_sharpe": 0.138356384529421,
+        "is_pnl_bps": 356.04153431628055,
+        "score": 0.44801576443764496,
+        "eligible": true,
+        "warnings": [
+          "median<=0",
+          "win<=50%",
+          "n<60"
+        ],
+        "_mode": "dual"
+      },
       "short": {
         "threshold_pct": 50.0,
         "conviction_pct": 90.0,
-        "n_full": 67,
-        "n_oos": 24,
-        "oos_sharpe": 1.36025184979196,
-        "oos_pnl_bps": 351.01865183078473,
-        "oos_max_dd_bps": -657.7840445731587,
-        "oos_win_rate": 0.5833333333333334,
-        "is_sharpe": 2.512462069503917,
-        "is_pnl_bps": 1174.7584982203905,
-        "score": 0.47843398108449403,
+        "n_full": 92,
+        "n_oos": 20,
+        "oos_sharpe": 9.80348605509007,
+        "oos_pnl_bps": 1441.2110155645773,
+        "oos_max_dd_bps": -65.52778644955792,
+        "oos_win_rate": 0.65,
+        "oos_median_bps": 36.280014124293615,
+        "is_sharpe": 4.217682907115632,
+        "is_pnl_bps": 1672.3178317729353,
+        "score": 0.656884804245838,
         "eligible": true,
-        "_mode": "dual"
+        "warnings": [
+          "n<60"
+        ],
+        "_mode": "single"
       }
     },
     "300ETF": {
-      "long": null,
-      "short": null
-    },
-    "500ETF": {
       "long": {
         "threshold_pct": 50.0,
         "conviction_pct": 60.0,
-        "n_full": 365,
-        "n_oos": 94,
-        "oos_sharpe": 3.6792884650727573,
-        "oos_pnl_bps": 3324.0430874188837,
-        "oos_max_dd_bps": -915.5352664027605,
-        "oos_win_rate": 0.5851063829787234,
-        "is_sharpe": 3.4339617426741973,
-        "is_pnl_bps": 8691.154758827251,
-        "score": 0.7922011051667396,
+        "n_full": 309,
+        "n_oos": 24,
+        "oos_sharpe": 3.6325400653830595,
+        "oos_pnl_bps": 661.1275903168981,
+        "oos_max_dd_bps": -299.61126735972493,
+        "oos_win_rate": 0.5416666666666666,
+        "oos_median_bps": 3.1576672069849727,
+        "is_sharpe": 1.6734173672443486,
+        "is_pnl_bps": 3389.8563947517755,
+        "score": 0.5266584822227417,
         "eligible": true,
+        "warnings": [
+          "n<60"
+        ],
         "_mode": "hybrid"
       },
       "short": {
         "threshold_pct": 50.0,
         "conviction_pct": 90.0,
-        "n_full": 122,
-        "n_oos": 58,
-        "oos_sharpe": 5.138222261685638,
-        "oos_pnl_bps": 2127.716653832952,
-        "oos_max_dd_bps": -318.4173008243673,
-        "oos_win_rate": 0.6206896551724138,
-        "is_sharpe": 1.6478892339663185,
-        "is_pnl_bps": 765.1997622595954,
-        "score": 0.7184280211394221,
+        "n_full": 136,
+        "n_oos": 33,
+        "oos_sharpe": 2.7612876178749497,
+        "oos_pnl_bps": 675.9828589317793,
+        "oos_max_dd_bps": -535.0183276332365,
+        "oos_win_rate": 0.42424242424242425,
+        "oos_median_bps": -6.740088105726114,
+        "is_sharpe": 0.0680196822694019,
+        "is_pnl_bps": 53.818400176515354,
+        "score": 0.5378492216015485,
         "eligible": true,
-        "_mode": "single"
+        "warnings": [
+          "median<=0",
+          "win<=50%",
+          "n<60"
+        ],
+        "_mode": "hybrid"
+      }
+    },
+    "500ETF": {
+      "long": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 90.0,
+        "n_full": 68,
+        "n_oos": 29,
+        "oos_sharpe": 5.567933953933473,
+        "oos_pnl_bps": 2219.3854615277014,
+        "oos_max_dd_bps": -406.3855902212753,
+        "oos_win_rate": 0.5517241379310345,
+        "oos_median_bps": 38.80076362374364,
+        "is_sharpe": 5.905666265429633,
+        "is_pnl_bps": 2432.548697797182,
+        "score": 0.7378221970259096,
+        "eligible": true,
+        "warnings": [
+          "n<60"
+        ],
+        "_mode": "hybrid"
+      },
+      "short": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 90.0,
+        "n_full": 64,
+        "n_oos": 37,
+        "oos_sharpe": 4.247257033753365,
+        "oos_pnl_bps": 989.9244470756382,
+        "oos_max_dd_bps": -307.54635994159787,
+        "oos_win_rate": 0.5675675675675675,
+        "oos_median_bps": 29.551698533504823,
+        "is_sharpe": 7.535878051879551,
+        "is_pnl_bps": 1955.6737277948216,
+        "score": 0.5875008692532196,
+        "eligible": true,
+        "warnings": [
+          "n<60"
+        ],
+        "_mode": "hybrid"
       }
     },
     "588000ETF": {
       "long": {
-        "threshold_pct": 50.0,
-        "conviction_pct": 90.0,
-        "n_full": 64,
-        "n_oos": 27,
-        "oos_sharpe": 1.8040529083707606,
-        "oos_pnl_bps": 891.2258115971844,
-        "oos_max_dd_bps": -853.6494783172766,
-        "oos_win_rate": 0.4444444444444444,
-        "is_sharpe": 1.2304390938366891,
-        "is_pnl_bps": 421.9939577652607,
-        "score": 0.5279873228879026,
+        "threshold_pct": 95.0,
+        "conviction_pct": 40.0,
+        "n_full": 40,
+        "n_oos": 21,
+        "oos_sharpe": 5.749179938598556,
+        "oos_pnl_bps": 3124.0267827016305,
+        "oos_max_dd_bps": -400.22379196238467,
+        "oos_win_rate": 0.47619047619047616,
+        "oos_median_bps": -0.0634802091109424,
+        "is_sharpe": 10.971010235676987,
+        "is_pnl_bps": 1996.6255846779097,
+        "score": 0.8231696813689209,
         "eligible": true,
-        "_mode": "single"
-      },
-      "short": null
-    },
-    "159915ETF": {
-      "long": {
-        "threshold_pct": 50.0,
-        "conviction_pct": 90.0,
-        "n_full": 83,
-        "n_oos": 32,
-        "oos_sharpe": 6.37041914194963,
-        "oos_pnl_bps": 3492.161728754808,
-        "oos_max_dd_bps": -542.4394461517346,
-        "oos_win_rate": 0.6875,
-        "is_sharpe": 7.098851973457293,
-        "is_pnl_bps": 2847.3429658521936,
-        "score": 0.8540341156872241,
-        "eligible": true,
+        "warnings": [
+          "median<=0",
+          "win<=50%",
+          "n<60"
+        ],
         "_mode": "single"
       },
       "short": {
         "threshold_pct": 50.0,
         "conviction_pct": 80.0,
-        "n_full": 178,
-        "n_oos": 61,
-        "oos_sharpe": 4.825081370705647,
-        "oos_pnl_bps": 2714.1404718395106,
-        "oos_max_dd_bps": -618.8976264015822,
-        "oos_win_rate": 0.6721311475409836,
-        "is_sharpe": 6.001632483442597,
-        "is_pnl_bps": 6520.110410879742,
-        "score": 0.8060388151753953,
+        "n_full": 153,
+        "n_oos": 68,
+        "oos_sharpe": 3.4794045336226067,
+        "oos_pnl_bps": 2327.034563652788,
+        "oos_max_dd_bps": -789.6884157209682,
+        "oos_win_rate": 0.5882352941176471,
+        "oos_median_bps": 23.54023993795308,
+        "is_sharpe": 4.014308503569104,
+        "is_pnl_bps": 2134.8893155363126,
+        "score": 0.7471415356944572,
         "eligible": true,
-        "_mode": "hybrid"
+        "warnings": [],
+        "_mode": "single"
+      }
+    },
+    "159915ETF": {
+      "long": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 80.0,
+        "n_full": 196,
+        "n_oos": 60,
+        "oos_sharpe": 3.070083602178878,
+        "oos_pnl_bps": 2651.4612382022674,
+        "oos_max_dd_bps": -1204.8957363418256,
+        "oos_win_rate": 0.5833333333333334,
+        "oos_median_bps": 19.640735288170575,
+        "is_sharpe": 4.5405188367823595,
+        "is_pnl_bps": 5765.747778166378,
+        "score": 0.8192959730140668,
+        "eligible": true,
+        "warnings": [],
+        "_mode": "single"
+      },
+      "short": {
+        "threshold_pct": 95.0,
+        "conviction_pct": 40.0,
+        "n_full": 52,
+        "n_oos": 28,
+        "oos_sharpe": 4.9216516416327565,
+        "oos_pnl_bps": 1408.677163737151,
+        "oos_max_dd_bps": -502.45947749258613,
+        "oos_win_rate": 0.5714285714285714,
+        "oos_median_bps": 32.88671734824612,
+        "is_sharpe": 5.0938747549897,
+        "is_pnl_bps": 1137.2230376538887,
+        "score": 0.6571286818878876,
+        "eligible": true,
+        "warnings": [
+          "n<60"
+        ],
+        "_mode": "single"
       }
     }
   }

@@ -119,19 +119,31 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
         oos_cum = np.insert(np.cumsum(oos_rets), 0, 0.0)
         oos_max_dd = float(np.min(oos_cum - np.maximum.accumulate(oos_cum)) * 1e4)
         oos_wr = float((oos_rets > 0).mean())
+        oos_median_bps = float(np.median(oos_rets) * 1e4)
         n_oos = len(oos)
         side_metrics = {"pnl_bps": oos_pnl, "sharpe": oos_sharpe,
                         "max_dd_bps": oos_max_dd, "win_rate": oos_wr, "n": n_oos}
         score = _score(side_metrics, n_baseline_oos)
         eligible = (oos_pnl > 0) and (oos_sharpe > 0)
+        # Non-blocking fragility warnings (transparency only; do NOT change eligibility).
+        # If any of these fire, the positive Sharpe may be a small-sample / heavy-tail artifact.
+        warnings = []
+        if oos_median_bps <= 0:
+            warnings.append("median<=0")
+        if oos_wr <= 0.50:
+            warnings.append("win<=50%")
+        if n_oos < 60:
+            warnings.append("n<60")
         results.append({
             "threshold_pct": thr, "conviction_pct": conv,
             "n_full": len(trades), "n_oos": n_oos,
             "oos_sharpe": oos_sharpe, "oos_pnl_bps": oos_pnl,
             "oos_max_dd_bps": oos_max_dd, "oos_win_rate": oos_wr,
+            "oos_median_bps": oos_median_bps,
             "is_sharpe": _sharpe(is_["net_ret"].values) if len(is_) > 1 else float("nan"),
             "is_pnl_bps": float(is_["net_ret"].sum() * 1e4) if len(is_) else 0.0,
             "score": score, "eligible": eligible,
+            "warnings": warnings,
         })
         if verbose:
             print(f"    {side:<5} thr={thr:>4.0f} conv={conv:>4.0f} "
@@ -215,9 +227,14 @@ def calibrate_all(cost_bps: float = DEFAULT_COST_BPS, verbose: bool = True,
             for etf, v in out.items()
         },
     }
+    # Always write to calibration_{mode}.json (consumed by deploy.py mixed-mode picker).
+    # Also mirror to calibration.json for backward compat / single-shot inspection.
+    mode_path = OUT_PATH.parent / f"calibration_{mode}.json"
+    with open(mode_path, "w") as f:
+        json.dump(compact, f, indent=2)
     with open(OUT_PATH, "w") as f:
         json.dump(compact, f, indent=2)
-    print(f"\nSaved → {OUT_PATH}")
+    print(f"\nSaved → {mode_path} (and mirror → {OUT_PATH})")
 
     # Summary
     print("\n" + "=" * 72)

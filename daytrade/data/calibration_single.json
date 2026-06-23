@@ -4,119 +4,211 @@
   "results": {
     "50ETF": {
       "long": null,
-      "short": null,
+      "short": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 90.0,
+        "n_full": 92,
+        "n_oos": 20,
+        "oos_sharpe": 9.80348605509007,
+        "oos_pnl_bps": 1441.2110155645773,
+        "oos_max_dd_bps": -65.52778644955792,
+        "oos_win_rate": 0.65,
+        "oos_median_bps": 36.280014124293615,
+        "is_sharpe": 4.217682907115632,
+        "is_pnl_bps": 1672.3178317729353,
+        "score": 0.656884804245838,
+        "eligible": true,
+        "warnings": [
+          "n<60"
+        ]
+      },
       "long_meta": {
         "n_eligible": 0,
         "n_total": 20
       },
       "short_meta": {
-        "n_eligible": 0,
-        "n_total": 20
+        "n_eligible": 28,
+        "n_total": 30
       }
     },
     "300ETF": {
-      "long": null,
-      "short": null,
+      "long": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 40.0,
+        "n_full": 500,
+        "n_oos": 29,
+        "oos_sharpe": 0.60902162536856,
+        "oos_pnl_bps": 93.25540711393235,
+        "oos_max_dd_bps": -438.8679545155226,
+        "oos_win_rate": 0.3448275862068966,
+        "oos_median_bps": -18.003905076600645,
+        "is_sharpe": -0.8844771258680124,
+        "is_pnl_bps": -2754.7252330119886,
+        "score": 0.31116251289122493,
+        "eligible": true,
+        "warnings": [
+          "median<=0",
+          "win<=50%",
+          "n<60"
+        ]
+      },
+      "short": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 90.0,
+        "n_full": 141,
+        "n_oos": 34,
+        "oos_sharpe": 0.8030794925331647,
+        "oos_pnl_bps": 186.22550104324708,
+        "oos_max_dd_bps": -550.6056533585651,
+        "oos_win_rate": 0.4411764705882353,
+        "oos_median_bps": -12.851425430459017,
+        "is_sharpe": -0.30879311913022345,
+        "is_pnl_bps": -239.49478042879767,
+        "score": 0.3866325970036193,
+        "eligible": true,
+        "warnings": [
+          "median<=0",
+          "win<=50%",
+          "n<60"
+        ]
+      },
       "long_meta": {
-        "n_eligible": 0,
-        "n_total": 30
+        "n_eligible": 2,
+        "n_total": 2
       },
       "short_meta": {
-        "n_eligible": 0,
-        "n_total": 20
+        "n_eligible": 10,
+        "n_total": 30
       }
     },
     "500ETF": {
       "long": {
         "threshold_pct": 50.0,
-        "conviction_pct": 60.0,
-        "n_full": 384,
-        "n_oos": 81,
-        "oos_sharpe": 3.658884589042165,
-        "oos_pnl_bps": 2926.8474906850342,
-        "oos_max_dd_bps": -915.5352664027605,
-        "oos_win_rate": 0.5555555555555556,
-        "is_sharpe": 2.572556457513976,
-        "is_pnl_bps": 6318.899385073933,
-        "score": 0.7919833768418644,
-        "eligible": true
+        "conviction_pct": 90.0,
+        "n_full": 87,
+        "n_oos": 32,
+        "oos_sharpe": 2.96976681152524,
+        "oos_pnl_bps": 1139.9922740026082,
+        "oos_max_dd_bps": -445.65920752853094,
+        "oos_win_rate": 0.5,
+        "oos_median_bps": 6.395923759461866,
+        "is_sharpe": 3.44006690948339,
+        "is_pnl_bps": 1721.2609426160818,
+        "score": 0.599701990053009,
+        "eligible": true,
+        "warnings": [
+          "win<=50%",
+          "n<60"
+        ]
       },
       "short": {
         "threshold_pct": 50.0,
         "conviction_pct": 90.0,
-        "n_full": 122,
-        "n_oos": 58,
-        "oos_sharpe": 5.138222261685638,
-        "oos_pnl_bps": 2127.716653832952,
-        "oos_max_dd_bps": -318.4173008243673,
-        "oos_win_rate": 0.6206896551724138,
-        "is_sharpe": 1.6478892339663185,
-        "is_pnl_bps": 765.1997622595954,
-        "score": 0.7184280211394221,
-        "eligible": true
+        "n_full": 83,
+        "n_oos": 38,
+        "oos_sharpe": 1.8835260790832822,
+        "oos_pnl_bps": 450.79328921312964,
+        "oos_max_dd_bps": -539.7444502106075,
+        "oos_win_rate": 0.5,
+        "oos_median_bps": 13.918204284392178,
+        "is_sharpe": 5.508594376359837,
+        "is_pnl_bps": 2110.9876038580683,
+        "score": 0.46987984539139727,
+        "eligible": true,
+        "warnings": [
+          "win<=50%",
+          "n<60"
+        ]
       },
       "long_meta": {
         "n_eligible": 30,
         "n_total": 30
       },
       "short_meta": {
-        "n_eligible": 30,
-        "n_total": 36
+        "n_eligible": 18,
+        "n_total": 30
       }
     },
     "588000ETF": {
       "long": {
-        "threshold_pct": 50.0,
-        "conviction_pct": 90.0,
-        "n_full": 64,
-        "n_oos": 27,
-        "oos_sharpe": 1.8040529083707606,
-        "oos_pnl_bps": 891.2258115971844,
-        "oos_max_dd_bps": -853.6494783172766,
-        "oos_win_rate": 0.4444444444444444,
-        "is_sharpe": 1.2304390938366891,
-        "is_pnl_bps": 421.9939577652607,
-        "score": 0.5279873228879026,
-        "eligible": true
+        "threshold_pct": 95.0,
+        "conviction_pct": 40.0,
+        "n_full": 40,
+        "n_oos": 21,
+        "oos_sharpe": 5.749179938598556,
+        "oos_pnl_bps": 3124.0267827016305,
+        "oos_max_dd_bps": -400.22379196238467,
+        "oos_win_rate": 0.47619047619047616,
+        "oos_median_bps": -0.0634802091109424,
+        "is_sharpe": 10.971010235676987,
+        "is_pnl_bps": 1996.6255846779097,
+        "score": 0.8231696813689209,
+        "eligible": true,
+        "warnings": [
+          "median<=0",
+          "win<=50%",
+          "n<60"
+        ]
       },
-      "short": null,
+      "short": {
+        "threshold_pct": 50.0,
+        "conviction_pct": 80.0,
+        "n_full": 153,
+        "n_oos": 68,
+        "oos_sharpe": 3.4794045336226067,
+        "oos_pnl_bps": 2327.034563652788,
+        "oos_max_dd_bps": -789.6884157209682,
+        "oos_win_rate": 0.5882352941176471,
+        "oos_median_bps": 23.54023993795308,
+        "is_sharpe": 4.014308503569104,
+        "is_pnl_bps": 2134.8893155363126,
+        "score": 0.7471415356944572,
+        "eligible": true,
+        "warnings": []
+      },
       "long_meta": {
-        "n_eligible": 18,
-        "n_total": 30
+        "n_eligible": 36,
+        "n_total": 36
       },
       "short_meta": {
-        "n_eligible": 0,
+        "n_eligible": 36,
         "n_total": 36
       }
     },
     "159915ETF": {
       "long": {
         "threshold_pct": 50.0,
-        "conviction_pct": 90.0,
-        "n_full": 83,
-        "n_oos": 32,
-        "oos_sharpe": 6.37041914194963,
-        "oos_pnl_bps": 3492.161728754808,
-        "oos_max_dd_bps": -542.4394461517346,
-        "oos_win_rate": 0.6875,
-        "is_sharpe": 7.098851973457293,
-        "is_pnl_bps": 2847.3429658521936,
-        "score": 0.8540341156872241,
-        "eligible": true
+        "conviction_pct": 80.0,
+        "n_full": 196,
+        "n_oos": 60,
+        "oos_sharpe": 3.070083602178878,
+        "oos_pnl_bps": 2651.4612382022674,
+        "oos_max_dd_bps": -1204.8957363418256,
+        "oos_win_rate": 0.5833333333333334,
+        "oos_median_bps": 19.640735288170575,
+        "is_sharpe": 4.5405188367823595,
+        "is_pnl_bps": 5765.747778166378,
+        "score": 0.8192959730140668,
+        "eligible": true,
+        "warnings": []
       },
       "short": {
-        "threshold_pct": 50.0,
-        "conviction_pct": 70.0,
-        "n_full": 332,
-        "n_oos": 91,
-        "oos_sharpe": 3.198545876268783,
-        "oos_pnl_bps": 2405.933655621505,
-        "oos_max_dd_bps": -627.9494708125433,
-        "oos_win_rate": 0.6373626373626373,
-        "is_sharpe": 3.5645608726406195,
-        "is_pnl_bps": 7629.299341051274,
-        "score": 0.7426471329682536,
-        "eligible": true
+        "threshold_pct": 95.0,
+        "conviction_pct": 40.0,
+        "n_full": 52,
+        "n_oos": 28,
+        "oos_sharpe": 4.9216516416327565,
+        "oos_pnl_bps": 1408.677163737151,
+        "oos_max_dd_bps": -502.45947749258613,
+        "oos_win_rate": 0.5714285714285714,
+        "oos_median_bps": 32.88671734824612,
+        "is_sharpe": 5.0938747549897,
+        "is_pnl_bps": 1137.2230376538887,
+        "score": 0.6571286818878876,
+        "eligible": true,
+        "warnings": [
+          "n<60"
+        ]
       },
       "long_meta": {
         "n_eligible": 30,
@@ -124,7 +216,7 @@
       },
       "short_meta": {
         "n_eligible": 30,
-        "n_total": 30
+        "n_total": 36
       }
     }
   }

@@ -8,8 +8,8 @@ Dual-Model Architecture
 -----------------------
 Each ETF runs TWO independent models trained by ``day-model/train_model.py --side``:
 
-  * ``side="long"``  -> target ``max(0, pm_return)``, files ``linear_{ETF}_long.joblib``
-  * ``side="short"`` -> target ``max(0, -pm_return)``, files ``linear_{ETF}_short.joblib``
+  * ``side="long"``  -> target ``max(0, trade_return)``, files ``linear_{ETF}_long.joblib``
+  * ``side="short"`` -> target ``max(0, -trade_return)``, files ``linear_{ETF}_short.joblib``
 
 Both scores are **positive-oriented conviction** series.  The legacy
 ``side="single"`` path (symmetric target) is retained for backward compat
@@ -88,7 +88,12 @@ def load_model(etf: str, side: str = "single") -> dict:
 
 
 def load_features(etf: str) -> pd.DataFrame:
-    """Load feature parquet (137 features + pm_return target, indexed by date)."""
+    """Load feature parquet (137 features + trade_return target, indexed by date).
+
+    ``trade_return`` = log(close[EXIT_BAR] / open[decision_bar+1]) mirrors the
+    actual daytrade P&L. ``pm_return`` retained for diagnostic IC checks vs the
+    old baseline.
+    """
     return pd.read_parquet(DATA_DIR / f"features_{etf}.parquet")
 
 
@@ -138,13 +143,13 @@ def compute_scores(etf: str, side: str = "single", dropna: bool = True) -> pd.Se
 def verify_ic(etf: str, side: str = "single") -> dict:
     """Compute IC vs the appropriate target.
 
-    For ``side="long"`` the target is ``max(0, pm_return)``; for
-    ``side="short"`` it is ``max(0, -pm_return)``; for ``single`` it is
-    the raw ``pm_return``.
+    For ``side="long"`` the target is ``max(0, trade_return)``; for
+    ``side="short"`` it is ``max(0, -trade_return)``; for ``single`` it is
+    the raw ``trade_return``.
     """
     s = compute_scores(etf, side=side, dropna=False)
     df = load_features(etf)
-    pm = df["pm_return"]
+    pm = df["trade_return"]
     if side == "long":
         target = np.maximum(0.0, pm.values)
     elif side == "short":

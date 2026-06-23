@@ -11,11 +11,11 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | ETF | Model | Threshold | Features | Samples | Holdout IC | Holdout Dir | L/S Sharpe | Ridge Base IC | IS-OOS Gap |
 |-----|-------|-----------|----------|---------|-----------|-------------|-----------|---------------|------------|
-| 300ETF | HUBER | 0.50 | 28/130 | 2722 | +0.0663 | 0.511 | +1.23 | +0.0216 | +0.1116 |
-| 50ETF | HUBER | 0.70 | 3/130 | 2721 | +0.0231 | 0.537 | +0.03 | -0.0522 | +0.0681 |
-| 500ETF | HUBER | 0.40 | 70/130 | 2719 | +0.0848 | 0.519 | +2.67 | -0.0427 | +0.1417 |
-| 588000ETF | ELASTICNET | 0.60 | 33/130 | 1293 | -0.0474 | 0.453 | -1.13 | -0.0612 | +0.2631 |
-| 159915ETF | HUBER | 0.80 | 15/130 | 2719 | +0.1789 | 0.569 | +3.28 | +0.1139 | +0.0337 |
+| 300ETF | HUBER | 0.90 | 3/130 | 2722 | +0.0207 | 0.518 | +1.20 | +0.0618 | +0.0495 |
+| 50ETF | HUBER | 0.70 | 12/130 | 2721 | +0.0333 | 0.500 | +1.68 | +0.0861 | +0.1055 |
+| 500ETF | ELASTICNET | 0.60 | 39/130 | 2719 | +0.1282 | 0.573 | +2.49 | +0.1371 | +0.0650 |
+| 588000ETF | RIDGE | 0.65 | 21/130 | 1293 | -0.0152 | 0.465 | +1.17 | -0.0564 | +0.2350 |
+| 159915ETF | ELASTICNET | 0.70 | 41/130 | 2719 | +0.1006 | 0.510 | +2.77 | +0.0482 | +0.1424 |
 
 ## 2. Data & Features
 
@@ -27,10 +27,11 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 | Day-level (60) | 60 | macd_hist, sma20_dist, sma50_dist, atr14_norm, roc10, bb_pctb, vol20, sma10_dist, sma100_dist, sma200_dist, ema12_dist, rsi5, rsi21, roc5, roc20... and 45 more (total 60) |
 | Yesterday (22) | 22 | yesterday_pm_return, yesterday_am_return, yesterday_gap_pct, yesterday_first_30min_return, yesterday_early_realized_vol, yesterday_early_range, yesterday_early_volume_ratio, yesterday_early_trend, yesterday_early_momentum, yesterday_first_bar_return, yesterday_first_bar_volume, yesterday_early_vwap_dev, yesterday_early_skew, yesterday_early_kurtosis, yesterday_day_range... and 7 more (total 22) |
 
-- **Early-bar**: First 6 five-minute bars (9:30–10:00) plus price action features. All computable by 10:00 AM.
+- **Early-bar**: First `decision_bar+1` five-minute bars per-ETF (see `DECISION_BAR` in `build_features.py`). Bars beyond `decision_bar` padded with 0.0. Strictly causal — no look-ahead.
 - **Day-level**: Technical indicators and 3rd party flows shifted by 1 day (no look-ahead).
 - **Yesterday**: Shifted full-day and early-bar features from day t-1 (no look-ahead).
-- **Target**: `pm_return` = sum of log returns over bars 24–47 (13:00–15:00 session).
+- **Target**: `trade_return` = log(close[EXIT_BAR] / open[decision_bar+1]). Mirrors actual daytrade P&L exactly (entry at next-bar open after decision, exit at 14:30 close).
+- **Diagnostic target**: `pm_return` (bars 24..47, 13:00→15:00) retained for IC sanity-checks vs the old baseline — do NOT train on it.
 - **Warmup**: First 60 rows dropped (SMA50/ATR14 burn-in).
 
 ## 3. Methodology
@@ -61,146 +62,146 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 ### 300ETF
 
 - **Selected Model**: HUBER
-- **Tuned Stability Threshold**: 0.50
+- **Tuned Stability Threshold**: 0.90
 - **Samples**: 2722 (2015-04-07 → 2026-06-17)
 - **Holdout**: 544 days (2024-03-19 → 2026-06-17)
-- **Target stats**: mean=0.0245%, std=0.8148%, Sharpe=0.48
-- **Selected features (28)**: `early_skew, bar_vol_5, bar_rng_0, bar_rng_1, bar_rng_3, bar_rng_5, bar_vwap_dev_0, max_up_ret, body_to_range_ratio, roc5, vol5, volume_sma_ratio_long, short_repayment_quantity, margin_net_buy, northbound_net, vix_iv_spread, iv_diff_1d, yesterday_am_return, yesterday_early_realized_vol, yesterday_early_volume_ratio, yesterday_early_trend, yesterday_first_bar_return, yesterday_early_skew, yesterday_day_realized_vol, yesterday_day_close_pos, yesterday_day_late_mom, yesterday_day_vwap_dev, yesterday_day_skew`
+- **Target stats**: mean=0.0125%, std=0.9550%, Sharpe=0.21
+- **Selected features (3)**: `sma100_dist, yesterday_day_late_mom, northbound_net`
 
 #### Feature Stability Scores (Block Bootstrap)
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|
-| vix_iv_spread | 82.0% | **Selected** | +0.0509 | +0.0673 | +0.80 | 0.0263 | ** Moderate Monotonic |
-| yesterday_day_skew | 74.0% | **Selected** | -0.0361 | -0.0213 | -0.30 | 0.0000 | * Non-Monotonic / Weak |
-| bar_rng_3 | 72.0% | **Selected** | -0.0594 | -0.0085 | +0.00 | 0.0365 | * Non-Monotonic / Weak |
-| iv_diff_1d | 70.0% | **Selected** | -0.0239 | -0.0098 | -0.20 | 0.0038 | * Non-Monotonic / Weak |
-| bar_vwap_dev_0 | 66.0% | **Selected** | +0.0369 | +0.0334 | N/A | 0.0021 | N/A |
-| max_up_ret | 64.0% | **Selected** | +0.0534 | +0.0645 | +0.90 | 0.0428 | *** Strong Monotonic |
-| vol5 | 64.0% | **Selected** | +0.0110 | +0.0009 | +0.10 | 0.0738 | * Non-Monotonic / Weak |
-| yesterday_day_close_pos | 64.0% | **Selected** | -0.0529 | -0.0628 | -0.80 | 0.0000 | ** Moderate Monotonic |
-| short_repayment_quantity | 62.0% | **Selected** | -0.0231 | -0.0140 | -0.90 | 0.0080 | *** Strong Monotonic |
-| bar_rng_0 | 60.0% | **Selected** | -0.0703 | -0.0027 | +0.10 | 0.0562 | * Non-Monotonic / Weak |
-| yesterday_am_return | 60.0% | **Selected** | +0.0628 | +0.0381 | +0.40 | 0.0102 | * Non-Monotonic / Weak |
-| body_to_range_ratio | 58.0% | **Selected** | +0.0006 | +0.0065 | +0.70 | 0.0000 | ** Moderate Monotonic |
-| yesterday_early_realized_vol | 58.0% | **Selected** | +0.0220 | +0.0266 | +0.50 | 0.0138 | * Non-Monotonic / Weak |
-| yesterday_day_vwap_dev | 58.0% | **Selected** | -0.0372 | -0.0851 | -1.00 | 0.0238 | ** Non-Linear Monotonic |
-| early_skew | 56.0% | **Selected** | -0.0158 | -0.0170 | +0.00 | 0.0063 | * Non-Monotonic / Weak |
-| yesterday_first_bar_return | 56.0% | **Selected** | +0.0495 | +0.0324 | +0.90 | 0.0000 | *** Strong Monotonic |
-| bar_vol_5 | 52.0% | **Selected** | +0.0087 | -0.0291 | -0.70 | 0.0000 | ** Moderate Monotonic |
-| bar_rng_5 | 52.0% | **Selected** | -0.0037 | +0.0047 | +0.30 | 0.0086 | * Non-Monotonic / Weak |
-| margin_net_buy | 52.0% | **Selected** | +0.0299 | -0.0025 | +0.40 | 0.0129 | * Non-Monotonic / Weak |
-| yesterday_early_trend | 52.0% | **Selected** | +0.0596 | +0.0534 | +0.90 | 0.0000 | *** Strong Monotonic |
-| yesterday_day_realized_vol | 52.0% | **Selected** | -0.0010 | +0.0117 | +0.40 | 0.0755 | * Non-Monotonic / Weak |
-| bar_rng_1 | 50.0% | **Selected** | -0.0183 | +0.0156 | +0.50 | 0.0625 | * Non-Monotonic / Weak |
-| roc5 | 50.0% | **Selected** | -0.0256 | -0.0217 | -0.30 | 0.0404 | * Non-Monotonic / Weak |
-| volume_sma_ratio_long | 50.0% | **Selected** | +0.0099 | +0.0278 | +0.90 | 0.0364 | ** Non-Linear Monotonic |
-| northbound_net | 50.0% | **Selected** | +0.0269 | +0.0293 | +0.80 | 0.0043 | ** Moderate Monotonic |
-| yesterday_early_volume_ratio | 50.0% | **Selected** | -0.0088 | +0.0173 | +0.50 | 0.0090 | * Non-Monotonic / Weak |
-| yesterday_early_skew | 50.0% | **Selected** | -0.0121 | -0.0191 | -0.70 | 0.0157 | ** Moderate Monotonic |
-| yesterday_day_late_mom | 50.0% | **Selected** | +0.0181 | -0.0028 | -0.50 | 0.0557 | * Non-Monotonic / Weak |
-| early_realized_vol | 48.0% | Pruned | -0.0444 | -0.0003 | -0.10 | 0.0481 | * Non-Monotonic / Weak |
-| bar_body_rng_5 | 48.0% | Pruned | +0.0010 | -0.0359 | -0.10 | 0.0137 | * Non-Monotonic / Weak |
-| buy_on_margin_value | 48.0% | Pruned | -0.0310 | -0.0415 | -0.90 | 0.0135 | *** Strong Monotonic |
-| yesterday_pm_return | 48.0% | Pruned | -0.0412 | -0.0817 | -1.00 | 0.0396 | ** Non-Linear Monotonic |
-| yesterday_early_vwap_dev | 48.0% | Pruned | +0.0665 | +0.0660 | +1.00 | 0.0127 | *** Strong Monotonic |
-| yesterday_early_kurtosis | 48.0% | Pruned | +0.0132 | +0.0018 | +0.50 | 0.0000 | * Non-Monotonic / Weak |
-| early_range | 46.0% | Pruned | -0.0081 | +0.0196 | +0.60 | 0.0802 | ** Moderate Monotonic |
-| bar_rng_2 | 46.0% | Pruned | -0.0367 | +0.0038 | -0.10 | 0.0248 | * Non-Monotonic / Weak |
-| bar_rng_4 | 46.0% | Pruned | -0.0177 | -0.0053 | +0.30 | 0.0684 | * Non-Monotonic / Weak |
-| bar_body_rng_0 | 46.0% | Pruned | +0.0470 | +0.0344 | +1.00 | 0.0000 | *** Strong Monotonic |
-| bar_body_rng_2 | 46.0% | Pruned | +0.0104 | +0.0191 | +0.60 | 0.0000 | ** Moderate Monotonic |
-| bar_vwap_dev_2 | 46.0% | Pruned | -0.0318 | +0.0279 | -0.70 | 0.0151 | ** Moderate Monotonic |
-| sma100_dist | 46.0% | Pruned | -0.0248 | -0.0135 | -0.30 | 0.0316 | * Non-Monotonic / Weak |
-| yesterday_day_range | 46.0% | Pruned | -0.0218 | +0.0039 | -0.50 | 0.0421 | * Non-Monotonic / Weak |
-| yesterday_day_kurtosis | 46.0% | Pruned | +0.0058 | +0.0026 | -0.20 | 0.0000 | * Non-Monotonic / Weak |
-| vix_diff_1d | 44.0% | Pruned | -0.0356 | -0.0182 | -0.40 | 0.0171 | * Non-Monotonic / Weak |
-| bar_ret_1 | 42.0% | Pruned | -0.0364 | +0.0330 | +0.00 | 0.0473 | * Non-Monotonic / Weak |
-| bar_vol_4 | 42.0% | Pruned | +0.0202 | -0.0146 | -0.10 | 0.0215 | * Non-Monotonic / Weak |
-| macd_hist | 42.0% | Pruned | -0.0240 | +0.0030 | +0.10 | 0.0411 | * Non-Monotonic / Weak |
-| vol_ratio_5_20 | 42.0% | Pruned | +0.0262 | +0.0027 | +0.10 | 0.0000 | * Non-Monotonic / Weak |
-| yesterday_early_range | 42.0% | Pruned | -0.0079 | +0.0207 | +0.60 | 0.0471 | ** Moderate Monotonic |
-| early_kurtosis | 40.0% | Pruned | -0.0162 | -0.0170 | -0.60 | 0.0051 | ** Moderate Monotonic |
-| cl_pos_in_range | 40.0% | Pruned | +0.0204 | +0.0158 | +0.80 | 0.0000 | ** Moderate Monotonic |
-| yesterday_gap_pct | 40.0% | Pruned | +0.0205 | +0.0445 | +0.60 | 0.0376 | ** Moderate Monotonic |
-| yesterday_first_bar_volume | 40.0% | Pruned | -0.0000 | -0.0085 | -0.30 | 0.0144 | * Non-Monotonic / Weak |
-| bar_body_rng_1 | 38.0% | Pruned | -0.0020 | +0.0393 | -0.10 | 0.0145 | * Non-Monotonic / Weak |
-| bar_body_rng_4 | 38.0% | Pruned | +0.0014 | +0.0067 | +0.00 | 0.0049 | * Non-Monotonic / Weak |
-| bar_vwap_dev_1 | 38.0% | Pruned | -0.0291 | +0.0341 | -0.20 | 0.0032 | * Non-Monotonic / Weak |
-| num_up_bars | 38.0% | Pruned | +0.0284 | +0.0432 | +1.00 | 0.0000 | ** Non-Linear Monotonic |
-| roc10 | 38.0% | Pruned | -0.0368 | -0.0020 | -0.20 | 0.0715 | * Non-Monotonic / Weak |
-| vol10 | 38.0% | Pruned | +0.0029 | +0.0129 | -0.40 | 0.0471 | * Non-Monotonic / Weak |
-| bb_width | 38.0% | Pruned | +0.0082 | -0.0244 | -0.70 | 0.0569 | ** Moderate Monotonic |
-| capital_net_ratio | 38.0% | Pruned | -0.0232 | -0.0448 | -0.80 | 0.0323 | ** Moderate Monotonic |
-| iv | 38.0% | Pruned | -0.0379 | +0.0015 | -0.20 | 0.0575 | * Non-Monotonic / Weak |
-| yesterday_day_pm_am_vol_ratio | 38.0% | Pruned | +0.0017 | -0.0271 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
-| gap_pct | 36.0% | Pruned | +0.0287 | +0.0428 | +0.60 | 0.0275 | ** Moderate Monotonic |
-| first_bar_volume | 36.0% | Pruned | -0.0301 | -0.0402 | -0.70 | 0.0000 | ** Moderate Monotonic |
-| early_vwap_dev | 36.0% | Pruned | +0.0054 | +0.0049 | +0.70 | 0.0250 | ** Moderate Monotonic |
-| bar_ret_5 | 36.0% | Pruned | +0.0160 | -0.0284 | +0.60 | 0.0508 | ** Moderate Monotonic |
-| bar_vol_1 | 36.0% | Pruned | -0.0216 | -0.0240 | -0.30 | 0.0065 | * Non-Monotonic / Weak |
-| bar_vol_2 | 36.0% | Pruned | -0.0178 | -0.0332 | -0.90 | 0.0000 | ** Non-Linear Monotonic |
-| bar_vol_3 | 36.0% | Pruned | +0.0000 | -0.0177 | +0.10 | 0.0053 | * Non-Monotonic / Weak |
-| vol60 | 36.0% | Pruned | -0.0127 | +0.0027 | -0.60 | 0.0675 | ** Moderate Monotonic |
-| volume_sma_ratio | 36.0% | Pruned | -0.0069 | -0.0044 | +0.40 | 0.0000 | * Non-Monotonic / Weak |
-| margin_short_ratio | 36.0% | Pruned | -0.0095 | -0.0125 | -0.70 | 0.0566 | ** Moderate Monotonic |
-| bar_ret_3 | 34.0% | Pruned | +0.0075 | +0.0219 | +0.60 | 0.0452 | ** Moderate Monotonic |
-| bar_ret_4 | 34.0% | Pruned | +0.0102 | +0.0122 | +0.20 | 0.0375 | * Non-Monotonic / Weak |
-| bar_vwap_dev_4 | 34.0% | Pruned | -0.0147 | +0.0297 | +0.50 | 0.0405 | * Non-Monotonic / Weak |
-| bar_vwap_dev_5 | 34.0% | Pruned | +0.0054 | +0.0049 | +0.70 | 0.0250 | ** Moderate Monotonic |
-| volume_slope | 34.0% | Pruned | +0.0430 | +0.0334 | +0.20 | 0.0000 | * Non-Monotonic / Weak |
-| sma200_dist | 34.0% | Pruned | -0.0160 | +0.0000 | -0.20 | 0.0389 | * Non-Monotonic / Weak |
-| rsi5 | 34.0% | Pruned | -0.0154 | -0.0108 | -0.40 | 0.0030 | * Non-Monotonic / Weak |
-| vol_ratio_10_60 | 34.0% | Pruned | +0.0154 | +0.0168 | +0.50 | 0.0111 | * Non-Monotonic / Weak |
-| vol_pk20 | 34.0% | Pruned | -0.0306 | +0.0085 | -0.30 | 0.0561 | * Non-Monotonic / Weak |
-| vol_gk20 | 34.0% | Pruned | -0.0329 | +0.0081 | -0.40 | 0.0481 | * Non-Monotonic / Weak |
-| capital_net_value | 34.0% | Pruned | -0.0380 | -0.0540 | -0.80 | 0.0000 | ** Moderate Monotonic |
-| vix_vol_ratio | 34.0% | Pruned | -0.0056 | -0.0055 | -0.80 | 0.0282 | ** Moderate Monotonic |
-| yesterday_early_momentum | 32.0% | Pruned | +0.0553 | +0.0536 | +0.90 | 0.0205 | *** Strong Monotonic |
-| bar_ret_2 | 30.0% | Pruned | -0.0153 | +0.0175 | +0.30 | 0.0305 | * Non-Monotonic / Weak |
-| bar_vol_0 | 30.0% | Pruned | -0.0301 | -0.0402 | -0.70 | 0.0000 | ** Moderate Monotonic |
-| bar_vwap_dev_3 | 30.0% | Pruned | -0.0278 | +0.0262 | +0.10 | 0.0005 | * Non-Monotonic / Weak |
-| total_path_length | 30.0% | Pruned | -0.0325 | +0.0124 | +0.30 | 0.0350 | * Non-Monotonic / Weak |
-| cci14 | 30.0% | Pruned | +0.0045 | +0.0049 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
-| willr14 | 30.0% | Pruned | -0.0119 | -0.0051 | -0.30 | 0.0196 | * Non-Monotonic / Weak |
-| stoch_d | 30.0% | Pruned | -0.0054 | +0.0116 | +0.40 | 0.0173 | * Non-Monotonic / Weak |
-| short_balance | 30.0% | Pruned | +0.0110 | +0.0554 | +0.90 | 0.0385 | ** Non-Linear Monotonic |
-| capital_buy_volume | 30.0% | Pruned | -0.0304 | -0.0267 | -0.60 | 0.0278 | ** Moderate Monotonic |
-| vix_iv_ratio | 30.0% | Pruned | +0.0357 | +0.0700 | +0.90 | 0.0354 | ** Non-Linear Monotonic |
-| first_30min_return | 28.0% | Pruned | +0.0462 | +0.0478 | +0.80 | 0.0198 | ** Moderate Monotonic |
-| bar_body_rng_3 | 28.0% | Pruned | +0.0103 | +0.0163 | +0.60 | 0.0071 | ** Moderate Monotonic |
-| rsi21 | 28.0% | Pruned | -0.0122 | -0.0051 | -0.10 | 0.0168 | * Non-Monotonic / Weak |
-| roc20 | 28.0% | Pruned | -0.0115 | +0.0015 | +0.40 | 0.0185 | * Non-Monotonic / Weak |
-| mfi14 | 28.0% | Pruned | +0.0025 | +0.0072 | +0.10 | 0.0059 | * Non-Monotonic / Weak |
-| aroon_osc | 28.0% | Pruned | +0.0048 | +0.0151 | +0.50 | 0.0000 | * Non-Monotonic / Weak |
-| yesterday_first_30min_return | 28.0% | Pruned | +0.0727 | +0.0614 | +1.00 | 0.0444 | *** Strong Monotonic |
-| first_bar_return | 26.0% | Pruned | +0.0973 | +0.0459 | +1.00 | 0.0259 | *** Strong Monotonic |
-| bb_pctb | 26.0% | Pruned | +0.0018 | +0.0032 | +0.10 | 0.0326 | * Non-Monotonic / Weak |
-| vol20 | 26.0% | Pruned | -0.0146 | +0.0106 | +0.00 | 0.0779 | * Non-Monotonic / Weak |
-| sma10_dist | 26.0% | Pruned | -0.0273 | -0.0111 | -0.30 | 0.0586 | * Non-Monotonic / Weak |
-| ema12_dist | 26.0% | Pruned | -0.0244 | -0.0109 | -0.10 | 0.0254 | * Non-Monotonic / Weak |
-| roc60 | 26.0% | Pruned | -0.0143 | -0.0005 | -0.40 | 0.0334 | * Non-Monotonic / Weak |
-| short_sell_quantity | 26.0% | Pruned | -0.0121 | +0.0637 | +0.10 | 0.0181 | * Non-Monotonic / Weak |
-| vol_gk10 | 24.0% | Pruned | -0.0158 | +0.0191 | +0.20 | 0.0642 | * Non-Monotonic / Weak |
-| early_momentum | 22.0% | Pruned | -0.0133 | +0.0226 | -0.10 | 0.0303 | * Non-Monotonic / Weak |
-| sma50_dist | 22.0% | Pruned | -0.0173 | -0.0059 | +0.30 | 0.0653 | * Non-Monotonic / Weak |
-| margin_balance | 22.0% | Pruned | -0.0045 | +0.0408 | +0.60 | 0.0702 | ** Moderate Monotonic |
-| bar_ret_0 | 20.0% | Pruned | +0.0972 | +0.0459 | +1.00 | 0.0257 | *** Strong Monotonic |
-| short_balance_quantity | 20.0% | Pruned | +0.0206 | +0.0611 | +0.90 | 0.0213 | ** Non-Linear Monotonic |
-| total_balance | 20.0% | Pruned | -0.0042 | +0.0415 | +0.80 | 0.0779 | ** Moderate Monotonic |
-| capital_buy_value | 20.0% | Pruned | -0.0383 | -0.0251 | -0.60 | 0.0422 | ** Moderate Monotonic |
-| iv_vol_ratio | 20.0% | Pruned | -0.0172 | -0.0210 | -1.00 | 0.0113 | *** Strong Monotonic |
-| stoch_k | 18.0% | Pruned | -0.0045 | +0.0078 | +0.20 | 0.0000 | * Non-Monotonic / Weak |
-| northbound_sell | 18.0% | Pruned | -0.0206 | -0.0394 | -0.90 | 0.0453 | ** Non-Linear Monotonic |
-| early_trend | 16.0% | Pruned | -0.0089 | +0.0202 | +0.50 | 0.0100 | * Non-Monotonic / Weak |
-| sma20_dist | 16.0% | Pruned | -0.0275 | -0.0061 | -0.60 | 0.0427 | ** Moderate Monotonic |
-| margin_repayment | 14.0% | Pruned | -0.0496 | -0.0443 | -1.00 | 0.0242 | *** Strong Monotonic |
-| atr14_norm | 12.0% | Pruned | -0.0162 | +0.0106 | -0.20 | 0.0344 | * Non-Monotonic / Weak |
-| max_down_ret | 10.0% | Pruned | +0.0605 | +0.0350 | +0.90 | 0.0297 | *** Strong Monotonic |
-| capital_sell_volume | 10.0% | Pruned | -0.0186 | -0.0098 | -0.80 | 0.0654 | ** Moderate Monotonic |
-| northbound_buy | 10.0% | Pruned | -0.0157 | -0.0356 | -0.50 | 0.0419 | * Non-Monotonic / Weak |
-| capital_sell_value | 8.0% | Pruned | -0.0226 | -0.0081 | -0.90 | 0.0358 | *** Strong Monotonic |
-| vix | 8.0% | Pruned | -0.0154 | +0.0259 | +0.80 | 0.0463 | ** Moderate Monotonic |
+| sma100_dist | 96.0% | **Selected** | -0.0793 | -0.0428 | -0.90 | 0.0170 | *** Strong Monotonic |
+| yesterday_day_late_mom | 88.0% | **Selected** | +0.0391 | +0.0103 | +0.30 | 0.0338 | * Non-Monotonic / Weak |
+| northbound_net | 82.0% | **Selected** | +0.0381 | +0.0469 | +0.90 | 0.0000 | *** Strong Monotonic |
+| iv_diff_1d | 82.0% | Pruned | -0.0231 | -0.0174 | -0.80 | 0.0083 | ** Moderate Monotonic |
+| yesterday_early_realized_vol | 80.0% | Pruned | +0.0550 | +0.0205 | +0.10 | 0.0134 | * Non-Monotonic / Weak |
+| yesterday_early_vwap_dev | 78.0% | Pruned | +0.0869 | +0.0479 | +0.60 | 0.0323 | ** Moderate Monotonic |
+| vix_iv_spread | 70.0% | Pruned | +0.0440 | +0.0576 | +0.80 | 0.0187 | ** Moderate Monotonic |
+| yesterday_early_skew | 68.0% | Pruned | -0.0433 | -0.0409 | -0.70 | 0.0159 | ** Moderate Monotonic |
+| yesterday_day_close_pos | 66.0% | Pruned | -0.0219 | -0.0294 | -0.70 | 0.0000 | ** Moderate Monotonic |
+| yesterday_day_skew | 64.0% | Pruned | -0.0019 | -0.0049 | +0.10 | 0.0000 | * Non-Monotonic / Weak |
+| early_skew | 62.0% | Pruned | +0.0298 | +0.0162 | +0.80 | 0.0000 | ** Moderate Monotonic |
+| capital_net_ratio | 62.0% | Pruned | -0.0251 | -0.0464 | -0.60 | 0.0089 | ** Moderate Monotonic |
+| bar_vol_3 | 60.0% | Pruned | +0.0162 | -0.0171 | -0.30 | 0.0000 | * Non-Monotonic / Weak |
+| yesterday_am_return | 60.0% | Pruned | +0.0594 | +0.0241 | +0.30 | 0.0078 | * Non-Monotonic / Weak |
+| first_bar_return | 58.0% | Pruned | +0.1670 | +0.0754 | +0.90 | 0.0148 | *** Strong Monotonic |
+| bar_body_rng_1 | 58.0% | Pruned | +0.0312 | +0.0425 | +0.90 | 0.0083 | *** Strong Monotonic |
+| bar_ret_2 | 56.0% | Pruned | -0.0335 | +0.0125 | +0.60 | 0.0228 | ** Moderate Monotonic |
+| bar_body_rng_0 | 56.0% | Pruned | +0.0847 | +0.0682 | +0.70 | 0.0185 | ** Moderate Monotonic |
+| roc10 | 56.0% | Pruned | -0.0667 | -0.0307 | -0.20 | 0.0074 | * Non-Monotonic / Weak |
+| yesterday_early_kurtosis | 56.0% | Pruned | -0.0244 | -0.0063 | -0.30 | 0.0036 | * Non-Monotonic / Weak |
+| yesterday_day_pm_am_vol_ratio | 56.0% | Pruned | +0.0275 | +0.0044 | +0.30 | 0.0302 | * Non-Monotonic / Weak |
+| bar_body_rng_2 | 54.0% | Pruned | +0.0052 | +0.0061 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
+| bar_vwap_dev_0 | 54.0% | Pruned | +0.0128 | +0.0145 | N/A | 0.0000 | N/A |
+| max_up_ret | 54.0% | Pruned | +0.1235 | +0.0781 | +1.00 | 0.0182 | *** Strong Monotonic |
+| bar_rng_1 | 52.0% | Pruned | -0.0171 | +0.0223 | +0.10 | 0.0501 | * Non-Monotonic / Weak |
+| yesterday_early_volume_ratio | 52.0% | Pruned | -0.0147 | -0.0106 | -0.30 | 0.0000 | * Non-Monotonic / Weak |
+| bar_vwap_dev_1 | 50.0% | Pruned | +0.0289 | +0.0504 | +0.80 | 0.0047 | ** Moderate Monotonic |
+| yesterday_early_range | 50.0% | Pruned | +0.0375 | +0.0088 | +0.70 | 0.0022 | ** Moderate Monotonic |
+| early_kurtosis | 48.0% | Pruned | +0.0003 | +0.0064 | -0.30 | 0.0000 | * Non-Monotonic / Weak |
+| stoch_d | 48.0% | Pruned | -0.0368 | -0.0313 | -0.80 | 0.0000 | ** Moderate Monotonic |
+| volume_sma_ratio_long | 48.0% | Pruned | +0.0033 | +0.0003 | +0.60 | 0.0479 | ** Moderate Monotonic |
+| vix_diff_1d | 48.0% | Pruned | -0.0159 | -0.0117 | +0.00 | 0.0191 | * Non-Monotonic / Weak |
+| bar_ret_3 | 46.0% | Pruned | +0.0022 | +0.0030 | +0.30 | 0.0290 | * Non-Monotonic / Weak |
+| bb_pctb | 46.0% | Pruned | +0.0141 | +0.0245 | +0.20 | 0.0081 | * Non-Monotonic / Weak |
+| bar_rng_3 | 44.0% | Pruned | +0.0219 | +0.0053 | +0.60 | 0.0482 | ** Moderate Monotonic |
+| bar_body_rng_3 | 44.0% | Pruned | -0.0039 | -0.0093 | -0.10 | 0.0236 | * Non-Monotonic / Weak |
+| body_to_range_ratio | 44.0% | Pruned | +0.0032 | +0.0083 | +0.30 | 0.0128 | * Non-Monotonic / Weak |
+| margin_repayment | 44.0% | Pruned | +0.0026 | +0.0011 | +0.00 | 0.0064 | * Non-Monotonic / Weak |
+| capital_sell_volume | 44.0% | Pruned | +0.0083 | +0.0192 | +0.50 | 0.0198 | * Non-Monotonic / Weak |
+| yesterday_first_bar_return | 44.0% | Pruned | +0.0238 | +0.0278 | +0.80 | 0.0186 | ** Moderate Monotonic |
+| early_realized_vol | 42.0% | Pruned | +0.0212 | +0.0313 | +0.70 | 0.0406 | ** Moderate Monotonic |
+| bar_ret_0 | 42.0% | Pruned | +0.1669 | +0.0754 | +0.90 | 0.0147 | *** Strong Monotonic |
+| yesterday_pm_return | 42.0% | Pruned | -0.0015 | -0.0246 | +0.00 | 0.0063 | * Non-Monotonic / Weak |
+| yesterday_day_kurtosis | 42.0% | Pruned | +0.0005 | -0.0103 | -0.50 | 0.0023 | * Non-Monotonic / Weak |
+| bar_vol_1 | 40.0% | Pruned | -0.0074 | -0.0139 | +0.30 | 0.0089 | * Non-Monotonic / Weak |
+| bar_rng_0 | 40.0% | Pruned | +0.0085 | +0.0204 | +0.10 | 0.0587 | * Non-Monotonic / Weak |
+| cl_pos_in_range | 40.0% | Pruned | +0.0421 | +0.0397 | +0.60 | 0.0038 | ** Moderate Monotonic |
+| vol_ratio_5_20 | 40.0% | Pruned | -0.0081 | -0.0275 | -0.50 | 0.0280 | * Non-Monotonic / Weak |
+| margin_short_ratio | 40.0% | Pruned | +0.0166 | +0.0071 | +0.70 | 0.0000 | ** Moderate Monotonic |
+| yesterday_first_bar_volume | 40.0% | Pruned | -0.0081 | -0.0237 | -0.30 | 0.0002 | * Non-Monotonic / Weak |
+| bar_rng_2 | 38.0% | Pruned | -0.0041 | -0.0078 | +0.10 | 0.0064 | * Non-Monotonic / Weak |
+| aroon_osc | 38.0% | Pruned | -0.0208 | -0.0158 | -0.30 | 0.0000 | * Non-Monotonic / Weak |
+| northbound_sell | 38.0% | Pruned | -0.0252 | -0.0459 | -0.90 | 0.0349 | ** Non-Linear Monotonic |
+| early_vwap_dev | 36.0% | Pruned | -0.0016 | +0.0195 | +0.70 | 0.0277 | ** Moderate Monotonic |
+| total_path_length | 36.0% | Pruned | +0.0238 | +0.0326 | +0.80 | 0.0547 | ** Moderate Monotonic |
+| macd_hist | 36.0% | Pruned | -0.0455 | -0.0275 | -0.30 | 0.0391 | * Non-Monotonic / Weak |
+| roc20 | 36.0% | Pruned | -0.0426 | -0.0253 | -0.30 | 0.0283 | * Non-Monotonic / Weak |
+| cci14 | 36.0% | Pruned | +0.0131 | +0.0173 | +0.50 | 0.0362 | * Non-Monotonic / Weak |
+| bb_width | 36.0% | Pruned | -0.0181 | -0.0176 | -0.30 | 0.0265 | * Non-Monotonic / Weak |
+| yesterday_first_30min_return | 36.0% | Pruned | +0.0715 | +0.0472 | +0.40 | 0.0014 | * Non-Monotonic / Weak |
+| vol5 | 34.0% | Pruned | +0.0208 | -0.0119 | +0.00 | 0.0068 | * Non-Monotonic / Weak |
+| vol60 | 34.0% | Pruned | +0.0211 | +0.0110 | +0.60 | 0.0503 | ** Moderate Monotonic |
+| volume_sma_ratio | 34.0% | Pruned | -0.0086 | -0.0076 | +0.30 | 0.0000 | * Non-Monotonic / Weak |
+| roc5 | 32.0% | Pruned | -0.0276 | -0.0244 | -0.10 | 0.0183 | * Non-Monotonic / Weak |
+| short_balance | 32.0% | Pruned | -0.0005 | +0.0260 | +0.20 | 0.0008 | * Non-Monotonic / Weak |
+| vix | 32.0% | Pruned | -0.0034 | +0.0342 | +0.80 | 0.0417 | ** Moderate Monotonic |
+| yesterday_day_range | 32.0% | Pruned | +0.0191 | +0.0040 | +0.60 | 0.0345 | ** Moderate Monotonic |
+| yesterday_day_vwap_dev | 32.0% | Pruned | -0.0003 | -0.0459 | -0.50 | 0.0000 | * Non-Monotonic / Weak |
+| bar_vol_2 | 30.0% | Pruned | -0.0095 | -0.0134 | +0.10 | 0.0000 | * Non-Monotonic / Weak |
+| num_up_bars | 30.0% | Pruned | +0.0532 | +0.0505 | +1.00 | 0.0000 | *** Strong Monotonic |
+| max_down_ret | 30.0% | Pruned | +0.0940 | +0.0610 | +1.00 | 0.0351 | *** Strong Monotonic |
+| vol_ratio_10_60 | 30.0% | Pruned | +0.0113 | -0.0042 | +0.10 | 0.0123 | * Non-Monotonic / Weak |
+| short_sell_quantity | 30.0% | Pruned | +0.0027 | +0.0135 | +0.20 | 0.0086 | * Non-Monotonic / Weak |
+| yesterday_early_momentum | 30.0% | Pruned | +0.0747 | +0.0483 | +0.60 | 0.0000 | ** Moderate Monotonic |
+| yesterday_day_realized_vol | 30.0% | Pruned | +0.0128 | +0.0112 | +0.60 | 0.0623 | ** Moderate Monotonic |
+| bar_ret_1 | 28.0% | Pruned | +0.0225 | +0.0427 | +0.70 | 0.0299 | ** Moderate Monotonic |
+| bar_vwap_dev_3 | 28.0% | Pruned | -0.0016 | +0.0195 | +0.70 | 0.0277 | ** Moderate Monotonic |
+| roc60 | 28.0% | Pruned | -0.0443 | -0.0142 | -1.00 | 0.0193 | *** Strong Monotonic |
+| vol10 | 28.0% | Pruned | +0.0381 | +0.0020 | -0.10 | 0.0558 | * Non-Monotonic / Weak |
+| margin_net_buy | 28.0% | Pruned | -0.0280 | -0.0063 | +0.00 | 0.0000 | * Non-Monotonic / Weak |
+| gap_pct | 26.0% | Pruned | +0.0154 | +0.0295 | +0.40 | 0.0452 | * Non-Monotonic / Weak |
+| sma200_dist | 26.0% | Pruned | -0.0451 | -0.0174 | -0.50 | 0.0203 | * Non-Monotonic / Weak |
+| vol_gk10 | 26.0% | Pruned | +0.0337 | +0.0265 | +0.70 | 0.0465 | ** Moderate Monotonic |
+| vix_vol_ratio | 26.0% | Pruned | -0.0003 | +0.0167 | +0.40 | 0.0337 | * Non-Monotonic / Weak |
+| early_trend | 24.0% | Pruned | -0.0087 | +0.0179 | +0.20 | 0.0075 | * Non-Monotonic / Weak |
+| early_momentum | 24.0% | Pruned | -0.0034 | +0.0194 | +0.10 | 0.0000 | * Non-Monotonic / Weak |
+| first_bar_volume | 24.0% | Pruned | +0.0056 | -0.0219 | -0.30 | 0.0000 | * Non-Monotonic / Weak |
+| margin_balance | 24.0% | Pruned | +0.0092 | +0.0299 | +0.30 | 0.0256 | * Non-Monotonic / Weak |
+| short_repayment_quantity | 24.0% | Pruned | +0.0011 | -0.0168 | -0.70 | 0.0263 | ** Moderate Monotonic |
+| total_balance | 24.0% | Pruned | +0.0090 | +0.0290 | +0.40 | 0.0288 | * Non-Monotonic / Weak |
+| bar_vol_0 | 22.0% | Pruned | +0.0056 | -0.0219 | -0.30 | 0.0000 | * Non-Monotonic / Weak |
+| sma50_dist | 22.0% | Pruned | -0.0531 | -0.0222 | -0.60 | 0.0387 | ** Moderate Monotonic |
+| sma10_dist | 22.0% | Pruned | -0.0466 | -0.0321 | -0.10 | 0.0064 | * Non-Monotonic / Weak |
+| vol_pk20 | 22.0% | Pruned | +0.0230 | +0.0143 | +0.40 | 0.0572 | * Non-Monotonic / Weak |
+| buy_on_margin_value | 22.0% | Pruned | -0.0191 | -0.0152 | -0.20 | 0.0354 | * Non-Monotonic / Weak |
+| vix_iv_ratio | 22.0% | Pruned | +0.0290 | +0.0629 | +0.90 | 0.0283 | ** Non-Linear Monotonic |
+| ema12_dist | 20.0% | Pruned | -0.0508 | -0.0328 | -0.30 | 0.0257 | * Non-Monotonic / Weak |
+| mfi14 | 20.0% | Pruned | -0.0249 | -0.0186 | -0.50 | 0.0067 | * Non-Monotonic / Weak |
+| capital_net_value | 20.0% | Pruned | -0.0252 | -0.0462 | -0.60 | 0.0142 | ** Moderate Monotonic |
+| iv | 20.0% | Pruned | -0.0231 | +0.0094 | +0.80 | 0.0366 | ** Moderate Monotonic |
+| iv_vol_ratio | 20.0% | Pruned | -0.0123 | -0.0068 | -0.80 | 0.0167 | ** Moderate Monotonic |
+| bar_vwap_dev_2 | 18.0% | Pruned | -0.0049 | +0.0298 | +0.60 | 0.0329 | ** Moderate Monotonic |
+| rsi21 | 18.0% | Pruned | -0.0359 | -0.0245 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
+| willr14 | 18.0% | Pruned | -0.0210 | -0.0208 | -0.10 | 0.0317 | * Non-Monotonic / Weak |
+| volume_slope | 16.0% | Pruned | +0.0031 | +0.0127 | -0.30 | 0.0151 | * Non-Monotonic / Weak |
+| rsi5 | 16.0% | Pruned | -0.0196 | -0.0238 | -0.90 | 0.0000 | *** Strong Monotonic |
+| capital_buy_volume | 16.0% | Pruned | +0.0007 | +0.0012 | -0.10 | 0.0343 | * Non-Monotonic / Weak |
+| yesterday_early_trend | 16.0% | Pruned | +0.0704 | +0.0447 | +0.90 | 0.0051 | *** Strong Monotonic |
+| sma20_dist | 14.0% | Pruned | -0.0593 | -0.0402 | -0.60 | 0.0154 | ** Moderate Monotonic |
+| yesterday_gap_pct | 14.0% | Pruned | +0.0112 | +0.0271 | +0.30 | 0.0173 | * Non-Monotonic / Weak |
+| early_range | 12.0% | Pruned | +0.0137 | +0.0208 | +0.60 | 0.0692 | ** Moderate Monotonic |
+| atr14_norm | 12.0% | Pruned | +0.0357 | +0.0159 | +0.70 | 0.0682 | ** Moderate Monotonic |
+| vol20 | 12.0% | Pruned | +0.0289 | +0.0063 | +0.30 | 0.0365 | * Non-Monotonic / Weak |
+| short_balance_quantity | 10.0% | Pruned | +0.0155 | +0.0354 | +0.60 | 0.0000 | ** Moderate Monotonic |
+| stoch_k | 6.0% | Pruned | -0.0303 | -0.0260 | -0.60 | 0.0000 | ** Moderate Monotonic |
+| vol_gk20 | 6.0% | Pruned | +0.0251 | +0.0182 | +0.70 | 0.0513 | ** Moderate Monotonic |
+| capital_buy_value | 6.0% | Pruned | -0.0109 | -0.0000 | -0.50 | 0.0384 | * Non-Monotonic / Weak |
+| capital_sell_value | 6.0% | Pruned | -0.0012 | +0.0170 | -0.20 | 0.0364 | * Non-Monotonic / Weak |
+| first_30min_return | 4.0% | Pruned | +0.1051 | +0.0716 | +0.90 | 0.0079 | *** Strong Monotonic |
+| northbound_buy | 4.0% | Pruned | -0.0184 | -0.0413 | -0.80 | 0.0121 | ** Moderate Monotonic |
+| bar_ret_4 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_ret_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_vol_4 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_vol_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_rng_4 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_rng_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_body_rng_4 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_body_rng_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_vwap_dev_4 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_vwap_dev_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
 
 - **Pearson $r$**: Linear correlation coefficient.
 - **Spearman $\rho$**: Rank correlation coefficient (overall monotonic relation).
@@ -212,19 +213,19 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | +0.0663 | +0.0216 | +0.0000 | -0.0787 | +0.0468 |
-| Dir Acc | 0.511 | 0.524 | 0.500 | 0.478 | 0.507 |
-| RMSE | 0.6198% | 0.6868% | 0.6187% | 0.8840% | 0.7349% |
-| L/S Sharpe | +1.23 | +0.79 | — | — | — |
+| IC | +0.0207 | +0.0618 | +0.0000 | -0.0638 | +0.0397 |
+| Dir Acc | 0.518 | 0.515 | 0.500 | 0.458 | 0.498 |
+| RMSE | 0.8006% | 0.8487% | 0.8010% | 1.1427% | 0.8757% |
+| L/S Sharpe | +1.20 | +2.51 | — | — | — |
 
 #### Best Hyperparameters
 
 ```json
 {
   "model_type": "huber",
-  "stability_threshold": 0.5,
-  "huber_alpha": 1784.3449223085747,
-  "huber_epsilon": 1.3077881377581166
+  "stability_threshold": 0.9,
+  "huber_alpha": 9.845232315243068,
+  "huber_epsilon": 1.5637885435011725
 }
 ```
 
@@ -232,27 +233,27 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.2179 | +0.0856 |
-| 2 | 0.2010 | +0.1356 |
-| 3 | 0.2003 | +0.1092 |
-| 4 | 0.1864 | +0.1283 |
-| 5 | 0.1818 | +0.0397 |
-| **Overall** | — | +0.0957 |
+| 1 | 0.1308 | -0.0140 |
+| 2 | 0.0645 | +0.1515 |
+| 3 | 0.0906 | +0.0340 |
+| 4 | 0.0706 | +0.0663 |
+| 5 | 0.0665 | +0.0225 |
+| **Overall** | — | +0.0407 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2017 | +0.1468 | 0.577 | 215 | +1.65 |
-| 2018 | +0.0653 | 0.502 | 243 | +1.52 |
-| 2019 | +0.1895 | 0.525 | 244 | +4.48 |
-| 2020 | +0.0752 | 0.564 | 243 | +1.35 |
-| 2021 | +0.0787 | 0.519 | 243 | +1.73 |
-| 2022 | +0.1053 | 0.492 | 242 | +2.52 |
-| 2023 | +0.1281 | 0.583 | 242 | +2.42 |
-| 2024 | +0.1374 | 0.529 | 242 | +2.70 |
-| 2025 | +0.0572 | 0.539 | 243 | +1.11 |
-| 2026 | -0.0284 | 0.491 | 108 | -0.42 |
+| 2017 | +0.0363 | 0.447 | 215 | +2.75 |
+| 2018 | +0.0451 | 0.457 | 243 | +3.30 |
+| 2019 | +0.1767 | 0.529 | 244 | +4.01 |
+| 2020 | +0.1023 | 0.523 | 243 | +1.85 |
+| 2021 | +0.0196 | 0.477 | 243 | +1.54 |
+| 2022 | +0.0938 | 0.483 | 242 | +2.69 |
+| 2023 | +0.1053 | 0.517 | 242 | +2.15 |
+| 2024 | +0.0505 | 0.496 | 242 | +1.68 |
+| 2025 | +0.0143 | 0.514 | 243 | +1.69 |
+| 2026 | +0.0497 | 0.583 | 108 | +1.36 |
 
 #### Diagnostic Plots
 
@@ -280,143 +281,143 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Tuned Stability Threshold**: 0.70
 - **Samples**: 2721 (2015-04-07 → 2026-06-16)
 - **Holdout**: 544 days (2024-03-18 → 2026-06-16)
-- **Target stats**: mean=0.0167%, std=0.7701%, Sharpe=0.34
-- **Selected features (3)**: `capital_buy_value, vix_iv_spread, vix_diff_1d`
+- **Target stats**: mean=-0.0020%, std=0.9482%, Sharpe=-0.03
+- **Selected features (12)**: `early_skew, bar_rng_1, num_up_bars, sma100_dist, margin_net_buy, capital_net_ratio, northbound_net, yesterday_early_realized_vol, yesterday_early_range, yesterday_day_close_pos, yesterday_day_late_mom, yesterday_day_kurtosis`
 
 #### Feature Stability Scores (Block Bootstrap)
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|
-| capital_buy_value | 66.0% | **Selected** | -0.0407 | -0.0545 | -0.90 | 0.0568 | *** Strong Monotonic |
-| vix_iv_spread | 64.0% | **Selected** | +0.1088 | +0.0712 | +0.90 | 0.0477 | *** Strong Monotonic |
-| vix_diff_1d | 62.0% | **Selected** | +0.0304 | -0.0061 | +0.20 | 0.0095 | * Non-Monotonic / Weak |
-| num_up_bars | 60.0% | Pruned | +0.0385 | +0.0366 | +0.80 | 0.0117 | ** Moderate Monotonic |
-| yesterday_pm_return | 60.0% | Pruned | -0.0223 | -0.0441 | -0.60 | 0.0504 | ** Moderate Monotonic |
-| bar_ret_3 | 58.0% | Pruned | +0.0272 | +0.0171 | +0.90 | 0.0798 | *** Strong Monotonic |
-| bar_rng_3 | 54.0% | Pruned | -0.0519 | -0.0100 | -0.40 | 0.0764 | * Non-Monotonic / Weak |
-| bar_rng_5 | 52.0% | Pruned | -0.0238 | +0.0107 | +0.20 | 0.0671 | * Non-Monotonic / Weak |
-| margin_net_buy | 52.0% | Pruned | -0.0570 | -0.0394 | -0.20 | 0.0000 | * Non-Monotonic / Weak |
-| bar_vol_4 | 50.0% | Pruned | +0.0237 | -0.0169 | +0.00 | 0.0060 | * Non-Monotonic / Weak |
-| short_repayment_quantity | 50.0% | Pruned | -0.0459 | -0.0172 | -0.40 | 0.0034 | * Non-Monotonic / Weak |
-| northbound_net | 50.0% | Pruned | +0.0134 | +0.0215 | +0.90 | 0.0206 | ** Non-Linear Monotonic |
-| vix_iv_ratio | 50.0% | Pruned | +0.0596 | +0.0689 | +0.90 | 0.0070 | *** Strong Monotonic |
-| iv_diff_1d | 50.0% | Pruned | -0.0359 | -0.0278 | -0.50 | 0.0000 | * Non-Monotonic / Weak |
-| yesterday_early_range | 50.0% | Pruned | +0.0076 | +0.0183 | +0.40 | 0.0343 | * Non-Monotonic / Weak |
-| bar_rng_4 | 48.0% | Pruned | -0.0318 | -0.0148 | -0.30 | 0.0643 | * Non-Monotonic / Weak |
-| bar_ret_5 | 46.0% | Pruned | -0.0072 | -0.0293 | +0.30 | 0.0740 | * Non-Monotonic / Weak |
-| bar_body_rng_1 | 46.0% | Pruned | -0.0077 | +0.0238 | -0.60 | 0.0000 | ** Moderate Monotonic |
-| max_up_ret | 46.0% | Pruned | +0.0168 | +0.0218 | +0.90 | 0.0340 | *** Strong Monotonic |
-| body_to_range_ratio | 46.0% | Pruned | +0.0187 | +0.0201 | +0.50 | 0.0000 | * Non-Monotonic / Weak |
-| vol5 | 46.0% | Pruned | +0.0188 | -0.0123 | -1.00 | 0.0358 | *** Strong Monotonic |
-| vol_pk20 | 46.0% | Pruned | -0.0240 | -0.0037 | -0.70 | 0.0737 | ** Moderate Monotonic |
-| yesterday_early_trend | 46.0% | Pruned | +0.0712 | +0.0314 | +0.10 | 0.0161 | * Non-Monotonic / Weak |
-| early_realized_vol | 44.0% | Pruned | -0.0370 | +0.0010 | -0.30 | 0.0420 | * Non-Monotonic / Weak |
-| bar_vol_5 | 44.0% | Pruned | +0.0254 | -0.0088 | +0.10 | 0.0174 | * Non-Monotonic / Weak |
-| sma100_dist | 44.0% | Pruned | -0.0362 | -0.0188 | -0.70 | 0.0244 | ** Moderate Monotonic |
-| vol_gk10 | 44.0% | Pruned | +0.0071 | +0.0058 | +0.10 | 0.0882 | * Non-Monotonic / Weak |
-| yesterday_early_realized_vol | 44.0% | Pruned | +0.0134 | +0.0115 | +0.30 | 0.0055 | * Non-Monotonic / Weak |
-| yesterday_day_late_mom | 44.0% | Pruned | +0.0412 | +0.0011 | +0.60 | 0.0500 | ** Moderate Monotonic |
-| bar_vwap_dev_1 | 42.0% | Pruned | -0.0559 | +0.0223 | -0.80 | 0.0112 | ** Moderate Monotonic |
-| volume_sma_ratio_long | 42.0% | Pruned | -0.0058 | +0.0043 | +0.20 | 0.0147 | * Non-Monotonic / Weak |
-| yesterday_early_kurtosis | 42.0% | Pruned | -0.0143 | -0.0054 | -0.70 | 0.0000 | ** Moderate Monotonic |
-| yesterday_day_close_pos | 42.0% | Pruned | -0.0229 | -0.0285 | -0.50 | 0.0000 | * Non-Monotonic / Weak |
-| yesterday_day_skew | 42.0% | Pruned | -0.0033 | +0.0049 | -0.50 | 0.0141 | * Non-Monotonic / Weak |
-| early_skew | 40.0% | Pruned | +0.0135 | +0.0034 | +0.80 | 0.0003 | ** Moderate Monotonic |
-| bar_vol_3 | 40.0% | Pruned | -0.0070 | -0.0192 | -0.20 | 0.0000 | * Non-Monotonic / Weak |
-| bar_body_rng_0 | 40.0% | Pruned | +0.0304 | +0.0078 | +0.50 | 0.0029 | * Non-Monotonic / Weak |
-| bar_vol_1 | 38.0% | Pruned | -0.0069 | -0.0456 | -0.60 | 0.0145 | ** Moderate Monotonic |
-| bar_body_rng_4 | 38.0% | Pruned | +0.0306 | +0.0442 | +0.80 | 0.0156 | ** Moderate Monotonic |
-| bar_vwap_dev_5 | 38.0% | Pruned | -0.0126 | +0.0181 | +0.50 | 0.0263 | * Non-Monotonic / Weak |
-| volume_slope | 38.0% | Pruned | +0.0368 | +0.0381 | +0.90 | 0.0057 | *** Strong Monotonic |
-| vol_ratio_5_20 | 38.0% | Pruned | +0.0264 | +0.0025 | +0.50 | 0.0000 | * Non-Monotonic / Weak |
-| yesterday_am_return | 38.0% | Pruned | +0.0602 | +0.0441 | +0.90 | 0.0154 | *** Strong Monotonic |
-| yesterday_first_bar_volume | 38.0% | Pruned | +0.0185 | -0.0129 | -0.40 | 0.0002 | * Non-Monotonic / Weak |
-| yesterday_early_skew | 38.0% | Pruned | -0.0019 | +0.0110 | -0.30 | 0.0000 | * Non-Monotonic / Weak |
-| yesterday_day_realized_vol | 38.0% | Pruned | +0.0052 | +0.0061 | +0.50 | 0.0861 | * Non-Monotonic / Weak |
-| yesterday_day_pm_am_vol_ratio | 38.0% | Pruned | -0.0134 | -0.0334 | -0.70 | 0.0003 | ** Moderate Monotonic |
-| early_vwap_dev | 36.0% | Pruned | -0.0126 | +0.0181 | +0.50 | 0.0263 | * Non-Monotonic / Weak |
-| bar_body_rng_3 | 36.0% | Pruned | +0.0227 | +0.0047 | +0.70 | 0.0037 | ** Moderate Monotonic |
-| bar_vwap_dev_0 | 36.0% | Pruned | -0.0116 | +0.0039 | N/A | 0.0003 | N/A |
-| roc5 | 36.0% | Pruned | -0.0089 | -0.0098 | +0.30 | 0.0139 | * Non-Monotonic / Weak |
-| vol60 | 36.0% | Pruned | -0.0124 | -0.0132 | -0.90 | 0.0566 | *** Strong Monotonic |
-| volume_sma_ratio | 36.0% | Pruned | -0.0069 | -0.0372 | -0.70 | 0.0298 | ** Moderate Monotonic |
-| margin_repayment | 36.0% | Pruned | -0.0012 | -0.0364 | -1.00 | 0.0585 | ** Non-Linear Monotonic |
-| northbound_sell | 36.0% | Pruned | -0.0105 | -0.0156 | -0.50 | 0.0703 | * Non-Monotonic / Weak |
-| vix_vol_ratio | 36.0% | Pruned | +0.0133 | -0.0025 | +0.50 | 0.0000 | * Non-Monotonic / Weak |
-| yesterday_early_vwap_dev | 36.0% | Pruned | +0.0850 | +0.0487 | +1.00 | 0.0024 | *** Strong Monotonic |
-| yesterday_day_range | 36.0% | Pruned | -0.0111 | +0.0082 | -0.30 | 0.0421 | * Non-Monotonic / Weak |
-| yesterday_day_kurtosis | 36.0% | Pruned | +0.0052 | +0.0055 | +0.30 | 0.0017 | * Non-Monotonic / Weak |
-| bar_rng_0 | 34.0% | Pruned | -0.0378 | -0.0065 | -0.20 | 0.0325 | * Non-Monotonic / Weak |
-| bar_rng_2 | 34.0% | Pruned | -0.0362 | +0.0180 | -0.30 | 0.0517 | * Non-Monotonic / Weak |
-| bar_body_rng_5 | 34.0% | Pruned | -0.0021 | -0.0293 | -0.10 | 0.0453 | * Non-Monotonic / Weak |
-| total_path_length | 34.0% | Pruned | -0.0296 | +0.0150 | +0.30 | 0.0503 | * Non-Monotonic / Weak |
-| bb_width | 34.0% | Pruned | +0.0029 | -0.0022 | +0.20 | 0.0346 | * Non-Monotonic / Weak |
-| margin_short_ratio | 34.0% | Pruned | +0.0014 | +0.0014 | -0.20 | 0.0073 | * Non-Monotonic / Weak |
-| yesterday_day_vwap_dev | 34.0% | Pruned | +0.0016 | -0.0418 | -0.90 | 0.0000 | ** Non-Linear Monotonic |
-| bar_ret_4 | 32.0% | Pruned | +0.0227 | +0.0476 | +0.60 | 0.0724 | ** Moderate Monotonic |
-| bar_vwap_dev_2 | 32.0% | Pruned | -0.0564 | +0.0171 | -0.90 | 0.0216 | *** Strong Monotonic |
-| max_down_ret | 32.0% | Pruned | +0.0431 | +0.0324 | +0.80 | 0.0683 | ** Moderate Monotonic |
-| sma200_dist | 32.0% | Pruned | -0.0129 | +0.0005 | +0.00 | 0.0505 | * Non-Monotonic / Weak |
-| vol_ratio_10_60 | 32.0% | Pruned | +0.0145 | +0.0033 | +0.00 | 0.0253 | * Non-Monotonic / Weak |
-| capital_net_ratio | 32.0% | Pruned | -0.0322 | -0.0559 | -0.70 | 0.0486 | ** Moderate Monotonic |
-| yesterday_gap_pct | 32.0% | Pruned | +0.0132 | +0.0205 | +0.30 | 0.0578 | * Non-Monotonic / Weak |
-| early_kurtosis | 30.0% | Pruned | -0.0125 | -0.0183 | -0.30 | 0.0097 | * Non-Monotonic / Weak |
-| bar_ret_1 | 30.0% | Pruned | -0.0505 | +0.0200 | -0.10 | 0.0279 | * Non-Monotonic / Weak |
-| bar_rng_1 | 30.0% | Pruned | -0.0137 | +0.0154 | +0.60 | 0.0550 | ** Moderate Monotonic |
-| bar_body_rng_2 | 30.0% | Pruned | -0.0092 | -0.0005 | -0.30 | 0.0047 | * Non-Monotonic / Weak |
-| cl_pos_in_range | 30.0% | Pruned | +0.0136 | +0.0085 | +0.50 | 0.0000 | * Non-Monotonic / Weak |
-| yesterday_early_volume_ratio | 30.0% | Pruned | +0.0130 | -0.0054 | -0.30 | 0.0000 | * Non-Monotonic / Weak |
-| first_bar_return | 28.0% | Pruned | +0.0705 | +0.0020 | +0.90 | 0.0517 | *** Strong Monotonic |
-| bar_vol_2 | 28.0% | Pruned | -0.0052 | -0.0237 | -0.30 | 0.0145 | * Non-Monotonic / Weak |
-| bb_pctb | 28.0% | Pruned | +0.0001 | +0.0109 | +0.30 | 0.0000 | * Non-Monotonic / Weak |
-| capital_net_value | 28.0% | Pruned | -0.0265 | -0.0584 | -0.70 | 0.0398 | ** Moderate Monotonic |
-| bar_vwap_dev_4 | 26.0% | Pruned | -0.0070 | +0.0498 | +0.70 | 0.0054 | ** Moderate Monotonic |
-| macd_hist | 26.0% | Pruned | -0.0319 | -0.0116 | -0.20 | 0.0357 | * Non-Monotonic / Weak |
-| roc10 | 26.0% | Pruned | -0.0316 | -0.0022 | +0.50 | 0.0521 | * Non-Monotonic / Weak |
-| rsi5 | 26.0% | Pruned | -0.0047 | -0.0060 | -0.20 | 0.0000 | * Non-Monotonic / Weak |
-| roc20 | 26.0% | Pruned | -0.0359 | -0.0135 | -0.40 | 0.0217 | * Non-Monotonic / Weak |
-| roc60 | 26.0% | Pruned | -0.0326 | -0.0099 | -0.40 | 0.0490 | * Non-Monotonic / Weak |
-| aroon_osc | 26.0% | Pruned | -0.0110 | -0.0132 | -0.20 | 0.0000 | * Non-Monotonic / Weak |
-| margin_balance | 26.0% | Pruned | -0.0208 | +0.0116 | -0.10 | 0.0646 | * Non-Monotonic / Weak |
-| short_balance | 26.0% | Pruned | -0.0124 | +0.0045 | -0.50 | 0.0044 | * Non-Monotonic / Weak |
-| iv_vol_ratio | 26.0% | Pruned | -0.0186 | -0.0316 | -0.70 | 0.0038 | ** Moderate Monotonic |
-| vix | 26.0% | Pruned | +0.0013 | -0.0120 | -0.30 | 0.0985 | * Non-Monotonic / Weak |
-| yesterday_early_momentum | 26.0% | Pruned | +0.0603 | +0.0363 | +0.60 | 0.0453 | ** Moderate Monotonic |
-| sma50_dist | 24.0% | Pruned | -0.0365 | -0.0197 | -0.70 | 0.0396 | ** Moderate Monotonic |
-| sma10_dist | 24.0% | Pruned | -0.0193 | -0.0086 | -0.30 | 0.0230 | * Non-Monotonic / Weak |
-| buy_on_margin_value | 24.0% | Pruned | -0.0424 | -0.0556 | -0.90 | 0.0199 | *** Strong Monotonic |
-| short_sell_quantity | 24.0% | Pruned | -0.0350 | +0.0206 | +0.10 | 0.0067 | * Non-Monotonic / Weak |
-| sma20_dist | 22.0% | Pruned | -0.0382 | -0.0187 | -0.50 | 0.0245 | * Non-Monotonic / Weak |
-| cci14 | 22.0% | Pruned | +0.0071 | -0.0026 | +0.60 | 0.0314 | ** Moderate Monotonic |
-| stoch_d | 22.0% | Pruned | -0.0024 | -0.0044 | +0.10 | 0.0051 | * Non-Monotonic / Weak |
-| mfi14 | 22.0% | Pruned | -0.0018 | -0.0055 | -0.80 | 0.0000 | ** Moderate Monotonic |
-| early_range | 20.0% | Pruned | -0.0214 | -0.0019 | -0.10 | 0.0863 | * Non-Monotonic / Weak |
-| bar_ret_2 | 20.0% | Pruned | -0.0335 | -0.0052 | -0.30 | 0.0441 | * Non-Monotonic / Weak |
-| atr14_norm | 20.0% | Pruned | -0.0094 | -0.0016 | -0.10 | 0.0517 | * Non-Monotonic / Weak |
-| vol20 | 20.0% | Pruned | -0.0105 | -0.0070 | -0.90 | 0.0469 | *** Strong Monotonic |
-| vol10 | 20.0% | Pruned | +0.0115 | -0.0044 | -0.60 | 0.0672 | ** Moderate Monotonic |
-| short_balance_quantity | 20.0% | Pruned | -0.0064 | +0.0073 | -0.50 | 0.0000 | * Non-Monotonic / Weak |
-| yesterday_first_bar_return | 20.0% | Pruned | +0.0134 | +0.0241 | +0.60 | 0.0366 | ** Moderate Monotonic |
-| gap_pct | 18.0% | Pruned | +0.0149 | +0.0184 | +0.20 | 0.0861 | * Non-Monotonic / Weak |
-| early_momentum | 18.0% | Pruned | -0.0257 | +0.0288 | +0.60 | 0.0157 | ** Moderate Monotonic |
-| ema12_dist | 18.0% | Pruned | -0.0224 | -0.0143 | -0.30 | 0.0138 | * Non-Monotonic / Weak |
-| stoch_k | 18.0% | Pruned | +0.0044 | -0.0017 | +0.60 | 0.0000 | ** Moderate Monotonic |
-| capital_sell_volume | 18.0% | Pruned | -0.0130 | -0.0334 | -0.60 | 0.0462 | ** Moderate Monotonic |
-| first_30min_return | 16.0% | Pruned | +0.0212 | +0.0281 | +0.90 | 0.0276 | *** Strong Monotonic |
-| rsi21 | 16.0% | Pruned | -0.0205 | -0.0207 | -0.10 | 0.0163 | * Non-Monotonic / Weak |
-| yesterday_first_30min_return | 16.0% | Pruned | +0.0552 | +0.0489 | +0.90 | 0.0178 | *** Strong Monotonic |
-| first_bar_volume | 14.0% | Pruned | -0.0215 | -0.0428 | -0.70 | 0.0018 | ** Moderate Monotonic |
-| bar_ret_0 | 14.0% | Pruned | +0.0705 | +0.0020 | +0.90 | 0.0518 | *** Strong Monotonic |
-| bar_vol_0 | 14.0% | Pruned | -0.0215 | -0.0428 | -0.70 | 0.0018 | ** Moderate Monotonic |
-| willr14 | 14.0% | Pruned | +0.0062 | -0.0023 | -0.30 | 0.0000 | * Non-Monotonic / Weak |
-| vol_gk20 | 14.0% | Pruned | -0.0200 | -0.0020 | -0.70 | 0.0509 | ** Moderate Monotonic |
-| capital_sell_value | 14.0% | Pruned | -0.0176 | -0.0332 | -0.50 | 0.0433 | * Non-Monotonic / Weak |
-| bar_vwap_dev_3 | 12.0% | Pruned | -0.0260 | +0.0290 | +0.30 | 0.0215 | * Non-Monotonic / Weak |
-| capital_buy_volume | 12.0% | Pruned | -0.0321 | -0.0558 | -0.70 | 0.0519 | ** Moderate Monotonic |
-| iv | 10.0% | Pruned | -0.0437 | -0.0295 | -0.70 | 0.0555 | ** Moderate Monotonic |
-| early_trend | 8.0% | Pruned | -0.0128 | +0.0349 | +0.90 | 0.0004 | ** Non-Linear Monotonic |
-| total_balance | 8.0% | Pruned | -0.0208 | +0.0117 | -0.10 | 0.0515 | * Non-Monotonic / Weak |
-| northbound_buy | 4.0% | Pruned | -0.0081 | -0.0127 | -0.50 | 0.0769 | * Non-Monotonic / Weak |
+| northbound_net | 94.0% | **Selected** | +0.0324 | +0.0458 | +0.90 | 0.0019 | *** Strong Monotonic |
+| yesterday_early_range | 94.0% | **Selected** | +0.0930 | -0.0231 | -0.50 | 0.0357 | * Non-Monotonic / Weak |
+| margin_net_buy | 92.0% | **Selected** | -0.1262 | -0.0654 | -0.90 | 0.0000 | *** Strong Monotonic |
+| early_skew | 90.0% | **Selected** | +0.0478 | +0.0308 | +0.60 | 0.0446 | ** Moderate Monotonic |
+| sma100_dist | 90.0% | **Selected** | -0.0814 | -0.0479 | -0.90 | 0.0125 | *** Strong Monotonic |
+| yesterday_day_late_mom | 86.0% | **Selected** | +0.0532 | +0.0098 | +0.20 | 0.0347 | * Non-Monotonic / Weak |
+| num_up_bars | 84.0% | **Selected** | +0.0521 | +0.0409 | +1.00 | 0.0080 | *** Strong Monotonic |
+| yesterday_day_close_pos | 80.0% | **Selected** | -0.0061 | -0.0055 | -0.60 | 0.0164 | ** Moderate Monotonic |
+| capital_net_ratio | 78.0% | **Selected** | -0.0201 | -0.0393 | -0.70 | 0.0163 | ** Moderate Monotonic |
+| yesterday_early_realized_vol | 76.0% | **Selected** | +0.0627 | -0.0041 | +0.60 | 0.0052 | ** Moderate Monotonic |
+| bar_rng_1 | 72.0% | **Selected** | +0.0050 | -0.0039 | +0.30 | 0.0445 | * Non-Monotonic / Weak |
+| yesterday_day_kurtosis | 72.0% | **Selected** | -0.0120 | -0.0073 | -0.60 | 0.0000 | ** Moderate Monotonic |
+| vix_diff_1d | 70.0% | Pruned | +0.0383 | -0.0406 | -0.60 | 0.0312 | ** Moderate Monotonic |
+| yesterday_early_skew | 70.0% | Pruned | -0.0262 | -0.0242 | -0.60 | 0.0000 | ** Moderate Monotonic |
+| first_bar_return | 68.0% | Pruned | +0.1520 | +0.0528 | +1.00 | 0.0148 | *** Strong Monotonic |
+| early_vwap_dev | 68.0% | Pruned | -0.0818 | +0.0095 | +0.10 | 0.0014 | * Non-Monotonic / Weak |
+| bar_rng_2 | 68.0% | Pruned | -0.0048 | -0.0107 | -0.10 | 0.0387 | * Non-Monotonic / Weak |
+| body_to_range_ratio | 68.0% | Pruned | +0.0059 | +0.0074 | +0.20 | 0.0005 | * Non-Monotonic / Weak |
+| yesterday_early_trend | 66.0% | Pruned | +0.0035 | +0.0165 | -0.10 | 0.0045 | * Non-Monotonic / Weak |
+| yesterday_day_pm_am_vol_ratio | 66.0% | Pruned | +0.0053 | -0.0199 | -0.30 | 0.0000 | * Non-Monotonic / Weak |
+| bar_rng_0 | 64.0% | Pruned | +0.0043 | -0.0043 | +0.10 | 0.0422 | * Non-Monotonic / Weak |
+| capital_sell_value | 64.0% | Pruned | -0.0208 | -0.0318 | -0.80 | 0.0384 | ** Moderate Monotonic |
+| yesterday_pm_return | 64.0% | Pruned | +0.0063 | -0.0011 | -0.20 | 0.0000 | * Non-Monotonic / Weak |
+| bar_body_rng_1 | 62.0% | Pruned | -0.0009 | +0.0048 | -0.10 | 0.0309 | * Non-Monotonic / Weak |
+| volume_slope | 62.0% | Pruned | +0.0178 | +0.0178 | +0.30 | 0.0534 | * Non-Monotonic / Weak |
+| iv_diff_1d | 62.0% | Pruned | -0.0142 | -0.0295 | -0.60 | 0.0024 | ** Moderate Monotonic |
+| early_realized_vol | 60.0% | Pruned | +0.0387 | -0.0049 | -0.70 | 0.0191 | ** Moderate Monotonic |
+| bar_body_rng_0 | 60.0% | Pruned | +0.0752 | +0.0513 | +1.00 | 0.0004 | *** Strong Monotonic |
+| bar_vwap_dev_1 | 58.0% | Pruned | -0.0753 | +0.0087 | +0.60 | 0.0200 | ** Moderate Monotonic |
+| sma200_dist | 58.0% | Pruned | -0.0553 | -0.0324 | -0.60 | 0.0073 | ** Moderate Monotonic |
+| bar_vol_1 | 56.0% | Pruned | -0.0145 | -0.0488 | -0.60 | 0.0013 | ** Moderate Monotonic |
+| bar_vwap_dev_0 | 56.0% | Pruned | -0.0025 | -0.0036 | N/A | 0.0035 | N/A |
+| total_path_length | 56.0% | Pruned | +0.0416 | +0.0118 | +0.60 | 0.0284 | ** Moderate Monotonic |
+| bb_pctb | 56.0% | Pruned | +0.0223 | +0.0371 | +0.60 | 0.0000 | ** Moderate Monotonic |
+| vix_iv_spread | 56.0% | Pruned | +0.0449 | +0.0630 | +0.80 | 0.0118 | ** Moderate Monotonic |
+| yesterday_am_return | 56.0% | Pruned | +0.0365 | +0.0174 | +0.90 | 0.0000 | *** Strong Monotonic |
+| macd_hist | 54.0% | Pruned | -0.0656 | -0.0509 | -0.70 | 0.0000 | ** Moderate Monotonic |
+| iv | 54.0% | Pruned | -0.0146 | -0.0458 | -0.70 | 0.0600 | ** Moderate Monotonic |
+| yesterday_first_bar_return | 54.0% | Pruned | -0.0035 | +0.0276 | +0.80 | 0.0190 | ** Moderate Monotonic |
+| bar_vol_2 | 52.0% | Pruned | -0.0052 | -0.0402 | -0.50 | 0.0000 | * Non-Monotonic / Weak |
+| vol_ratio_5_20 | 52.0% | Pruned | -0.0036 | -0.0295 | -0.20 | 0.0056 | * Non-Monotonic / Weak |
+| bar_vwap_dev_2 | 50.0% | Pruned | -0.0818 | +0.0095 | +0.10 | 0.0014 | * Non-Monotonic / Weak |
+| cci14 | 50.0% | Pruned | -0.0156 | -0.0320 | -0.30 | 0.0379 | * Non-Monotonic / Weak |
+| sma10_dist | 48.0% | Pruned | -0.0571 | -0.0402 | -0.70 | 0.0379 | ** Moderate Monotonic |
+| margin_repayment | 48.0% | Pruned | +0.0736 | -0.0338 | -0.70 | 0.0000 | ** Moderate Monotonic |
+| short_balance_quantity | 48.0% | Pruned | -0.0051 | -0.0231 | -0.60 | 0.0443 | ** Moderate Monotonic |
+| vix_iv_ratio | 48.0% | Pruned | +0.0342 | +0.0654 | +0.80 | 0.0265 | ** Moderate Monotonic |
+| bar_body_rng_2 | 46.0% | Pruned | -0.0010 | +0.0093 | +0.10 | 0.0027 | * Non-Monotonic / Weak |
+| cl_pos_in_range | 46.0% | Pruned | +0.0204 | +0.0168 | +0.70 | 0.0000 | ** Moderate Monotonic |
+| roc10 | 46.0% | Pruned | -0.0776 | -0.0419 | -0.10 | 0.0160 | * Non-Monotonic / Weak |
+| vol_pk20 | 46.0% | Pruned | +0.0115 | -0.0169 | +0.00 | 0.0632 | * Non-Monotonic / Weak |
+| volume_sma_ratio_long | 46.0% | Pruned | -0.0004 | -0.0359 | -0.70 | 0.0000 | ** Moderate Monotonic |
+| short_sell_quantity | 46.0% | Pruned | -0.0036 | -0.0262 | -0.20 | 0.0000 | * Non-Monotonic / Weak |
+| vix_vol_ratio | 46.0% | Pruned | +0.0072 | +0.0210 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
+| yesterday_day_skew | 46.0% | Pruned | +0.0125 | +0.0055 | -0.60 | 0.0000 | ** Moderate Monotonic |
+| gap_pct | 44.0% | Pruned | +0.0138 | +0.0054 | +0.20 | 0.0245 | * Non-Monotonic / Weak |
+| max_down_ret | 44.0% | Pruned | +0.0803 | +0.0498 | +0.90 | 0.0195 | *** Strong Monotonic |
+| stoch_d | 44.0% | Pruned | -0.0461 | -0.0492 | -0.90 | 0.0000 | *** Strong Monotonic |
+| northbound_sell | 44.0% | Pruned | -0.0172 | -0.0279 | -0.90 | 0.0265 | ** Non-Linear Monotonic |
+| vol5 | 42.0% | Pruned | +0.0183 | -0.0483 | -0.70 | 0.0337 | ** Moderate Monotonic |
+| bb_width | 42.0% | Pruned | -0.0045 | +0.0335 | +0.50 | 0.0573 | * Non-Monotonic / Weak |
+| yesterday_day_vwap_dev | 42.0% | Pruned | +0.0039 | -0.0241 | -0.90 | 0.0031 | ** Non-Linear Monotonic |
+| max_up_ret | 40.0% | Pruned | +0.0815 | +0.0318 | +0.90 | 0.0104 | *** Strong Monotonic |
+| yesterday_early_volume_ratio | 40.0% | Pruned | +0.0173 | -0.0372 | -0.30 | 0.0116 | * Non-Monotonic / Weak |
+| yesterday_first_bar_volume | 40.0% | Pruned | +0.0225 | -0.0212 | -0.10 | 0.0035 | * Non-Monotonic / Weak |
+| yesterday_early_vwap_dev | 40.0% | Pruned | +0.0128 | +0.0133 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
+| yesterday_day_realized_vol | 40.0% | Pruned | +0.0503 | -0.0275 | -0.10 | 0.0575 | * Non-Monotonic / Weak |
+| vol10 | 38.0% | Pruned | +0.0239 | -0.0330 | -0.40 | 0.0455 | * Non-Monotonic / Weak |
+| volume_sma_ratio | 38.0% | Pruned | -0.0000 | -0.0455 | -0.60 | 0.0160 | ** Moderate Monotonic |
+| margin_balance | 38.0% | Pruned | +0.0008 | -0.0048 | -0.10 | 0.0333 | * Non-Monotonic / Weak |
+| iv_vol_ratio | 38.0% | Pruned | -0.0170 | -0.0179 | -0.60 | 0.0298 | ** Moderate Monotonic |
+| yesterday_day_range | 38.0% | Pruned | +0.0333 | -0.0335 | -0.40 | 0.0469 | * Non-Monotonic / Weak |
+| roc20 | 36.0% | Pruned | -0.0665 | -0.0517 | -0.70 | 0.0239 | ** Moderate Monotonic |
+| roc60 | 36.0% | Pruned | -0.0566 | -0.0255 | -0.90 | 0.0242 | *** Strong Monotonic |
+| mfi14 | 36.0% | Pruned | -0.0338 | -0.0348 | -0.90 | 0.0000 | *** Strong Monotonic |
+| vol_ratio_10_60 | 36.0% | Pruned | -0.0021 | -0.0238 | -0.40 | 0.0122 | * Non-Monotonic / Weak |
+| short_repayment_quantity | 36.0% | Pruned | -0.0089 | -0.0159 | -0.10 | 0.0157 | * Non-Monotonic / Weak |
+| margin_short_ratio | 36.0% | Pruned | +0.0195 | +0.0262 | +0.80 | 0.0253 | ** Moderate Monotonic |
+| early_kurtosis | 34.0% | Pruned | +0.0179 | -0.0375 | -1.00 | 0.0000 | ** Non-Linear Monotonic |
+| yesterday_early_kurtosis | 34.0% | Pruned | -0.0036 | -0.0154 | -0.80 | 0.0000 | ** Moderate Monotonic |
+| aroon_osc | 32.0% | Pruned | -0.0406 | -0.0469 | -0.60 | 0.0000 | ** Moderate Monotonic |
+| vol60 | 32.0% | Pruned | +0.0135 | -0.0175 | -0.10 | 0.0340 | * Non-Monotonic / Weak |
+| vol_gk10 | 32.0% | Pruned | +0.0352 | -0.0139 | +0.00 | 0.0428 | * Non-Monotonic / Weak |
+| roc5 | 30.0% | Pruned | -0.0365 | -0.0322 | -0.90 | 0.0175 | *** Strong Monotonic |
+| sma50_dist | 28.0% | Pruned | -0.0683 | -0.0421 | -0.90 | 0.0394 | *** Strong Monotonic |
+| bar_ret_2 | 24.0% | Pruned | -0.0466 | +0.0055 | -0.10 | 0.0175 | * Non-Monotonic / Weak |
+| willr14 | 24.0% | Pruned | -0.0193 | -0.0264 | -0.50 | 0.0102 | * Non-Monotonic / Weak |
+| bar_ret_0 | 22.0% | Pruned | +0.1517 | +0.0528 | +1.00 | 0.0149 | *** Strong Monotonic |
+| sma20_dist | 22.0% | Pruned | -0.0793 | -0.0551 | -0.70 | 0.0037 | ** Moderate Monotonic |
+| rsi5 | 22.0% | Pruned | -0.0250 | -0.0311 | -0.50 | 0.0000 | * Non-Monotonic / Weak |
+| capital_net_value | 22.0% | Pruned | -0.0081 | -0.0380 | -0.90 | 0.0044 | ** Non-Linear Monotonic |
+| bar_ret_1 | 20.0% | Pruned | -0.0517 | +0.0032 | -0.10 | 0.0489 | * Non-Monotonic / Weak |
+| capital_buy_volume | 20.0% | Pruned | -0.0169 | -0.0387 | -0.90 | 0.0283 | ** Non-Linear Monotonic |
+| vix | 20.0% | Pruned | +0.0046 | -0.0303 | -0.30 | 0.0331 | * Non-Monotonic / Weak |
+| yesterday_gap_pct | 20.0% | Pruned | +0.0109 | +0.0034 | +0.30 | 0.0390 | * Non-Monotonic / Weak |
+| first_bar_volume | 18.0% | Pruned | -0.0174 | -0.0321 | -0.50 | 0.0000 | * Non-Monotonic / Weak |
+| bar_vol_0 | 18.0% | Pruned | -0.0174 | -0.0321 | -0.50 | 0.0000 | * Non-Monotonic / Weak |
+| vol20 | 18.0% | Pruned | +0.0072 | -0.0321 | -0.40 | 0.0543 | * Non-Monotonic / Weak |
+| early_trend | 16.0% | Pruned | -0.0681 | +0.0006 | +0.00 | 0.0055 | * Non-Monotonic / Weak |
+| buy_on_margin_value | 16.0% | Pruned | -0.0086 | -0.0689 | -0.90 | 0.0000 | ** Non-Linear Monotonic |
+| northbound_buy | 16.0% | Pruned | -0.0114 | -0.0230 | -0.90 | 0.0087 | ** Non-Linear Monotonic |
+| rsi21 | 14.0% | Pruned | -0.0525 | -0.0445 | -0.70 | 0.0019 | ** Moderate Monotonic |
+| capital_buy_value | 14.0% | Pruned | -0.0318 | -0.0441 | -0.90 | 0.0408 | *** Strong Monotonic |
+| yesterday_first_30min_return | 14.0% | Pruned | +0.0001 | +0.0289 | +0.90 | 0.0317 | ** Non-Linear Monotonic |
+| first_30min_return | 10.0% | Pruned | +0.0545 | +0.0380 | +0.90 | 0.0110 | *** Strong Monotonic |
+| early_range | 10.0% | Pruned | +0.0012 | -0.0082 | +0.60 | 0.0390 | ** Moderate Monotonic |
+| vol_gk20 | 10.0% | Pruned | +0.0193 | -0.0093 | +0.40 | 0.0483 | * Non-Monotonic / Weak |
+| stoch_k | 8.0% | Pruned | -0.0337 | -0.0395 | -0.60 | 0.0102 | ** Moderate Monotonic |
+| capital_sell_volume | 8.0% | Pruned | -0.0106 | -0.0241 | -0.80 | 0.0235 | ** Moderate Monotonic |
+| ema12_dist | 6.0% | Pruned | -0.0634 | -0.0441 | -0.60 | 0.0054 | ** Moderate Monotonic |
+| short_balance | 6.0% | Pruned | -0.0169 | -0.0340 | -0.60 | 0.0000 | ** Moderate Monotonic |
+| early_momentum | 4.0% | Pruned | -0.0669 | +0.0005 | +0.00 | 0.0032 | * Non-Monotonic / Weak |
+| total_balance | 2.0% | Pruned | +0.0004 | -0.0057 | +0.20 | 0.0326 | * Non-Monotonic / Weak |
+| yesterday_early_momentum | 2.0% | Pruned | +0.0035 | +0.0166 | +0.20 | 0.0028 | * Non-Monotonic / Weak |
+| bar_ret_3 | 0.0% | Pruned | N/A | N/A | N/A | 0.0035 | N/A |
+| bar_ret_4 | 0.0% | Pruned | N/A | N/A | N/A | 0.0035 | N/A |
+| bar_ret_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0035 | N/A |
+| bar_vol_3 | 0.0% | Pruned | N/A | N/A | N/A | 0.0035 | N/A |
+| bar_vol_4 | 0.0% | Pruned | N/A | N/A | N/A | 0.0035 | N/A |
+| bar_vol_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0035 | N/A |
+| bar_rng_3 | 0.0% | Pruned | N/A | N/A | N/A | 0.0035 | N/A |
+| bar_rng_4 | 0.0% | Pruned | N/A | N/A | N/A | 0.0035 | N/A |
+| bar_rng_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0035 | N/A |
+| bar_body_rng_3 | 0.0% | Pruned | N/A | N/A | N/A | 0.0035 | N/A |
+| bar_body_rng_4 | 0.0% | Pruned | N/A | N/A | N/A | 0.0035 | N/A |
+| bar_body_rng_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0035 | N/A |
+| bar_vwap_dev_3 | 0.0% | Pruned | N/A | N/A | N/A | 0.0035 | N/A |
+| bar_vwap_dev_4 | 0.0% | Pruned | N/A | N/A | N/A | 0.0035 | N/A |
+| bar_vwap_dev_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0035 | N/A |
+| atr14_norm | 0.0% | Pruned | +0.0275 | -0.0162 | +0.00 | 0.0551 | * Non-Monotonic / Weak |
 
 - **Pearson $r$**: Linear correlation coefficient.
 - **Spearman $\rho$**: Rank correlation coefficient (overall monotonic relation).
@@ -428,10 +429,10 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | +0.0231 | -0.0522 | +0.0000 | +0.0523 | -0.0271 |
-| Dir Acc | 0.537 | 0.500 | 0.500 | 0.506 | 0.449 |
-| RMSE | 0.5571% | 0.6048% | 0.5598% | 0.7697% | 0.7018% |
-| L/S Sharpe | +0.03 | +0.47 | — | — | — |
+| IC | +0.0333 | +0.0861 | +0.0000 | +0.0108 | -0.0195 |
+| Dir Acc | 0.500 | 0.506 | 0.500 | 0.487 | 0.474 |
+| RMSE | 0.7341% | 0.8100% | 0.7417% | 1.0412% | 0.8254% |
+| L/S Sharpe | +1.68 | +2.87 | — | — | — |
 
 #### Best Hyperparameters
 
@@ -439,8 +440,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 {
   "model_type": "huber",
   "stability_threshold": 0.7000000000000001,
-  "huber_alpha": 6.3165939003775975,
-  "huber_epsilon": 1.1379164617270376
+  "huber_alpha": 0.00030726607939511466,
+  "huber_epsilon": 1.7253016080575705
 }
 ```
 
@@ -448,27 +449,27 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.0768 | -0.0161 |
-| 2 | 0.0909 | +0.0785 |
-| 3 | 0.0811 | +0.1113 |
-| 4 | 0.0862 | +0.1201 |
-| 5 | 0.0919 | +0.0127 |
-| **Overall** | — | +0.0412 |
+| 1 | 0.1895 | +0.0826 |
+| 2 | 0.1527 | +0.1357 |
+| 3 | 0.1465 | +0.0997 |
+| 4 | 0.1515 | +0.0402 |
+| 5 | 0.1350 | +0.0378 |
+| **Overall** | — | +0.0823 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2017 | +0.0735 | 0.486 | 216 | +0.12 |
-| 2018 | -0.1257 | 0.494 | 243 | -3.03 |
-| 2019 | -0.0117 | 0.492 | 244 | +0.66 |
-| 2020 | +0.1452 | 0.576 | 243 | +4.09 |
-| 2021 | +0.0941 | 0.564 | 243 | +1.10 |
-| 2022 | +0.1375 | 0.483 | 242 | +2.44 |
-| 2023 | +0.1282 | 0.537 | 242 | +2.69 |
-| 2024 | +0.1380 | 0.541 | 242 | +3.67 |
-| 2025 | -0.0856 | 0.539 | 243 | -3.39 |
-| 2026 | -0.0854 | 0.495 | 107 | -2.95 |
+| 2017 | +0.0223 | 0.491 | 216 | +0.98 |
+| 2018 | +0.1744 | 0.547 | 243 | +3.27 |
+| 2019 | +0.1524 | 0.549 | 244 | +3.77 |
+| 2020 | +0.1068 | 0.510 | 243 | +2.66 |
+| 2021 | +0.0268 | 0.486 | 243 | -0.78 |
+| 2022 | +0.1919 | 0.566 | 242 | +2.11 |
+| 2023 | +0.0529 | 0.512 | 242 | +1.60 |
+| 2024 | +0.1060 | 0.517 | 242 | +2.83 |
+| 2025 | +0.0774 | 0.514 | 243 | +1.70 |
+| 2026 | -0.1472 | 0.467 | 107 | -2.59 |
 
 #### Diagnostic Plots
 
@@ -492,147 +493,147 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 ### 500ETF
 
-- **Selected Model**: HUBER
-- **Tuned Stability Threshold**: 0.40
+- **Selected Model**: ELASTICNET
+- **Tuned Stability Threshold**: 0.60
 - **Samples**: 2719 (2015-04-07 → 2026-06-16)
 - **Holdout**: 543 days (2024-03-19 → 2026-06-16)
-- **Target stats**: mean=0.0095%, std=0.9742%, Sharpe=0.16
-- **Selected features (70)**: `gap_pct, early_range, early_skew, early_kurtosis, bar_ret_1, bar_ret_2, bar_ret_3, bar_ret_4, bar_ret_5, bar_vol_2, bar_vol_3, bar_vol_4, bar_vol_5, bar_rng_0, bar_rng_1, bar_rng_2, bar_rng_3, bar_rng_4, bar_rng_5, bar_body_rng_0, bar_body_rng_1, bar_body_rng_2, bar_body_rng_3, bar_body_rng_5, bar_vwap_dev_0, bar_vwap_dev_1, bar_vwap_dev_2, num_up_bars, cl_pos_in_range, body_to_range_ratio, macd_hist, roc10, sma10_dist, sma200_dist, roc5, roc20, roc60, vol5, vol_ratio_10_60, vol_gk10, volume_sma_ratio, volume_sma_ratio_long, short_sell_quantity, short_repayment_quantity, capital_buy_volume, capital_net_value, capital_net_ratio, northbound_net, iv_vol_ratio, vix_iv_spread, vix_diff_1d, yesterday_pm_return, yesterday_am_return, yesterday_gap_pct, yesterday_early_realized_vol, yesterday_early_range, yesterday_early_volume_ratio, yesterday_early_trend, yesterday_first_bar_return, yesterday_first_bar_volume, yesterday_early_vwap_dev, yesterday_early_skew, yesterday_early_kurtosis, yesterday_day_range, yesterday_day_realized_vol, yesterday_day_pm_am_vol_ratio, yesterday_day_late_mom, yesterday_day_vwap_dev, yesterday_day_skew, yesterday_day_kurtosis`
+- **Target stats**: mean=0.0193%, std=1.1480%, Sharpe=0.27
+- **Selected features (39)**: `first_bar_volume, early_skew, early_kurtosis, bar_ret_4, bar_vol_1, bar_rng_4, bar_body_rng_0, bar_vwap_dev_0, bar_vwap_dev_2, num_up_bars, body_to_range_ratio, macd_hist, bb_pctb, sma100_dist, cci14, vol_ratio_10_60, volume_sma_ratio, volume_sma_ratio_long, margin_balance, short_sell_quantity, margin_short_ratio, capital_buy_volume, northbound_net, iv_diff_1d, vix_diff_1d, yesterday_pm_return, yesterday_am_return, yesterday_gap_pct, yesterday_early_momentum, yesterday_first_bar_volume, yesterday_early_vwap_dev, yesterday_early_skew, yesterday_early_kurtosis, yesterday_day_close_pos, yesterday_day_pm_am_vol_ratio, yesterday_day_late_mom, yesterday_day_vwap_dev, yesterday_day_skew, yesterday_day_kurtosis`
 
 #### Feature Stability Scores (Block Bootstrap)
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|
-| volume_sma_ratio | 78.0% | **Selected** | +0.0741 | +0.0144 | +0.30 | 0.0302 | * Non-Monotonic / Weak |
-| yesterday_day_skew | 74.0% | **Selected** | -0.0327 | -0.0397 | -0.70 | 0.0160 | ** Moderate Monotonic |
-| yesterday_day_vwap_dev | 72.0% | **Selected** | -0.0830 | -0.0764 | -1.00 | 0.0333 | *** Strong Monotonic |
-| bar_vol_5 | 70.0% | **Selected** | +0.0861 | -0.0008 | +0.90 | 0.0000 | *** Strong Monotonic |
-| yesterday_day_late_mom | 70.0% | **Selected** | +0.0016 | +0.0060 | +0.00 | 0.0428 | * Non-Monotonic / Weak |
-| early_skew | 68.0% | **Selected** | +0.0368 | +0.0457 | +0.60 | 0.0000 | ** Moderate Monotonic |
-| vix_diff_1d | 64.0% | **Selected** | +0.0338 | +0.0093 | N/A | 0.0171 | N/A |
-| short_sell_quantity | 62.0% | **Selected** | +0.0173 | -0.0222 | -0.30 | 0.0409 | * Non-Monotonic / Weak |
-| bar_vol_2 | 60.0% | **Selected** | +0.0596 | +0.0185 | +0.30 | 0.0211 | * Non-Monotonic / Weak |
-| bar_vol_3 | 60.0% | **Selected** | +0.0613 | -0.0046 | +0.70 | 0.0000 | ** Moderate Monotonic |
-| roc5 | 60.0% | **Selected** | -0.0211 | +0.0097 | -0.30 | 0.0388 | * Non-Monotonic / Weak |
-| yesterday_am_return | 60.0% | **Selected** | +0.0302 | +0.0276 | +0.90 | 0.0149 | *** Strong Monotonic |
-| yesterday_early_realized_vol | 58.0% | **Selected** | +0.0283 | +0.0369 | +0.60 | 0.0430 | ** Moderate Monotonic |
-| early_kurtosis | 56.0% | **Selected** | -0.0198 | -0.0137 | -0.60 | 0.0000 | ** Moderate Monotonic |
-| vol_ratio_10_60 | 56.0% | **Selected** | +0.0246 | +0.0331 | +0.60 | 0.0371 | ** Moderate Monotonic |
-| short_repayment_quantity | 56.0% | **Selected** | -0.0063 | -0.0381 | -0.70 | 0.0515 | ** Moderate Monotonic |
-| yesterday_early_range | 56.0% | **Selected** | +0.0198 | +0.0153 | +0.20 | 0.0650 | * Non-Monotonic / Weak |
-| roc60 | 54.0% | **Selected** | +0.0170 | +0.0059 | -0.60 | 0.0215 | ** Moderate Monotonic |
-| northbound_net | 54.0% | **Selected** | +0.0335 | +0.0365 | +0.90 | 0.0000 | *** Strong Monotonic |
-| yesterday_first_bar_return | 54.0% | **Selected** | -0.0001 | +0.0494 | +1.00 | 0.0012 | ** Non-Linear Monotonic |
-| yesterday_first_bar_volume | 54.0% | **Selected** | +0.0166 | +0.0210 | +0.20 | 0.0130 | * Non-Monotonic / Weak |
-| yesterday_early_vwap_dev | 54.0% | **Selected** | +0.0702 | +0.0680 | +0.60 | 0.0227 | ** Moderate Monotonic |
-| bar_rng_2 | 52.0% | **Selected** | +0.0058 | +0.0009 | -0.10 | 0.0513 | * Non-Monotonic / Weak |
-| bar_rng_3 | 52.0% | **Selected** | +0.0024 | -0.0004 | +0.30 | 0.0388 | * Non-Monotonic / Weak |
-| yesterday_pm_return | 52.0% | **Selected** | -0.0804 | -0.0830 | -1.00 | 0.0557 | *** Strong Monotonic |
-| yesterday_early_skew | 52.0% | **Selected** | -0.0094 | -0.0205 | -0.20 | 0.0000 | * Non-Monotonic / Weak |
-| gap_pct | 50.0% | **Selected** | +0.0178 | +0.0303 | +0.60 | 0.0266 | ** Moderate Monotonic |
-| early_range | 50.0% | **Selected** | -0.0332 | +0.0258 | +0.80 | 0.0699 | ** Moderate Monotonic |
-| bar_ret_2 | 50.0% | **Selected** | -0.0174 | +0.0099 | -0.20 | 0.0306 | * Non-Monotonic / Weak |
-| bar_rng_0 | 50.0% | **Selected** | -0.0309 | +0.0349 | +0.10 | 0.1180 | * Non-Monotonic / Weak |
-| bar_rng_5 | 50.0% | **Selected** | +0.0148 | +0.0156 | +0.40 | 0.0725 | * Non-Monotonic / Weak |
-| bar_body_rng_0 | 50.0% | **Selected** | +0.0462 | +0.0533 | +0.90 | 0.0000 | *** Strong Monotonic |
-| bar_vwap_dev_0 | 50.0% | **Selected** | -0.0002 | +0.0089 | N/A | 0.0000 | N/A |
-| body_to_range_ratio | 50.0% | **Selected** | +0.0062 | +0.0052 | +0.40 | 0.0000 | * Non-Monotonic / Weak |
-| yesterday_day_kurtosis | 50.0% | **Selected** | +0.0285 | -0.0168 | +0.30 | 0.0289 | * Non-Monotonic / Weak |
-| bar_ret_4 | 48.0% | **Selected** | +0.0359 | +0.0407 | +0.90 | 0.0185 | *** Strong Monotonic |
-| bar_vol_4 | 48.0% | **Selected** | +0.0410 | -0.0209 | +0.30 | 0.0013 | * Non-Monotonic / Weak |
-| bar_rng_1 | 48.0% | **Selected** | -0.0031 | +0.0164 | +0.90 | 0.0509 | ** Non-Linear Monotonic |
-| bar_vwap_dev_1 | 48.0% | **Selected** | -0.0002 | +0.0156 | +0.00 | 0.0000 | * Non-Monotonic / Weak |
-| macd_hist | 48.0% | **Selected** | +0.0258 | +0.0330 | +0.30 | 0.0321 | * Non-Monotonic / Weak |
-| roc10 | 48.0% | **Selected** | -0.0036 | +0.0250 | -0.20 | 0.0647 | * Non-Monotonic / Weak |
-| sma200_dist | 48.0% | **Selected** | -0.0211 | -0.0015 | -1.00 | 0.0306 | *** Strong Monotonic |
-| vol_gk10 | 48.0% | **Selected** | -0.0070 | +0.0503 | +0.90 | 0.0754 | ** Non-Linear Monotonic |
-| iv_vol_ratio | 48.0% | **Selected** | -0.0189 | -0.0434 | -0.70 | 0.0757 | ** Moderate Monotonic |
-| yesterday_day_range | 48.0% | **Selected** | -0.0005 | +0.0249 | -0.20 | 0.0690 | * Non-Monotonic / Weak |
-| volume_sma_ratio_long | 46.0% | **Selected** | +0.0241 | +0.0230 | +0.70 | 0.0000 | ** Moderate Monotonic |
-| bar_ret_3 | 44.0% | **Selected** | +0.0386 | +0.0336 | +0.60 | 0.0095 | ** Moderate Monotonic |
-| bar_body_rng_3 | 44.0% | **Selected** | +0.0291 | +0.0370 | +0.60 | 0.0000 | ** Moderate Monotonic |
-| capital_net_value | 44.0% | **Selected** | +0.0357 | +0.0080 | +0.40 | 0.0140 | * Non-Monotonic / Weak |
-| yesterday_early_kurtosis | 44.0% | **Selected** | +0.0266 | +0.0201 | +0.20 | 0.0273 | * Non-Monotonic / Weak |
-| yesterday_day_realized_vol | 44.0% | **Selected** | +0.0084 | +0.0320 | +0.70 | 0.1001 | ** Moderate Monotonic |
-| bar_ret_1 | 42.0% | **Selected** | -0.0244 | +0.0151 | +0.10 | 0.0246 | * Non-Monotonic / Weak |
-| bar_ret_5 | 42.0% | **Selected** | -0.0018 | -0.0035 | +0.00 | 0.0341 | * Non-Monotonic / Weak |
-| bar_rng_4 | 42.0% | **Selected** | -0.0231 | -0.0087 | -0.70 | 0.0473 | ** Moderate Monotonic |
-| bar_body_rng_1 | 42.0% | **Selected** | -0.0013 | +0.0193 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
-| bar_body_rng_2 | 42.0% | **Selected** | +0.0055 | +0.0099 | +0.50 | 0.0000 | * Non-Monotonic / Weak |
-| bar_vwap_dev_2 | 42.0% | **Selected** | -0.0002 | +0.0272 | +0.90 | 0.0000 | ** Non-Linear Monotonic |
-| num_up_bars | 42.0% | **Selected** | +0.0357 | +0.0447 | +0.80 | 0.0102 | ** Moderate Monotonic |
-| capital_net_ratio | 42.0% | **Selected** | +0.0162 | +0.0062 | +0.60 | 0.0390 | ** Moderate Monotonic |
-| yesterday_gap_pct | 42.0% | **Selected** | +0.0121 | +0.0438 | +0.30 | 0.0075 | * Non-Monotonic / Weak |
-| yesterday_day_pm_am_vol_ratio | 42.0% | **Selected** | +0.0166 | -0.0122 | -0.40 | 0.0000 | * Non-Monotonic / Weak |
-| bar_body_rng_5 | 40.0% | **Selected** | -0.0080 | -0.0032 | -0.10 | 0.0032 | * Non-Monotonic / Weak |
-| cl_pos_in_range | 40.0% | **Selected** | +0.0378 | +0.0439 | +0.70 | 0.0088 | ** Moderate Monotonic |
-| sma10_dist | 40.0% | **Selected** | -0.0042 | +0.0211 | -0.30 | 0.0429 | * Non-Monotonic / Weak |
-| roc20 | 40.0% | **Selected** | +0.0280 | +0.0361 | +0.60 | 0.0372 | ** Moderate Monotonic |
-| vol5 | 40.0% | **Selected** | +0.0066 | +0.0427 | +0.90 | 0.0639 | ** Non-Linear Monotonic |
-| capital_buy_volume | 40.0% | **Selected** | +0.0257 | +0.0236 | +0.20 | 0.0314 | * Non-Monotonic / Weak |
-| vix_iv_spread | 40.0% | **Selected** | +0.0099 | +0.0145 | N/A | 0.0238 | N/A |
-| yesterday_early_volume_ratio | 40.0% | **Selected** | +0.0438 | +0.0263 | +0.70 | 0.0000 | ** Moderate Monotonic |
-| yesterday_early_trend | 40.0% | **Selected** | +0.0496 | +0.0676 | +0.50 | 0.0324 | * Non-Monotonic / Weak |
-| early_vwap_dev | 38.0% | Pruned | +0.0141 | +0.0224 | -0.10 | 0.0500 | * Non-Monotonic / Weak |
-| bar_body_rng_4 | 38.0% | Pruned | +0.0298 | +0.0409 | +0.70 | 0.0000 | ** Moderate Monotonic |
-| sma50_dist | 38.0% | Pruned | +0.0161 | +0.0274 | +0.60 | 0.0780 | ** Moderate Monotonic |
-| sma100_dist | 38.0% | Pruned | -0.0028 | +0.0046 | -0.60 | 0.0531 | ** Moderate Monotonic |
-| aroon_osc | 38.0% | Pruned | +0.0168 | +0.0389 | +0.30 | 0.0288 | * Non-Monotonic / Weak |
-| vix | 38.0% | Pruned | -0.0056 | +0.0201 | -0.50 | 0.0260 | ** Moderate Monotonic |
-| first_bar_volume | 36.0% | Pruned | +0.0320 | +0.0125 | +0.80 | 0.0007 | ** Moderate Monotonic |
-| bar_vol_1 | 36.0% | Pruned | +0.0481 | +0.0145 | +0.90 | 0.0071 | *** Strong Monotonic |
-| bb_width | 36.0% | Pruned | +0.0089 | -0.0549 | -0.90 | 0.0899 | ** Non-Linear Monotonic |
-| margin_balance | 36.0% | Pruned | -0.0060 | -0.0345 | -0.50 | 0.0380 | * Non-Monotonic / Weak |
-| buy_on_margin_value | 36.0% | Pruned | +0.0029 | -0.0110 | +0.20 | 0.0000 | * Non-Monotonic / Weak |
-| margin_net_buy | 36.0% | Pruned | +0.0113 | +0.0060 | +0.10 | 0.0011 | * Non-Monotonic / Weak |
-| margin_short_ratio | 36.0% | Pruned | -0.0055 | +0.0313 | +0.60 | 0.0784 | ** Moderate Monotonic |
-| iv_diff_1d | 36.0% | Pruned | +0.0298 | +0.0078 | N/A | 0.0177 | N/A |
-| yesterday_first_30min_return | 36.0% | Pruned | +0.0366 | +0.0749 | +0.90 | 0.0000 | ** Non-Linear Monotonic |
-| first_30min_return | 34.0% | Pruned | +0.0353 | +0.0651 | +1.00 | 0.0193 | ** Non-Linear Monotonic |
-| bb_pctb | 34.0% | Pruned | -0.0103 | -0.0292 | -0.30 | 0.0099 | * Non-Monotonic / Weak |
-| vol_ratio_5_20 | 34.0% | Pruned | +0.0255 | +0.0087 | +0.50 | 0.0218 | * Non-Monotonic / Weak |
-| margin_repayment | 34.0% | Pruned | -0.0045 | -0.0044 | +0.30 | 0.0104 | * Non-Monotonic / Weak |
-| yesterday_early_momentum | 34.0% | Pruned | +0.0480 | +0.0644 | +0.70 | 0.0321 | ** Moderate Monotonic |
-| yesterday_day_close_pos | 34.0% | Pruned | -0.0594 | -0.0630 | -0.90 | 0.0469 | *** Strong Monotonic |
-| early_realized_vol | 32.0% | Pruned | +0.0064 | +0.0182 | -0.10 | 0.0982 | * Non-Monotonic / Weak |
-| ema12_dist | 32.0% | Pruned | +0.0013 | +0.0223 | +0.10 | 0.0532 | * Non-Monotonic / Weak |
-| mfi14 | 32.0% | Pruned | +0.0223 | +0.0390 | +0.80 | 0.0152 | ** Moderate Monotonic |
-| capital_sell_value | 32.0% | Pruned | +0.0047 | +0.0270 | -0.10 | 0.0375 | * Non-Monotonic / Weak |
-| bar_vwap_dev_5 | 30.0% | Pruned | -0.0002 | +0.0224 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
-| max_up_ret | 30.0% | Pruned | -0.0151 | +0.0623 | +0.70 | 0.0083 | ** Moderate Monotonic |
-| total_path_length | 30.0% | Pruned | -0.0013 | +0.0138 | -0.30 | 0.0811 | * Non-Monotonic / Weak |
-| volume_slope | 30.0% | Pruned | +0.0063 | -0.0122 | -0.30 | 0.0000 | * Non-Monotonic / Weak |
-| rsi21 | 30.0% | Pruned | +0.0033 | +0.0252 | +0.30 | 0.0221 | * Non-Monotonic / Weak |
-| stoch_d | 30.0% | Pruned | +0.0113 | +0.0286 | +0.20 | 0.0044 | * Non-Monotonic / Weak |
-| bar_vwap_dev_3 | 28.0% | Pruned | -0.0002 | +0.0525 | +0.80 | 0.0000 | ** Moderate Monotonic |
-| bar_vwap_dev_4 | 28.0% | Pruned | -0.0002 | +0.0496 | +0.50 | 0.0000 | * Non-Monotonic / Weak |
-| vol20 | 28.0% | Pruned | -0.0075 | +0.0459 | +0.80 | 0.0616 | ** Moderate Monotonic |
-| short_balance_quantity | 28.0% | Pruned | -0.0083 | -0.0316 | -0.70 | 0.0567 | ** Moderate Monotonic |
-| bar_vol_0 | 26.0% | Pruned | +0.0320 | +0.0125 | +0.80 | 0.0007 | ** Moderate Monotonic |
-| max_down_ret | 24.0% | Pruned | +0.0298 | +0.0425 | +0.70 | 0.0288 | ** Moderate Monotonic |
-| rsi5 | 24.0% | Pruned | -0.0061 | +0.0195 | +0.10 | 0.0257 | * Non-Monotonic / Weak |
-| stoch_k | 22.0% | Pruned | +0.0064 | +0.0274 | +0.30 | 0.0000 | * Non-Monotonic / Weak |
-| vol60 | 22.0% | Pruned | -0.0116 | +0.0258 | +0.00 | 0.0586 | * Non-Monotonic / Weak |
-| vix_iv_ratio | 22.0% | Pruned | +0.0054 | +0.0081 | N/A | 0.0335 | N/A |
-| early_trend | 20.0% | Pruned | +0.0260 | +0.0339 | +0.20 | 0.0403 | * Non-Monotonic / Weak |
-| early_momentum | 20.0% | Pruned | +0.0168 | +0.0336 | +0.40 | 0.0361 | * Non-Monotonic / Weak |
-| bar_ret_0 | 20.0% | Pruned | +0.0370 | +0.0599 | +0.90 | 0.0323 | ** Non-Linear Monotonic |
-| vol10 | 20.0% | Pruned | -0.0079 | +0.0522 | +0.90 | 0.1025 | ** Non-Linear Monotonic |
-| northbound_sell | 20.0% | Pruned | -0.0135 | -0.0308 | -0.70 | 0.0455 | ** Moderate Monotonic |
-| first_bar_return | 18.0% | Pruned | +0.0375 | +0.0599 | +0.90 | 0.0326 | ** Non-Linear Monotonic |
-| willr14 | 18.0% | Pruned | -0.0034 | +0.0141 | +0.00 | 0.0249 | * Non-Monotonic / Weak |
-| vix_vol_ratio | 18.0% | Pruned | -0.0186 | -0.0423 | -0.70 | 0.0725 | ** Moderate Monotonic |
-| cci14 | 16.0% | Pruned | +0.0125 | +0.0335 | +0.10 | 0.0000 | * Non-Monotonic / Weak |
-| vol_pk20 | 16.0% | Pruned | -0.0097 | +0.0437 | +0.90 | 0.0776 | ** Non-Linear Monotonic |
-| vol_gk20 | 16.0% | Pruned | -0.0100 | +0.0430 | +0.90 | 0.0709 | ** Non-Linear Monotonic |
-| capital_sell_volume | 16.0% | Pruned | +0.0093 | +0.0227 | +0.60 | 0.0241 | ** Moderate Monotonic |
-| atr14_norm | 14.0% | Pruned | -0.0107 | +0.0431 | +1.00 | 0.0661 | ** Non-Linear Monotonic |
-| capital_buy_value | 14.0% | Pruned | +0.0191 | +0.0258 | +0.20 | 0.0281 | * Non-Monotonic / Weak |
-| iv | 12.0% | Pruned | -0.0097 | +0.0175 | -0.50 | 0.0320 | ** Moderate Monotonic |
-| northbound_buy | 8.0% | Pruned | -0.0076 | -0.0255 | -0.30 | 0.0254 | * Non-Monotonic / Weak |
-| sma20_dist | 6.0% | Pruned | +0.0117 | +0.0297 | +0.30 | 0.0625 | * Non-Monotonic / Weak |
-| short_balance | 6.0% | Pruned | -0.0086 | -0.0292 | -0.70 | 0.0378 | ** Moderate Monotonic |
-| total_balance | 6.0% | Pruned | -0.0090 | -0.0312 | -0.70 | 0.0533 | ** Moderate Monotonic |
+| sma100_dist | 94.0% | **Selected** | -0.0722 | -0.0379 | -0.90 | 0.0407 | *** Strong Monotonic |
+| northbound_net | 92.0% | **Selected** | +0.0326 | +0.0302 | +0.60 | 0.0091 | ** Moderate Monotonic |
+| yesterday_early_vwap_dev | 90.0% | **Selected** | +0.1243 | +0.0783 | +0.90 | 0.0002 | *** Strong Monotonic |
+| short_sell_quantity | 88.0% | **Selected** | +0.0145 | -0.0236 | -0.60 | 0.0256 | ** Moderate Monotonic |
+| yesterday_early_kurtosis | 88.0% | **Selected** | +0.0250 | +0.0230 | +0.40 | 0.0000 | * Non-Monotonic / Weak |
+| vix_diff_1d | 82.0% | **Selected** | +0.0401 | +0.0172 | N/A | 0.0000 | N/A |
+| yesterday_day_late_mom | 82.0% | **Selected** | +0.0018 | +0.0018 | +0.00 | 0.0191 | * Non-Monotonic / Weak |
+| early_kurtosis | 80.0% | **Selected** | -0.0483 | -0.0298 | -0.70 | 0.0057 | ** Moderate Monotonic |
+| iv_diff_1d | 80.0% | **Selected** | +0.0246 | +0.0266 | N/A | 0.0000 | N/A |
+| yesterday_day_kurtosis | 80.0% | **Selected** | +0.0589 | -0.0160 | +0.10 | 0.0000 | * Non-Monotonic / Weak |
+| yesterday_day_skew | 78.0% | **Selected** | +0.0191 | +0.0065 | +0.50 | 0.0254 | * Non-Monotonic / Weak |
+| yesterday_day_vwap_dev | 76.0% | **Selected** | -0.0288 | -0.0457 | -0.60 | 0.0216 | ** Moderate Monotonic |
+| first_bar_volume | 74.0% | **Selected** | +0.0515 | +0.0284 | +0.80 | 0.0224 | ** Moderate Monotonic |
+| bar_rng_4 | 74.0% | **Selected** | +0.0606 | +0.0190 | +0.80 | 0.0786 | ** Moderate Monotonic |
+| bar_vwap_dev_0 | 74.0% | **Selected** | -0.0003 | +0.0040 | N/A | 0.0007 | N/A |
+| bb_pctb | 74.0% | **Selected** | -0.0157 | -0.0152 | -0.30 | 0.0214 | * Non-Monotonic / Weak |
+| capital_buy_volume | 74.0% | **Selected** | +0.0488 | +0.0322 | +0.80 | 0.0349 | ** Moderate Monotonic |
+| volume_sma_ratio | 72.0% | **Selected** | -0.0261 | +0.0033 | -0.50 | 0.0000 | * Non-Monotonic / Weak |
+| yesterday_day_close_pos | 72.0% | **Selected** | -0.0308 | -0.0483 | -0.70 | 0.0199 | ** Moderate Monotonic |
+| margin_short_ratio | 70.0% | **Selected** | -0.0016 | +0.0095 | +0.70 | 0.0510 | ** Moderate Monotonic |
+| yesterday_gap_pct | 70.0% | **Selected** | +0.0047 | +0.0275 | +0.30 | 0.0121 | * Non-Monotonic / Weak |
+| yesterday_first_bar_volume | 70.0% | **Selected** | -0.0053 | -0.0047 | +0.10 | 0.0283 | * Non-Monotonic / Weak |
+| bar_body_rng_0 | 68.0% | **Selected** | +0.0648 | +0.0832 | +1.00 | 0.0171 | *** Strong Monotonic |
+| num_up_bars | 68.0% | **Selected** | +0.0730 | +0.0862 | +0.50 | 0.0000 | ** Moderate Monotonic |
+| macd_hist | 68.0% | **Selected** | +0.0379 | +0.0238 | +0.30 | 0.0152 | * Non-Monotonic / Weak |
+| margin_balance | 68.0% | **Selected** | -0.0182 | -0.0505 | -0.20 | 0.0399 | * Non-Monotonic / Weak |
+| bar_ret_4 | 66.0% | **Selected** | +0.0395 | -0.0033 | +0.10 | 0.0457 | * Non-Monotonic / Weak |
+| bar_vol_1 | 66.0% | **Selected** | -0.0009 | +0.0029 | +0.70 | 0.0082 | ** Moderate Monotonic |
+| bar_vwap_dev_2 | 66.0% | **Selected** | -0.0003 | +0.0745 | +1.00 | 0.0005 | ** Non-Linear Monotonic |
+| cci14 | 66.0% | **Selected** | +0.0359 | +0.0488 | +1.00 | 0.0656 | *** Strong Monotonic |
+| vol_ratio_10_60 | 66.0% | **Selected** | +0.0468 | +0.0382 | +0.60 | 0.0136 | ** Moderate Monotonic |
+| yesterday_am_return | 66.0% | **Selected** | +0.0469 | +0.0074 | +0.30 | 0.0083 | * Non-Monotonic / Weak |
+| yesterday_early_skew | 66.0% | **Selected** | -0.0002 | +0.0033 | +0.10 | 0.0000 | * Non-Monotonic / Weak |
+| yesterday_pm_return | 64.0% | **Selected** | -0.0125 | -0.0402 | -0.70 | 0.0055 | ** Moderate Monotonic |
+| yesterday_early_momentum | 64.0% | **Selected** | +0.1103 | +0.0822 | +0.90 | 0.0000 | *** Strong Monotonic |
+| yesterday_day_pm_am_vol_ratio | 64.0% | **Selected** | -0.0111 | +0.0114 | +0.20 | 0.0050 | * Non-Monotonic / Weak |
+| early_skew | 62.0% | **Selected** | +0.0359 | +0.0382 | +0.80 | 0.0169 | ** Moderate Monotonic |
+| body_to_range_ratio | 62.0% | **Selected** | +0.0265 | +0.0287 | +0.90 | 0.0084 | *** Strong Monotonic |
+| volume_sma_ratio_long | 62.0% | **Selected** | +0.0028 | +0.0081 | +0.40 | 0.0152 | * Non-Monotonic / Weak |
+| bar_ret_1 | 60.0% | Pruned | +0.0833 | +0.0661 | +0.90 | 0.0042 | *** Strong Monotonic |
+| bar_vol_2 | 60.0% | Pruned | +0.0119 | +0.0116 | +0.30 | 0.0321 | * Non-Monotonic / Weak |
+| bar_vol_3 | 60.0% | Pruned | +0.0301 | -0.0055 | +0.10 | 0.0000 | * Non-Monotonic / Weak |
+| bar_vol_0 | 58.0% | Pruned | +0.0515 | +0.0284 | +0.80 | 0.0224 | ** Moderate Monotonic |
+| bar_rng_3 | 58.0% | Pruned | +0.0399 | +0.0335 | +0.70 | 0.0577 | ** Moderate Monotonic |
+| bar_body_rng_2 | 58.0% | Pruned | +0.0359 | +0.0395 | +0.90 | 0.0105 | *** Strong Monotonic |
+| sma200_dist | 58.0% | Pruned | -0.0382 | -0.0151 | -0.70 | 0.0416 | ** Moderate Monotonic |
+| roc5 | 58.0% | Pruned | -0.0022 | -0.0085 | -0.40 | 0.0501 | * Non-Monotonic / Weak |
+| roc60 | 58.0% | Pruned | -0.0234 | -0.0146 | -0.90 | 0.0568 | *** Strong Monotonic |
+| yesterday_early_realized_vol | 58.0% | Pruned | +0.0328 | +0.0419 | +0.90 | 0.0375 | *** Strong Monotonic |
+| yesterday_day_realized_vol | 58.0% | Pruned | +0.0140 | +0.0369 | +1.00 | 0.0650 | ** Non-Linear Monotonic |
+| bar_rng_2 | 56.0% | Pruned | +0.0162 | +0.0084 | +0.60 | 0.0549 | ** Moderate Monotonic |
+| bar_body_rng_4 | 56.0% | Pruned | +0.0044 | +0.0019 | +0.10 | 0.0000 | * Non-Monotonic / Weak |
+| roc10 | 56.0% | Pruned | -0.0077 | +0.0156 | +0.00 | 0.0575 | * Non-Monotonic / Weak |
+| early_vwap_dev | 54.0% | Pruned | +0.0384 | +0.0216 | +0.70 | 0.0519 | ** Moderate Monotonic |
+| sma50_dist | 54.0% | Pruned | -0.0198 | -0.0039 | -0.30 | 0.0365 | * Non-Monotonic / Weak |
+| vix_iv_spread | 54.0% | Pruned | +0.0015 | +0.0070 | N/A | 0.0000 | N/A |
+| yesterday_early_volume_ratio | 54.0% | Pruned | +0.0153 | +0.0100 | +0.90 | 0.0000 | *** Strong Monotonic |
+| cl_pos_in_range | 52.0% | Pruned | +0.0628 | +0.0589 | +0.90 | 0.0000 | *** Strong Monotonic |
+| stoch_d | 52.0% | Pruned | -0.0108 | +0.0002 | -0.20 | 0.0066 | * Non-Monotonic / Weak |
+| bar_ret_3 | 50.0% | Pruned | -0.0267 | -0.0011 | +0.00 | 0.0374 | * Non-Monotonic / Weak |
+| bar_body_rng_3 | 50.0% | Pruned | -0.0049 | -0.0002 | -0.10 | 0.0113 | * Non-Monotonic / Weak |
+| bar_vwap_dev_1 | 50.0% | Pruned | -0.0003 | +0.0614 | +1.00 | 0.0006 | ** Non-Linear Monotonic |
+| rsi21 | 50.0% | Pruned | -0.0089 | +0.0003 | +0.10 | 0.0025 | * Non-Monotonic / Weak |
+| short_repayment_quantity | 50.0% | Pruned | -0.0003 | -0.0224 | -0.30 | 0.0158 | * Non-Monotonic / Weak |
+| capital_net_ratio | 50.0% | Pruned | +0.0043 | -0.0035 | -0.10 | 0.0078 | * Non-Monotonic / Weak |
+| bar_rng_0 | 48.0% | Pruned | +0.0292 | +0.0530 | +0.50 | 0.0511 | * Non-Monotonic / Weak |
+| bar_body_rng_1 | 48.0% | Pruned | +0.0641 | +0.0595 | +0.90 | 0.0000 | *** Strong Monotonic |
+| total_path_length | 48.0% | Pruned | +0.0433 | +0.0395 | +0.30 | 0.0725 | * Non-Monotonic / Weak |
+| stoch_k | 48.0% | Pruned | -0.0086 | -0.0012 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
+| mfi14 | 48.0% | Pruned | -0.0029 | +0.0114 | +0.30 | 0.0000 | * Non-Monotonic / Weak |
+| vol_ratio_5_20 | 48.0% | Pruned | +0.0000 | -0.0040 | -0.30 | 0.0108 | * Non-Monotonic / Weak |
+| bb_width | 48.0% | Pruned | -0.0390 | -0.0586 | -1.00 | 0.0697 | ** Non-Linear Monotonic |
+| early_realized_vol | 46.0% | Pruned | +0.0338 | +0.0412 | +0.60 | 0.0848 | ** Moderate Monotonic |
+| bar_vol_4 | 46.0% | Pruned | +0.0270 | -0.0150 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
+| bar_vwap_dev_4 | 46.0% | Pruned | -0.0003 | +0.0216 | +0.70 | 0.0005 | ** Moderate Monotonic |
+| vol_gk10 | 46.0% | Pruned | +0.0373 | +0.0493 | +0.90 | 0.0828 | *** Strong Monotonic |
+| yesterday_day_range | 46.0% | Pruned | +0.0179 | +0.0313 | +0.60 | 0.0208 | ** Moderate Monotonic |
+| first_bar_return | 44.0% | Pruned | +0.0931 | +0.0834 | +1.00 | 0.0390 | *** Strong Monotonic |
+| early_range | 42.0% | Pruned | +0.0187 | +0.0521 | +0.90 | 0.0790 | ** Non-Linear Monotonic |
+| max_up_ret | 42.0% | Pruned | +0.0755 | +0.0968 | +0.90 | 0.0348 | *** Strong Monotonic |
+| vix_iv_ratio | 42.0% | Pruned | -0.0129 | -0.0159 | N/A | 0.0027 | N/A |
+| yesterday_early_trend | 42.0% | Pruned | +0.0992 | +0.0802 | +1.00 | 0.0000 | *** Strong Monotonic |
+| roc20 | 40.0% | Pruned | -0.0046 | +0.0114 | +0.10 | 0.0307 | * Non-Monotonic / Weak |
+| vol5 | 40.0% | Pruned | +0.0362 | +0.0346 | +0.80 | 0.0370 | ** Moderate Monotonic |
+| short_balance_quantity | 40.0% | Pruned | -0.0082 | -0.0239 | -0.60 | 0.0570 | ** Moderate Monotonic |
+| margin_net_buy | 40.0% | Pruned | -0.0136 | -0.0171 | -0.80 | 0.0000 | ** Moderate Monotonic |
+| capital_net_value | 40.0% | Pruned | +0.0370 | -0.0059 | -0.20 | 0.0302 | * Non-Monotonic / Weak |
+| yesterday_early_range | 40.0% | Pruned | +0.0245 | +0.0476 | +0.90 | 0.0580 | ** Non-Linear Monotonic |
+| gap_pct | 38.0% | Pruned | +0.0034 | +0.0273 | +0.30 | 0.0000 | * Non-Monotonic / Weak |
+| bar_rng_1 | 38.0% | Pruned | +0.0236 | +0.0200 | +0.90 | 0.0830 | *** Strong Monotonic |
+| aroon_osc | 38.0% | Pruned | -0.0003 | +0.0118 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
+| vol_gk20 | 38.0% | Pruned | +0.0318 | +0.0443 | +0.70 | 0.0669 | ** Moderate Monotonic |
+| vix | 38.0% | Pruned | +0.0240 | +0.0265 | +1.00 | 0.0107 | *** Strong Monotonic |
+| max_down_ret | 36.0% | Pruned | +0.0586 | +0.0623 | +0.50 | 0.0493 | * Non-Monotonic / Weak |
+| vol20 | 36.0% | Pruned | +0.0527 | +0.0456 | +0.90 | 0.0772 | *** Strong Monotonic |
+| sma10_dist | 36.0% | Pruned | +0.0035 | +0.0035 | +0.00 | 0.0511 | * Non-Monotonic / Weak |
+| first_30min_return | 34.0% | Pruned | +0.1093 | +0.0857 | +0.90 | 0.0275 | *** Strong Monotonic |
+| bar_ret_2 | 34.0% | Pruned | +0.0212 | +0.0393 | +0.80 | 0.0271 | ** Moderate Monotonic |
+| vol60 | 32.0% | Pruned | +0.0279 | +0.0217 | +0.40 | 0.0317 | * Non-Monotonic / Weak |
+| capital_sell_volume | 32.0% | Pruned | +0.0303 | +0.0359 | +1.00 | 0.0156 | *** Strong Monotonic |
+| yesterday_first_bar_return | 32.0% | Pruned | +0.0227 | +0.0238 | +0.70 | 0.0110 | ** Moderate Monotonic |
+| iv_vol_ratio | 30.0% | Pruned | -0.0396 | -0.0341 | -0.80 | 0.0624 | ** Moderate Monotonic |
+| vol10 | 28.0% | Pruned | +0.0537 | +0.0500 | +0.90 | 0.0414 | *** Strong Monotonic |
+| bar_ret_0 | 26.0% | Pruned | +0.0925 | +0.0834 | +1.00 | 0.0390 | *** Strong Monotonic |
+| buy_on_margin_value | 26.0% | Pruned | +0.0017 | -0.0252 | +0.10 | 0.0064 | * Non-Monotonic / Weak |
+| margin_repayment | 26.0% | Pruned | +0.0110 | -0.0100 | +0.90 | 0.0001 | *** Strong Monotonic |
+| sma20_dist | 24.0% | Pruned | +0.0011 | +0.0127 | +0.10 | 0.0501 | * Non-Monotonic / Weak |
+| yesterday_first_30min_return | 24.0% | Pruned | +0.0928 | +0.0740 | +0.90 | 0.0000 | *** Strong Monotonic |
+| northbound_sell | 22.0% | Pruned | -0.0160 | -0.0282 | -0.70 | 0.0177 | ** Moderate Monotonic |
+| bar_vwap_dev_3 | 20.0% | Pruned | -0.0003 | +0.0540 | +0.90 | 0.0006 | ** Non-Linear Monotonic |
+| volume_slope | 20.0% | Pruned | -0.0255 | -0.0241 | -0.60 | 0.0524 | ** Moderate Monotonic |
+| rsi5 | 20.0% | Pruned | +0.0019 | +0.0024 | +0.30 | 0.0311 | * Non-Monotonic / Weak |
+| willr14 | 20.0% | Pruned | +0.0005 | +0.0015 | +0.50 | 0.0162 | * Non-Monotonic / Weak |
+| total_balance | 18.0% | Pruned | -0.0134 | -0.0291 | -0.60 | 0.0540 | ** Moderate Monotonic |
+| vix_vol_ratio | 18.0% | Pruned | -0.0424 | -0.0375 | -0.90 | 0.0510 | *** Strong Monotonic |
+| capital_sell_value | 16.0% | Pruned | +0.0180 | +0.0363 | +0.70 | 0.0070 | ** Moderate Monotonic |
+| early_trend | 14.0% | Pruned | +0.0574 | +0.0491 | +0.90 | 0.0436 | *** Strong Monotonic |
+| northbound_buy | 14.0% | Pruned | -0.0102 | -0.0261 | -0.20 | 0.0395 | * Non-Monotonic / Weak |
+| early_momentum | 12.0% | Pruned | +0.0700 | +0.0517 | +0.70 | 0.0177 | ** Moderate Monotonic |
+| atr14_norm | 12.0% | Pruned | +0.0323 | +0.0406 | +0.90 | 0.0611 | *** Strong Monotonic |
+| capital_buy_value | 12.0% | Pruned | +0.0340 | +0.0265 | +0.40 | 0.0194 | * Non-Monotonic / Weak |
+| ema12_dist | 10.0% | Pruned | +0.0014 | +0.0089 | +0.00 | 0.0315 | * Non-Monotonic / Weak |
+| vol_pk20 | 6.0% | Pruned | +0.0359 | +0.0451 | +0.70 | 0.0772 | ** Moderate Monotonic |
+| iv | 4.0% | Pruned | +0.0227 | +0.0463 | +1.00 | 0.0086 | ** Non-Linear Monotonic |
+| short_balance | 2.0% | Pruned | -0.0118 | -0.0262 | -0.70 | 0.0608 | ** Moderate Monotonic |
+| bar_ret_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0008 | N/A |
+| bar_vol_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0008 | N/A |
+| bar_rng_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0008 | N/A |
+| bar_body_rng_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0008 | N/A |
+| bar_vwap_dev_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0008 | N/A |
 
 - **Pearson $r$**: Linear correlation coefficient.
 - **Spearman $\rho$**: Rank correlation coefficient (overall monotonic relation).
@@ -644,19 +645,19 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | +0.0848 | -0.0427 | +0.0000 | -0.0981 | +0.0579 |
-| Dir Acc | 0.519 | 0.488 | 0.500 | 0.449 | 0.532 |
-| RMSE | 0.7801% | 1.0792% | 0.7598% | 1.0952% | 0.9970% |
-| L/S Sharpe | +2.67 | +0.69 | — | — | — |
+| IC | +0.1282 | +0.1371 | +0.0000 | -0.0763 | +0.1021 |
+| Dir Acc | 0.573 | 0.560 | 0.500 | 0.459 | 0.525 |
+| RMSE | 1.0075% | 1.0808% | 1.0136% | 1.4760% | 1.1903% |
+| L/S Sharpe | +2.49 | +3.30 | — | — | — |
 
 #### Best Hyperparameters
 
 ```json
 {
-  "model_type": "huber",
-  "stability_threshold": 0.4,
-  "huber_alpha": 16.777063593933356,
-  "huber_epsilon": 1.3953252498064648
+  "model_type": "elasticnet",
+  "stability_threshold": 0.6000000000000001,
+  "en_alpha": 4.042561673611988e-05,
+  "en_l1_ratio": 0.83950021662242
 }
 ```
 
@@ -664,27 +665,27 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.3920 | +0.0921 |
-| 2 | 0.3313 | +0.1394 |
-| 3 | 0.2917 | +0.0504 |
-| 4 | 0.2407 | +0.0927 |
-| 5 | 0.2288 | +0.0648 |
-| **Overall** | — | +0.0768 |
+| 1 | 0.3092 | +0.0791 |
+| 2 | 0.2368 | +0.1297 |
+| 3 | 0.2164 | +0.1287 |
+| 4 | 0.2044 | +0.1439 |
+| 5 | 0.1968 | +0.1090 |
+| **Overall** | — | +0.1065 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2017 | +0.0328 | 0.505 | 216 | +1.30 |
-| 2018 | +0.1178 | 0.556 | 243 | +2.39 |
-| 2019 | +0.1039 | 0.537 | 244 | +1.20 |
-| 2020 | +0.1315 | 0.535 | 243 | +4.12 |
-| 2021 | +0.0322 | 0.498 | 243 | +0.47 |
-| 2022 | +0.1056 | 0.512 | 242 | +1.71 |
-| 2023 | +0.1145 | 0.533 | 242 | +2.96 |
-| 2024 | +0.1339 | 0.550 | 242 | +3.71 |
-| 2025 | -0.0189 | 0.461 | 243 | +0.38 |
-| 2026 | +0.1773 | 0.514 | 107 | +5.34 |
+| 2017 | +0.0839 | 0.519 | 216 | +1.39 |
+| 2018 | +0.0453 | 0.535 | 243 | +2.77 |
+| 2019 | +0.0889 | 0.533 | 244 | +1.55 |
+| 2020 | +0.1896 | 0.539 | 243 | +3.49 |
+| 2021 | +0.0529 | 0.502 | 243 | +1.76 |
+| 2022 | +0.2297 | 0.587 | 242 | +5.31 |
+| 2023 | +0.1010 | 0.512 | 242 | +1.11 |
+| 2024 | +0.1585 | 0.612 | 242 | +2.75 |
+| 2025 | +0.0493 | 0.556 | 243 | +0.94 |
+| 2026 | +0.1467 | 0.505 | 107 | +3.48 |
 
 #### Diagnostic Plots
 
@@ -708,147 +709,147 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 ### 588000ETF
 
-- **Selected Model**: ELASTICNET
-- **Tuned Stability Threshold**: 0.60
+- **Selected Model**: RIDGE
+- **Tuned Stability Threshold**: 0.65
 - **Samples**: 1293 (2021-02-09 → 2026-06-16)
 - **Holdout**: 258 days (2025-05-26 → 2026-06-16)
-- **Target stats**: mean=-0.0391%, std=0.9366%, Sharpe=-0.66
-- **Selected features (33)**: `gap_pct, early_vwap_dev, early_skew, early_kurtosis, bar_ret_5, bar_vol_5, bar_rng_2, bar_rng_4, bar_body_rng_5, bar_vwap_dev_0, bar_vwap_dev_5, body_to_range_ratio, total_path_length, sma10_dist, sma100_dist, roc5, volume_sma_ratio_long, margin_net_buy, capital_net_ratio, vix_diff_1d, yesterday_pm_return, yesterday_am_return, yesterday_gap_pct, yesterday_first_bar_volume, yesterday_early_vwap_dev, yesterday_early_kurtosis, yesterday_day_range, yesterday_day_close_pos, yesterday_day_pm_am_vol_ratio, yesterday_day_late_mom, yesterday_day_vwap_dev, yesterday_day_skew, yesterday_day_kurtosis`
+- **Target stats**: mean=-0.0077%, std=1.3644%, Sharpe=-0.09
+- **Selected features (21)**: `early_realized_vol, early_skew, bar_vol_2, bar_vwap_dev_0, cl_pos_in_range, total_path_length, sma100_dist, roc5, vol_gk10, margin_net_buy, margin_short_ratio, capital_net_ratio, vix, vix_diff_1d, yesterday_gap_pct, yesterday_first_bar_volume, yesterday_early_skew, yesterday_day_range, yesterday_day_realized_vol, yesterday_day_pm_am_vol_ratio, yesterday_day_late_mom`
 
 #### Feature Stability Scores (Block Bootstrap)
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|
-| bar_vwap_dev_0 | 96.0% | **Selected** | -0.0793 | -0.0649 | N/A | 0.0038 | N/A |
-| yesterday_early_vwap_dev | 90.0% | **Selected** | +0.0435 | +0.0553 | +0.40 | 0.0000 | * Non-Monotonic / Weak |
-| early_skew | 88.0% | **Selected** | +0.0566 | +0.0411 | +0.90 | 0.0000 | *** Strong Monotonic |
-| yesterday_gap_pct | 86.0% | **Selected** | -0.0120 | +0.0343 | +0.90 | 0.0845 | ** Non-Linear Monotonic |
-| margin_net_buy | 84.0% | **Selected** | -0.0921 | -0.0302 | -0.90 | 0.0269 | *** Strong Monotonic |
-| early_vwap_dev | 80.0% | **Selected** | +0.0616 | +0.0585 | +0.90 | 0.0223 | *** Strong Monotonic |
-| bar_rng_2 | 80.0% | **Selected** | -0.0460 | -0.0157 | -0.30 | 0.0887 | * Non-Monotonic / Weak |
-| yesterday_first_bar_volume | 78.0% | **Selected** | +0.0078 | +0.0511 | +0.70 | 0.0056 | ** Moderate Monotonic |
-| yesterday_day_late_mom | 78.0% | **Selected** | +0.0080 | -0.0412 | -0.90 | 0.1147 | ** Non-Linear Monotonic |
-| vix_diff_1d | 76.0% | **Selected** | -0.0094 | +0.0557 | +0.80 | 0.0261 | ** Moderate Monotonic |
-| bar_vol_5 | 74.0% | **Selected** | -0.0750 | -0.0358 | -0.90 | 0.0000 | *** Strong Monotonic |
-| yesterday_day_range | 74.0% | **Selected** | -0.0704 | +0.0006 | +0.60 | 0.0553 | ** Moderate Monotonic |
-| bar_rng_4 | 72.0% | **Selected** | -0.0223 | -0.0216 | -0.80 | 0.1281 | ** Moderate Monotonic |
-| capital_net_ratio | 72.0% | **Selected** | -0.0761 | -0.0608 | -0.80 | 0.0000 | ** Moderate Monotonic |
-| yesterday_am_return | 72.0% | **Selected** | +0.0180 | +0.0325 | +0.20 | 0.0418 | * Non-Monotonic / Weak |
-| gap_pct | 70.0% | **Selected** | -0.0115 | +0.0301 | -0.10 | 0.0843 | * Non-Monotonic / Weak |
-| bar_body_rng_5 | 70.0% | **Selected** | -0.0081 | -0.0029 | +0.60 | 0.0003 | ** Moderate Monotonic |
-| total_path_length | 70.0% | **Selected** | -0.0968 | -0.0163 | -0.30 | 0.0430 | * Non-Monotonic / Weak |
-| sma10_dist | 70.0% | **Selected** | -0.1309 | -0.0136 | -0.50 | 0.0000 | * Non-Monotonic / Weak |
-| volume_sma_ratio_long | 70.0% | **Selected** | -0.0461 | +0.0036 | +0.30 | 0.0182 | * Non-Monotonic / Weak |
-| yesterday_early_kurtosis | 70.0% | **Selected** | -0.0070 | -0.0163 | -0.50 | 0.0152 | * Non-Monotonic / Weak |
-| early_kurtosis | 68.0% | **Selected** | -0.0118 | -0.0233 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
-| body_to_range_ratio | 68.0% | **Selected** | +0.0078 | +0.0146 | +0.10 | 0.0000 | * Non-Monotonic / Weak |
-| bar_vwap_dev_5 | 66.0% | **Selected** | +0.0616 | +0.0585 | +0.90 | 0.0223 | *** Strong Monotonic |
-| yesterday_pm_return | 66.0% | **Selected** | -0.1036 | -0.0953 | -0.90 | 0.0428 | *** Strong Monotonic |
-| yesterday_day_close_pos | 66.0% | **Selected** | -0.1016 | -0.0816 | -0.80 | 0.0223 | ** Moderate Monotonic |
-| yesterday_day_pm_am_vol_ratio | 66.0% | **Selected** | -0.0305 | +0.0005 | -0.60 | 0.0000 | ** Moderate Monotonic |
-| yesterday_day_kurtosis | 66.0% | **Selected** | +0.0031 | -0.0175 | -0.20 | 0.0003 | * Non-Monotonic / Weak |
-| bar_ret_5 | 64.0% | **Selected** | +0.0254 | +0.0131 | -0.20 | 0.0679 | * Non-Monotonic / Weak |
-| sma100_dist | 62.0% | **Selected** | -0.0981 | -0.0251 | -0.60 | 0.0194 | ** Moderate Monotonic |
-| roc5 | 62.0% | **Selected** | -0.1349 | -0.0155 | -0.70 | 0.0118 | ** Moderate Monotonic |
-| yesterday_day_vwap_dev | 62.0% | **Selected** | -0.1066 | -0.0917 | -1.00 | 0.0412 | *** Strong Monotonic |
-| yesterday_day_skew | 62.0% | **Selected** | +0.0036 | +0.0168 | +0.70 | 0.0000 | ** Moderate Monotonic |
-| bar_rng_1 | 60.0% | Pruned | -0.0458 | -0.0176 | -0.30 | 0.0510 | * Non-Monotonic / Weak |
-| cci14 | 60.0% | Pruned | -0.0184 | +0.0146 | -0.30 | 0.0000 | * Non-Monotonic / Weak |
-| bar_ret_4 | 58.0% | Pruned | +0.0631 | +0.0411 | +0.70 | 0.0592 | ** Moderate Monotonic |
-| bar_vol_1 | 58.0% | Pruned | -0.0827 | -0.0080 | -0.30 | 0.0000 | * Non-Monotonic / Weak |
-| mfi14 | 58.0% | Pruned | +0.0033 | +0.0369 | +0.40 | 0.0349 | * Non-Monotonic / Weak |
-| yesterday_day_realized_vol | 58.0% | Pruned | -0.0772 | -0.0087 | +0.20 | 0.1018 | * Non-Monotonic / Weak |
-| bar_rng_3 | 56.0% | Pruned | -0.0680 | -0.0222 | -0.20 | 0.0757 | * Non-Monotonic / Weak |
-| bar_rng_5 | 56.0% | Pruned | -0.0844 | -0.0168 | -0.30 | 0.1175 | * Non-Monotonic / Weak |
-| max_up_ret | 56.0% | Pruned | +0.0660 | +0.0801 | +0.90 | 0.0359 | *** Strong Monotonic |
-| volume_sma_ratio | 56.0% | Pruned | -0.0391 | +0.0105 | +0.60 | 0.0126 | ** Moderate Monotonic |
-| margin_short_ratio | 56.0% | Pruned | +0.0125 | -0.0010 | -0.30 | 0.0531 | * Non-Monotonic / Weak |
-| northbound_net | 56.0% | Pruned | +0.0207 | +0.0433 | +0.80 | 0.0415 | ** Moderate Monotonic |
-| yesterday_early_range | 56.0% | Pruned | -0.0473 | -0.0223 | -0.40 | 0.0376 | * Non-Monotonic / Weak |
-| yesterday_early_skew | 56.0% | Pruned | +0.0021 | +0.0165 | +0.30 | 0.0056 | * Non-Monotonic / Weak |
-| num_up_bars | 54.0% | Pruned | +0.0402 | +0.0683 | +0.40 | 0.0459 | * Non-Monotonic / Weak |
-| sma50_dist | 54.0% | Pruned | -0.1059 | -0.0077 | -0.80 | 0.0817 | ** Moderate Monotonic |
-| vol_ratio_10_60 | 54.0% | Pruned | +0.0074 | +0.0146 | +0.10 | 0.0187 | * Non-Monotonic / Weak |
-| vol60 | 52.0% | Pruned | -0.0829 | -0.0293 | -0.70 | 0.0384 | ** Moderate Monotonic |
-| capital_net_value | 52.0% | Pruned | -0.1599 | -0.0530 | -0.90 | 0.0238 | *** Strong Monotonic |
-| yesterday_early_realized_vol | 52.0% | Pruned | -0.0218 | +0.0192 | +0.40 | 0.0129 | * Non-Monotonic / Weak |
-| vol_ratio_5_20 | 50.0% | Pruned | +0.0186 | +0.0216 | +0.20 | 0.0000 | * Non-Monotonic / Weak |
-| iv_diff_1d | 50.0% | Pruned | +0.0320 | +0.0071 | -0.20 | 0.0165 | * Non-Monotonic / Weak |
-| bar_ret_3 | 48.0% | Pruned | +0.0325 | +0.0165 | +0.40 | 0.1016 | * Non-Monotonic / Weak |
-| bar_vol_2 | 48.0% | Pruned | -0.0462 | +0.0067 | -0.30 | 0.0281 | * Non-Monotonic / Weak |
-| aroon_osc | 48.0% | Pruned | +0.0045 | +0.0387 | +0.10 | 0.0159 | * Non-Monotonic / Weak |
-| yesterday_first_bar_return | 48.0% | Pruned | +0.0437 | +0.0076 | -0.20 | 0.0420 | * Non-Monotonic / Weak |
-| bar_rng_0 | 46.0% | Pruned | -0.1408 | -0.0245 | -0.10 | 0.0703 | * Non-Monotonic / Weak |
-| bar_body_rng_0 | 46.0% | Pruned | +0.0643 | +0.0678 | +0.70 | 0.0026 | ** Moderate Monotonic |
-| bar_body_rng_1 | 46.0% | Pruned | +0.0410 | +0.0679 | +1.00 | 0.0076 | ** Non-Linear Monotonic |
-| short_repayment_quantity | 46.0% | Pruned | +0.0337 | -0.0052 | +0.60 | 0.0515 | ** Moderate Monotonic |
-| northbound_sell | 46.0% | Pruned | +0.0076 | -0.0035 | -0.20 | 0.0299 | * Non-Monotonic / Weak |
-| vix_iv_spread | 46.0% | Pruned | +0.0934 | +0.0299 | +0.80 | 0.0292 | ** Moderate Monotonic |
-| yesterday_early_volume_ratio | 46.0% | Pruned | -0.0144 | +0.0293 | +0.80 | 0.0220 | ** Moderate Monotonic |
-| yesterday_early_trend | 46.0% | Pruned | +0.0089 | +0.0531 | +0.50 | 0.0192 | * Non-Monotonic / Weak |
-| bar_vol_3 | 44.0% | Pruned | -0.0286 | +0.0233 | +0.20 | 0.0504 | * Non-Monotonic / Weak |
-| bar_body_rng_3 | 44.0% | Pruned | +0.0247 | +0.0179 | +0.30 | 0.0000 | * Non-Monotonic / Weak |
-| roc10 | 44.0% | Pruned | -0.0937 | +0.0168 | -0.30 | 0.0418 | * Non-Monotonic / Weak |
-| stoch_d | 44.0% | Pruned | -0.0241 | +0.0116 | -0.50 | 0.0000 | * Non-Monotonic / Weak |
-| max_down_ret | 42.0% | Pruned | +0.1744 | +0.1042 | +0.90 | 0.0588 | *** Strong Monotonic |
-| roc20 | 42.0% | Pruned | -0.0824 | +0.0119 | -0.70 | 0.0337 | ** Moderate Monotonic |
-| vol5 | 42.0% | Pruned | -0.0782 | +0.0008 | -0.10 | 0.0450 | * Non-Monotonic / Weak |
-| bb_width | 42.0% | Pruned | +0.0720 | +0.0090 | -0.20 | 0.0057 | * Non-Monotonic / Weak |
-| vol_gk10 | 42.0% | Pruned | -0.0625 | -0.0132 | +0.10 | 0.0893 | * Non-Monotonic / Weak |
-| short_sell_quantity | 42.0% | Pruned | +0.0305 | -0.0281 | +0.20 | 0.0682 | * Non-Monotonic / Weak |
-| capital_buy_value | 42.0% | Pruned | -0.1206 | +0.0005 | -0.30 | 0.0801 | * Non-Monotonic / Weak |
-| vix | 42.0% | Pruned | -0.0739 | +0.0017 | +0.00 | 0.0697 | * Non-Monotonic / Weak |
-| early_realized_vol | 40.0% | Pruned | -0.0868 | -0.0081 | -0.10 | 0.0368 | * Non-Monotonic / Weak |
-| bar_ret_2 | 38.0% | Pruned | -0.0261 | -0.0004 | +0.00 | 0.0698 | * Non-Monotonic / Weak |
-| bar_vol_4 | 38.0% | Pruned | -0.0427 | -0.0123 | -0.50 | 0.0281 | * Non-Monotonic / Weak |
-| bar_body_rng_4 | 38.0% | Pruned | +0.0401 | +0.0319 | +0.70 | 0.0481 | ** Moderate Monotonic |
-| roc60 | 38.0% | Pruned | -0.0765 | -0.0164 | -0.70 | 0.0349 | ** Moderate Monotonic |
-| vix_iv_ratio | 38.0% | Pruned | +0.0494 | +0.0266 | +0.80 | 0.0737 | ** Moderate Monotonic |
-| first_bar_volume | 36.0% | Pruned | -0.0670 | +0.0177 | +0.20 | 0.0356 | * Non-Monotonic / Weak |
-| atr14_norm | 36.0% | Pruned | -0.0495 | -0.0235 | -0.30 | 0.0435 | * Non-Monotonic / Weak |
-| rsi5 | 34.0% | Pruned | -0.0505 | -0.0122 | -0.60 | 0.0000 | ** Moderate Monotonic |
-| bar_ret_1 | 32.0% | Pruned | +0.0378 | +0.0639 | +0.80 | 0.0548 | ** Moderate Monotonic |
-| bar_body_rng_2 | 32.0% | Pruned | -0.0164 | -0.0036 | -0.60 | 0.0000 | ** Moderate Monotonic |
-| bar_vol_0 | 30.0% | Pruned | -0.0670 | +0.0177 | +0.20 | 0.0356 | * Non-Monotonic / Weak |
-| bar_vwap_dev_1 | 30.0% | Pruned | +0.0327 | +0.0596 | +0.60 | 0.0000 | ** Moderate Monotonic |
-| bb_pctb | 30.0% | Pruned | +0.0288 | -0.0031 | +0.60 | 0.0027 | ** Moderate Monotonic |
-| sma200_dist | 30.0% | Pruned | -0.0681 | -0.0016 | -0.70 | 0.0817 | ** Moderate Monotonic |
-| buy_on_margin_value | 30.0% | Pruned | -0.0880 | -0.0127 | +0.10 | 0.0006 | * Non-Monotonic / Weak |
-| cl_pos_in_range | 28.0% | Pruned | +0.0551 | +0.0707 | +0.60 | 0.0000 | ** Moderate Monotonic |
-| vix_vol_ratio | 28.0% | Pruned | +0.0304 | +0.0296 | +0.60 | 0.0342 | ** Moderate Monotonic |
-| bar_vwap_dev_2 | 26.0% | Pruned | -0.0106 | +0.0475 | +0.80 | 0.0023 | ** Moderate Monotonic |
-| rsi21 | 26.0% | Pruned | -0.0585 | -0.0002 | -0.70 | 0.0181 | ** Moderate Monotonic |
-| vol_gk20 | 26.0% | Pruned | -0.0698 | -0.0209 | -0.50 | 0.0641 | * Non-Monotonic / Weak |
-| northbound_buy | 26.0% | Pruned | +0.0166 | +0.0117 | -0.20 | 0.0139 | * Non-Monotonic / Weak |
-| yesterday_first_30min_return | 26.0% | Pruned | +0.0427 | +0.0393 | +0.50 | 0.0534 | * Non-Monotonic / Weak |
-| yesterday_early_momentum | 26.0% | Pruned | +0.0175 | +0.0505 | +0.40 | 0.0490 | * Non-Monotonic / Weak |
-| willr14 | 24.0% | Pruned | -0.0283 | -0.0026 | -0.50 | 0.0000 | * Non-Monotonic / Weak |
-| vol10 | 22.0% | Pruned | -0.0769 | -0.0176 | -0.30 | 0.0044 | * Non-Monotonic / Weak |
-| margin_balance | 22.0% | Pruned | -0.0164 | -0.0166 | +0.30 | 0.0895 | * Non-Monotonic / Weak |
-| bar_vwap_dev_4 | 20.0% | Pruned | +0.0537 | +0.0516 | +0.70 | 0.0000 | ** Moderate Monotonic |
-| first_30min_return | 18.0% | Pruned | +0.1278 | +0.1031 | +1.00 | 0.0506 | *** Strong Monotonic |
-| stoch_k | 18.0% | Pruned | -0.0271 | +0.0062 | -0.70 | 0.0000 | ** Moderate Monotonic |
-| first_bar_return | 16.0% | Pruned | +0.1252 | +0.0614 | +0.70 | 0.0769 | ** Moderate Monotonic |
-| bar_vwap_dev_3 | 16.0% | Pruned | +0.0096 | +0.0438 | +0.70 | 0.0033 | ** Moderate Monotonic |
-| macd_hist | 16.0% | Pruned | -0.0433 | +0.0230 | +0.00 | 0.0244 | * Non-Monotonic / Weak |
-| sma20_dist | 16.0% | Pruned | -0.1129 | +0.0080 | -0.60 | 0.0256 | ** Moderate Monotonic |
-| ema12_dist | 16.0% | Pruned | -0.1242 | -0.0039 | -0.50 | 0.0114 | * Non-Monotonic / Weak |
-| short_balance | 16.0% | Pruned | +0.0169 | -0.0034 | +0.30 | 0.1212 | * Non-Monotonic / Weak |
-| capital_sell_value | 16.0% | Pruned | -0.0690 | +0.0115 | -0.30 | 0.0838 | * Non-Monotonic / Weak |
-| iv_vol_ratio | 16.0% | Pruned | +0.0099 | +0.0269 | +0.50 | 0.0162 | * Non-Monotonic / Weak |
-| early_range | 14.0% | Pruned | -0.0925 | -0.0167 | -0.30 | 0.0373 | * Non-Monotonic / Weak |
-| early_trend | 14.0% | Pruned | +0.0545 | +0.0620 | +0.60 | 0.0000 | ** Moderate Monotonic |
-| bar_ret_0 | 14.0% | Pruned | +0.1268 | +0.0614 | +0.70 | 0.0765 | ** Moderate Monotonic |
-| total_balance | 12.0% | Pruned | -0.0153 | -0.0169 | +0.30 | 0.0722 | * Non-Monotonic / Weak |
-| volume_slope | 10.0% | Pruned | +0.0578 | -0.0228 | +0.00 | 0.0182 | * Non-Monotonic / Weak |
-| vol20 | 10.0% | Pruned | -0.0826 | -0.0093 | -0.40 | 0.0656 | * Non-Monotonic / Weak |
-| capital_sell_volume | 10.0% | Pruned | -0.0639 | +0.0030 | +0.30 | 0.0699 | * Non-Monotonic / Weak |
-| vol_pk20 | 8.0% | Pruned | -0.0698 | -0.0168 | -0.90 | 0.0222 | *** Strong Monotonic |
-| margin_repayment | 8.0% | Pruned | -0.0665 | -0.0093 | +0.00 | 0.0256 | * Non-Monotonic / Weak |
-| short_balance_quantity | 8.0% | Pruned | +0.0237 | -0.0045 | +0.10 | 0.1366 | * Non-Monotonic / Weak |
-| capital_buy_volume | 8.0% | Pruned | -0.1159 | -0.0070 | -0.10 | 0.0596 | * Non-Monotonic / Weak |
-| early_momentum | 2.0% | Pruned | +0.0591 | +0.0686 | +0.60 | 0.0091 | ** Moderate Monotonic |
-| iv | 2.0% | Pruned | -0.1027 | -0.0082 | -0.40 | 0.0600 | * Non-Monotonic / Weak |
+| bar_vwap_dev_0 | 90.0% | **Selected** | -0.0697 | -0.0653 | N/A | 0.0000 | N/A |
+| yesterday_day_realized_vol | 84.0% | **Selected** | +0.0692 | +0.0338 | +0.60 | 0.0231 | ** Moderate Monotonic |
+| vix_diff_1d | 82.0% | **Selected** | +0.1266 | +0.0675 | +0.80 | 0.0032 | ** Moderate Monotonic |
+| yesterday_first_bar_volume | 82.0% | **Selected** | +0.0901 | +0.0527 | +0.80 | 0.0000 | ** Moderate Monotonic |
+| yesterday_early_skew | 78.0% | **Selected** | -0.0325 | -0.0163 | -0.50 | 0.0078 | * Non-Monotonic / Weak |
+| cl_pos_in_range | 76.0% | **Selected** | +0.0763 | +0.0813 | +0.70 | 0.0384 | ** Moderate Monotonic |
+| capital_net_ratio | 76.0% | **Selected** | -0.0589 | -0.0734 | -0.90 | 0.0000 | *** Strong Monotonic |
+| early_realized_vol | 74.0% | **Selected** | +0.0158 | -0.0031 | +0.60 | 0.0187 | ** Moderate Monotonic |
+| early_skew | 74.0% | **Selected** | -0.0445 | -0.0137 | -0.70 | 0.0040 | ** Moderate Monotonic |
+| margin_net_buy | 74.0% | **Selected** | -0.0416 | -0.0246 | -1.00 | 0.0065 | *** Strong Monotonic |
+| yesterday_gap_pct | 74.0% | **Selected** | +0.1178 | +0.0217 | +0.70 | 0.0556 | ** Moderate Monotonic |
+| yesterday_day_range | 74.0% | **Selected** | +0.0455 | +0.0052 | +0.90 | 0.0112 | *** Strong Monotonic |
+| vol_gk10 | 72.0% | **Selected** | +0.0733 | +0.0302 | +0.50 | 0.0317 | * Non-Monotonic / Weak |
+| bar_vol_2 | 70.0% | **Selected** | +0.1103 | +0.0200 | +0.50 | 0.0254 | * Non-Monotonic / Weak |
+| sma100_dist | 70.0% | **Selected** | -0.0326 | -0.0208 | -0.10 | 0.0600 | * Non-Monotonic / Weak |
+| margin_short_ratio | 70.0% | **Selected** | +0.0186 | +0.0137 | +0.60 | 0.0463 | ** Moderate Monotonic |
+| yesterday_day_pm_am_vol_ratio | 70.0% | **Selected** | +0.0160 | +0.0194 | +0.30 | 0.0000 | * Non-Monotonic / Weak |
+| yesterday_day_late_mom | 70.0% | **Selected** | +0.0115 | -0.0244 | -0.40 | 0.0247 | * Non-Monotonic / Weak |
+| total_path_length | 66.0% | **Selected** | +0.0158 | +0.0079 | +0.60 | 0.0108 | ** Moderate Monotonic |
+| roc5 | 66.0% | **Selected** | -0.0113 | -0.0010 | +0.00 | 0.0000 | * Non-Monotonic / Weak |
+| vix | 66.0% | **Selected** | +0.0631 | +0.0390 | +0.40 | 0.0076 | * Non-Monotonic / Weak |
+| gap_pct | 62.0% | Pruned | +0.0406 | +0.0066 | +0.00 | 0.0389 | * Non-Monotonic / Weak |
+| num_up_bars | 62.0% | Pruned | +0.0621 | +0.0563 | +1.00 | 0.0056 | *** Strong Monotonic |
+| body_to_range_ratio | 62.0% | Pruned | +0.0083 | +0.0267 | +0.20 | 0.0243 | * Non-Monotonic / Weak |
+| vix_iv_ratio | 62.0% | Pruned | +0.0218 | +0.0457 | +0.40 | 0.0084 | * Non-Monotonic / Weak |
+| iv_diff_1d | 62.0% | Pruned | +0.1120 | +0.0062 | +1.00 | 0.0000 | *** Strong Monotonic |
+| yesterday_early_realized_vol | 62.0% | Pruned | -0.0180 | +0.0128 | +0.70 | 0.0000 | ** Moderate Monotonic |
+| yesterday_day_close_pos | 58.0% | Pruned | -0.0362 | -0.0479 | -0.40 | 0.0000 | * Non-Monotonic / Weak |
+| bar_rng_1 | 56.0% | Pruned | +0.0640 | -0.0032 | -0.20 | 0.0181 | * Non-Monotonic / Weak |
+| vol5 | 56.0% | Pruned | +0.0522 | +0.0407 | +0.90 | 0.0000 | *** Strong Monotonic |
+| yesterday_am_return | 56.0% | Pruned | +0.0185 | +0.0208 | +0.30 | 0.0441 | * Non-Monotonic / Weak |
+| yesterday_day_skew | 56.0% | Pruned | +0.0683 | +0.0265 | +0.20 | 0.0399 | * Non-Monotonic / Weak |
+| bb_pctb | 54.0% | Pruned | -0.0315 | -0.0248 | -0.10 | 0.0082 | * Non-Monotonic / Weak |
+| rsi5 | 54.0% | Pruned | +0.0046 | +0.0079 | +0.30 | 0.0021 | * Non-Monotonic / Weak |
+| vol_ratio_5_20 | 54.0% | Pruned | +0.0451 | +0.0311 | +0.80 | 0.0000 | ** Moderate Monotonic |
+| yesterday_day_kurtosis | 54.0% | Pruned | +0.0471 | -0.0517 | -0.80 | 0.0429 | ** Moderate Monotonic |
+| first_bar_volume | 52.0% | Pruned | +0.1086 | +0.0281 | +0.40 | 0.0161 | * Non-Monotonic / Weak |
+| bar_rng_2 | 52.0% | Pruned | +0.0333 | -0.0112 | +0.60 | 0.0253 | ** Moderate Monotonic |
+| bar_vol_0 | 50.0% | Pruned | +0.1086 | +0.0281 | +0.40 | 0.0161 | * Non-Monotonic / Weak |
+| bar_body_rng_2 | 50.0% | Pruned | -0.0057 | -0.0108 | -0.60 | 0.0000 | ** Moderate Monotonic |
+| sma10_dist | 48.0% | Pruned | -0.0038 | +0.0052 | +0.00 | 0.0000 | * Non-Monotonic / Weak |
+| volume_sma_ratio | 48.0% | Pruned | +0.0600 | +0.0075 | +0.30 | 0.0000 | * Non-Monotonic / Weak |
+| yesterday_pm_return | 48.0% | Pruned | -0.0154 | -0.0358 | -0.30 | 0.0159 | * Non-Monotonic / Weak |
+| yesterday_early_vwap_dev | 48.0% | Pruned | -0.0296 | -0.0198 | -0.10 | 0.0227 | * Non-Monotonic / Weak |
+| first_bar_return | 46.0% | Pruned | +0.0552 | +0.0761 | +0.80 | 0.0076 | ** Moderate Monotonic |
+| early_kurtosis | 46.0% | Pruned | +0.0002 | -0.0214 | -0.20 | 0.0000 | * Non-Monotonic / Weak |
+| bar_vol_1 | 46.0% | Pruned | +0.1015 | +0.0242 | +0.30 | 0.0000 | * Non-Monotonic / Weak |
+| bar_body_rng_1 | 46.0% | Pruned | +0.0604 | +0.0557 | +0.70 | 0.0219 | ** Moderate Monotonic |
+| vol10 | 46.0% | Pruned | +0.0687 | +0.0075 | +0.50 | 0.0238 | * Non-Monotonic / Weak |
+| vol_ratio_10_60 | 46.0% | Pruned | +0.0532 | +0.0104 | +0.70 | 0.0000 | ** Moderate Monotonic |
+| bb_width | 46.0% | Pruned | -0.0637 | -0.0360 | -0.70 | 0.0172 | ** Moderate Monotonic |
+| bar_body_rng_0 | 44.0% | Pruned | +0.0681 | +0.0754 | +0.90 | 0.0186 | *** Strong Monotonic |
+| cci14 | 44.0% | Pruned | +0.0362 | +0.0265 | +0.70 | 0.0012 | ** Moderate Monotonic |
+| aroon_osc | 44.0% | Pruned | +0.0225 | +0.0409 | +0.60 | 0.0000 | ** Moderate Monotonic |
+| yesterday_early_range | 44.0% | Pruned | -0.0268 | +0.0163 | +0.60 | 0.0000 | ** Moderate Monotonic |
+| sma50_dist | 42.0% | Pruned | -0.0147 | -0.0066 | -0.10 | 0.0536 | * Non-Monotonic / Weak |
+| sma200_dist | 42.0% | Pruned | -0.0269 | -0.0032 | -0.40 | 0.0370 | * Non-Monotonic / Weak |
+| volume_sma_ratio_long | 42.0% | Pruned | +0.0591 | +0.0295 | +0.10 | 0.0337 | * Non-Monotonic / Weak |
+| buy_on_margin_value | 40.0% | Pruned | +0.0183 | -0.0132 | +0.40 | 0.0124 | * Non-Monotonic / Weak |
+| short_repayment_quantity | 40.0% | Pruned | -0.0111 | -0.0155 | -0.10 | 0.0515 | * Non-Monotonic / Weak |
+| northbound_sell | 40.0% | Pruned | +0.0143 | -0.0024 | -0.20 | 0.0258 | * Non-Monotonic / Weak |
+| yesterday_first_30min_return | 40.0% | Pruned | +0.0072 | +0.0338 | +0.90 | 0.0069 | ** Non-Linear Monotonic |
+| macd_hist | 38.0% | Pruned | +0.0100 | +0.0297 | +0.50 | 0.0440 | * Non-Monotonic / Weak |
+| roc10 | 38.0% | Pruned | +0.0194 | +0.0263 | +1.00 | 0.0230 | *** Strong Monotonic |
+| willr14 | 38.0% | Pruned | +0.0206 | +0.0198 | +0.50 | 0.0062 | * Non-Monotonic / Weak |
+| mfi14 | 38.0% | Pruned | +0.0248 | +0.0370 | +0.60 | 0.0000 | ** Moderate Monotonic |
+| capital_net_value | 38.0% | Pruned | +0.0282 | -0.0629 | -1.00 | 0.0000 | ** Non-Linear Monotonic |
+| northbound_buy | 38.0% | Pruned | +0.0129 | -0.0094 | -0.80 | 0.0125 | ** Moderate Monotonic |
+| yesterday_early_volume_ratio | 38.0% | Pruned | +0.0772 | +0.0419 | +0.80 | 0.0000 | ** Moderate Monotonic |
+| early_vwap_dev | 36.0% | Pruned | +0.0200 | +0.0374 | +0.80 | 0.0169 | ** Moderate Monotonic |
+| max_up_ret | 34.0% | Pruned | +0.0783 | +0.0698 | +0.80 | 0.0000 | ** Moderate Monotonic |
+| roc60 | 34.0% | Pruned | -0.0228 | -0.0160 | +0.00 | 0.0241 | * Non-Monotonic / Weak |
+| short_balance | 34.0% | Pruned | -0.0311 | -0.0213 | -0.80 | 0.0768 | ** Moderate Monotonic |
+| capital_buy_value | 34.0% | Pruned | +0.0288 | +0.0017 | +0.30 | 0.0325 | * Non-Monotonic / Weak |
+| northbound_net | 34.0% | Pruned | -0.0009 | -0.0144 | -0.60 | 0.0058 | ** Moderate Monotonic |
+| yesterday_day_vwap_dev | 34.0% | Pruned | -0.0172 | -0.0538 | -0.30 | 0.0029 | * Non-Monotonic / Weak |
+| bar_ret_0 | 32.0% | Pruned | +0.0549 | +0.0761 | +0.80 | 0.0071 | ** Moderate Monotonic |
+| bar_ret_2 | 32.0% | Pruned | +0.0011 | -0.0016 | +0.00 | 0.0185 | * Non-Monotonic / Weak |
+| bar_vwap_dev_1 | 32.0% | Pruned | +0.0408 | +0.0516 | +1.00 | 0.0234 | *** Strong Monotonic |
+| stoch_k | 32.0% | Pruned | +0.0129 | +0.0207 | +0.90 | 0.0058 | ** Non-Linear Monotonic |
+| margin_balance | 32.0% | Pruned | +0.0247 | -0.0068 | +0.60 | 0.0634 | ** Moderate Monotonic |
+| vol60 | 30.0% | Pruned | +0.0238 | +0.0195 | +0.90 | 0.0118 | *** Strong Monotonic |
+| vix_vol_ratio | 30.0% | Pruned | -0.0085 | +0.0069 | +0.20 | 0.0435 | * Non-Monotonic / Weak |
+| vix_iv_spread | 30.0% | Pruned | -0.0517 | +0.0582 | +0.80 | 0.0000 | ** Moderate Monotonic |
+| yesterday_first_bar_return | 30.0% | Pruned | +0.0204 | +0.0530 | +0.10 | 0.0364 | * Non-Monotonic / Weak |
+| bar_ret_1 | 28.0% | Pruned | +0.0561 | +0.0592 | +1.00 | 0.0058 | *** Strong Monotonic |
+| bar_vwap_dev_2 | 28.0% | Pruned | +0.0200 | +0.0374 | +0.80 | 0.0169 | ** Moderate Monotonic |
+| bar_rng_0 | 26.0% | Pruned | +0.0474 | +0.0133 | +0.60 | 0.0487 | ** Moderate Monotonic |
+| max_down_ret | 26.0% | Pruned | -0.0011 | +0.0624 | +1.00 | 0.0474 | ** Non-Linear Monotonic |
+| roc20 | 26.0% | Pruned | +0.0098 | +0.0085 | +0.40 | 0.0112 | * Non-Monotonic / Weak |
+| first_30min_return | 24.0% | Pruned | +0.0737 | +0.0871 | +1.00 | 0.0635 | *** Strong Monotonic |
+| vol20 | 24.0% | Pruned | +0.0606 | +0.0188 | +0.90 | 0.0290 | *** Strong Monotonic |
+| yesterday_early_trend | 24.0% | Pruned | -0.0123 | -0.0105 | -0.70 | 0.0016 | ** Moderate Monotonic |
+| yesterday_early_kurtosis | 24.0% | Pruned | +0.0956 | +0.0008 | +0.20 | 0.0000 | * Non-Monotonic / Weak |
+| atr14_norm | 22.0% | Pruned | +0.0525 | +0.0234 | +0.50 | 0.0305 | * Non-Monotonic / Weak |
+| capital_sell_value | 22.0% | Pruned | +0.0211 | +0.0169 | +0.50 | 0.0000 | * Non-Monotonic / Weak |
+| vol_gk20 | 20.0% | Pruned | +0.0482 | +0.0248 | +0.60 | 0.0215 | ** Moderate Monotonic |
+| iv | 20.0% | Pruned | +0.0747 | +0.0063 | +0.40 | 0.0387 | * Non-Monotonic / Weak |
+| yesterday_early_momentum | 18.0% | Pruned | -0.0130 | -0.0105 | -0.70 | 0.0080 | ** Moderate Monotonic |
+| early_range | 16.0% | Pruned | +0.0642 | +0.0229 | +0.50 | 0.0483 | * Non-Monotonic / Weak |
+| rsi21 | 16.0% | Pruned | -0.0048 | +0.0072 | +0.00 | 0.0360 | * Non-Monotonic / Weak |
+| stoch_d | 16.0% | Pruned | +0.0063 | +0.0196 | -0.40 | 0.0005 | * Non-Monotonic / Weak |
+| volume_slope | 14.0% | Pruned | -0.0775 | -0.0191 | -0.80 | 0.0072 | ** Moderate Monotonic |
+| short_sell_quantity | 14.0% | Pruned | -0.0147 | -0.0429 | -0.50 | 0.0491 | * Non-Monotonic / Weak |
+| early_momentum | 12.0% | Pruned | +0.0429 | +0.0521 | +0.80 | 0.0429 | ** Moderate Monotonic |
+| sma20_dist | 12.0% | Pruned | +0.0095 | +0.0206 | +0.90 | 0.0239 | ** Non-Linear Monotonic |
+| ema12_dist | 12.0% | Pruned | +0.0109 | +0.0131 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
+| margin_repayment | 10.0% | Pruned | +0.0289 | -0.0073 | +0.30 | 0.0000 | * Non-Monotonic / Weak |
+| short_balance_quantity | 10.0% | Pruned | -0.0242 | -0.0197 | -0.30 | 0.1013 | * Non-Monotonic / Weak |
+| capital_sell_volume | 10.0% | Pruned | +0.0412 | +0.0141 | +0.60 | 0.0272 | ** Moderate Monotonic |
+| vol_pk20 | 8.0% | Pruned | +0.0456 | +0.0217 | +0.30 | 0.0332 | * Non-Monotonic / Weak |
+| capital_buy_volume | 8.0% | Pruned | +0.0431 | -0.0036 | +0.40 | 0.0121 | * Non-Monotonic / Weak |
+| iv_vol_ratio | 8.0% | Pruned | -0.0054 | -0.0042 | -0.10 | 0.0265 | * Non-Monotonic / Weak |
+| early_trend | 6.0% | Pruned | +0.0433 | +0.0521 | +0.80 | 0.0427 | ** Moderate Monotonic |
+| total_balance | 4.0% | Pruned | +0.0227 | -0.0070 | +0.70 | 0.0721 | ** Moderate Monotonic |
+| bar_ret_3 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_ret_4 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_ret_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_vol_3 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_vol_4 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_vol_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_rng_3 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_rng_4 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_rng_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_body_rng_3 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_body_rng_4 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_body_rng_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_vwap_dev_3 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_vwap_dev_4 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_vwap_dev_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
 
 - **Pearson $r$**: Linear correlation coefficient.
 - **Spearman $\rho$**: Rank correlation coefficient (overall monotonic relation).
@@ -860,19 +861,18 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | -0.0474 | -0.0612 | +0.0000 | -0.1046 | -0.0291 |
-| Dir Acc | 0.453 | 0.477 | 0.500 | 0.450 | 0.492 |
-| RMSE | 1.0940% | 1.2818% | 1.0403% | 1.5540% | 1.5099% |
-| L/S Sharpe | -1.13 | -0.04 | — | — | — |
+| IC | -0.0152 | -0.0564 | +0.0000 | -0.1378 | +0.0310 |
+| Dir Acc | 0.465 | 0.450 | 0.500 | 0.403 | 0.461 |
+| RMSE | 1.5129% | 1.7641% | 1.4521% | 2.1735% | 1.6548% |
+| L/S Sharpe | +1.17 | +0.35 | — | — | — |
 
 #### Best Hyperparameters
 
 ```json
 {
-  "model_type": "elasticnet",
-  "stability_threshold": 0.6000000000000001,
-  "en_alpha": 0.20819182453092927,
-  "en_l1_ratio": 0.09848500049768899
+  "model_type": "ridge",
+  "stability_threshold": 0.65,
+  "ridge_alpha": 113.4578983122216
 }
 ```
 
@@ -880,22 +880,22 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.3430 | +0.2242 |
-| 2 | 0.2748 | +0.1269 |
-| 3 | 0.2507 | +0.1261 |
-| 4 | 0.2253 | +0.1949 |
-| 5 | 0.2148 | -0.0622 |
-| **Overall** | — | +0.1066 |
+| 1 | 0.3589 | +0.1077 |
+| 2 | 0.2535 | +0.2361 |
+| 3 | 0.2641 | +0.1628 |
+| 4 | 0.2285 | +0.1596 |
+| 5 | 0.2128 | -0.0100 |
+| **Overall** | — | +0.1062 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2022 | +0.2221 | 0.618 | 241 | +2.41 |
-| 2023 | +0.1257 | 0.562 | 242 | +3.36 |
-| 2024 | +0.1773 | 0.570 | 242 | +3.54 |
-| 2025 | +0.0736 | 0.519 | 243 | +0.63 |
-| 2026 | -0.1144 | 0.411 | 107 | -1.66 |
+| 2022 | +0.1378 | 0.485 | 241 | +3.04 |
+| 2023 | +0.1946 | 0.570 | 242 | +4.02 |
+| 2024 | +0.1738 | 0.525 | 242 | +4.31 |
+| 2025 | +0.0864 | 0.510 | 243 | +2.04 |
+| 2026 | -0.0584 | 0.411 | 107 | -0.48 |
 
 #### Diagnostic Plots
 
@@ -919,147 +919,147 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 ### 159915ETF
 
-- **Selected Model**: HUBER
-- **Tuned Stability Threshold**: 0.80
+- **Selected Model**: ELASTICNET
+- **Tuned Stability Threshold**: 0.70
 - **Samples**: 2719 (2015-04-07 → 2026-06-16)
 - **Holdout**: 543 days (2024-03-19 → 2026-06-16)
-- **Target stats**: mean=-0.0079%, std=1.1363%, Sharpe=-0.11
-- **Selected features (15)**: `gap_pct, first_bar_volume, bar_vol_0, bar_rng_1, num_up_bars, cl_pos_in_range, macd_hist, volume_sma_ratio_long, yesterday_am_return, yesterday_gap_pct, yesterday_early_kurtosis, yesterday_day_pm_am_vol_ratio, yesterday_day_late_mom, yesterday_day_vwap_dev, yesterday_day_skew`
+- **Target stats**: mean=0.0176%, std=1.4021%, Sharpe=0.20
+- **Selected features (41)**: `gap_pct, early_realized_vol, early_skew, early_kurtosis, bar_ret_0, bar_ret_1, bar_ret_4, bar_rng_0, bar_rng_1, bar_rng_2, bar_rng_3, bar_rng_4, bar_body_rng_2, num_up_bars, body_to_range_ratio, sma50_dist, bb_pctb, sma100_dist, roc20, cci14, aroon_osc, vol_ratio_5_20, vol_gk20, volume_sma_ratio_long, margin_net_buy, margin_short_ratio, capital_net_ratio, northbound_net, vix_diff_1d, yesterday_gap_pct, yesterday_early_momentum, yesterday_early_vwap_dev, yesterday_early_skew, yesterday_early_kurtosis, yesterday_day_range, yesterday_day_close_pos, yesterday_day_pm_am_vol_ratio, yesterday_day_late_mom, yesterday_day_vwap_dev, yesterday_day_skew, yesterday_day_kurtosis`
 
 #### Feature Stability Scores (Block Bootstrap)
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|
-| gap_pct | 100.0% | **Selected** | +0.1703 | +0.0605 | +0.90 | 0.0528 | *** Strong Monotonic |
-| first_bar_volume | 100.0% | **Selected** | -0.0381 | -0.0444 | -1.00 | 0.0018 | *** Strong Monotonic |
-| yesterday_gap_pct | 98.0% | **Selected** | +0.0542 | +0.0475 | +0.90 | 0.0607 | *** Strong Monotonic |
-| yesterday_day_vwap_dev | 96.0% | **Selected** | -0.0957 | -0.1137 | -1.00 | 0.0492 | *** Strong Monotonic |
-| num_up_bars | 94.0% | **Selected** | +0.0642 | +0.0740 | +0.80 | 0.0000 | ** Moderate Monotonic |
-| yesterday_day_pm_am_vol_ratio | 94.0% | **Selected** | +0.0198 | +0.0071 | +0.20 | 0.0319 | * Non-Monotonic / Weak |
-| yesterday_am_return | 92.0% | **Selected** | +0.0508 | +0.0325 | +0.70 | 0.0022 | ** Moderate Monotonic |
-| bar_rng_1 | 88.0% | **Selected** | -0.0345 | +0.0082 | +0.60 | 0.0644 | ** Moderate Monotonic |
-| macd_hist | 88.0% | **Selected** | +0.0461 | +0.0283 | +0.20 | 0.0087 | * Non-Monotonic / Weak |
-| yesterday_day_skew | 88.0% | **Selected** | -0.0232 | -0.0155 | -0.70 | 0.0001 | ** Moderate Monotonic |
-| cl_pos_in_range | 86.0% | **Selected** | +0.0401 | +0.0504 | +0.90 | 0.0000 | *** Strong Monotonic |
-| yesterday_early_kurtosis | 86.0% | **Selected** | +0.0117 | +0.0159 | +0.40 | 0.0000 | * Non-Monotonic / Weak |
-| yesterday_day_late_mom | 84.0% | **Selected** | -0.0105 | -0.0205 | -0.60 | 0.0303 | ** Moderate Monotonic |
-| bar_vol_0 | 82.0% | **Selected** | -0.0381 | -0.0444 | -1.00 | 0.0018 | *** Strong Monotonic |
-| volume_sma_ratio_long | 82.0% | **Selected** | -0.0005 | +0.0078 | +0.80 | 0.0000 | ** Moderate Monotonic |
-| early_skew | 78.0% | Pruned | +0.0312 | +0.0266 | +0.80 | 0.0173 | ** Moderate Monotonic |
-| bar_vol_3 | 78.0% | Pruned | +0.0201 | -0.0009 | +0.30 | 0.0073 | * Non-Monotonic / Weak |
-| northbound_net | 78.0% | Pruned | +0.0234 | +0.0250 | +0.80 | 0.0158 | ** Moderate Monotonic |
-| vix_vol_ratio | 78.0% | Pruned | -0.0194 | -0.0309 | -0.60 | 0.0581 | ** Moderate Monotonic |
-| yesterday_day_realized_vol | 78.0% | Pruned | -0.0169 | +0.0200 | +0.90 | 0.1142 | *** Strong Monotonic |
-| roc10 | 76.0% | Pruned | -0.0153 | +0.0216 | -0.10 | 0.0557 | * Non-Monotonic / Weak |
-| yesterday_day_kurtosis | 76.0% | Pruned | -0.0174 | -0.0254 | -0.50 | 0.0183 | * Non-Monotonic / Weak |
-| bar_ret_1 | 74.0% | Pruned | -0.0279 | +0.0171 | -0.30 | 0.0371 | * Non-Monotonic / Weak |
-| body_to_range_ratio | 74.0% | Pruned | +0.0212 | +0.0206 | +0.80 | 0.0000 | ** Moderate Monotonic |
-| yesterday_early_volume_ratio | 74.0% | Pruned | -0.0354 | -0.0184 | +0.00 | 0.0000 | * Non-Monotonic / Weak |
-| early_kurtosis | 72.0% | Pruned | -0.0035 | +0.0016 | +0.10 | 0.0243 | * Non-Monotonic / Weak |
-| bar_vol_4 | 72.0% | Pruned | -0.0049 | -0.0149 | -0.10 | 0.0102 | * Non-Monotonic / Weak |
-| bar_body_rng_5 | 72.0% | Pruned | -0.0001 | -0.0127 | +0.40 | 0.0000 | * Non-Monotonic / Weak |
-| yesterday_early_realized_vol | 72.0% | Pruned | +0.0076 | +0.0286 | +0.70 | 0.0344 | ** Moderate Monotonic |
-| yesterday_first_bar_volume | 72.0% | Pruned | -0.0090 | +0.0068 | +0.20 | 0.0066 | * Non-Monotonic / Weak |
-| bar_vol_1 | 70.0% | Pruned | -0.0061 | -0.0196 | -0.60 | 0.0105 | ** Moderate Monotonic |
-| bar_vol_2 | 70.0% | Pruned | +0.0018 | -0.0012 | +0.50 | 0.0010 | * Non-Monotonic / Weak |
-| yesterday_early_vwap_dev | 70.0% | Pruned | +0.1114 | +0.0855 | +1.00 | 0.0254 | *** Strong Monotonic |
-| bar_ret_2 | 68.0% | Pruned | -0.0064 | +0.0140 | +0.60 | 0.0270 | ** Moderate Monotonic |
-| bar_rng_0 | 68.0% | Pruned | -0.0568 | +0.0242 | +0.60 | 0.0596 | ** Moderate Monotonic |
-| bar_rng_4 | 68.0% | Pruned | -0.0293 | -0.0067 | -0.30 | 0.0361 | * Non-Monotonic / Weak |
-| bar_rng_5 | 68.0% | Pruned | -0.0333 | +0.0043 | +0.70 | 0.0573 | ** Moderate Monotonic |
-| bar_body_rng_3 | 68.0% | Pruned | +0.0090 | +0.0175 | +0.60 | 0.0000 | ** Moderate Monotonic |
-| aroon_osc | 68.0% | Pruned | +0.0175 | +0.0403 | +0.60 | 0.0098 | ** Moderate Monotonic |
-| vix_diff_1d | 68.0% | Pruned | -0.0980 | +0.0133 | N/A | 0.0136 | N/A |
-| early_vwap_dev | 66.0% | Pruned | -0.0043 | +0.0236 | +0.60 | 0.0132 | ** Moderate Monotonic |
-| bar_rng_3 | 66.0% | Pruned | -0.0206 | +0.0111 | +0.00 | 0.0465 | * Non-Monotonic / Weak |
-| sma50_dist | 66.0% | Pruned | +0.0078 | +0.0257 | +0.90 | 0.0487 | ** Non-Linear Monotonic |
-| yesterday_early_skew | 66.0% | Pruned | -0.0130 | -0.0089 | -0.20 | 0.0028 | * Non-Monotonic / Weak |
-| bar_vol_5 | 64.0% | Pruned | -0.0015 | +0.0077 | +0.40 | 0.0000 | * Non-Monotonic / Weak |
-| bar_rng_2 | 64.0% | Pruned | +0.0093 | +0.0131 | +0.80 | 0.0452 | ** Moderate Monotonic |
-| cci14 | 64.0% | Pruned | +0.0275 | +0.0420 | +0.00 | 0.0021 | * Non-Monotonic / Weak |
-| margin_short_ratio | 64.0% | Pruned | +0.0012 | -0.0122 | +0.10 | 0.0247 | * Non-Monotonic / Weak |
-| bar_body_rng_0 | 62.0% | Pruned | +0.0856 | +0.0953 | +0.80 | 0.0178 | ** Moderate Monotonic |
-| sma200_dist | 62.0% | Pruned | -0.0157 | +0.0250 | -0.30 | 0.0498 | * Non-Monotonic / Weak |
-| roc5 | 62.0% | Pruned | -0.0033 | +0.0188 | +0.10 | 0.0210 | * Non-Monotonic / Weak |
-| yesterday_early_trend | 62.0% | Pruned | +0.0954 | +0.0806 | +0.90 | 0.0000 | *** Strong Monotonic |
-| yesterday_day_range | 62.0% | Pruned | -0.0178 | +0.0172 | +0.70 | 0.0429 | ** Moderate Monotonic |
-| early_range | 60.0% | Pruned | -0.0279 | +0.0236 | +0.70 | 0.0553 | ** Moderate Monotonic |
-| bar_ret_3 | 60.0% | Pruned | +0.0010 | +0.0223 | +0.30 | 0.0286 | * Non-Monotonic / Weak |
-| bar_ret_5 | 60.0% | Pruned | +0.0184 | -0.0122 | +0.30 | 0.0558 | * Non-Monotonic / Weak |
-| roc20 | 60.0% | Pruned | +0.0243 | +0.0329 | +0.60 | 0.0733 | ** Moderate Monotonic |
-| volume_sma_ratio | 60.0% | Pruned | -0.0146 | -0.0249 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
-| yesterday_early_range | 60.0% | Pruned | -0.0075 | +0.0200 | +0.80 | 0.0730 | ** Moderate Monotonic |
-| yesterday_first_bar_return | 60.0% | Pruned | +0.0193 | +0.0177 | +0.30 | 0.0000 | * Non-Monotonic / Weak |
-| max_up_ret | 58.0% | Pruned | +0.0247 | +0.0863 | +0.90 | 0.0366 | ** Non-Linear Monotonic |
-| rsi5 | 58.0% | Pruned | -0.0020 | +0.0110 | -0.30 | 0.0091 | * Non-Monotonic / Weak |
-| vol_ratio_5_20 | 58.0% | Pruned | +0.0014 | -0.0142 | +0.30 | 0.0000 | * Non-Monotonic / Weak |
-| capital_net_ratio | 58.0% | Pruned | -0.0539 | -0.0699 | -1.00 | 0.0377 | *** Strong Monotonic |
-| yesterday_day_close_pos | 58.0% | Pruned | -0.0781 | -0.0911 | -0.90 | 0.0131 | *** Strong Monotonic |
-| bar_vwap_dev_0 | 56.0% | Pruned | +0.0002 | -0.0190 | N/A | 0.0000 | N/A |
-| margin_net_buy | 56.0% | Pruned | -0.1053 | -0.0426 | -0.90 | 0.0200 | *** Strong Monotonic |
-| bar_body_rng_1 | 54.0% | Pruned | +0.0005 | +0.0230 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
-| yesterday_pm_return | 54.0% | Pruned | -0.0982 | -0.1239 | -0.90 | 0.0219 | *** Strong Monotonic |
-| bar_body_rng_2 | 52.0% | Pruned | +0.0117 | +0.0105 | +0.50 | 0.0032 | * Non-Monotonic / Weak |
-| bar_body_rng_4 | 52.0% | Pruned | +0.0112 | +0.0273 | +0.40 | 0.0000 | * Non-Monotonic / Weak |
-| bb_width | 52.0% | Pruned | +0.0221 | -0.0409 | -1.00 | 0.0591 | ** Non-Linear Monotonic |
-| short_sell_quantity | 52.0% | Pruned | -0.0073 | -0.0129 | -0.20 | 0.0539 | * Non-Monotonic / Weak |
-| short_repayment_quantity | 52.0% | Pruned | +0.0050 | -0.0084 | +0.00 | 0.0636 | * Non-Monotonic / Weak |
-| bar_ret_4 | 50.0% | Pruned | -0.0061 | +0.0167 | +0.70 | 0.0284 | ** Moderate Monotonic |
-| stoch_d | 50.0% | Pruned | +0.0180 | +0.0345 | +0.30 | 0.0047 | * Non-Monotonic / Weak |
-| vol5 | 50.0% | Pruned | -0.0184 | +0.0096 | +0.90 | 0.0445 | *** Strong Monotonic |
-| early_realized_vol | 48.0% | Pruned | -0.0333 | +0.0200 | +0.60 | 0.0418 | ** Moderate Monotonic |
-| first_bar_return | 48.0% | Pruned | +0.0859 | +0.1093 | +1.00 | 0.0362 | *** Strong Monotonic |
-| vol_gk20 | 48.0% | Pruned | -0.0247 | +0.0270 | +0.90 | 0.0940 | *** Strong Monotonic |
-| capital_net_value | 48.0% | Pruned | -0.1010 | -0.0784 | -1.00 | 0.0286 | *** Strong Monotonic |
-| yesterday_early_momentum | 48.0% | Pruned | +0.0993 | +0.0767 | +0.70 | 0.0195 | ** Moderate Monotonic |
-| roc60 | 46.0% | Pruned | -0.0087 | +0.0063 | -0.30 | 0.0093 | * Non-Monotonic / Weak |
-| vol_ratio_10_60 | 46.0% | Pruned | +0.0135 | +0.0160 | +0.50 | 0.0281 | * Non-Monotonic / Weak |
-| iv_diff_1d | 46.0% | Pruned | +0.0445 | -0.0046 | N/A | 0.0098 | N/A |
-| total_path_length | 44.0% | Pruned | -0.0282 | +0.0255 | +0.90 | 0.0431 | *** Strong Monotonic |
-| sma100_dist | 44.0% | Pruned | -0.0185 | +0.0110 | -0.50 | 0.0501 | * Non-Monotonic / Weak |
-| sma20_dist | 42.0% | Pruned | +0.0152 | +0.0291 | +0.10 | 0.0584 | * Non-Monotonic / Weak |
-| buy_on_margin_value | 42.0% | Pruned | -0.0729 | -0.0276 | -0.30 | 0.0178 | * Non-Monotonic / Weak |
-| yesterday_first_30min_return | 40.0% | Pruned | +0.0879 | +0.0693 | +0.90 | 0.0126 | *** Strong Monotonic |
-| sma10_dist | 38.0% | Pruned | +0.0048 | +0.0206 | -0.10 | 0.0145 | * Non-Monotonic / Weak |
-| mfi14 | 38.0% | Pruned | +0.0165 | +0.0361 | +0.50 | 0.0226 | * Non-Monotonic / Weak |
-| vol60 | 38.0% | Pruned | -0.0115 | +0.0169 | +0.40 | 0.0746 | * Non-Monotonic / Weak |
-| short_balance_quantity | 38.0% | Pruned | +0.0020 | +0.0062 | +0.40 | 0.0737 | * Non-Monotonic / Weak |
-| vix | 38.0% | Pruned | -0.0412 | -0.0116 | -0.50 | 0.0239 | ** Moderate Monotonic |
-| capital_sell_volume | 36.0% | Pruned | -0.0468 | -0.0191 | -0.20 | 0.0507 | * Non-Monotonic / Weak |
-| vol_gk10 | 34.0% | Pruned | -0.0246 | +0.0306 | +0.80 | 0.0831 | ** Moderate Monotonic |
-| northbound_sell | 34.0% | Pruned | -0.0035 | -0.0055 | -0.40 | 0.0304 | * Non-Monotonic / Weak |
-| early_trend | 32.0% | Pruned | -0.0122 | +0.0368 | +0.20 | 0.0247 | * Non-Monotonic / Weak |
-| capital_buy_value | 32.0% | Pruned | -0.0756 | -0.0259 | -0.70 | 0.0478 | ** Moderate Monotonic |
-| bb_pctb | 30.0% | Pruned | -0.0154 | -0.0272 | -0.50 | 0.0085 | * Non-Monotonic / Weak |
-| vol_pk20 | 26.0% | Pruned | -0.0202 | +0.0282 | +1.00 | 0.0626 | *** Strong Monotonic |
-| margin_balance | 26.0% | Pruned | -0.0413 | -0.0169 | -0.20 | 0.0308 | * Non-Monotonic / Weak |
-| northbound_buy | 26.0% | Pruned | +0.0006 | -0.0006 | +0.10 | 0.0476 | * Non-Monotonic / Weak |
-| vix_iv_spread | 26.0% | Pruned | -0.0037 | +0.0301 | N/A | 0.0151 | N/A |
-| vix_iv_ratio | 26.0% | Pruned | -0.0065 | +0.0328 | N/A | 0.0041 | N/A |
-| vol20 | 24.0% | Pruned | -0.0164 | +0.0289 | +0.60 | 0.0623 | ** Moderate Monotonic |
-| stoch_k | 24.0% | Pruned | +0.0177 | +0.0362 | +0.70 | 0.0078 | ** Moderate Monotonic |
-| margin_repayment | 24.0% | Pruned | -0.0329 | -0.0180 | -0.90 | 0.0198 | *** Strong Monotonic |
-| iv | 24.0% | Pruned | -0.0343 | -0.0229 | -0.50 | 0.0157 | ** Moderate Monotonic |
-| bar_ret_0 | 22.0% | Pruned | +0.0860 | +0.1093 | +1.00 | 0.0359 | *** Strong Monotonic |
-| atr14_norm | 20.0% | Pruned | -0.0185 | +0.0272 | +0.90 | 0.0832 | *** Strong Monotonic |
-| rsi21 | 20.0% | Pruned | +0.0095 | +0.0247 | +0.10 | 0.0088 | * Non-Monotonic / Weak |
-| vol10 | 20.0% | Pruned | -0.0165 | +0.0302 | +0.60 | 0.0836 | ** Moderate Monotonic |
-| short_balance | 20.0% | Pruned | -0.0011 | +0.0112 | +0.60 | 0.0651 | ** Moderate Monotonic |
-| max_down_ret | 18.0% | Pruned | +0.0588 | +0.0827 | +0.90 | 0.0349 | *** Strong Monotonic |
-| total_balance | 18.0% | Pruned | -0.0416 | -0.0170 | +0.20 | 0.0473 | * Non-Monotonic / Weak |
-| capital_sell_value | 18.0% | Pruned | -0.0523 | -0.0116 | +0.30 | 0.0273 | * Non-Monotonic / Weak |
-| willr14 | 16.0% | Pruned | +0.0007 | +0.0175 | -0.20 | 0.0179 | * Non-Monotonic / Weak |
-| first_30min_return | 14.0% | Pruned | +0.0368 | +0.0803 | +1.00 | 0.0000 | ** Non-Linear Monotonic |
-| ema12_dist | 14.0% | Pruned | +0.0096 | +0.0201 | +0.30 | 0.0171 | * Non-Monotonic / Weak |
-| capital_buy_volume | 14.0% | Pruned | -0.0685 | -0.0329 | -0.50 | 0.0488 | * Non-Monotonic / Weak |
-| early_momentum | 10.0% | Pruned | -0.0113 | +0.0348 | +0.70 | 0.0417 | ** Moderate Monotonic |
-| volume_slope | 4.0% | Pruned | +0.0366 | +0.0474 | +0.90 | 0.0000 | *** Strong Monotonic |
-| iv_vol_ratio | 4.0% | Pruned | -0.0176 | -0.0321 | -0.60 | 0.0626 | ** Moderate Monotonic |
-| bar_vwap_dev_2 | 2.0% | Pruned | +0.0002 | +0.0230 | +0.10 | 0.0000 | * Non-Monotonic / Weak |
-| bar_vwap_dev_5 | 2.0% | Pruned | +0.0002 | +0.0234 | +0.60 | 0.0006 | ** Moderate Monotonic |
-| bar_vwap_dev_1 | 0.0% | Pruned | +0.0002 | +0.0168 | -0.20 | 0.0000 | * Non-Monotonic / Weak |
-| bar_vwap_dev_3 | 0.0% | Pruned | +0.0002 | +0.0393 | +0.20 | 0.0000 | * Non-Monotonic / Weak |
-| bar_vwap_dev_4 | 0.0% | Pruned | +0.0002 | +0.0370 | +0.20 | 0.0004 | * Non-Monotonic / Weak |
+| sma100_dist | 98.0% | **Selected** | -0.0721 | -0.0342 | -0.90 | 0.0442 | *** Strong Monotonic |
+| yesterday_day_vwap_dev | 98.0% | **Selected** | -0.0659 | -0.0823 | -1.00 | 0.0000 | *** Strong Monotonic |
+| cci14 | 96.0% | **Selected** | +0.0504 | +0.0388 | +0.70 | 0.0530 | ** Moderate Monotonic |
+| yesterday_day_late_mom | 96.0% | **Selected** | +0.0142 | -0.0057 | +0.10 | 0.0543 | * Non-Monotonic / Weak |
+| gap_pct | 94.0% | **Selected** | +0.0511 | +0.0581 | +0.30 | 0.0396 | * Non-Monotonic / Weak |
+| early_skew | 94.0% | **Selected** | +0.0671 | +0.0642 | +0.90 | 0.0000 | *** Strong Monotonic |
+| bar_rng_3 | 92.0% | **Selected** | +0.0673 | +0.0477 | +1.00 | 0.0413 | *** Strong Monotonic |
+| bar_rng_4 | 92.0% | **Selected** | +0.0616 | +0.0096 | +0.30 | 0.0773 | * Non-Monotonic / Weak |
+| northbound_net | 92.0% | **Selected** | +0.0287 | +0.0277 | +0.60 | 0.0000 | ** Moderate Monotonic |
+| bar_rng_2 | 90.0% | **Selected** | +0.0548 | +0.0319 | +0.90 | 0.0520 | *** Strong Monotonic |
+| yesterday_day_pm_am_vol_ratio | 90.0% | **Selected** | +0.0010 | -0.0008 | -0.10 | 0.0035 | * Non-Monotonic / Weak |
+| num_up_bars | 88.0% | **Selected** | +0.0686 | +0.0744 | +1.00 | 0.0193 | *** Strong Monotonic |
+| bar_body_rng_2 | 86.0% | **Selected** | +0.0202 | +0.0292 | +0.60 | 0.0082 | ** Moderate Monotonic |
+| margin_net_buy | 86.0% | **Selected** | -0.0419 | -0.0310 | -0.90 | 0.0143 | *** Strong Monotonic |
+| vix_diff_1d | 86.0% | **Selected** | +0.0050 | +0.0044 | N/A | 0.0217 | N/A |
+| yesterday_gap_pct | 86.0% | **Selected** | +0.0201 | +0.0078 | +0.30 | 0.0303 | * Non-Monotonic / Weak |
+| yesterday_early_kurtosis | 86.0% | **Selected** | -0.0089 | -0.0156 | -0.20 | 0.0107 | * Non-Monotonic / Weak |
+| yesterday_day_range | 86.0% | **Selected** | +0.0213 | +0.0135 | +0.80 | 0.0577 | ** Moderate Monotonic |
+| bar_rng_0 | 84.0% | **Selected** | -0.0069 | +0.0496 | +0.80 | 0.0393 | ** Moderate Monotonic |
+| roc20 | 84.0% | **Selected** | +0.0105 | +0.0202 | +0.30 | 0.0530 | * Non-Monotonic / Weak |
+| yesterday_early_vwap_dev | 84.0% | **Selected** | +0.0870 | +0.0706 | +1.00 | 0.0024 | *** Strong Monotonic |
+| bar_ret_4 | 82.0% | **Selected** | -0.0081 | +0.0023 | +0.10 | 0.0384 | * Non-Monotonic / Weak |
+| body_to_range_ratio | 82.0% | **Selected** | +0.0401 | +0.0566 | +1.00 | 0.0000 | *** Strong Monotonic |
+| early_kurtosis | 80.0% | **Selected** | +0.0096 | -0.0038 | +0.10 | 0.0258 | * Non-Monotonic / Weak |
+| bar_ret_0 | 80.0% | **Selected** | +0.1366 | +0.1153 | +1.00 | 0.0386 | *** Strong Monotonic |
+| margin_short_ratio | 80.0% | **Selected** | -0.0047 | +0.0057 | +0.20 | 0.0600 | * Non-Monotonic / Weak |
+| capital_net_ratio | 80.0% | **Selected** | -0.0463 | -0.0546 | -0.80 | 0.0214 | ** Moderate Monotonic |
+| sma50_dist | 78.0% | **Selected** | -0.0138 | +0.0066 | +0.30 | 0.0502 | * Non-Monotonic / Weak |
+| aroon_osc | 78.0% | **Selected** | -0.0064 | +0.0043 | +0.40 | 0.0107 | * Non-Monotonic / Weak |
+| yesterday_day_close_pos | 76.0% | **Selected** | -0.0549 | -0.0622 | -0.90 | 0.0000 | *** Strong Monotonic |
+| yesterday_day_skew | 76.0% | **Selected** | +0.0174 | +0.0097 | +0.40 | 0.0000 | * Non-Monotonic / Weak |
+| bar_ret_1 | 74.0% | **Selected** | +0.0197 | +0.0367 | +0.90 | 0.0000 | ** Non-Linear Monotonic |
+| volume_sma_ratio_long | 74.0% | **Selected** | +0.0157 | +0.0009 | +0.40 | 0.0132 | * Non-Monotonic / Weak |
+| early_realized_vol | 72.0% | **Selected** | +0.0276 | +0.0416 | +0.70 | 0.0625 | ** Moderate Monotonic |
+| bar_rng_1 | 72.0% | **Selected** | +0.0134 | +0.0097 | +0.30 | 0.0668 | * Non-Monotonic / Weak |
+| bb_pctb | 72.0% | **Selected** | -0.0043 | -0.0067 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
+| vol_ratio_5_20 | 72.0% | **Selected** | +0.0022 | -0.0025 | -0.10 | 0.0021 | * Non-Monotonic / Weak |
+| vol_gk20 | 72.0% | **Selected** | +0.0267 | +0.0226 | +0.90 | 0.0922 | *** Strong Monotonic |
+| yesterday_early_momentum | 72.0% | **Selected** | +0.0809 | +0.0695 | +0.90 | 0.0000 | *** Strong Monotonic |
+| yesterday_early_skew | 72.0% | **Selected** | +0.0057 | +0.0112 | +0.50 | 0.0203 | * Non-Monotonic / Weak |
+| yesterday_day_kurtosis | 72.0% | **Selected** | +0.0116 | -0.0329 | -0.30 | 0.0075 | * Non-Monotonic / Weak |
+| bar_vol_4 | 70.0% | Pruned | +0.0074 | +0.0214 | +0.50 | 0.0121 | * Non-Monotonic / Weak |
+| roc10 | 70.0% | Pruned | -0.0267 | +0.0103 | -0.10 | 0.0223 | * Non-Monotonic / Weak |
+| mfi14 | 70.0% | Pruned | +0.0072 | +0.0146 | +0.10 | 0.0015 | * Non-Monotonic / Weak |
+| yesterday_am_return | 70.0% | Pruned | +0.0274 | +0.0270 | +0.40 | 0.0407 | * Non-Monotonic / Weak |
+| bar_ret_3 | 68.0% | Pruned | +0.0024 | +0.0011 | -0.10 | 0.0273 | * Non-Monotonic / Weak |
+| bar_body_rng_3 | 68.0% | Pruned | -0.0058 | -0.0051 | -0.40 | 0.0262 | * Non-Monotonic / Weak |
+| total_path_length | 68.0% | Pruned | +0.0461 | +0.0538 | +1.00 | 0.0394 | *** Strong Monotonic |
+| roc5 | 68.0% | Pruned | -0.0300 | -0.0078 | -0.30 | 0.0112 | * Non-Monotonic / Weak |
+| short_balance | 68.0% | Pruned | -0.0042 | -0.0004 | -0.20 | 0.0765 | * Non-Monotonic / Weak |
+| yesterday_early_range | 68.0% | Pruned | +0.0254 | +0.0234 | +0.90 | 0.0336 | *** Strong Monotonic |
+| yesterday_early_volume_ratio | 68.0% | Pruned | +0.0044 | -0.0025 | +0.60 | 0.0088 | ** Moderate Monotonic |
+| yesterday_day_realized_vol | 68.0% | Pruned | +0.0286 | +0.0271 | +1.00 | 0.0662 | *** Strong Monotonic |
+| bar_body_rng_0 | 66.0% | Pruned | +0.0986 | +0.1032 | +0.90 | 0.0115 | *** Strong Monotonic |
+| bar_body_rng_4 | 66.0% | Pruned | +0.0061 | +0.0081 | +0.60 | 0.0000 | ** Moderate Monotonic |
+| cl_pos_in_range | 66.0% | Pruned | +0.0530 | +0.0618 | +1.00 | 0.0131 | *** Strong Monotonic |
+| roc60 | 66.0% | Pruned | -0.0275 | -0.0146 | -0.50 | 0.0466 | * Non-Monotonic / Weak |
+| stoch_d | 66.0% | Pruned | -0.0109 | +0.0028 | -0.50 | 0.0029 | * Non-Monotonic / Weak |
+| short_sell_quantity | 66.0% | Pruned | -0.0014 | -0.0136 | +0.00 | 0.0789 | * Non-Monotonic / Weak |
+| bar_ret_2 | 64.0% | Pruned | -0.0004 | +0.0320 | +0.40 | 0.0239 | * Non-Monotonic / Weak |
+| macd_hist | 64.0% | Pruned | +0.0124 | +0.0186 | +0.30 | 0.0293 | * Non-Monotonic / Weak |
+| willr14 | 64.0% | Pruned | -0.0070 | +0.0033 | -0.30 | 0.0091 | * Non-Monotonic / Weak |
+| vol5 | 64.0% | Pruned | +0.0399 | +0.0198 | +0.90 | 0.0698 | *** Strong Monotonic |
+| vol_ratio_10_60 | 64.0% | Pruned | +0.0440 | +0.0146 | +0.70 | 0.0000 | ** Moderate Monotonic |
+| iv_diff_1d | 64.0% | Pruned | +0.0097 | +0.0064 | N/A | 0.0174 | N/A |
+| yesterday_early_realized_vol | 64.0% | Pruned | +0.0328 | +0.0274 | +0.80 | 0.0221 | ** Moderate Monotonic |
+| bar_vol_2 | 62.0% | Pruned | -0.0008 | +0.0218 | +0.80 | 0.0129 | ** Moderate Monotonic |
+| bar_vol_3 | 62.0% | Pruned | +0.0129 | +0.0287 | +0.50 | 0.0000 | * Non-Monotonic / Weak |
+| buy_on_margin_value | 62.0% | Pruned | -0.0061 | -0.0161 | -0.20 | 0.0510 | * Non-Monotonic / Weak |
+| bar_vol_1 | 60.0% | Pruned | -0.0002 | +0.0070 | +0.30 | 0.0000 | * Non-Monotonic / Weak |
+| bar_vwap_dev_0 | 60.0% | Pruned | -0.0041 | -0.0101 | N/A | 0.0000 | N/A |
+| short_repayment_quantity | 60.0% | Pruned | +0.0054 | -0.0163 | -0.40 | 0.0625 | * Non-Monotonic / Weak |
+| yesterday_early_trend | 60.0% | Pruned | +0.0693 | +0.0652 | +0.90 | 0.0053 | *** Strong Monotonic |
+| max_up_ret | 58.0% | Pruned | +0.1062 | +0.1149 | +0.90 | 0.0226 | *** Strong Monotonic |
+| sma10_dist | 58.0% | Pruned | -0.0314 | -0.0037 | -0.70 | 0.0138 | ** Moderate Monotonic |
+| vix_iv_ratio | 58.0% | Pruned | +0.0106 | +0.0341 | N/A | 0.0504 | N/A |
+| yesterday_first_bar_volume | 58.0% | Pruned | +0.0109 | +0.0039 | +0.70 | 0.0173 | ** Moderate Monotonic |
+| bar_body_rng_1 | 56.0% | Pruned | +0.0288 | +0.0379 | +0.70 | 0.0000 | ** Moderate Monotonic |
+| rsi21 | 56.0% | Pruned | -0.0082 | +0.0023 | -0.10 | 0.0154 | * Non-Monotonic / Weak |
+| vol60 | 56.0% | Pruned | +0.0312 | +0.0140 | +0.90 | 0.0427 | *** Strong Monotonic |
+| bb_width | 56.0% | Pruned | -0.0514 | -0.0516 | -0.90 | 0.0835 | *** Strong Monotonic |
+| vol_gk10 | 56.0% | Pruned | +0.0395 | +0.0354 | +1.00 | 0.0854 | *** Strong Monotonic |
+| volume_sma_ratio | 56.0% | Pruned | -0.0089 | -0.0178 | -0.10 | 0.0098 | * Non-Monotonic / Weak |
+| capital_net_value | 56.0% | Pruned | -0.0380 | -0.0465 | -1.00 | 0.0124 | *** Strong Monotonic |
+| yesterday_pm_return | 56.0% | Pruned | -0.0553 | -0.0772 | -0.90 | 0.0355 | *** Strong Monotonic |
+| yesterday_first_30min_return | 56.0% | Pruned | +0.0692 | +0.0745 | +0.70 | 0.0352 | ** Moderate Monotonic |
+| yesterday_first_bar_return | 56.0% | Pruned | +0.0139 | +0.0307 | +0.30 | 0.0194 | * Non-Monotonic / Weak |
+| vol20 | 54.0% | Pruned | +0.0543 | +0.0261 | +0.90 | 0.0832 | *** Strong Monotonic |
+| sma200_dist | 54.0% | Pruned | -0.0337 | -0.0096 | -0.30 | 0.0477 | * Non-Monotonic / Weak |
+| early_vwap_dev | 52.0% | Pruned | +0.0013 | +0.0329 | +0.40 | 0.0273 | * Non-Monotonic / Weak |
+| volume_slope | 52.0% | Pruned | +0.0117 | +0.0309 | +0.30 | 0.0028 | * Non-Monotonic / Weak |
+| rsi5 | 52.0% | Pruned | -0.0125 | -0.0050 | -0.10 | 0.0000 | * Non-Monotonic / Weak |
+| vix | 52.0% | Pruned | +0.0262 | +0.0181 | +0.50 | 0.0366 | ** Moderate Monotonic |
+| first_30min_return | 50.0% | Pruned | +0.0920 | +0.0928 | +1.00 | 0.0105 | *** Strong Monotonic |
+| early_momentum | 48.0% | Pruned | +0.0199 | +0.0460 | +0.40 | 0.0124 | * Non-Monotonic / Weak |
+| vol10 | 48.0% | Pruned | +0.0552 | +0.0266 | +0.70 | 0.0798 | ** Moderate Monotonic |
+| iv_vol_ratio | 46.0% | Pruned | -0.0443 | -0.0275 | -0.70 | 0.0505 | ** Moderate Monotonic |
+| short_balance_quantity | 44.0% | Pruned | +0.0036 | -0.0001 | +0.00 | 0.0456 | * Non-Monotonic / Weak |
+| sma20_dist | 42.0% | Pruned | -0.0109 | +0.0104 | +0.10 | 0.0589 | * Non-Monotonic / Weak |
+| atr14_norm | 42.0% | Pruned | +0.0379 | +0.0213 | +0.90 | 0.1013 | *** Strong Monotonic |
+| capital_buy_volume | 40.0% | Pruned | +0.0035 | +0.0007 | +0.70 | 0.0386 | ** Moderate Monotonic |
+| vix_iv_spread | 40.0% | Pruned | +0.0238 | +0.0416 | N/A | 0.0155 | N/A |
+| early_trend | 38.0% | Pruned | +0.0162 | +0.0474 | +0.30 | 0.0313 | * Non-Monotonic / Weak |
+| max_down_ret | 38.0% | Pruned | +0.0714 | +0.0815 | +0.90 | 0.0473 | *** Strong Monotonic |
+| total_balance | 38.0% | Pruned | +0.0110 | -0.0022 | +0.30 | 0.0387 | * Non-Monotonic / Weak |
+| capital_buy_value | 38.0% | Pruned | -0.0067 | +0.0015 | +0.30 | 0.0640 | * Non-Monotonic / Weak |
+| capital_sell_value | 38.0% | Pruned | +0.0049 | +0.0128 | +0.40 | 0.0381 | * Non-Monotonic / Weak |
+| ema12_dist | 36.0% | Pruned | -0.0232 | +0.0019 | -0.30 | 0.0344 | * Non-Monotonic / Weak |
+| stoch_k | 36.0% | Pruned | -0.0072 | +0.0082 | +0.30 | 0.0000 | * Non-Monotonic / Weak |
+| vol_pk20 | 36.0% | Pruned | +0.0342 | +0.0259 | +1.00 | 0.0921 | *** Strong Monotonic |
+| vix_vol_ratio | 36.0% | Pruned | -0.0432 | -0.0220 | -0.90 | 0.0590 | *** Strong Monotonic |
+| early_range | 34.0% | Pruned | +0.0253 | +0.0602 | +0.90 | 0.0543 | ** Non-Linear Monotonic |
+| capital_sell_volume | 32.0% | Pruned | +0.0152 | +0.0144 | +0.80 | 0.0322 | ** Moderate Monotonic |
+| northbound_sell | 32.0% | Pruned | -0.0221 | -0.0273 | -0.90 | 0.0166 | *** Strong Monotonic |
+| first_bar_volume | 30.0% | Pruned | -0.0055 | -0.0112 | +0.10 | 0.0000 | * Non-Monotonic / Weak |
+| northbound_buy | 30.0% | Pruned | -0.0169 | -0.0237 | -0.70 | 0.0000 | ** Moderate Monotonic |
+| margin_repayment | 28.0% | Pruned | +0.0119 | -0.0030 | +0.40 | 0.0721 | * Non-Monotonic / Weak |
+| iv | 24.0% | Pruned | +0.0106 | -0.0077 | +0.50 | 0.0439 | ** Moderate Monotonic |
+| bar_vol_0 | 22.0% | Pruned | -0.0055 | -0.0112 | +0.10 | 0.0000 | * Non-Monotonic / Weak |
+| margin_balance | 20.0% | Pruned | +0.0111 | -0.0041 | +0.40 | 0.0403 | * Non-Monotonic / Weak |
+| first_bar_return | 14.0% | Pruned | +0.1359 | +0.1153 | +1.00 | 0.0387 | *** Strong Monotonic |
+| bar_vwap_dev_1 | 2.0% | Pruned | -0.0041 | +0.0390 | +0.80 | 0.0000 | ** Moderate Monotonic |
+| bar_vwap_dev_2 | 2.0% | Pruned | -0.0041 | +0.0483 | +0.30 | 0.0000 | * Non-Monotonic / Weak |
+| bar_ret_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_vol_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_rng_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_body_rng_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
+| bar_vwap_dev_3 | 0.0% | Pruned | -0.0041 | +0.0370 | +0.70 | 0.0000 | ** Moderate Monotonic |
+| bar_vwap_dev_4 | 0.0% | Pruned | -0.0041 | +0.0324 | +0.40 | 0.0000 | * Non-Monotonic / Weak |
+| bar_vwap_dev_5 | 0.0% | Pruned | N/A | N/A | N/A | 0.0000 | N/A |
 
 - **Pearson $r$**: Linear correlation coefficient.
 - **Spearman $\rho$**: Rank correlation coefficient (overall monotonic relation).
@@ -1071,19 +1071,19 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | +0.1789 | +0.1139 | +0.0000 | -0.1612 | +0.0677 |
-| Dir Acc | 0.569 | 0.560 | 0.500 | 0.413 | 0.530 |
-| RMSE | 0.9580% | 1.2183% | 1.0048% | 1.4929% | 1.2770% |
-| L/S Sharpe | +3.28 | +1.97 | — | — | — |
+| IC | +0.1006 | +0.0482 | +0.0000 | -0.1226 | +0.0877 |
+| Dir Acc | 0.510 | 0.506 | 0.500 | 0.448 | 0.514 |
+| RMSE | 1.3409% | 1.5919% | 1.3308% | 1.9575% | 1.4715% |
+| L/S Sharpe | +2.77 | +1.86 | — | — | — |
 
 #### Best Hyperparameters
 
 ```json
 {
-  "model_type": "huber",
-  "stability_threshold": 0.8,
-  "huber_alpha": 0.016151339233570663,
-  "huber_epsilon": 1.6489622978952514
+  "model_type": "elasticnet",
+  "stability_threshold": 0.7000000000000001,
+  "en_alpha": 7.049008686065471e-05,
+  "en_l1_ratio": 0.5883993179640956
 }
 ```
 
@@ -1091,27 +1091,27 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.2837 | +0.1485 |
-| 2 | 0.2437 | +0.2132 |
-| 3 | 0.2413 | +0.1736 |
-| 4 | 0.2284 | +0.1614 |
-| 5 | 0.2189 | +0.1584 |
-| **Overall** | — | +0.1677 |
+| 1 | 0.2871 | +0.0984 |
+| 2 | 0.2491 | +0.1734 |
+| 3 | 0.2550 | +0.1924 |
+| 4 | 0.2468 | +0.2087 |
+| 5 | 0.2400 | +0.1017 |
+| **Overall** | — | +0.1485 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2017 | +0.1018 | 0.516 | 217 | +1.26 |
-| 2018 | +0.1655 | 0.547 | 243 | +3.95 |
-| 2019 | +0.1910 | 0.574 | 244 | +4.25 |
-| 2020 | +0.1879 | 0.547 | 243 | +4.08 |
-| 2021 | +0.1492 | 0.545 | 242 | +3.30 |
-| 2022 | +0.1902 | 0.595 | 242 | +3.34 |
-| 2023 | +0.1328 | 0.545 | 242 | +3.19 |
-| 2024 | +0.2578 | 0.574 | 242 | +5.68 |
-| 2025 | +0.1039 | 0.543 | 243 | +2.00 |
-| 2026 | +0.1258 | 0.542 | 107 | +1.51 |
+| 2017 | -0.0909 | 0.419 | 217 | -1.59 |
+| 2018 | +0.2478 | 0.535 | 243 | +6.09 |
+| 2019 | +0.2381 | 0.586 | 244 | +3.51 |
+| 2020 | +0.1490 | 0.551 | 243 | +4.80 |
+| 2021 | +0.1602 | 0.570 | 242 | +3.68 |
+| 2022 | +0.2123 | 0.566 | 242 | +5.20 |
+| 2023 | +0.2695 | 0.574 | 242 | +6.42 |
+| 2024 | +0.1783 | 0.529 | 242 | +4.87 |
+| 2025 | +0.1201 | 0.498 | 243 | +2.71 |
+| 2026 | -0.0232 | 0.523 | 107 | -1.49 |
 
 #### Diagnostic Plots
 
@@ -1138,17 +1138,17 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 Four baselines evaluated on the same holdout set:
 
 1. **Zero** (no-skill): Always predicts 0. IC=0 by definition.
-2. **Yesterday PM return**: Autocorrelation baseline. Tests if PM returns are predictable from prior day.
+2. **Yesterday trade_return**: Autocorrelation baseline. Tests if trade returns are predictable from prior day.
 3. **First 30-min return**: Momentum baseline. Tests AM-to-PM momentum.
 4. **Ridge Base**: Ridge regression with alpha=1.0 on all 21 features. Controls for tuning/selection lift.
 
 | ETF | Best Linear IC > Ridge Base IC? | Best Linear IC > Mom IC? | Best Baseline |
 |-----|---------------------------------|--------------------------|---------------|
-| 300ETF | Yes | Yes | first_30min_mom (IC=+0.0468) |
-| 50ETF | Yes | Yes | yesterday_pm (IC=+0.0523) |
-| 500ETF | Yes | Yes | first_30min_mom (IC=+0.0579) |
-| 588000ETF | Yes | No | zero (IC=+0.0000) |
-| 159915ETF | Yes | Yes | ridge (IC=+0.1139) |
+| 300ETF | No | No | ridge (IC=+0.0618) |
+| 50ETF | No | Yes | ridge (IC=+0.0861) |
+| 500ETF | No | Yes | ridge (IC=+0.1371) |
+| 588000ETF | Yes | No | first_30min_mom (IC=+0.0310) |
+| 159915ETF | Yes | Yes | first_30min_mom (IC=+0.0877) |
 
 ## 6. Risk of Overfitting
 
@@ -1156,11 +1156,11 @@ Four baselines evaluated on the same holdout set:
 
 | ETF | IS IC | OOS IC | Gap | Assessment |
 |-----|-------|--------|-----|-----------|
-| 300ETF | 0.1779 | 0.0663 | +0.1116 | Low |
-| 50ETF | 0.0911 | 0.0231 | +0.0681 | Low |
-| 500ETF | 0.2265 | 0.0848 | +0.1417 | Low |
-| 588000ETF | 0.2157 | -0.0474 | +0.2631 | Moderate |
-| 159915ETF | 0.2126 | 0.1789 | +0.0337 | Low |
+| 300ETF | 0.0703 | 0.0207 | +0.0495 | Low |
+| 50ETF | 0.1388 | 0.0333 | +0.1055 | Low |
+| 500ETF | 0.1932 | 0.1282 | +0.0650 | Low |
+| 588000ETF | 0.2198 | -0.0152 | +0.2350 | Moderate |
+| 159915ETF | 0.2430 | 0.1006 | +0.1424 | Low |
 
 ### 6.2 Regime Breakdown (Year-by-Year)
 
@@ -1172,11 +1172,11 @@ If IC drops sharply as purge gap increases from 0→5→10, it indicates short-t
 
 | ETF | Gap=0 | Gap=5 | Gap=10 | Delta(0→10) |
 |-----|-------|-------|--------|------------|
-| 300ETF | +0.0997 | +0.0997 | +0.0992 | +0.0005 |
-| 50ETF | +0.0613 | +0.0613 | +0.0612 | +0.0001 |
-| 500ETF | +0.0865 | +0.0879 | +0.0884 | -0.0019 |
-| 588000ETF | +0.1247 | +0.1220 | +0.1137 | +0.0110 |
-| 159915ETF | +0.1711 | +0.1710 | +0.1706 | +0.0005 |
+| 300ETF | +0.0512 | +0.0521 | +0.0515 | -0.0003 |
+| 50ETF | +0.0788 | +0.0792 | +0.0784 | +0.0004 |
+| 500ETF | +0.1195 | +0.1181 | +0.1179 | +0.0016 |
+| 588000ETF | +0.1293 | +0.1312 | +0.1302 | -0.0008 |
+| 159915ETF | +0.1552 | +0.1549 | +0.1550 | +0.0002 |
 
 ### 6.4 Feature Importance Stability
 
@@ -1189,65 +1189,65 @@ Compare standardized coefficients vs permutation importance (OOS) across feature
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | max_up_ret (+0.0352) | bar_rng_0 (+0.003083) |
-| 2 | vix_iv_spread (+0.0290) | yesterday_am_return (+0.002992) |
-| 3 | yesterday_day_vwap_dev (-0.0281) | max_up_ret (+0.001758) |
-| 4 | yesterday_am_return (+0.0239) | bar_rng_3 (+0.001600) |
-| 5 | yesterday_day_close_pos (-0.0237) | roc5 (+0.001512) |
+| 1 | sma100_dist (-0.0794) | sma100_dist (+0.009731) |
+| 2 | northbound_net (+0.0413) | northbound_net (+0.000467) |
+| 3 | yesterday_day_late_mom (+0.0309) | first_30min_return (+0.000000) |
+| 4 | gap_pct (+0.0000) | gap_pct (+0.000000) |
+| 5 | first_30min_return (+0.0000) | early_trend (+0.000000) |
 
 **50ETF**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | vix_iv_spread (+0.0578) | vix_iv_spread (+0.003654) |
-| 2 | capital_buy_value (-0.0208) | capital_buy_value (+0.002480) |
-| 3 | vix_diff_1d (+0.0064) | first_30min_return (+0.000000) |
-| 4 | gap_pct (+0.0000) | gap_pct (+0.000000) |
-| 5 | first_30min_return (+0.0000) | early_realized_vol (+0.000000) |
+| 1 | margin_net_buy (-0.0812) | bar_rng_1 (+0.019346) |
+| 2 | sma100_dist (-0.0785) | margin_net_buy (+0.011537) |
+| 3 | yesterday_early_range (+0.0732) | sma100_dist (+0.005235) |
+| 4 | bar_rng_1 (-0.0710) | yesterday_day_late_mom (+0.003856) |
+| 5 | num_up_bars (+0.0656) | early_skew (+0.003294) |
 
 **500ETF**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | yesterday_day_vwap_dev (-0.1915) | yesterday_day_vwap_dev (+0.047122) |
-| 2 | sma10_dist (+0.1587) | roc5 (+0.039964) |
-| 3 | yesterday_day_late_mom (+0.1167) | yesterday_day_late_mom (+0.019228) |
-| 4 | roc5 (-0.1003) | yesterday_day_range (+0.015187) |
-| 5 | yesterday_day_realized_vol (+0.0986) | bar_rng_4 (+0.009622) |
+| 1 | yesterday_day_vwap_dev (-0.2187) | vix_diff_1d (+0.082074) |
+| 2 | yesterday_pm_return (+0.1786) | capital_buy_volume (+0.069239) |
+| 3 | yesterday_early_vwap_dev (+0.1425) | yesterday_day_vwap_dev (+0.060985) |
+| 4 | sma100_dist (-0.1376) | yesterday_early_vwap_dev (+0.047382) |
+| 5 | bar_rng_4 (+0.0982) | yesterday_pm_return (+0.034122) |
 
 **588000ETF**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | total_path_length (-0.0871) | yesterday_pm_return (+0.010779) |
-| 2 | margin_net_buy (-0.0636) | bar_vwap_dev_0 (+0.007760) |
-| 3 | yesterday_first_bar_volume (+0.0614) | early_skew (+0.006067) |
-| 4 | capital_net_ratio (-0.0592) | bar_rng_4 (+0.003242) |
-| 5 | yesterday_pm_return (-0.0581) | yesterday_day_late_mom (+0.002869) |
+| 1 | vix_diff_1d (+0.2050) | vix_diff_1d (+0.084805) |
+| 2 | vol_gk10 (+0.1819) | bar_vol_2 (+0.048445) |
+| 3 | bar_vol_2 (+0.1705) | sma100_dist (+0.040620) |
+| 4 | margin_net_buy (-0.1687) | roc5 (+0.034318) |
+| 5 | yesterday_gap_pct (+0.1293) | yesterday_day_range (+0.032754) |
 
 **159915ETF**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | yesterday_day_vwap_dev (-0.2690) | yesterday_day_vwap_dev (+0.142097) |
-| 2 | yesterday_am_return (+0.1576) | gap_pct (+0.114652) |
-| 3 | yesterday_day_late_mom (+0.1196) | yesterday_am_return (+0.040165) |
-| 4 | gap_pct (+0.1134) | yesterday_day_late_mom (+0.030368) |
-| 5 | yesterday_gap_pct (+0.0754) | yesterday_gap_pct (+0.014627) |
+| 1 | sma100_dist (-0.2972) | vix_diff_1d (+0.180645) |
+| 2 | yesterday_day_vwap_dev (-0.2179) | margin_net_buy (+0.160429) |
+| 3 | bar_rng_2 (+0.2019) | sma100_dist (+0.138460) |
+| 4 | bar_ret_0 (+0.1938) | sma50_dist (+0.130115) |
+| 5 | sma50_dist (+0.1927) | yesterday_day_vwap_dev (+0.076174) |
 
 ### 6.6 Hyperparameter Sensitivity
 
 Optuna parameter importance shows which parameters most affect CV IC.
 
-- **300ETF**: Most influential = `model_type` (68.41%)
-- **50ETF**: Most influential = `stability_threshold` (58.80%)
-- **500ETF**: Most influential = `stability_threshold` (80.40%)
-- **588000ETF**: Most influential = `stability_threshold` (94.87%)
-- **159915ETF**: Most influential = `stability_threshold` (59.77%)
+- **300ETF**: Most influential = `stability_threshold` (79.16%)
+- **50ETF**: Most influential = `model_type` (51.82%)
+- **500ETF**: Most influential = `stability_threshold` (81.53%)
+- **588000ETF**: Most influential = `stability_threshold` (92.20%)
+- **159915ETF**: Most influential = `stability_threshold` (86.43%)
 
 ## 7. Sensitivity to Prediction Time (Bar Count Comparison)
 
-To determine how early the PM return prediction can be made, we evaluated model performance across different morning bar counts:
+To determine how early the trade_return prediction can be made, we evaluated model performance across different morning bar counts (target = `trade_return`: open[early_bars] -> close[EXIT_BAR]):
 - **9:45 AM (3 bars)**: First 15 minutes of trading (9:30–9:45)
 - **9:50 AM (4 bars)**: First 20 minutes of trading (9:30–9:50)
 - **9:55 AM (5 bars)**: First 25 minutes of trading (9:30–9:55)
@@ -1300,16 +1300,16 @@ To determine how early the PM return prediction can be made, we evaluated model 
 
 ## 8. Conclusions & Caveats
 
-**Potentially deployable** (IC>0.03, L/S Sharpe>0.5, beats Ridge Base): 300ETF, 500ETF, 159915ETF
+**Potentially deployable** (IC>0.03, L/S Sharpe>0.5, beats Ridge Base): 159915ETF
 
-**Marginal** (positive IC but weak Sharpe or below Ridge Base): 50ETF
+**Marginal** (positive IC but weak Sharpe or below Ridge Base): 300ETF, 50ETF, 500ETF
 
 **Weak/Not recommended** (negative IC or no edge): 588000ETF
 
 
 **Key caveats**:
 
-1. PM return prediction is inherently noisy (low signal-to-noise ratio)
+1. Trade return prediction is inherently noisy (low signal-to-noise ratio)
 2. Feature selection using block bootstrap stability scores handles highly correlated features much better than greedy RFE
 3. HuberRegressor handles extreme outlier days much better than standard MSE-based models
 4. Transaction costs and execution slippage are not modeled here

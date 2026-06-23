@@ -1,13 +1,21 @@
 """
-Phase 1: Feature engineering for Day-Model XGBoost/Linear PM Return prediction.
+Phase 1: Feature engineering for Day-Model XGBoost/Linear trade_return prediction.
 
 Combines:
   - Intraday early-bar features (50) from first 6 five-minute bars (9:30-10:00).
+    Causality: per-ETF ``DECISION_BAR`` below controls how many bars are actually
+    consumed (bars beyond ``decision_bar`` are padded with 0.0).
   - Day-level indicators (58) computed from prior day's close (shifted by 1 to prevent leakage),
     including technical indicators and Ricequant 3rd-party margin/capital flow/northbound quota.
   - Yesterday's features (22) representing the full-day and early-day properties of day t-1.
 
-Target: PM return = sum of log returns over bars 24..47 (13:00-15:00 session).
+Primary target: ``trade_return`` = log(close[EXIT_BAR] / open[decision_bar+1])
+  - Mirrors actual trade P&L in daytrade/backtest.py exactly
+  - Entry at open of bar after decision; exit at close of bar 41 (14:30)
+
+Diagnostic target: ``pm_return`` = sum of log returns over bars 24..47 (13:00-15:00)
+  - Retained for IC sanity-checks vs the old pm_return baseline.
+
 Outputs: data/features_{ETF}.parquet per ETF.
 """
 import argparse
@@ -108,6 +116,23 @@ EARLY_BARS = 6          # 9:35..10:00 (matches REPORT.md sec.6)
 BARS_PER_DAY = 48
 BAR_LUNCH = 24          # first PM bar (13:00)
 WARMUP_DAYS = 60        # drop first 60 days (SMA50/ATR14 warmup)
+
+# ── Per-ETF decision/exit bars (single source of truth) ──────────────
+# Decision bar = the 5m bar whose CLOSE triggers the signal.
+# Bars are 0-indexed, END-timestamped (bar 0 closes at 9:35, bar 5 closes at 10:00).
+# Entry happens at OPEN of bar (decision_bar + 1).
+# EXIT_BAR = 41 closes at 14:30.
+#
+# Picked by bar-count experiment with trade_return target
+# (see day-model/experiment_bars_results_trade_return.json).
+EXIT_BAR = 41
+DECISION_BAR = {
+    "300ETF":    3,   # 9:50 (best IC=+0.056 LS=+2.05 at 4 bars)
+    "50ETF":     2,   # 9:45 (best IC=+0.045 LS=+1.56 at 3 bars)
+    "500ETF":    4,   # 9:55 (best IC=+0.126 LS=+3.45 at 5 bars)
+    "588000ETF": 2,   # 9:45 (least-bad IC=-0.051 LS=-1.23 at 3 bars)
+    "159915ETF": 4,   # 9:55 (best IC=+0.113 LS=+2.62 at 5 bars)
+}
 
 
 # ============================================================
@@ -436,10 +461,27 @@ def compute_daylevel_indicators(df_1d: pd.DataFrame, margin_cache: pd.DataFrame,
 # ============================================================
 # Early-bar features (first 6 bars of 5m data)
 # ============================================================
-def extract_day_early_features(day_5m: pd.DataFrame, prev_close: float, expected_bar_vol: float) -> dict:
-    """Extract early features from first 6 bars of one trading day (computable by 10:00 AM)."""
-    bars = day_5m.head(EARLY_BARS)
-    if len(bars) < EARLY_BARS or prev_close <= 0 or prev_close is None or np.isnan(prev_close):
+def extract_day_early_features(day_5m: pd.DataFrame, prev_close: float, expected_bar_vol: float,
+                               decision_bar: int = EARLY_BARS - 1) -> dict:
+    """Extract early features strictly causally — only bars [0..decision_bar] are consumed.
+
+    Parameters
+    ----------
+    decision_bar : int
+        Index of the 5m bar whose CLOSE triggers the decision. Features use bars
+        ``[0..decision_bar]`` inclusive; entry happens at OPEN of bar
+        ``decision_bar + 1`` (handled by ``compute_trade_return``).
+
+    Bar-by-bar features ``bar_*_{decision_bar+1..5}`` are padded with 0.0 so the
+    feature schema stays uniform across ETFs (StandardScaler handles constant
+    columns by setting scale=1; stability selection prunes them automatically).
+    Summary features (``first_30min_return`` etc.) are computed only from the
+    available bars, so for ETFs with ``decision_bar < 5`` they effectively
+    become "return up to decision time" rather than "first 30 minutes".
+    """
+    n_use = decision_bar + 1
+    bars = day_5m.head(n_use)
+    if len(bars) < n_use or prev_close <= 0 or prev_close is None or np.isnan(prev_close):
         return _empty_early_features()
 
     day_open = float(bars.iloc[0]["open"])
@@ -465,11 +507,11 @@ def extract_day_early_features(day_5m: pd.DataFrame, prev_close: float, expected
     gap_direction = float(np.sign(gap_pct))
     first_bar_return = (cl[0] - op[0]) / op[0] if op[0] > 0 else 0.0
     first_bar_volume = vol[0] / expected_bar_vol
-    
-    # VWAP of first 6 bars
+
+    # VWAP of available bars
     vwap = (cl * vol).sum() / max(vol.sum(), 1.0)
     early_vwap_dev = (cl[-1] - vwap) / vwap if vwap > 0 else 0.0
-    
+
     if len(bar_ret) >= 3 and np.std(bar_ret) > 1e-10:
         early_skew = float(skew(bar_ret))
         early_kurt = float(kurtosis(bar_ret, fisher=True))
@@ -493,19 +535,26 @@ def extract_day_early_features(day_5m: pd.DataFrame, prev_close: float, expected
         "early_kurtosis": early_kurt,
     }
 
-    # Add 37 new early-bar/price action features
-    for i in range(6):
-        res[f"bar_ret_{i}"] = float(np.log(cl[i] / max(op[i], 1e-10)))
-    for i in range(6):
-        res[f"bar_vol_{i}"] = float(vol[i] / expected_bar_vol)
-    for i in range(6):
-        res[f"bar_rng_{i}"] = float((hi[i] - lo[i]) / max(op[i], 1e-10))
-    for i in range(6):
-        res[f"bar_body_rng_{i}"] = float((cl[i] - op[i]) / (hi[i] - lo[i] + 1e-8))
-    for i in range(6):
-        cum_vol = max(vol[:i+1].sum(), 1.0)
-        cum_vwap = (cl[:i+1] * vol[:i+1]).sum() / cum_vol
-        res[f"bar_vwap_dev_{i}"] = float((cl[i] - cum_vwap) / max(cum_vwap, 1e-10))
+    # Bar-by-bar features for all 6 slots; pad indices > decision_bar with 0.0
+    # (causality: those bars are in the future at decision time)
+    for i in range(EARLY_BARS):
+        if i <= decision_bar:
+            res[f"bar_ret_{i}"] = float(np.log(cl[i] / max(op[i], 1e-10)))
+            res[f"bar_vol_{i}"] = float(vol[i] / expected_bar_vol)
+            res[f"bar_rng_{i}"] = float((hi[i] - lo[i]) / max(op[i], 1e-10))
+            res[f"bar_body_rng_{i}"] = float((cl[i] - op[i]) / (hi[i] - lo[i] + 1e-8))
+            cum_vol = max(vol[:i+1].sum(), 1.0)
+            cum_vwap = (cl[:i+1] * vol[:i+1]).sum() / cum_vol
+            res[f"bar_vwap_dev_{i}"] = float((cl[i] - cum_vwap) / max(cum_vwap, 1e-10))
+        else:
+            # Future bar from decision's perspective — pad with 0.0 (constant).
+            # Stability selection / L1 will drop these; StandardScaler sets
+            # scale=1 for std=0 columns, producing transformed value 0.0.
+            res[f"bar_ret_{i}"] = 0.0
+            res[f"bar_vol_{i}"] = 0.0
+            res[f"bar_rng_{i}"] = 0.0
+            res[f"bar_body_rng_{i}"] = 0.0
+            res[f"bar_vwap_dev_{i}"] = 0.0
 
     res["num_up_bars"] = float((cl > op).sum())
     res["max_up_ret"] = float((hi.max() - op[0]) / max(op[0], 1e-10))
@@ -603,6 +652,30 @@ def compute_pm_return(day_5m: pd.DataFrame) -> float:
 
 
 # ============================================================
+# Trade return target (entry-to-exit)
+# ============================================================
+def compute_trade_return(day_5m: pd.DataFrame, decision_bar: int, exit_bar: int = EXIT_BAR) -> float:
+    """Entry-to-exit log return = log(close[exit_bar] / open[decision_bar + 1]).
+
+    Mirrors actual trade execution in daytrade/backtest.py:
+        decision at close of bar (decision_bar)
+        entry    at open  of bar (decision_bar + 1)   <- next bar open after decision
+        exit     at close of bar (exit_bar)
+
+    The model now trains on exactly what the trade captures — no window mismatch.
+    """
+    bars = day_5m.reset_index(drop=True)
+    entry_idx = decision_bar + 1
+    if len(bars) <= exit_bar or entry_idx >= len(bars):
+        return np.nan
+    entry_open = float(bars.iloc[entry_idx]["open"])
+    exit_close = float(bars.iloc[exit_bar]["close"])
+    if entry_open <= 0 or exit_close <= 0:
+        return np.nan
+    return float(np.log(exit_close / entry_open))
+
+
+# ============================================================
 # Pipeline per ETF
 # ============================================================
 def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
@@ -644,6 +717,10 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
     if pd.isna(fallback_daily_vol) or fallback_daily_vol <= 0:
         fallback_daily_vol = 1000000.0
 
+    decision_bar = DECISION_BAR[etf_name]
+    print(f"  decision_bar={decision_bar} (features use bars [0..{decision_bar}], "
+          f"entry at open of bar {decision_bar + 1}, exit at close of bar {EXIT_BAR})")
+
     rows = []
     for date, day_df in df_5m.groupby("date", sort=True):
         date_ts = pd.Timestamp(date)
@@ -654,9 +731,10 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
             expected_daily_vol = fallback_daily_vol
         expected_bar_vol = expected_daily_vol / 48.0
         
-        early = extract_day_early_features(day_df, prev_close, expected_bar_vol)
+        early = extract_day_early_features(day_df, prev_close, expected_bar_vol, decision_bar=decision_bar)
         early["date"] = date_ts
-        early["pm_return"] = compute_pm_return(day_df)
+        early["pm_return"] = compute_pm_return(day_df)                              # diagnostic only
+        early["trade_return"] = compute_trade_return(day_df, decision_bar, EXIT_BAR)  # new TARGET
         
         # AM return for diagnostics
         am = day_df.reset_index(drop=True).iloc[:BAR_LUNCH]
@@ -677,7 +755,7 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
 
     # Shift yesterday features by 1 day
     cols_to_shift = [
-        "pm_return", "am_return",
+        "pm_return", "am_return", "trade_return",
         "gap_pct", "first_30min_return", "early_realized_vol", "early_range",
         "early_volume_ratio", "early_trend", "early_momentum", "first_bar_return",
         "first_bar_volume", "early_vwap_dev", "early_skew", "early_kurtosis",
@@ -696,14 +774,17 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
     # ── Drop warmup rows ──
     feat = feat.iloc[WARMUP_DAYS:].copy()
 
-    # ── Drop any rows with NaN target ──
+    # ── Drop any rows with NaN target (trade_return is the model target; pm_return kept for diagnostics) ──
     n_before = len(feat)
-    feat = feat.dropna(subset=["pm_return"]).copy()
+    feat = feat.dropna(subset=["trade_return"]).copy()
     n_after = len(feat)
 
     print(f"  samples: {n_after} (dropped {n_before - n_after} NaN-target), "
           f"features: {len(FEATURES)}")
-    print(f"  target pm_return: mean={feat['pm_return'].mean()*100:.4f}%  "
+    print(f"  target trade_return: mean={feat['trade_return'].mean()*100:.4f}%  "
+          f"std={feat['trade_return'].std()*100:.4f}%  "
+          f"Sharpe={feat['trade_return'].mean()/feat['trade_return'].std()*np.sqrt(252):.2f}")
+    print(f"  diagnostic pm_return: mean={feat['pm_return'].mean()*100:.4f}%  "
           f"std={feat['pm_return'].std()*100:.4f}%  "
           f"Sharpe={feat['pm_return'].mean()/feat['pm_return'].std()*np.sqrt(252):.2f}")
 
@@ -728,7 +809,8 @@ def main():
         etfs = [ETF_CLI_MAP.get(etf_arg, etf_arg)]
 
     print(f"Building day-model features for: {etfs}")
-    print(f"  early window: first {EARLY_BARS} bars (9:30-10:00)")
+    print(f"  early window: per-ETF decision_bar (see DECISION_BAR dict in build_features.py)")
+    print(f"  exit bar: {EXIT_BAR} (14:30 close)")
     print(f"  warmup dropped: {WARMUP_DAYS} days")
 
     summary = []
@@ -737,9 +819,13 @@ def main():
         if not feat.empty:
             summary.append({
                 "ETF": etf,
+                "decision_bar": DECISION_BAR[etf],
                 "n_days": len(feat),
                 "date_start": feat.index.min().strftime("%Y-%m-%d"),
                 "date_end": feat.index.max().strftime("%Y-%m-%d"),
+                "trade_mean_pct": feat["trade_return"].mean() * 100,
+                "trade_std_pct": feat["trade_return"].std() * 100,
+                "trade_sharpe_ann": feat["trade_return"].mean() / feat["trade_return"].std() * np.sqrt(252),
                 "pm_mean_pct": feat["pm_return"].mean() * 100,
                 "pm_std_pct": feat["pm_return"].std() * 100,
                 "pm_sharpe_ann": feat["pm_return"].mean() / feat["pm_return"].std() * np.sqrt(252),
