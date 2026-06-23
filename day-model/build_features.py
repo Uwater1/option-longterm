@@ -100,6 +100,14 @@ ETF_CONFIG = {
     "159915ETF": {"file_5m": "159915ETF_5m.parquet","file_1d": "159915ETF_1d.parquet"},
 }
 
+INDEX_CONFIG = {
+    "300ETF":    {"file_5m": "000300_5m.parquet",   "file_1d": "000300_1d.parquet"},
+    "50ETF":     {"file_5m": "000016_5m.parquet",   "file_1d": "000016_1d.parquet"},
+    "500ETF":    {"file_5m": "000905_5m.parquet",   "file_1d": "000905_1d.parquet"},
+    "588000ETF": {"file_5m": "000688_5m.parquet",   "file_1d": "000688_1d.parquet"},
+    "159915ETF": {"file_5m": "399006_5m.parquet",   "file_1d": "399006_1d.parquet"},
+}
+
 ETF_CLI_MAP = {
     "300": "300ETF", "50": "50ETF", "500": "500ETF",
     "588000": "588000ETF", "159915": "159915ETF",
@@ -333,12 +341,27 @@ def compute_daylevel_indicators(df_1d: pd.DataFrame, margin_cache: pd.DataFrame,
     order_book_id = df["order_book_id"].iloc[0]
     df["date"] = pd.to_datetime(df["date"])
 
+    # Map to ETF order book id for querying cached 3rd party datasets
+    etf_id_map = {
+        "000016.XSHG": "510050.XSHG",
+        "000300.XSHG": "510300.XSHG",
+        "000905.XSHG": "510500.XSHG",
+        "000688.XSHG": "588000.XSHG",
+        "399006.XSHE": "159915.XSHE",
+        "510050.XSHG": "510050.XSHG",
+        "510300.XSHG": "510300.XSHG",
+        "510500.XSHG": "510500.XSHG",
+        "588000.XSHG": "588000.XSHG",
+        "159915.XSHE": "159915.XSHE"
+    }
+    etf_obid = etf_id_map.get(order_book_id, order_book_id)
+
     # Securities Margin
     if margin_cache is not None and not margin_cache.empty:
         try:
             margin = margin_cache.reset_index()
             margin["date"] = pd.to_datetime(margin["date"])
-            etf_margin = margin[margin["order_book_id"] == order_book_id].copy()
+            etf_margin = margin[margin["order_book_id"] == etf_obid].copy()
             if not etf_margin.empty:
                 etf_margin = etf_margin.set_index("date").drop(columns=["order_book_id"], errors="ignore")
                 etf_margin = etf_margin.rename(columns={
@@ -358,7 +381,7 @@ def compute_daylevel_indicators(df_1d: pd.DataFrame, margin_cache: pd.DataFrame,
         try:
             cap_flow = cap_flow_cache.reset_index()
             cap_flow["date"] = pd.to_datetime(cap_flow["date"])
-            etf_cap = cap_flow[cap_flow["order_book_id"] == order_book_id].copy()
+            etf_cap = cap_flow[cap_flow["order_book_id"] == etf_obid].copy()
             if not etf_cap.empty:
                 etf_cap = etf_cap.set_index("date").drop(columns=["order_book_id"], errors="ignore")
                 etf_cap = etf_cap.rename(columns={
@@ -399,7 +422,12 @@ def compute_daylevel_indicators(df_1d: pd.DataFrame, margin_cache: pd.DataFrame,
         "510300.XSHG": "300",
         "510500.XSHG": "500",
         "588000.XSHG": "588000",
-        "159915.XSHE": "159915"
+        "159915.XSHE": "159915",
+        "000016.XSHG": "50",
+        "000300.XSHG": "300",
+        "000905.XSHG": "500",
+        "000688.XSHG": "588000",
+        "399006.XSHE": "159915"
     }.get(order_book_id, "300")
 
     # Load calculated ATM 30d IV cache
@@ -680,20 +708,28 @@ def compute_trade_return(day_5m: pd.DataFrame, decision_bar: int, exit_bar: int 
 # ============================================================
 def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
     cfg = ETF_CONFIG[etf_name]
-    path_5m = DATA_DIR / cfg["file_5m"]
-    path_1d = DATA_DIR / cfg["file_1d"]
+    idx_cfg = INDEX_CONFIG[etf_name]
+    
+    path_etf_5m = DATA_DIR / cfg["file_5m"]
+    path_idx_5m = DATA_DIR / idx_cfg["file_5m"]
+    path_idx_1d = DATA_DIR / idx_cfg["file_1d"]
 
-    if not path_5m.exists() or not path_1d.exists():
-        print(f"  [SKIP] {etf_name}: missing parquet ({path_5m.name} / {path_1d.name})")
+    if not (path_etf_5m.exists() and path_idx_5m.exists() and path_idx_1d.exists()):
+        print(f"  [SKIP] {etf_name}: missing parquet ({path_etf_5m.name} / {path_idx_5m.name} / {path_idx_1d.name})")
         return pd.DataFrame()
 
-    print(f"\n[{etf_name}] loading 5m + 1d ...")
-    df_5m = pd.read_parquet(path_5m)
-    df_1d = pd.read_parquet(path_1d)
+    print(f"\n[{etf_name}] loading Index 5m + 1d (for features) and ETF 5m (for trades) ...")
+    df_idx_5m = pd.read_parquet(path_idx_5m)
+    df_idx_1d = pd.read_parquet(path_idx_1d)
+    df_etf_5m = pd.read_parquet(path_etf_5m)
 
-    df_5m["datetime"] = pd.to_datetime(df_5m["datetime"])
-    df_5m["date"] = df_5m["datetime"].dt.normalize()
-    df_5m = df_5m.sort_values(["date", "datetime"]).reset_index(drop=True)
+    df_idx_5m["datetime"] = pd.to_datetime(df_idx_5m["datetime"])
+    df_idx_5m["date"] = df_idx_5m["datetime"].dt.normalize()
+    df_idx_5m = df_idx_5m.sort_values(["date", "datetime"]).reset_index(drop=True)
+
+    df_etf_5m["datetime"] = pd.to_datetime(df_etf_5m["datetime"])
+    df_etf_5m["date"] = df_etf_5m["datetime"].dt.normalize()
+    df_etf_5m = df_etf_5m.sort_values(["date", "datetime"]).reset_index(drop=True)
 
     # ── Fetch/Load caches once for all ETFs ──
     all_etf_ids = ["510300.XSHG", "510050.XSHG", "510500.XSHG", "588000.XSHG", "159915.XSHE"]
@@ -701,19 +737,24 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
     cap_df = get_cached_capital_flow(all_etf_ids, "2015-01-01", "2026-06-19")
     quota_df = get_cached_stock_connect_quota("2015-01-01", "2026-06-19")
 
+    # Add adjusted columns to daily Index data for compatibility with compute_daylevel_indicators
+    for col in ["open", "high", "low", "close"]:
+        if f"{col}_adj" not in df_idx_1d.columns:
+            df_idx_1d[f"{col}_adj"] = df_idx_1d[col]
+
     # ── Day-level indicators (shifted to prior day) ──
-    daylevel = compute_daylevel_indicators(df_1d, margin_df, cap_df, quota_df)
+    daylevel = compute_daylevel_indicators(df_idx_1d, margin_df, cap_df, quota_df)
 
     # ── Per-day early features + PM return ──
-    df_1d_sorted = df_1d.sort_values("date").reset_index(drop=True).copy()
-    df_1d_sorted["prev_close_adj"] = df_1d_sorted["close_adj"].shift(1)
-    df_1d_sorted["rolling_volume_20d"] = df_1d_sorted["volume"].rolling(20).mean()
-    df_1d_sorted["expected_daily_volume"] = df_1d_sorted["rolling_volume_20d"].shift(1)
-    df_1d_sorted["date"] = pd.to_datetime(df_1d_sorted["date"])
-    prev_close_map = df_1d_sorted.set_index("date")["prev_close_adj"].to_dict()
-    expected_vol_map = df_1d_sorted.set_index("date")["expected_daily_volume"].to_dict()
+    df_idx_1d_sorted = df_idx_1d.sort_values("date").reset_index(drop=True).copy()
+    df_idx_1d_sorted["prev_close_adj"] = df_idx_1d_sorted["close_adj"].shift(1)
+    df_idx_1d_sorted["rolling_volume_20d"] = df_idx_1d_sorted["volume"].rolling(20).mean()
+    df_idx_1d_sorted["expected_daily_volume"] = df_idx_1d_sorted["rolling_volume_20d"].shift(1)
+    df_idx_1d_sorted["date"] = pd.to_datetime(df_idx_1d_sorted["date"])
+    prev_close_map = df_idx_1d_sorted.set_index("date")["prev_close_adj"].to_dict()
+    expected_vol_map = df_idx_1d_sorted.set_index("date")["expected_daily_volume"].to_dict()
 
-    fallback_daily_vol = df_1d_sorted["volume"].median()
+    fallback_daily_vol = df_idx_1d_sorted["volume"].median()
     if pd.isna(fallback_daily_vol) or fallback_daily_vol <= 0:
         fallback_daily_vol = 1000000.0
 
@@ -721,9 +762,15 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
     print(f"  decision_bar={decision_bar} (features use bars [0..{decision_bar}], "
           f"entry at open of bar {decision_bar + 1}, exit at close of bar {EXIT_BAR})")
 
+    etf_5m_by_date = {d: g for d, g in df_etf_5m.groupby("date")}
+
     rows = []
-    for date, day_df in df_5m.groupby("date", sort=True):
+    for date, day_idx_df in df_idx_5m.groupby("date", sort=True):
         date_ts = pd.Timestamp(date)
+        if date not in etf_5m_by_date:
+            continue
+        day_etf_df = etf_5m_by_date[date]
+        
         prev_close = prev_close_map.get(date_ts, np.nan)
         
         expected_daily_vol = expected_vol_map.get(date_ts, np.nan)
@@ -731,21 +778,24 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
             expected_daily_vol = fallback_daily_vol
         expected_bar_vol = expected_daily_vol / 48.0
         
-        early = extract_day_early_features(day_df, prev_close, expected_bar_vol, decision_bar=decision_bar)
+        # Calculate early features on Index 5m data
+        early = extract_day_early_features(day_idx_df, prev_close, expected_bar_vol, decision_bar=decision_bar)
         early["date"] = date_ts
-        early["pm_return"] = compute_pm_return(day_df)                              # diagnostic only
-        early["trade_return"] = compute_trade_return(day_df, decision_bar, EXIT_BAR)  # new TARGET
         
-        # AM return for diagnostics
-        am = day_df.reset_index(drop=True).iloc[:BAR_LUNCH]
-        if len(am) >= 2:
-            early["am_return"] = float(np.log(np.maximum(am["close"].iloc[-1], 1e-10) /
-                                              np.maximum(am["open"].iloc[0], 1e-10)))
+        # Target/diagnostics calculated on ETF 5m data
+        early["pm_return"] = compute_pm_return(day_etf_df)                              # diagnostic only
+        early["trade_return"] = compute_trade_return(day_etf_df, decision_bar, EXIT_BAR)  # target
+        
+        # AM return of ETF (diagnostic)
+        am_etf = day_etf_df.reset_index(drop=True).iloc[:BAR_LUNCH]
+        if len(am_etf) >= 2:
+            early["am_return"] = float(np.log(np.maximum(am_etf["close"].iloc[-1], 1e-10) /
+                                              np.maximum(am_etf["open"].iloc[0], 1e-10)))
         else:
             early["am_return"] = np.nan
             
-        # Compute day full features (to be shifted later)
-        full_feats = extract_day_full_features(day_df)
+        # Compute day full features (to be shifted later) on Index 5m data
+        full_feats = extract_day_full_features(day_idx_df)
         for k, v in full_feats.items():
             early[k] = v
             

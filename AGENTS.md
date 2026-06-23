@@ -9,6 +9,7 @@ source venv/bin/activate                    # Activate env
 python3 update_data.py                      # Pull ETF/option data from rqdatac
 python3 download_5m_data.py                # Download 5m data
 python3 download_1m_data.py                # Download 1m data (zstd level 5 compressed)
+python3 download_index_data.py             # Download 1d, 5m, 1m Index data (for signals)
 python backtest_put.py [50|300|500] --alpha    # Run new daily alpha-hedging backtest
 python backtest_put.py 300 --no-filter         # Run daily baseline (hedge every cycle)
 python backtest_put.py 300 --limit-entry       # Run daily backtest with BS limit entry
@@ -101,6 +102,7 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy (v2: mixe
 ```
 
 ### Day-Model Caching & Features (New)
+- **Index-Based Signals**: Features and technical indicators are calculated using daily and intraday Index data (`000016.XSHG`, `000300.XSHG`, `000905.XSHG`, `000688.XSHG`, `399006.XSHE`) to eliminate look-ahead bias and accelerate computation. Trade entry, exit, and target `trade_return` continue to use ETF prices to accurately reflect P&L performance.
 - **Data Caching**: Ricequant 3rd-party data (Securities Margin, Capital Flow, Northbound Connect Quota, and VIX indices) is cached locally to `data/securities_margin.parquet`, `data/capital_flow.parquet`, `data/stock_connect_quota.parquet`, and `data/rq_vix.parquet` to prevent slow network calls and minimize API quota usage.
 - **130 Features**: Expanded feature space includes 48 early-bar intraday features, 60 day-level features (including technical indicators, 3rd party margin/flow, and 8 option-derived factors such as `iv`, `vix`, `vix_iv_spread`, etc.), and 22 yesterday's features (shifted by 1 day to prevent leakage).
 - **Look-Ahead Bias Correction**: Normalizing early-morning volume features using a rolling 20-day historical daily volume shifted by 1 day (i.e. expected bar volume = `yesterday_rolling_20d_daily_volume / 48`) instead of the current day's full volume, ensuring strict chronological boundaries and eliminating look-ahead leakage.
@@ -185,7 +187,7 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy (v2: mixe
 - `RISK_FREE = 0.02`
 
 ## Data Dependencies
-- `rqdatac` needed. Run `python3 update_data.py`, `python3 download_5m_data.py`, and `python3 download_1m_data.py`.
+- `rqdatac` needed. Run `python3 update_data.py`, `python3 download_5m_data.py`, `python3 download_1m_data.py`, and `python3 download_index_data.py`.
 
 ## Research Notes
 - **500ETF**: Volatility too high (~26.8%). Sharp rallies cause major assignment loss. Raising RSI threshold to 70 helps slightly. Detailed in [RESEARCH_500ETF.md](file:///home/hallo/Documents/option-longterm/RESEARCH_500ETF.md).
