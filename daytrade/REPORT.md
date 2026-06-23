@@ -85,7 +85,7 @@ Fraction of trading days on which each side fires. High Place% × high Sharpe = 
 | 159915ETF | `long` | +7.80 | -2.85 | +0.59 |
 | 159915ETF | `short` | +10.84 | +6.95 | -20.09 |
 
-![yearly_sharpe](plots\yearly_sharpe.png)
+![yearly_sharpe](plots/yearly_sharpe.png)
 
 
 ### 3.5 Cost Sensitivity (OOS Sharpe by side)
@@ -105,9 +105,9 @@ Fraction of trading days on which each side fires. High Place% × high Sharpe = 
 
 ### 3.6 Equity Curves
 
-![equity_combined](plots\equity_combined.png)
+![equity_combined](plots/equity_combined.png)
 
-![equity_per_side](plots\equity_curves.png)
+![equity_per_side](plots/equity_curves.png)
 
 
 ### 3.7 Fragility Warnings Summary
