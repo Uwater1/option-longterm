@@ -35,7 +35,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import spearmanr
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import TimeSeriesSplit
-from sklearn.linear_model import Ridge, Lasso, ElasticNet, HuberRegressor, LassoCV
+from sklearn.linear_model import Ridge, Lasso, ElasticNet, HuberRegressor, LassoCV, ElasticNetCV
 from sklearn.inspection import permutation_importance
 import optuna
 import joblib
@@ -132,54 +132,218 @@ def long_short_sharpe(returns: np.ndarray, preds: np.ndarray, n_quant: int = 5) 
 
 
 # ============================================================
-# Lasso-based Block Bootstrap Stability Selection
+# Unified Multi-Regime Time-Series Feature Stability Selection
 # ============================================================
-def _run_bootstrap_trial(X_scaled, y, block_size, random_seed):
+def _run_stratified_bootstrap_trial(X, y, regimes, block_starts, block_freqs, block_size, randomization_alpha, best_alpha, best_l1_ratio, random_seed):
     warnings.filterwarnings("ignore")
-    N, D = X_scaled.shape
+    N, D = X.shape
     n_blocks = int(np.ceil(N / block_size))
     
-    # Use a localized RNG to preserve cross-process independence
     rng = np.random.default_rng(random_seed)
-    start_indices = rng.integers(0, N - block_size + 1, size=n_blocks)
+    
+    # Stratified block selection
+    m_blocks = {}
+    total_assigned = 0
+    regimes_list = list(block_starts.keys())
+    for r in regimes_list:
+        m = int(np.round(n_blocks * block_freqs[r]))
+        m_blocks[r] = m
+        total_assigned += m
+        
+    diff = n_blocks - total_assigned
+    if diff != 0 and len(regimes_list) > 0:
+        chosen_regime = int(np.argmax(block_freqs))
+        m_blocks[chosen_regime] = max(0, m_blocks[chosen_regime] + diff)
+        
+    start_indices = []
+    for r, m in m_blocks.items():
+        if m > 0 and len(block_starts[r]) > 0:
+            draws = rng.choice(block_starts[r], size=m, replace=True)
+            start_indices.extend(draws)
+            
+    rng.shuffle(start_indices)
     
     boot_indices = []
     for start in start_indices:
         boot_indices.extend(range(start, start + block_size))
     boot_indices = boot_indices[:N]
     
-    X_boot_s = X_scaled[boot_indices]
+    all_indices = np.arange(N)
+    oob_indices = np.setdiff1d(all_indices, boot_indices)
+    
+    if len(boot_indices) == 0:
+        boot_indices = np.arange(N)
+        oob_indices = np.array([])
+        
+    X_boot = X[boot_indices]
     y_boot = y[boot_indices]
     
-    # Fit LassoCV to automatically select best L1 penalty
-    lasso = LassoCV(cv=5, random_state=random_seed, alphas=50, tol=1e-3, max_iter=1000)
-    lasso.fit(X_boot_s, y_boot)
+    scaler = StandardScaler()
+    X_boot_scaled = scaler.fit_transform(X_boot).astype(np.float32)
     
-    return np.abs(lasso.coef_) > 1e-5
-
-
-def compute_stability_scores(X, y, features, block_size=BLOCK_SIZE, n_bootstraps=N_BOOTSTRAPS):
-    N, D = X.shape
-    print(f"  [Stability Selection] Running {n_bootstraps} block bootstrap trials (block_size={block_size}) ...")
+    W = rng.uniform(randomization_alpha, 1.0, size=D)
+    X_boot_scaled_rand = X_boot_scaled / W
     
-    # Pre-scale features once for stability selection
-    X_scaled = StandardScaler().fit_transform(X).astype(np.float32)
+    model = ElasticNet(alpha=best_alpha, l1_ratio=best_l1_ratio, random_state=random_seed, max_iter=1000, tol=1e-3)
+    model.fit(X_boot_scaled_rand, y_boot)
+    coef_selected = np.abs(model.coef_) > 1e-5
     
-    # Parallel execution across all CPU cores
-    results = Parallel(n_jobs=-1)(
-        delayed(_run_bootstrap_trial)(X_scaled, y, block_size, 42 + i)
-        for i in range(n_bootstraps)
-    )
-    
-    selection_counts = np.sum(results, axis=0)
-    scores = selection_counts / n_bootstraps
-    
-    sorted_idx = np.argsort(scores)[::-1]
-    print("  Feature stability scores:")
-    for idx in sorted_idx:
-        print(f"    {features[idx]:<20} : {scores[idx]:.2%}")
+    ic_selected = np.ones(D, dtype=bool)
+    if len(oob_indices) >= 10:
+        X_oob = X[oob_indices]
+        y_oob = y[oob_indices]
+        X_oob_scaled = StandardScaler().fit_transform(X_oob).astype(np.float32)
         
-    return scores
+        for j in range(D):
+            x_oob_j = X_oob_scaled[:, j]
+            rho, pval = spearmanr(x_oob_j, y_oob)
+            if np.isnan(rho):
+                ic_selected[j] = True
+            else:
+                ic_selected[j] = (pval < 0.05) or (abs(rho) > 0.02)
+                
+    joint_selected = coef_selected & ic_selected
+    return joint_selected, coef_selected, ic_selected
+
+
+class TimeSeriesStabilitySelector:
+    """Unified Multi-Regime Time-Series Feature Stability Selector."""
+    def __init__(self, n_bootstraps=N_BOOTSTRAPS, block_size=BLOCK_SIZE, randomization_alpha=0.5,
+                 l1_ratio=0.8, ic_threshold=0.02, ic_sig_level=0.05,
+                 n_splits=5, purge_gap=5, variance_cap=0.15):
+        self.n_bootstraps = n_bootstraps
+        self.block_size = block_size
+        self.randomization_alpha = randomization_alpha
+        self.l1_ratio = l1_ratio
+        self.ic_threshold = ic_threshold
+        self.ic_sig_level = ic_sig_level
+        self.n_splits = n_splits
+        self.purge_gap = purge_gap
+        self.variance_cap = variance_cap
+
+    def fit(self, X, y, features):
+        N, D = X.shape
+        # Detect regimes on daily vol20 feature
+        vol_idx = -1
+        if "vol20" in features:
+            vol_idx = features.index("vol20")
+            vols = X[:, vol_idx]
+        else:
+            vols = np.zeros(N)
+            for i in range(20, N):
+                vols[i] = np.std(y[i-20:i])
+        
+        q33 = np.quantile(vols, 0.33)
+        q66 = np.quantile(vols, 0.66)
+        regimes = np.zeros(N, dtype=int)
+        regimes[vols > q33] = 1
+        regimes[vols > q66] = 2
+
+        # Define block starts and their regimes (overlapping blocks)
+        block_starts = []
+        block_regimes = []
+        for s in range(0, N - self.block_size + 1):
+            block_starts.append(s)
+            mode_r = int(np.bincount(regimes[s:s+self.block_size]).argmax())
+            block_regimes.append(mode_r)
+        
+        block_starts = np.array(block_starts)
+        block_regimes = np.array(block_regimes)
+
+        fold_stability_scores = []
+        fold_coef_scores = []
+        fold_ic_scores = []
+        
+        splits = list(purged_tssplit(N, self.n_splits, self.purge_gap))
+        print(f"  [Stability Selection] Running {self.n_splits} splits of walk-forward stability selection...")
+        
+        for fold_idx, (train_idx, test_idx) in enumerate(splits):
+            X_tr, y_tr = X[train_idx], y[train_idx]
+            regimes_tr = regimes[train_idx]
+            
+            max_start = len(train_idx) - self.block_size
+            if max_start < 1:
+                continue
+                
+            tr_block_starts = block_starts[block_starts <= max_start]
+            tr_block_regimes = block_regimes[block_starts <= max_start]
+            
+            regime_starts = {}
+            for r in [0, 1, 2]:
+                regime_starts[r] = tr_block_starts[tr_block_regimes == r]
+            
+            counts = np.bincount(regimes_tr, minlength=3)
+            freqs = counts / len(regimes_tr)
+            
+            scaler_tr = StandardScaler()
+            X_tr_scaled = scaler_tr.fit_transform(X_tr).astype(np.float32)
+            
+            try:
+                enet_cv = ElasticNetCV(l1_ratio=self.l1_ratio, cv=5, random_state=42, 
+                                       alphas=np.logspace(-4, 1, 20), tol=1e-2, max_iter=500, n_jobs=-1)
+                enet_cv.fit(X_tr_scaled, y_tr)
+                best_alpha = enet_cv.alpha_
+                best_l1_ratio = enet_cv.l1_ratio_
+            except Exception:
+                best_alpha = 0.01
+                best_l1_ratio = self.l1_ratio
+
+            results = Parallel(n_jobs=-1)(
+                delayed(_run_stratified_bootstrap_trial)(
+                    X_tr, y_tr, regimes_tr, regime_starts, freqs,
+                    self.block_size, self.randomization_alpha,
+                    best_alpha, best_l1_ratio, 42 + fold_idx * 1000 + i
+                )
+                for i in range(self.n_bootstraps)
+            )
+            
+            joint_selections = np.array([r[0] for r in results])
+            coef_selections = np.array([r[1] for r in results])
+            ic_selections = np.array([r[2] for r in results])
+            
+            fold_stability_scores.append(np.mean(joint_selections, axis=0))
+            fold_coef_scores.append(np.mean(coef_selections, axis=0))
+            fold_ic_scores.append(np.mean(ic_selections, axis=0))
+            
+        fold_stability_scores = np.array(fold_stability_scores)
+        fold_coef_scores = np.array(fold_coef_scores)
+        fold_ic_scores = np.array(fold_ic_scores)
+        
+        mean_stability = np.mean(fold_stability_scores, axis=0)
+        std_stability = np.std(fold_stability_scores, axis=0)
+        mean_coef = np.mean(fold_coef_scores, axis=0)
+        mean_ic = np.mean(fold_ic_scores, axis=0)
+        
+        stats_df = pd.DataFrame({
+            "feature": features,
+            "mean_stability": mean_stability,
+            "std_stability": std_stability,
+            "mean_coef_selection": mean_coef,
+            "mean_ic_selection": mean_ic
+        })
+        
+        print("\n  Top Feature Stability Scores (Walk-Forward CV):")
+        sorted_stats = stats_df.sort_values(by="mean_stability", ascending=False)
+        for _, row in sorted_stats.iterrows():
+            print(f"    {row['feature']:<25} : Mean={row['mean_stability']:.1%}, Std={row['std_stability']:.1%}, L1={row['mean_coef_selection']:.1%}, IC={row['mean_ic_selection']:.1%}")
+            
+        return stats_df
+
+
+def compute_stability_scores(X, y, features, n_splits=5, gap=5, block_size=BLOCK_SIZE, n_bootstraps=N_BOOTSTRAPS, variance_cap=0.15):
+    selector = TimeSeriesStabilitySelector(
+        n_bootstraps=n_bootstraps,
+        block_size=block_size,
+        randomization_alpha=0.5,
+        l1_ratio=0.8,
+        ic_threshold=0.02,
+        ic_sig_level=0.05,
+        n_splits=n_splits,
+        purge_gap=gap,
+        variance_cap=variance_cap
+    )
+    stats_df = selector.fit(X, y, features)
+    return stats_df["mean_stability"].values, stats_df["std_stability"].values
 
 
 # ============================================================
@@ -229,15 +393,15 @@ def _tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str,
     return spearman_ic(y_true[mask], y_pred[mask])
 
 
-def make_objective(pre_scaled_splits, y, sample_w, stability_scores, side="single",
-                   tail_weight: float = 0.0):
+def make_objective(pre_scaled_splits, y, sample_w, stability_scores, fold_std_stability, side="single",
+                   tail_weight: float = 0.0, variance_cap: float = 0.15):
     def objective(trial: optuna.Trial) -> float:
         model_type = trial.suggest_categorical("model_type", ["ridge", "lasso", "elasticnet", "huber"])
         # Suggest stability selection threshold as a hyperparameter
         stability_threshold = trial.suggest_float("stability_threshold", 0.4, 0.9, step=0.05)
 
-        # Select indices where score >= threshold
-        selected_indices = np.where(stability_scores >= stability_threshold)[0]
+        # Select indices where score >= threshold and std <= variance_cap
+        selected_indices = np.where((stability_scores >= stability_threshold) & (fold_std_stability <= variance_cap))[0]
         # Keep at least 3 features to prevent empty subsets
         if len(selected_indices) < 3:
             selected_indices = np.argsort(stability_scores)[::-1][:3]
@@ -358,7 +522,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
               f"for feature pruning (Phase 2.4 fix)")
     else:
         stab_target = y_dev
-    stability_scores = compute_stability_scores(X_dev, stab_target, FEATURES)
+    stability_scores, fold_std_stability = compute_stability_scores(X_dev, stab_target, FEATURES, n_splits=n_splits, gap=gap)
 
     # ── 3) Optuna hyperparameter search — side-specific objective ──
     print(f"  Optuna: {n_trials} trials, {n_splits} folds, purge_gap={gap} "
@@ -384,8 +548,8 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
     # Phase 2.5: weight the objective toward the trading tail for dual models
     # (0.0 for single = pure overall IC, 0.5 for dual = equal weight tail+overall)
     tail_weight = 0.0 if side == "single" else 0.5
-    obj = make_objective(pre_scaled_splits, y_dev, sw_dev, stability_scores,
-                         side=side, tail_weight=tail_weight)
+    obj = make_objective(pre_scaled_splits, y_dev, sw_dev, stability_scores, fold_std_stability,
+                         side=side, tail_weight=tail_weight, variance_cap=0.15)
     study.optimize(obj, n_trials=n_trials, show_progress_bar=False)
 
     best_params = study.best_params
@@ -398,7 +562,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
     X_ho_s = scaler.transform(X_ho)
 
     best_threshold = best_params["stability_threshold"]
-    selected_indices = np.where(stability_scores >= best_threshold)[0]
+    selected_indices = np.where((stability_scores >= best_threshold) & (fold_std_stability <= 0.15))[0]
     if len(selected_indices) < 3:
         selected_indices = np.argsort(stability_scores)[::-1][:3]
     selected_features = [FEATURES[i] for i in selected_indices]
@@ -562,6 +726,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
                  "features": FEATURES,
                  "selected_features": selected_features,
                  "stability_scores": dict(zip(FEATURES, stability_scores.tolist())),
+                 "fold_std_stability": dict(zip(FEATURES, fold_std_stability.tolist())),
                  "best_params": best_params,
                  "best_model_type": model_type,
                  "holdout_ic": holdout_ic,
@@ -592,6 +757,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
         "selected_features": selected_features,
         "n_selected_features": len(selected_features),
         "stability_scores": dict(zip(FEATURES, stability_scores.tolist())),
+        "fold_std_stability": dict(zip(FEATURES, fold_std_stability.tolist())),
         "date_range": [str(dates[0].date()), str(dates[-1].date())],
         "holdout_n": int(len(X_ho)),
         "holdout_range": [str(dates_ho[0].date()), str(dates_ho[-1].date())],

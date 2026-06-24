@@ -2,7 +2,7 @@
 
 ## 0. Project Background
 
-This research plan is part of the Option daytrading strategy. In this step, we would foucus on evaluating the features and their stability. We use the method of **Block Bootstrap Stability Selection** to identify a robust, sparse subset of features that persist across time before tuning hyperparameters.
+This research plan is part of the Option daytrading strategy. In this step, we would foucus on evaluating the features and their stability. 
 
 ### The Day-Model Strategy
 * **Goal**: Predict the entry-to-exit trade return of the ETF, where entry is executed at the open of `decision_bar + 1` (mid-day) and exit is executed at the 14:30 market close.
@@ -140,3 +140,6 @@ The final research implementation should deliver:
      * **Out-of-Sample IC Improvement**: Higher and more stable OOS IC (lower standard deviation of rolling OOS IC).
      * **Reduced Overfitting**: Smaller gap between In-Sample (IS) IC and Out-of-Sample (OOS) IC.
      * **Collinearity Coverage**: Verification that collinear but structurally sound features are not randomly masked/dropped.
+
+### Research guideline:
+Professional Academic research paper are prefered. The final result should be professional and can be used in a quant trading strategy. Newer paper are prefered
