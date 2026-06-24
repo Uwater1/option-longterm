@@ -134,8 +134,9 @@ def long_short_sharpe(returns: np.ndarray, preds: np.ndarray, n_quant: int = 5) 
 # ============================================================
 # Lasso-based Block Bootstrap Stability Selection
 # ============================================================
-def _run_bootstrap_trial(X, y, block_size, random_seed):
-    N, D = X.shape
+def _run_bootstrap_trial(X_scaled, y, block_size, random_seed):
+    warnings.filterwarnings("ignore")
+    N, D = X_scaled.shape
     n_blocks = int(np.ceil(N / block_size))
     
     # Use a localized RNG to preserve cross-process independence
@@ -147,14 +148,11 @@ def _run_bootstrap_trial(X, y, block_size, random_seed):
         boot_indices.extend(range(start, start + block_size))
     boot_indices = boot_indices[:N]
     
-    X_boot = X[boot_indices]
+    X_boot_s = X_scaled[boot_indices]
     y_boot = y[boot_indices]
     
-    scaler = StandardScaler()
-    X_boot_s = scaler.fit_transform(X_boot)
-    
     # Fit LassoCV to automatically select best L1 penalty
-    lasso = LassoCV(cv=5, random_state=random_seed, max_iter=3000)
+    lasso = LassoCV(cv=5, random_state=random_seed, alphas=50, tol=1e-3, max_iter=1000)
     lasso.fit(X_boot_s, y_boot)
     
     return np.abs(lasso.coef_) > 1e-5
@@ -164,9 +162,12 @@ def compute_stability_scores(X, y, features, block_size=BLOCK_SIZE, n_bootstraps
     N, D = X.shape
     print(f"  [Stability Selection] Running {n_bootstraps} block bootstrap trials (block_size={block_size}) ...")
     
+    # Pre-scale features once for stability selection
+    X_scaled = StandardScaler().fit_transform(X).astype(np.float32)
+    
     # Parallel execution across all CPU cores
     results = Parallel(n_jobs=-1)(
-        delayed(_run_bootstrap_trial)(X, y, block_size, 42 + i)
+        delayed(_run_bootstrap_trial)(X_scaled, y, block_size, 42 + i)
         for i in range(n_bootstraps)
     )
     
@@ -228,7 +229,7 @@ def _tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str,
     return spearman_ic(y_true[mask], y_pred[mask])
 
 
-def make_objective(X, y, sample_w, n_splits, gap, stability_scores, side="single",
+def make_objective(pre_scaled_splits, y, sample_w, stability_scores, side="single",
                    tail_weight: float = 0.0):
     def objective(trial: optuna.Trial) -> float:
         model_type = trial.suggest_categorical("model_type", ["ridge", "lasso", "elasticnet", "huber"])
@@ -246,11 +247,11 @@ def make_objective(X, y, sample_w, n_splits, gap, stability_scores, side="single
             model = Ridge(alpha=alpha, random_state=42)
         elif model_type == "lasso":
             alpha = trial.suggest_float("lasso_alpha", 1e-5, 1.0, log=True)
-            model = Lasso(alpha=alpha, random_state=42, max_iter=5000)
+            model = Lasso(alpha=alpha, random_state=42, max_iter=1000, tol=1e-3)
         elif model_type == "elasticnet":
             alpha = trial.suggest_float("en_alpha", 1e-5, 1.0, log=True)
             l1_ratio = trial.suggest_float("en_l1_ratio", 0.0, 1.0)
-            model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, random_state=42, max_iter=5000)
+            model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, random_state=42, max_iter=1000, tol=1e-3)
         elif model_type == "huber":
             alpha = trial.suggest_float("huber_alpha", 1e-4, 1e4, log=True)
             epsilon = trial.suggest_float("huber_epsilon", 1.0, 2.0)
@@ -258,11 +259,7 @@ def make_objective(X, y, sample_w, n_splits, gap, stability_scores, side="single
 
         ics = []
         tail_ics = []
-        for train_idx, test_idx in purged_tssplit(len(y), n_splits, gap):
-            scaler = StandardScaler().fit(X[train_idx])
-            Xtr_s = scaler.transform(X[train_idx])
-            Xte_s = scaler.transform(X[test_idx])
-
+        for Xtr_s, Xte_s, train_idx, test_idx in pre_scaled_splits:
             Xtr_sel = Xtr_s[:, selected_indices]
             Xte_sel = Xte_s[:, selected_indices]
 
@@ -300,13 +297,13 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
 
     feat = pd.read_parquet(feat_path).sort_index()
     feat = feat.dropna(subset=FEATURES + [TARGET]).copy()
-    X = feat[FEATURES].values
+    X = feat[FEATURES].values.astype(np.float32)
     Y_SCALE = 100.0
     # Always train on the raw trade_return so the model preserves full regression
     # signal (including the magnitude of negative returns).  The clipped target
     # is used ONLY for stability-selection feature pruning so each side picks
     # features that are relevant to its regime (upside / downside).
-    y_raw = feat[TARGET].values
+    y_raw = feat[TARGET].values.astype(np.float32)
     n = len(feat)
     if side == "long":
         y_clip_raw = np.maximum(0.0, y_raw)
@@ -314,8 +311,8 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
         y_clip_raw = np.maximum(0.0, -y_raw)
     else:
         y_clip_raw = y_raw.copy()
-    y = y_raw * Y_SCALE          # training target (raw)
-    y_clip = y_clip_raw * Y_SCALE  # stability-selection target (asymmetric)
+    y = (y_raw * Y_SCALE).astype(np.float32)          # training target (raw)
+    y_clip = (y_clip_raw * Y_SCALE).astype(np.float32)  # stability-selection target (asymmetric)
     # Sample weights: gently emphasize the side's active regime without
     # distorting the overall regression.  lambda=0.5 means a +2σ day gets
     # only ~2× weight; most days stay near 1×.
@@ -326,6 +323,7 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
         sample_w = 1.0 + 0.5 * np.maximum(0.0, -y_raw) / sigma
     else:
         sample_w = np.ones(n)
+    sample_w = sample_w.astype(np.float32)
     dates = feat.index
     full_y_raw = pd.Series(y_raw, index=dates)
 
@@ -375,10 +373,18 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
         sampler=optuna.samplers.TPESampler(seed=42),
         pruner=optuna.pruners.MedianPruner(n_warmup_steps=10),
     )
+    # Pre-scale features once for each cross-validation split of Optuna
+    pre_scaled_splits = []
+    for train_idx, test_idx in purged_tssplit(len(y_dev), n_splits, gap):
+        scaler = StandardScaler().fit(X_dev[train_idx])
+        Xtr_s = scaler.transform(X_dev[train_idx]).astype(np.float32)
+        Xte_s = scaler.transform(X_dev[test_idx]).astype(np.float32)
+        pre_scaled_splits.append((Xtr_s, Xte_s, train_idx, test_idx))
+
     # Phase 2.5: weight the objective toward the trading tail for dual models
     # (0.0 for single = pure overall IC, 0.5 for dual = equal weight tail+overall)
     tail_weight = 0.0 if side == "single" else 0.5
-    obj = make_objective(X_dev, y_dev, sw_dev, n_splits, gap, stability_scores,
+    obj = make_objective(pre_scaled_splits, y_dev, sw_dev, stability_scores,
                          side=side, tail_weight=tail_weight)
     study.optimize(obj, n_trials=n_trials, show_progress_bar=False)
 

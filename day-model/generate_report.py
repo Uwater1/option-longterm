@@ -153,8 +153,8 @@ def generate(results: dict) -> str:
 
         # Feature Stability Scores Table
         w("#### Feature Stability Scores (Block Bootstrap)\n")
-        w("| Feature | Stability Score | Status | Pearson $r$ | Spearman $\\rho$ | Monotonicity Score | Mutual Info | Quality Rating |")
-        w("|---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|")
+        w("| Feature | Stability Score | Status | Pearson $r$ | Spearman $\\rho$ | Monotonicity Score | Mutual Info | Quality Rating | IC |")
+        w("|---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|----|")
         
         # Precompute quality metrics if feature data exists
         feat_quality = {}
@@ -163,6 +163,11 @@ def generate(results: dict) -> str:
             df_feat = pd.read_parquet(feat_path)
             df_feat = df_feat.dropna(subset=FEATURES + [TARGET])
             y_data = df_feat[TARGET].values
+            
+            # Slice holdout data for IC calculation
+            ho_start, ho_end = r['holdout_range']
+            df_ho = df_feat[(df_feat.index >= pd.to_datetime(ho_start)) & (df_feat.index <= pd.to_datetime(ho_end))]
+            y_ho_data = df_ho[TARGET].values if not df_ho.empty else np.array([])
             
             from scipy.stats import pearsonr, spearmanr
             try:
@@ -177,6 +182,16 @@ def generate(results: dict) -> str:
                 x_data = df_feat[feat_name].values
                 p_corr, _ = pearsonr(x_data, y_data)
                 s_corr, _ = spearmanr(x_data, y_data)
+                
+                # Holdout IC (OOS Spearman Rank correlation)
+                if not df_ho.empty and feat_name in df_ho.columns:
+                    x_ho_data = df_ho[feat_name].values
+                    if len(y_ho_data) >= 5 and np.std(x_ho_data) > 1e-12 and np.std(y_ho_data) > 1e-12:
+                        ho_ic, _ = spearmanr(x_ho_data, y_ho_data)
+                    else:
+                        ho_ic = np.nan
+                else:
+                    ho_ic = np.nan
                 
                 # Binned Monotonicity Score
                 try:
@@ -216,7 +231,8 @@ def generate(results: dict) -> str:
                     "s_corr": s_corr,
                     "mono": mono_score,
                     "mi": mi_val,
-                    "rating": rating
+                    "rating": rating,
+                    "ic": ho_ic
                 }
 
         # Sort stability scores descending
@@ -224,17 +240,19 @@ def generate(results: dict) -> str:
         threshold = r['best_params']['stability_threshold']
         for feat, score in sorted_scores:
             status = "**Selected**" if score >= threshold or feat in r['selected_features'] else "Pruned"
-            q = feat_quality.get(feat, {"p_corr": np.nan, "s_corr": np.nan, "mono": np.nan, "mi": 0.0, "rating": "N/A"})
+            q = feat_quality.get(feat, {"p_corr": np.nan, "s_corr": np.nan, "mono": np.nan, "mi": 0.0, "rating": "N/A", "ic": np.nan})
             p_str = f"{q['p_corr']:+.4f}" if not np.isnan(q['p_corr']) else "N/A"
             s_str = f"{q['s_corr']:+.4f}" if not np.isnan(q['s_corr']) else "N/A"
             m_str = f"{q['mono']:+.2f}" if not np.isnan(q['mono']) else "N/A"
-            w(f"| {feat} | {score:.1%} | {status} | {p_str} | {s_str} | {m_str} | {q['mi']:.4f} | {q['rating']} |")
+            ic_str = f"{q['ic']:+.4f}" if not np.isnan(q['ic']) else "N/A"
+            w(f"| {feat} | {score:.1%} | {status} | {p_str} | {s_str} | {m_str} | {q['mi']:.4f} | {q['rating']} | {ic_str} |")
         w("")
         w("- **Pearson $r$**: Linear correlation coefficient.")
         w("- **Spearman $\\rho$**: Rank correlation coefficient (overall monotonic relation).")
         w("- **Monotonicity Score**: Spearman rank correlation of target means across 5 feature quintiles. $\\pm 1.0$ indicates perfect bin-wise monotonicity.")
         w("- **Mutual Info**: Estimated information gain (captures non-linear dependencies).")
         w("- **Quality Rating**: Categorized by strength and shape of the monotonic relationship.")
+        w("- **IC**: Spearman rank correlation on the holdout set (out-of-sample predictive power).")
         w("")
 
         # Metrics table
