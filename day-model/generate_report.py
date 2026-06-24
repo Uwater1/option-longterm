@@ -173,6 +173,8 @@ def generate(results: dict) -> str:
 
         # Feature Stability Scores Table
         w("#### Feature Stability Scores (Block Bootstrap)\n")
+        w("<details>")
+        w("<summary><b>Click to expand Feature Stability Scores (Block Bootstrap) Table</b></summary>\n")
         w("| Feature | Stability Score | Status | Pearson $r$ | Spearman $\\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |")
         w("|---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|")
         
@@ -308,6 +310,7 @@ def generate(results: dict) -> str:
         w("- **Yearly ICs**: Spearman rank correlation calculated per year.")
         w("- **Yearly IC Std**: Standard deviation of yearly ICs (measures temporal stability).")
         w("")
+        w("</details>\n")
 
         # Metrics table
         w("#### Metrics\n")
@@ -329,9 +332,12 @@ def generate(results: dict) -> str:
 
         # Best params
         w("#### Best Hyperparameters\n")
+        w("<details>")
+        w("<summary><b>Click to expand Best Hyperparameters JSON</b></summary>\n")
         w("```json")
         w(json.dumps(r["best_params"], indent=2))
         w("```\n")
+        w("</details>\n")
 
         # Walk-forward fold ICs
         w("#### Walk-Forward Fold ICs\n")
@@ -358,11 +364,14 @@ def generate(results: dict) -> str:
 
         # Plots
         w("#### Diagnostic Plots\n")
+        w("<details>")
+        w("<summary><b>Click to expand Diagnostic Plots</b></summary>\n")
         for plot_name in ["holdout_scatter", "ic_timeseries", "feature_importance",
                           "yearly_ic", "purge_sensitivity", "optuna_param_importance"]:
             ref = plot_ref(key, plot_name)
             if ref:
                 w(ref)
+        w("</details>\n")
 
     # ── 5) Baseline Comparison ──
     w("## 5. Comparison to Baselines\n")

@@ -75,6 +75,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Feature Stability Scores (Block Bootstrap)
 
+<details>
+<summary><b>Click to expand Feature Stability Scores (Block Bootstrap) Table</b></summary>
+
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
 | sma100_dist | 78.0% | **Selected** | -0.0790 | -0.0440 | -0.70 | 0.0350 | ** Moderate Monotonic | -0.0390 | 15:-0.18 16:-0.09 17:-0.01 18:-0.05 19:-0.16 20:-0.08 21:-0.14 22:-0.07 23:-0.09 24:-0.06 25:-0.01 26:-0.16 | 0.0535 |
@@ -217,6 +220,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Yearly ICs**: Spearman rank correlation calculated per year.
 - **Yearly IC Std**: Standard deviation of yearly ICs (measures temporal stability).
 
+</details>
+
 #### Metrics
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
@@ -228,6 +233,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Best Hyperparameters
 
+<details>
+<summary><b>Click to expand Best Hyperparameters JSON</b></summary>
+
 ```json
 {
   "model_type": "huber",
@@ -236,6 +244,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
   "huber_epsilon": 1.6239231716293077
 }
 ```
+
+</details>
 
 #### Walk-Forward Fold ICs
 
@@ -265,6 +275,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Diagnostic Plots
 
+<details>
+<summary><b>Click to expand Diagnostic Plots</b></summary>
+
 ![holdout_scatter_300ETF_long](plots/holdout_scatter_300ETF_long.png)
 
 
@@ -283,6 +296,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 ![optuna_param_importance_300ETF_long](plots/optuna_param_importance_300ETF_long.png)
 
 
+</details>
+
 ### 300ETF_short
 
 - **Selected Model**: RIDGE
@@ -293,6 +308,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Selected features (14)**: `gap_pct, first_bar_return, bar_ret_0, bar_rng_0, bar_rng_2, body_to_range_ratio, cci14, bb_width, yesterday_gap_pct, yesterday_early_range, yesterday_first_bar_return, yesterday_early_vwap_dev, yesterday_day_close_pos, yesterday_day_late_mom`
 
 #### Feature Stability Scores (Block Bootstrap)
+
+<details>
+<summary><b>Click to expand Feature Stability Scores (Block Bootstrap) Table</b></summary>
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
@@ -436,6 +454,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Yearly ICs**: Spearman rank correlation calculated per year.
 - **Yearly IC Std**: Standard deviation of yearly ICs (measures temporal stability).
 
+</details>
+
 #### Metrics
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
@@ -447,6 +467,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Best Hyperparameters
 
+<details>
+<summary><b>Click to expand Best Hyperparameters JSON</b></summary>
+
 ```json
 {
   "model_type": "ridge",
@@ -454,6 +477,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
   "ridge_alpha": 0.0025223209588465575
 }
 ```
+
+</details>
 
 #### Walk-Forward Fold ICs
 
@@ -483,6 +508,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Diagnostic Plots
 
+<details>
+<summary><b>Click to expand Diagnostic Plots</b></summary>
+
 ![holdout_scatter_300ETF_short](plots/holdout_scatter_300ETF_short.png)
 
 
@@ -501,6 +529,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 ![optuna_param_importance_300ETF_short](plots/optuna_param_importance_300ETF_short.png)
 
 
+</details>
+
 ### 50ETF_long
 
 - **Selected Model**: HUBER
@@ -511,6 +541,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Selected features (4)**: `bar_rng_0, sma100_dist, margin_net_buy, yesterday_early_range`
 
 #### Feature Stability Scores (Block Bootstrap)
+
+<details>
+<summary><b>Click to expand Feature Stability Scores (Block Bootstrap) Table</b></summary>
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
@@ -654,6 +687,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Yearly ICs**: Spearman rank correlation calculated per year.
 - **Yearly IC Std**: Standard deviation of yearly ICs (measures temporal stability).
 
+</details>
+
 #### Metrics
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
@@ -665,6 +700,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Best Hyperparameters
 
+<details>
+<summary><b>Click to expand Best Hyperparameters JSON</b></summary>
+
 ```json
 {
   "model_type": "huber",
@@ -673,6 +711,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
   "huber_epsilon": 1.6994872752732892
 }
 ```
+
+</details>
 
 #### Walk-Forward Fold ICs
 
@@ -702,6 +742,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Diagnostic Plots
 
+<details>
+<summary><b>Click to expand Diagnostic Plots</b></summary>
+
 ![holdout_scatter_50ETF_long](plots/holdout_scatter_50ETF_long.png)
 
 
@@ -720,6 +763,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 ![optuna_param_importance_50ETF_long](plots/optuna_param_importance_50ETF_long.png)
 
 
+</details>
+
 ### 50ETF_short
 
 - **Selected Model**: HUBER
@@ -730,6 +775,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Selected features (3)**: `bar_vol_2, iv, gap_pct`
 
 #### Feature Stability Scores (Block Bootstrap)
+
+<details>
+<summary><b>Click to expand Feature Stability Scores (Block Bootstrap) Table</b></summary>
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
@@ -873,6 +921,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Yearly ICs**: Spearman rank correlation calculated per year.
 - **Yearly IC Std**: Standard deviation of yearly ICs (measures temporal stability).
 
+</details>
+
 #### Metrics
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
@@ -884,6 +934,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Best Hyperparameters
 
+<details>
+<summary><b>Click to expand Best Hyperparameters JSON</b></summary>
+
 ```json
 {
   "model_type": "huber",
@@ -892,6 +945,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
   "huber_epsilon": 1.2705955772697044
 }
 ```
+
+</details>
 
 #### Walk-Forward Fold ICs
 
@@ -921,6 +976,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Diagnostic Plots
 
+<details>
+<summary><b>Click to expand Diagnostic Plots</b></summary>
+
 ![holdout_scatter_50ETF_short](plots/holdout_scatter_50ETF_short.png)
 
 
@@ -939,6 +997,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 ![optuna_param_importance_50ETF_short](plots/optuna_param_importance_50ETF_short.png)
 
 
+</details>
+
 ### 500ETF_long
 
 - **Selected Model**: HUBER
@@ -949,6 +1009,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Selected features (4)**: `bar_rng_4, max_up_ret, sma100_dist, yesterday_gap_pct`
 
 #### Feature Stability Scores (Block Bootstrap)
+
+<details>
+<summary><b>Click to expand Feature Stability Scores (Block Bootstrap) Table</b></summary>
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
@@ -1092,6 +1155,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Yearly ICs**: Spearman rank correlation calculated per year.
 - **Yearly IC Std**: Standard deviation of yearly ICs (measures temporal stability).
 
+</details>
+
 #### Metrics
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
@@ -1103,6 +1168,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Best Hyperparameters
 
+<details>
+<summary><b>Click to expand Best Hyperparameters JSON</b></summary>
+
 ```json
 {
   "model_type": "huber",
@@ -1111,6 +1179,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
   "huber_epsilon": 1.5640654410320907
 }
 ```
+
+</details>
 
 #### Walk-Forward Fold ICs
 
@@ -1140,6 +1210,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Diagnostic Plots
 
+<details>
+<summary><b>Click to expand Diagnostic Plots</b></summary>
+
 ![holdout_scatter_500ETF_long](plots/holdout_scatter_500ETF_long.png)
 
 
@@ -1158,6 +1231,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 ![optuna_param_importance_500ETF_long](plots/optuna_param_importance_500ETF_long.png)
 
 
+</details>
+
 ### 500ETF_short
 
 - **Selected Model**: HUBER
@@ -1168,6 +1243,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Selected features (5)**: `gap_pct, bar_body_rng_0, bar_vwap_dev_2, bb_width, yesterday_early_vwap_dev`
 
 #### Feature Stability Scores (Block Bootstrap)
+
+<details>
+<summary><b>Click to expand Feature Stability Scores (Block Bootstrap) Table</b></summary>
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
@@ -1311,6 +1389,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Yearly ICs**: Spearman rank correlation calculated per year.
 - **Yearly IC Std**: Standard deviation of yearly ICs (measures temporal stability).
 
+</details>
+
 #### Metrics
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
@@ -1322,6 +1402,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Best Hyperparameters
 
+<details>
+<summary><b>Click to expand Best Hyperparameters JSON</b></summary>
+
 ```json
 {
   "model_type": "huber",
@@ -1330,6 +1413,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
   "huber_epsilon": 1.9490621019437229
 }
 ```
+
+</details>
 
 #### Walk-Forward Fold ICs
 
@@ -1359,6 +1444,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Diagnostic Plots
 
+<details>
+<summary><b>Click to expand Diagnostic Plots</b></summary>
+
 ![holdout_scatter_500ETF_short](plots/holdout_scatter_500ETF_short.png)
 
 
@@ -1377,6 +1465,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 ![optuna_param_importance_500ETF_short](plots/optuna_param_importance_500ETF_short.png)
 
 
+</details>
+
 ### 588000ETF_long
 
 - **Selected Model**: HUBER
@@ -1387,6 +1477,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Selected features (3)**: `yesterday_day_realized_vol, vol5, roc5`
 
 #### Feature Stability Scores (Block Bootstrap)
+
+<details>
+<summary><b>Click to expand Feature Stability Scores (Block Bootstrap) Table</b></summary>
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
@@ -1530,6 +1623,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Yearly ICs**: Spearman rank correlation calculated per year.
 - **Yearly IC Std**: Standard deviation of yearly ICs (measures temporal stability).
 
+</details>
+
 #### Metrics
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
@@ -1541,6 +1636,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Best Hyperparameters
 
+<details>
+<summary><b>Click to expand Best Hyperparameters JSON</b></summary>
+
 ```json
 {
   "model_type": "huber",
@@ -1549,6 +1647,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
   "huber_epsilon": 1.2183731366392727
 }
 ```
+
+</details>
 
 #### Walk-Forward Fold ICs
 
@@ -1573,6 +1673,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Diagnostic Plots
 
+<details>
+<summary><b>Click to expand Diagnostic Plots</b></summary>
+
 ![holdout_scatter_588000ETF_long](plots/holdout_scatter_588000ETF_long.png)
 
 
@@ -1591,6 +1694,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 ![optuna_param_importance_588000ETF_long](plots/optuna_param_importance_588000ETF_long.png)
 
 
+</details>
+
 ### 588000ETF_short
 
 - **Selected Model**: HUBER
@@ -1601,6 +1706,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Selected features (5)**: `first_bar_return, bar_ret_0, cl_pos_in_range, yesterday_early_realized_vol, yesterday_day_pm_am_vol_ratio`
 
 #### Feature Stability Scores (Block Bootstrap)
+
+<details>
+<summary><b>Click to expand Feature Stability Scores (Block Bootstrap) Table</b></summary>
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
@@ -1744,6 +1852,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Yearly ICs**: Spearman rank correlation calculated per year.
 - **Yearly IC Std**: Standard deviation of yearly ICs (measures temporal stability).
 
+</details>
+
 #### Metrics
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
@@ -1755,6 +1865,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Best Hyperparameters
 
+<details>
+<summary><b>Click to expand Best Hyperparameters JSON</b></summary>
+
 ```json
 {
   "model_type": "huber",
@@ -1763,6 +1876,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
   "huber_epsilon": 1.5577186317055085
 }
 ```
+
+</details>
 
 #### Walk-Forward Fold ICs
 
@@ -1787,6 +1902,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Diagnostic Plots
 
+<details>
+<summary><b>Click to expand Diagnostic Plots</b></summary>
+
 ![holdout_scatter_588000ETF_short](plots/holdout_scatter_588000ETF_short.png)
 
 
@@ -1805,6 +1923,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 ![optuna_param_importance_588000ETF_short](plots/optuna_param_importance_588000ETF_short.png)
 
 
+</details>
+
 ### 159915ETF_long
 
 - **Selected Model**: RIDGE
@@ -1815,6 +1935,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Selected features (3)**: `sma100_dist, yesterday_early_realized_vol, yesterday_day_vwap_dev`
 
 #### Feature Stability Scores (Block Bootstrap)
+
+<details>
+<summary><b>Click to expand Feature Stability Scores (Block Bootstrap) Table</b></summary>
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
@@ -1958,6 +2081,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Yearly ICs**: Spearman rank correlation calculated per year.
 - **Yearly IC Std**: Standard deviation of yearly ICs (measures temporal stability).
 
+</details>
+
 #### Metrics
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
@@ -1969,6 +2094,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Best Hyperparameters
 
+<details>
+<summary><b>Click to expand Best Hyperparameters JSON</b></summary>
+
 ```json
 {
   "model_type": "ridge",
@@ -1976,6 +2104,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
   "ridge_alpha": 8807.388953962965
 }
 ```
+
+</details>
 
 #### Walk-Forward Fold ICs
 
@@ -2005,6 +2135,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Diagnostic Plots
 
+<details>
+<summary><b>Click to expand Diagnostic Plots</b></summary>
+
 ![holdout_scatter_159915ETF_long](plots/holdout_scatter_159915ETF_long.png)
 
 
@@ -2023,6 +2156,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 ![optuna_param_importance_159915ETF_long](plots/optuna_param_importance_159915ETF_long.png)
 
 
+</details>
+
 ### 159915ETF_short
 
 - **Selected Model**: LASSO
@@ -2033,6 +2168,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Selected features (6)**: `gap_pct, bar_body_rng_0, max_down_ret, bb_width, yesterday_gap_pct, yesterday_early_skew`
 
 #### Feature Stability Scores (Block Bootstrap)
+
+<details>
+<summary><b>Click to expand Feature Stability Scores (Block Bootstrap) Table</b></summary>
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
@@ -2176,6 +2314,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 - **Yearly ICs**: Spearman rank correlation calculated per year.
 - **Yearly IC Std**: Standard deviation of yearly ICs (measures temporal stability).
 
+</details>
+
 #### Metrics
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
@@ -2187,6 +2327,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Best Hyperparameters
 
+<details>
+<summary><b>Click to expand Best Hyperparameters JSON</b></summary>
+
 ```json
 {
   "model_type": "lasso",
@@ -2194,6 +2337,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
   "lasso_alpha": 0.00026019425954421863
 }
 ```
+
+</details>
 
 #### Walk-Forward Fold ICs
 
@@ -2223,6 +2368,9 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 #### Diagnostic Plots
 
+<details>
+<summary><b>Click to expand Diagnostic Plots</b></summary>
+
 ![holdout_scatter_159915ETF_short](plots/holdout_scatter_159915ETF_short.png)
 
 
@@ -2240,6 +2388,8 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 ![optuna_param_importance_159915ETF_short](plots/optuna_param_importance_159915ETF_short.png)
 
+
+</details>
 
 ## 5. Comparison to Baselines
 
