@@ -153,8 +153,8 @@ def generate(results: dict) -> str:
 
         # Feature Stability Scores Table
         w("#### Feature Stability Scores (Block Bootstrap)\n")
-        w("| Feature | Stability Score | Status | Pearson $r$ | Spearman $\\rho$ | Monotonicity Score | Mutual Info | Quality Rating | IC |")
-        w("|---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|----|")
+        w("| Feature | Stability Score | Status | Pearson $r$ | Spearman $\\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |")
+        w("|---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|")
         
         # Precompute quality metrics if feature data exists
         feat_quality = {}
@@ -176,6 +176,9 @@ def generate(results: dict) -> str:
             except ImportError:
                 has_mi = False
                 
+            df_feat['year'] = pd.to_datetime(df_feat.index).year
+            years = sorted(df_feat['year'].unique())
+
             for feat_name in r["stability_scores"].keys():
                 if feat_name not in df_feat.columns:
                     continue
@@ -193,6 +196,30 @@ def generate(results: dict) -> str:
                 else:
                     ho_ic = np.nan
                 
+                # Calculate Yearly IC Stability
+                yearly_ics = {}
+                for yr in years:
+                    df_yr = df_feat[df_feat['year'] == yr]
+                    if len(df_yr) >= 20:
+                        x_yr = df_yr[feat_name].values
+                        y_yr = df_yr[TARGET].values
+                        if np.std(x_yr) > 1e-12 and np.std(y_yr) > 1e-12:
+                            rho_yr, _ = spearmanr(x_yr, y_yr)
+                            yearly_ics[yr] = rho_yr
+                
+                yc_parts = []
+                for yr in sorted(yearly_ics.keys()):
+                    val = yearly_ics[yr]
+                    short_yr = str(yr)[-2:]
+                    yc_parts.append(f"{short_yr}:{val:+.2f}")
+                yearly_ic_str = " ".join(yc_parts) if yc_parts else "N/A"
+                
+                if len(yearly_ics) >= 2:
+                    yearly_ic_std = float(np.std(list(yearly_ics.values())))
+                    yearly_ic_std_str = f"{yearly_ic_std:.4f}"
+                else:
+                    yearly_ic_std_str = "N/A"
+
                 # Binned Monotonicity Score
                 try:
                     q_labels = pd.qcut(x_data, 5, labels=False, duplicates='drop')
@@ -232,7 +259,9 @@ def generate(results: dict) -> str:
                     "mono": mono_score,
                     "mi": mi_val,
                     "rating": rating,
-                    "ic": ho_ic
+                    "ic": ho_ic,
+                    "yearly_ic_str": yearly_ic_str,
+                    "yearly_ic_std_str": yearly_ic_std_str
                 }
 
         # Sort stability scores descending
@@ -240,19 +269,24 @@ def generate(results: dict) -> str:
         threshold = r['best_params']['stability_threshold']
         for feat, score in sorted_scores:
             status = "**Selected**" if score >= threshold or feat in r['selected_features'] else "Pruned"
-            q = feat_quality.get(feat, {"p_corr": np.nan, "s_corr": np.nan, "mono": np.nan, "mi": 0.0, "rating": "N/A", "ic": np.nan})
+            q = feat_quality.get(feat, {
+                "p_corr": np.nan, "s_corr": np.nan, "mono": np.nan, "mi": 0.0,
+                "rating": "N/A", "ic": np.nan, "yearly_ic_str": "N/A", "yearly_ic_std_str": "N/A"
+            })
             p_str = f"{q['p_corr']:+.4f}" if not np.isnan(q['p_corr']) else "N/A"
             s_str = f"{q['s_corr']:+.4f}" if not np.isnan(q['s_corr']) else "N/A"
             m_str = f"{q['mono']:+.2f}" if not np.isnan(q['mono']) else "N/A"
             ic_str = f"{q['ic']:+.4f}" if not np.isnan(q['ic']) else "N/A"
-            w(f"| {feat} | {score:.1%} | {status} | {p_str} | {s_str} | {m_str} | {q['mi']:.4f} | {q['rating']} | {ic_str} |")
+            w(f"| {feat} | {score:.1%} | {status} | {p_str} | {s_str} | {m_str} | {q['mi']:.4f} | {q['rating']} | {ic_str} | {q['yearly_ic_str']} | {q['yearly_ic_std_str']} |")
         w("")
         w("- **Pearson $r$**: Linear correlation coefficient.")
         w("- **Spearman $\\rho$**: Rank correlation coefficient (overall monotonic relation).")
         w("- **Monotonicity Score**: Spearman rank correlation of target means across 5 feature quintiles. $\\pm 1.0$ indicates perfect bin-wise monotonicity.")
         w("- **Mutual Info**: Estimated information gain (captures non-linear dependencies).")
         w("- **Quality Rating**: Categorized by strength and shape of the monotonic relationship.")
-        w("- **IC**: Spearman rank correlation on the holdout set (out-of-sample predictive power).")
+        w("- **Holdout IC**: Spearman rank correlation on the holdout set (out-of-sample predictive power).")
+        w("- **Yearly ICs**: Spearman rank correlation calculated per year.")
+        w("- **Yearly IC Std**: Standard deviation of yearly ICs (measures temporal stability).")
         w("")
 
         # Metrics table
