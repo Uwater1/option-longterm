@@ -1,6 +1,6 @@
 """Daytrade: frozen-linear intraday alpha strategy.
 
-Signal source: day-model trained LASSO/Huber/etc coefficients, frozen as constants.
+Signal source: day-model trained skglm (Huber+L1 / Huber+MCP) coefficients, frozen as constants.
 Trade plan: decide at decision-bar close (per-ETF, see DECISION_BAR), enter at
 the next bar's open, exit at 14:30 (bar 41 close).
 """

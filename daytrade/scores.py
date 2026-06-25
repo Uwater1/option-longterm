@@ -1,7 +1,7 @@
 """Frozen-linear score computation.
 
 Loads trained coefficients from day-model and produces a per-day score
-that is a direct port of the underlying LASSO/Huber/etc model.
+that is a direct port of the underlying skglm (Huber+L1 / Huber+MCP) model.
 Runtime = pure arithmetic, no ML fitting.
 
 Dual-Model Architecture
