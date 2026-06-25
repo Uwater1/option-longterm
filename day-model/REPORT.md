@@ -4,7 +4,7 @@
 
 ## 1. Executive Summary
 
-Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting entry-to-exit trade return (entry at open of decision_bar+1, exit at close of exit_bar (14:30)) using features and indicators calculated from daily and intraday Index data directly (to eliminate look-ahead bias and accelerate computation), while executing trades on the actual ETF (to accurately reflect P&L performance). The input feature space spans early-bar features (up to decision bar close) + prior-day technical indicators. Features are robustly selected using the new TimeSeriesStabilitySelector which incorporates regime-stratified bootstrapping, randomized ElasticNet penalties, OOB IC screening, and across-fold variance filtering.
+Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) predicting entry-to-exit trade return (entry at open of decision_bar+1, exit at close of exit_bar (14:30)) using features and indicators calculated from daily and intraday Index data directly (to eliminate look-ahead bias and accelerate computation), while executing trades on the actual ETF (to accurately reflect P&L performance). The input feature space spans early-bar features (up to decision bar close) + prior-day technical indicators. Features are robustly selected using the new TimeSeriesStabilitySelector which incorporates regime-stratified bootstrapping, randomized ElasticNet penalties, OOB IC screening, and across-fold variance filtering.
 
 **Validation**: Purged walk-forward TimeSeriesSplit (gap=5 days, 5 folds). Optuna TPE hyperparameter search (100 trials). 20% holdout never used in tuning.
 
@@ -45,7 +45,7 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 - **TimeSeriesSplit**: 5 folds expanding window.
 - **Purge gap**: 5 trading days between train and test.
-- **Stability Selection**: 50 block bootstrap trials (block length 20 days) using `LassoCV` as the base selector. Stability scores computed on the dev set.
+- **Stability Selection**: 50 stratified block bootstrap trials (block length 20 days) using randomized `ElasticNet` (pre-tuned via `ElasticNetCV`) combined with an out-of-bag (OOB) Spearman rank IC significance check (p < 0.05 or |IC| > 0.02) as the base selector. Stability scores and cross-fold variance filters are computed across purged walk-forward validation folds.
 
 - **Tuning**: The stability selection threshold is searched via Optuna in walk-forward CV over $[0.40, 0.90]$ to find the globally most robust subset.
 
@@ -55,12 +55,10 @@ Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) predicting
 
 | Parameter | Range / Options |
 |-----------|-----------------|
-| model_type | ridge, lasso, elasticnet, huber |
+| model_type | skglm_huber_l1, skglm_mcp (from `skglm` library) |
 | stability_threshold | 0.40–0.90 (step 0.05) |
-| **Ridge** alpha | $10^{-3}$–$10^4$ (log) |
-| **Lasso** alpha | $10^{-5}$–$1.0$ (log) |
-| **ElasticNet** alpha, l1_ratio | alpha: $10^{-5}$–$1.0$ (log), l1_ratio: 0.0–1.0 |
-| **HuberRegressor** alpha, epsilon | alpha: $10^{-4}$–$10^4$ (log), epsilon: 1.0–2.0 |
+| **skglm_huber_l1** | alpha: $10^{-5}$–$10^3$ (log), delta: $1.0$–$3.0$ |
+| **skglm_mcp** | alpha: $10^{-5}$–$10^3$ (log), gamma: $1.5$–$15.0$ |
 
 ## 4. Results
 
@@ -2642,5 +2640,5 @@ To determine how early the trade_return prediction can be made, we evaluated mod
 
 1. Trade return prediction is inherently noisy (low signal-to-noise ratio)
 2. Feature selection using block bootstrap stability scores handles highly correlated features much better than greedy RFE
-3. HuberRegressor handles extreme outlier days much better than standard MSE-based models
+3. Robust Huber datafits (used in both `skglm_huber_l1` and `skglm_mcp` models) handle extreme outlier days much better than standard MSE-based models
 4. Transaction costs and execution slippage are not modeled here
