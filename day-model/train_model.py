@@ -41,6 +41,13 @@ import optuna
 import joblib
 from joblib import Parallel, delayed
 
+# skglm: L1-regularized Huber, MCP, SCAD penalties (not available in sklearn)
+from skglm import GeneralizedLinearEstimator
+from skglm.datafits import Huber as SkglmHuber
+from skglm.penalties import L1 as SkglmL1, MCPenalty
+
+SKGLM_MODEL_TYPES = {"skglm_huber_l1", "skglm_mcp"}
+
 warnings.filterwarnings("ignore")
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
@@ -72,6 +79,60 @@ DEFAULT_PURGE_GAP = 5
 HOLDOUT_FRACTION = 0.20   # last 20% of data is the final OOS holdout
 BLOCK_SIZE = 20           # Block bootstrap contiguous length (approx 1 calendar month)
 N_BOOTSTRAPS = 50         # Number of bootstrap trials for stability selection
+
+
+# ============================================================
+# Model factory (skglm unified — sklearn kept for legacy model loading)
+# ============================================================
+# Optuna searches ONLY these two types; sklearn types retained in
+# _build_model() solely for loading previously-trained models.
+_OPTUNA_MODEL_TYPES = ["skglm_huber_l1", "skglm_mcp"]
+
+
+def _build_model(model_type: str, params: dict):
+    """Instantiate a linear model from type string + params dict.
+
+    Supported types: ridge, lasso, elasticnet, huber (sklearn),
+    skglm_huber_l1 (Huber datafit + L1 penalty),
+    skglm_mcp (Quadratic datafit + MCP penalty).
+    """
+    if model_type == "ridge":
+        return Ridge(alpha=params["ridge_alpha"], random_state=42)
+    elif model_type == "lasso":
+        return Lasso(alpha=params["lasso_alpha"], random_state=42,
+                     max_iter=5000, tol=1e-3)
+    elif model_type == "elasticnet":
+        return ElasticNet(alpha=params["en_alpha"],
+                          l1_ratio=params["en_l1_ratio"],
+                          random_state=42, max_iter=5000, tol=1e-3)
+    elif model_type == "huber":
+        return HuberRegressor(alpha=params["huber_alpha"],
+                              epsilon=params["huber_epsilon"],
+                              max_iter=2000)
+    elif model_type == "skglm_huber_l1":
+        return GeneralizedLinearEstimator(
+            datafit=SkglmHuber(delta=params.get("skglm_huber_delta", 1.35)),
+            penalty=SkglmL1(alpha=params["skglm_huber_l1_alpha"]),
+        )
+    elif model_type == "skglm_mcp":
+        return GeneralizedLinearEstimator(
+            datafit=SkglmHuber(delta=params.get("skglm_mcp_delta", 1.35)),
+            penalty=MCPenalty(alpha=params["skglm_mcp_alpha"],
+                              gamma=params.get("skglm_mcp_gamma", 3.0)),
+        )
+    else:
+        raise ValueError(f"Unknown model_type: {model_type!r}")
+
+
+def _safe_fit(model, X, y, sample_weight=None):
+    """Fit model, skipping sample_weight for skglm (not supported)."""
+    if isinstance(model, GeneralizedLinearEstimator):
+        model.fit(X, y)
+    elif sample_weight is not None:
+        model.fit(X, y, sample_weight=sample_weight)
+    else:
+        model.fit(X, y)
+    return model
 
 
 # ============================================================
@@ -396,7 +457,8 @@ def _tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str,
 def make_objective(pre_scaled_splits, y, sample_w, stability_scores, fold_std_stability, side="single",
                    tail_weight: float = 0.0, variance_cap: float = 0.15):
     def objective(trial: optuna.Trial) -> float:
-        model_type = trial.suggest_categorical("model_type", ["ridge", "lasso", "elasticnet", "huber"])
+        model_type = trial.suggest_categorical(
+            "model_type", _OPTUNA_MODEL_TYPES)
         # Suggest stability selection threshold as a hyperparameter
         stability_threshold = trial.suggest_float("stability_threshold", 0.4, 0.9, step=0.05)
 
@@ -406,20 +468,16 @@ def make_objective(pre_scaled_splits, y, sample_w, stability_scores, fold_std_st
         if len(selected_indices) < 3:
             selected_indices = np.argsort(stability_scores)[::-1][:3]
 
-        if model_type == "ridge":
-            alpha = trial.suggest_float("ridge_alpha", 1e-3, 1e4, log=True)
-            model = Ridge(alpha=alpha, random_state=42)
-        elif model_type == "lasso":
-            alpha = trial.suggest_float("lasso_alpha", 1e-5, 1.0, log=True)
-            model = Lasso(alpha=alpha, random_state=42, max_iter=1000, tol=1e-3)
-        elif model_type == "elasticnet":
-            alpha = trial.suggest_float("en_alpha", 1e-5, 1.0, log=True)
-            l1_ratio = trial.suggest_float("en_l1_ratio", 0.0, 1.0)
-            model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, random_state=42, max_iter=1000, tol=1e-3)
-        elif model_type == "huber":
-            alpha = trial.suggest_float("huber_alpha", 1e-4, 1e4, log=True)
-            epsilon = trial.suggest_float("huber_epsilon", 1.0, 2.0)
-            model = HuberRegressor(alpha=alpha, epsilon=epsilon, max_iter=2000)
+        if model_type == "skglm_huber_l1":
+            alpha = trial.suggest_float("skglm_huber_l1_alpha", 1e-5, 1e3, log=True)
+            delta = trial.suggest_float("skglm_huber_delta", 1.0, 3.0)
+            params = {"skglm_huber_l1_alpha": alpha, "skglm_huber_delta": delta}
+        elif model_type == "skglm_mcp":
+            alpha = trial.suggest_float("skglm_mcp_alpha", 1e-5, 1e3, log=True)
+            gamma = trial.suggest_float("skglm_mcp_gamma", 1.5, 15.0)
+            params = {"skglm_mcp_alpha": alpha, "skglm_mcp_gamma": gamma}
+
+        model = _build_model(model_type, params)
 
         ics = []
         tail_ics = []
@@ -427,7 +485,7 @@ def make_objective(pre_scaled_splits, y, sample_w, stability_scores, fold_std_st
             Xtr_sel = Xtr_s[:, selected_indices]
             Xte_sel = Xte_s[:, selected_indices]
 
-            model.fit(Xtr_sel, y[train_idx], sample_weight=sample_w[train_idx])
+            _safe_fit(model, Xtr_sel, y[train_idx], sample_w[train_idx])
             preds = model.predict(Xte_sel)
             ics.append(_side_ic(y[test_idx], preds, side))
             tail_ics.append(_tail_ic(y[test_idx], preds, side))
@@ -572,16 +630,9 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
     X_ho_sel = X_ho_s[:, selected_indices]
 
     model_type = best_params["model_type"]
-    if model_type == "ridge":
-        final_model = Ridge(alpha=best_params["ridge_alpha"], random_state=42)
-    elif model_type == "lasso":
-        final_model = Lasso(alpha=best_params["lasso_alpha"], random_state=42, max_iter=5000)
-    elif model_type == "elasticnet":
-        final_model = ElasticNet(alpha=best_params["en_alpha"], l1_ratio=best_params["en_l1_ratio"], random_state=42, max_iter=5000)
-    elif model_type == "huber":
-        final_model = HuberRegressor(alpha=best_params["huber_alpha"], epsilon=best_params["huber_epsilon"], max_iter=2000)
+    final_model = _build_model(model_type, best_params)
 
-    final_model.fit(X_dev_sel, y_dev, sample_weight=sw_dev)
+    _safe_fit(final_model, X_dev_sel, y_dev, sw_dev)
     preds_ho = final_model.predict(X_ho_sel)
     preds_is = final_model.predict(X_dev_sel)
 
@@ -615,16 +666,8 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
         Xtr_sel = Xtr_s[:, selected_indices]
         Xte_sel = Xte_s[:, selected_indices]
 
-        if model_type == "ridge":
-            m = Ridge(alpha=best_params["ridge_alpha"], random_state=42)
-        elif model_type == "lasso":
-            m = Lasso(alpha=best_params["lasso_alpha"], random_state=42, max_iter=5000)
-        elif model_type == "elasticnet":
-            m = ElasticNet(alpha=best_params["en_alpha"], l1_ratio=best_params["en_l1_ratio"], random_state=42, max_iter=5000)
-        elif model_type == "huber":
-            m = HuberRegressor(alpha=best_params["huber_alpha"], epsilon=best_params["huber_epsilon"], max_iter=2000)
-
-        m.fit(Xtr_sel, y[train_idx], sample_weight=sample_w[train_idx])
+        m = _build_model(model_type, best_params)
+        _safe_fit(m, Xtr_sel, y[train_idx], sample_w[train_idx])
         wf_preds[test_idx] = m.predict(Xte_sel) / Y_SCALE
         wf_is_ic_per_fold.append(spearman_ic(y[train_idx] / Y_SCALE, m.predict(Xtr_sel) / Y_SCALE))
         wf_oos_ic_per_fold.append(spearman_ic(y[test_idx] / Y_SCALE, wf_preds[test_idx]))
@@ -681,7 +724,8 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
 
     perm = permutation_importance(
         final_model, X_ho_sel, y_ho, n_repeats=10, random_state=42,
-        scoring="neg_mean_squared_error", n_jobs=-1,
+        scoring="neg_mean_squared_error",
+        n_jobs=1 if isinstance(final_model, GeneralizedLinearEstimator) else -1,
     )
     perm_imp_sel = dict(zip(selected_features, perm.importances_mean.tolist()))
     perm_imp = {feat: perm_imp_sel.get(feat, 0.0) for feat in FEATURES}
@@ -698,16 +742,8 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
             Xtr_sel = Xtr_s[:, selected_indices]
             Xte_sel = Xte_s[:, selected_indices]
 
-            if model_type == "ridge":
-                m = Ridge(alpha=best_params["ridge_alpha"], random_state=42)
-            elif model_type == "lasso":
-                m = Lasso(alpha=best_params["lasso_alpha"], random_state=42, max_iter=5000)
-            elif model_type == "elasticnet":
-                m = ElasticNet(alpha=best_params["en_alpha"], l1_ratio=best_params["en_l1_ratio"], random_state=42, max_iter=5000)
-            elif model_type == "huber":
-                m = HuberRegressor(alpha=best_params["huber_alpha"], epsilon=best_params["huber_epsilon"], max_iter=2000)
-
-            m.fit(Xtr_sel, y[train_idx], sample_weight=sample_w[train_idx])
+            m = _build_model(model_type, best_params)
+            _safe_fit(m, Xtr_sel, y[train_idx], sample_w[train_idx])
             preds = m.predict(Xte_sel) / Y_SCALE
             ics_g.append(spearman_ic(y_raw[test_idx], preds))
         purge_sens[g] = {"mean_ic": float(np.mean(ics_g)) if ics_g else 0.0,
