@@ -1,6 +1,6 @@
 # Day-Model Feature Expansion Workflow
 
-This guide details how to add new features, run the training pipeline, and leverage the Lasso Block Bootstrap Stability Selection to automatically filter out noisy inputs.
+This guide details how to add new features, run the training pipeline, and leverage Unified Time-Series Stability Selection to automatically filter out noisy inputs.
 
 ## Target
 

@@ -1,7 +1,7 @@
 """
-Phase 2: Train Optuna-tuned linear regression predicting trade_return per ETF.
-Supports Ridge, Lasso, ElasticNet, HuberRegressor.
-Uses Lasso-based Block Bootstrap Stability Selection to select robust feature subsets,
+Phase 2: Train Optuna-tuned sparse/robust linear regression predicting trade_return per ETF.
+Tunes skglm models (skglm_huber_l1, skglm_mcp) via hyperparameter optimization.
+Uses Unified Time-Series Stability Selection (regime-stratified bootstrap, randomized ElasticNet, OOB IC) to select robust feature subsets,
 and tunes the selection threshold as a walk-forward CV hyperparameter.
 
 Target: trade_return = log(close[EXIT_BAR] / open[decision_bar+1])
