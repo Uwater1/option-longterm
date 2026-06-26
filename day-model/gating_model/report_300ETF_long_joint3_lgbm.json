@@ -1,0 +1,75 @@
+{
+    "etf": "300ETF",
+    "side": "long",
+    "variant": "joint3",
+    "selector": "lgbm",
+    "best_model_type": "lightgbm",
+    "best_params": {
+        "n_estimators": 87,
+        "learning_rate": 0.03963868628540535,
+        "num_leaves": 7,
+        "max_depth": 3,
+        "min_child_samples": 34
+    },
+    "final_threshold": 0.00777433393523097,
+    "firing_threshold": 0.16688164758079457,
+    "features_used": [
+        "early_range",
+        "yesterday_day_realized_vol",
+        "volume_sma_ratio",
+        "bar_body_rng_0",
+        "max_up_ret",
+        "yesterday_day_late_mom",
+        "vol_ratio_5_20",
+        "early_skew",
+        "yesterday_early_volume_ratio",
+        "yesterday_day_vwap_dev",
+        "margin_net_buy",
+        "sma200_dist",
+        "early_realized_vol",
+        "yesterday_day_range",
+        "early_vwap_dev",
+        "sma100_dist",
+        "yesterday_first_bar_return",
+        "bar_rng_2",
+        "yesterday_am_return",
+        "rsi5",
+        "yesterday_day_kurtosis",
+        "first_bar_return",
+        "max_down_ret",
+        "yesterday_day_pm_am_vol_ratio",
+        "bar_ret_0"
+    ],
+    "n_features": 25,
+    "results": {
+        "lightgbm": {
+            "cv_metrics": {
+                "auc": 0.7036014112072517,
+                "pr_auc": 0.2393379248124432,
+                "precision_at_thr": 0.19705340699815838,
+                "recall_at_thr": 0.5572916666666666,
+                "f1_at_thr": 0.291156462585034,
+                "firing_threshold": 0.14329032388001453,
+                "base_rate": 0.10607734806629834
+            },
+            "dev_only_oos": {
+                "auc": 0.648590417762197,
+                "pr_auc": 0.1837237207241404,
+                "precision_at_thr": 0.17682926829268292,
+                "recall_at_thr": 0.5178571428571429,
+                "f1_at_thr": 0.2636363636363636,
+                "firing_threshold": 0.14265716724417005
+            },
+            "forward_wf_estimate": {
+                "auc": 0.6515465584359051,
+                "pr_auc": 0.18491085061479784,
+                "precision_at_thr": 0.16470588235294117,
+                "recall_at_thr": 0.47058823529411764,
+                "f1_at_thr": 0.2440087145969499,
+                "firing_threshold": 0.14211674966821822,
+                "base_rate": 0.10507726269315673
+            }
+        }
+    },
+    "joint3_class": "long"
+}

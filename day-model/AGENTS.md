@@ -105,22 +105,74 @@ Decide whether to keep or discard using the following protocol:
 
 ---
 
-## 4. Tradability Gating Model (Option 1 Pre-Gate)
+## 4. Tradability / Big-Move Gating Model (v2)
 
-Separate binary classifiers (`gating_{ETF}_long.joblib` and `gating_{ETF}_short.joblib`) that pre-filter "untradable" chop days before direction/conviction models evaluate them.
+Per-side classifiers that predict whether a day will see a large directional
+move (big-up tail for long, big-down tail for short). Used as a **veto filter**
+over the daytrade linear score (NOT as a standalone signal — see
+`daytrade/GATING_ONLY_REPORT.md`: gate-only total OOS Sharpe = +9.08 vs
+gated-daytrade +41.94).
+
+### v2 improvements over v1
+- **Feature curation** (was: all 130 raw, no selection). Three selectors
+  benchmarked per cell, winner auto-picked:
+  - `none` — all 130 features (legacy baseline).
+  - `stability` — `feature_select.py`: regime-stratified block bootstrap +
+    randomized ElasticNet + OOB Spearman IC screen + variance cap (σ ≤ 0.15).
+    Yields ~14–25 features.
+  - `lgbm` — walk-forward LightGBM gain + permutation importance, top-25.
+- **Three target variants** (was: per-side binary only):
+  - `two_sided` — per-side binary big-move (legacy).
+  - `joint3` — shared 3-class softmax {big_up, neutral, big_down}; long uses
+    P(big_up), short uses P(big_down). Shares signal between sides.
+  - `gated` — big-move label ANDed with a tradability/regime mask
+    (rolling vol20/early_range above p40). Two-stage filter collapsed into one
+    binary classifier.
+- **Honest IS/OOS reporting** (was: final model retrained on dev+holdout, leak).
+  Deployed artifact still retrains on dev+holdout (more data = better), but two
+  distinct metrics are now reported:
+  - `dev_only_oos` — holdout metric of the dev-trained model (unbiased).
+  - `forward_wf_estimate` — pooled purged walk-forward OOS over the full dataset
+    (the deployed-model proxy; used for variant/selector/model selection).
+- **Performance**: dropped RandomForest from default benchmark (rarely wins,
+  3–4× slower), compute `forward_wf` only for the CV-winner (3×→1×), parallelize
+  the 5 ETFs across processes. Full sweep (5 ETFs × 3 variants × 3 selectors ×
+  20 Optuna trials) runs in **~100s** on a 12-core box (was 30+ min).
 
 ### Commands
 
 ```bash
-# 1. Train gating models (benchmarks Logistic, RF, and LightGBM with CV folds pre-scaled)
-python day-model/gating_model.py -e all -t 30
+# Full sweep (recommended): all ETFs, all variants × selectors, parallel
+python day-model/gating_model.py -e all -t 20 --jobs 5
 
-# 2. Compile head-to-head comparison report
+# Single ETF, quick smoke
+python day-model/gating_model.py -e 300 -t 5
+
+# Restrict variants / selectors / model types
+python day-model/gating_model.py -e all --variants two_sided,joint3 --selectors stability,lgbm
+python day-model/gating_model.py -e all --models logistic,rf,lightgbm   # re-enable RF
+
+# Compile head-to-head comparison report (winner table + full WF PR-AUC grid)
 python day-model/evaluate_gating.py
 ```
 
 ### Outputs
-- Save models & scalers: `day-model/gating_model/gating_{ETF}_{side}.joblib`
-- JSON reports: `day-model/gating_model/report_{ETF}_{side}.json`
-- Plots: `day-model/gating_model/plots/curves_{ETF}_{side}.png` (ROC and Precision-Recall)
-- Comparison Markdown: `day-model/gating_model/GATING_REPORT.md`
+- Per-config artifacts (variant × selector):
+  - `gating_model/gating_{ETF}_{side}_{variant}_{selector}.joblib`
+  - `gating_model/gating_scaler_{ETF}_{side}_{variant}_{selector}.joblib`
+  - `gating_model/report_{ETF}_{side}_{variant}_{selector}.json`
+- Canonical promoted winner (backward-compatible, consumed by daytrade):
+  - `gating_model/gating_{ETF}_{side}.joblib`
+  - `gating_model/gating_scaler_{ETF}_{side}.joblib`
+  - `gating_model/report_{ETF}_{side}.json` — carries `chosen_variant`,
+    `chosen_selector`, `firing_threshold`, `features_used`, `selection_summary`.
+- Plots: `gating_model/plots/curves_{ETF}_{side}_{variant}_{selector}.png`
+- Comparison Markdown: `gating_model/GATING_REPORT.md`,
+  `tradability_model_report.md` (project root mirror).
+
+### Daytrade integration
+The daytrade pipeline consumes the canonical promoted artifacts via
+`daytrade/gating_loader.py`. Calibration auto-sweeps gated vs ungated
+(`python -m daytrade.calibrate --mode single --sweep-gated`), and
+`daytrade/deploy.py` mixed-mode picker treats `{mode}` and `{mode}+gated` as
+candidates per side. See `daytrade/AGENTS.md` §"Gating Integration".

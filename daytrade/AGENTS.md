@@ -53,6 +53,19 @@ python -m daytrade.calibrate --mode dual                    # dual-mode calibrat
 python -m daytrade.deploy                                    # pick best mode per side → calibration.json
 python -m daytrade.report                                    # generate report with mixed-mode deployment
 
+# Gating-integrated pipeline (recommended; +10.13 total OOS Sharpe over ungated)
+python day-model/gating_model.py -e all -t 20 --jobs 5      # train gating models (all variants×selectors, ~100s)
+python -m daytrade.calibrate --mode single --sweep-gated    # calibrate ungated + gated for all 3 modes
+python -m daytrade.calibrate --mode hybrid --sweep-gated
+python -m daytrade.calibrate --mode dual   --sweep-gated
+python -m daytrade.deploy                                    # mixed-mode picker now treats {mode}+gated as candidates
+python -m daytrade.report
+
+# Gating-only standalone backtest (gate as sole signal — diagnostic, NOT for deployment)
+python -m daytrade.gating_only                              # all ETFs, 4% stop, conflict=flat
+python -m daytrade.gating_only --no-stop                    # hold to 14:30
+python -m daytrade.gating_only --conflict long              # both gates fire → take long
+
 # Ad-hoc inspection
 python -m daytrade.rules         # long/short signal counts at defaults
 python -m daytrade.rules --mode hybrid  # hybrid-mode signal counts
@@ -100,6 +113,36 @@ Long & short are **mutually exclusive by construction** (different score signs),
 
 Dual-model artifacts (`linear_{ETF}_long.joblib` etc.) are trained via `python day-model/train_model.py --side both`. See `improvement_plan.md` for v2 results showing mixed-mode deployment (Phase 4) improves total OOS Sharpe by +3.01 over single-only.
 
+### Gating Integration (v3 — production)
+
+A **big-move gating model** (trained in `day-model/gating_model.py`, see
+`day-model/AGENTS.md` §4) acts as a **post-hoc veto filter** over the daytrade
+directional signal. On each day the long-gate fires only when a big-up move is
+predicted; the short-gate fires only on predicted big-down. Signals are kept
+only where the matching gate fires (days with no gate prediction are kept — no
+veto). The gate is **not** a standalone alpha — see `GATING_ONLY_REPORT.md`
+(gate-only total OOS Sharpe = +9.08 vs gated-daytrade +41.94). Its value is
+selectivity: removing low-tradability days where the score fires but the move
+won't follow through.
+
+**Plumbing** (single integration chokepoint at `backtest.py` `direction` column):
+- `gating_loader.load_gating_mask(etf, side) → pd.Series[date→bool]` loads the
+  canonical promoted artifact (`gating_{ETF}_{side}.joblib`) and applies the
+  persisted firing probability threshold (p70 of training predictions).
+- `backtest_long_short(..., gated=True)` ANDs the mask into `signals["direction"]`
+  after `get_long_short_signals` returns.
+- `calibrate.py --gated` / `--sweep-gated` runs the grid with gating on (writes
+  `calibration_{mode}_gated.json`).
+- `deploy.py` `MODE_FILES` includes `{single,hybrid,dual}+gated`; the mixed-mode
+  picker auto-adopts the gated variant per side when it wins on OOS Sharpe.
+- Each deployed config carries a `gated: bool` flag; `report.py`'s
+  `_run_mixed_backtest` splits the `+gated` suffix into `mode=base, gated=True`.
+
+**Result**: gated mixed-mode total OOS Sharpe **+41.94** vs ungated **+31.81**
+(Δ = **+10.13**); 9 of 10 cells pick a `+gated` config. Run
+`python -m daytrade.calibrate --mode single --sweep-gated` (×3 modes) →
+`python -m daytrade.deploy` → `python -m daytrade.report` to reproduce.
+
 ### Pipeline Flow
 
 ```
@@ -143,19 +186,25 @@ daytrade/
 ├── __init__.py         # paths, ETFS, DECISION_BAR, EXIT_BAR, DEFAULT_COST_BPS, HOLDOUT_START
 ├── scores.py           # frozen score loader (side-aware) + IC verification
 ├── rules.py            # expanding_pct, expanding_pct_masked, expanding_pct_rank, get_long_short_signals (mode="single"|"hybrid"|"dual"), get_signals (legacy)
-├── backtest.py         # 5m bar sim, per-side summarizer, holdout splitter (mode-aware)
-├── calibrate.py        # independent per-side grid search (--mode single|hybrid|dual)
-├── deploy.py           # Phase 4: per-side best-of-mode deployment (reads all calibration files)
-├── report.py           # REPORT.md + results.json + 3 plots (supports mode="mixed")
+├── backtest.py         # 5m bar sim, per-side summarizer, holdout splitter (mode-aware, gated= veto)
+├── calibrate.py        # independent per-side grid search (--mode single|hybrid|dual, --gated/--sweep-gated)
+├── deploy.py           # Phase 4: per-side best-of-mode deployment (reads all calibration files incl. +gated)
+├── report.py           # REPORT.md + results.json + 3 plots (supports mode="mixed", gated flag)
+├── gating_loader.py    # loads canonical gating artifacts → boolean fire mask per (etf, side)
+├── gating_only.py      # standalone gate-only backtest (diagnostic; NOT deployment)
 ├── improvement_plan.md # dual-model research findings & revised architecture
+├── GATING_ONLY_REPORT.md # gate-only vs gated-daytrade comparison (+9.08 vs +41.94)
 ├── REPORT.md           # latest summary
 ├── AGENTS.md           # this file
 ├── data/
-│   ├── calibration.json         # deployed per-side configs (mode="mixed" default)
-│   ├── calibration_single.json  # single-mode calibration (for comparison)
-│   ├── calibration_hybrid.json  # hybrid-mode calibration
-│   ├── calibration_dual.json    # dual-mode calibration (v2)
-│   └── results.json             # deployed metrics
+│   ├── calibration.json             # deployed per-side configs (mode="mixed" default)
+│   ├── calibration_single.json      # single-mode calibration (ungated)
+│   ├── calibration_hybrid.json      # hybrid-mode calibration (ungated)
+│   ├── calibration_dual.json        # dual-mode calibration (v2, ungated)
+│   ├── calibration_single_gated.json  # single-mode + gating veto
+│   ├── calibration_hybrid_gated.json  # hybrid-mode + gating veto
+│   ├── calibration_dual_gated.json    # dual-mode + gating veto
+│   └── results.json                 # deployed metrics
 └── plots/
     ├── equity_combined.png
     ├── equity_curves.png   # per-side panels
@@ -258,24 +307,31 @@ Currently one `cost_bps` applies to both sides. For options-based shorts (which 
 
 ---
 
-## 8. Deployability Status (as of latest calibration — mixed-mode deployment)
+## 8. Deployability Status (as of latest calibration — gated mixed-mode deployment)
 
-Each side deploys the mode (single/hybrid/dual) that maximises OOS Sharpe.
-Run `python -m daytrade.deploy` to rebuild from per-mode calibration files.
-
-Warning flags (non-blocking): `m`=median<=0, `w`=win<=50%, `n`=n<60. See §3.1/§3.7 in REPORT.md for details. Clean = no flags.
+Each side deploys the mode (single/hybrid/dual, optionally `+gated`) that
+maximises OOS Sharpe. Run `python -m daytrade.deploy` to rebuild from per-mode
+calibration files. The gating-integrated pipeline (`+gated` variants) is now the
+**default production config** — 9 of 10 cells pick a `+gated` config.
 
 | ETF | Long | Short | Notes |
 |---|---|---|---|
-| **159915** | single thr=50 c=90, OOS S=+6.44 [n] | hybrid thr=95 c=40, OOS S=+3.45 [n] | Both sides robust. |
-| **500** | hybrid thr=50 c=90, OOS S=+3.80 [n] | dual thr=50 c=80, OOS S=+0.02 — | Long strong. Short barely positive — investigate. |
-| **588000** | single thr=95 c=40, OOS S=+5.43 [m,w,n] | hybrid thr=95 c=40, OOS S=+3.87 [n] | Long fragile — heavy-tail dependent. Short is the robust side. |
-| **300** | hybrid thr=50 c=70, OOS S=+2.11 [m,w,n] | dual thr=95 c=40, OOS S=+5.53 [n] | **Both sides now deployable** (was disabled under old pm_return target). |
-| **50** | hybrid thr=50 c=80, OOS S=+4.34 [n] | hybrid thr=50 c=90, OOS S=+6.47 [n] | Both sides strong via hybrid mode. |
+| **50** | single+gated thr=50 c=60, OOS S=+1.16 | single+gated thr=50 c=80, OOS S=+7.64 | Gating flipped short from mediocre to best-in-book. Long newly deployable (was disabled ungated). |
+| **300** | hybrid+gated thr=50 c=40, OOS S=+5.28 | single thr=50 c=90, OOS S=+2.00 | Long big lift from gating (was +2.02 ungated). Short kept ungated. |
+| **500** | single+gated thr=50 c=60, OOS S=+3.78 | dual+gated thr=50 c=90, OOS S=+3.80 | Both sides robust via gating. |
+| **588000** | single+gated thr=95 c=40, OOS S=+5.86 | single+gated thr=50 c=80, OOS S=+3.30 | Gating preserves strong long, lifts short. |
+| **159915** | hybrid+gated thr=50 c=40, OOS S=+5.07 | hybrid+gated thr=50 c=70, OOS S=+4.05 | Both sides robust. |
 
-**Total deployed OOS Sharpe**: +41.46 (vs single-only +28.60, Δ=+12.86; vs old pm_return baseline +23.18, Δ=+18.28).
+**Total deployed OOS Sharpe**: **+41.94** (gated mixed-mode) vs **+31.81**
+(ungated mixed-mode, Δ = **+10.13**); vs single-only ungated +27.97. All 10
+ETF×side cells deployable.
 
-The move from `pm_return` (13:00→15:00) to `trade_return` (entry-open→14:30-close) as the model target nearly doubled total Sharpe — confirming the original target/strategy mismatch was a major drag. All 10 ETF×side cells now deployable (was 5 of 10).
+Gating is the single largest daytrade improvement since the `pm_return`→
+`trade_return` target fix. The gate acts as a selectivity veto over the linear
+score (NOT a standalone signal — gate-only total = +9.08; see
+`GATING_ONLY_REPORT.md`). Re-train gating models after every day-model feature
+rebuild (`python day-model/gating_model.py -e all -t 20 --jobs 5`) and re-run
+the calibrate→deploy→report pipeline.
 
 Re-validate after every day-model retrain (see `day-model/AGENTS.md`) and after material market regime change.
 
@@ -347,11 +403,14 @@ Ordered roughly by expected value / implementation cost.
 ## 11. Validation Checklist (after any code change)
 
 - [ ] `python -m daytrade.scores` — verify IC positive for all ETF×side dual models
-- [ ] `python -m daytrade.calibrate --mode single` — at least 3 ETFs have ≥1 robust side (Sharpe ≥ +2)
-- [ ] `python -m daytrade.calibrate --mode hybrid` — hybrid mode eligible configs saved
-- [ ] `python -m daytrade.calibrate --mode dual` — dual mode eligible configs saved (50ETF Short should appear)
-- [ ] `python -m daytrade.deploy` — mixed-mode calibration.json written, mode usage printed
+- [ ] `python day-model/gating_model.py -e all -t 20 --jobs 5` — gating models trained, all 10 cells deployable (WF AUC > 0.53, PR-AUC > base)
+- [ ] `python day-model/evaluate_gating.py` — GATING_REPORT.md written, winner table sane
+- [ ] `python -m daytrade.calibrate --mode single --sweep-gated` — ungated + gated configs saved
+- [ ] `python -m daytrade.calibrate --mode hybrid --sweep-gated` — hybrid ungated + gated saved
+- [ ] `python -m daytrade.calibrate --mode dual --sweep-gated` — dual ungated + gated saved
+- [ ] `python -m daytrade.deploy` — mixed-mode calibration.json written, `+gated` appears in mode usage
 - [ ] `python -m daytrade.report` — REPORT.md renders, all 3 plots present, mode comparison table (§5) populated
+- [ ] `python -m daytrade.gating_only` — gate-only diagnostic runs (expect total ≪ gated-daytrade; sanity only)
 - [ ] Cost sensitivity: at least 2 sides remain positive at 30 bps (robustness floor)
 - [ ] Cluster confusion: long_model trades ≥30% Rally days, short_model ≥30% Selloff days (sanity that signal direction aligns with discovered day-types)
-- [ ] Total deployed OOS Sharpe ≥ single-only baseline (currently +41.46 vs +28.60)
+- [ ] Total deployed OOS Sharpe ≥ ungated mixed-mode baseline (currently **+41.94** gated vs **+31.81** ungated)

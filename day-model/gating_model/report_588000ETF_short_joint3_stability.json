@@ -1,0 +1,66 @@
+{
+    "etf": "588000ETF",
+    "side": "short",
+    "variant": "joint3",
+    "selector": "stability",
+    "best_model_type": "logistic",
+    "best_params": {
+        "C": 0.0017447060617149135,
+        "penalty": "l1"
+    },
+    "final_threshold": 0.01199467945843935,
+    "firing_threshold": 0.1659556145409967,
+    "features_used": [
+        "yesterday_day_realized_vol",
+        "vol5",
+        "roc5",
+        "yesterday_day_kurtosis",
+        "body_to_range_ratio",
+        "yesterday_early_skew",
+        "sma200_dist",
+        "bar_ret_2",
+        "bb_width",
+        "sma100_dist",
+        "yesterday_early_realized_vol",
+        "bar_vwap_dev_0",
+        "bar_vwap_dev_1",
+        "yesterday_first_bar_volume",
+        "cl_pos_in_range",
+        "early_range",
+        "vol_ratio_5_20",
+        "vix_diff_1d",
+        "yesterday_day_pm_am_vol_ratio"
+    ],
+    "n_features": 19,
+    "results": {
+        "logistic": {
+            "cv_metrics": {
+                "auc": 0.5825309881037435,
+                "pr_auc": 0.20467110069742744,
+                "precision_at_thr": 0.18604651162790697,
+                "recall_at_thr": 0.40336134453781514,
+                "f1_at_thr": 0.2546419098143236,
+                "firing_threshold": 0.15860548774960306,
+                "base_rate": 0.13837209302325582
+            },
+            "dev_only_oos": {
+                "auc": 0.709219064667711,
+                "pr_auc": 0.3533715159278742,
+                "precision_at_thr": 0.2948717948717949,
+                "recall_at_thr": 0.5609756097560976,
+                "f1_at_thr": 0.3865546218487395,
+                "firing_threshold": 0.2067345944949111
+            },
+            "forward_wf_estimate": {
+                "auc": 0.6017968248653777,
+                "pr_auc": 0.23907579853616107,
+                "precision_at_thr": 0.2043343653250774,
+                "recall_at_thr": 0.4230769230769231,
+                "f1_at_thr": 0.2755741127348643,
+                "firing_threshold": 0.16463911999546393,
+                "base_rate": 0.14511627906976743
+            }
+        }
+    },
+    "joint3_class": "short"
+}

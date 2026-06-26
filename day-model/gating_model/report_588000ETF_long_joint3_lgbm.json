@@ -1,0 +1,72 @@
+{
+    "etf": "588000ETF",
+    "side": "long",
+    "variant": "joint3",
+    "selector": "lgbm",
+    "best_model_type": "logistic",
+    "best_params": {
+        "C": 0.0016057035366076704,
+        "penalty": "l2"
+    },
+    "final_threshold": 0.012971884571015835,
+    "firing_threshold": 0.1386097838278724,
+    "features_used": [
+        "macd_hist",
+        "cl_pos_in_range",
+        "yesterday_gap_pct",
+        "volume_sma_ratio_long",
+        "yesterday_day_vwap_dev",
+        "yesterday_day_realized_vol",
+        "bb_pctb",
+        "vol10",
+        "mfi14",
+        "yesterday_early_trend",
+        "bar_vol_1",
+        "vol5",
+        "early_skew",
+        "max_up_ret",
+        "bar_vol_2",
+        "yesterday_day_close_pos",
+        "yesterday_day_late_mom",
+        "bar_body_rng_0",
+        "yesterday_first_bar_volume",
+        "vol_ratio_5_20",
+        "bar_rng_1",
+        "yesterday_am_return",
+        "first_30min_return",
+        "capital_net_value",
+        "atr14_norm"
+    ],
+    "n_features": 25,
+    "results": {
+        "logistic": {
+            "cv_metrics": {
+                "auc": 0.6309026699336255,
+                "pr_auc": 0.21775124096736292,
+                "precision_at_thr": 0.20155038759689922,
+                "recall_at_thr": 0.4444444444444444,
+                "f1_at_thr": 0.2773333333333333,
+                "firing_threshold": 0.1438169112272711,
+                "base_rate": 0.13604651162790699
+            },
+            "dev_only_oos": {
+                "auc": 0.6140104375752709,
+                "pr_auc": 0.2395544284209732,
+                "precision_at_thr": 0.23076923076923078,
+                "recall_at_thr": 0.3829787234042553,
+                "f1_at_thr": 0.288,
+                "firing_threshold": 0.16081041985477726
+            },
+            "forward_wf_estimate": {
+                "auc": 0.6349708598704583,
+                "pr_auc": 0.22934897598885118,
+                "precision_at_thr": 0.23219814241486067,
+                "recall_at_thr": 0.46296296296296297,
+                "f1_at_thr": 0.30927835051546393,
+                "firing_threshold": 0.14934606334508038,
+                "base_rate": 0.15069767441860465
+            }
+        }
+    },
+    "joint3_class": "long"
+}

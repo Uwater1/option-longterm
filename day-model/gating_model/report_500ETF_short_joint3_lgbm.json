@@ -1,0 +1,75 @@
+{
+    "etf": "500ETF",
+    "side": "short",
+    "variant": "joint3",
+    "selector": "lgbm",
+    "best_model_type": "lightgbm",
+    "best_params": {
+        "n_estimators": 55,
+        "learning_rate": 0.01649300307957989,
+        "num_leaves": 19,
+        "max_depth": 3,
+        "min_child_samples": 17
+    },
+    "final_threshold": 0.008288134820759296,
+    "firing_threshold": 0.16445327592017164,
+    "features_used": [
+        "early_range",
+        "max_up_ret",
+        "vol_gk10",
+        "sma100_dist",
+        "yesterday_day_kurtosis",
+        "yesterday_pm_return",
+        "northbound_buy",
+        "yesterday_am_return",
+        "yesterday_gap_pct",
+        "margin_repayment",
+        "margin_net_buy",
+        "yesterday_day_late_mom",
+        "stoch_k",
+        "sma200_dist",
+        "northbound_net",
+        "total_path_length",
+        "sma50_dist",
+        "first_30min_return",
+        "bar_rng_1",
+        "bar_vol_4",
+        "vol10",
+        "early_trend",
+        "first_bar_return",
+        "yesterday_first_bar_volume",
+        "early_skew"
+    ],
+    "n_features": 25,
+    "results": {
+        "lightgbm": {
+            "cv_metrics": {
+                "auc": 0.7045024848746758,
+                "pr_auc": 0.23737097540975133,
+                "precision_at_thr": 0.20810313075506445,
+                "recall_at_thr": 0.5432692307692307,
+                "f1_at_thr": 0.3009320905459387,
+                "firing_threshold": 0.1479331106364689,
+                "base_rate": 0.11491712707182321
+            },
+            "dev_only_oos": {
+                "auc": 0.6662365591397851,
+                "pr_auc": 0.24488605461882773,
+                "precision_at_thr": 0.23170731707317074,
+                "recall_at_thr": 0.475,
+                "f1_at_thr": 0.3114754098360656,
+                "firing_threshold": 0.18205311734362953
+            },
+            "forward_wf_estimate": {
+                "auc": 0.6511787330481081,
+                "pr_auc": 0.2146854467793995,
+                "precision_at_thr": 0.18529411764705883,
+                "recall_at_thr": 0.4548736462093863,
+                "f1_at_thr": 0.26332288401253917,
+                "firing_threshold": 0.1661015847710831,
+                "base_rate": 0.12229580573951435
+            }
+        }
+    },
+    "joint3_class": "short"
+}

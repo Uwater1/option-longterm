@@ -1,0 +1,208 @@
+{
+    "etf": "588000ETF",
+    "side": "short",
+    "variant": "two_sided",
+    "selector": "lgbm",
+    "best_model_type": "logistic",
+    "best_params": {
+        "C": 0.03262067603000777,
+        "penalty": "l2"
+    },
+    "final_threshold": 0.01199467945843935,
+    "firing_threshold": 0.1751165577720662,
+    "features_used": [
+        "macd_hist",
+        "cl_pos_in_range",
+        "yesterday_gap_pct",
+        "volume_sma_ratio_long",
+        "yesterday_day_vwap_dev",
+        "yesterday_day_realized_vol",
+        "bb_pctb",
+        "vol10",
+        "mfi14",
+        "yesterday_early_trend",
+        "bar_vol_1",
+        "vol5",
+        "early_skew",
+        "max_up_ret",
+        "bar_vol_2",
+        "yesterday_day_close_pos",
+        "yesterday_day_late_mom",
+        "bar_body_rng_0",
+        "yesterday_first_bar_volume",
+        "vol_ratio_5_20",
+        "bar_rng_1",
+        "yesterday_am_return",
+        "first_30min_return",
+        "capital_net_value",
+        "atr14_norm"
+    ],
+    "n_features": 25,
+    "results": {
+        "logistic": {
+            "best_params": {
+                "C": 0.03262067603000777,
+                "penalty": "l2"
+            },
+            "cv_metrics": {
+                "auc": 0.5981582916567436,
+                "pr_auc": 0.22839512091079056,
+                "precision_at_thr": 0.18992248062015504,
+                "recall_at_thr": 0.4117647058823529,
+                "f1_at_thr": 0.259946949602122,
+                "firing_threshold": 0.17308481372152662,
+                "base_rate": 0.13837209302325582
+            },
+            "fold_metrics": [
+                {
+                    "auc": 0.5458829365079365,
+                    "pr_auc": 0.18955519215249245,
+                    "precision_at_thr": 0.19230769230769232,
+                    "recall_at_thr": 0.35714285714285715,
+                    "f1_at_thr": 0.25,
+                    "firing_threshold": 0.191876008445026,
+                    "fold": 0,
+                    "base_rate": 0.16279069767441862
+                },
+                {
+                    "auc": 0.5619349005424954,
+                    "pr_auc": 0.12708907233963357,
+                    "precision_at_thr": 0.09615384615384616,
+                    "recall_at_thr": 0.35714285714285715,
+                    "f1_at_thr": 0.15151515151515152,
+                    "firing_threshold": 0.14735908077341484,
+                    "fold": 1,
+                    "base_rate": 0.08139534883720931
+                },
+                {
+                    "auc": 0.6670274170274171,
+                    "pr_auc": 0.28560690462261284,
+                    "precision_at_thr": 0.17307692307692307,
+                    "recall_at_thr": 0.5,
+                    "f1_at_thr": 0.2571428571428571,
+                    "firing_threshold": 0.16133884501782983,
+                    "fold": 2,
+                    "base_rate": 0.10465116279069768
+                },
+                {
+                    "auc": 0.44734693877551024,
+                    "pr_auc": 0.14834521317807586,
+                    "precision_at_thr": 0.11538461538461539,
+                    "recall_at_thr": 0.24,
+                    "f1_at_thr": 0.15584415584415584,
+                    "firing_threshold": 0.17631746966225645,
+                    "fold": 3,
+                    "base_rate": 0.14534883720930233
+                },
+                {
+                    "auc": 0.6764705882352942,
+                    "pr_auc": 0.37988381863111775,
+                    "precision_at_thr": 0.3269230769230769,
+                    "recall_at_thr": 0.5,
+                    "f1_at_thr": 0.3953488372093023,
+                    "firing_threshold": 0.2047065208067025,
+                    "fold": 4,
+                    "base_rate": 0.19767441860465115
+                }
+            ],
+            "dev_only_oos": {
+                "auc": 0.6584247035130902,
+                "pr_auc": 0.2478893805600274,
+                "precision_at_thr": 0.21794871794871795,
+                "recall_at_thr": 0.4146341463414634,
+                "f1_at_thr": 0.2857142857142857,
+                "firing_threshold": 0.19172617693486924,
+                "base_rate": 0.1583011583011583
+            },
+            "forward_wf_estimate": {
+                "auc": 0.6077118383973662,
+                "pr_auc": 0.23526260039750171,
+                "precision_at_thr": 0.20743034055727555,
+                "recall_at_thr": 0.42948717948717946,
+                "f1_at_thr": 0.2797494780793319,
+                "firing_threshold": 0.19341532525011287,
+                "base_rate": 0.14511627906976743
+            }
+        },
+        "lightgbm": {
+            "best_params": {
+                "n_estimators": 75,
+                "learning_rate": 0.04326015136549471,
+                "num_leaves": 11,
+                "max_depth": 4,
+                "min_child_samples": 36
+            },
+            "cv_metrics": {
+                "auc": 0.5913879721929258,
+                "pr_auc": 0.19870907118119485,
+                "precision_at_thr": 0.20155038759689922,
+                "recall_at_thr": 0.4369747899159664,
+                "f1_at_thr": 0.27586206896551724,
+                "firing_threshold": 0.156907859044626,
+                "base_rate": 0.13837209302325582
+            },
+            "fold_metrics": [
+                {
+                    "auc": 0.6257440476190476,
+                    "pr_auc": 0.2796200549596467,
+                    "precision_at_thr": 0.25,
+                    "recall_at_thr": 0.4642857142857143,
+                    "f1_at_thr": 0.325,
+                    "firing_threshold": 0.1957739024331712,
+                    "fold": 0,
+                    "base_rate": 0.16279069767441862
+                },
+                {
+                    "auc": 0.6256781193490054,
+                    "pr_auc": 0.15102329052115543,
+                    "precision_at_thr": 0.1346153846153846,
+                    "recall_at_thr": 0.5,
+                    "f1_at_thr": 0.21212121212121213,
+                    "firing_threshold": 0.13500566250880122,
+                    "fold": 1,
+                    "base_rate": 0.08139534883720931
+                },
+                {
+                    "auc": 0.7059884559884559,
+                    "pr_auc": 0.2822393722987848,
+                    "precision_at_thr": 0.19230769230769232,
+                    "recall_at_thr": 0.5555555555555556,
+                    "f1_at_thr": 0.2857142857142857,
+                    "firing_threshold": 0.13764283490262993,
+                    "fold": 2,
+                    "base_rate": 0.10465116279069768
+                },
+                {
+                    "auc": 0.4791836734693878,
+                    "pr_auc": 0.1658096391722278,
+                    "precision_at_thr": 0.17307692307692307,
+                    "recall_at_thr": 0.36,
+                    "f1_at_thr": 0.23376623376623376,
+                    "firing_threshold": 0.1822432139376196,
+                    "fold": 3,
+                    "base_rate": 0.14534883720930233
+                },
+                {
+                    "auc": 0.5277067348678601,
+                    "pr_auc": 0.2485407185310416,
+                    "precision_at_thr": 0.25,
+                    "recall_at_thr": 0.38235294117647056,
+                    "f1_at_thr": 0.3023255813953488,
+                    "firing_threshold": 0.14884123031033455,
+                    "fold": 4,
+                    "base_rate": 0.19767441860465115
+                }
+            ],
+            "dev_only_oos": {
+                "auc": 0.5853658536585366,
+                "pr_auc": 0.190467297576766,
+                "precision_at_thr": 0.23076923076923078,
+                "recall_at_thr": 0.43902439024390244,
+                "f1_at_thr": 0.3025210084033613,
+                "firing_threshold": 0.1844255539160911,
+                "base_rate": 0.1583011583011583
+            },
+            "forward_wf_estimate": null
+        }
+    }
+}

@@ -123,6 +123,9 @@ def run_deployed_backtest(etf: str, cfg: dict, cost_bps: float,
     stop_pct = long_stop_pct or short_stop_pct
     stop_atr_k = long_stop_atr_k or short_stop_atr_k
 
+    # Gated flag: apply if either side's config was trained with gating.
+    gated = bool((long_cfg or {}).get("gated", False)) or bool((short_cfg or {}).get("gated", False))
+
     r = backtest_long_short(
         etf,
         long_threshold_pct=long_thr, long_conviction_pct=long_conv,
@@ -132,6 +135,7 @@ def run_deployed_backtest(etf: str, cfg: dict, cost_bps: float,
         mode=mode,
         stop_pct=stop_pct,
         stop_atr_k=stop_atr_k,
+        gated=gated,
     )
     return r
 
@@ -150,6 +154,9 @@ def _run_mixed_backtest(etf: str, long_cfg: dict | None,
         if not side_cfg:
             continue
         side_mode = side_cfg.get("_mode", "single")
+        # Split "+gated" suffix: base mode goes to `mode=`, flag to `gated=`.
+        gated = side_mode.endswith("+gated") or bool(side_cfg.get("gated", False))
+        base_mode = side_mode.replace("+gated", "")
         sp, sak = None, None
         st = side_cfg.get("stop_type")
         sv = side_cfg.get("stop_value")
@@ -166,9 +173,10 @@ def _run_mixed_backtest(etf: str, long_cfg: dict | None,
             cost_bps=cost_bps,
             long_enabled=enable,
             short_enabled=not enable,
-            mode=side_mode,
+            mode=base_mode,
             stop_pct=sp,
             stop_atr_k=sak,
+            gated=gated,
         )
         if len(r["trades"]) > 0:
             trades_parts.append(r["trades"])
@@ -639,8 +647,56 @@ def generate():
                  f"(vs single-only {total_single:+.2f}, "
                  f"Δ = {improvement:+.2f})\n")
 
-    # ── 5.5 Stop-Loss Optimisation (Phase 5) ─────────────────────────────────
-    L.append("\n## 5.5 Stop-Loss Optimisation (Phase 5)\n")
+    # ── 5.5 Gating Impact (v3) ─────────────────────────────────────────────
+    L.append("\n## 5.5 Gating Impact (v3)\n")
+    L.append("Per-side OOS Sharpe: best ungated mode (single/hybrid/dual) vs best "
+             "gated mode (single/hybrid/dual + gating veto). The mixed-mode picker "
+             "auto-adopts `+gated` per side when it wins on OOS Sharpe.\n")
+    from .deploy import _load_mode_calibrations, MODE_FILES
+    all_calibs = _load_mode_calibrations()
+    ungated = {m: c for m, c in all_calibs.items() if not m.endswith("+gated")}
+    gated = {m: c for m, c in all_calibs.items() if m.endswith("+gated")}
+    if ungated or gated:
+        L.append("| ETF | Side | Best Ungated | Best Gated | Δ | Deployed |")
+        L.append("|-----|------|--------------|------------|---|----------|")
+        tot_ung = tot_gat = tot_dep = 0.0
+        for etf in ETFS:
+            for side in ("long", "short"):
+                def _best(calibs):
+                    b = None
+                    for m, mc in calibs.items():
+                        cfg = mc.get("results", {}).get(etf, {}).get(side)
+                        if cfg and cfg.get("eligible"):
+                            s = cfg.get("oos_sharpe", 0) or 0
+                            if b is None or s > b:
+                                b = s
+                    return b
+                u = _best(ungated); g = _best(gated)
+                if u is None and g is None:
+                    continue
+                u_str = f"{u:+.2f}" if u is not None else "disabled"
+                g_str = f"{g:+.2f}" if g is not None else "disabled"
+                if u is not None: tot_ung += u
+                if g is not None: tot_gat += g
+                delta = (g - u) if (u is not None and g is not None) else float("nan")
+                d_str = f"{delta:+.2f}" if delta == delta else "—"
+                dep_cfg = configs.get(etf, {}).get(side)
+                dep_mode = dep_cfg.get("_mode", "—") if dep_cfg else "—"
+                dep_s = (f"{dep_cfg['oos_sharpe']:+.2f}" if dep_cfg else "—")
+                if dep_cfg: tot_dep += dep_cfg.get("oos_sharpe", 0) or 0
+                L.append(f"| {etf} | `{side}` | {u_str} | {g_str} | {d_str} | "
+                         f"**{dep_mode}** ({dep_s}) |")
+        lift = tot_dep - tot_ung
+        L.append(f"\n**Totals** — Ungated mixed: {tot_ung:+.2f} | "
+                 f"Gated mixed: {tot_gat:+.2f} | "
+                 f"Deployed (mixed-mode picker): {tot_dep:+.2f} "
+                 f"(Δ vs ungated = {lift:+.2f})\n")
+        L.append("_Gate-only (no daytrade score) totals just +9.08 OOS Sharpe — "
+                 "see `GATING_ONLY_REPORT.md`. The gate is a selectivity filter, "
+                 "not a standalone alpha._\n")
+
+    # ── 5.6 Stop-Loss Optimisation (Phase 5) ─────────────────────────────────
+    L.append("\n## 5.6 Stop-Loss Optimisation (Phase 5)\n")
     L.append("Each side's stop-loss is optimised **in-sample** by maximising total IS profit "
              "on the best (threshold, conviction) pair. The chosen stop is then evaluated OOS. "
              "Two types are swept: fixed-% from entry and ATR-14 multiples. "

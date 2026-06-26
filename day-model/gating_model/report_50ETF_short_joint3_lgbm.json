@@ -1,0 +1,72 @@
+{
+    "etf": "50ETF",
+    "side": "short",
+    "variant": "joint3",
+    "selector": "lgbm",
+    "best_model_type": "logistic",
+    "best_params": {
+        "C": 0.004905179650884941,
+        "penalty": "l2"
+    },
+    "final_threshold": 0.007197234779596329,
+    "firing_threshold": 0.16294656495511636,
+    "features_used": [
+        "early_range",
+        "yesterday_am_return",
+        "vix_diff_1d",
+        "yesterday_early_range",
+        "max_up_ret",
+        "yesterday_day_range",
+        "bar_rng_2",
+        "yesterday_day_kurtosis",
+        "total_path_length",
+        "bar_body_rng_0",
+        "volume_sma_ratio",
+        "yesterday_day_pm_am_vol_ratio",
+        "sma200_dist",
+        "yesterday_first_bar_volume",
+        "yesterday_day_realized_vol",
+        "cl_pos_in_range",
+        "early_realized_vol",
+        "early_skew",
+        "vol_gk10",
+        "yesterday_pm_return",
+        "yesterday_day_skew",
+        "bar_rng_0",
+        "northbound_net",
+        "vol_gk20",
+        "yesterday_early_vwap_dev"
+    ],
+    "n_features": 25,
+    "results": {
+        "logistic": {
+            "cv_metrics": {
+                "auc": 0.633021724546121,
+                "pr_auc": 0.2243956941419936,
+                "precision_at_thr": 0.2136279926335175,
+                "recall_at_thr": 0.46963562753036436,
+                "f1_at_thr": 0.2936708860759494,
+                "firing_threshold": 0.15583919262401733,
+                "base_rate": 0.13646408839779006
+            },
+            "dev_only_oos": {
+                "auc": 0.6160481099656357,
+                "pr_auc": 0.2357976098608691,
+                "precision_at_thr": 0.16463414634146342,
+                "recall_at_thr": 0.45,
+                "f1_at_thr": 0.24107142857142858,
+                "firing_threshold": 0.14069789778664182
+            },
+            "forward_wf_estimate": {
+                "auc": 0.6201795487786316,
+                "pr_auc": 0.22382691507009128,
+                "precision_at_thr": 0.19852941176470587,
+                "recall_at_thr": 0.4368932038834951,
+                "f1_at_thr": 0.2730030333670374,
+                "firing_threshold": 0.15206193464423595,
+                "base_rate": 0.13642384105960265
+            }
+        }
+    },
+    "joint3_class": "short"
+}

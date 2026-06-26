@@ -1,0 +1,66 @@
+{
+    "etf": "588000ETF",
+    "side": "long",
+    "variant": "joint3",
+    "selector": "stability",
+    "best_model_type": "logistic",
+    "best_params": {
+        "C": 0.0017447060617149135,
+        "penalty": "l1"
+    },
+    "final_threshold": 0.012971884571015835,
+    "firing_threshold": 0.13543577664919004,
+    "features_used": [
+        "yesterday_day_realized_vol",
+        "vol5",
+        "roc5",
+        "yesterday_day_kurtosis",
+        "body_to_range_ratio",
+        "yesterday_early_skew",
+        "sma200_dist",
+        "bar_ret_2",
+        "bb_width",
+        "sma100_dist",
+        "yesterday_early_realized_vol",
+        "bar_vwap_dev_0",
+        "bar_vwap_dev_1",
+        "yesterday_first_bar_volume",
+        "cl_pos_in_range",
+        "early_range",
+        "vol_ratio_5_20",
+        "vix_diff_1d",
+        "yesterday_day_pm_am_vol_ratio"
+    ],
+    "n_features": 19,
+    "results": {
+        "logistic": {
+            "cv_metrics": {
+                "auc": 0.6200549861384317,
+                "pr_auc": 0.21932914103932202,
+                "precision_at_thr": 0.20930232558139536,
+                "recall_at_thr": 0.46153846153846156,
+                "f1_at_thr": 0.288,
+                "firing_threshold": 0.14095360274136998,
+                "base_rate": 0.13604651162790699
+            },
+            "dev_only_oos": {
+                "auc": 0.6327780008028905,
+                "pr_auc": 0.2468175154591218,
+                "precision_at_thr": 0.2692307692307692,
+                "recall_at_thr": 0.44680851063829785,
+                "f1_at_thr": 0.336,
+                "firing_threshold": 0.15273719402658933
+            },
+            "forward_wf_estimate": {
+                "auc": 0.6390951009424904,
+                "pr_auc": 0.2421192896369338,
+                "precision_at_thr": 0.23219814241486067,
+                "recall_at_thr": 0.46296296296296297,
+                "f1_at_thr": 0.30927835051546393,
+                "firing_threshold": 0.1403950411607496,
+                "base_rate": 0.15069767441860465
+            }
+        }
+    },
+    "joint3_class": "long"
+}

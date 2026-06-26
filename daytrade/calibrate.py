@@ -79,7 +79,8 @@ def _score(side_metrics: dict, n_baseline: int) -> float:
 
 
 def _calibrate_one_side(etf: str, side: str, cost_bps: float,
-                        verbose: bool = False, mode: str = "single") -> dict | None:
+                        verbose: bool = False, mode: str = "single",
+                        gated: bool = False) -> dict | None:
     """Grid-search one side. Returns best config dict or None if no eligible config.
 
     side ∈ {"long", "short"}.
@@ -100,6 +101,7 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
         short_enabled=(side == "short"),
         min_periods=20,
         mode=mode,
+        gated=gated,
     )
     base_trades = base["trades"]
     if len(base_trades) == 0:
@@ -117,6 +119,7 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
             long_enabled=(side == "long"),
             short_enabled=(side == "short"),
             mode=mode,
+            gated=gated,
         )
         trades = r["trades"]
         if len(trades) == 0:
@@ -183,6 +186,7 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
         long_enabled=(side == "long"),
         short_enabled=(side == "short"),
         mode=mode,
+        gated=gated,
     )
     is_base, _ = split_holdout(r_base_stop["trades"])
     base_is_sharpe = _sharpe(is_base["net_ret"].values) if len(is_base) > 1 else float("nan")
@@ -210,6 +214,7 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
             long_enabled=(side == "long"),
             short_enabled=(side == "short"),
             mode=mode,
+            gated=gated,
             **kw,
         )
         trades = r["trades"]
@@ -307,12 +312,14 @@ def _calibrate_one_side(etf: str, side: str, cost_bps: float,
 
 
 def calibrate_etf(etf: str, cost_bps: float = DEFAULT_COST_BPS,
-                  verbose: bool = True, mode: str = "single") -> dict:
+                  verbose: bool = True, mode: str = "single",
+                  gated: bool = False) -> dict:
     """Calibrate long_model and short_model independently for one ETF."""
     if verbose:
-        print(f"\n=== {etf} (mode={mode}) ===")
-    long_res = _calibrate_one_side(etf, "long", cost_bps, verbose=verbose, mode=mode)
-    short_res = _calibrate_one_side(etf, "short", cost_bps, verbose=verbose, mode=mode)
+        gate_tag = "+gated" if gated else ""
+        print(f"\n=== {etf} (mode={mode}{gate_tag}) ===")
+    long_res = _calibrate_one_side(etf, "long", cost_bps, verbose=verbose, mode=mode, gated=gated)
+    short_res = _calibrate_one_side(etf, "short", cost_bps, verbose=verbose, mode=mode, gated=gated)
 
     long_best = long_res["best"] if long_res else None
     short_best = short_res["best"] if short_res else None
@@ -359,18 +366,19 @@ def calibrate_etf(etf: str, cost_bps: float = DEFAULT_COST_BPS,
 
 
 def _calibrate_etf_wrapper(args):
-    etf, cost_bps, mode = args
+    etf, cost_bps, mode, gated = args
     # Run with verbose=False to avoid console print scrambling in parallel
-    return etf, calibrate_etf(etf, cost_bps=cost_bps, verbose=False, mode=mode)
+    return etf, calibrate_etf(etf, cost_bps=cost_bps, verbose=False, mode=mode, gated=gated)
 
 
 def calibrate_all(cost_bps: float = DEFAULT_COST_BPS, verbose: bool = True,
-                  mode: str = "single") -> dict:
+                  mode: str = "single", gated: bool = False) -> dict:
     out = {}
     if verbose:
-        print(f"Calibrating {len(ETFS)} ETFs in parallel (mode={mode})...")
+        gate_tag = "+gated" if gated else ""
+        print(f"Calibrating {len(ETFS)} ETFs in parallel (mode={mode}{gate_tag})...")
 
-    tasks = [(etf, cost_bps, mode) for etf in ETFS]
+    tasks = [(etf, cost_bps, mode, gated) for etf in ETFS]
     with ProcessPoolExecutor() as executor:
         results = executor.map(_calibrate_etf_wrapper, tasks)
         for etf, res in results:
@@ -394,6 +402,7 @@ def calibrate_all(cost_bps: float = DEFAULT_COST_BPS, verbose: bool = True,
     compact = {
         "cost_bps": cost_bps,
         "mode": mode,
+        "gated": gated,
         "results": {},
     }
     for etf, v in out.items():
@@ -410,14 +419,18 @@ def calibrate_all(cost_bps: float = DEFAULT_COST_BPS, verbose: bool = True,
                 clean = {k: val for k, val in cfg.items() if k != "stop_results"}
                 entry[side_key] = clean
         compact["results"][etf] = entry
-    # Always write to calibration_{mode}.json (consumed by deploy.py mixed-mode picker).
+    # Always write to calibration_{mode}[_gated].json (consumed by deploy.py mixed-mode picker).
     # Also mirror to calibration.json for backward compat / single-shot inspection.
-    mode_path = OUT_PATH.parent / f"calibration_{mode}.json"
+    gate_suffix = "_gated" if gated else ""
+    mode_path = OUT_PATH.parent / f"calibration_{mode}{gate_suffix}.json"
     with open(mode_path, "w") as f:
         json.dump(compact, f, indent=2)
-    with open(OUT_PATH, "w") as f:
-        json.dump(compact, f, indent=2)
-    print(f"\nSaved → {mode_path} (and mirror → {OUT_PATH})")
+    if not gated:
+        with open(OUT_PATH, "w") as f:
+            json.dump(compact, f, indent=2)
+        print(f"\nSaved → {mode_path} (and mirror → {OUT_PATH})")
+    else:
+        print(f"\nSaved → {mode_path}")
 
     # Summary
     print("\n" + "=" * 82)
@@ -450,5 +463,15 @@ if __name__ == "__main__":
                    help="single=frozen single-model score (default, proven); "
                         "hybrid=single×dual combined conviction (experimental); "
                         "dual=true independent dual execution with rank normalisation (v2)")
+    p.add_argument("--gated", action="store_true",
+                   help="Apply the day-model gating model as a post-hoc veto "
+                        "(writes calibration_{mode}_gated.json).")
+    p.add_argument("--sweep-gated", action="store_true",
+                   help="Run both ungated and gated calibrations (writes both files).")
     args = p.parse_args()
-    calibrate_all(cost_bps=args.cost_bps, verbose=True, mode=args.mode)
+
+    if args.sweep_gated:
+        calibrate_all(cost_bps=args.cost_bps, verbose=True, mode=args.mode, gated=False)
+        calibrate_all(cost_bps=args.cost_bps, verbose=True, mode=args.mode, gated=True)
+    else:
+        calibrate_all(cost_bps=args.cost_bps, verbose=True, mode=args.mode, gated=args.gated)

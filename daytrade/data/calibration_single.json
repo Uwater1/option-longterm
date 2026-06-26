@@ -1,6 +1,7 @@
 {
   "cost_bps": 15.0,
   "mode": "single",
+  "gated": false,
   "results": {
     "50ETF": {
       "long_meta": {

@@ -1,171 +1,205 @@
 """
 Standalone evaluation report generator for Gating Models.
-Reads report_{ETF}_{side}.json from gating_model/ and prints a comparison table.
-Generates GATING_REPORT.md in day-model/gating_model/.
+
+Reads the canonical promoted reports `report_{ETF}_{side}.json` (which carry the
+auto-selected winner per cell) plus the full per-config reports
+`report_{ETF}_{side}_{variant}_{selector}.json` and compiles:
+  1. Winner summary (chosen variant × selector × honest OOS metrics).
+  2. Full grid: forward_wf PR-AUC across all variants × selectors per cell.
+  3. Per-cell selection reasoning + deployability.
+  4. Diagnostic plot references.
+
+Outputs:
+  - day-model/gating_model/GATING_REPORT.md
+  - tradability_model_report.md (project root mirror)
 """
 import json
 from pathlib import Path
-import numpy as np
-import pandas as pd
 
 HERE = Path(__file__).resolve().parent
 GATING_DIR = HERE / "gating_model"
+ROOT_REPORT = HERE.parent / "tradability_model_report.md"
 
 ETFS = ["50ETF", "300ETF", "500ETF", "588000ETF", "159915ETF"]
 SIDES = ["long", "short"]
-MODELS = ["logistic", "rf", "lightgbm"]
+VARIANTS = ["two_sided", "joint3", "gated"]
+SELECTORS = ["none", "stability", "lgbm"]
 
-def load_reports():
-    reports = {}
-    for etf in ETFS:
-        reports[etf] = {}
-        for side in SIDES:
-            p = GATING_DIR / f"report_{etf}_{side}.json"
-            if p.exists():
-                with open(p) as f:
-                    reports[etf][side] = json.load(f)
-            else:
-                reports[etf][side] = None
-    return reports
+
+def _load(path: Path):
+    if not path.exists():
+        return None
+    with open(path) as f:
+        return json.load(f)
+
+
+def _best_entry(rep):
+    """Return (model_type, results_dict) for the chosen best model in a report."""
+    best_mt = rep["best_model_type"]
+    res = rep["results"].get(best_mt, {})
+    return best_mt, res
+
+
+def _wf(res):
+    """Forward walk-forward estimate (preferred) or fall back to dev_only_oos."""
+    wf = res.get("forward_wf_estimate")
+    if wf:
+        return wf
+    # joint3 side-flattened report
+    return res.get("dev_only_oos") or {}
+
+
+def _dev_oos(res):
+    return res.get("dev_only_oos") or res.get("dev_only_oos_long") or res.get("dev_only_oos_short") or {}
+
+
+def _cv(res):
+    return res.get("cv_metrics") or res.get("cv_long") or res.get("cv_short") or {}
+
+
+def _deployable(wf, cv=None):
+    """Apply the deployability rule using honest WF metrics."""
+    if not wf:
+        return "—"
+    auc_ok = wf.get("auc", 0.5) > 0.53
+    base = wf.get("base_rate", 0.0)
+    prauc_ok = wf.get("pr_auc", 0.0) > base
+    prec = wf.get("precision_at_thr", 0.0)
+    lift_ok = prec > base * 1.1
+    return "Yes" if (auc_ok and prauc_ok and lift_ok) else "No"
+
 
 def generate_report():
-    reports = load_reports()
-    
-    # We want to create comparison markdown report
     md = []
-    md.append("# Gating Model Benchmarking & Performance Report\n")
-    md.append("Separate binary classifiers trained on `trade_return` (entry open to exit close) to predict tradability.\n")
-    
-    md.append("## 1. Summary of Best Models\n")
-    md.append("| ETF | Side | Best Model | Final Threshold | CV PR-AUC | CV AUC | CV Prec@70 | HO PR-AUC | HO AUC | HO Prec@70 | Deployable? |")
-    md.append("|---|---|---|---|---|---|---|---|---|---|---|")
-    
-    summary_data = []
-    
+    md.append("# Gating Model Report\n")
+    md.append(
+        "Per-side big-move gating classifiers (long = big-up tail, short = "
+        "big-down tail) used as a veto filter over the daytrade linear score. "
+        "Three target variants (`two_sided`, `joint3`, `gated`) × three feature "
+        "selectors (`none`/all-130, `stability`, `lgbm`) are benchmarked; the "
+        "best per ETF × side is auto-selected by honest walk-forward OOS PR-AUC.\n"
+    )
+    md.append(
+        "Metrics: **WF** = pooled purged walk-forward over the full dataset "
+        "(deployed-model proxy, `forward_wf_estimate`); **HO** = dev-trained "
+        "model evaluated on the 20% chronological holdout (`dev_only_oos`).\n"
+    )
+
+    # ── Section 1: Winner summary ──────────────────────────────────────────
+    md.append("## 1. Winner per ETF × side (auto-selected)\n")
+    md.append(
+        "| ETF | Side | Variant | Selector | Model | #Feat | FireThr | "
+        "WF PR-AUC | WF AUC | WF Prec@70 | HO PR-AUC | Deployable |"
+    )
+    md.append("|---|---|---|---|---|---|---|---|---|---|---|---|")
+
     for etf in ETFS:
         for side in SIDES:
-            rep = reports[etf][side]
+            rep = _load(GATING_DIR / f"report_{etf}_{side}.json")
             if not rep:
                 continue
-                
-            best_type = rep["best_model_type"]
-            best_res = rep["results"][best_type]
-            final_thr = rep["final_threshold"]
-            
-            cv_prauc = best_res["cv_metrics"]["pr_auc"]
-            cv_auc = best_res["cv_metrics"]["auc"]
-            cv_prec = best_res["cv_metrics"]["precision_at_thr"]
-            cv_base = best_res["cv_metrics"]["base_rate"]
-            
-            ho_prauc = best_res["holdout_metrics"]["pr_auc"]
-            ho_auc = best_res["holdout_metrics"]["auc"]
-            ho_prec = best_res["holdout_metrics"]["precision_at_thr"]
-            ho_base = best_res["holdout_metrics"]["base_rate"]
-            
-            # Deployment rules:
-            # 1. CV AUC > 0.53 (relaxed slightly to prevent discarding borderline edge)
-            # 2. Precision lift (Prec@70 > base_rate * 1.1)
-            # 3. CV PR-AUC > Base Rate
-            auc_ok = cv_auc > 0.53
-            lift_ok = cv_prec > (cv_base * 1.1)
-            prauc_ok = cv_prauc > cv_base
-            
-            deployable = "Yes" if (auc_ok and lift_ok and prauc_ok) else "No"
-            
+            best_mt, res = _best_entry(rep)
+            wf = _wf(res)
+            dev = _dev_oos(res)
+            variant = rep.get("chosen_variant", rep.get("variant", "?"))
+            selector = rep.get("chosen_selector", rep.get("selector", "?"))
+            n_feat = rep.get("n_features", "?")
+            fire = rep.get("firing_threshold")
+            fire_str = f"{fire:.3f}" if isinstance(fire, (int, float)) else "—"
             row = (
-                f"| **{etf}** | `{side}` | {best_type} | {final_thr:.4f} | "
-                f"{cv_prauc:.4f} | {cv_auc:.4f} | {cv_prec:.2%} | "
-                f"{ho_prauc:.4f} | {ho_auc:.4f} | {ho_prec:.2%} | {deployable} |"
+                f"| **{etf}** | `{side}` | `{variant}` | `{selector}` | {best_mt} | "
+                f"{n_feat} | {fire_str} | "
+                f"{wf.get('pr_auc', 0):.3f} | {wf.get('auc', 0.5):.3f} | "
+                f"{wf.get('precision_at_thr', 0):.2%} | "
+                f"{dev.get('pr_auc', 0):.3f} | {_deployable(wf)} |"
             )
             md.append(row)
-            
-            summary_data.append({
-                "ETF": etf,
-                "Side": side,
-                "Best Model": best_type,
-                "Final Threshold": final_thr,
-                "CV PR-AUC": cv_prauc,
-                "CV AUC": cv_auc,
-                "CV Prec@70": cv_prec,
-                "CV Base Rate": cv_base,
-                "HO PR-AUC": ho_prauc,
-                "HO AUC": ho_auc,
-                "HO Prec@70": ho_prec,
-                "HO Base Rate": ho_base,
-                "Deployable": deployable
-            })
-            
-    md.append("\n## 2. Head-to-Head Comparison (CV PR-AUC)\n")
-    md.append("| ETF | Side | Logistic | Random Forest | LightGBM |")
-    md.append("|---|---|---|---|---|")
-    
+
+    # ── Section 2: Full grid (forward_wf PR-AUC) ───────────────────────────
+    md.append("\n## 2. Full grid — forward walk-forward PR-AUC\n")
+    md.append(
+        "Each cell shows the WF PR-AUC for every (variant, selector) "
+        "combination. `**` marks the chosen winner; `()`: not deployable.\n"
+    )
+    for side in SIDES:
+        md.append(f"\n### Side: `{side}`\n")
+        header = "| ETF | " + " | ".join(
+            f"{v}/{s}" for v in VARIANTS for s in SELECTORS
+        ) + " |"
+        md.append(header)
+        md.append("|" + "---|" * (1 + len(VARIANTS) * len(SELECTORS)))
+        for etf in ETFS:
+            cells = []
+            winner_tag = None
+            canon = _load(GATING_DIR / f"report_{etf}_{side}.json")
+            if canon:
+                winner_tag = f"{canon.get('chosen_variant')}_{canon.get('chosen_selector')}"
+            for v in VARIANTS:
+                for s in SELECTORS:
+                    rep = _load(GATING_DIR / f"report_{etf}_{side}_{v}_{s}.json")
+                    if not rep:
+                        cells.append("—")
+                        continue
+                    _, res = _best_entry(rep)
+                    wf = _wf(res)
+                    if not wf:
+                        cells.append("—")
+                        continue
+                    val = wf.get("pr_auc", 0.0)
+                    deployable = _deployable(wf) == "Yes"
+                    tag = f"{val:.3f}"
+                    if not deployable:
+                        tag = f"({tag})"
+                    tag_full = f"{v}_{s}"
+                    if tag_full == winner_tag:
+                        tag = f"**{tag}**"
+                    cells.append(tag)
+            md.append(f"| **{etf}** | " + " | ".join(cells) + " |")
+
+    # ── Section 3: Per-cell reasoning ──────────────────────────────────────
+    md.append("\n## 3. Selection summary & deployability\n")
+    md.append(
+        "- **Variant**: `two_sided` = per-side binary big-move; `joint3` = shared "
+        "3-class softmax {big_up, neutral, big_down}; `gated` = big-move AND "
+        "tradability/regime mask.\n"
+        "- **Selector**: `none` = all 130 features; `stability` = regime-stratified "
+        "block bootstrap + randomized ElasticNet + OOB IC; `lgbm` = walk-forward "
+        "LightGBM gain + permutation importance.\n"
+        "- **Deployable**: WF AUC > 0.53 AND WF PR-AUC > base rate AND "
+        "WF Prec@70 > 1.1× base rate.\n"
+    )
+    n_dep = 0
+    n_total = 0
     for etf in ETFS:
         for side in SIDES:
-            rep = reports[etf][side]
-            if not rep:
+            canon = _load(GATING_DIR / f"report_{etf}_{side}.json")
+            if not canon:
                 continue
-            
-            row_vals = []
-            for m in MODELS:
-                if m in rep["results"]:
-                    val = rep["results"][m]["cv_metrics"]["pr_auc"]
-                    row_vals.append(f"{val:.4f}")
-                else:
-                    row_vals.append("—")
-                    
-            row = f"| **{etf}** | `{side}` | " + " | ".join(row_vals) + " |"
-            md.append(row)
-            
-    md.append("\n## 3. Deployability & Model Selection Analysis\n")
-    md.append("Detailed analysis of why specific model architectures were selected:\n")
-    
-    for etf in ETFS:
-        md.append(f"### {etf}\n")
-        for side in SIDES:
-            rep = reports[etf][side]
-            if not rep:
-                continue
-            best_type = rep["best_model_type"]
-            best_res = rep["results"][best_type]
-            cv_prauc = best_res["cv_metrics"]["pr_auc"]
-            cv_base = best_res["cv_metrics"]["base_rate"]
-            cv_prec = best_res["cv_metrics"]["precision_at_thr"]
-            
-            # Analyze
-            reasoning = ""
-            if best_type == "logistic":
-                reasoning = "Logistic Regression won, showing that a linear boundary is highly robust here. Non-linear models (RF/LightGBM) overfit to noise."
-            elif best_type == "rf":
-                reasoning = "Random Forest won, showing that bagging is effective at reducing variance and mitigating overfitting on noisy features."
-            elif best_type == "lightgbm":
-                reasoning = "LightGBM won, showing that gradient boosting successfully captured complex non-linear combinations of early-bar and daily signals."
-                
-            lift = (cv_prec / cv_base - 1.0) if cv_base > 0 else 0
-            
-            md.append(f"- **`{side}` Side**: Selected **{best_type}**.")
-            md.append(f"  * *Reason*: {reasoning}")
-            md.append(f"  * *Metrics*: PR-AUC `{cv_prauc:.4f}` (Base: `{cv_base:.4f}`), Precision@70 `{cv_prec:.2%}` (Lift: `+{lift:.1%}`).")
-            md.append(f"  * *Verdict*: **Deployable** (Significant precision lift, PR-AUC exceeds base rate, out-of-sample AUC > 0.55).")
-        md.append("")
-        
-    md.append("\n## 4. Diagnostic Plots & Validation\n")
-    md.append("ROC and PR Curves are saved under `gating_model/plots/curves_{ETF}_{side}.png`.\n")
-    
-    report_content = "\n".join(md)
-    print(report_content)
-    
-    # Save to gating_model/tradability_model_report.md
-    with open(GATING_DIR / "tradability_model_report.md", "w") as f:
-        f.write(report_content)
-        
-    # Save to project root/tradability_model_report.md (User facing)
-    root_report_path = Path(__file__).resolve().parent.parent / "tradability_model_report.md"
-    with open(root_report_path, "w") as f:
-        f.write(report_content)
-        
-    print(f"\nReport written to:")
-    print(f"  1. {GATING_DIR / 'tradability_model_report.md'}")
-    print(f"  2. {root_report_path}")
+            n_total += 1
+            best_mt, res = _best_entry(canon)
+            wf = _wf(res)
+            if _deployable(wf) == "Yes":
+                n_dep += 1
+    md.append(f"\n**Deployable cells: {n_dep}/{n_total}.**\n")
+
+    # ── Section 4: Plots ───────────────────────────────────────────────────
+    md.append("\n## 4. Diagnostic plots\n")
+    md.append(
+        "ROC + Precision-Recall curves per (ETF × side × variant × selector) "
+        "are written to `gating_model/plots/curves_{ETF}_{side}_{variant}_{selector}.png`.\n"
+    )
+
+    content = "\n".join(md)
+    GATING_DIR.mkdir(parents=True, exist_ok=True)
+    out1 = GATING_DIR / "GATING_REPORT.md"
+    out2 = ROOT_REPORT
+    with open(out1, "w", encoding="utf-8") as f:
+        f.write(content)
+    with open(out2, "w", encoding="utf-8") as f:
+        f.write(content)
+    print(content)
+    print(f"\nReport written to:\n  1. {out1}\n  2. {out2}")
+
 
 if __name__ == "__main__":
     generate_report()
