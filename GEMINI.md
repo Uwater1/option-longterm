@@ -49,7 +49,8 @@ python validate_alpha_pnl.py -e 300 --phase 2 --cadence cycle  # Put P&L validat
 python validate_alpha_pnl.py -e 300 --phase 3 --cadence cycle  # Put P&L validation, Phase 3 (hybrid)
 python validate_alpha_pnl.py -e 300 --phase 1 --cadence daily  # Daily-cadence (needs TODO 4)
 python compare_alpha_phases.py               # Cross-phase comparison → backtest/alpha_phase_comparison.md
-
+python day-model/gating_model.py -e all -t 30 # Train tradability gating models
+python day-model/evaluate_gating.py          # Compile tradability gating report
 ```
 
 ## Project Structure

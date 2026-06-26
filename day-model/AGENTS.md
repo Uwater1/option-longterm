@@ -102,3 +102,25 @@ Decide whether to keep or discard using the following protocol:
 2. **Verify Holdout Performance**:
    - Verify that the OOS **Holdout IC** and **L/S Sharpe** have improved compared to the previous baseline report.
    - Confirm that the **IS-OOS Gap** (overfitting diagnostic) remains low. If a feature causes the gap to explode, it is leaking information or causing extreme variance.
+
+---
+
+## 4. Tradability Gating Model (Option 1 Pre-Gate)
+
+Separate binary classifiers (`gating_{ETF}_long.joblib` and `gating_{ETF}_short.joblib`) that pre-filter "untradable" chop days before direction/conviction models evaluate them.
+
+### Commands
+
+```bash
+# 1. Train gating models (benchmarks Logistic, RF, and LightGBM with CV folds pre-scaled)
+python day-model/gating_model.py -e all -t 30
+
+# 2. Compile head-to-head comparison report
+python day-model/evaluate_gating.py
+```
+
+### Outputs
+- Save models & scalers: `day-model/gating_model/gating_{ETF}_{side}.joblib`
+- JSON reports: `day-model/gating_model/report_{ETF}_{side}.json`
+- Plots: `day-model/gating_model/plots/curves_{ETF}_{side}.png` (ROC and Precision-Recall)
+- Comparison Markdown: `day-model/gating_model/GATING_REPORT.md`
