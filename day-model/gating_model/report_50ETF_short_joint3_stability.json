@@ -1,0 +1,65 @@
+{
+    "etf": "50ETF",
+    "side": "short",
+    "variant": "joint3",
+    "selector": "stability",
+    "best_model_type": "logistic",
+    "best_params": {
+        "C": 0.0054167845755056674,
+        "penalty": "l2"
+    },
+    "final_threshold": 0.007197234779596329,
+    "firing_threshold": 0.16136082647636527,
+    "features_used": [
+        "early_realized_vol",
+        "early_skew",
+        "bar_rng_2",
+        "bar_body_rng_0",
+        "bar_vwap_dev_1",
+        "cl_pos_in_range",
+        "macd_hist",
+        "roc10",
+        "margin_net_buy",
+        "northbound_net",
+        "vix_iv_spread",
+        "vix_diff_1d",
+        "yesterday_gap_pct",
+        "yesterday_early_realized_vol",
+        "yesterday_early_range",
+        "yesterday_early_skew",
+        "yesterday_day_realized_vol",
+        "yesterday_day_pm_am_vol_ratio"
+    ],
+    "n_features": 18,
+    "results": {
+        "logistic": {
+            "cv_metrics": {
+                "auc": 0.6267455143099148,
+                "pr_auc": 0.2395133223823777,
+                "precision_at_thr": 0.20810313075506445,
+                "recall_at_thr": 0.4574898785425101,
+                "f1_at_thr": 0.28607594936708863,
+                "firing_threshold": 0.15598526966612164,
+                "base_rate": 0.13646408839779006
+            },
+            "dev_only_oos": {
+                "auc": 0.6392783505154638,
+                "pr_auc": 0.24229494470736204,
+                "precision_at_thr": 0.17073170731707318,
+                "recall_at_thr": 0.4666666666666667,
+                "f1_at_thr": 0.25,
+                "firing_threshold": 0.14694086927489447
+            },
+            "forward_wf_estimate": {
+                "auc": 0.626595786923978,
+                "pr_auc": 0.2339676042544578,
+                "precision_at_thr": 0.21176470588235294,
+                "recall_at_thr": 0.46601941747572817,
+                "f1_at_thr": 0.29120323559150657,
+                "firing_threshold": 0.15548211626938893,
+                "base_rate": 0.13642384105960265
+            }
+        }
+    },
+    "joint3_class": "short"
+}

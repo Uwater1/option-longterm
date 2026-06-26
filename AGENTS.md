@@ -49,8 +49,11 @@ python validate_alpha_pnl.py -e 300 --phase 2 --cadence cycle  # Put P&L validat
 python validate_alpha_pnl.py -e 300 --phase 3 --cadence cycle  # Put P&L validation, Phase 3 (hybrid)
 python validate_alpha_pnl.py -e 300 --phase 1 --cadence daily  # Daily-cadence (needs TODO 4)
 python compare_alpha_phases.py               # Cross-phase comparison → backtest/alpha_phase_comparison.md
-python day-model/gating_model.py -e all -t 30 # Train tradability gating models
-python day-model/evaluate_gating.py          # Compile tradability gating report
+python day-model/gating_model.py -e all -t 20 --jobs 5   # Train big-move gating models (3 variants × 3 selectors, ~100s)
+python day-model/evaluate_gating.py                     # Compile gating winner + WF PR-AUC grid report
+python -m daytrade.calibrate --mode single --sweep-gated # Gated daytrade calibration (×3 modes: single/hybrid/dual)
+python -m daytrade.deploy                                # Mixed-mode deploy (auto-picks +gated per side)
+python -m daytrade.gating_only                           # Gate-only diagnostic backtest (NOT for deployment)
 ```
 
 ## Project Structure
@@ -88,18 +91,24 @@ day-model/                     # Day-Model PM session return predictor
 ├── AGENTS.md                  # Feature expansion and workflow guide
 ├── build_features.py          # Early-bar + day-level feature engineering (130 features, local caching)
 ├── train_model.py             # Optuna-tuned linear model training & feature selection (Phase 2: stability + tail-IC fixes)
+├── feature_select.py          # Stability + LightGBM-importance selectors (shared by gating model)
+├── gating_model.py            # Big-move gating classifier (3 variants × 3 selectors, auto-winner)
+├── evaluate_gating.py         # Compile gating winner table + WF PR-AUC grid report
 └── generate_report.py         # Report markdown generator
-daytrade/                      # Frozen-Linear Intraday Alpha Strategy (v2: mixed-mode deployment)
+daytrade/                      # Frozen-Linear Intraday Alpha Strategy (v3: gated mixed-mode deployment)
 ├── AGENTS.md                  # Strategy details, parameters, and developer guide
 ├── REPORT.md                  # Calibration and performance report (with mode comparison table)
 ├── improvement_plan.md        # Dual-model research findings & v2 results
+├── GATING_ONLY_REPORT.md      # Gate-only vs gated-daytrade comparison (+9.08 vs +41.94)
 ├── __init__.py                # Strategy parameters and paths
 ├── scores.py                  # Frozen score compute + IC verification
 ├── rules.py                   # expanding_pct, expanding_pct_masked, expanding_pct_rank signal rules (single/hybrid/dual modes)
-├── backtest.py                # Daily 5m intraday simulator
-├── calibrate.py               # Independent per-side threshold optimizer (--mode single|hybrid|dual)
-├── deploy.py                  # Phase 4: per-side best-of-mode deployment (picks best mode per ETF × side)
-└── report.py                  # Report generator (supports mode="mixed")
+├── backtest.py                # Daily 5m intraday simulator (gated= post-hoc veto support)
+├── calibrate.py               # Per-side threshold optimizer (--mode, --gated/--sweep-gated)
+├── deploy.py                  # Phase 4: per-side best-of-mode deployment (picks best mode + gated per ETF × side)
+├── gating_loader.py           # Loads canonical gating artifacts → boolean fire mask per (etf, side)
+├── gating_only.py             # Gate-only standalone diagnostic backtest (NOT for deployment)
+└── report.py                  # Report generator (supports mode="mixed", gated flag)
 ```
 
 ### Day-Model Caching & Features (New)
@@ -195,6 +204,7 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy (v2: mixe
 - **Tail Risk (Puts)**: Vol acceleration + negative skewness predict downside. Detailed in [FINDINGS.md](file:///home/hallo/Documents/option-longterm/FINDINGS.md).
 - **Day Trading**: [day-trading/AGENTS.md](file:///home/hallo/Documents/option-longterm/day-trading/AGENTS.md) [day-trading/REPORT.md](file:///home/hallo/Documents/option-longterm/day-trading/REPORT.md)
 - **Daytrade v2**: Mixed-mode deployment (single/hybrid/dual per side) with baseline-guided safety stops improves total OOS Sharpe from +28.60 (single-only) to **+37.47** (Δ = +8.86), while ensuring emergency-level stop-losses (3.0%-5.0% or 3.5x ATR) are active on all trades. See [daytrade/improvement_plan.md](file:///home/hallo/Documents/option-longterm/daytrade/improvement_plan.md) §8.
+- **Daytrade v3 (Gating)**: Big-move gating model (per-side big-up/big-down tail classifier) applied as a post-hoc veto over the daytrade linear score. Three target variants (`two_sided`/`joint3`/`gated`) × three feature selectors (`none`/`stability`/`lgbm`) benchmarked; winner auto-picked per cell by honest walk-forward OOS PR-AUC. Gated mixed-mode total OOS Sharpe **+41.94** vs ungated **+31.81** (Δ = **+10.13**); 9/10 cells adopt `+gated`. Gate-only (no daytrade score) totals just +9.08 — confirming the gate is a selectivity filter, not a standalone alpha. See [daytrade/GATING_ONLY_REPORT.md](file:///home/hallo/Documents/option-longterm/daytrade/GATING_ONLY_REPORT.md) and [day-model/gating_model/GATING_REPORT.md](file:///home/hallo/Documents/option-longterm/day-model/gating_model/GATING_REPORT.md).
 - **Daytrade Optimization**: Vectorized 5m backtests using NumPy array groups (float32) and added caches for model scores, expanding percentiles, and ranks, reducing single-ETF calibration sweeps from 33.7s to 3.4s (10x). Added multiprocessing to run ETF calibrations in parallel, reducing complete 5-ETF sweeps from ~3 minutes to under 6 seconds (30x+ speedup).
 - **Day-Model Training Optimization**: Implemented float32 precision, pre-scaled Optuna cross-validation splits, and pre-scaled stability selection dev set in `day-model/train_model.py`. Relaxed ElasticNetCV parameters (`tol=1e-2`, `alphas=20`, `max_iter=500`) and suppressed coordinate descent warning messages in parallel child processes. Reduced standard 100-trial training run time from minutes to under 15 seconds per ETF (5x+ speedup) with 100% exact mathematical match to baseline features/results.
 - **Unified Time-Series Stability Selection (New)**: Replaced legacy Lasso block bootstrap with `TimeSeriesStabilitySelector`. Implements regime-stratified block bootstrap, randomized ElasticNet (L2 grouping + randomized L1 penalty scaling to handle collinearity), univariate OOB Spearman IC significance screening (p < 0.05 or |IC| > 0.02), and walk-forward fold aggregation with a stability variance filter ($\sigma_{S, j} \le 0.15$). Employs ElasticNetCV pre-tuning per fold for a 6x speedup.

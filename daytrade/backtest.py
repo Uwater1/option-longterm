@@ -225,6 +225,7 @@ def backtest_long_short(
     mode: str = "single",
     stop_pct: Optional[float] = None,
     stop_atr_k: Optional[float] = None,
+    gated: bool = False,
 ) -> dict:
     """Run backtest with INDEPENDENT long_model / short_model thresholds.
 
@@ -238,6 +239,12 @@ def backtest_long_short(
     stop_atr_k : float or None
         ATR-based stop-loss: ``stop = k * ATR14 / entry``.
         Mutually exclusive with ``stop_pct``.
+    gated : bool
+        If True, apply the day-model gating model as a post-hoc veto: long
+        signals are kept only on days the long-gate fires (big-up predicted),
+        short signals only where the short-gate fires (big-down predicted).
+        Days without a gating prediction are kept (no veto). Requires trained
+        canonical artifacts in ``day-model/gating_model/``.
     """
     signals = get_long_short_signals(
         etf,
@@ -250,6 +257,10 @@ def backtest_long_short(
         short_enabled=short_enabled,
         mode=mode,
     )
+
+    if gated:
+        signals = _apply_gating_veto(etf, signals)
+
     signals = signals[signals["direction"] != 0]
     if len(signals) == 0:
         return _empty_long_short_result(etf)
@@ -314,6 +325,33 @@ def backtest_long_short(
     metrics = _summarize_long_short(trades, etf, cost_bps)
     metrics["trades"] = trades
     return metrics
+
+
+def _apply_gating_veto(etf: str, signals: pd.DataFrame) -> pd.DataFrame:
+    """Apply the day-model gating model as a post-hoc veto over signals.
+
+    Long directions are zeroed on days the long-gate does NOT fire; short
+    directions on days the short-gate does NOT fire. Days absent from the gate
+    mask are kept (no veto). If no gating model exists, signals are returned
+    unchanged.
+    """
+    try:
+        from .gating_loader import load_gating_mask
+    except Exception:
+        return signals
+
+    out = signals.copy()
+    for side, sign in (("long", 1), ("short", -1)):
+        mask = load_gating_mask(etf, side)
+        if mask is None:
+            continue
+        # Align mask to signal index (dates). mask is indexed by date (DatetimeIndex).
+        aligned = mask.reindex(out.index)
+        side_rows = out["direction"] == sign
+        # Veto: zero direction where gate did not fire; NaN in reindex → keep
+        veto = aligned.fillna(True) == False
+        out.loc[side_rows & veto, "direction"] = 0
+    return out
 
 
 def _empty_result(etf: str) -> dict:

@@ -1,0 +1,72 @@
+{
+    "etf": "159915ETF",
+    "side": "long",
+    "variant": "joint3",
+    "selector": "lgbm",
+    "best_model_type": "logistic",
+    "best_params": {
+        "C": 0.018468866381074495,
+        "penalty": "l2"
+    },
+    "final_threshold": 0.012725558131933212,
+    "firing_threshold": 0.1460783984644549,
+    "features_used": [
+        "early_range",
+        "total_path_length",
+        "volume_sma_ratio_long",
+        "bar_rng_3",
+        "yesterday_day_vwap_dev",
+        "sma100_dist",
+        "bar_vol_4",
+        "rsi21",
+        "volume_sma_ratio",
+        "vol_gk10",
+        "early_skew",
+        "bb_width",
+        "northbound_net",
+        "bar_rng_2",
+        "yesterday_first_bar_return",
+        "bar_vwap_dev_2",
+        "sma200_dist",
+        "northbound_sell",
+        "first_bar_return",
+        "yesterday_day_late_mom",
+        "early_kurtosis",
+        "sma50_dist",
+        "yesterday_day_realized_vol",
+        "yesterday_first_30min_return",
+        "bar_rng_1"
+    ],
+    "n_features": 25,
+    "results": {
+        "logistic": {
+            "cv_metrics": {
+                "auc": 0.6522595621432831,
+                "pr_auc": 0.2125564290426998,
+                "precision_at_thr": 0.15469613259668508,
+                "recall_at_thr": 0.4883720930232558,
+                "f1_at_thr": 0.23496503496503496,
+                "firing_threshold": 0.12915532085816994,
+                "base_rate": 0.09502762430939227
+            },
+            "dev_only_oos": {
+                "auc": 0.7086530264279625,
+                "pr_auc": 0.2511144324980876,
+                "precision_at_thr": 0.23170731707317074,
+                "recall_at_thr": 0.5507246376811594,
+                "f1_at_thr": 0.3261802575107296,
+                "firing_threshold": 0.13765402226118395
+            },
+            "forward_wf_estimate": {
+                "auc": 0.6605534011109947,
+                "pr_auc": 0.19711305078571623,
+                "precision_at_thr": 0.1676470588235294,
+                "recall_at_thr": 0.4851063829787234,
+                "f1_at_thr": 0.24918032786885247,
+                "firing_threshold": 0.1363237393911242,
+                "base_rate": 0.10375275938189846
+            }
+        }
+    },
+    "joint3_class": "long"
+}

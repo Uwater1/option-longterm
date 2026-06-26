@@ -22,6 +22,9 @@ MODE_FILES = {
     "single": DATA_DIR / "calibration_single.json",
     "hybrid": DATA_DIR / "calibration_hybrid.json",
     "dual": DATA_DIR / "calibration_dual.json",
+    "single+gated": DATA_DIR / "calibration_single_gated.json",
+    "hybrid+gated": DATA_DIR / "calibration_hybrid_gated.json",
+    "dual+gated": DATA_DIR / "calibration_dual_gated.json",
 }
 
 
@@ -78,11 +81,13 @@ def deploy(verbose: bool = True) -> dict:
                     best_short = dict(short_cfg)
                     best_short_mode = mode
 
-        # Annotate configs with their source mode
+        # Annotate configs with their source mode + gated flag
         if best_long:
             best_long["_mode"] = best_long_mode
+            best_long["gated"] = best_long_mode.endswith("+gated")
         if best_short:
             best_short["_mode"] = best_short_mode
+            best_short["gated"] = best_short_mode.endswith("+gated")
 
         deployed[etf] = {
             "long": best_long,
