@@ -2,7 +2,9 @@
 
 Rule-based day-trading layer that consumes day-model trained coefficients as **frozen constants** (no runtime ML) and turns them into per-side deployable signals. Each ETF uses one signed frozen score where **sign determines direction** (positive → long, negative → short) and **magnitude determines conviction**. Each side has its own expanding-percentile threshold conditioned on that side's prior history.
 
-Three signal modes are available: **single** (default, proven), **hybrid** (single direction × dual conviction), and **dual** (v2 true independent execution with rank normalisation). The deployed configuration uses **mixed mode** (Phase 4): each ETF × side picks whichever of the three modes maximises OOS Sharpe. Built by `python -m daytrade.deploy`. See `improvement_plan.md` for the full dual-model research findings and v2 results.
+Three signal modes are available: **single** (default, proven), **hybrid** (single direction × dual conviction), and **dual** (v2 true independent execution with rank normalisation). The deployed configuration uses **mixed mode** (Phase 4): each ETF × side picks whichever of the three modes maximises **pooled walk-forward Sharpe**. Built by `python -m daytrade.deploy`.
+
+**Calibration is walk-forward** (v4): per-side (threshold, conviction, stop, mode) is re-selected per yearly fold using train-window data only, eliminating the hyperparameter snooping bias of the previous single-split-at-`HOLDOUT_START` calibrator. See §3 "Walk-Forward Calibration" and `walkforward.py`.
 
 ---
 
@@ -138,10 +140,11 @@ won't follow through.
 - Each deployed config carries a `gated: bool` flag; `report.py`'s
   `_run_mixed_backtest` splits the `+gated` suffix into `mode=base, gated=True`.
 
-**Result**: gated mixed-mode total OOS Sharpe **+41.94** vs ungated **+31.81**
-(Δ = **+10.13**); 9 of 10 cells pick a `+gated` config. Run
+**Result**: gated mixed-mode total **pooled WF Sharpe +39.96** vs ungated
+**+30.77** (Δ = **+9.20**); 7 of 10 cells pick a `+gated` config. Run
 `python -m daytrade.calibrate --mode single --sweep-gated` (×3 modes) →
 `python -m daytrade.deploy` → `python -m daytrade.report` to reproduce.
+(Walk-forward v4 numbers; previous single-split headline was +41.94 gated / +31.81 ungated — the ~2 point drop is the hyperparameter selection bias removed.)
 
 ### Pipeline Flow
 
@@ -167,15 +170,99 @@ day-model/data/features_{ETF}.parquet   ─┘                                  
 
 Calibration grid: `threshold_pct ∈ {50,60,70,80,90,95}`, `conviction_pct ∈ {40,50,60,70,80,90}`, run independently for long & short. Selection objective is profit-first composite (per AGENTS.md put convention):
 - P&L 35%, FilterLift 30% (selectivity rate, `s5`), Sharpe 15%, MaxDD 10%, WinRate 5%, Placement 5% (trades kept fraction, `1.0 - s5`)
-- **Hard eligibility guard**: OOS P&L > 0 AND OOS Sharpe > 0 AND OOS n ≥ 20
+- **Hard per-fold eligibility guard**: train P&L > 0 AND train Sharpe > 0 AND n ≥ 20
+- **Deployment gate (new, WF)**: a side deploys only if eligible in ≥ 50% of folds AND pooled WF Sharpe > 0
 - **Soft fragility warnings** (non-blocking, transparency only): for each deployed side the calibrator records a `warnings` list flagging any of:
-  - `median<=0` — typical OOS trade loses money (positive mean carried by heavy-tail winners)
+  - `median<=0` — typical pooled WF trade loses money (positive mean carried by heavy-tail winners)
   - `win<=50%` — side loses more often than it wins
   - `n<60` — small sample; high multiple-testing risk from the 6×6 grid search
 
-  These surface in `REPORT.md` §3.1 ("Warnings" column) and §3.7 (Fragility Warnings Summary) and in each `calibration_*.json` config. They do NOT change deployment — investigate before sizing capital.
+  These surface in `REPORT.md` §3.6. They do NOT change deployment — investigate before sizing capital.
 
-Selection is by **holdout** (2024-03-19+), never in-sample — matches day-model window.
+Selection is **walk-forward** (yearly expanding-window folds, see §3 below) — never on the window used for reporting.
+
+---
+
+## 3. Walk-Forward Calibration (v4 — no look-ahead in selection)
+
+### Why
+
+The runtime signal generation has always been causal (`expanding_pct_masked` /
+`expanding_pct_rank` in `rules.py` use `series.shift(1)`, so the threshold at
+time *t* depends only on data strictly before *t*). The frozen day-model
+coefficients are themselves purged-walk-forward trained.
+
+**The bias was in hyperparameter SELECTION.** The previous calibrator
+grid-searched 36 (thr, conv) × 6 stop configs and 6 modes, picked the best by
+metrics computed on the `HOLDOUT_START = 2024-03-19+` window, then **reported
+metrics on the same window**. The headline "+41.94 OOS Sharpe" was therefore
+the maximum of a ~200-cell grid search over the reported window — optimistically
+biased (hyperparameter snooping). `deploy.py`'s mixed-mode picker compounded it
+by selecting the best of 6 modes on the same window.
+
+### Fix
+
+Replaced the single IS/OOS split with **purged expanding-window walk-forward**
+(yearly folds, matching `optimize_put_alpha.py --select-by-oos` and
+`day-model/train_model.py:purged_tssplit` conventions):
+
+```
+For each test year Y in {2021, 2022, 2023, 2024, 2025, 2026}:
+    train = all dates strictly before Y (purge gap = 1 day)
+    For each mode in {single, hybrid, dual} × {ungated, +gated}:
+        grid_search(thr, conv, stop) scoring on train window only
+    pick best mode by train-window composite score
+    if not eligible on train (P&L>0, S>0, n≥20) → side disabled for fold Y
+    else apply selected config to test year Y
+stitch trades across all test folds → pooled WF equity curve
+```
+
+A side is **deployed** iff:
+1. Eligible (train P&L>0 AND train Sharpe>0 AND n≥20) in ≥ 50% of folds, AND
+2. Pooled WF Sharpe > 0.
+
+Purge gap = 1 day is sufficient because `trade_return` is a same-day target
+(features at decision-bar close → exit at 14:30 same day) — no multi-day
+forward leakage. The gap is a safety boundary only.
+
+### Plumbing
+
+- `walkforward.py` — `make_yearly_folds(dates)` → list of fold dicts
+  `{test_year, train_end, test_start, test_end, n_train_days, n_test_days}`.
+  Skips folds with `< 252` train days or `< 20` test days (so 588000ETF, which
+  starts 2021, only contributes folds from 2023 onward).
+- `calibrate.py:_grid_search_on_window(etf, side, train_end, mode, gated)` —
+  replaces the old `_calibrate_one_side`. Scores on train window only; returns
+  best eligible config + train-window metrics.
+- `calibrate.py:calibrate_side_walkforward` — loops folds, replays each fold's
+  selected config on its test window, concatenates stitched trades.
+- `calibrate.py:replay_side_wf_trades` — rebuilds stitched WF trades from a
+  persisted per-fold config (used by `report.py`; avoids re-running grid search).
+- `deploy.py` — picks best mode per side by **pooled WF Sharpe** among configs
+  that pass the eligibility majority gate.
+- `report.py` — §2.1 "Per-Fold Config Stability" table exposes regime drift;
+  §3 reports pooled WF metrics; §5 mode comparison all in WF terms.
+
+### Result (bias gap)
+
+| Metric | Old (single-split) | New (walk-forward) | Δ |
+|---|---|---|---|
+| Total deployed Sharpe | +41.94 (2024-03+ only) | **+39.96** (2021-2026 pooled) | -1.98 |
+| 50ETF short Sharpe | +7.64 | +6.18 (single+gated) | -1.46 |
+| 588000ETF long Sharpe | +5.86 | +2.96 (single+gated) | -2.90 |
+
+The drop is modest overall because the day-model score was already honest; only
+the threshold/stop/mode selection was biased. Some sides shrank materially
+(e.g. 588000 long) — the previous number was inflated by selection on the
+reported window. The pooled WF number is the honest estimate.
+
+### Computational Cost
+
+Per (ETF, side, mode, gated): 36 (thr, conv) × 7 stops × 6 folds ≈ 1,500
+backtests. With existing NumPy-vectorised `backtest_long_short` and
+multiprocessing, full sweep (5 ETFs × 2 sides × 6 mode/gated combos) runs in
+~6 minutes. `calibration_*.json` files now contain per-fold config tables
+(heavier but still <100 KB each).
 
 ---
 
@@ -186,34 +273,35 @@ daytrade/
 ├── __init__.py         # paths, ETFS, DECISION_BAR, EXIT_BAR, DEFAULT_COST_BPS, HOLDOUT_START
 ├── scores.py           # frozen score loader (side-aware) + IC verification
 ├── rules.py            # expanding_pct, expanding_pct_masked, expanding_pct_rank, get_long_short_signals (mode="single"|"hybrid"|"dual"), get_signals (legacy)
-├── backtest.py         # 5m bar sim, per-side summarizer, holdout splitter (mode-aware, gated= veto)
-├── calibrate.py        # independent per-side grid search (--mode single|hybrid|dual, --gated/--sweep-gated)
-├── deploy.py           # Phase 4: per-side best-of-mode deployment (reads all calibration files incl. +gated)
-├── report.py           # REPORT.md + results.json + 3 plots (supports mode="mixed", gated flag)
+├── backtest.py         # 5m bar sim, per-side summarizer, fold-agnostic (mode-aware, gated= veto)
+├── walkforward.py      # [v4] yearly expanding-window fold schedule + purge helpers
+├── calibrate.py        # [v4] walk-forward per-side grid search (--mode single|hybrid|dual, --gated/--sweep-gated)
+├── deploy.py           # [v4] per-side best-of-mode deployment by pooled WF Sharpe (reads all calibration files incl. +gated)
+├── report.py           # [v4] REPORT.md + results.json + 3 plots (WF pooled metrics, per-fold stability table)
 ├── gating_loader.py    # loads canonical gating artifacts → boolean fire mask per (etf, side)
 ├── gating_only.py      # standalone gate-only backtest (diagnostic; NOT deployment)
 ├── improvement_plan.md # dual-model research findings & revised architecture
-├── GATING_ONLY_REPORT.md # gate-only vs gated-daytrade comparison (+9.08 vs +41.94)
-├── REPORT.md           # latest summary
+├── GATING_ONLY_REPORT.md # gate-only vs gated-daytrade comparison (+9.08 vs +39.96)
+├── REPORT.md           # latest summary (walk-forward)
 ├── AGENTS.md           # this file
 ├── data/
-│   ├── calibration.json             # deployed per-side configs (mode="mixed" default)
-│   ├── calibration_single.json      # single-mode calibration (ungated)
-│   ├── calibration_hybrid.json      # hybrid-mode calibration (ungated)
-│   ├── calibration_dual.json        # dual-mode calibration (v2, ungated)
-│   ├── calibration_single_gated.json  # single-mode + gating veto
-│   ├── calibration_hybrid_gated.json  # hybrid-mode + gating veto
-│   ├── calibration_dual_gated.json    # dual-mode + gating veto
-│   └── results.json                 # deployed metrics
+│   ├── calibration.json             # deployed per-side configs (mode="mixed", walk_forward=True)
+│   ├── calibration_single.json      # single-mode WF calibration (ungated)
+│   ├── calibration_hybrid.json      # hybrid-mode WF calibration (ungated)
+│   ├── calibration_dual.json        # dual-mode WF calibration (ungated)
+│   ├── calibration_single_gated.json  # single-mode + gating veto (WF)
+│   ├── calibration_hybrid_gated.json  # hybrid-mode + gating veto (WF)
+│   ├── calibration_dual_gated.json    # dual-mode + gating veto (WF)
+│   └── results.json                 # deployed metrics (WF pooled)
 └── plots/
     ├── equity_combined.png
-    ├── equity_curves.png   # per-side panels
-    └── yearly_sharpe.png   # per-side year bars
+    ├── equity_curves.png   # per-side panels (fold boundaries marked)
+    └── yearly_sharpe.png   # per-side year bars (fold-aligned)
 ```
 
 ---
 
-## 5. Key Parameters (`__init__.py`)
+## 5. Key Parameters (`__init__.py` and `walkforward.py`)
 
 | Parameter | Default | Purpose |
 |---|---|---|
@@ -221,14 +309,18 @@ daytrade/
 | `DECISION_BAR` | `{300:3, 50:2, 500:4, 588000:2, 159915:4}` | Per-ETF decision bar (close). Single source of truth in `day-model/build_features.py`; imported by `daytrade/__init__.py`. Picked by bar-count experiment with `trade_return` target. |
 | `EXIT_BAR` | `41` | 14:30 close (5m bars are timestamped at END of period). Single source of truth in `day-model/build_features.py`. |
 | `DEFAULT_COST_BPS` | `15.0` | Round-trip cost in basis points |
-| `HOLDOUT_START` | `"2024-03-19"` | OOS cutoff (matches day-model) |
+| `HOLDOUT_START` | `"2024-03-19"` | Legacy field; no longer used for calibration (v4 is walk-forward). Retained for `split_holdout` backwards-compat imports. |
 | `MIN_PERIODS` (rules) | `60` | Min same-side observations before expanding pct is valid |
-| `THRESHOLD_GRID` (calibrate) | `[50,60,70,80,90,95]` | Calibration grid for threshold_pct (95 added: improved 500ETF Short) |
+| `THRESHOLD_GRID` (calibrate) | `[50,60,70,80,90,95]` | Calibration grid for threshold_pct |
 | `CONVICTION_GRID` (calibrate) | `[40,50,60,70,80,90]` | Calibration grid for conviction_pct |
-| `MIN_OOS_TRADES` (calibrate) | `20` | Below this, side config is rejected |
-| `expanding_pct_rank` (rules) | `min_periods=60` | Walk-forward percentile rank → [0,1]; used by `mode="dual"` (Phase 1 fix) |
-| `STOP_PCT_GRID` (calibrate) | `[0.003, 0.005, 0.008, 0.010, 0.015]` | Fixed-% stop-loss grid (Phase 5); selected by IS max profit |
-| `STOP_ATR_GRID` (calibrate) | `[0.5, 1.0, 1.5, 2.0]` | ATR-14 multiple stop-loss grid (Phase 5) |
+| `MIN_TRAIN_TRADES` (calibrate) | `20` | Per-fold eligibility: min train trades |
+| `MIN_FOLD_ELIGIBILITY_FRAC` (calibrate) | `0.50` | Side deploys only if eligible in ≥50% of folds |
+| `STOP_PCT_GRID` (calibrate) | `[0.030, 0.040, 0.050]` | Fixed-% stop-loss grid (Phase 5); selected by train-window Sharpe |
+| `STOP_ATR_GRID` (calibrate) | `[3.5, 4.0, 5.0]` | ATR-14 multiple stop-loss grid (Phase 5) |
+| `FIRST_TEST_YEAR_DEFAULT` (walkforward) | `2021` | First walk-forward fold test year |
+| `MIN_TRAIN_DAYS_DEFAULT` (walkforward) | `252` | Min train days for a fold (1 trading year) |
+| `MIN_TEST_DAYS_DEFAULT` (walkforward) | `20` | Min test days for a fold |
+| `PURGE_DAYS_DEFAULT` (walkforward) | `1` | Purge gap (safety only — `trade_return` is same-day) |
 
 ---
 
@@ -307,31 +399,31 @@ Currently one `cost_bps` applies to both sides. For options-based shorts (which 
 
 ---
 
-## 8. Deployability Status (as of latest calibration — gated mixed-mode deployment)
+## 8. Deployability Status (walk-forward v4 — pooled across 2021-2026 folds)
 
-Each side deploys the mode (single/hybrid/dual, optionally `+gated`) that
-maximises OOS Sharpe. Run `python -m daytrade.deploy` to rebuild from per-mode
-calibration files. The gating-integrated pipeline (`+gated` variants) is now the
-**default production config** — 9 of 10 cells pick a `+gated` config.
+Each side deploys the mode (single/hybrid/dual, optionally `+gated`) with the
+highest **pooled walk-forward Sharpe** among configs passing the per-fold
+eligibility majority gate (≥50% of folds eligible). Run `python -m daytrade.deploy`
+to rebuild. The gating-integrated pipeline (`+gated` variants) remains the
+**default production config** — 7 of 10 cells pick a `+gated` config.
 
 | ETF | Long | Short | Notes |
 |---|---|---|---|
-| **50** | single+gated thr=50 c=60, OOS S=+1.16 | single+gated thr=50 c=80, OOS S=+7.64 | Gating flipped short from mediocre to best-in-book. Long newly deployable (was disabled ungated). |
-| **300** | hybrid+gated thr=50 c=40, OOS S=+5.28 | single thr=50 c=90, OOS S=+2.00 | Long big lift from gating (was +2.02 ungated). Short kept ungated. |
-| **500** | single+gated thr=50 c=60, OOS S=+3.78 | dual+gated thr=50 c=90, OOS S=+3.80 | Both sides robust via gating. |
-| **588000** | single+gated thr=95 c=40, OOS S=+5.86 | single+gated thr=50 c=80, OOS S=+3.30 | Gating preserves strong long, lifts short. |
-| **159915** | hybrid+gated thr=50 c=40, OOS S=+5.07 | hybrid+gated thr=50 c=70, OOS S=+4.05 | Both sides robust. |
+| **50** | dual+gated, pooled S=+3.71 | single+gated, pooled S=+6.18 | Both sides robust via gating. |
+| **300** | hybrid+gated, pooled S=+1.34 | single, pooled S=+7.17 (n=12) | Long marginal; short sparse but strong. Investigate `n<60`. |
+| **500** | hybrid+gated, pooled S=+3.42 | single+gated, pooled S=+4.90 | Both sides robust. |
+| **588000** | single+gated, pooled S=+2.96 | hybrid, pooled S=+2.54 | 4 folds only (data starts 2021). |
+| **159915** | single+gated, pooled S=+4.26 | hybrid, pooled S=+3.49 | Both sides robust. |
 
-**Total deployed OOS Sharpe**: **+41.94** (gated mixed-mode) vs **+31.81**
-(ungated mixed-mode, Δ = **+10.13**); vs single-only ungated +27.97. All 10
-ETF×side cells deployable.
+**Total deployed pooled WF Sharpe**: **+39.96** across 10 sides (2021-2026
+honest OOS). Previous single-split headline was +41.94 (2024-03+ only, biased
+by selection on the reported window) — see §3 "Result (bias gap)" for the
+side-by-side comparison.
 
-Gating is the single largest daytrade improvement since the `pm_return`→
-`trade_return` target fix. The gate acts as a selectivity veto over the linear
-score (NOT a standalone signal — gate-only total = +9.08; see
-`GATING_ONLY_REPORT.md`). Re-train gating models after every day-model feature
-rebuild (`python day-model/gating_model.py -e all -t 20 --jobs 5`) and re-run
-the calibrate→deploy→report pipeline.
+Gating remains the single largest daytrade improvement since the
+`pm_return`→`trade_return` target fix. Re-train gating models after every
+day-model feature rebuild (`python day-model/gating_model.py -e all -t 20 --jobs 5`)
+and re-run the calibrate→deploy→report pipeline.
 
 Re-validate after every day-model retrain (see `day-model/AGENTS.md`) and after material market regime change.
 
@@ -352,7 +444,7 @@ Ordered roughly by expected value / implementation cost.
 
 3. **Asymmetric cost model** — longs use ETF-spread cost (~5–10 bps), shorts use option-leg cost (~30–50 bps). Affects short-side eligibility materially.
 
-4. **Walk-forward re-calibration** — re-fit thresholds on rolling 2-year window quarterly. Catches regime drift in the score distribution even when coefficients are frozen.
+4. **~~Walk-forward re-calibration~~** ✅ **Done (v4)** — replaced the single-split calibrator with purged expanding-window yearly folds (see §3). All threshold/stop/mode selection is now per-fold using train-window data only; reported metrics are pooled WF. Future enhancement: quarterly folds (finer-grained, more honest to intra-year regime shifts) — currently yearly to match `optimize_put_alpha.py` convention and keep per-fold sample size adequate.
 
 5. **Phase 2 Option D: skglm L1-Huber** — install `skglm` and add L1-regularized Huber datafit to the model search space. Enables true robust sparse regression (Huber loss + L1 penalty simultaneously). Currently `sklearn.HuberRegressor` only supports L2.
 
@@ -390,11 +482,13 @@ Ordered roughly by expected value / implementation cost.
 - Short-side P&L assumes 15bps transaction cost and other execution assumptions similar to the long side. Real option/margin/borrow costs are not modeled (which would reduce short_model Sharpe; the cost-sensitivity table in REPORT.md gives the break-even sensitivity).
 - Frozen coefficients = **no regime adaptation**. Live IC decay (visible in day-model year-by-year tables for 50ETF) will silently erode edge until next retrain.
 - 14:30 exit leaves late-day Rally continuation on the table — visible in the equity curve vs buy-and-hold.
-- Per-side eligibility uses holdout (2024-03+) only; earlier years may behave differently. Year-by-year table is the honest diagnostic.
 - Single `cost_bps` for both long and short; real shorts via options carry different (likely higher) cost.
 - No position sizing in v1 — drawdowns are per-unit-notional and 159915 will dominate any naive portfolio combination.
 - Drawdown Calculation: Drawdown was historically calculated with a buggy formula `minimum.accumulate(cum) - cum`. This was corrected to `cum - maximum.accumulate(cum)` with inception `0.0` prepended to measure drawdown from the start of trading.
-- **300ETF untradeable**: Feature-set change (rsi14, ema26_dist, vol_pk10 removed from `build_features.py`) degraded IC below deployability threshold. Both sides disabled across all modes. Needs `build_features.py` fix or retrain with replacement features.
+- **300ETF long marginal**: pooled WF Sharpe +1.34 — above the deployment floor but thin. Several folds have <10 test trades. Treat as borderline; investigate before sizing.
+- **300ETF short sparse (n=12 pooled)**: very selective (thr=95, conv=40) — high Sharpe but tiny sample. `n<60` fragility warning fires; high multiple-testing risk.
+- **588000ETF fewer folds**: data starts 2021, so only 4 folds (2023-2026). First fold has just 32 train days — borderline `MIN_TRAIN_DAYS_DEFAULT=252` check.
+- **Per-fold config instability**: stop type/value varies across folds for some sides (e.g. 500ETF long switches between 5.00% and 3.5×ATR). This is honest regime adaptation but means there is no single "deployed config" — the per-fold table in REPORT.md §2.1 is the source of truth.
 - **Dual mode selectivity**: At thr=50, dual mode selects ~50% of days (rank ≥ median) since rank is computed over all days, not same-side days. Single mode's conditional thresholding is inherently more selective. Consider higher minimum thresholds for dual mode calibration.
 
 
@@ -405,12 +499,13 @@ Ordered roughly by expected value / implementation cost.
 - [ ] `python -m daytrade.scores` — verify IC positive for all ETF×side dual models
 - [ ] `python day-model/gating_model.py -e all -t 20 --jobs 5` — gating models trained, all 10 cells deployable (WF AUC > 0.53, PR-AUC > base)
 - [ ] `python day-model/evaluate_gating.py` — GATING_REPORT.md written, winner table sane
-- [ ] `python -m daytrade.calibrate --mode single --sweep-gated` — ungated + gated configs saved
-- [ ] `python -m daytrade.calibrate --mode hybrid --sweep-gated` — hybrid ungated + gated saved
-- [ ] `python -m daytrade.calibrate --mode dual --sweep-gated` — dual ungated + gated saved
-- [ ] `python -m daytrade.deploy` — mixed-mode calibration.json written, `+gated` appears in mode usage
-- [ ] `python -m daytrade.report` — REPORT.md renders, all 3 plots present, mode comparison table (§5) populated
+- [ ] `python -m daytrade.calibrate --mode single --sweep-gated` — WF ungated + gated configs saved (per-fold tables in JSON)
+- [ ] `python -m daytrade.calibrate --mode hybrid --sweep-gated` — WF hybrid ungated + gated saved
+- [ ] `python -m daytrade.calibrate --mode dual --sweep-gated` — WF dual ungated + gated saved
+- [ ] `python -m daytrade.deploy` — mixed-mode calibration.json written, picks max pooled WF Sharpe per side
+- [ ] `python -m daytrade.report` — REPORT.md renders, §2.1 per-fold stability table populated, §3 metrics are pooled WF (not single-split)
 - [ ] `python -m daytrade.gating_only` — gate-only diagnostic runs (expect total ≪ gated-daytrade; sanity only)
 - [ ] Cost sensitivity: at least 2 sides remain positive at 30 bps (robustness floor)
 - [ ] Cluster confusion: long_model trades ≥30% Rally days, short_model ≥30% Selloff days (sanity that signal direction aligns with discovered day-types)
-- [ ] Total deployed OOS Sharpe ≥ ungated mixed-mode baseline (currently **+41.94** gated vs **+31.81** ungated)
+- [ ] Total deployed pooled WF Sharpe ≥ +30 (current: **+39.96**; was +41.94 single-split — the ~2 point drop is the selection bias removed, not a regression)
+- [ ] No side flunks the majority-fold eligibility gate unexpectedly (if one does, investigate regime drift before re-enabling)

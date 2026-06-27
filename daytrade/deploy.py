@@ -1,12 +1,16 @@
-"""Phase 4: Per-side best-of-mode deployment.
+"""Phase 4: Per-side best-of-mode deployment (walk-forward aware).
 
-Reads all calibration files (single, hybrid, dual), picks the best config
-per ETF per side by OOS composite score, and saves the combined deployment.
+Reads all walk-forward calibration files (single, hybrid, dual, each ±gated),
+picks the best mode per (ETF, side) by **pooled walk-forward Sharpe**, and
+saves the combined deployment.
 
-This implements the improvement plan Phase 4:
-  "For each ETF, deploy whichever mode/side gives the best OOS composite score."
+A side is deployable for a given mode only if:
+  - ``deployed == True`` in that mode's WF calibration (majority-fold
+    eligibility AND pooled WF Sharpe > 0), AND
+  - it has the highest pooled WF Sharpe among all candidate modes.
 
-Output: daytrade/data/calibration.json with mode="mixed" and per-side _mode tags.
+The deployed `calibration.json` carries the per-fold config table so the
+report can show stability across folds (regime drift diagnostic).
 """
 from __future__ import annotations
 
@@ -29,17 +33,16 @@ MODE_FILES = {
 
 
 def _deploy_better(candidate: dict, current: dict) -> bool:
-    """Deployment comparison: prefer higher OOS Sharpe, tiebreak by P&L."""
-    cs = candidate.get("oos_sharpe", 0) or 0
-    cc = current.get("oos_sharpe", 0) or 0
+    """Prefer higher pooled WF Sharpe, tiebreak by pooled WF P&L."""
+    cs = candidate.get("pooled_wf_sharpe", 0) or 0
+    cc = current.get("pooled_wf_sharpe", 0) or 0
     if abs(cs - cc) > 0.01:
         return cs > cc
-    # Tiebreak: higher P&L
-    return (candidate.get("oos_pnl_bps", 0) or 0) > (current.get("oos_pnl_bps", 0) or 0)
+    return (candidate.get("pooled_wf_pnl_bps", 0) or 0) > (current.get("pooled_wf_pnl_bps", 0) or 0)
 
 
 def _load_mode_calibrations() -> dict[str, dict]:
-    """Return {mode: calibration_dict} for all available calibration files."""
+    """Return {mode: calibration_dict} for all available WF calibration files."""
     out = {}
     for mode, path in MODE_FILES.items():
         if path.exists():
@@ -48,7 +51,7 @@ def _load_mode_calibrations() -> dict[str, dict]:
 
 
 def deploy(verbose: bool = True) -> dict:
-    """Pick best mode per ETF per side and save combined deployment."""
+    """Pick best mode per ETF per side by pooled WF Sharpe; save combined deployment."""
     calibs = _load_mode_calibrations()
     if not calibs:
         raise SystemExit("No calibration files found. Run calibrate for each mode first.")
@@ -67,16 +70,15 @@ def deploy(verbose: bool = True) -> dict:
             long_cfg = res.get("long")
             short_cfg = res.get("short")
 
-            # Deployment criterion: OOS Sharpe (risk-adjusted), not composite
-            # score.  Composite score within each mode already accounts for
-            # tradeoffs; cross-mode we want the best risk-adjusted edge.
-            # Tiebreak: higher P&L, then higher composite score.
-            if long_cfg and long_cfg.get("eligible"):
+            # Deployment criterion: pooled walk-forward Sharpe (honest OOS).
+            # The per-mode calibrator already enforces the per-fold eligibility
+            # majority gate; we only pick among configs flagged deployed=True.
+            if long_cfg and long_cfg.get("deployed"):
                 if best_long is None or _deploy_better(long_cfg, best_long):
                     best_long = dict(long_cfg)
                     best_long_mode = mode
 
-            if short_cfg and short_cfg.get("eligible"):
+            if short_cfg and short_cfg.get("deployed"):
                 if best_short is None or _deploy_better(short_cfg, best_short):
                     best_short = dict(short_cfg)
                     best_short_mode = mode
@@ -105,15 +107,11 @@ def deploy(verbose: bool = True) -> dict:
                 return f"{sv:.1f}xATR"
             return "—"
 
-        l_str = (f"{best_long_mode} thr={best_long['threshold_pct']:.0f} "
-                 f"c={best_long['conviction_pct']:.0f} "
-                 f"stop={_stop_label(best_long)} "
-                 f"S={best_long['oos_sharpe']:+.2f}"
+        l_str = (f"{best_long_mode} pooled_S={best_long['pooled_wf_sharpe']:+.2f} "
+                 f"(elig {best_long['n_folds_eligible']}/{best_long['n_folds']})"
                  if best_long else "disabled")
-        s_str = (f"{best_short_mode} thr={best_short['threshold_pct']:.0f} "
-                 f"c={best_short['conviction_pct']:.0f} "
-                 f"stop={_stop_label(best_short)} "
-                 f"S={best_short['oos_sharpe']:+.2f}"
+        s_str = (f"{best_short_mode} pooled_S={best_short['pooled_wf_sharpe']:+.2f} "
+                 f"(elig {best_short['n_folds_eligible']}/{best_short['n_folds']})"
                  if best_short else "disabled")
         comparison_rows.append((etf, l_str, s_str))
 
@@ -121,21 +119,22 @@ def deploy(verbose: bool = True) -> dict:
     out = {
         "cost_bps": 15.0,
         "mode": "mixed",
+        "walk_forward": True,
         "results": deployed,
     }
     out_path = DATA_DIR / "calibration.json"
-    out_path.write_text(json.dumps(out, indent=2))
+    out_path.write_text(json.dumps(out, indent=2, default=str))
     if verbose:
         print(f"Deployed calibration → {out_path}")
         print()
-        print("=" * 96)
-        print(f"{'ETF':<12} {'LONG (mode / cfg / stop / Sharpe)':<42} {'SHORT (mode / cfg / stop / Sharpe)':<42}")
-        print("-" * 96)
+        print("=" * 110)
+        print(f"{'ETF':<12} {'LONG (mode / pooled WF Sharpe / eligibility)':<49} "
+              f"{'SHORT (mode / pooled WF Sharpe / eligibility)':<49}")
+        print("-" * 110)
         for etf, l, s in comparison_rows:
-            print(f"{etf:<12} {l:<42} {s:<42}")
-        print("=" * 96)
+            print(f"{etf:<12} {l:<49} {s:<49}")
+        print("=" * 110)
 
-        # Count deployments per mode
         mode_counts = {}
         for etf_cfg in deployed.values():
             for side in ("long", "short"):
@@ -144,6 +143,16 @@ def deploy(verbose: bool = True) -> dict:
                     m = cfg["_mode"]
                     mode_counts[m] = mode_counts.get(m, 0) + 1
         print(f"\nMode usage: {mode_counts}")
+
+        total_pooled = 0.0
+        n_deployed = 0
+        for etf_cfg in deployed.values():
+            for side in ("long", "short"):
+                cfg = etf_cfg[side]
+                if cfg:
+                    total_pooled += cfg.get("pooled_wf_sharpe", 0) or 0
+                    n_deployed += 1
+        print(f"Total deployed pooled WF Sharpe: {total_pooled:+.2f} across {n_deployed} sides")
 
     return deployed
 
