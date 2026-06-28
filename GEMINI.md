@@ -10,7 +10,7 @@ python3 update_data.py                      # Pull ETF/option data from rqdatac
 python3 download_5m_data.py                # Download 5m data
 python3 download_1m_data.py                # Download 1m data (zstd level 5 compressed)
 python3 download_index_data.py             # Download 1d, 5m, 1m Index data (for signals)
-python backtest_put.py [50|300|500] --alpha    # Run new daily alpha-hedging backtest
+python backtest_put.py [50|300|500] --alpha    # Run daily alpha-hedging backtest
 python backtest_put.py 300 --no-filter         # Run daily baseline (hedge every cycle)
 python backtest_put.py 300 --limit-entry       # Run daily backtest with BS limit entry
 python backtest_put.py 300                     # Run daily static filter backtest
@@ -39,21 +39,21 @@ python evaluate_combinations.py -e 300     # Search real filter combos
 python3 diagnose_500etf.py -e 500           # 500ETF multi-variant diagnostics
 python3 optimize_put_alpha.py -e all        # Optimize put alpha weights/horizons (IS objective)
 python3 optimize_put_alpha.py -e 300 --max-weight 0.5 # Run with weight cap (regularization)
-python3 optimize_put_alpha.py -e 300 --walk-forward   # Walk-forward diagnostic (per-fold IS-opt → OOS)
-python3 optimize_put_alpha.py -e all --select-by-oos  # **SELECT by mean OOS across purged folds (recommended)**
+python3 optimize_put_alpha.py -e 300 --walk-forward   # Walk-forward diagnostic (per-fold IS-opt -> OOS)
+python3 optimize_put_alpha.py -e all --select-by-oos  # SELECT by mean OOS across purged folds
 python3 optimize_put_alpha.py -e 300 --select-by-oos --expanding-pct  # Adaptive expanding-window percentiles
-python alpha_model_ml.py -e all              # Train Phase 2 LightGBM regime models (monotone+bagged+isotonic)
+python alpha_model_ml.py -e all              # Train Phase 2 LightGBM regime models
 python alpha_model_hybrid.py -e 300          # Phase 3 rule-anchored hybrid AUC report
-python validate_alpha_pnl.py -e all --phase 1 --cadence cycle  # Put P&L validation, Phase 1, cycle cadence
+python validate_alpha_pnl.py -e all --phase 1 --cadence cycle  # Put P&L validation, Phase 1
 python validate_alpha_pnl.py -e 300 --phase 2 --cadence cycle  # Put P&L validation, Phase 2 (ML)
 python validate_alpha_pnl.py -e 300 --phase 3 --cadence cycle  # Put P&L validation, Phase 3 (hybrid)
-python validate_alpha_pnl.py -e 300 --phase 1 --cadence daily  # Daily-cadence (needs TODO 4)
-python compare_alpha_phases.py               # Cross-phase comparison → backtest/alpha_phase_comparison.md
-python day-model/gating_model.py -e all -t 20 --jobs 5   # Train big-move gating models (3 variants × 3 selectors, ~100s)
-python day-model/evaluate_gating.py                     # Compile gating winner + WF PR-AUC grid report
-python -m daytrade.calibrate --all-modes --sweep-gated   # Fast full sweep: 3 modes × 2 gated in one pool (~45s, was ~6min)
+python validate_alpha_pnl.py -e 300 --phase 1 --cadence daily  # Daily-cadence validation
+python compare_alpha_phases.py               # Cross-phase comparison -> backtest/alpha_phase_comparison.md
+python day-model/gating_model.py -e all -t 20 --jobs 5   # Train gating models (3 variants x 3 selectors)
+python day-model/evaluate_gating.py                     # Compile gating winner + WF PR-AUC report
+python -m daytrade.calibrate --all-modes --sweep-gated   # Full sweep: 3 modes x 2 gated in one pool
 python -m daytrade.deploy                                # Mixed-mode deploy (auto-picks +gated per side)
-python -m daytrade.gating_only                           # Gate-only diagnostic backtest (NOT for deployment)
+python -m daytrade.gating_only                           # Gate-only diagnostic backtest
 ```
 
 ## Project Structure
@@ -76,7 +76,7 @@ data/                          # Parquet files
 backtest_engine.py                # Core backtest engine
 backtest_strategies.py            # CallStrategy & PutStrategy definitions
 backtest_covered_call.py          # Covered call script
-backtest_put.py                   # Daily protective put script (new 4-regime)
+backtest_put.py                   # Daily protective put script
 backtest_put_old.py               # Cycle-centric put script (old)
 alpha_model.py                 # 4-Type Decision Matrix indicators & scoring (Phase 1)
 optimize_put_alpha.py          # Weight/horizon optimizer (OOS-select + IS objective)
@@ -90,83 +90,71 @@ day-model/                     # Day-Model PM session return predictor
 ├── REPORT.md                  # Comprehensive PM return prediction report
 ├── AGENTS.md                  # Feature expansion and workflow guide
 ├── build_features.py          # Early-bar + day-level feature engineering (130 features, local caching)
-├── train_model.py             # Optuna-tuned linear model training & feature selection (Phase 2: stability + tail-IC fixes)
-├── feature_select.py          # Stability + LightGBM-importance selectors (shared by gating model)
-├── gating_model.py            # Big-move gating classifier (3 variants × 3 selectors, auto-winner)
+├── train_model.py             # Optuna-tuned linear model training & feature selection
+├── feature_select.py          # Stability + LightGBM-importance selectors
+├── gating_model.py            # Big-move gating classifier
 ├── evaluate_gating.py         # Compile gating winner table + WF PR-AUC grid report
 └── generate_report.py         # Report markdown generator
-daytrade/                      # Frozen-Linear Intraday Alpha Strategy (v4: walk-forward calibrated gated mixed-mode)
-├── AGENTS.md                  # Strategy details, parameters, and developer guide
-├── REPORT.md                  # Calibration and performance report (with mode comparison table)
+daytrade/                      # Frozen-Linear Intraday Alpha Strategy
+├── AGENTS.md                  # Strategy details, parameters, guide
+├── REPORT.md                  # Calibration and performance report
 ├── improvement_plan.md        # Dual-model research findings & v2 results
-├── GATING_ONLY_REPORT.md      # Gate-only vs gated-daytrade comparison (+9.08 vs +39.96 WF pooled)
+├── GATING_ONLY_REPORT.md      # Gate-only vs gated-daytrade comparison
 ├── __init__.py                # Strategy parameters and paths
 ├── scores.py                  # Frozen score compute + IC verification
-├── rules.py                   # expanding_pct, expanding_pct_masked, expanding_pct_rank signal rules (single/hybrid/dual modes)
-├── backtest.py                # Daily 5m intraday simulator (gated= post-hoc veto support)
-├── calibrate.py               # Per-side threshold optimizer (--mode, --gated/--sweep-gated)
-├── deploy.py                  # Phase 4: per-side best-of-mode deployment (picks best mode + gated per ETF × side)
-├── gating_loader.py           # Loads canonical gating artifacts → boolean fire mask per (etf, side)
-├── gating_only.py             # Gate-only standalone diagnostic backtest (NOT for deployment)
-└── report.py                  # Report generator (supports mode="mixed", gated flag)
+├── rules.py                   # Signal rules (single/hybrid/dual modes)
+├── backtest.py                # Daily 5m intraday simulator
+├── calibrate.py               # Per-side threshold optimizer
+├── deploy.py                  # Phase 4 best-of-mode deployment
+├── gating_loader.py           # Loads gating artifacts -> boolean fire mask
+├── gating_only.py             # Gate-only standalone diagnostic backtest
+└── report.py                  # Report generator
 ```
 
-### Day-Model Caching & Features (New)
-- **Index-Based Signals**: Features and technical indicators are calculated using daily and intraday Index data (`000016.XSHG`, `000300.XSHG`, `000905.XSHG`, `000688.XSHG`, `399006.XSHE`) to eliminate look-ahead bias and accelerate computation. Trade entry, exit, and target `trade_return` continue to use ETF prices to accurately reflect P&L performance.
-- **Data Caching**: Ricequant 3rd-party data (Securities Margin, Capital Flow, Northbound Connect Quota, and VIX indices) is cached locally to `data/securities_margin.parquet`, `data/capital_flow.parquet`, `data/stock_connect_quota.parquet`, and `data/rq_vix.parquet` to prevent slow network calls and minimize API quota usage.
-- **130 Features**: Expanded feature space includes 48 early-bar intraday features, 60 day-level features (including technical indicators, 3rd party margin/flow, and 8 option-derived factors such as `iv`, `vix`, `vix_iv_spread`, etc.), and 22 yesterday's features (shifted by 1 day to prevent leakage).
-- **Look-Ahead Bias Correction**: Normalizing early-morning volume features using a rolling 20-day historical daily volume shifted by 1 day (i.e. expected bar volume = `yesterday_rolling_20d_daily_volume / 48`) instead of the current day's full volume, ensuring strict chronological boundaries and eliminating look-ahead leakage.
-- **VIX/IV Spread Properties**:
-  - `vix_iv_spread = vix - iv`. Proxy for variance risk premium / option skew.
-  - VIX data starts late for some ETFs (e.g. 300ETF in 2019, 500ETF in 2022). Missing values backfilled using `iv + mean_bias`. On backfilled dates, the spread is constant and standardizes to `0.0`.
-  - 50ETF VIX is 100% real (no backfilling). Highly selected, confirming real predictive signal.
-  - Strong positive correlation with `pm_return` historically (~+0.07), but flipped to negative in 2025/2026.
+### Day-Model Features & Caching
+- **Index Signals**: Technical indicators use daily/intraday Index data (`000016.XSHG`, `000300.XSHG`, `000905.XSHG`, `000688.XSHG`, `399006.XSHE`) to prevent look-ahead bias. Execution uses ETF prices.
+- **Local Cache**: Ricequant data (Margin, Capital Flow, Northbound Quota, VIX) cached in `data/*.parquet`.
+- **130 Features**: 48 early-bar intraday, 60 day-level, 22 prior-day features (shifted 1 day).
+- **Volume Normalization**: Early-morning volume normalized by rolling 20-day daily volume shifted by 1 day (`yesterday_rolling_20d_daily_volume / 48`).
+- **VIX/IV Spread**: `vix_iv_spread = vix - iv`. Missing VIX backfilled via `iv + mean_bias`.
 
-
-
-> Also: `backtest/alpha_put_models.json` (Phase 1 weights+OOS), `backtest/alpha_ml_models/` (Phase 2 bags+manifests), `backtest/validate_pnl_phase{1,2,3}.json`, `backtest/alpha_phase_comparison.md`.
+> Artifacts: `backtest/alpha_put_models.json`, `backtest/alpha_ml_models/`, `backtest/validate_pnl_phase{1,2,3}.json`, `backtest/alpha_phase_comparison.md`.
 
 ## Architecture
 
-### Data Rules (Critical)
+### Data Rules
 - **Option strikes/multipliers**: Use daily-correct values from `_historical_prices.parquet`. Do NOT overwrite with instruments metadata.
-- **ETF daily prices**: Option matching & settlement must use unadjusted prices (`close`, `open`). Avoid mismatch.
-- **Technical indicators & forward returns**: Use post-adjusted prices (`close_adj`, `open_adj`) to avoid split artifacts.
-- **`prev_close` calculation**: Shift `close_adj` (`df['prev_close'] = df['close_adj'].shift(1)`) before taking `.tail()`.
-- **ATM 30d IV Speedup**: Use pre-grouped dictionaries to bypass slow boolean filters.
+- **ETF daily prices**: Option matching & settlement use unadjusted prices (`close`, `open`).
+- **Technical indicators & forward returns**: Use post-adjusted prices (`close_adj`, `open_adj`).
+- **`prev_close` calculation**: Shift `close_adj` (`df['prev_close'] = df['close_adj'].shift(1)`).
+- **ATM 30d IV Speedup**: Pre-grouped dictionaries bypass slow filters.
 
 ### Call Strategy
 - Cycles: Monthly expiry. Enter first trading day after expiry.
 - IV Rank (252-day): High IVR -> wider OTM offset.
-- Dynamic Alpha Mode (`--alpha`): Signal strong -> Combo A (OTM2+OTM3). Signal weak -> Combo B (OTM4). `roc20` protect against sharp rally.
+- Dynamic Alpha Mode (`--alpha`): Signal strong -> Combo A (OTM2+OTM3). Signal weak -> Combo B (OTM4). `roc20` protects against sharp rally.
 
 ### Put Strategy (Selective Hedge)
-- Cadence: Daily indicator scanning. Mid-cycle entry, holds to expiry.
+- Cadence: Daily indicator scanning. Mid-cycle entry, hold to expiry.
 - Trigger: Dynamic alpha threshold or daily static filter.
 - OTM Level: Level 1 (OTM1/ATM) for Fall regimes (`reg1`/`reg2`), Level 2 (OTM2) for Crash regimes (`reg3`/`reg4`).
-- Level defaults: optimal OTM levels per ETF set by sweep optimizer.
 
-### Limit Entry Models (Black-Scholes Mapping)
+### Limit Entry Models
 - **Calls (`--model-offset`)**: Predict open-to-high P10 (bagged LightGBM + vol-regime calibration). Set sell limit order.
-- **Puts (`--limit-entry`)**: Predict max ETF high return via daily model. Solve open option IV. Map to target option limit price. Apply OTM cushion.
+- **Puts (`--limit-entry`)**: Predict max ETF high return via daily model. Solve open option IV. Map to target option limit price.
 
 ### Put Alpha Model (4-Type Decision Matrix)
 - 4 regimes: ST/MT Fall, ST/MT Crash.
-- Rolling 252-day percentile rank: Normalizes indicators to `[0.0, 1.0]` (no look-ahead). `--expanding-pct` switches to adaptive expanding-window percentiles.
-- Score calculation: Weighted sum of active normalized indicators. Rescale weights if indicator missing.
-- **Regularization**: Capped maximum weight (`--max-weight 0.5`) to prevent single-indicator dominance.
-- **Dynamic Threshold**: Trigger threshold adjusted daily based on option cost: $T_t = T_{base} + \gamma \times (\text{iv\_vol\_ratio}_t - 1.0)$.
-- **OOS Validation**: Expanding window walk-forward validation (`--walk-forward`) checks chronological test year stability.
-- **OOS Selection** (recommended): `--select-by-oos` picks final config by mean OOS metric across **purged** expanding folds (drops train rows whose forward target leaks into test), not best in-sample.
-- Config stored in `backtest/alpha_put_models.json`.
+- Rolling 252-day percentile rank: Normalizes indicators to `[0.0, 1.0]`. `--expanding-pct` switches to adaptive expanding window.
+- Score: Weighted sum of active normalized indicators. Capped maximum weight (`--max-weight 0.5`).
+- Dynamic Threshold: $T_t = T_{base} + \gamma \times (\text{iv\_vol\_ratio}_t - 1.0)$.
+- Selection: `--select-by-oos` picks config by mean OOS metric across purged expanding folds. Saved in `backtest/alpha_put_models.json`.
 
-### Put Alpha Model — 3 Phases (OOS-validated)
-**Phase 1** (`alpha_model.py` + `optimize_put_alpha.py`): linear weighted score. New composite objective (Spearman rank + log placement + complexity penalty). 18 normalized indicators incl. ATR ratio, vol-of-vol, range expansion, vol term structure, RSI divergence.
-**Phase 2** (`alpha_model_ml.py`): per-regime LightGBM binary classifier (crash→`worst_dd<=-0.05`, fall→`fwd_ret<0`). Monotone constraints (+1 all features), 5-bag bootstrap ensemble, isotonic calibration, walk-forward expanding training. Outputs calibrated probability; threshold = avg per-fold train p85.
-**Phase 3** (`alpha_model_hybrid.py`): logistic stack of [Phase1 rank, Phase2 prob, FINDINGS rule flags]. L2-reg (C=0.5), walk-forward. Rule anchoring = anti-overfit.
-**Validator** (`validate_alpha_pnl.py`): real put option P&L per trigger vs 3 baselines (no-hedge / all-hedge / static filter). `--cadence cycle` (fair, monthly) or `daily` (needs TODO 4). Deployable = net P&L>0 AND Sharpe>0 AND per-trig>0 AND beats static filter.
-**Result**: 4 of 12 ETF×regime cells deployable. See `backtest/alpha_phase_comparison.md`. Run `python compare_alpha_phases.py` to regenerate.
-
+### Put Alpha Model — 3 Phases
+- **Phase 1** (`alpha_model.py` + `optimize_put_alpha.py`): Linear weighted score. Composite objective (Spearman rank + log placement + complexity penalty).
+- **Phase 2** (`alpha_model_ml.py`): LightGBM binary classifier per regime. Monotone constraints, 5-bag bootstrap ensemble, isotonic calibration, walk-forward training.
+- **Phase 3** (`alpha_model_hybrid.py`): Logistic stack of Phase 1 rank, Phase 2 prob, FINDINGS rule flags.
+- **Validator** (`validate_alpha_pnl.py`): Real put option P&L vs 3 baselines. `deployable = net_pnl > 0 AND Sharpe > 0 AND per_trig > 0 AND beats_static`.
 
 ### Scoring
 - **Call filters**: 6-component score (Sharpe 20%, P&L 15%, MaxDD 15%, WinRate 15%, Placement 15%, FilterLift 20%).
@@ -197,15 +185,14 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy (v4: walk
 - `RISK_FREE = 0.02`
 
 ## Data Dependencies
-- `rqdatac` needed. Run `python3 update_data.py`, `python3 download_5m_data.py`, `python3 download_1m_data.py`, and `python3 download_index_data.py`.
+- Requires `rqdatac`. Run `python3 update_data.py`, `python3 download_5m_data.py`, `python3 download_1m_data.py`, `python3 download_index_data.py`.
 
 ## Research Notes
-- **500ETF**: Volatility too high (~26.8%). Sharp rallies cause major assignment loss. Raising RSI threshold to 70 helps slightly. Detailed in [RESEARCH_500ETF.md](file:///home/hallo/Documents/option-longterm/RESEARCH_500ETF.md).
-- **Tail Risk (Puts)**: Vol acceleration + negative skewness predict downside. Detailed in [FINDINGS.md](file:///home/hallo/Documents/option-longterm/FINDINGS.md).
-- **Day Trading**: [day-trading/AGENTS.md](file:///home/hallo/Documents/option-longterm/day-trading/AGENTS.md) [day-trading/REPORT.md](file:///home/hallo/Documents/option-longterm/day-trading/REPORT.md)
-- **Daytrade v2**: Mixed-mode deployment (single/hybrid/dual per side) with baseline-guided safety stops improves total OOS Sharpe from +28.60 (single-only) to **+37.47** (Δ = +8.86), while ensuring emergency-level stop-losses (3.0%-5.0% or 3.5x ATR) are active on all trades. See [daytrade/improvement_plan.md](file:///home/hallo/Documents/option-longterm/daytrade/improvement_plan.md) §8.
-- **Daytrade v5 (Structural Stop Loss & Dynamic Take-Profit Exit Bar)**: Added structural opening support/resistance stop loss (`min(low)` for long, `max(high)` for short on bars `0..decision_bar`) with ATR/pct cushions (`struct`, `struct_atr`, `struct_pct`) evaluated alongside legacy fixed % and ATR stops in Stage 2 walk-forward calibration. Added Stage 3 in-sample exit bar sweeping (bars 24 to 46, 13:05 to 14:55). Evaluated out-of-sample across yearly expanding walk-forward folds. Total deployed pooled WF Sharpe increased from **+39.96** to **+42.13** (+2.17 boost).
+- **500ETF**: High volatility (~26.8%). Sharp rallies trigger assignment loss. Raising RSI threshold to 70 helps. Details in [RESEARCH_500ETF.md](file:///home/hallo/Documents/option-longterm/RESEARCH_500ETF.md).
+- **Tail Risk (Puts)**: Vol acceleration + negative skewness predict downside. Details in [FINDINGS.md](file:///home/hallo/Documents/option-longterm/FINDINGS.md).
+- **Day Trading**: See [day-trading/AGENTS.md](file:///home/hallo/Documents/option-longterm/day-trading/AGENTS.md) and [day-trading/REPORT.md](file:///home/hallo/Documents/option-longterm/day-trading/REPORT.md).
+- **Daytrade v2**: Mixed-mode deployment with baseline-guided safety stops improves total OOS Sharpe from +28.60 to +37.47. Details in [daytrade/improvement_plan.md](file:///home/hallo/Documents/option-longterm/daytrade/improvement_plan.md).
+- **Daytrade v5**: Added structural opening support/resistance stop loss and dynamic take-profit exit bar sweeping. Deployed pooled WF Sharpe increased to +42.13.
 
 ## TODO
 - [ ] Improve put buy strategy: [put_improvement_plan.md](file:///home/hallo/Documents/option-longterm/put_improvement_plan.md)
-- [ ] TBD
