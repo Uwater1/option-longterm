@@ -93,8 +93,18 @@ def load_features(etf: str) -> pd.DataFrame:
     ``trade_return`` = log(close[EXIT_BAR] / open[decision_bar+1]) mirrors the
     actual daytrade P&L. ``pm_return`` retained for diagnostic IC checks vs the
     old baseline.
+
+    Memoised: report/calibrate call this many times per ETF.
     """
-    return pd.read_parquet(DATA_DIR / f"features_{etf}.parquet")
+    cached = _FEATURES_CACHE.get(etf)
+    if cached is not None:
+        return cached
+    df = pd.read_parquet(DATA_DIR / f"features_{etf}.parquet")
+    _FEATURES_CACHE[etf] = df
+    return df
+
+
+_FEATURES_CACHE = {}
 
 
 _SCORES_CACHE = {}

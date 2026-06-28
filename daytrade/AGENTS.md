@@ -57,11 +57,12 @@ python -m daytrade.report                                    # generate report w
 
 # Gating-integrated pipeline (recommended; +10.13 total OOS Sharpe over ungated)
 python day-model/gating_model.py -e all -t 20 --jobs 5      # train gating models (all variants×selectors, ~100s)
-python -m daytrade.calibrate --mode single --sweep-gated    # calibrate ungated + gated for all 3 modes
-python -m daytrade.calibrate --mode hybrid --sweep-gated
-python -m daytrade.calibrate --mode dual   --sweep-gated
+python -m daytrade.calibrate --all-modes --sweep-gated      # ONE-STEP full sweep: all 3 modes × 2 gated = 6 combos in one pool (~45s, fastest)
 python -m daytrade.deploy                                    # mixed-mode picker now treats {mode}+gated as candidates
 python -m daytrade.report
+
+# (Slower legacy alternative — one pool per mode:)
+# python -m daytrade.calibrate --mode single --sweep-gated   # ×3 modes
 
 # Gating-only standalone backtest (gate as sole signal — diagnostic, NOT for deployment)
 python -m daytrade.gating_only                              # all ETFs, 4% stop, conflict=flat
@@ -258,11 +259,31 @@ reported window. The pooled WF number is the honest estimate.
 
 ### Computational Cost
 
-Per (ETF, side, mode, gated): 36 (thr, conv) × 7 stops × 6 folds ≈ 1,500
-backtests. With existing NumPy-vectorised `backtest_long_short` and
-multiprocessing, full sweep (5 ETFs × 2 sides × 6 mode/gated combos) runs in
-~6 minutes. `calibration_*.json` files now contain per-fold config tables
-(heavier but still <100 KB each).
+Per (ETF, side, mode, gated): 36 (thr, conv) × ~14 stops × ~12 exit bars × 6
+folds ≈ 36k backtests per side. Three layers of memoisation make this cheap:
+
+1. `_DAY_TABLE_CACHE[etf]` — dense NumPy bar slices built once per ETF
+   (replaces per-day Python loop with vectorised row-wise ops).
+2. `_SIGNALS_CACHE` / `_BT_CACHE` — signal frames and trade DataFrames are
+   memoised by their full parameter tuple; repeated (thr, conv, stop,
+   exit_bar) combos within a process are O(1) dict lookups.
+3. `calibrate_full_sweep` (CLI: `--all-modes --sweep-gated`) runs all 6
+   (mode × gated) combos in ONE `ProcessPoolExecutor`, so workers persist
+   across combos and per-ETF caches amortise.
+
+Full sweep timings (5 ETFs × 6 mode/gated combos, 5-worker pool):
+
+| Command                                              | Wall time |
+|---|---|
+| `--mode single --sweep-gated` × 3 (legacy 6-call)   | ~54 s     |
+| `--all-modes --sweep-gated` (single pool, **fast**) | **~45 s** |
+| `python -m daytrade.deploy`                          | <0.1 s    |
+| `python -m daytrade.report` (cold matplotlib)        | ~7-9 s    |
+
+Previous baseline (NumPy-vectorised `backtest_long_short` + multiprocessing
+but no memoisation): ~6 minutes for the full sweep. The memoisation +
+vectorised trade sim delivered ~7-8× speedup; collapsing 6 pool invocations
+into one gave an additional ~15 %.
 
 ---
 
@@ -499,7 +520,7 @@ Ordered roughly by expected value / implementation cost.
 - [ ] `python -m daytrade.scores` — verify IC positive for all ETF×side dual models
 - [ ] `python day-model/gating_model.py -e all -t 20 --jobs 5` — gating models trained, all 10 cells deployable (WF AUC > 0.53, PR-AUC > base)
 - [ ] `python day-model/evaluate_gating.py` — GATING_REPORT.md written, winner table sane
-- [ ] `python -m daytrade.calibrate --mode single --sweep-gated` — WF ungated + gated configs saved (per-fold tables in JSON)
+- [ ] `python -m daytrade.calibrate --mode single --sweep-gated` — WF ungated + gated configs saved (per-fold tables in JSON). **Or use `--all-modes --sweep-gated` for one-shot 6-combo sweep (faster, see §3).**
 - [ ] `python -m daytrade.calibrate --mode hybrid --sweep-gated` — WF hybrid ungated + gated saved
 - [ ] `python -m daytrade.calibrate --mode dual --sweep-gated` — WF dual ungated + gated saved
 - [ ] `python -m daytrade.deploy` — mixed-mode calibration.json written, picks max pooled WF Sharpe per side
@@ -509,3 +530,54 @@ Ordered roughly by expected value / implementation cost.
 - [ ] Cluster confusion: long_model trades ≥30% Rally days, short_model ≥30% Selloff days (sanity that signal direction aligns with discovered day-types)
 - [ ] Total deployed pooled WF Sharpe ≥ +30 (current: **+39.96**; was +41.94 single-split — the ~2 point drop is the selection bias removed, not a regression)
 - [ ] No side flunks the majority-fold eligibility gate unexpectedly (if one does, investigate regime drift before re-enabling)
+
+---
+
+## 12. In-Memory Cache Invalidation Cheat Sheet
+
+The daytrade pipeline uses **process-local dict caches** for hot-path memoisation
+(see §3 "Computational Cost"). CLI invocations (`python -m daytrade.*`) always
+start cold — caches only matter within a single Python process (e.g. Jupyter
+notebook, REPL session, or a long-lived test runner).
+
+**If you edit code or swap data files inside an active Python session, clear
+the corresponding cache(s) to avoid stale results.** Restarting the kernel is
+the nuclear option; the table below is the surgical option.
+
+| Cache (module-level dict) | File | Key | Clear when … |
+|---|---|---|---|
+| `_FEATURES_CACHE` | `scores.py` | etf | `day-model/data/features_{ETF}.parquet` regenerated, OR `load_features` edited |
+| `_SCORES_CACHE` | `scores.py` | (etf, side, dropna) | `_FEATURES_CACHE` cleared, OR `day-model/models/linear_{ETF}[_side].joblib` / `scaler_{ETF}[_side].joblib` retrained, OR `compute_scores` math edited |
+| `_5M_CACHE` | `backtest.py` | etf | `data/{ETF}_5m.parquet` regenerated (via `download_5m_data.py`) |
+| `_GROUPED_BARS_CACHE` | `backtest.py` | etf | Same as `_5M_CACHE` (derived) |
+| `_ATR_CACHE` | `backtest.py` | etf | Same as `_5M_CACHE` OR `compute_daily_atr14` window/math edited |
+| `_DAY_TABLE_CACHE` | `backtest.py` | etf | Any of `_5M_CACHE` / `_ATR_CACHE` cleared, OR `DECISION_BAR[etf]` / `_MAX_EXIT_BAR_SUPPORTED` edited, OR `_build_day_table` slice logic edited |
+| `_MASKED_PCT_CACHE` | `rules.py` | (series.values.tobytes(), q, min_periods) | `_SCORES_CACHE` cleared OR `expanding_pct_masked` math edited |
+| `_RANK_CACHE` | `rules.py` | (series.values.tobytes(), min_periods) | `_SCORES_CACHE` cleared OR `expanding_pct_rank` math edited |
+| `_SIGNALS_CACHE` | `rules.py` | (etf, thr, conv, min_periods, mode, long_enabled, short_enabled) | Any signal logic in `rules.py` edited (`_signals_single` / `_signals_hybrid` / `_signals_dual` / `get_long_short_signals`) OR any upstream cache (`_SCORES_CACHE`, `_MASKED_PCT_CACHE`, `_RANK_CACHE`) cleared |
+| `_BT_CACHE` | `backtest.py` | (etf, thr, conv, cost_bps, stops, exit_bar, mode, gated, min_periods) | `backtest_long_short` / `_simulate_trades_vectorized` / `_summarize_long_short` logic edited, OR any upstream cache (`_SIGNALS_CACHE`, `_DAY_TABLE_CACHE`, `_ATR_CACHE`) cleared, OR `DEFAULT_COST_BPS` / `EXIT_BAR` / `DECISION_BAR` changed |
+| `_FOLDS_CACHE` | `report.py` | etf | `_FEATURES_CACHE` cleared OR fold-schedule params in `walkforward.py` (`FIRST_TEST_YEAR_DEFAULT`, `MIN_TRAIN_DAYS_DEFAULT`, `MIN_TEST_DAYS_DEFAULT`, `PURGE_DAYS_DEFAULT`) edited |
+
+### Clear-all snippet (Jupyter / REPL)
+
+```python
+from daytrade.backtest import (
+    _5M_CACHE, _GROUPED_BARS_CACHE, _ATR_CACHE, _DAY_TABLE_CACHE, _BT_CACHE,
+)
+from daytrade.rules import _SIGNALS_CACHE, _MASKED_PCT_CACHE, _RANK_CACHE
+from daytrade.scores import _SCORES_CACHE, _FEATURES_CACHE
+from daytrade.report import _FOLDS_CACHE
+for c in (_5M_CACHE, _GROUPED_BARS_CACHE, _ATR_CACHE, _DAY_TABLE_CACHE, _BT_CACHE,
+          _SIGNALS_CACHE, _MASKED_PCT_CACHE, _RANK_CACHE,
+          _SCORES_CACHE, _FEATURES_CACHE, _FOLDS_CACHE):
+    c.clear()
+```
+
+### Cross-process note for `calibrate_full_sweep`
+
+`ProcessPoolExecutor` workers are forked from the parent on Linux and inherit
+the parent's caches at fork time (read-only — worker writes do not propagate
+back). `_preload_etf_caches()` populates `_DAY_TABLE_CACHE` in the parent
+before the pool starts so every worker starts warm for the heavy bar-slice
+table. Signal/backtest caches still rebuild inside each worker (intentional —
+worker-local writes are isolated).

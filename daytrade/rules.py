@@ -141,6 +141,9 @@ def expanding_pct_rank(series: pd.Series, min_periods: int = 60) -> pd.Series:
 # ---------------------------------------------------------------------------
 # Main signal generator (single-mode default, hybrid optional)
 # ---------------------------------------------------------------------------
+_SIGNALS_CACHE = {}
+
+
 def get_long_short_signals(
     etf: str,
     long_threshold_pct: float = 70.0,
@@ -153,6 +156,10 @@ def get_long_short_signals(
     mode: str = "single",
 ) -> pd.DataFrame:
     """Return per-day signal frame with per-side expanding-percentile thresholds.
+
+    Memoised: calibration re-runs the same (etf, thr, conv, mode) combos many
+    times across stop/exit_bar sweeps, so caching the signal frame is a big
+    win. Callers treat the result as read-only (they copy before mutating).
 
     Parameters
     ----------
@@ -179,24 +186,31 @@ def get_long_short_signals(
         long_threshold, long_conviction_thr, long_margin,
         short_threshold, short_conviction_thr, short_margin.
     """
+    key = (etf, float(long_threshold_pct), float(long_conviction_pct),
+           float(short_threshold_pct), float(short_conviction_pct),
+           int(min_periods), bool(long_enabled), bool(short_enabled), mode)
+    cached = _SIGNALS_CACHE.get(key)
+    if cached is not None:
+        return cached
+
     score = compute_scores(etf, "single", dropna=True)
 
     if mode == "single":
-        return _signals_single(
+        out = _signals_single(
             etf, score,
             long_threshold_pct, long_conviction_pct,
             short_threshold_pct, short_conviction_pct,
             min_periods, long_enabled, short_enabled,
         )
     elif mode == "hybrid":
-        return _signals_hybrid(
+        out = _signals_hybrid(
             etf, score,
             long_threshold_pct, long_conviction_pct,
             short_threshold_pct, short_conviction_pct,
             min_periods, long_enabled, short_enabled,
         )
     elif mode == "dual":
-        return _signals_dual(
+        out = _signals_dual(
             etf,
             long_threshold_pct, long_conviction_pct,
             short_threshold_pct, short_conviction_pct,
@@ -204,6 +218,9 @@ def get_long_short_signals(
         )
     else:
         raise ValueError(f"mode must be 'single', 'hybrid', or 'dual', got {mode!r}")
+
+    _SIGNALS_CACHE[key] = out
+    return out
 
 
 def _signals_single(

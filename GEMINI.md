@@ -51,7 +51,7 @@ python validate_alpha_pnl.py -e 300 --phase 1 --cadence daily  # Daily-cadence (
 python compare_alpha_phases.py               # Cross-phase comparison → backtest/alpha_phase_comparison.md
 python day-model/gating_model.py -e all -t 20 --jobs 5   # Train big-move gating models (3 variants × 3 selectors, ~100s)
 python day-model/evaluate_gating.py                     # Compile gating winner + WF PR-AUC grid report
-python -m daytrade.calibrate --mode single --sweep-gated # Gated daytrade calibration (×3 modes: single/hybrid/dual)
+python -m daytrade.calibrate --all-modes --sweep-gated   # Fast full sweep: 3 modes × 2 gated in one pool (~45s, was ~6min)
 python -m daytrade.deploy                                # Mixed-mode deploy (auto-picks +gated per side)
 python -m daytrade.gating_only                           # Gate-only diagnostic backtest (NOT for deployment)
 ```
@@ -91,18 +91,24 @@ day-model/                     # Day-Model PM session return predictor
 ├── AGENTS.md                  # Feature expansion and workflow guide
 ├── build_features.py          # Early-bar + day-level feature engineering (130 features, local caching)
 ├── train_model.py             # Optuna-tuned linear model training & feature selection (Phase 2: stability + tail-IC fixes)
+├── feature_select.py          # Stability + LightGBM-importance selectors (shared by gating model)
+├── gating_model.py            # Big-move gating classifier (3 variants × 3 selectors, auto-winner)
+├── evaluate_gating.py         # Compile gating winner table + WF PR-AUC grid report
 └── generate_report.py         # Report markdown generator
-daytrade/                      # Frozen-Linear Intraday Alpha Strategy (v2: mixed-mode deployment)
+daytrade/                      # Frozen-Linear Intraday Alpha Strategy (v4: walk-forward calibrated gated mixed-mode)
 ├── AGENTS.md                  # Strategy details, parameters, and developer guide
 ├── REPORT.md                  # Calibration and performance report (with mode comparison table)
 ├── improvement_plan.md        # Dual-model research findings & v2 results
+├── GATING_ONLY_REPORT.md      # Gate-only vs gated-daytrade comparison (+9.08 vs +39.96 WF pooled)
 ├── __init__.py                # Strategy parameters and paths
 ├── scores.py                  # Frozen score compute + IC verification
 ├── rules.py                   # expanding_pct, expanding_pct_masked, expanding_pct_rank signal rules (single/hybrid/dual modes)
-├── backtest.py                # Daily 5m intraday simulator
-├── calibrate.py               # Independent per-side threshold optimizer (--mode single|hybrid|dual)
-├── deploy.py                  # Phase 4: per-side best-of-mode deployment (picks best mode per ETF × side)
-└── report.py                  # Report generator (supports mode="mixed")
+├── backtest.py                # Daily 5m intraday simulator (gated= post-hoc veto support)
+├── calibrate.py               # Per-side threshold optimizer (--mode, --gated/--sweep-gated)
+├── deploy.py                  # Phase 4: per-side best-of-mode deployment (picks best mode + gated per ETF × side)
+├── gating_loader.py           # Loads canonical gating artifacts → boolean fire mask per (etf, side)
+├── gating_only.py             # Gate-only standalone diagnostic backtest (NOT for deployment)
+└── report.py                  # Report generator (supports mode="mixed", gated flag)
 ```
 
 ### Day-Model Caching & Features (New)
@@ -195,6 +201,9 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy (v2: mixe
 
 ## Research Notes
 - **500ETF**: Volatility too high (~26.8%). Sharp rallies cause major assignment loss. Raising RSI threshold to 70 helps slightly. Detailed in [RESEARCH_500ETF.md](file:///home/hallo/Documents/option-longterm/RESEARCH_500ETF.md).
+- **Tail Risk (Puts)**: Vol acceleration + negative skewness predict downside. Detailed in [FINDINGS.md](file:///home/hallo/Documents/option-longterm/FINDINGS.md).
+- **Day Trading**: [day-trading/AGENTS.md](file:///home/hallo/Documents/option-longterm/day-trading/AGENTS.md) [day-trading/REPORT.md](file:///home/hallo/Documents/option-longterm/day-trading/REPORT.md)
+- **Daytrade v2**: Mixed-mode deployment (single/hybrid/dual per side) with baseline-guided safety stops improves total OOS Sharpe from +28.60 (single-only) to **+37.47** (Δ = +8.86), while ensuring emergency-level stop-losses (3.0%-5.0% or 3.5x ATR) are active on all trades. See [daytrade/improvement_plan.md](file:///home/hallo/Documents/option-longterm/daytrade/improvement_plan.md) §8.
 - **Daytrade v5 (Structural Stop Loss & Dynamic Take-Profit Exit Bar)**: Added structural opening support/resistance stop loss (`min(low)` for long, `max(high)` for short on bars `0..decision_bar`) with ATR/pct cushions (`struct`, `struct_atr`, `struct_pct`) evaluated alongside legacy fixed % and ATR stops in Stage 2 walk-forward calibration. Added Stage 3 in-sample exit bar sweeping (bars 24 to 46, 13:05 to 14:55). Evaluated out-of-sample across yearly expanding walk-forward folds. Total deployed pooled WF Sharpe increased from **+39.96** to **+42.13** (+2.17 boost).
 
 ## TODO

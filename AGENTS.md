@@ -51,7 +51,7 @@ python validate_alpha_pnl.py -e 300 --phase 1 --cadence daily  # Daily-cadence (
 python compare_alpha_phases.py               # Cross-phase comparison → backtest/alpha_phase_comparison.md
 python day-model/gating_model.py -e all -t 20 --jobs 5   # Train big-move gating models (3 variants × 3 selectors, ~100s)
 python day-model/evaluate_gating.py                     # Compile gating winner + WF PR-AUC grid report
-python -m daytrade.calibrate --mode single --sweep-gated # Gated daytrade calibration (×3 modes: single/hybrid/dual)
+python -m daytrade.calibrate --all-modes --sweep-gated   # Fast full sweep: 3 modes × 2 gated in one pool (~45s, was ~6min)
 python -m daytrade.deploy                                # Mixed-mode deploy (auto-picks +gated per side)
 python -m daytrade.gating_only                           # Gate-only diagnostic backtest (NOT for deployment)
 ```
