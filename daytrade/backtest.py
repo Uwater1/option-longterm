@@ -110,6 +110,9 @@ def _day_bars_to_series(
     exit_bar: int,
     direction: int = 0,
     stop_pct: Optional[float] = None,
+    stop_type: Optional[str] = None,
+    stop_val: Optional[float] = None,
+    atr_val: Optional[float] = None,
 ):
     """Extract entry & exit prices from a single day's 48 bars.
 
@@ -134,23 +137,63 @@ def _day_bars_to_series(
 
     exit_type = "target"
 
-    if stop_pct is not None and stop_pct > 0 and direction != 0:
-        if direction > 0:  # long: stop hit when bar low <= stop level
-            stop_level = entry_price * (1.0 - stop_pct)
-            low_arr = day_data["low"]
-            scan = low_arr[entry_idx:exit_bar + 1]
-            hits = np.where(scan <= stop_level)[0]
-            if len(hits) > 0:
-                exit_price = stop_level
-                exit_type = "stop"
-        else:  # short: stop hit when bar high >= stop level
-            stop_level = entry_price * (1.0 + stop_pct)
-            high_arr = day_data["high"]
-            scan = high_arr[entry_idx:exit_bar + 1]
-            hits = np.where(scan >= stop_level)[0]
-            if len(hits) > 0:
-                exit_price = stop_level
-                exit_type = "stop"
+    eff_stop_type = stop_type
+    eff_stop_val = stop_val
+    if eff_stop_type is None and stop_pct is not None and stop_pct > 0:
+        eff_stop_type = "pct"
+        eff_stop_val = stop_pct
+
+    if eff_stop_type is not None and direction != 0:
+        stop_level = None
+        if eff_stop_type == "pct":
+            if direction > 0:
+                stop_level = entry_price * (1.0 - eff_stop_val)
+            else:
+                stop_level = entry_price * (1.0 + eff_stop_val)
+        elif eff_stop_type == "atr":
+            if atr_val is not None and not np.isnan(atr_val):
+                if direction > 0:
+                    stop_level = entry_price - eff_stop_val * atr_val
+                else:
+                    stop_level = entry_price + eff_stop_val * atr_val
+        elif eff_stop_type == "struct":
+            if direction > 0:
+                struct_low = float(np.min(day_data["low"][:entry_idx]))
+                stop_level = min(struct_low, entry_price * 0.999)
+            else:
+                struct_high = float(np.max(day_data["high"][:entry_idx]))
+                stop_level = max(struct_high, entry_price * 1.001)
+        elif eff_stop_type == "struct_atr":
+            if atr_val is not None and not np.isnan(atr_val):
+                if direction > 0:
+                    struct_low = float(np.min(day_data["low"][:entry_idx]))
+                    stop_level = struct_low - eff_stop_val * atr_val
+                else:
+                    struct_high = float(np.max(day_data["high"][:entry_idx]))
+                    stop_level = struct_high + eff_stop_val * atr_val
+        elif eff_stop_type == "struct_pct":
+            if direction > 0:
+                struct_low = float(np.min(day_data["low"][:entry_idx]))
+                stop_level = struct_low * (1.0 - eff_stop_val)
+            else:
+                struct_high = float(np.max(day_data["high"][:entry_idx]))
+                stop_level = struct_high * (1.0 + eff_stop_val)
+
+        if stop_level is not None:
+            if direction > 0:
+                low_arr = day_data["low"]
+                scan = low_arr[entry_idx:exit_bar + 1]
+                hits = np.where(scan <= stop_level)[0]
+                if len(hits) > 0:
+                    exit_price = stop_level
+                    exit_type = "stop"
+            else:
+                high_arr = day_data["high"]
+                scan = high_arr[entry_idx:exit_bar + 1]
+                hits = np.where(scan >= stop_level)[0]
+                if len(hits) > 0:
+                    exit_price = stop_level
+                    exit_type = "stop"
 
     return entry_price, exit_price, exit_type
 
@@ -225,6 +268,9 @@ def backtest_long_short(
     mode: str = "single",
     stop_pct: Optional[float] = None,
     stop_atr_k: Optional[float] = None,
+    stop_type: Optional[str] = None,
+    stop_val: Optional[float] = None,
+    exit_bar: Optional[int] = None,
     gated: bool = False,
 ) -> dict:
     """Run backtest with INDEPENDENT long_model / short_model thresholds.
@@ -234,17 +280,17 @@ def backtest_long_short(
     mode : {"single", "hybrid", "dual"}
         Signal mode passed through to ``get_long_short_signals``.
     stop_pct : float or None
-        Fixed stop-loss as a fraction of entry (e.g. 0.01 = 1%).
-        Mutually exclusive with ``stop_atr_k``.
+        Fixed stop-loss as a fraction of entry (e.g. 0.01 = 1%). Legacy parameter.
     stop_atr_k : float or None
-        ATR-based stop-loss: ``stop = k * ATR14 / entry``.
-        Mutually exclusive with ``stop_pct``.
+        ATR-based stop-loss: ``stop = k * ATR14 / entry``. Legacy parameter.
+    stop_type : str or None
+        Stop loss type: {"pct", "atr", "struct", "struct_atr", "struct_pct"}.
+    stop_val : float or None
+        Stop loss parameter value (e.g. fraction or ATR multiplier or cushion).
+    exit_bar : int or None
+        Custom exit bar index (defaults to EXIT_BAR=41, i.e. 14:30 close).
     gated : bool
-        If True, apply the day-model gating model as a post-hoc veto: long
-        signals are kept only on days the long-gate fires (big-up predicted),
-        short signals only where the short-gate fires (big-down predicted).
-        Days without a gating prediction are kept (no veto). Requires trained
-        canonical artifacts in ``day-model/gating_model/``.
+        If True, apply the day-model gating model as a post-hoc veto filter.
     """
     signals = get_long_short_signals(
         etf,
@@ -268,10 +314,21 @@ def backtest_long_short(
     by_date = get_grouped_bars(etf)
 
     decision_bar = DECISION_BAR[etf]
-    exit_bar = EXIT_BAR
+    eff_exit_bar = exit_bar if exit_bar is not None else EXIT_BAR
 
     # Pre-compute ATR14 series if ATR-based stop is requested
-    atr_series = get_daily_atr14(etf) if stop_atr_k is not None else None
+    eff_stop_type = stop_type
+    eff_stop_val = stop_val
+    if eff_stop_type is None:
+        if stop_atr_k is not None:
+            eff_stop_type = "atr"
+            eff_stop_val = stop_atr_k
+        elif stop_pct is not None:
+            eff_stop_type = "pct"
+            eff_stop_val = stop_pct
+
+    need_atr = eff_stop_type in ("atr", "struct_atr")
+    atr_series = get_daily_atr14(etf) if need_atr else None
 
     rows = []
     for date, row in signals.iterrows():
@@ -281,24 +338,15 @@ def backtest_long_short(
         day = by_date[d]
         direction = int(row["direction"])
 
-        # Resolve effective stop percentage for this date
-        effective_stop = None
-        if stop_atr_k is not None and atr_series is not None:
+        atr_val = None
+        if need_atr and atr_series is not None:
             atr_val = atr_series.get(d)
             if atr_val is None or np.isnan(atr_val):
                 atr_val = atr_series.iloc[:atr_series.index.get_loc(d)].max() if len(atr_series) > 0 else None
-            if atr_val is not None and not np.isnan(atr_val):
-                # Retrieve entry_price directly to avoid calling the stop check logic twice
-                entry_idx = decision_bar + 1
-                if len(day["open"]) > entry_idx:
-                    entry_tmp = float(day["open"][entry_idx])
-                    if entry_tmp > 0:
-                        effective_stop = stop_atr_k * atr_val / entry_tmp
-        elif stop_pct is not None:
-            effective_stop = stop_pct
 
         entry, exit_, exit_type = _day_bars_to_series(
-            day, decision_bar, exit_bar, direction=direction, stop_pct=effective_stop,
+            day, decision_bar, eff_exit_bar, direction=direction,
+            stop_type=eff_stop_type, stop_val=eff_stop_val, atr_val=atr_val,
         )
         if entry is None:
             continue

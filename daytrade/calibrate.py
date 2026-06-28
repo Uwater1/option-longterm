@@ -42,9 +42,13 @@ CONVICTION_GRID = [40.0, 50.0, 60.0, 70.0, 80.0, 90.0]
 MIN_TRAIN_TRADES = 20      # per-fold eligibility: enough train trades to trust the config
 MIN_FOLD_ELIGIBILITY_FRAC = 0.50   # side deploys only if eligible in >=50% of folds
 
-# Stop-loss optimisation grids (Phase 5) - wide only to prevent OOS decay
+# Stop-loss optimisation grids (fixed %, ATR multiples, and structural stops)
 STOP_PCT_GRID  = [0.030, 0.040, 0.050]   # fixed % from entry
 STOP_ATR_GRID  = [3.5, 4.0, 5.0]          # ATR-14 multiples
+
+# Exit-bar optimisation grid (between 13:00 and 14:55 close)
+# Bar 24 = 13:05, Bar 41 = 14:30, Bar 46 = 14:55
+EXIT_BAR_GRID = sorted(list(set(list(range(24, 47, 2)) + [41])))
 
 OUT_PATH = Path(__file__).resolve().parent / "data" / "calibration.json"
 
@@ -203,15 +207,12 @@ def _grid_search_on_window(
 
     stop_configs = [{"stop_type": "pct", "stop_value": sp} for sp in STOP_PCT_GRID]
     stop_configs += [{"stop_type": "atr", "stop_value": ak} for ak in STOP_ATR_GRID]
+    stop_configs += [{"stop_type": "struct", "stop_value": 0.0}]
+    stop_configs += [{"stop_type": "struct_atr", "stop_value": ak} for ak in [0.5, 1.0, 1.5]]
+    stop_configs += [{"stop_type": "struct_pct", "stop_value": sp} for sp in [0.005, 0.010]]
 
     stop_results = []
     for sc in stop_configs:
-        kw = {}
-        if sc["stop_type"] == "pct":
-            kw["stop_pct"] = sc["stop_value"]
-        else:
-            kw["stop_atr_k"] = sc["stop_value"]
-
         r = backtest_long_short(
             etf,
             long_threshold_pct=best_thr, long_conviction_pct=best_conv,
@@ -221,7 +222,8 @@ def _grid_search_on_window(
             short_enabled=(side == "short"),
             mode=mode,
             gated=gated,
-            **kw,
+            stop_type=sc["stop_type"],
+            stop_val=sc["stop_value"],
         )
         trades = r["trades"]
         if len(trades) == 0:
@@ -267,16 +269,54 @@ def _grid_search_on_window(
     best["stop_results"] = stop_results
     best["base_train_sharpe_nostop"] = base_train_sharpe
 
+    # ── Stage 3: Exit bar sweep on best (thr, conv, stop) ────────────────
+    exit_results = []
+    for eb in EXIT_BAR_GRID:
+        r = backtest_long_short(
+            etf,
+            long_threshold_pct=best_thr, long_conviction_pct=best_conv,
+            short_threshold_pct=best_thr, short_conviction_pct=best_conv,
+            cost_bps=cost_bps,
+            long_enabled=(side == "long"),
+            short_enabled=(side == "short"),
+            mode=mode,
+            gated=gated,
+            stop_type=best_stop["stop_type"],
+            stop_val=best_stop["stop_value"],
+            exit_bar=eb,
+        )
+        trades = r["trades"]
+        if len(trades) == 0:
+            continue
+        train = filter_train(trades, {"train_end": train_end})
+        train_rets = train["net_ret"].values if len(train) else np.array([])
+        is_sh = _sharpe(train_rets) if len(train) > 1 else float("nan")
+        exit_results.append({
+            "exit_bar": eb,
+            "train_pnl_bps": float(train_rets.sum() * 1e4) if len(train) else 0.0,
+            "train_sharpe": is_sh,
+        })
+
+    if exit_results:
+        best_exit_row = max(exit_results, key=lambda x: (x["train_sharpe"] if not np.isnan(x["train_sharpe"]) else -100.0, x["train_pnl_bps"]))
+        best_exit_bar = best_exit_row["exit_bar"]
+    else:
+        best_exit_bar = 41
+
+    best["exit_bar"] = best_exit_bar
+    best["exit_results"] = exit_results
+
     if verbose:
-        st_label = (f"{best_stop['stop_value']:.3f}" if best_stop["stop_type"] == "pct"
-                    else f"{best_stop['stop_value']:.1f}xATR")
-        print(f"    {side:<5} stop: {st_label} "
+        st_type = best_stop["stop_type"]
+        st_val = best_stop["stop_value"]
+        st_label = f"{st_type}:{st_val}"
+        print(f"    {side:<5} stop: {st_label} exit_bar: {best_exit_bar} "
               f"(train Sharpe w/ stop = "
               f"{next((s['train_sharpe'] for s in stop_results if s['stop_type']==best_stop['stop_type'] and s['stop_value']==best_stop['stop_value']), float('nan')):+.2f})")
 
     return {"best": best, "n_eligible": len(eligible), "n_total": len(results),
             "baseline_train_n": n_baseline_train, "grid": results,
-            "stop_results": stop_results}
+            "stop_results": stop_results, "exit_results": exit_results}
 
 
 def _run_test_window(
@@ -293,14 +333,12 @@ def _run_side_backtest_filtered(
     etf: str, side: str, cfg: dict, cost_bps: float,
     fold: dict | None, mode: str, gated: bool,
 ) -> pd.DataFrame:
-    """Run a single (thr, conv, stop) config; optionally filter to a fold's test window."""
+    """Run a single (thr, conv, stop, exit_bar) config; optionally filter to a fold's test window."""
     thr = cfg["threshold_pct"]
     conv = cfg["conviction_pct"]
-    kw = {}
-    if cfg.get("stop_type") == "pct":
-        kw["stop_pct"] = cfg["stop_value"]
-    elif cfg.get("stop_type") == "atr":
-        kw["stop_atr_k"] = cfg["stop_value"]
+    st_type = cfg.get("stop_type")
+    st_val = cfg.get("stop_value")
+    exit_bar = cfg.get("exit_bar", 41)
 
     r = backtest_long_short(
         etf,
@@ -311,7 +349,9 @@ def _run_side_backtest_filtered(
         short_enabled=(side == "short"),
         mode=mode,
         gated=gated,
-        **kw,
+        stop_type=st_type,
+        stop_val=st_val,
+        exit_bar=exit_bar,
     )
     trades = r["trades"]
     if len(trades) == 0:
@@ -355,6 +395,7 @@ def replay_side_wf_trades(
             "conviction_pct": fr["conviction_pct"],
             "stop_type": fr.get("stop_type"),
             "stop_value": fr.get("stop_value"),
+            "exit_bar": fr.get("exit_bar", 41),
         }
         trades = _run_side_backtest_filtered(etf, side, cfg, cost_bps, fold, base_mode, gated)
         if len(trades):
@@ -406,7 +447,7 @@ def calibrate_side_walkforward(
             test_trades["mode"] = f"{mode}{'+' if gated else ''}{'gated' if gated else ''}"
             stitched_trades_parts.append(test_trades)
 
-        clean_best = {k: v for k, v in best.items() if k != "stop_results"}
+        clean_best = {k: v for k, v in best.items() if k not in ("stop_results", "exit_results")}
         fold_records.append({
             "test_year": fold["test_year"],
             "eligible": True,
@@ -414,6 +455,7 @@ def calibrate_side_walkforward(
             "conviction_pct": clean_best["conviction_pct"],
             "stop_type": clean_best.get("stop_type"),
             "stop_value": clean_best.get("stop_value"),
+            "exit_bar": clean_best.get("exit_bar", 41),
             "train_sharpe": clean_best["train_sharpe"],
             "train_pnl_bps": clean_best["train_pnl_bps"],
             "train_n": clean_best["n_train"],
@@ -428,12 +470,24 @@ def calibrate_side_walkforward(
             "test_median_bps": test_m["median_bps"],
         })
         if verbose:
-            st_lbl = (f"{clean_best.get('stop_value', 0):.3f}"
-                      if clean_best.get("stop_type") == "pct"
-                      else f"{clean_best.get('stop_value', 0):.1f}xATR")
+            st_type = clean_best.get("stop_type")
+            st_val = clean_best.get("stop_value", 0)
+            if st_type == "pct":
+                st_lbl = f"{st_val:.3f}"
+            elif st_type == "atr":
+                st_lbl = f"{st_val:.1f}xATR"
+            elif st_type == "struct":
+                st_lbl = "struct"
+            elif st_type == "struct_atr":
+                st_lbl = f"struct+{st_val:.1f}xATR"
+            elif st_type == "struct_pct":
+                st_lbl = f"struct+{st_val:.3f}pct"
+            else:
+                st_lbl = "none"
+            eb_lbl = f"exit={clean_best.get('exit_bar', 41)}"
             print(f"    {side:<5} fold={fold['test_year']} "
                   f"thr={clean_best['threshold_pct']:.0f} conv={clean_best['conviction_pct']:.0f} "
-                  f"stop={st_lbl} | train S={clean_best['train_sharpe']:+.2f} "
+                  f"stop={st_lbl} {eb_lbl} | train S={clean_best['train_sharpe']:+.2f} "
                   f"pnl={clean_best['train_pnl_bps']:+.0f} | "
                   f"test S={test_m['sharpe']:+.2f} pnl={test_m['pnl_bps']:+.0f} n={test_m['n']}")
 
