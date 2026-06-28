@@ -80,6 +80,32 @@ def _placement_rate(n_trades: int, n_days: int) -> float:
     return 100.0 * n_trades / n_days
 
 
+def _bar_to_time_str(bar_idx: int | None) -> str:
+    if bar_idx is None:
+        bar_idx = 41
+    if bar_idx <= 23:
+        total_mins = 9 * 60 + 35 + bar_idx * 5
+    else:
+        total_mins = 13 * 60 + 5 + (bar_idx - 24) * 5
+    h = total_mins // 60
+    m = total_mins % 60
+    return f"{bar_idx} ({h:02d}:{m:02d})"
+
+
+def _stop_label(st: str | None, sv: float | None) -> str:
+    if st == "pct":
+        return f"{sv:.2%}" if sv is not None else "—"
+    elif st == "atr":
+        return f"{sv:.1f}×ATR" if sv is not None else "—"
+    elif st == "struct":
+        return "struct"
+    elif st == "struct_atr":
+        return f"str+{sv:.1f}×ATR" if sv is not None else "struct_atr"
+    elif st == "struct_pct":
+        return f"str+{sv:.2%}" if sv is not None else "struct_pct"
+    return "—"
+
+
 def load_best_configs() -> dict:
     if not CALIB_PATH.exists():
         raise SystemExit("Run `python -m daytrade.calibrate` and `python -m daytrade.deploy` first.")
@@ -95,8 +121,16 @@ def _calib_mode() -> str:
 
 
 def _folds_for(etf: str) -> list[dict]:
+    cached = _FOLDS_CACHE.get(etf)
+    if cached is not None:
+        return cached
     feats = load_features(etf)
-    return make_yearly_folds(feats.index)
+    folds = make_yearly_folds(feats.index)
+    _FOLDS_CACHE[etf] = folds
+    return folds
+
+
+_FOLDS_CACHE = {}
 
 
 def run_deployed_backtest_wf(etf: str, cfg: dict, cost_bps: float) -> dict:
@@ -326,10 +360,10 @@ def generate():
     L.append("# Daytrade — Frozen-Linear Intraday Alpha (Walk-Forward Calibrated)\n")
     L.append("*Signal = frozen LASSO/Huber coefficients from day-model (target = `trade_return`, "
              "log return from entry-open to exit-close). "
-             "Per-side (threshold, conviction, stop, mode) selected via **purged expanding-window "
+             "Per-side (threshold, conviction, stop, exit_bar, mode) selected via **purged expanding-window "
              "walk-forward** (yearly folds, train = all prior years). No hyperparameter snooping. "
              "Decision at close[DECISION_BAR[etf]] -> entry at open[DECISION_BAR[etf]+1] -> "
-             f"exit at close[{EXIT_BAR}] (14:30). Cost {DEFAULT_COST_BPS:.0f} bps round-trip.*\n")
+             "exit dynamically selected per fold (between 13:05 and 14:55). Cost 15 bps round-trip.*\n")
 
     L.append("\n## 1. Strategy\n")
     L.append("- **Signal**: frozen LASSO/Huber/ElasticNet score from `day-model/models/linear_{ETF}.joblib`")
@@ -337,7 +371,7 @@ def generate():
     L.append("- **Per-side thresholds**: expanding-window percentile of |score| computed only over that side's prior history (causal: `series.shift(1)`)")
     L.append("- **Direction**: `long_model` fires when score>0 & crosses long thresholds; `short_model` fires when score<0 & crosses short thresholds")
     L.append("- **Calibration**: walk-forward yearly folds (test year Y, train = all years < Y, 1-day purge gap). "
-             "Grid-search (thr, conv, stop) per fold using train-window data only; deploy on the test year. "
+             "Grid-search (thr, conv, stop, exit_bar) per fold using train-window data only; deploy on the test year. "
              "Trades stitched across test folds → pooled WF metrics.")
     L.append("- **Eligibility guard (per fold)**: train P&L>0 AND train Sharpe>0 AND n≥20. "
              "A side **deploys** only if eligible in ≥50% of folds AND pooled WF Sharpe>0.")
@@ -346,27 +380,46 @@ def generate():
                  "(single/hybrid/dual, optionally +gated) with the highest pooled WF Sharpe among "
                  "configs that pass the eligibility majority gate.")
     L.append("- **Decision/Entry**: per-ETF `DECISION_BAR` (see day-model/build_features.py).")
-    L.append(f"- **Exit bar**: {EXIT_BAR} (5m close at 14:30)")
+    L.append("- **Exit bar**: dynamically optimized per fold (between bar 24 [13:05] and bar 46 [14:55], default 41 [14:30])")
     L.append(f"- **Cost**: {DEFAULT_COST_BPS:.0f} bps round-trip (parametrizable)\n")
 
     L.append("\n## 2. Deployed Configurations\n")
     if mode == "mixed":
+        L.append("### 2.1 Deployed Modes & Performance\n")
         L.append("| ETF | Long mode | Long pooled S | Long elig | Short mode | Short pooled S | Short elig |")
         L.append("|-----|-----------|---------------|-----------|------------|----------------|------------|")
         for etf in ETFS:
             cfg = configs.get(etf, {})
             lg = cfg.get("long"); sh = cfg.get("short")
-            lmode = lg.get("_mode", "?") if lg else "—"
-            ls = (f"{lg['pooled_wf_sharpe']:+.2f}" if lg else "—")
+            lm = lg.get("_mode", "—") if lg else "disabled"
+            ls = f"{lg['pooled_wf_sharpe']:+.2f}" if lg else "—"
             le = (f"{lg['n_folds_eligible']}/{lg['n_folds']}" if lg else "—")
-            smode = sh.get("_mode", "?") if sh else "—"
-            ss = (f"{sh['pooled_wf_sharpe']:+.2f}" if sh else "—")
+            sm = sh.get("_mode", "—") if sh else "disabled"
+            ss = f"{sh['pooled_wf_sharpe']:+.2f}" if sh else "—"
             se = (f"{sh['n_folds_eligible']}/{sh['n_folds']}" if sh else "—")
-            L.append(f"| **{etf}** | `{lmode}` | {ls} | {le} | `{smode}` | {ss} | {se} |")
+            L.append(f"| {etf} | **{lm}** | {ls} | {le} | **{sm}** | {ss} | {se} |")
+        L.append("")
+
+        L.append("### 2.2 Summary of Deployed Stop Loss & Take-Profit Exit Times\n")
+        L.append("| ETF | Side | Mode | Selected Stop Loss Types (across folds) | Selected Exit Times (across folds) |")
+        L.append("|-----|------|------|-----------------------------------------|------------------------------------|")
+        for etf in ETFS:
+            cfg = configs.get(etf, {})
+            for side_name in ("long", "short"):
+                side_cfg = cfg.get(side_name)
+                if not side_cfg or not side_cfg.get("deployed"):
+                    continue
+                m_str = side_cfg.get("_mode", "—")
+                stops = sorted(list({_stop_label(f.get("stop_type"), f.get("stop_value")) for f in side_cfg.get("folds", []) if f.get("eligible")}))
+                exits = sorted(list({_bar_to_time_str(f.get("exit_bar", 41)) for f in side_cfg.get("folds", []) if f.get("eligible")}))
+                stop_str = ", ".join(stops) if stops else "—"
+                exit_str = ", ".join(exits) if exits else "—"
+                L.append(f"| {etf} | `{side_name}` | **{m_str}** | {stop_str} | {exit_str} |")
+        L.append("")
 
     # Per-fold config stability table
-    L.append("\n### 2.1 Per-Fold Config Stability\n")
-    L.append("Shows the (mode / threshold / conviction / stop) chosen for each fold's test year, "
+    L.append("\n### 2.3 Per-Fold Config Stability & Execution Details\n")
+    L.append("Shows the (mode / threshold / conviction / stop / exit time) chosen for each fold's test year, "
              "plus train and test Sharpe. Variation across years exposes regime drift; "
              "consistency suggests a stable edge.\n")
     for etf in ETFS:
@@ -378,21 +431,16 @@ def generate():
             L.append(f"\n**{etf} / {side_name}** (mode={side_cfg.get('_mode','?')}, "
                      f"pooled WF S={side_cfg['pooled_wf_sharpe']:+.2f}, "
                      f"elig {side_cfg['n_folds_eligible']}/{side_cfg['n_folds']}):")
-            L.append("| Fold | Thr | Conv | Stop | Train S | Train P&L | Train N | Test S | Test P&L | Test N |")
-            L.append("|------|-----|------|------|---------|-----------|---------|--------|-----------|--------|")
+            L.append("| Fold | Thr | Conv | Stop | Exit Time | Train S | Train P&L | Train N | Test S | Test P&L | Test N |")
+            L.append("|------|-----|------|------|-----------|---------|-----------|---------|--------|-----------|--------|")
             for fr in side_cfg.get("folds", []):
                 if not fr.get("eligible"):
-                    L.append(f"| {fr['test_year']} | — | — | — | — | — | — | — | — | — (disabled) |")
+                    L.append(f"| {fr['test_year']} | — | — | — | — | — | — | — | — | — | — (disabled) |")
                     continue
-                st = fr.get("stop_type"); sv = fr.get("stop_value")
-                if st == "pct":
-                    stop_lbl = f"{sv:.2%}"
-                elif st == "atr":
-                    stop_lbl = f"{sv:.1f}×ATR"
-                else:
-                    stop_lbl = "—"
+                stop_lbl = _stop_label(fr.get("stop_type"), fr.get("stop_value"))
+                eb_lbl = _bar_to_time_str(fr.get("exit_bar", 41))
                 L.append(f"| {fr['test_year']} | {fr['threshold_pct']:.0f} | {fr['conviction_pct']:.0f} | "
-                         f"{stop_lbl} | {fr['train_sharpe']:+.2f} | {fr['train_pnl_bps']:+.0f} | "
+                         f"{stop_lbl} | {eb_lbl} | {fr['train_sharpe']:+.2f} | {fr['train_pnl_bps']:+.0f} | "
                          f"{fr['train_n']} | {fr['test_sharpe']:+.2f} | {fr['test_pnl_bps']:+.0f} | "
                          f"{fr['test_n']} |")
 
@@ -626,7 +674,7 @@ def generate():
     L.append("\n## 7. Caveats\n")
     L.append("- Short-side P&L assumes 15bps transaction cost; real options/margin/borrow costs not modeled")
     L.append("- Frozen coefficients = no regime adaptation; live IC decay will hurt deployability")
-    L.append("- 14:30 exit leaves late-day continuation on the table")
+    L.append("- Exit bar dynamically optimized per fold (swept between 13:05 and 14:55 bar closes)")
     L.append("- No position sizing (fixed notional); drawdowns are per-unit-notional")
     L.append("- Walk-forward folds are yearly; intra-year regime shifts are not captured")
     L.append("- Per-fold small-sample noise (fold with <60 trades) is flagged via the `n<60` warning")

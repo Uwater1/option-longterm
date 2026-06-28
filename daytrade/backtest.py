@@ -43,6 +43,10 @@ ETF_5M_FILE = {
 _5M_CACHE = {}
 _GROUPED_BARS_CACHE = {}
 _ATR_CACHE = {}
+_DAY_TABLE_CACHE = {}
+
+# Maximum exit bar supported by the precomputed DayTable (covers EXIT_BAR_GRID + headroom)
+_MAX_EXIT_BAR_SUPPORTED = 47
 
 
 def load_5m(etf: str) -> pd.DataFrame:
@@ -102,6 +106,299 @@ def get_daily_atr14(etf: str) -> pd.Series:
     atr = compute_daily_atr14(bars)
     _ATR_CACHE[etf] = atr
     return atr
+
+
+def _build_day_table(etf: str) -> dict:
+    """Per-ETF dense table of intraday bar slices for vectorized simulation.
+
+    Once built, any (stop_type, stop_val, exit_bar) combo can be replayed as
+    pure NumPy row-wise ops — no per-day Python loop.
+
+    Layout (all arrays aligned by positional day index ``i``):
+        entry_price[i]      = open[decision_bar + 1]
+        struct_low[i]       = min(low[0 .. decision_bar])
+        struct_high[i]      = max(high[0 .. decision_bar])
+        low_scan[i, :]      = low[entry_idx .. max_exit_bar]  (fp32)
+        high_scan[i, :]     = high[entry_idx .. max_exit_bar] (fp32)
+        close_by_bar[i, b]  = close[b] for b in [0 .. max_exit_bar]
+        valid[i]            = day has enough bars AND entry_price > 0
+        atr_at[i]           = ATR14 for that day (NaN if missing)
+        atr_fallback_max[i] = max of prior non-NaN ATR values (NaN if none)
+    """
+    if etf in _DAY_TABLE_CACHE:
+        return _DAY_TABLE_CACHE[etf]
+
+    decision_bar = DECISION_BAR[etf]
+    max_exit_bar = _MAX_EXIT_BAR_SUPPORTED
+    entry_idx = decision_bar + 1
+    scan_len = max_exit_bar - entry_idx + 1
+
+    grouped = get_grouped_bars(etf)
+    dates = sorted(grouped.keys())
+    n_days = len(dates)
+
+    entry_price = np.full(n_days, np.nan, dtype=np.float64)
+    struct_low = np.full(n_days, np.nan, dtype=np.float64)
+    struct_high = np.full(n_days, np.nan, dtype=np.float64)
+    low_scan = np.full((n_days, scan_len), np.nan, dtype=np.float32)
+    high_scan = np.full((n_days, scan_len), np.nan, dtype=np.float32)
+    close_by_bar = np.full((n_days, max_exit_bar + 1), np.nan, dtype=np.float32)
+    valid = np.zeros(n_days, dtype=bool)
+
+    for i, d in enumerate(dates):
+        day = grouped[d]
+        open_arr = day["open"]; high_arr = day["high"]
+        low_arr = day["low"]; close_arr = day["close"]
+        L = len(open_arr)
+        # Need bars up to max_exit_bar; otherwise this day can never be simulated
+        if L <= max_exit_bar or entry_idx >= L:
+            continue
+        ep = float(open_arr[entry_idx])
+        if ep <= 0:
+            continue
+        entry_price[i] = ep
+        struct_low[i] = float(np.min(low_arr[:entry_idx]))
+        struct_high[i] = float(np.max(high_arr[:entry_idx]))
+        low_scan[i] = low_arr[entry_idx:max_exit_bar + 1]
+        high_scan[i] = high_arr[entry_idx:max_exit_bar + 1]
+        close_by_bar[i] = close_arr[:max_exit_bar + 1]
+        valid[i] = True
+
+    # ATR14 per day; compute fallback (max of prior non-NaN values) for the
+    # missing-value branch in the legacy _day_bars_to_series code path.
+    atr = get_daily_atr14(etf)
+    atr_at = np.full(n_days, np.nan, dtype=np.float64)
+    for i, d in enumerate(dates):
+        if d in atr.index:
+            v = atr[d]
+            if v is not None and not np.isnan(v):
+                atr_at[i] = float(v)
+
+    filled = np.where(np.isnan(atr_at), -np.inf, atr_at)
+    atr_fallback_max = np.full(n_days, np.nan, dtype=np.float64)
+    if n_days > 1:
+        cummax = np.maximum.accumulate(filled[:-1])
+        atr_fallback_max[1:] = np.where(np.isneginf(cummax), np.nan, cummax)
+
+    table = dict(
+        decision_bar=decision_bar, max_exit_bar=max_exit_bar,
+        entry_idx=entry_idx, scan_len=scan_len,
+        dates=dates,
+        date_to_pos={d: i for i, d in enumerate(dates)},
+        entry_price=entry_price, struct_low=struct_low, struct_high=struct_high,
+        low_scan=low_scan, high_scan=high_scan, close_by_bar=close_by_bar,
+        valid=valid, atr_at=atr_at, atr_fallback_max=atr_fallback_max,
+    )
+    _DAY_TABLE_CACHE[etf] = table
+    return table
+
+
+def _simulate_trades_vectorized(
+    etf: str,
+    signals: pd.DataFrame,
+    eff_stop_type: Optional[str],
+    eff_stop_val: Optional[float],
+    eff_exit_bar: int,
+    cost_bps: float,
+) -> pd.DataFrame:
+    """Vectorized trade simulation. Behavioural equivalent of the legacy
+    per-day ``_day_bars_to_series`` loop, but runs as NumPy row-wise ops
+    over the precomputed ``_DAY_TABLE_CACHE[etf]`` slices.
+
+    Returns a trades DataFrame with the same columns / index as the legacy
+    path. Empty DataFrame if no tradeable signal days.
+    """
+    if len(signals) == 0:
+        return pd.DataFrame()
+
+    table = _build_day_table(etf)
+    if eff_exit_bar > table["max_exit_bar"]:
+        # Out of supported range — caller should have caught this; defensive.
+        return _simulate_trades_legacy(etf, signals, eff_stop_type, eff_stop_val, eff_exit_bar, cost_bps)
+
+    date_to_pos = table["date_to_pos"]
+    sig_index = signals.index
+    sig_date_objs = sig_index.date
+    positions = np.array([date_to_pos.get(d, -1) for d in sig_date_objs], dtype=np.int64)
+
+    # Keep only days that exist in the day_table AND pass the valid flag AND
+    # have a strictly-positive close at the requested exit_bar.
+    keep = positions >= 0
+    if not np.all(keep):
+        positions = positions[keep]
+        sig_date_objs = sig_date_objs[keep]
+        signals = signals.iloc[keep]
+
+    table_valid = table["valid"][positions]
+    close_at_exit = table["close_by_bar"][positions, eff_exit_bar]
+    keep2 = table_valid & (close_at_exit > 0)
+    if not np.all(keep2):
+        positions = positions[keep2]
+        sig_date_objs = sig_date_objs[keep2]
+        signals = signals.iloc[keep2]
+        close_at_exit = close_at_exit[keep2]
+
+    n = len(positions)
+    if n == 0:
+        return pd.DataFrame()
+
+    entry_idx = table["entry_idx"]
+    scan_len = eff_exit_bar - entry_idx + 1
+    direction = signals["direction"].values.astype(np.int8)
+    is_long = direction > 0
+    is_short = ~is_long
+
+    entry_price = table["entry_price"][positions]
+    exit_price = close_at_exit.astype(np.float64).copy()
+    hit_mask = np.zeros(n, dtype=bool)
+
+    # Score columns (mirror the legacy .get(...) fallbacks)
+    cols = signals.columns
+    if "fired_score" in cols:
+        score_arr = signals["fired_score"].values.astype(np.float64)
+    elif "score" in cols:
+        score_arr = signals["score"].values.astype(np.float64)
+    else:
+        score_arr = np.full(n, np.nan)
+    long_score_arr = (signals["long_score"].values.astype(np.float64)
+                      if "long_score" in cols else np.full(n, np.nan))
+    short_score_arr = (signals["short_score"].values.astype(np.float64)
+                       if "short_score" in cols else np.full(n, np.nan))
+
+    stop_level = np.full(n, np.nan, dtype=np.float64)
+
+    if eff_stop_type == "pct":
+        if eff_stop_val is not None and eff_stop_val > 0:
+            stop_level = np.where(is_long,
+                                  entry_price * (1.0 - eff_stop_val),
+                                  entry_price * (1.0 + eff_stop_val))
+    elif eff_stop_type == "atr":
+        if eff_stop_val is not None:
+            atr_arr = table["atr_at"][positions]
+            fallback = table["atr_fallback_max"][positions]
+            atr_val = np.where(np.isnan(atr_arr), fallback, atr_arr)
+            ok = ~np.isnan(atr_val)
+            if np.any(ok):
+                sl = np.where(is_long,
+                              entry_price - eff_stop_val * atr_val,
+                              entry_price + eff_stop_val * atr_val)
+                stop_level = np.where(ok, sl, np.nan)
+    elif eff_stop_type == "struct":
+        sl = np.where(is_long,
+                      np.minimum(table["struct_low"][positions], entry_price * 0.999),
+                      np.maximum(table["struct_high"][positions], entry_price * 1.001))
+        stop_level = sl
+    elif eff_stop_type == "struct_atr":
+        if eff_stop_val is not None:
+            atr_arr = table["atr_at"][positions]
+            fallback = table["atr_fallback_max"][positions]
+            atr_val = np.where(np.isnan(atr_arr), fallback, atr_arr)
+            ok = ~np.isnan(atr_val)
+            if np.any(ok):
+                sl = np.where(is_long,
+                              table["struct_low"][positions] - eff_stop_val * atr_val,
+                              table["struct_high"][positions] + eff_stop_val * atr_val)
+                stop_level = np.where(ok, sl, np.nan)
+    elif eff_stop_type == "struct_pct":
+        sl = np.where(is_long,
+                      table["struct_low"][positions] * (1.0 - eff_stop_val),
+                      table["struct_high"][positions] * (1.0 + eff_stop_val))
+        stop_level = sl
+    # else: eff_stop_type is None → no stop, all target exits
+
+    valid_stop = ~np.isnan(stop_level)
+    if np.any(valid_stop):
+        # Slice scan arrays to the requested exit window
+        low_scan_slice = table["low_scan"][positions, :scan_len]
+        high_scan_slice = table["high_scan"][positions, :scan_len]
+
+        long_check = is_long & valid_stop
+        if np.any(long_check):
+            # NaN-aware: NaN <= x is False, so missing bars don't trigger a hit
+            long_hit = long_check & np.any(low_scan_slice <= stop_level[:, None], axis=1)
+        else:
+            long_hit = np.zeros(n, dtype=bool)
+
+        short_check = is_short & valid_stop
+        if np.any(short_check):
+            short_hit = short_check & np.any(high_scan_slice >= stop_level[:, None], axis=1)
+        else:
+            short_hit = np.zeros(n, dtype=bool)
+
+        hit_mask = long_hit | short_hit
+        exit_price = np.where(hit_mask, stop_level, exit_price)
+
+    exit_type_arr = np.where(hit_mask, "stop", "target")
+
+    direction_f64 = direction.astype(np.float64)
+    gross = direction_f64 * (exit_price / entry_price - 1.0)
+    net = gross - cost_bps / 1e4
+    sides = np.where(is_long, "long", "short")
+
+    trades = pd.DataFrame({
+        "direction": direction.astype(np.int64),
+        "side": sides,
+        "entry": entry_price,
+        "exit": exit_price,
+        "exit_type": exit_type_arr,
+        "score": score_arr,
+        "long_score": long_score_arr,
+        "short_score": short_score_arr,
+        "gross_ret": gross,
+        "net_ret": net,
+    }, index=pd.DatetimeIndex(list(sig_date_objs), name="date")).sort_index()
+
+    return trades
+
+
+def _simulate_trades_legacy(
+    etf: str,
+    signals: pd.DataFrame,
+    eff_stop_type: Optional[str],
+    eff_stop_val: Optional[float],
+    eff_exit_bar: int,
+    cost_bps: float,
+) -> pd.DataFrame:
+    """Legacy per-day loop fallback (used only if exit_bar exceeds the
+    DayTable's precomputed range, which should not happen in practice)."""
+    by_date = get_grouped_bars(etf)
+    decision_bar = DECISION_BAR[etf]
+    need_atr = eff_stop_type in ("atr", "struct_atr")
+    atr_series = get_daily_atr14(etf) if need_atr else None
+
+    rows = []
+    for date, row in signals.iterrows():
+        d = date.date()
+        if d not in by_date:
+            continue
+        day = by_date[d]
+        direction = int(row["direction"])
+        atr_val = None
+        if need_atr and atr_series is not None:
+            atr_val = atr_series.get(d)
+            if atr_val is None or np.isnan(atr_val):
+                atr_val = (atr_series.iloc[:atr_series.index.get_loc(d)].max()
+                           if len(atr_series) > 0 else None)
+        entry, exit_, exit_type = _day_bars_to_series(
+            day, decision_bar, eff_exit_bar, direction=direction,
+            stop_type=eff_stop_type, stop_val=eff_stop_val, atr_val=atr_val,
+        )
+        if entry is None:
+            continue
+        gross = direction * (exit_ / entry - 1.0)
+        net = gross - cost_bps / 1e4
+        rows.append({
+            "date": date, "direction": direction,
+            "side": "long" if direction > 0 else "short",
+            "entry": entry, "exit": exit_, "exit_type": exit_type,
+            "score": row.get("fired_score", row.get("score", np.nan)),
+            "long_score": row.get("long_score", np.nan),
+            "short_score": row.get("short_score", np.nan),
+            "gross_ret": gross, "net_ret": net,
+        })
+    if not rows:
+        return pd.DataFrame()
+    return pd.DataFrame(rows).set_index("date").sort_index()
 
 
 def _day_bars_to_series(
@@ -291,7 +588,35 @@ def backtest_long_short(
         Custom exit bar index (defaults to EXIT_BAR=41, i.e. 14:30 close).
     gated : bool
         If True, apply the day-model gating model as a post-hoc veto filter.
+
+    Notes
+    -----
+    Results are memoised in ``_BT_CACHE`` keyed by every parameter below —
+    calibration re-runs the same (etf, thr, conv, stop, exit_bar) combos
+    repeatedly so this is a large win. Returns the same dict every call;
+    callers must copy ``trades`` before mutating (all current callers do).
     """
+    eff_exit_bar = exit_bar if exit_bar is not None else EXIT_BAR
+    eff_stop_type = stop_type
+    eff_stop_val = stop_val
+    if eff_stop_type is None:
+        if stop_atr_k is not None:
+            eff_stop_type = "atr"
+            eff_stop_val = stop_atr_k
+        elif stop_pct is not None:
+            eff_stop_type = "pct"
+            eff_stop_val = stop_pct
+
+    key = (etf, float(long_threshold_pct), float(long_conviction_pct),
+           float(short_threshold_pct), float(short_conviction_pct),
+           float(cost_bps), bool(long_enabled), bool(short_enabled),
+           int(min_periods), mode,
+           eff_stop_type, None if eff_stop_val is None else float(eff_stop_val),
+           int(eff_exit_bar), bool(gated))
+    cached = _BT_CACHE.get(key)
+    if cached is not None:
+        return cached
+
     signals = get_long_short_signals(
         etf,
         long_threshold_pct=long_threshold_pct,
@@ -309,70 +634,25 @@ def backtest_long_short(
 
     signals = signals[signals["direction"] != 0]
     if len(signals) == 0:
-        return _empty_long_short_result(etf)
+        result = _empty_long_short_result(etf)
+        _BT_CACHE[key] = result
+        return result
 
-    by_date = get_grouped_bars(etf)
+    trades = _simulate_trades_vectorized(
+        etf, signals, eff_stop_type, eff_stop_val, eff_exit_bar, cost_bps,
+    )
+    if len(trades) == 0:
+        result = _empty_long_short_result(etf)
+        _BT_CACHE[key] = result
+        return result
 
-    decision_bar = DECISION_BAR[etf]
-    eff_exit_bar = exit_bar if exit_bar is not None else EXIT_BAR
-
-    # Pre-compute ATR14 series if ATR-based stop is requested
-    eff_stop_type = stop_type
-    eff_stop_val = stop_val
-    if eff_stop_type is None:
-        if stop_atr_k is not None:
-            eff_stop_type = "atr"
-            eff_stop_val = stop_atr_k
-        elif stop_pct is not None:
-            eff_stop_type = "pct"
-            eff_stop_val = stop_pct
-
-    need_atr = eff_stop_type in ("atr", "struct_atr")
-    atr_series = get_daily_atr14(etf) if need_atr else None
-
-    rows = []
-    for date, row in signals.iterrows():
-        d = date.date()
-        if d not in by_date:
-            continue
-        day = by_date[d]
-        direction = int(row["direction"])
-
-        atr_val = None
-        if need_atr and atr_series is not None:
-            atr_val = atr_series.get(d)
-            if atr_val is None or np.isnan(atr_val):
-                atr_val = atr_series.iloc[:atr_series.index.get_loc(d)].max() if len(atr_series) > 0 else None
-
-        entry, exit_, exit_type = _day_bars_to_series(
-            day, decision_bar, eff_exit_bar, direction=direction,
-            stop_type=eff_stop_type, stop_val=eff_stop_val, atr_val=atr_val,
-        )
-        if entry is None:
-            continue
-        gross = direction * (exit_ / entry - 1.0)
-        net = gross - cost_bps / 1e4
-        rows.append({
-            "date": date,
-            "direction": direction,
-            "side": "long" if direction > 0 else "short",
-            "entry": entry,
-            "exit": exit_,
-            "exit_type": exit_type,
-            "score": row.get("fired_score", row.get("score", np.nan)),
-            "long_score": row.get("long_score", np.nan),
-            "short_score": row.get("short_score", np.nan),
-            "gross_ret": gross,
-            "net_ret": net,
-        })
-
-    if not rows:
-        return _empty_long_short_result(etf)
-
-    trades = pd.DataFrame(rows).set_index("date").sort_index()
     metrics = _summarize_long_short(trades, etf, cost_bps)
     metrics["trades"] = trades
+    _BT_CACHE[key] = metrics
     return metrics
+
+
+_BT_CACHE = {}
 
 
 def _apply_gating_veto(etf: str, signals: pd.DataFrame) -> pd.DataFrame:

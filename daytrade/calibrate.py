@@ -555,6 +555,107 @@ def _calibrate_etf_mode_wrapper(args):
         etf, cost_bps=cost_bps, mode=mode, gated=gated, verbose=False)
 
 
+def _calibrate_etf_all_combos_wrapper(args):
+    """Process all (mode, gated) combos for one ETF in a single worker.
+
+    Lets the per-ETF caches (``_DAY_TABLE_CACHE``, ``_SIGNALS_CACHE``,
+    ``_BT_CACHE``, ``_ATR_CACHE``) be reused across combos — a big win
+    vs. spawning fresh workers per combo.
+    """
+    etf, cost_bps, combos = args
+    out = {}
+    for mode, gated in combos:
+        res = calibrate_etf_walkforward(
+            etf, cost_bps=cost_bps, mode=mode, gated=gated, verbose=False)
+        out[(etf, mode, gated)] = res
+    return out
+
+
+def _preload_etf_caches():
+    """Populate ``_DAY_TABLE_CACHE`` and ``_ATR_CACHE`` for all ETFs in the
+    parent process. With Linux fork start-method, worker processes inherit
+    these read-only caches for free (no per-worker cold load)."""
+    from .backtest import _build_day_table
+    for etf in ETFS:
+        _build_day_table(etf)
+
+
+def calibrate_full_sweep(cost_bps: float = DEFAULT_COST_BPS, verbose: bool = True,
+                         modes=("single", "hybrid", "dual"),
+                         gated_options=(False, True)) -> dict:
+    """Run all (mode, gated) combos across all ETFs in a SINGLE process pool.
+
+    Workers persist across the (mode, gated) combos for each ETF, so the
+    per-ETF day_table / signal / backtest caches are reused — large speedup
+    over calling ``calibrate_all`` once per combo.
+
+    Writes one JSON per (mode, gated) and mirrors ungated single to
+    ``calibration.json`` for backward compat. Returns dict keyed by
+    ``(etf, mode, gated)``.
+    """
+    combos = [(m, g) for m in modes for g in gated_options]
+    if verbose:
+        print(f"Walk-forward calibrating {len(ETFS)} ETFs × {len(combos)} (mode, gated) combos "
+              f"= {len(ETFS) * len(combos)} tasks in one pool...")
+
+    # Pre-compute folds per ETF (data starts vary — 588000ETF starts 2021)
+    folds_per_etf = {}
+    for etf in ETFS:
+        feats = load_features(etf)
+        folds_per_etf[etf] = make_yearly_folds(feats.index)
+
+    # Preload day_tables in parent so fork-based workers inherit them
+    _preload_etf_caches()
+
+    tasks = [(etf, cost_bps, combos) for etf in ETFS]
+    out: dict = {}
+    with ProcessPoolExecutor() as executor:
+        for etf_results in executor.map(_calibrate_etf_all_combos_wrapper, tasks):
+            out.update(etf_results)
+            if verbose:
+                # Pick any key from this ETF to label progress
+                done_etf = next(iter(etf_results))[0]
+                print(f"  Finished {done_etf} ({len(combos)} combos)")
+
+    # Write per-(mode, gated) files
+    OUT_PATH.parent.mkdir(exist_ok=True)
+    for (mode, gated) in combos:
+        gate_suffix = "_gated" if gated else ""
+        mode_path = OUT_PATH.parent / f"calibration_{mode}{gate_suffix}.json"
+        compact = {
+            "cost_bps": cost_bps,
+            "mode": mode,
+            "gated": gated,
+            "walk_forward": True,
+            "min_fold_eligibility_frac": MIN_FOLD_ELIGIBILITY_FRAC,
+            "results": {},
+        }
+        for etf in ETFS:
+            v = out.get((etf, mode, gated))
+            if v is None:
+                continue
+            compact["results"][etf] = {
+                "long": _side_to_compact(v["long"]),
+                "short": _side_to_compact(v["short"]),
+            }
+        with open(mode_path, "w") as f:
+            json.dump(compact, f, indent=2, default=str)
+        if verbose:
+            print(f"Saved → {mode_path}")
+        # Mirror ungated single to calibration.json for backward compat
+        if mode == "single" and not gated:
+            with open(OUT_PATH, "w") as f:
+                json.dump(compact, f, indent=2, default=str)
+            if verbose:
+                print(f"Mirror → {OUT_PATH}")
+
+    if verbose:
+        for (mode, gated) in combos:
+            combo_out = {k: v for k, v in out.items() if k[1] == mode and k[2] == gated}
+            _print_summary(combo_out, mode, gated)
+    return out
+
+
 def calibrate_all(cost_bps: float = DEFAULT_COST_BPS, verbose: bool = True,
                   mode: str = "single", gated: bool = False) -> dict:
     """Walk-forward calibrate all ETFs for one (mode, gated) combo.
@@ -571,6 +672,9 @@ def calibrate_all(cost_bps: float = DEFAULT_COST_BPS, verbose: bool = True,
     for etf in ETFS:
         feats = load_features(etf)
         folds_per_etf[etf] = make_yearly_folds(feats.index)
+
+    # Preload day_tables in parent so fork-based workers inherit them
+    _preload_etf_caches()
 
     tasks = [(etf, cost_bps, mode, gated) for etf in ETFS]
     out = {}
@@ -648,10 +752,21 @@ if __name__ == "__main__":
     p.add_argument("--gated", action="store_true",
                    help="Apply the day-model gating model as a post-hoc veto.")
     p.add_argument("--sweep-gated", action="store_true",
-                   help="Run both ungated and gated calibrations (writes both files).")
+                   help="Run both ungated and gated calibrations for the chosen mode(s).")
+    p.add_argument("--all-modes", action="store_true",
+                   help="Sweep all 3 modes (single/hybrid/dual). Combine with --sweep-gated "
+                        "to run the full 3 modes × 2 gated = 6 combos in one optimised pool "
+                        "(much faster than calling this script 6 times).")
     args = p.parse_args()
 
-    if args.sweep_gated:
+    if args.all_modes:
+        # Single pool for all 6 combos — uses persistent workers + inherited caches
+        calibrate_full_sweep(
+            cost_bps=args.cost_bps, verbose=True,
+            modes=("single", "hybrid", "dual"),
+            gated_options=(False, True) if args.sweep_gated else (False,),
+        )
+    elif args.sweep_gated:
         calibrate_all(cost_bps=args.cost_bps, verbose=True, mode=args.mode, gated=False)
         calibrate_all(cost_bps=args.cost_bps, verbose=True, mode=args.mode, gated=True)
     else:
