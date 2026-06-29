@@ -54,6 +54,8 @@ python day-model/evaluate_gating.py                     # Compile gating winner 
 python -m daytrade.calibrate --all-modes --sweep-gated   # Full sweep: 3 modes x 2 gated in one pool
 python -m daytrade.deploy                                # Mixed-mode deploy (auto-picks +gated per side)
 python -m daytrade.gating_only                           # Gate-only diagnostic backtest
+python -m daytrade.methods.download_futures_data         # Download index futures 5m data
+python -m daytrade.methods.report                        # Generate execution placement evaluation report
 ```
 
 ## Project Structure
@@ -109,7 +111,14 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 ├── deploy.py                  # Phase 4 best-of-mode deployment
 ├── gating_loader.py           # Loads gating artifacts -> boolean fire mask
 ├── gating_only.py             # Gate-only standalone diagnostic backtest
-└── report.py                  # Report generator
+├── report.py                  # Report generator
+└── methods/                   # Execution & placement research module (isolated)
+    ├── AGENTS.md              # Workflow & script guide
+    ├── download_futures_data.py # Futures 5m downloader via rqdatac
+    ├── cost_model.py          # Transaction cost & slippage models
+    ├── option_pricing.py      # Intraday option pricer (BS & real 5m quotes)
+    ├── eval_execution.py      # Multi-instrument backtest engine
+    └── report.py              # Comparative report generator
 ```
 
 ### Day-Model Features & Caching
