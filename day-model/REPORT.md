@@ -154,6 +154,9 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 <img src="plots/feature_importance_300ETF_long.png" alt="feature_importance_300ETF_long" width="800" /><br>
 
 
+<img src="plots/threshold_return_300ETF_long.png" alt="threshold_return_300ETF_long" width="800" /><br>
+
+
 <img src="plots/gating_performance_300ETF_long.png" alt="gating_performance_300ETF_long" width="800" /><br>
 
 
@@ -253,6 +256,9 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 
 <img src="plots/feature_importance_300ETF_short.png" alt="feature_importance_300ETF_short" width="800" /><br>
+
+
+<img src="plots/threshold_return_300ETF_short.png" alt="threshold_return_300ETF_short" width="800" /><br>
 
 
 <img src="plots/gating_performance_300ETF_short.png" alt="gating_performance_300ETF_short" width="800" /><br>
@@ -357,6 +363,9 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 <img src="plots/feature_importance_50ETF_long.png" alt="feature_importance_50ETF_long" width="800" /><br>
 
 
+<img src="plots/threshold_return_50ETF_long.png" alt="threshold_return_50ETF_long" width="800" /><br>
+
+
 <img src="plots/gating_performance_50ETF_long.png" alt="gating_performance_50ETF_long" width="800" /><br>
 
 
@@ -456,6 +465,9 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 
 <img src="plots/feature_importance_50ETF_short.png" alt="feature_importance_50ETF_short" width="800" /><br>
+
+
+<img src="plots/threshold_return_50ETF_short.png" alt="threshold_return_50ETF_short" width="800" /><br>
 
 
 <img src="plots/gating_performance_50ETF_short.png" alt="gating_performance_50ETF_short" width="800" /><br>
@@ -568,6 +580,9 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 <img src="plots/feature_importance_500ETF_long.png" alt="feature_importance_500ETF_long" width="800" /><br>
 
 
+<img src="plots/threshold_return_500ETF_long.png" alt="threshold_return_500ETF_long" width="800" /><br>
+
+
 <img src="plots/gating_performance_500ETF_long.png" alt="gating_performance_500ETF_long" width="800" /><br>
 
 
@@ -671,6 +686,9 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 <img src="plots/feature_importance_500ETF_short.png" alt="feature_importance_500ETF_short" width="800" /><br>
 
 
+<img src="plots/threshold_return_500ETF_short.png" alt="threshold_return_500ETF_short" width="800" /><br>
+
+
 <img src="plots/gating_performance_500ETF_short.png" alt="gating_performance_500ETF_short" width="800" /><br>
 
 
@@ -767,6 +785,9 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 <img src="plots/feature_importance_588000ETF_long.png" alt="feature_importance_588000ETF_long" width="800" /><br>
 
 
+<img src="plots/threshold_return_588000ETF_long.png" alt="threshold_return_588000ETF_long" width="800" /><br>
+
+
 <img src="plots/gating_performance_588000ETF_long.png" alt="gating_performance_588000ETF_long" width="800" /><br>
 
 
@@ -861,6 +882,9 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 
 <img src="plots/feature_importance_588000ETF_short.png" alt="feature_importance_588000ETF_short" width="800" /><br>
+
+
+<img src="plots/threshold_return_588000ETF_short.png" alt="threshold_return_588000ETF_short" width="800" /><br>
 
 
 <img src="plots/gating_performance_588000ETF_short.png" alt="gating_performance_588000ETF_short" width="800" /><br>
@@ -962,6 +986,9 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 
 <img src="plots/feature_importance_159915ETF_long.png" alt="feature_importance_159915ETF_long" width="800" /><br>
+
+
+<img src="plots/threshold_return_159915ETF_long.png" alt="threshold_return_159915ETF_long" width="800" /><br>
 
 
 <img src="plots/gating_performance_159915ETF_long.png" alt="gating_performance_159915ETF_long" width="800" /><br>
@@ -1070,6 +1097,9 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 <img src="plots/feature_importance_159915ETF_short.png" alt="feature_importance_159915ETF_short" width="800" /><br>
 
 
+<img src="plots/threshold_return_159915ETF_short.png" alt="threshold_return_159915ETF_short" width="800" /><br>
+
+
 <img src="plots/gating_performance_159915ETF_short.png" alt="gating_performance_159915ETF_short" width="800" /><br>
 
 
@@ -1091,7 +1121,7 @@ Four baselines evaluated on the same holdout set:
 1. **Zero** (no-skill): Always predicts 0. IC=0 by definition.
 2. **Yesterday trade_return**: Autocorrelation baseline. Tests if trade returns are predictable from prior day.
 3. **First 30-min return (up to decision time)**: Momentum baseline. Tests AM-to-PM momentum.
-4. **Ridge Base**: Ridge regression with alpha=1.0 on all features (130 features). Controls for tuning/selection lift.
+4. **Ridge Base**: Ridge regression with alpha=1.0 on all candidate features (238 features). Controls for tuning/selection lift.
 
 | ETF/Tag | Best Linear IC > Ridge Base IC? | Best Linear IC > Mom IC? | Best Baseline |
 |---------|---------------------------------|--------------------------|---------------|
