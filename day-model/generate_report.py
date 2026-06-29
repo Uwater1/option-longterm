@@ -76,67 +76,99 @@ def generate_threshold_return_plot(key: str, r: dict):
         return
     
     try:
-        df_feat = pd.read_parquet(feat_path).dropna(subset=FEATURES + [TARGET])
+        scaler_obj = joblib.load(scaler_path)
+        scaler = scaler_obj["scaler"] if isinstance(scaler_obj, dict) else scaler_obj
+        model_features = scaler_obj.get("features", FEATURES) if isinstance(scaler_obj, dict) else FEATURES
+        
+        df_feat = pd.read_parquet(feat_path).dropna(subset=model_features + [TARGET])
         model = joblib.load(model_path)
-        scaler = joblib.load(scaler_path)
         
+        # Slice specifically to Out-Of-Sample Holdout range
+        ho_start, ho_end = r['holdout_range']
+        df_ho = df_feat[(df_feat.index >= pd.to_datetime(ho_start)) & (df_feat.index <= pd.to_datetime(ho_end))]
+        if df_ho.empty:
+            df_ho = df_feat
+            
         sel_features = r["selected_features"]
-        sel_indices = [FEATURES.index(f) for f in sel_features if f in FEATURES]
+        sel_indices = [model_features.index(f) for f in sel_features if f in model_features]
         
-        X_scaled = scaler.transform(df_feat[FEATURES].values)[:, sel_indices]
-        preds = model.predict(X_scaled) / 100.0
-        y_true = df_feat[TARGET].values
+        X_ho_scaled = scaler.transform(df_ho[model_features].values)[:, sel_indices]
+        preds_ho = model.predict(X_ho_scaled) / 100.0
+        y_ho = df_ho[TARGET].values
         
         if side == "short":
-            preds = -preds
+            sig_preds = -preds_ho
+            trade_rets = -y_ho
+        else:
+            sig_preds = preds_ho
+            trade_rets = y_ho
             
-        quantiles = np.linspace(0.4, 0.95, 12)
-        thrs = np.quantile(preds, quantiles)
+        max_sig = max(0.0001, float(np.quantile(sig_preds, 0.95)))
+        thrs = np.linspace(0.0, max_sig, 15)
         
+        total_rets = []
+        counts = []
         mean_rets = []
-        win_rates = []
-        sharpes = []
         
         for thr in thrs:
-            mask = preds >= thr
-            c = mask.sum()
-            if c < 10:
-                mean_rets.append(np.nan)
-                win_rates.append(np.nan)
-                sharpes.append(np.nan)
+            mask = sig_preds >= thr
+            c = int(mask.sum())
+            counts.append(c)
+            if c == 0:
+                total_rets.append(0.0)
+                mean_rets.append(0.0)
             else:
-                trade_rets = y_true[mask] if side == "long" else -y_true[mask]
-                mean_rets.append(np.mean(trade_rets) * 100)
-                win_rates.append((trade_rets > 0).mean() * 100)
-                std_r = np.std(trade_rets)
-                sh = (np.mean(trade_rets) / std_r * np.sqrt(252)) if std_r > 1e-12 else 0
-                sharpes.append(sh)
+                total_rets.append(float(np.sum(trade_rets[mask]) * 100))
+                mean_rets.append(float(np.mean(trade_rets[mask]) * 100))
                 
-        fig, ax1 = plt.subplots(figsize=(8, 4.5))
-        color = 'tab:blue'
-        ax1.set_xlabel('Linear Model Signal Threshold')
-        ax1.set_ylabel('Mean Return (%) & Sharpe', color=color)
-        p1 = ax1.plot(thrs * 100, mean_rets, 'o-', color='blue', label='Mean Return (%)')
-        p2 = ax1.plot(thrs * 100, sharpes, 's--', color='darkblue', label='Sharpe Ratio')
-        ax1.tick_params(axis='y', labelcolor=color)
+        fig, ax1 = plt.subplots(figsize=(8.5, 4.5))
+        ax1.set_xlabel('Linear Model Signal Threshold x (Predicted Return)')
+        ax1.set_ylabel('Total OOS Return b (%) & Mean Return (%)', color='purple')
+        p1 = ax1.plot(thrs * 100, total_rets, 'o-', color='purple', lw=2, label='Total OOS Return b (%)')
+        p2 = ax1.plot(thrs * 100, mean_rets, 's--', color='blue', lw=1.5, label='Mean Return per Trade (%)')
+        ax1.tick_params(axis='y', labelcolor='purple')
         ax1.grid(alpha=0.3)
         
         ax2 = ax1.twinx()
-        color = 'tab:green'
-        ax2.set_ylabel('Win Rate (%)', color=color)
-        p3 = ax2.plot(thrs * 100, win_rates, '^:', color='green', label='Win Rate (%)')
-        ax2.tick_params(axis='y', labelcolor=color)
+        ax2.set_ylabel('OOS Trade Count N', color='darkgreen')
+        p3 = ax2.plot(thrs * 100, counts, '^:', color='darkgreen', lw=1.8, label='Trade Count N')
+        ax2.tick_params(axis='y', labelcolor='darkgreen')
         
         lines_all = p1 + p2 + p3
         labels_all = [l.get_label() for l in lines_all]
-        ax1.legend(lines_all, labels_all, loc='upper left')
+        ax1.legend(lines_all, labels_all, loc='upper right')
         
-        plt.title(f"{key}: Trade Return & Performance vs Signal Threshold")
+        plt.title(f"{key}: OOS Holdout Return b (%) & Trade Count N vs Threshold x")
         plt.tight_layout()
         plt.savefig(PLOTS_DIR / f"threshold_return_{key}.png", dpi=110)
         plt.close()
     except Exception as e:
         pass
+
+
+def generate_feature_importance_plot(key: str, r: dict):
+    coef_imp = r.get("coefficient_importance", {})
+    perm_imp = r.get("permutation_importance", {})
+    sel_features = set(r.get("selected_features", []))
+    
+    if not sel_features or not coef_imp:
+        return
+        
+    filtered_coef = {k: v for k, v in coef_imp.items() if k in sel_features}
+    filtered_perm = {k: v for k, v in perm_imp.items() if k in sel_features}
+    
+    fig, axes = plt.subplots(1, 2, figsize=(13, 6))
+    for ax, imp, title in [
+        (axes[0], filtered_coef, "Standardized Coefficient"),
+        (axes[1], filtered_perm, "Permutation Importance (OOS)"),
+    ]:
+        s = pd.Series(imp).sort_values()
+        ax.barh(s.index, s.values, color="steelblue")
+        ax.set_title(f"{key}: {title}")
+        ax.grid(alpha=0.3, axis="x")
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / f"feature_importance_{key}.png", dpi=110)
+    plt.close()
 
 
 def generate_gating_performance_plot(key: str, r: dict):
@@ -290,7 +322,8 @@ def generate(results: dict) -> str:
         etf = r["etf"]
         side = r.get("side", "single")
         
-        # Pre-generate new diagnostic plots if missing
+        # Pre-generate diagnostic plots
+        generate_feature_importance_plot(key, r)
         generate_threshold_return_plot(key, r)
         generate_gating_performance_plot(key, r)
         
@@ -503,7 +536,7 @@ def generate(results: dict) -> str:
     w("1. **Zero** (no-skill): Always predicts 0. IC=0 by definition.")
     w("2. **Yesterday trade_return**: Autocorrelation baseline. Tests if trade returns are predictable from prior day.")
     w("3. **First 30-min return (up to decision time)**: Momentum baseline. Tests AM-to-PM momentum.")
-    w("4. **Ridge Base**: Ridge regression with alpha=1.0 on all features (130 features). Controls for tuning/selection lift.\n")
+    w(f"4. **Ridge Base**: Ridge regression with alpha=1.0 on all candidate features ({len(FEATURES)} features). Controls for tuning/selection lift.\n")
 
     w("| ETF/Tag | Best Linear IC > Ridge Base IC? | Best Linear IC > Mom IC? | Best Baseline |")
     w("|---------|---------------------------------|--------------------------|---------------|")

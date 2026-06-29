@@ -76,7 +76,7 @@ def generate_report():
         "Per-side big-move gating classifiers (long = big-up tail, short = "
         "big-down tail) used as a veto filter over the daytrade linear score. "
         "Three target variants (`two_sided`, `joint3`, `gated`) × three feature "
-        "selectors (`none`/all-130, `stability`, `lgbm`) are benchmarked; the "
+        "selectors (`none`/all features, `stability`, `lgbm`) are benchmarked; the "
         "best per ETF × side is auto-selected by honest walk-forward OOS PR-AUC.\n"
     )
     md.append(
@@ -162,7 +162,7 @@ def generate_report():
         "- **Variant**: `two_sided` = per-side binary big-move; `joint3` = shared "
         "3-class softmax {big_up, neutral, big_down}; `gated` = big-move AND "
         "tradability/regime mask.\n"
-        "- **Selector**: `none` = all 130 features; `stability` = regime-stratified "
+        "- **Selector**: `none` = all candidate features; `stability` = regime-stratified "
         "block bootstrap + randomized ElasticNet + OOB IC; `lgbm` = walk-forward "
         "LightGBM gain + permutation importance.\n"
         "- **Deployable**: WF AUC > 0.53 AND WF PR-AUC > base rate AND "
