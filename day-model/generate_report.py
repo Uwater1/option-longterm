@@ -13,8 +13,12 @@ import json
 from pathlib import Path
 import sys
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import joblib
 
 # Constants
 HERE = Path(__file__).resolve().parent
@@ -54,11 +58,138 @@ def fmt_sharpe(v):
 
 
 def plot_ref(etf: str, name: str) -> str:
-    """Return markdown image ref if plot exists, else empty string."""
+    """Return HTML image tag if plot exists, else empty string."""
     p = PLOTS_DIR / f"{name}_{etf}.png"
     if p.exists():
-        return f"![{name}_{etf}](plots/{name}_{etf}.png)\n\n"
+        return f'<img src="plots/{name}_{etf}.png" alt="{name}_{etf}" width="800" /><br>\n\n'
     return ""
+
+
+def generate_threshold_return_plot(key: str, r: dict):
+    etf = r["etf"]
+    side = r.get("side", "long")
+    feat_path = DATA_DIR / f"features_{etf}.parquet"
+    model_path = HERE / "models" / f"linear_{key}.joblib"
+    scaler_path = HERE / "models" / f"scaler_{key}.joblib"
+    
+    if not (feat_path.exists() and model_path.exists() and scaler_path.exists()):
+        return
+    
+    try:
+        df_feat = pd.read_parquet(feat_path).dropna(subset=FEATURES + [TARGET])
+        model = joblib.load(model_path)
+        scaler = joblib.load(scaler_path)
+        
+        sel_features = r["selected_features"]
+        sel_indices = [FEATURES.index(f) for f in sel_features if f in FEATURES]
+        
+        X_scaled = scaler.transform(df_feat[FEATURES].values)[:, sel_indices]
+        preds = model.predict(X_scaled) / 100.0
+        y_true = df_feat[TARGET].values
+        
+        if side == "short":
+            preds = -preds
+            
+        quantiles = np.linspace(0.4, 0.95, 12)
+        thrs = np.quantile(preds, quantiles)
+        
+        mean_rets = []
+        win_rates = []
+        sharpes = []
+        
+        for thr in thrs:
+            mask = preds >= thr
+            c = mask.sum()
+            if c < 10:
+                mean_rets.append(np.nan)
+                win_rates.append(np.nan)
+                sharpes.append(np.nan)
+            else:
+                trade_rets = y_true[mask] if side == "long" else -y_true[mask]
+                mean_rets.append(np.mean(trade_rets) * 100)
+                win_rates.append((trade_rets > 0).mean() * 100)
+                std_r = np.std(trade_rets)
+                sh = (np.mean(trade_rets) / std_r * np.sqrt(252)) if std_r > 1e-12 else 0
+                sharpes.append(sh)
+                
+        fig, ax1 = plt.subplots(figsize=(8, 4.5))
+        color = 'tab:blue'
+        ax1.set_xlabel('Linear Model Signal Threshold')
+        ax1.set_ylabel('Mean Return (%) & Sharpe', color=color)
+        p1 = ax1.plot(thrs * 100, mean_rets, 'o-', color='blue', label='Mean Return (%)')
+        p2 = ax1.plot(thrs * 100, sharpes, 's--', color='darkblue', label='Sharpe Ratio')
+        ax1.tick_params(axis='y', labelcolor=color)
+        ax1.grid(alpha=0.3)
+        
+        ax2 = ax1.twinx()
+        color = 'tab:green'
+        ax2.set_ylabel('Win Rate (%)', color=color)
+        p3 = ax2.plot(thrs * 100, win_rates, '^:', color='green', label='Win Rate (%)')
+        ax2.tick_params(axis='y', labelcolor=color)
+        
+        lines_all = p1 + p2 + p3
+        labels_all = [l.get_label() for l in lines_all]
+        ax1.legend(lines_all, labels_all, loc='upper left')
+        
+        plt.title(f"{key}: Trade Return & Performance vs Signal Threshold")
+        plt.tight_layout()
+        plt.savefig(PLOTS_DIR / f"threshold_return_{key}.png", dpi=110)
+        plt.close()
+    except Exception as e:
+        pass
+
+
+def generate_gating_performance_plot(key: str, r: dict):
+    etf = r["etf"]
+    side = r.get("side", "long")
+    gating_report_path = HERE / "gating_model" / f"report_{etf}_{side}.json"
+    if not gating_report_path.exists():
+        return
+    
+    try:
+        with open(gating_report_path) as f:
+            g_rep = json.load(f)
+            
+        results = g_rep.get("results", {})
+        if not results:
+            return
+            
+        models = []
+        pr_aucs = []
+        aucs = []
+        precisions = []
+        
+        for m_name, m_data in results.items():
+            wf = m_data.get("forward_wf_estimate") or m_data.get("dev_only_oos") or {}
+            if wf:
+                models.append(m_name.upper())
+                pr_aucs.append(wf.get("pr_auc", 0.0))
+                aucs.append(wf.get("auc", 0.0))
+                precisions.append(wf.get("precision_at_thr", 0.0))
+                
+        if not models:
+            return
+            
+        fig, ax = plt.subplots(figsize=(7, 4.5))
+        x = np.arange(len(models))
+        width = 0.25
+        
+        ax.bar(x - width, pr_aucs, width, label='PR-AUC', color='darkorange')
+        ax.bar(x, aucs, width, label='ROC-AUC', color='steelblue')
+        ax.bar(x + width, precisions, width, label='Precision@Thr', color='forestgreen')
+        
+        ax.set_ylabel('Score / Metric')
+        ax.set_title(f"{key}: Gating Model Performance Comparison (WF OOS)")
+        ax.set_xticks(x)
+        ax.set_xticklabels(models)
+        ax.legend()
+        ax.grid(alpha=0.3, axis='y')
+        
+        plt.tight_layout()
+        plt.savefig(PLOTS_DIR / f"gating_performance_{key}.png", dpi=110)
+        plt.close()
+    except Exception as e:
+        pass
 
 
 def generate(results: dict) -> str:
@@ -159,6 +290,10 @@ def generate(results: dict) -> str:
         etf = r["etf"]
         side = r.get("side", "single")
         
+        # Pre-generate new diagnostic plots if missing
+        generate_threshold_return_plot(key, r)
+        generate_gating_performance_plot(key, r)
+        
         w(f"### {key}\n")
         w(f"- **Selected Model**: {r['best_params']['model_type'].upper()}")
         w(f"- **Tuned Stability Threshold**: {r['best_params']['stability_threshold']:.2f}")
@@ -169,10 +304,10 @@ def generate(results: dict) -> str:
           f"Sharpe={r['target_stats']['sharpe_ann']:.2f}")
         w(f"- **Selected features ({r['n_selected_features']})**: `{', '.join(r['selected_features'])}`\n")
 
-        # Feature Stability Scores Table
-        w("#### Feature Stability Scores (Block Bootstrap)\n")
+        # Feature Stability Scores Table (Filtered to Selected Features Only)
+        w("#### Selected Feature Stability Scores (Block Bootstrap)\n")
         w("<details>")
-        w("<summary><b>Click to expand Feature Stability Scores (Block Bootstrap) Table</b></summary>\n")
+        w("<summary><b>Click to expand Feature Stability Scores Table</b></summary>\n")
         w("| Feature | Stability Score | Status | Pearson $r$ | Spearman $\\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |")
         w("|---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|")
         
@@ -199,7 +334,7 @@ def generate(results: dict) -> str:
             df_feat['year'] = pd.to_datetime(df_feat.index).year
             years = sorted(df_feat['year'].unique())
 
-            for feat_name in r["stability_scores"].keys():
+            for feat_name in r["selected_features"]:
                 if feat_name not in df_feat.columns:
                     continue
                 x_data = df_feat[feat_name].values
@@ -284,11 +419,10 @@ def generate(results: dict) -> str:
                     "yearly_ic_std_str": yearly_ic_std_str
                 }
 
-        # Sort stability scores descending
-        sorted_scores = sorted(r["stability_scores"].items(), key=lambda x: x[1], reverse=True)
-        threshold = r['best_params']['stability_threshold']
+        # Sort stability scores descending for selected features
+        sorted_scores = sorted([(f, r["stability_scores"].get(f, 0.0)) for f in r["selected_features"]], key=lambda x: x[1], reverse=True)
         for feat, score in sorted_scores:
-            status = "**Selected**" if score >= threshold or feat in r['selected_features'] else "Pruned"
+            status = "**Selected**"
             q = feat_quality.get(feat, {
                 "p_corr": np.nan, "s_corr": np.nan, "mono": np.nan, "mi": 0.0,
                 "rating": "N/A", "ic": np.nan, "yearly_ic_str": "N/A", "yearly_ic_std_str": "N/A"
@@ -298,15 +432,6 @@ def generate(results: dict) -> str:
             m_str = f"{q['mono']:+.2f}" if not np.isnan(q['mono']) else "N/A"
             ic_str = f"{q['ic']:+.4f}" if not np.isnan(q['ic']) else "N/A"
             w(f"| {feat} | {score:.1%} | {status} | {p_str} | {s_str} | {m_str} | {q['mi']:.4f} | {q['rating']} | {ic_str} | {q['yearly_ic_str']} | {q['yearly_ic_std_str']} |")
-        w("")
-        w("- **Pearson $r$**: Linear correlation coefficient.")
-        w("- **Spearman $\\rho$**: Rank correlation coefficient (overall monotonic relation).")
-        w("- **Monotonicity Score**: Spearman rank correlation of target means across 5 feature quintiles. $\\pm 1.0$ indicates perfect bin-wise monotonicity.")
-        w("- **Mutual Info**: Estimated information gain (captures non-linear dependencies).")
-        w("- **Quality Rating**: Categorized by strength and shape of the monotonic relationship.")
-        w("- **Holdout IC**: Spearman rank correlation on the holdout set (out-of-sample predictive power).")
-        w("- **Yearly ICs**: Spearman rank correlation calculated per year.")
-        w("- **Yearly IC Std**: Standard deviation of yearly ICs (measures temporal stability).")
         w("")
         w("</details>\n")
 
@@ -365,6 +490,7 @@ def generate(results: dict) -> str:
         w("<details>")
         w("<summary><b>Click to expand Diagnostic Plots</b></summary>\n")
         for plot_name in ["holdout_scatter", "ic_timeseries", "feature_importance",
+                          "threshold_return", "gating_performance",
                           "yearly_ic", "purge_sensitivity", "optuna_param_importance"]:
             ref = plot_ref(key, plot_name)
             if ref:
