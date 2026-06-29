@@ -889,7 +889,10 @@ def _plot_diagnostics(etf, dates_ho, y_ho, preds_ho, wf_df,
         (axes[0], coef_imp, "Standardized Coefficient"),
         (axes[1], perm_imp, "Permutation Importance (OOS)"),
     ]:
-        s = pd.Series(imp).sort_values()
+        filtered_imp = {k: v for k, v in imp.items() if abs(v) > 1e-9}
+        if not filtered_imp:
+            filtered_imp = imp
+        s = pd.Series(filtered_imp).sort_values()
         ax.barh(s.index, s.values, color="steelblue")
         ax.set_title(f"{etf}: {title}")
         ax.grid(alpha=0.3, axis="x")
