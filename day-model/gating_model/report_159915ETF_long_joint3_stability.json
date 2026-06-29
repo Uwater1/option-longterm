@@ -5,54 +5,55 @@
     "selector": "stability",
     "best_model_type": "logistic",
     "best_params": {
-        "C": 0.0042377017100902244,
-        "penalty": "l1"
+        "C": 0.1534119384300503,
+        "penalty": "l2"
     },
     "final_threshold": 0.012725558131933212,
-    "firing_threshold": 0.14799766407792495,
+    "firing_threshold": 0.14780649542808533,
     "features_used": [
         "gap_pct",
         "bar_ret_0",
         "bar_ret_2",
-        "bar_rng_3",
-        "bar_rng_4",
-        "max_up_ret",
+        "bar_rng_2",
+        "bar_vwap_dev_1",
+        "volume_dryup_ratio",
+        "early_trend_consistency",
+        "adx_opening",
+        "vol20",
         "sma100_dist",
         "vol5",
-        "volume_sma_ratio",
-        "northbound_net",
         "yesterday_gap_pct",
-        "yesterday_early_realized_vol",
         "yesterday_early_range",
-        "yesterday_first_bar_return"
+        "yesterday_first_bar_return",
+        "yesterday_opening_gap_reversal"
     ],
-    "n_features": 14,
+    "n_features": 15,
     "results": {
         "logistic": {
             "cv_metrics": {
-                "auc": 0.686330465400233,
-                "pr_auc": 0.21019484829895665,
-                "precision_at_thr": 0.1712707182320442,
-                "recall_at_thr": 0.5406976744186046,
-                "f1_at_thr": 0.2601398601398601,
-                "firing_threshold": 0.13076870575697222,
+                "auc": 0.6839913962006985,
+                "pr_auc": 0.20321365719526016,
+                "precision_at_thr": 0.16574585635359115,
+                "recall_at_thr": 0.5232558139534884,
+                "f1_at_thr": 0.2517482517482518,
+                "firing_threshold": 0.12044969201087952,
                 "base_rate": 0.09502762430939227
             },
             "dev_only_oos": {
-                "auc": 0.7164474485446353,
-                "pr_auc": 0.24554217441241558,
-                "precision_at_thr": 0.21951219512195122,
-                "recall_at_thr": 0.5217391304347826,
-                "f1_at_thr": 0.3090128755364807,
-                "firing_threshold": 0.14481319576601423
+                "auc": 0.6118925831202046,
+                "pr_auc": 0.19350079751520533,
+                "precision_at_thr": 0.16463414634146342,
+                "recall_at_thr": 0.391304347826087,
+                "f1_at_thr": 0.2317596566523605,
+                "firing_threshold": 0.14375030994415283
             },
             "forward_wf_estimate": {
-                "auc": 0.6697599832302694,
-                "pr_auc": 0.20329669634771033,
-                "precision_at_thr": 0.18088235294117647,
-                "recall_at_thr": 0.5234042553191489,
-                "f1_at_thr": 0.26885245901639343,
-                "firing_threshold": 0.133974705184704,
+                "auc": 0.6574300387800021,
+                "pr_auc": 0.19054784886706083,
+                "precision_at_thr": 0.17058823529411765,
+                "recall_at_thr": 0.49361702127659574,
+                "f1_at_thr": 0.253551912568306,
+                "firing_threshold": 0.12411217391490936,
                 "base_rate": 0.10375275938189846
             }
         }
