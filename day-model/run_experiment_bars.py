@@ -35,6 +35,11 @@ from build_features import (
     DAY_FEATURES,
     YESTERDAY_FEATURES
 )
+from features_extra import (
+    EARLY_EXTRA,
+    extract_early_extras,
+    empty_early_extras,
+)
 
 # Exit bar (5m bar index, END-timestamped). 41 = 14:30 close.
 # Mirrors daytrade/__init__.py EXIT_BAR (single source of truth lives in build_features.py Phase 1).
@@ -58,7 +63,12 @@ def get_features_for_bars(early_bars: int):
         
     early += ["num_up_bars", "max_up_ret", "max_down_ret", "cl_pos_in_range",
               "body_to_range_ratio", "total_path_length", "volume_slope"]
-              
+
+    # New 91 early-bar extras from features_extra.py (numba njit, fp32).
+    # These are causally computable for any decision_bar >= 0; the njit
+    # dispatcher reads bars[0..decision_bar] only.
+    early += EARLY_EXTRA
+
     return early
 
 def get_full_features_list(early_bars: int):
@@ -142,6 +152,14 @@ def extract_day_early_features_param(day_5m: pd.DataFrame, prev_close: float, ea
     res["body_to_range_ratio"] = float(abs(cl[-1] - op[0]) / (hi.max() - lo.min() + 1e-8))
     res["total_path_length"] = float(np.sum(np.abs(bar_ret)))
     res["volume_slope"] = float(_linear_slope(vol) / expected_bar_vol)
+
+    # ── New 91 early-bar features from features_extra.py (numba njit, fp32) ──
+    # decision_bar = early_bars - 1 (the bar whose CLOSE triggers the signal).
+    try:
+        res.update(extract_early_extras(bars, prev_close, expected_bar_vol,
+                                        decision_bar=early_bars - 1))
+    except Exception:
+        res.update(empty_early_extras())
 
     return res
 
@@ -248,7 +266,10 @@ def build_features_for_bars(etf_name: str, early_bars: int) -> pd.DataFrame:
         "early_volume_ratio", "early_trend", "early_momentum", "first_bar_return",
         "first_bar_volume", "early_vwap_dev", "early_skew", "early_kurtosis",
         "day_range", "day_realized_vol", "day_close_pos", "day_pm_am_vol_ratio",
-        "day_late_mom", "day_vwap_dev", "day_skew", "day_kurtosis"
+        "day_late_mom", "day_vwap_dev", "day_skew", "day_kurtosis",
+        # Bases for YESTERDAY_EXTRA (yesterday_intraday_close_position,
+        # yesterday_opening_gap_reversal, yesterday_spike_exhaustion_ratio)
+        "intraday_close_position", "opening_gap_reversal", "spike_exhaustion_ratio",
     ]
     for col in cols_to_shift:
         early_df[f"yesterday_{col}"] = early_df[col].shift(1)

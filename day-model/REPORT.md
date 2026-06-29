@@ -28,9 +28,9 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Group | Count | Features |
 |-------|-------|----------|
-| Early-bar (48) | 48 | gap_pct, first_30min_return, early_realized_vol, early_range, early_trend, early_momentum, first_bar_return, first_bar_volume, early_vwap_dev, early_skew, early_kurtosis, bar_ret_0, bar_ret_1, bar_ret_2, bar_ret_3... and 33 more (total 48) |
-| Day-level (60) | 60 | macd_hist, sma20_dist, sma50_dist, atr14_norm, roc10, bb_pctb, vol20, sma10_dist, sma100_dist, sma200_dist, ema12_dist, rsi5, rsi21, roc5, roc20... and 45 more (total 60) |
-| Yesterday (22) | 22 | yesterday_pm_return, yesterday_am_return, yesterday_gap_pct, yesterday_first_30min_return, yesterday_early_realized_vol, yesterday_early_range, yesterday_early_volume_ratio, yesterday_early_trend, yesterday_early_momentum, yesterday_first_bar_return, yesterday_first_bar_volume, yesterday_early_vwap_dev, yesterday_early_skew, yesterday_early_kurtosis, yesterday_day_range... and 7 more (total 22) |
+| Early-bar (139) | 139 | gap_pct, first_30min_return, early_realized_vol, early_range, early_trend, early_momentum, first_bar_return, first_bar_volume, early_vwap_dev, early_skew, early_kurtosis, bar_ret_0, bar_ret_1, bar_ret_2, bar_ret_3... and 124 more (total 139) |
+| Day-level (74) | 74 | macd_hist, sma20_dist, sma50_dist, atr14_norm, roc10, bb_pctb, vol20, sma10_dist, sma100_dist, sma200_dist, ema12_dist, rsi5, rsi21, roc5, roc20... and 59 more (total 74) |
+| Yesterday (25) | 25 | yesterday_pm_return, yesterday_am_return, yesterday_gap_pct, yesterday_first_30min_return, yesterday_early_realized_vol, yesterday_early_range, yesterday_early_volume_ratio, yesterday_early_trend, yesterday_early_momentum, yesterday_first_bar_return, yesterday_first_bar_volume, yesterday_early_vwap_dev, yesterday_early_skew, yesterday_early_kurtosis, yesterday_day_range... and 10 more (total 25) |
 
 - **Early-bar**: First `decision_bar+1` five-minute bars of Index data (see `DECISION_BAR` dict in `build_features.py`). Bars beyond `decision_bar` padded with 0.0. Strictly causal — no look-ahead.
 - **Day-level**: Technical indicators and 3rd party flows calculated using daily and intraday Index data directly, shifted by 1 day (no look-ahead).

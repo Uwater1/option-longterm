@@ -1111,8 +1111,8 @@
     }
   },
   "optuna_param_importance": {
-    "stability_threshold": 0.8173061554514818,
-    "model_type": 0.18269384454851834
+    "stability_threshold": 0.7700024677708283,
+    "model_type": 0.22999753222917177
   },
   "target_stats": {
     "mean_pct": 0.012484846636652946,
@@ -1120,5 +1120,5 @@
     "sharpe_ann": 0.20752699980228986
   },
   "y_scale": 100.0,
-  "elapsed_sec": 13.83937406539917
+  "elapsed_sec": 11.696685314178467
 }
