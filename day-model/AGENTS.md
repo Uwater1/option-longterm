@@ -47,7 +47,8 @@ Note: `short` side coefficients predict raw `trade_return`. At load time (`score
 
 ## 1. Add New Features
 
-Features split into two groups in `day-model/build_features.py`.
+Features split into core in `day-model/build_features.py` and modular extra features in `day-model/features_extra.py` (115 Numba `njit` features: `EARLY_EXTRA`, `DAY_EXTRA`, `YESTERDAY_EXTRA`).
+
 
 ### A. Intraday Early-Bar Features (computable by decision-bar close)
 1. Open `day-model/build_features.py`.

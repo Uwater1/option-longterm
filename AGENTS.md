@@ -90,6 +90,7 @@ day-model/                     # Day-Model PM session return predictor
 ├── REPORT.md                  # Comprehensive PM return prediction report
 ├── AGENTS.md                  # Feature expansion and workflow guide
 ├── build_features.py          # Early-bar + day-level feature engineering (130 features, local caching)
+├── features_extra.py          # 115 Numba njit extra features (early-bar, day-level, yesterday-mirror)
 ├── train_model.py             # Optuna-tuned linear model training & feature selection
 ├── feature_select.py          # Stability + LightGBM-importance selectors
 ├── gating_model.py            # Big-move gating classifier
