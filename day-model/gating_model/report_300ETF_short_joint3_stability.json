@@ -3,61 +3,65 @@
     "side": "short",
     "variant": "joint3",
     "selector": "stability",
-    "best_model_type": "logistic",
+    "best_model_type": "lightgbm",
     "best_params": {
-        "C": 4.299079655352408,
-        "penalty": "l1"
+        "n_estimators": 85,
+        "learning_rate": 0.02839682322138505,
+        "num_leaves": 18,
+        "max_depth": 4,
+        "min_child_samples": 37
     },
     "final_threshold": 0.007171920966356993,
-    "firing_threshold": 0.1585417568177025,
+    "firing_threshold": 0.17746721490267742,
     "features_used": [
-        "gap_pct",
         "early_skew",
-        "bar_ret_2",
+        "bar_rng_0",
+        "bar_rng_2",
         "bar_body_rng_0",
-        "bar_vwap_dev_0",
-        "body_to_range_ratio",
-        "total_path_length",
+        "max_up_ret",
+        "volume_climax_exhaustion",
+        "intraday_bearish_fvg",
+        "inside_bar_failure_bull",
+        "upper_shadow_rejection",
+        "upper_wick_dominance",
+        "volatility_regime_intraday",
         "roc10",
         "sma100_dist",
-        "vol_ratio_5_20",
         "northbound_net",
+        "measured_move_proximity",
         "yesterday_am_return",
-        "yesterday_gap_pct",
         "yesterday_early_realized_vol",
         "yesterday_early_range",
         "yesterday_first_bar_return",
-        "yesterday_early_vwap_dev",
-        "yesterday_early_kurtosis",
-        "yesterday_day_pm_am_vol_ratio"
+        "yesterday_early_vwap_dev"
     ],
-    "n_features": 19,
+    "n_features": 20,
     "results": {
-        "logistic": {
+        "lightgbm": {
             "cv_metrics": {
-                "auc": 0.6046704562108745,
-                "pr_auc": 0.2138365866057491,
-                "precision_at_thr": 0.2007366482504604,
-                "recall_at_thr": 0.44672131147540983,
-                "f1_at_thr": 0.2770012706480305,
-                "firing_threshold": 0.14936905969855852,
+                "auc": 0.6459785817473777,
+                "pr_auc": 0.23593182303161922,
+                "precision_at_thr": 0.20994475138121546,
+                "recall_at_thr": 0.4672131147540984,
+                "f1_at_thr": 0.289707750952986,
+                "firing_threshold": 0.17231556447846058,
                 "base_rate": 0.13480662983425415
             },
             "dev_only_oos": {
-                "auc": 0.6672198889039427,
-                "pr_auc": 0.24416685778654107,
+                "auc": 0.6845278417558596,
+                "pr_auc": 0.25608649496175434,
                 "precision_at_thr": 0.20121951219512196,
                 "recall_at_thr": 0.5409836065573771,
                 "f1_at_thr": 0.29333333333333333,
-                "firing_threshold": 0.14475921434386887
+                "firing_threshold": 0.15107908559120906
             },
             "forward_wf_estimate": {
-                "auc": 0.5949227736327822,
-                "pr_auc": 0.22884450172821752,
-                "precision_at_thr": 0.20147058823529412,
-                "recall_at_thr": 0.4405144694533762,
-                "f1_at_thr": 0.27648839556004035,
-                "firing_threshold": 0.15056203087207584,
+                "auc": 0.6233795298291575,
+                "pr_auc": 0.22861664186325256,
+                "precision_at_thr": 0.20294117647058824,
+                "recall_at_thr": 0.4437299035369775,
+                "f1_at_thr": 0.2785065590312815,
+                "firing_threshold": 0.16835127920783063,
                 "base_rate": 0.13730684326710818
             }
         }
