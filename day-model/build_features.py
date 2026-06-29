@@ -27,6 +27,17 @@ import pandas as pd
 import pandas_ta as ta
 from scipy.stats import skew, kurtosis
 
+# New feature module: 91 early-bar (numba njit) + 14 day-level + 3 yesterday-mirror
+# features from feature.csv. See day-model/features_extra.py for impl details.
+from features_extra import (
+    EARLY_EXTRA,
+    DAY_EXTRA,
+    YESTERDAY_EXTRA,
+    extract_early_extras,
+    empty_early_extras,
+    compute_daylevel_extras,
+)
+
 warnings.filterwarnings("ignore")
 
 # Feature lists
@@ -49,7 +60,7 @@ EARLY_FEATURES = [
     # New shape/trend indicators (7)
     "num_up_bars", "max_up_ret", "max_down_ret", "cl_pos_in_range",
     "body_to_range_ratio", "total_path_length", "volume_slope"
-]
+] + EARLY_EXTRA
 
 DAY_FEATURES = [
     # Existing (7)
@@ -77,7 +88,7 @@ DAY_FEATURES = [
     # New Option Derived Features (8)
     "iv", "iv_vol_ratio", "vix", "vix_vol_ratio", "vix_iv_spread", "vix_iv_ratio",
     "iv_diff_1d", "vix_diff_1d"
-]
+] + DAY_EXTRA
 
 YESTERDAY_FEATURES = [
     "yesterday_pm_return", "yesterday_am_return",
@@ -88,7 +99,7 @@ YESTERDAY_FEATURES = [
     "yesterday_day_range", "yesterday_day_realized_vol", "yesterday_day_close_pos",
     "yesterday_day_pm_am_vol_ratio", "yesterday_day_late_mom", "yesterday_day_vwap_dev",
     "yesterday_day_skew", "yesterday_day_kurtosis"
-]
+] + YESTERDAY_EXTRA
 
 FEATURES = EARLY_FEATURES + DAY_FEATURES + YESTERDAY_FEATURES
 
@@ -470,6 +481,17 @@ def compute_daylevel_indicators(df_1d: pd.DataFrame, margin_cache: pd.DataFrame,
     df["iv_diff_1d"] = df["iv"].diff(1)
     df["vix_diff_1d"] = df["vix"].diff(1)
 
+    # ── New 14 day-level features from features_extra.py ──
+    # Computed on full daily Index history ending at T-1 (shifted by 1 below).
+    try:
+        day_extras = compute_daylevel_extras(df)
+        for col in day_extras.columns:
+            df[col] = day_extras[col].values
+    except Exception as e:
+        print(f"    [WARN] compute_daylevel_extras failed: {e}")
+        for col in DAY_EXTRA:
+            df[col] = np.nan
+
     # Check and fill missing columns/NaNs robustly
     for col in DAY_FEATURES:
         if col not in df.columns:
@@ -591,6 +613,15 @@ def extract_day_early_features(day_5m: pd.DataFrame, prev_close: float, expected
     res["body_to_range_ratio"] = float(abs(cl[-1] - op[0]) / (hi.max() - lo.min() + 1e-8))
     res["total_path_length"] = float(np.sum(np.abs(bar_ret)))
     res["volume_slope"] = float(_linear_slope(vol) / expected_bar_vol)
+
+    # ── New 91 early-bar features from features_extra.py (numba njit, fp32) ──
+    # Reuses already-sliced op/hi/lo/cl/vol (float64); extract_early_extras
+    # casts to float32 and dispatches to the compiled helper.
+    try:
+        res.update(extract_early_extras(bars, prev_close, expected_bar_vol, decision_bar))
+    except Exception:
+        # On any failure, fill NaN so the schema stays uniform
+        res.update(empty_early_extras())
 
     return res
 
@@ -810,7 +841,10 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
         "early_volume_ratio", "early_trend", "early_momentum", "first_bar_return",
         "first_bar_volume", "early_vwap_dev", "early_skew", "early_kurtosis",
         "day_range", "day_realized_vol", "day_close_pos", "day_pm_am_vol_ratio",
-        "day_late_mom", "day_vwap_dev", "day_skew", "day_kurtosis"
+        "day_late_mom", "day_vwap_dev", "day_skew", "day_kurtosis",
+        # Bases for YESTERDAY_EXTRA (yesterday_intraday_close_position,
+        # yesterday_opening_gap_reversal, yesterday_spike_exhaustion_ratio)
+        "intraday_close_position", "opening_gap_reversal", "spike_exhaustion_ratio",
     ]
     for col in cols_to_shift:
         early_df[f"yesterday_{col}"] = early_df[col].shift(1)
