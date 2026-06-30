@@ -460,7 +460,7 @@ def make_objective(pre_scaled_splits, y, sample_w, stability_scores, fold_std_st
         model_type = trial.suggest_categorical(
             "model_type", _OPTUNA_MODEL_TYPES)
         # Suggest top K features as a hyperparameter
-        top_k_features = trial.suggest_int("top_k_features", 3, 50, step=1)
+        top_k_features = trial.suggest_int("top_k_features", 3, 100, step=1)
 
         # Select indices by ranking stability scores descending
         selected_indices = np.argsort(stability_scores)[::-1][:top_k_features]
