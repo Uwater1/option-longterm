@@ -26,10 +26,82 @@ python day-model/train_model.py -e all --side both --trials 100
 # Train single side
 python day-model/train_model.py -e 300 --side long
 
+# Phase-3 overfit-control flags
+python day-model/train_model.py -e all --sampler random        # RandomSampler ablation
+python day-model/train_model.py -e 300 --max-top-k 12          # Override sqrt(n)/4 cap
+python day-model/train_model.py -e 300 --no-nested             # Skip nested CV (faster, less honest)
+python day-model/train_model.py -e 300 --no-cpcv               # Skip Combinatorial Purged CV
+python day-model/train_model.py -e 300 --inner-trials 30       # Optuna trials inside each outer fold
+python day-model/train_model.py -e 300 --nested-splits 10      # More outer folds (slower, tighter CI)
+
 # Bar-count experiment (re-pick per-ETF DECISION_BAR)
 python day-model/run_experiment_bars.py -e 300,50,500,588000,159915 --trials 40
 # Output: experiment_bars_results_trade_return.json
 ```
+
+## Phase-3 Overfit Controls
+
+`train_model.py` now ships explicit anti-overfit machinery on top of the existing purged walk-forward + stability selection:
+
+| Control | Default | Purpose |
+|:---|:---|:---|
+| `top_k_features` cap | `sqrt(n_dev)/4`, hard cap 20 (15 if n<1500) | Bounds Optuna's multiple-testing surface. Override via `--max-top-k`. |
+| `--trials` | 50 (was 100) | Fewer Optuna trials = less selection bias. |
+| `--sampler {tpe,random}` | `tpe` | `random` = RandomSampler ablation sanity check. |
+| **Nested CV** | on | Outer 5-fold purged WF × inner 3-fold Optuna. Re-tunes stability selection + model per outer fold. **Primary honest OOS metric.** Reported as `nested_cv.overall_ic_skglm`. |
+| **Ridge control** | on | Same outer-loop path with `Ridge(alpha=1.0)` on stability-selected features. Apples-to-apples; if skglm doesn't beat Ridge by >0.02 OOS IC → `deployable=False`. |
+| **CPCV** | on | Combinatorial Purged CV (8 groups × 2 test groups). Locked config, varies train/test split. Gives IC distribution (mean, std, min) instead of point estimate. |
+| Locked split | auto | First run writes dev/holdout boundary to `data/locked_splits.json`; later runs reuse it to prevent split-shopping inflation of holdout IC. |
+
+### Deployability Gate
+
+`deployable = True` requires nested CV overall IC > 0 **AND** skglm beats Ridge control by >0.02 IC. Falls back to holdout-vs-Ridge if `--no-nested`. Recorded in `scaler_{ETF}{_side}.joblib` bundle as `deployable` + `deployability_basis`.
+
+### Reading the New Summary Table
+
+```
+Tag  Model  k  HoldIC  NestIC  RidgeIC  Edge  CPCVmean  CPCVmin  Dir  Deploy
+```
+
+- `NestIC`: nested-CV overall OOS IC (primary headline).
+- `Edge`: `NestIC - RidgeIC`. Should be > +0.02 to deploy.
+- `CPCVmean / CPCVmin`: multi-path OOS distribution. `min` near or below 0 = fragile.
+- `Deploy`: YES only if `deployable=True`.
+
+### Results JSON schema additions
+
+Each `results_{tag}.json` now carries:
+
+```json
+{
+  "max_top_k": 11,
+  "sampler": "tpe",
+  "nested_cv": {
+    "overall_ic_skglm": 0.076,
+    "overall_ic_ridge": 0.071,
+    "edge_over_ridge": 0.005,
+    "ls_sharpe_skglm": 1.89,
+    "ls_sharpe_ridge": 1.61,
+    "dir_skglm": 0.515,
+    "per_fold": [...],
+    "yearly": {"2024": {"ic_skglm": ..., "ic_ridge": ..., "n": ...}},
+    "deployable": false
+  },
+  "cpcv": {
+    "n_paths": 7,
+    "mean_ic_skglm": 0.08,
+    "std_ic_skglm": 0.04,
+    "min_ic_skglm": -0.01,
+    "mean_ic_ridge": 0.07,
+    "path_ics_skglm": [...]
+  },
+  "deployable": false,
+  "deployability_basis": "nested_cv"
+}
+```
+
+Model bundle (`scaler_{ETF}{_side}.joblib`) gains: `max_top_k`, `nested_overall_ic_skglm`, `nested_overall_ic_ridge`, `nested_edge_over_ridge`, `nested_deployable`, `cpcv_mean_ic_skglm`, `cpcv_min_ic_skglm`, `deployable`, `deployability_basis`. **Backward compatible** — all existing keys preserved (`daytrade/scores.py` loads unchanged).
+
 
 **`--side` parameter details**:
 
@@ -88,12 +160,20 @@ Filter weak features automatically via Lasso Stability Selection:
 1. **Check Stability Score**:
    - Open `day-model/REPORT.md`.
    - Check **Feature Stability Scores (Block Bootstrap)** table.
-    - Optuna tunes top-K features count to keep. Rest pruned.
+    - Optuna tunes top-K features count to keep (bounded by sqrt(n)/4 cap). Rest pruned.
     - If feature selection probability < 20% across all ETFs, delete from `build_features.py`.
 
-2. **Verify Holdout Performance**:
-   - Verify OOS **Holdout IC** and **L/S Sharpe** improvement.
-   - Confirm **IS-OOS Gap** remains low (prevents overfitting/leakage).
+2. **Verify OOS Performance (priority order)**:
+   - **Nested CV overall IC** (`nested_cv.overall_ic_skglm`) — primary honest metric.
+   - **Edge over Ridge** (`nested_cv.edge_over_ridge`) — must be > +0.02 for `deployable=True`.
+   - **CPCV mean / min IC** — distribution across paths; min near 0 = fragile.
+   - Holdout IC + IS-OOS gap — secondary; locked split keeps it stable.
+   - Yearly IC stability (post-2023 must be positive).
+
+3. **Reject cells where**:
+   - `deployable=False`, OR
+   - CPCV min IC < 0, OR
+   - Nested yearly IC turns negative in the most recent 2 years.
 
 ---
 
