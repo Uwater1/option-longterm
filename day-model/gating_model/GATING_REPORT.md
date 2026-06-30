@@ -47,7 +47,7 @@ Each cell shows the WF PR-AUC for every (variant, selector) combination. `**` ma
 ## 3. Selection summary & deployability
 
 - **Variant**: `two_sided` = per-side binary big-move; `joint3` = shared 3-class softmax {big_up, neutral, big_down}; `gated` = big-move AND tradability/regime mask.
-- **Selector**: `none` = all 130 features; `stability` = regime-stratified block bootstrap + randomized ElasticNet + OOB IC; `lgbm` = walk-forward LightGBM gain + permutation importance.
+- **Selector**: `none` = all 238 features; `stability` = regime-stratified block bootstrap + randomized ElasticNet + OOB IC; `lgbm` = walk-forward LightGBM gain + permutation importance.
 - **Deployable**: WF AUC > 0.53 AND WF PR-AUC > base rate AND WF Prec@70 > 1.1× base rate.
 
 

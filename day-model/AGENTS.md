@@ -103,7 +103,7 @@ Per-side classifiers predict large directional move (big-up for long, big-down f
 
 ### v2 Improvements
 - **Feature curation**: Three selectors benchmarked per cell, winner auto-picked:
-  - `none`: all 130 features.
+  - `none`: all 238 features.
   - `stability`: `feature_select.py` block bootstrap + randomized ElasticNet + OOB IC screen + variance cap (σ ≤ 0.15). Yields ~14–25 features.
   - `lgbm`: walk-forward LightGBM gain + permutation importance, top-25.
 - **Target variants**:

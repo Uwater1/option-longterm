@@ -7,12 +7,12 @@ This research plan is part of the Option daytrading strategy. In this step, we w
 ### The Day-Model Strategy
 * **Goal**: Predict the entry-to-exit trade return of the ETF, where entry is executed at the open of `decision_bar + 1` (mid-day) and exit is executed at the 14:30 market close.
 * **Target**: $\text{trade\_return} = \log(P_{\text{close, 14:30}} / P_{\text{open, decision\_bar + 1}})$.
-* **Feature Space**: 130 features consisting of early-bar intraday features (computed up to the decision bar close from 5-minute index data), day-level technical indicators (shifted by 1 day to prevent leakage), capital flow, securities margin, and option-derived features (e.g., VIX, IV, VIX-IV spread).
+* **Feature Space**: 238 features consisting of early-bar intraday features (computed up to the decision bar close from 5-minute index data), day-level technical indicators (shifted by 1 day to prevent leakage), capital flow, securities margin, and option-derived features (e.g., VIX, IV, VIX-IV spread).
 * **Modeling**: Optuna-tuned linear models (Ridge, Lasso, ElasticNet, HuberRegressor) trained using walk-forward purged cross-validation.
 * **Dual Asymmetric Models**: Features are selected and models are trained separately for the `long` side (upside specialist predicting positive returns) and `short` side (downside specialist predicting negative returns). The feature selection target is asymmetric: $y_{\text{clip}} = \max(0, \text{trade\_return})$ for long, and $y_{\text{clip}} = \max(0, -\text{trade\_return})$ for short.
 
 ### Why Feature Selection Stability Matters
-Because the candidate feature space is large ($130$ features, will even add more) and financial data is highly noisy with short histories, standard model fitting overfits. We use **Block Bootstrap Stability Selection** on the dev set to identify a robust, sparse subset of features that persist across time before tuning hyperparameters.
+Because the candidate feature space is large ($238$ features, will even add more) and financial data is highly noisy with short histories, standard model fitting overfits. We use **Block Bootstrap Stability Selection** on the dev set to identify a robust, sparse subset of features that persist across time before tuning hyperparameters.
 
 ---
 

@@ -15,15 +15,15 @@ This project operates an intraday linear alpha model ("day-model") that predicts
 
 - **Signal source**: Features are computed from the corresponding **Index** data (e.g. 000300 for 300ETF) to eliminate look-ahead bias. Trade P&L is calculated using **ETF** prices.
 
-- **Model family**: Sparse robust linear regression (skglm with Huber loss + L1/MCP penalty). The pipeline loads 130+ candidate features; stability selection automatically prunes weak ones to ~3–12 final features per ETF.
+- **Model family**: Sparse robust linear regression (skglm with Huber loss + L1/MCP penalty). The pipeline loads 238+ candidate features; stability selection automatically prunes weak ones to ~3–12 final features per ETF.
 
-### Current Feature Space (130 features)
+### Current Feature Space (238 features)
 
 | Group | Count | Description |
 |-------|-------|-------------|
-| **Early-bar** (48) | Computed from the first 2–6 five-minute bars of the trading day (up to the decision bar). Includes gap %, early return, early realized vol, early range, bar-by-bar returns/volume/range/body-ratio/VWAP-deviation, shape indicators (num up bars, close position in range, path length, volume slope). |
-| **Day-level** (60) | Technical indicators and external data computed from **yesterday's** daily close (shifted by 1 day to prevent look-ahead). Includes SMA distances, RSI, MACD, Bollinger %B, realized vol (multiple windows + Parkinson/Garman-Klass), volume ratios, securities margin, capital flow, northbound connect, and option-derived factors (IV, VIX, VIX-IV spread). |
-| **Yesterday** (22) | The full-day and early-bar features of the **previous trading day** (shifted by 1 day). Captures serial autocorrelation in intraday patterns. |
+| **Early-bar** (139) | Computed from the first 2–6 five-minute bars of the trading day (up to the decision bar). Includes gap %, early return, early realized vol, early range, bar-by-bar returns/volume/range/body-ratio/VWAP-deviation, shape indicators (num up bars, close position in range, path length, volume slope). |
+| **Day-level** (74) | Technical indicators and external data computed from **yesterday's** daily close (shifted by 1 day to prevent look-ahead). Includes SMA distances, RSI, MACD, Bollinger %B, realized vol (multiple windows + Parkinson/Garman-Klass), volume ratios, securities margin, capital flow, northbound connect, and option-derived factors (IV, VIX, VIX-IV spread). |
+| **Yesterday** (25) | The full-day and early-bar features of the **previous trading day** (shifted by 1 day). Captures serial autocorrelation in intraday patterns. |
 
 ### Feature Quality Requirements
 
@@ -60,7 +60,7 @@ Each feature proposal must include the following fields. Proposals that omit req
 | **Lookback Window** | If the feature uses a rolling window (e.g. 20-day percentile rank of some intraday metric), specify the window length and why. |
 | **Normalization Method** | How the feature should be scaled (e.g. "divide by ATR(14)", "rolling 20-day z-score", "percentile rank over 252 days"). |
 | **Known Limitations** | Conditions under which the feature may fail or produce misleading signals (e.g. "unreliable in low-volume sessions", "requires minimum 3 bars of data"). |
-| **Related Existing Features** | Which of the current 130 features this is most similar to or might interact with. Helps us check for collinearity. |
+| **Related Existing Features** | Which of the current 238 features this is most similar to or might interact with. Helps us check for collinearity. |
 | **Supporting Evidence** | Any empirical observation, chart pattern example, or backtest result from the source material. |
 
 ### Category Definitions
