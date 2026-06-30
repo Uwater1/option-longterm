@@ -13,7 +13,7 @@ Three target variants (best per ETF×side is auto-selected by honest OOS metric)
                 (rolling vol20 / early_range regime). Single binary classifier.
 
 Three feature selectors (best per cell auto-selected):
-  - none      : all 130 features (legacy baseline).
+  - none      : all 238 features (legacy baseline).
   - stability : regime-stratified block bootstrap + randomized ElasticNet +
                 OOB IC screen + variance cap (ported via feature_select.py).
   - lgbm      : walk-forward LightGBM gain + permutation importance.

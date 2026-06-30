@@ -91,7 +91,7 @@ numba_utils.py                 # Numba BS functions & IV solver
 day-model/                     # Day-Model PM session return predictor
 ├── REPORT.md                  # Comprehensive PM return prediction report
 ├── AGENTS.md                  # Feature expansion and workflow guide
-├── build_features.py          # Early-bar + day-level feature engineering (130 features, local caching)
+├── build_features.py          # Early-bar + day-level feature engineering (238 features, local caching)
 ├── features_extra.py          # 115 Numba njit extra features (early-bar, day-level, yesterday-mirror)
 ├── train_model.py             # Optuna-tuned linear model training & feature selection
 ├── feature_select.py          # Stability + LightGBM-importance selectors
@@ -124,7 +124,7 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 ### Day-Model Features & Caching
 - **Index Signals**: Technical indicators use daily/intraday Index data (`000016.XSHG`, `000300.XSHG`, `000905.XSHG`, `000688.XSHG`, `399006.XSHE`) to prevent look-ahead bias. Execution uses ETF prices.
 - **Local Cache**: Ricequant data (Margin, Capital Flow, Northbound Quota, VIX) cached in `data/*.parquet`.
-- **130 Features**: 48 early-bar intraday, 60 day-level, 22 prior-day features (shifted 1 day).
+- **238 Features**: 139 early-bar intraday, 74 day-level, 25 prior-day features (shifted 1 day).
 - **Volume Normalization**: Early-morning volume normalized by rolling 20-day daily volume shifted by 1 day (`yesterday_rolling_20d_daily_volume / 48`).
 - **VIX/IV Spread**: `vix_iv_spread = vix - iv`. Missing VIX backfilled via `iv + mean_bias`.
 

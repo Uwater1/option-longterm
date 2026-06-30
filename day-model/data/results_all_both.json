@@ -4,7 +4,7 @@
     "side": "long",
     "tag": "300ETF_long",
     "n_samples": 2722,
-    "n_features": 130,
+    "n_features": 238,
     "selected_features": [
       "early_skew",
       "bar_body_rng_0",
@@ -701,7 +701,7 @@
     "side": "short",
     "tag": "300ETF_short",
     "n_samples": 2722,
-    "n_features": 130,
+    "n_features": 238,
     "selected_features": [
       "gap_pct",
       "bb_width",
@@ -1393,7 +1393,7 @@
     "side": "long",
     "tag": "50ETF_long",
     "n_samples": 2722,
-    "n_features": 130,
+    "n_features": 238,
     "selected_features": [
       "bar_rng_0",
       "sma100_dist",
@@ -2086,7 +2086,7 @@
     "side": "short",
     "tag": "50ETF_short",
     "n_samples": 2722,
-    "n_features": 130,
+    "n_features": 238,
     "selected_features": [
       "bar_vol_2",
       "iv",
@@ -2778,7 +2778,7 @@
     "side": "long",
     "tag": "500ETF_long",
     "n_samples": 2722,
-    "n_features": 130,
+    "n_features": 238,
     "selected_features": [
       "bar_ret_3",
       "bar_vol_4",
@@ -3479,7 +3479,7 @@
     "side": "short",
     "tag": "500ETF_short",
     "n_samples": 2722,
-    "n_features": 130,
+    "n_features": 238,
     "selected_features": [
       "gap_pct",
       "bar_body_rng_0",
@@ -4173,7 +4173,7 @@
     "side": "long",
     "tag": "588000ETF_long",
     "n_samples": 1294,
-    "n_features": 130,
+    "n_features": 238,
     "selected_features": [
       "yesterday_day_realized_vol",
       "vol5",
@@ -4835,7 +4835,7 @@
     "side": "short",
     "tag": "588000ETF_short",
     "n_samples": 1294,
-    "n_features": 130,
+    "n_features": 238,
     "selected_features": [
       "yesterday_day_pm_am_vol_ratio",
       "yesterday_am_return",
@@ -5497,7 +5497,7 @@
     "side": "long",
     "tag": "159915ETF_long",
     "n_samples": 2722,
-    "n_features": 130,
+    "n_features": 238,
     "selected_features": [
       "sma100_dist",
       "yesterday_early_realized_vol",
@@ -6189,7 +6189,7 @@
     "side": "short",
     "tag": "159915ETF_short",
     "n_samples": 2722,
-    "n_features": 130,
+    "n_features": 238,
     "selected_features": [
       "gap_pct",
       "bar_rng_3",
