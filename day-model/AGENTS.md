@@ -88,8 +88,8 @@ Filter weak features automatically via Lasso Stability Selection:
 1. **Check Stability Score**:
    - Open `day-model/REPORT.md`.
    - Check **Feature Stability Scores (Block Bootstrap)** table.
-   - Features below threshold (< 50%) pruned automatically.
-   - If selection probability < 20% across all ETFs, delete from `build_features.py`.
+    - Optuna tunes top-K features count to keep. Rest pruned.
+    - If feature selection probability < 20% across all ETFs, delete from `build_features.py`.
 
 2. **Verify Holdout Performance**:
    - Verify OOS **Holdout IC** and **L/S Sharpe** improvement.
