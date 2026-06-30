@@ -459,14 +459,11 @@ def make_objective(pre_scaled_splits, y, sample_w, stability_scores, fold_std_st
     def objective(trial: optuna.Trial) -> float:
         model_type = trial.suggest_categorical(
             "model_type", _OPTUNA_MODEL_TYPES)
-        # Suggest stability selection threshold as a hyperparameter
-        stability_threshold = trial.suggest_float("stability_threshold", 0.4, 0.9, step=0.05)
+        # Suggest top K features as a hyperparameter
+        top_k_features = trial.suggest_int("top_k_features", 3, 50, step=1)
 
-        # Select indices where score >= threshold and std <= variance_cap
-        selected_indices = np.where((stability_scores >= stability_threshold) & (fold_std_stability <= variance_cap))[0]
-        # Keep at least 3 features to prevent empty subsets
-        if len(selected_indices) < 3:
-            selected_indices = np.argsort(stability_scores)[::-1][:3]
+        # Select indices by ranking stability scores descending
+        selected_indices = np.argsort(stability_scores)[::-1][:top_k_features]
 
         if model_type == "skglm_huber_l1":
             alpha = trial.suggest_float("skglm_huber_l1_alpha", 1e-5, 1e3, log=True)
@@ -619,11 +616,12 @@ def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
     X_dev_s = scaler.transform(X_dev)
     X_ho_s = scaler.transform(X_ho)
 
-    best_threshold = best_params["stability_threshold"]
-    selected_indices = np.where((stability_scores >= best_threshold) & (fold_std_stability <= 0.15))[0]
-    if len(selected_indices) < 3:
-        selected_indices = np.argsort(stability_scores)[::-1][:3]
+    best_top_k = best_params["top_k_features"]
+    selected_indices = np.argsort(stability_scores)[::-1][:best_top_k]
     selected_features = [FEATURES[i] for i in selected_indices]
+
+    # Store dynamic stability threshold back into best_params for downstream compat
+    best_params["stability_threshold"] = float(stability_scores[selected_indices[-1]])
     print(f"  Final selected features ({len(selected_features)}): {selected_features}")
 
     X_dev_sel = X_dev_s[:, selected_indices]

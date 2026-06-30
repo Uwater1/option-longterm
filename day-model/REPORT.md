@@ -11,16 +11,16 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | ETF/Tag | Model | Threshold | Features | Samples | Holdout IC | Holdout Dir | L/S Sharpe | Ridge Base IC | IS-OOS Gap |
 |---------|-------|-----------|----------|---------|-----------|-------------|-----------|---------------|------------|
-| 300ETF_long | SKGLM_HUBER_L1 | 0.45 | 8/238 | 2722 | +0.0566 | 0.526 | +2.23 | +0.1028 | +0.1027 |
-| 300ETF_short | SKGLM_MCP | 0.80 | 3/238 | 2722 | -0.0198 | 0.502 | -0.04 | +0.1028 | +0.0501 |
-| 50ETF_long | SKGLM_MCP | 0.65 | 4/238 | 2722 | +0.0125 | 0.478 | +2.05 | +0.0912 | +0.0850 |
-| 50ETF_short | SKGLM_MCP | 0.55 | 3/238 | 2722 | +0.1183 | 0.509 | +1.10 | +0.0912 | -0.0038 |
-| 500ETF_long | SKGLM_HUBER_L1 | 0.40 | 12/238 | 2722 | +0.1066 | 0.561 | +1.56 | +0.1260 | +0.0677 |
-| 500ETF_short | SKGLM_HUBER_L1 | 0.60 | 5/238 | 2722 | +0.1887 | 0.572 | +2.79 | +0.1260 | -0.0675 |
-| 588000ETF_long | SKGLM_HUBER_L1 | 0.50 | 3/238 | 1294 | +0.0631 | 0.473 | -1.23 | +0.0168 | +0.0741 |
-| 588000ETF_short | SKGLM_HUBER_L1 | 0.55 | 3/238 | 1294 | -0.0205 | 0.442 | -0.87 | +0.0168 | +0.1114 |
-| 159915ETF_long | SKGLM_HUBER_L1 | 0.50 | 3/238 | 2722 | +0.1099 | 0.557 | +1.58 | +0.0520 | +0.0117 |
-| 159915ETF_short | SKGLM_HUBER_L1 | 0.40 | 8/238 | 2722 | +0.1112 | 0.555 | +3.48 | +0.0520 | +0.0317 |
+| 300ETF_long | SKGLM_HUBER_L1 | 0.37 | 21/238 | 2722 | +0.0510 | 0.517 | +2.14 | +0.1183 | +0.1135 |
+| 300ETF_short | SKGLM_HUBER_L1 | 0.54 | 5/238 | 2722 | -0.0048 | 0.498 | +0.77 | +0.1183 | +0.0634 |
+| 50ETF_long | SKGLM_MCP | 0.29 | 32/238 | 2722 | +0.0169 | 0.524 | +1.47 | +0.1178 | +0.1593 |
+| 50ETF_short | SKGLM_MCP | 0.46 | 8/238 | 2722 | +0.0845 | 0.502 | +0.58 | +0.1178 | +0.0470 |
+| 500ETF_long | SKGLM_MCP | 0.30 | 45/238 | 2722 | +0.1443 | 0.551 | +2.70 | +0.1348 | +0.0293 |
+| 500ETF_short | SKGLM_MCP | 0.22 | 50/238 | 2722 | +0.1512 | 0.551 | +3.06 | +0.1348 | +0.0167 |
+| 588000ETF_long | SKGLM_HUBER_L1 | 0.12 | 49/238 | 1294 | -0.0699 | 0.496 | -1.34 | -0.0277 | +0.3190 |
+| 588000ETF_short | SKGLM_HUBER_L1 | 0.24 | 16/238 | 1294 | -0.0021 | 0.477 | +0.28 | -0.0277 | +0.1716 |
+| 159915ETF_long | SKGLM_MCP | 0.25 | 38/238 | 2722 | +0.1869 | 0.564 | +4.17 | +0.0489 | +0.0442 |
+| 159915ETF_short | SKGLM_MCP | 0.32 | 28/238 | 2722 | +0.1148 | 0.555 | +2.96 | +0.0489 | +0.0690 |
 
 ## 2. Data & Features
 
@@ -47,7 +47,7 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 - **Purge gap**: 5 trading days between train and test.
 - **Stability Selection**: 50 stratified block bootstrap trials (block length 20 days) using randomized `ElasticNet` (pre-tuned via `ElasticNetCV`) combined with an out-of-bag (OOB) Spearman rank IC significance check (p < 0.05 or |IC| > 0.02) as the base selector. Stability scores and cross-fold variance filters are computed across purged walk-forward validation folds.
 
-- **Tuning**: The stability selection threshold is searched via Optuna in walk-forward CV over $[0.40, 0.90]$ to find the globally most robust subset.
+- **Tuning**: The top K features by stability selection are tuned via Optuna in walk-forward CV over $K \in [3, 50]$ to find the globally most robust subset.
 
 - **Optuna objective**: mean Spearman rank IC across folds (100 trials)
 
@@ -56,7 +56,7 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 | Parameter | Range / Options |
 |-----------|-----------------|
 | model_type | skglm_huber_l1, skglm_mcp (from `skglm` library) |
-| stability_threshold | 0.40–0.90 (step 0.05) |
+| top_k_features | 3–50 (step 1) |
 | **skglm_huber_l1** | alpha: $10^{-5}$–$10^3$ (log), delta: $1.0$–$3.0$ |
 | **skglm_mcp** | alpha: $10^{-5}$–$10^3$ (log), gamma: $1.5$–$15.0$ |
 
@@ -65,11 +65,11 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 ### 300ETF_long
 
 - **Selected Model**: SKGLM_HUBER_L1
-- **Tuned Stability Threshold**: 0.45
+- **Tuned Stability Threshold**: 0.37
 - **Samples**: 2722 (2015-04-07 → 2026-06-17)
 - **Holdout**: 544 days (2024-03-19 → 2026-06-17)
 - **Target stats**: mean=0.0125%, std=0.9550%, Sharpe=0.21
-- **Selected features (8)**: `early_skew, bar_body_rng_0, max_up_ret, sma100_dist, yesterday_gap_pct, yesterday_early_realized_vol, yesterday_early_range, yesterday_early_vwap_dev`
+- **Selected features (21)**: `yesterday_early_range, early_skew, sma100_dist, consecutive_higher_highs, inside_bar_failure_bear, vol_gk10, intraday_bullish_fvg, yesterday_body_ratio, yesterday_early_realized_vol, roc10, early_bearish_shooting_star, intraday_bearish_fvg, upper_wick_dominance, inside_bar_failure_bull, capital_net_value, opening_gap_reversal, volume_surge_direction, yesterday_early_vwap_dev, volume_climax_exhaustion, consecutive_bearish_engulfing, max_up_ret`
 
 #### Selected Feature Stability Scores (Block Bootstrap)
 
@@ -78,14 +78,27 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
-| sma100_dist | 78.0% | **Selected** | -0.0790 | -0.0440 | -0.70 | 0.0350 | ** Moderate Monotonic | -0.0390 | 15:-0.18 16:-0.09 17:-0.01 18:-0.05 19:-0.16 20:-0.08 21:-0.14 22:-0.07 23:-0.09 24:-0.06 25:-0.01 26:-0.16 | 0.0535 |
-| early_skew | 77.6% | **Selected** | +0.0386 | +0.0356 | +0.70 | 0.0035 | ** Moderate Monotonic | +0.0137 | 15:+0.11 16:+0.05 17:+0.08 18:-0.02 19:+0.04 20:+0.07 21:-0.03 22:+0.10 23:-0.00 24:+0.01 25:-0.00 26:+0.08 | 0.0469 |
-| yesterday_early_range | 77.2% | **Selected** | +0.0278 | +0.0063 | +0.80 | 0.0409 | ** Moderate Monotonic | -0.0142 | 15:+0.13 16:-0.02 17:+0.06 18:+0.05 19:-0.05 20:+0.01 21:-0.09 22:-0.02 23:-0.04 24:+0.01 25:+0.02 26:-0.06 | 0.0579 |
-| bar_body_rng_0 | 74.4% | **Selected** | +0.1072 | +0.0952 | +1.00 | 0.0073 | *** Strong Monotonic | +0.0300 | 15:+0.22 16:+0.12 17:+0.03 18:+0.20 19:+0.07 20:-0.00 21:+0.16 22:-0.00 23:+0.14 24:+0.07 25:+0.07 26:-0.10 | 0.0883 |
-| max_up_ret | 65.2% | **Selected** | +0.1202 | +0.0819 | +0.80 | 0.0075 | ** Moderate Monotonic | +0.0000 | 15:+0.18 16:+0.10 17:+0.03 18:+0.19 19:+0.01 20:+0.05 21:+0.15 22:-0.03 23:+0.14 24:+0.10 25:+0.04 26:-0.16 | 0.0956 |
-| yesterday_early_realized_vol | 58.4% | **Selected** | +0.0256 | +0.0150 | +0.30 | 0.0216 | * Non-Monotonic / Weak | +0.0239 | 15:+0.13 16:+0.09 17:-0.06 18:+0.05 19:-0.05 20:-0.05 21:+0.01 22:-0.07 23:-0.13 24:+0.09 25:+0.00 26:+0.01 | 0.0742 |
-| yesterday_gap_pct | 49.6% | **Selected** | -0.0003 | +0.0194 | +0.60 | 0.0000 | ** Moderate Monotonic | +0.0296 | 15:+0.06 16:-0.08 17:-0.05 18:-0.06 19:+0.05 20:+0.02 21:+0.11 22:+0.05 23:+0.01 24:+0.02 25:+0.07 26:-0.02 | 0.0536 |
-| yesterday_early_vwap_dev | 45.6% | **Selected** | +0.0745 | +0.0406 | +0.60 | 0.0191 | ** Moderate Monotonic | +0.0473 | 15:+0.06 16:-0.02 17:+0.09 18:+0.07 19:+0.01 20:+0.13 21:-0.06 22:+0.03 23:-0.05 24:+0.03 25:+0.05 26:+0.05 | 0.0543 |
+| yesterday_early_range | 74.8% | **Selected** | +0.0278 | +0.0063 | +0.80 | 0.0409 | ** Moderate Monotonic | -0.0142 | 15:+0.13 16:-0.02 17:+0.06 18:+0.05 19:-0.05 20:+0.01 21:-0.09 22:-0.02 23:-0.04 24:+0.01 25:+0.02 26:-0.06 | 0.0579 |
+| early_skew | 67.2% | **Selected** | +0.0386 | +0.0356 | +0.70 | 0.0035 | ** Moderate Monotonic | +0.0137 | 15:+0.11 16:+0.05 17:+0.08 18:-0.02 19:+0.04 20:+0.07 21:-0.03 22:+0.10 23:-0.00 24:+0.01 25:-0.00 26:+0.08 | 0.0469 |
+| sma100_dist | 62.4% | **Selected** | -0.0790 | -0.0440 | -0.70 | 0.0350 | ** Moderate Monotonic | -0.0390 | 15:-0.18 16:-0.09 17:-0.01 18:-0.05 19:-0.16 20:-0.08 21:-0.14 22:-0.07 23:-0.09 24:-0.06 25:-0.01 26:-0.16 | 0.0535 |
+| consecutive_higher_highs | 54.0% | **Selected** | +0.0565 | +0.0444 | +0.50 | 0.0000 | ** Moderate Monotonic | -0.0181 | 15:+0.04 16:+0.01 17:-0.03 18:+0.12 19:+0.06 20:-0.02 21:+0.19 22:+0.00 23:+0.11 24:-0.01 25:+0.07 26:-0.19 | 0.0925 |
+| inside_bar_failure_bear | 52.8% | **Selected** | +0.0272 | +0.0257 | N/A | 0.0000 | N/A | +0.0561 | 15:+0.04 16:+0.07 17:+0.07 18:+0.07 19:-0.02 20:+0.03 21:-0.06 22:+0.05 23:-0.03 24:+0.02 25:-0.02 26:+0.20 | 0.0636 |
+| vol_gk10 | 52.4% | **Selected** | +0.0401 | +0.0292 | +0.80 | 0.0392 | ** Moderate Monotonic | +0.0255 | 15:+0.04 16:+0.03 17:+0.09 18:+0.01 19:-0.04 20:-0.06 21:+0.04 22:+0.11 23:+0.01 24:+0.10 25:+0.06 26:+0.01 | 0.0504 |
+| intraday_bullish_fvg | 50.4% | **Selected** | +0.0588 | +0.0444 | N/A | 0.0000 | N/A | +0.0100 | 15:+0.14 16:+0.04 17:+0.06 18:+0.00 19:-0.02 20:+0.04 21:+0.08 22:+0.08 23:-0.00 24:-0.02 25:+0.04 26:-0.01 | 0.0451 |
+| yesterday_body_ratio | 47.6% | **Selected** | -0.0259 | -0.0316 | -0.70 | 0.0026 | ** Moderate Monotonic | -0.0492 | 15:+0.03 16:-0.04 17:+0.02 18:-0.04 19:+0.02 20:-0.14 21:-0.11 22:-0.01 23:+0.04 24:-0.03 25:-0.02 26:-0.12 | 0.0576 |
+| yesterday_early_realized_vol | 43.6% | **Selected** | +0.0256 | +0.0150 | +0.30 | 0.0216 | * Non-Monotonic / Weak | +0.0239 | 15:+0.13 16:+0.09 17:-0.06 18:+0.05 19:-0.05 20:-0.05 21:+0.01 22:-0.07 23:-0.13 24:+0.09 25:+0.00 26:+0.01 | 0.0742 |
+| roc10 | 43.6% | **Selected** | -0.0675 | -0.0325 | -0.50 | 0.0236 | * Non-Monotonic / Weak | -0.0431 | 15:-0.09 16:-0.12 17:-0.09 18:-0.00 19:-0.07 20:-0.02 21:-0.14 22:+0.05 23:+0.02 24:-0.06 25:+0.01 26:-0.12 | 0.0600 |
+| early_bearish_shooting_star | 42.8% | **Selected** | -0.0083 | -0.0419 | N/A | 0.0028 | N/A | -0.0328 | 15:+0.03 16:-0.04 17:+0.01 18:-0.09 19:-0.13 20:-0.01 21:-0.17 22:+0.08 23:-0.01 24:-0.04 25:-0.02 26:-0.04 | 0.0653 |
+| intraday_bearish_fvg | 41.2% | **Selected** | -0.0315 | -0.0269 | N/A | 0.0000 | N/A | -0.0789 | 15:-0.05 16:-0.01 17:+0.04 18:-0.07 19:-0.02 20:+0.01 21:-0.01 22:+0.02 23:-0.08 24:-0.07 25:-0.07 26:-0.09 | 0.0437 |
+| upper_wick_dominance | 40.8% | **Selected** | -0.0113 | +0.0101 | +0.60 | 0.0000 | ** Moderate Monotonic | +0.0619 | 15:+0.02 16:-0.01 17:+0.04 18:+0.08 19:-0.05 20:+0.03 21:-0.07 22:-0.04 23:+0.02 24:+0.08 25:+0.05 26:+0.00 | 0.0479 |
+| inside_bar_failure_bull | 40.4% | **Selected** | -0.0506 | -0.0409 | N/A | 0.0021 | N/A | -0.0058 | 15:-0.16 16:-0.01 17:-0.12 18:+0.01 19:-0.07 20:-0.06 21:-0.01 22:+0.05 23:-0.09 24:-0.03 25:+0.04 26:-0.12 | 0.0645 |
+| capital_net_value | 40.0% | **Selected** | -0.0252 | -0.0462 | -0.60 | 0.0142 | ** Moderate Monotonic | -0.0077 | 15:+nan 16:+nan 17:-0.04 18:+0.04 19:-0.17 20:-0.10 21:-0.08 22:-0.07 23:+0.03 24:-0.06 25:-0.00 26:+0.02 | nan |
+| opening_gap_reversal | 40.0% | **Selected** | -0.0588 | -0.0066 | -1.00 | 0.0000 | *** Strong Monotonic | +0.0330 | 15:+0.02 16:+0.01 17:-0.14 18:-0.01 19:+0.00 20:-0.02 21:-0.06 22:+0.05 23:-0.04 24:-0.09 25:+0.01 26:+0.13 | 0.0660 |
+| volume_surge_direction | 40.0% | **Selected** | +0.1175 | +0.0760 | +0.90 | 0.0067 | *** Strong Monotonic | +0.0329 | 15:+0.19 16:+0.08 17:-0.05 18:+0.18 19:+0.12 20:+0.06 21:+0.08 22:+0.04 23:+0.14 24:+0.04 25:+0.09 26:-0.11 | 0.0832 |
+| yesterday_early_vwap_dev | 39.6% | **Selected** | +0.0745 | +0.0406 | +0.60 | 0.0191 | ** Moderate Monotonic | +0.0473 | 15:+0.06 16:-0.02 17:+0.09 18:+0.07 19:+0.01 20:+0.13 21:-0.06 22:+0.03 23:-0.05 24:+0.03 25:+0.05 26:+0.05 | 0.0543 |
+| volume_climax_exhaustion | 39.2% | **Selected** | -0.0138 | -0.0068 | -0.70 | 0.0190 | ** Moderate Monotonic | -0.0070 | 15:-0.11 16:-0.16 17:-0.05 18:+0.04 19:+0.06 20:+0.00 21:-0.08 22:+0.06 23:+0.12 24:+0.03 25:-0.02 26:-0.10 | 0.0803 |
+| consecutive_bearish_engulfing | 38.8% | **Selected** | -0.0019 | -0.0094 | N/A | 0.0120 | N/A | -0.0644 | 15:+0.06 16:-0.04 17:+0.10 18:+0.02 19:+0.04 20:+0.01 21:-0.07 22:-0.08 23:-0.00 24:+0.00 25:-0.14 26:+0.04 | 0.0649 |
+| max_up_ret | 36.8% | **Selected** | +0.1202 | +0.0819 | +0.80 | 0.0075 | ** Moderate Monotonic | +0.0000 | 15:+0.18 16:+0.10 17:+0.03 18:+0.19 19:+0.01 20:+0.05 21:+0.15 22:-0.03 23:+0.14 24:+0.10 25:+0.04 26:-0.16 | 0.0956 |
 
 </details>
 
@@ -93,10 +106,10 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | +0.0566 | +0.1028 | +0.0000 | -0.0638 | -0.0160 |
-| Dir Acc | 0.526 | 0.520 | 0.500 | 0.458 | 0.493 |
-| RMSE | 0.7952% | 0.8188% | 0.8010% | 1.1427% | 0.8685% |
-| L/S Sharpe | +2.23 | +2.42 | — | — | — |
+| IC | +0.0510 | +0.1183 | +0.0000 | -0.0638 | -0.0160 |
+| Dir Acc | 0.517 | 0.531 | 0.500 | 0.458 | 0.493 |
+| RMSE | 0.7870% | 0.8415% | 0.8010% | 1.1427% | 0.8685% |
+| L/S Sharpe | +2.14 | +1.96 | — | — | — |
 
 #### Best Hyperparameters
 
@@ -106,9 +119,10 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 ```json
 {
   "model_type": "skglm_huber_l1",
-  "stability_threshold": 0.45,
-  "skglm_huber_l1_alpha": 0.017418270777832215,
-  "skglm_huber_delta": 2.5635291839304095
+  "top_k_features": 21,
+  "skglm_huber_l1_alpha": 0.024310365131498285,
+  "skglm_huber_delta": 1.9975705901589098,
+  "stability_threshold": 0.368
 }
 ```
 
@@ -118,27 +132,27 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.2421 | +0.1100 |
-| 2 | 0.1824 | +0.0988 |
-| 3 | 0.1583 | +0.1077 |
-| 4 | 0.1497 | +0.0726 |
-| 5 | 0.1337 | +0.0463 |
-| **Overall** | — | +0.0855 |
+| 1 | 0.2409 | +0.0872 |
+| 2 | 0.1939 | +0.1244 |
+| 3 | 0.1745 | +0.0994 |
+| 4 | 0.1585 | +0.0776 |
+| 5 | 0.1360 | +0.0344 |
+| **Overall** | — | +0.0878 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2017 | +0.0507 | 0.460 | 215 | +1.37 |
-| 2018 | +0.1811 | 0.527 | 243 | +5.10 |
-| 2019 | +0.1038 | 0.545 | 244 | +2.54 |
-| 2020 | +0.1079 | 0.514 | 243 | +3.33 |
-| 2021 | +0.1364 | 0.519 | 243 | +1.51 |
-| 2022 | +0.0352 | 0.496 | 242 | +1.41 |
-| 2023 | +0.1206 | 0.558 | 242 | +2.76 |
-| 2024 | +0.1094 | 0.521 | 242 | +3.66 |
-| 2025 | +0.0870 | 0.543 | 243 | +1.72 |
-| 2026 | -0.0562 | 0.491 | 108 | -1.19 |
+| 2017 | +0.1038 | 0.516 | 215 | +2.83 |
+| 2018 | +0.1249 | 0.481 | 243 | +4.07 |
+| 2019 | +0.1426 | 0.545 | 244 | +2.69 |
+| 2020 | +0.1308 | 0.539 | 243 | +2.73 |
+| 2021 | +0.1134 | 0.576 | 243 | +0.97 |
+| 2022 | +0.0255 | 0.488 | 242 | +0.93 |
+| 2023 | +0.1326 | 0.554 | 242 | +2.76 |
+| 2024 | +0.1050 | 0.558 | 242 | +2.99 |
+| 2025 | +0.0756 | 0.519 | 243 | +2.06 |
+| 2026 | -0.0695 | 0.435 | 108 | -0.36 |
 
 #### Diagnostic Plots
 
@@ -173,12 +187,12 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 ### 300ETF_short
 
-- **Selected Model**: SKGLM_MCP
-- **Tuned Stability Threshold**: 0.80
+- **Selected Model**: SKGLM_HUBER_L1
+- **Tuned Stability Threshold**: 0.54
 - **Samples**: 2722 (2015-04-07 → 2026-06-17)
 - **Holdout**: 544 days (2024-03-19 → 2026-06-17)
 - **Target stats**: mean=0.0125%, std=0.9550%, Sharpe=0.21
-- **Selected features (3)**: `gap_pct, bb_width, northbound_net`
+- **Selected features (5)**: `bb_width, volume_dryup_ratio, gap_pct, inside_bar_failure_bull, northbound_net`
 
 #### Selected Feature Stability Scores (Block Bootstrap)
 
@@ -187,9 +201,11 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
-| gap_pct | 71.2% | **Selected** | +0.0344 | +0.0234 | +0.90 | 0.0000 | *** Strong Monotonic | +0.0381 | 15:+0.07 16:+0.03 17:-0.15 18:+0.06 19:+0.04 20:+0.01 21:+0.00 22:+0.05 23:-0.01 24:-0.06 25:+0.05 26:+0.12 | 0.0677 |
-| bb_width | 70.8% | **Selected** | -0.0155 | -0.0173 | -0.90 | 0.0284 | *** Strong Monotonic | +0.0110 | 15:-0.02 16:+0.08 17:+0.02 18:-0.07 19:+0.03 20:+0.02 21:+0.02 22:-0.16 23:-0.12 24:-0.06 25:+0.03 26:-0.02 | 0.0671 |
-| northbound_net | 59.6% | **Selected** | +0.0381 | +0.0469 | +0.90 | 0.0000 | *** Strong Monotonic | -0.0416 | 15:+0.04 16:+0.01 17:-0.00 18:+0.07 19:+0.14 20:+0.05 21:+0.02 22:+0.06 23:+0.08 24:-0.01 26:+nan | nan |
+| bb_width | 71.6% | **Selected** | -0.0155 | -0.0173 | -0.90 | 0.0284 | *** Strong Monotonic | +0.0110 | 15:-0.02 16:+0.08 17:+0.02 18:-0.07 19:+0.03 20:+0.02 21:+0.02 22:-0.16 23:-0.12 24:-0.06 25:+0.03 26:-0.02 | 0.0671 |
+| volume_dryup_ratio | 63.2% | **Selected** | +0.0333 | +0.0344 | N/A | 0.0000 | N/A | +0.0059 | 15:+0.08 16:+0.05 17:+0.07 18:-0.01 19:-0.01 20:+0.01 21:+0.04 22:-0.06 23:-0.02 24:+0.03 25:+0.04 | 0.0403 |
+| gap_pct | 63.2% | **Selected** | +0.0344 | +0.0234 | +0.90 | 0.0000 | *** Strong Monotonic | +0.0381 | 15:+0.07 16:+0.03 17:-0.15 18:+0.06 19:+0.04 20:+0.01 21:+0.00 22:+0.05 23:-0.01 24:-0.06 25:+0.05 26:+0.12 | 0.0677 |
+| inside_bar_failure_bull | 55.2% | **Selected** | -0.0506 | -0.0409 | N/A | 0.0021 | N/A | -0.0058 | 15:-0.16 16:-0.01 17:-0.12 18:+0.01 19:-0.07 20:-0.06 21:-0.01 22:+0.05 23:-0.09 24:-0.03 25:+0.04 26:-0.12 | 0.0645 |
+| northbound_net | 53.6% | **Selected** | +0.0381 | +0.0469 | +0.90 | 0.0000 | *** Strong Monotonic | -0.0416 | 15:+0.04 16:+0.01 17:-0.00 18:+0.07 19:+0.14 20:+0.05 21:+0.02 22:+0.06 23:+0.08 24:-0.01 26:+nan | nan |
 
 </details>
 
@@ -197,10 +213,10 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | -0.0198 | +0.1028 | +0.0000 | -0.0638 | -0.0160 |
-| Dir Acc | 0.502 | 0.520 | 0.500 | 0.458 | 0.493 |
-| RMSE | 0.8059% | 0.8188% | 0.8010% | 1.1427% | 0.8685% |
-| L/S Sharpe | -0.04 | +2.42 | — | — | — |
+| IC | -0.0048 | +0.1183 | +0.0000 | -0.0638 | -0.0160 |
+| Dir Acc | 0.498 | 0.531 | 0.500 | 0.458 | 0.493 |
+| RMSE | 0.8073% | 0.8415% | 0.8010% | 1.1427% | 0.8685% |
+| L/S Sharpe | +0.77 | +1.96 | — | — | — |
 
 #### Best Hyperparameters
 
@@ -209,10 +225,11 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 ```json
 {
-  "model_type": "skglm_mcp",
-  "stability_threshold": 0.8,
-  "skglm_mcp_alpha": 0.0028488083570708546,
-  "skglm_mcp_gamma": 13.486013039130262
+  "model_type": "skglm_huber_l1",
+  "top_k_features": 5,
+  "skglm_huber_l1_alpha": 0.0004447986103729541,
+  "skglm_huber_delta": 2.7319696218151726,
+  "stability_threshold": 0.5359999999999999
 }
 ```
 
@@ -222,27 +239,27 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.0830 | +0.0022 |
-| 2 | 0.0410 | +0.0552 |
-| 3 | 0.0614 | +0.0305 |
-| 4 | 0.0489 | +0.0512 |
-| 5 | 0.0574 | +0.0235 |
-| **Overall** | — | +0.0289 |
+| 1 | 0.1119 | +0.0100 |
+| 2 | 0.0729 | +0.0717 |
+| 3 | 0.0833 | +0.0145 |
+| 4 | 0.0650 | +0.0760 |
+| 5 | 0.0699 | +0.0354 |
+| **Overall** | — | +0.0382 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2017 | -0.0976 | 0.460 | 215 | -1.96 |
-| 2018 | +0.0768 | 0.461 | 243 | +2.02 |
-| 2019 | +0.0579 | 0.533 | 244 | +0.72 |
-| 2020 | +0.0355 | 0.465 | 243 | -0.22 |
-| 2021 | +0.0055 | 0.519 | 243 | +0.79 |
-| 2022 | +0.0925 | 0.525 | 242 | +2.13 |
-| 2023 | +0.0799 | 0.504 | 242 | +1.91 |
-| 2024 | -0.0192 | 0.504 | 242 | +1.44 |
-| 2025 | +0.0253 | 0.498 | 243 | +0.19 |
-| 2026 | +0.0979 | 0.556 | 108 | +1.68 |
+| 2017 | -0.0836 | 0.484 | 215 | -0.44 |
+| 2018 | +0.0503 | 0.481 | 243 | +0.42 |
+| 2019 | +0.0910 | 0.553 | 244 | +1.83 |
+| 2020 | +0.0600 | 0.486 | 243 | +1.71 |
+| 2021 | -0.0060 | 0.498 | 243 | +0.91 |
+| 2022 | +0.0203 | 0.504 | 242 | +1.04 |
+| 2023 | +0.1107 | 0.529 | 242 | +1.16 |
+| 2024 | -0.0006 | 0.500 | 242 | +0.69 |
+| 2025 | +0.0341 | 0.523 | 243 | +0.43 |
+| 2026 | +0.1695 | 0.528 | 108 | +6.42 |
 
 #### Diagnostic Plots
 
@@ -278,11 +295,11 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 ### 50ETF_long
 
 - **Selected Model**: SKGLM_MCP
-- **Tuned Stability Threshold**: 0.65
+- **Tuned Stability Threshold**: 0.29
 - **Samples**: 2722 (2015-04-07 → 2026-06-17)
 - **Holdout**: 544 days (2024-03-19 → 2026-06-17)
 - **Target stats**: mean=-0.0019%, std=0.9480%, Sharpe=-0.03
-- **Selected features (4)**: `bar_rng_0, sma100_dist, margin_net_buy, yesterday_early_range`
+- **Selected features (32)**: `yesterday_body_ratio, yesterday_early_range, margin_net_buy, decision_bar_body, intraday_bullish_fvg, bar_rng_2, trend_bar_dominance, sma200_dist, yesterday_early_realized_vol, trend_exhaustion_early, vix_diff_1d, sma100_dist, bar_rng_1, bar_vwap_dev_0, vix_iv_spread, roc10, momentum_divergence, upper_wick_dominance, bar_rng_0, decision_bar_reversal_signal, opening_range_size, yesterday_day_late_mom, gap_pct, volume_sma_ratio_long, macd_hist, early_realized_vol, bar_vwap_dev_1, opening_gap_reversal, inside_bar_failure_bull, volume_surge_direction, yesterday_day_pm_am_vol_ratio, bar_ret_1`
 
 #### Selected Feature Stability Scores (Block Bootstrap)
 
@@ -291,10 +308,38 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
-| yesterday_early_range | 86.8% | **Selected** | +0.0691 | -0.0258 | -0.20 | 0.0235 | * Non-Monotonic / Weak | -0.0498 | 15:+0.08 16:-0.02 17:+0.05 18:-0.01 19:-0.08 20:+0.03 21:-0.08 22:-0.00 23:-0.05 24:-0.02 25:-0.09 26:+0.06 | 0.0559 |
-| margin_net_buy | 82.4% | **Selected** | -0.1262 | -0.0654 | -0.90 | 0.0000 | *** Strong Monotonic | -0.0343 | 15:-0.11 16:+0.05 17:+0.00 18:-0.08 19:-0.07 20:-0.08 21:-0.10 22:-0.07 23:-0.06 24:-0.18 25:+0.07 26:+0.07 | 0.0742 |
-| bar_rng_0 | 78.0% | **Selected** | +0.0489 | -0.0012 | +0.50 | 0.0745 | * Non-Monotonic / Weak | -0.0345 | 15:-0.02 16:-0.05 17:+0.00 18:+0.03 19:-0.03 20:+0.07 21:+0.01 22:+0.02 23:-0.04 24:+0.03 25:-0.01 26:-0.10 | 0.0433 |
-| sma100_dist | 69.6% | **Selected** | -0.0831 | -0.0496 | -0.70 | 0.0046 | ** Moderate Monotonic | -0.0418 | 15:-0.13 16:-0.06 17:-0.07 18:-0.05 19:-0.23 20:-0.09 21:-0.11 22:-0.06 23:-0.13 24:-0.08 25:-0.12 26:-0.10 | 0.0463 |
+| yesterday_body_ratio | 94.0% | **Selected** | -0.0635 | -0.0554 | -0.80 | 0.0069 | ** Moderate Monotonic | -0.0322 | 15:-0.09 16:-0.14 17:-0.03 18:-0.03 19:+0.03 20:-0.08 21:-0.16 22:+0.00 23:-0.04 24:-0.04 25:-0.02 26:-0.04 | 0.0526 |
+| yesterday_early_range | 84.4% | **Selected** | +0.0691 | -0.0258 | -0.20 | 0.0235 | * Non-Monotonic / Weak | -0.0498 | 15:+0.08 16:-0.02 17:+0.05 18:-0.01 19:-0.08 20:+0.03 21:-0.08 22:-0.00 23:-0.05 24:-0.02 25:-0.09 26:+0.06 | 0.0559 |
+| margin_net_buy | 82.0% | **Selected** | -0.1262 | -0.0654 | -0.90 | 0.0000 | *** Strong Monotonic | -0.0343 | 15:-0.11 16:+0.05 17:+0.00 18:-0.08 19:-0.07 20:-0.08 21:-0.10 22:-0.07 23:-0.06 24:-0.18 25:+0.07 26:+0.07 | 0.0742 |
+| decision_bar_body | 66.0% | **Selected** | +0.0383 | +0.0368 | +0.90 | 0.0288 | *** Strong Monotonic | -0.0202 | 15:+0.16 16:+0.06 17:+0.02 18:+0.11 19:-0.00 20:+0.01 21:+0.01 22:+0.05 23:+0.06 24:-0.09 25:+0.05 26:+0.02 | 0.0575 |
+| intraday_bullish_fvg | 64.4% | **Selected** | +0.0392 | +0.0128 | N/A | 0.0000 | N/A | +0.0196 | 15:+0.04 16:+0.08 17:-0.08 18:+0.11 19:-0.18 20:-0.12 21:+0.11 22:-0.01 23:+0.05 24:-0.04 25:+0.06 26:+0.05 | 0.0883 |
+| bar_rng_2 | 63.6% | **Selected** | -0.0089 | +0.0060 | +0.50 | 0.0221 | * Non-Monotonic / Weak | -0.0552 | 15:+0.07 16:-0.08 17:+0.02 18:+0.03 19:-0.01 20:-0.00 21:+0.04 22:+0.03 23:+0.11 24:-0.05 25:-0.07 26:+0.08 | 0.0575 |
+| trend_bar_dominance | 61.2% | **Selected** | +0.0379 | +0.0244 | +0.50 | 0.0000 | ** Moderate Monotonic | +0.0361 | 15:+0.08 16:+0.00 17:-0.01 18:+0.05 19:+0.08 20:+0.09 21:+0.02 22:-0.07 23:+0.05 24:+0.01 25:-0.08 26:+0.19 | 0.0702 |
+| sma200_dist | 58.8% | **Selected** | -0.0567 | -0.0335 | -0.70 | 0.0023 | ** Moderate Monotonic | -0.0475 | 15:-0.05 16:-0.01 17:-0.08 18:-0.08 19:-0.25 20:-0.10 21:-0.10 22:-0.06 23:-0.13 24:-0.11 25:-0.15 26:-0.07 | 0.0568 |
+| yesterday_early_realized_vol | 55.6% | **Selected** | +0.0306 | -0.0039 | +0.50 | 0.0055 | * Non-Monotonic / Weak | +0.0023 | 15:+0.01 16:+0.02 17:+0.04 18:+0.05 19:-0.11 20:+0.01 21:+0.08 22:-0.03 23:-0.08 24:-0.01 25:+0.02 26:+0.05 | 0.0522 |
+| trend_exhaustion_early | 49.6% | **Selected** | -0.0333 | -0.0302 | -0.80 | 0.0054 | ** Moderate Monotonic | +0.0356 | 15:-0.02 16:-0.05 17:-0.08 18:-0.02 19:-0.06 20:+0.01 21:-0.04 22:-0.10 23:-0.07 24:+0.07 25:+0.01 26:+0.01 | 0.0459 |
+| vix_diff_1d | 48.0% | **Selected** | +0.0383 | -0.0402 | -0.60 | 0.0320 | ** Moderate Monotonic | -0.0495 | 15:+0.17 16:-0.16 17:-0.02 18:-0.09 19:-0.15 20:-0.03 21:-0.02 22:-0.09 23:-0.02 24:-0.01 25:-0.05 26:-0.07 | 0.0794 |
+| sma100_dist | 44.8% | **Selected** | -0.0831 | -0.0496 | -0.70 | 0.0046 | ** Moderate Monotonic | -0.0418 | 15:-0.13 16:-0.06 17:-0.07 18:-0.05 19:-0.23 20:-0.09 21:-0.11 22:-0.06 23:-0.13 24:-0.08 25:-0.12 26:-0.10 | 0.0463 |
+| bar_rng_1 | 44.4% | **Selected** | +0.0038 | -0.0298 | -0.60 | 0.0223 | ** Moderate Monotonic | -0.0595 | 15:-0.04 16:-0.09 17:+0.01 18:+0.02 19:+0.03 20:-0.07 21:-0.07 22:-0.08 23:+0.11 24:-0.04 25:-0.10 26:+0.02 | 0.0589 |
+| bar_vwap_dev_0 | 42.4% | **Selected** | +0.0311 | +0.0409 | N/A | 0.0000 | N/A | N/A | N/A | N/A |
+| vix_iv_spread | 41.6% | **Selected** | +0.0448 | +0.0625 | +0.80 | 0.0123 | ** Moderate Monotonic | +0.0274 | 15:+0.08 16:+0.08 17:+0.04 18:+0.02 19:+0.02 20:+0.13 21:+0.01 22:+0.04 23:+0.06 24:+0.11 25:+0.07 26:-0.11 | 0.0585 |
+| roc10 | 40.8% | **Selected** | -0.0791 | -0.0420 | -0.10 | 0.0262 | * Non-Monotonic / Weak | -0.0668 | 15:-0.07 16:-0.07 17:-0.09 18:-0.04 19:-0.11 20:-0.06 21:-0.10 22:+0.05 23:-0.01 24:-0.09 25:-0.06 26:-0.09 | 0.0428 |
+| momentum_divergence | 40.0% | **Selected** | -0.0068 | +0.0055 | N/A | 0.0000 | N/A | -0.0180 | 15:-0.05 16:-0.00 17:+0.03 18:+0.03 19:+0.00 20:-0.02 21:+0.07 22:-0.04 23:+0.03 24:+0.03 25:-0.00 26:-0.15 | 0.0539 |
+| upper_wick_dominance | 38.8% | **Selected** | +0.0055 | -0.0120 | +0.20 | 0.0000 | * Non-Monotonic / Weak | +0.0025 | 15:-0.00 16:+0.03 17:+0.02 18:-0.03 19:-0.04 20:+0.04 21:-0.02 22:-0.09 23:-0.02 24:+0.08 25:-0.06 26:-0.04 | 0.0460 |
+| bar_rng_0 | 38.8% | **Selected** | +0.0489 | -0.0012 | +0.50 | 0.0745 | * Non-Monotonic / Weak | -0.0345 | 15:-0.02 16:-0.05 17:+0.00 18:+0.03 19:-0.03 20:+0.07 21:+0.01 22:+0.02 23:-0.04 24:+0.03 25:-0.01 26:-0.10 | 0.0433 |
+| decision_bar_reversal_signal | 38.4% | **Selected** | -0.0215 | -0.0187 | N/A | 0.0048 | N/A | +0.0640 | 15:-0.06 16:-0.04 17:-0.03 18:-0.14 19:+0.00 20:+0.04 21:-0.10 22:+0.01 23:-0.03 24:+0.06 25:+0.09 26:-0.04 | 0.0634 |
+| opening_range_size | 37.6% | **Selected** | +0.0495 | -0.0010 | +0.30 | 0.0684 | * Non-Monotonic / Weak | -0.0341 | 15:-0.01 16:-0.05 17:+0.00 18:+0.03 19:-0.03 20:+0.07 21:+0.01 22:+0.02 23:-0.04 24:+0.04 25:-0.01 26:-0.10 | 0.0428 |
+| yesterday_day_late_mom | 37.2% | **Selected** | +0.0363 | +0.0062 | +0.30 | 0.0000 | * Non-Monotonic / Weak | -0.0195 | 15:+0.10 16:+0.05 17:+0.13 18:-0.05 19:-0.05 20:+0.05 21:-0.06 22:-0.05 23:-0.05 24:-0.05 25:+0.05 26:+0.00 | 0.0635 |
+| gap_pct | 35.2% | **Selected** | +0.0437 | +0.0200 | +0.70 | 0.0101 | ** Moderate Monotonic | +0.0164 | 15:+0.03 16:+0.06 17:-0.12 18:+0.03 19:+0.06 20:+0.07 21:+0.01 22:+0.08 23:-0.07 24:-0.06 25:+0.00 26:+0.18 | 0.0757 |
+| volume_sma_ratio_long | 35.2% | **Selected** | -0.0277 | -0.0332 | -0.20 | 0.0270 | * Non-Monotonic / Weak | -0.0228 | 15:-0.04 16:-0.07 17:-0.08 18:+0.02 19:-0.14 20:+0.01 21:-0.04 22:+0.07 23:-0.15 24:-0.09 25:+0.11 26:-0.04 | 0.0738 |
+| macd_hist | 33.2% | **Selected** | -0.0658 | -0.0520 | -0.90 | 0.0170 | *** Strong Monotonic | -0.0710 | 15:-0.07 16:-0.01 17:-0.09 18:-0.09 19:-0.09 20:-0.03 21:-0.10 22:+0.03 23:-0.03 24:-0.05 25:-0.07 26:-0.14 | 0.0430 |
+| early_realized_vol | 32.8% | **Selected** | +0.0280 | -0.0066 | -0.10 | 0.0201 | * Non-Monotonic / Weak | +0.0261 | 15:+0.04 16:-0.00 17:-0.04 18:-0.01 19:-0.01 20:+0.00 21:-0.08 22:-0.07 23:+0.06 24:+0.06 25:+0.01 26:+0.01 | 0.0429 |
+| bar_vwap_dev_1 | 32.4% | **Selected** | -0.0668 | -0.0006 | -0.60 | 0.0153 | ** Moderate Monotonic | -0.0558 | 15:-0.11 16:+0.00 17:+0.04 18:+0.12 19:-0.04 20:-0.03 21:+0.07 22:-0.05 23:+0.02 24:-0.00 25:-0.01 26:-0.16 | 0.0717 |
+| opening_gap_reversal | 32.0% | **Selected** | -0.0255 | +0.0041 | +0.20 | 0.0101 | * Non-Monotonic / Weak | +0.0534 | 15:-0.03 16:+0.04 17:-0.04 18:-0.04 19:+0.07 20:+0.02 21:-0.02 22:+0.05 23:-0.07 24:-0.04 25:+0.01 26:+0.19 | 0.0673 |
+| inside_bar_failure_bull | 31.2% | **Selected** | -0.0051 | +0.0076 | N/A | 0.0003 | N/A | +0.0608 | 15:-0.12 16:-0.07 17:+0.01 18:+0.11 19:-0.12 20:+0.12 21:+0.07 22:-0.03 23:-0.01 24:+0.07 25:+0.13 26:-0.17 | 0.0985 |
+| volume_surge_direction | 30.4% | **Selected** | +0.0690 | +0.0402 | +0.90 | 0.0000 | *** Strong Monotonic | -0.0238 | 15:+0.13 16:+0.05 17:-0.08 18:+0.18 19:+0.10 20:+0.04 21:+0.05 22:+0.03 23:+0.03 24:-0.03 25:+0.03 26:-0.16 | 0.0873 |
+| yesterday_day_pm_am_vol_ratio | 28.8% | **Selected** | +0.0077 | -0.0110 | +0.10 | 0.0000 | * Non-Monotonic / Weak | -0.0158 | 15:+0.01 16:+0.14 17:+0.03 18:+0.01 19:-0.12 20:-0.07 21:-0.06 22:-0.05 23:+0.03 24:+0.08 25:-0.06 26:-0.03 | 0.0701 |
+| bar_ret_1 | 28.8% | **Selected** | -0.0677 | -0.0022 | -0.20 | 0.0154 | * Non-Monotonic / Weak | -0.0476 | 15:-0.12 16:+0.00 17:+0.04 18:+0.10 19:-0.04 20:-0.04 21:+0.07 22:-0.04 23:+0.01 24:+0.00 25:+0.00 26:-0.15 | 0.0685 |
 
 </details>
 
@@ -302,10 +347,10 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | +0.0125 | +0.0912 | +0.0000 | +0.0088 | -0.0301 |
-| Dir Acc | 0.478 | 0.491 | 0.500 | 0.485 | 0.493 |
-| RMSE | 0.7392% | 0.7909% | 0.7416% | 1.0417% | 0.8229% |
-| L/S Sharpe | +2.05 | +2.65 | — | — | — |
+| IC | +0.0169 | +0.1178 | +0.0000 | +0.0088 | -0.0301 |
+| Dir Acc | 0.524 | 0.513 | 0.500 | 0.485 | 0.493 |
+| RMSE | 0.7439% | 0.8028% | 0.7416% | 1.0417% | 0.8229% |
+| L/S Sharpe | +1.47 | +3.25 | — | — | — |
 
 #### Best Hyperparameters
 
@@ -315,9 +360,10 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 ```json
 {
   "model_type": "skglm_mcp",
-  "stability_threshold": 0.65,
-  "skglm_mcp_alpha": 0.04130630563833766,
-  "skglm_mcp_gamma": 6.933399841641333
+  "top_k_features": 32,
+  "skglm_mcp_alpha": 0.0006136622348776953,
+  "skglm_mcp_gamma": 14.127750160791042,
+  "stability_threshold": 0.288
 }
 ```
 
@@ -327,27 +373,27 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.1256 | -0.0143 |
-| 2 | 0.0548 | +0.1120 |
-| 3 | 0.0896 | +0.1035 |
-| 4 | 0.0905 | +0.0691 |
-| 5 | 0.0825 | +0.0292 |
-| **Overall** | — | +0.0414 |
+| 1 | 0.3409 | +0.0927 |
+| 2 | 0.2641 | +0.1235 |
+| 3 | 0.2279 | +0.1231 |
+| 4 | 0.2162 | +0.0397 |
+| 5 | 0.1835 | +0.0348 |
+| **Overall** | — | +0.0861 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2017 | +0.0493 | 0.512 | 215 | +3.08 |
-| 2018 | +0.0348 | 0.457 | 243 | +2.58 |
-| 2019 | +0.0907 | 0.492 | 244 | +2.42 |
-| 2020 | +0.1421 | 0.531 | 243 | +1.12 |
-| 2021 | +0.1094 | 0.510 | 243 | +2.86 |
-| 2022 | +0.1062 | 0.500 | 242 | +2.94 |
-| 2023 | +0.1138 | 0.525 | 242 | +2.11 |
-| 2024 | +0.1556 | 0.537 | 242 | +3.85 |
-| 2025 | +0.0371 | 0.428 | 243 | +2.12 |
-| 2026 | +0.0421 | 0.509 | 108 | -0.20 |
+| 2017 | +0.0148 | 0.479 | 215 | +0.99 |
+| 2018 | +0.1258 | 0.510 | 243 | +2.62 |
+| 2019 | +0.0829 | 0.537 | 244 | +1.26 |
+| 2020 | +0.1973 | 0.551 | 243 | +4.06 |
+| 2021 | +0.1097 | 0.535 | 243 | +3.75 |
+| 2022 | +0.0820 | 0.525 | 242 | +2.14 |
+| 2023 | +0.0763 | 0.508 | 242 | +1.03 |
+| 2024 | +0.0670 | 0.500 | 242 | +3.12 |
+| 2025 | +0.0725 | 0.560 | 243 | +1.91 |
+| 2026 | -0.0813 | 0.463 | 108 | -3.34 |
 
 #### Diagnostic Plots
 
@@ -383,11 +429,11 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 ### 50ETF_short
 
 - **Selected Model**: SKGLM_MCP
-- **Tuned Stability Threshold**: 0.55
+- **Tuned Stability Threshold**: 0.46
 - **Samples**: 2722 (2015-04-07 → 2026-06-17)
 - **Holdout**: 544 days (2024-03-19 → 2026-06-17)
 - **Target stats**: mean=-0.0019%, std=0.9480%, Sharpe=-0.03
-- **Selected features (3)**: `bar_vol_2, iv, gap_pct`
+- **Selected features (8)**: `bar_vol_2, gap_pct, spike_exhaustion_ratio, iv, adx_opening, northbound_net, yesterday_day_late_mom, inside_bar_compression`
 
 #### Selected Feature Stability Scores (Block Bootstrap)
 
@@ -396,9 +442,14 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
-| bar_vol_2 | 66.8% | **Selected** | -0.0341 | -0.0384 | -0.20 | 0.0246 | * Non-Monotonic / Weak | -0.0733 | 15:-0.04 16:-0.02 17:-0.02 18:-0.06 19:-0.03 20:+0.01 21:-0.11 22:+0.04 23:+0.02 24:-0.07 25:-0.05 26:-0.01 | 0.0392 |
-| iv | 58.0% | **Selected** | -0.0146 | -0.0456 | -0.70 | 0.0595 | ** Moderate Monotonic | -0.0462 | 15:-0.01 16:-0.11 17:-0.04 18:-0.02 19:-0.11 20:-0.08 21:-0.02 22:+0.08 23:-0.04 24:+0.01 25:-0.05 26:-0.05 | 0.0488 |
-| gap_pct | 56.0% | **Selected** | +0.0437 | +0.0200 | +0.70 | 0.0101 | ** Moderate Monotonic | +0.0164 | 15:+0.03 16:+0.06 17:-0.12 18:+0.03 19:+0.06 20:+0.07 21:+0.01 22:+0.08 23:-0.07 24:-0.06 25:+0.00 26:+0.18 | 0.0757 |
+| bar_vol_2 | 60.4% | **Selected** | -0.0341 | -0.0384 | -0.20 | 0.0246 | * Non-Monotonic / Weak | -0.0733 | 15:-0.04 16:-0.02 17:-0.02 18:-0.06 19:-0.03 20:+0.01 21:-0.11 22:+0.04 23:+0.02 24:-0.07 25:-0.05 26:-0.01 | 0.0392 |
+| gap_pct | 55.6% | **Selected** | +0.0437 | +0.0200 | +0.70 | 0.0101 | ** Moderate Monotonic | +0.0164 | 15:+0.03 16:+0.06 17:-0.12 18:+0.03 19:+0.06 20:+0.07 21:+0.01 22:+0.08 23:-0.07 24:-0.06 25:+0.00 26:+0.18 | 0.0757 |
+| spike_exhaustion_ratio | 54.0% | **Selected** | -0.0217 | -0.0235 | -0.60 | 0.0001 | ** Moderate Monotonic | +0.0241 | 15:-0.12 16:-0.04 17:-0.05 18:-0.03 19:+0.03 20:-0.01 21:+0.01 22:-0.05 23:-0.05 24:+0.06 25:-0.05 26:-0.00 | 0.0452 |
+| iv | 52.0% | **Selected** | -0.0146 | -0.0456 | -0.70 | 0.0595 | ** Moderate Monotonic | -0.0462 | 15:-0.01 16:-0.11 17:-0.04 18:-0.02 19:-0.11 20:-0.08 21:-0.02 22:+0.08 23:-0.04 24:+0.01 25:-0.05 26:-0.05 | 0.0488 |
+| adx_opening | 51.2% | **Selected** | +0.0776 | +0.0218 | N/A | 0.0000 | N/A | -0.0761 | 15:-0.03 16:-0.01 17:+0.09 18:+0.08 19:+0.12 20:-0.02 21:+0.02 22:+0.08 23:-0.01 24:-0.09 25:-0.02 26:-0.11 | 0.0702 |
+| northbound_net | 50.0% | **Selected** | +0.0324 | +0.0458 | +0.90 | 0.0016 | *** Strong Monotonic | -0.0394 | 15:+0.06 16:-0.03 17:+0.01 18:+0.09 19:+0.15 20:+0.01 21:+0.04 22:+0.09 23:+0.06 24:-0.03 26:+nan | nan |
+| yesterday_day_late_mom | 46.8% | **Selected** | +0.0363 | +0.0062 | +0.30 | 0.0000 | * Non-Monotonic / Weak | -0.0195 | 15:+0.10 16:+0.05 17:+0.13 18:-0.05 19:-0.05 20:+0.05 21:-0.06 22:-0.05 23:-0.05 24:-0.05 25:+0.05 26:+0.00 | 0.0635 |
+| inside_bar_compression | 45.6% | **Selected** | +0.0037 | -0.0032 | +0.50 | 0.0000 | ** Moderate Monotonic | -0.0030 | 15:-0.07 16:+0.05 17:+0.07 18:-0.04 19:-0.02 20:+0.10 21:-0.04 22:-0.02 23:-0.05 24:+0.01 25:+0.03 26:-0.18 | 0.0694 |
 
 </details>
 
@@ -406,10 +457,10 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | +0.1183 | +0.0912 | +0.0000 | +0.0088 | -0.0301 |
-| Dir Acc | 0.509 | 0.491 | 0.500 | 0.485 | 0.493 |
-| RMSE | 0.7377% | 0.7909% | 0.7416% | 1.0417% | 0.8229% |
-| L/S Sharpe | +1.10 | +2.65 | — | — | — |
+| IC | +0.0845 | +0.1178 | +0.0000 | +0.0088 | -0.0301 |
+| Dir Acc | 0.502 | 0.513 | 0.500 | 0.485 | 0.493 |
+| RMSE | 0.7347% | 0.8028% | 0.7416% | 1.0417% | 0.8229% |
+| L/S Sharpe | +0.58 | +3.25 | — | — | — |
 
 #### Best Hyperparameters
 
@@ -419,9 +470,10 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 ```json
 {
   "model_type": "skglm_mcp",
-  "stability_threshold": 0.55,
-  "skglm_mcp_alpha": 0.004651664224751935,
-  "skglm_mcp_gamma": 13.729123483273682
+  "top_k_features": 8,
+  "skglm_mcp_alpha": 0.0029725482640479955,
+  "skglm_mcp_gamma": 9.955754636649132,
+  "stability_threshold": 0.45599999999999996
 }
 ```
 
@@ -431,27 +483,27 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.0505 | +0.0661 |
-| 2 | 0.0612 | +0.0581 |
-| 3 | 0.0785 | +0.0555 |
-| 4 | 0.0731 | -0.0338 |
-| 5 | 0.0528 | +0.0666 |
-| **Overall** | — | +0.0450 |
+| 1 | 0.1110 | +0.1016 |
+| 2 | 0.1125 | +0.0955 |
+| 3 | 0.1114 | +0.0397 |
+| 4 | 0.0938 | -0.0075 |
+| 5 | 0.0765 | +0.0692 |
+| **Overall** | — | +0.0561 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2017 | +0.0343 | 0.498 | 215 | +0.04 |
-| 2018 | +0.0586 | 0.477 | 243 | +2.84 |
-| 2019 | +0.0673 | 0.537 | 244 | -0.78 |
-| 2020 | +0.0732 | 0.527 | 243 | +1.24 |
-| 2021 | +0.0878 | 0.527 | 243 | +1.14 |
-| 2022 | +0.0193 | 0.512 | 242 | +1.15 |
-| 2023 | -0.0360 | 0.496 | 242 | -0.82 |
-| 2024 | -0.0086 | 0.492 | 242 | +0.71 |
-| 2025 | +0.0480 | 0.494 | 243 | +2.33 |
-| 2026 | +0.0564 | 0.537 | 108 | +1.78 |
+| 2017 | +0.1420 | 0.516 | 215 | +1.66 |
+| 2018 | +0.0626 | 0.465 | 243 | +1.46 |
+| 2019 | +0.0756 | 0.525 | 244 | -0.80 |
+| 2020 | +0.0998 | 0.502 | 243 | +2.23 |
+| 2021 | +0.0263 | 0.539 | 243 | +0.28 |
+| 2022 | +0.0669 | 0.517 | 242 | +0.07 |
+| 2023 | -0.0197 | 0.500 | 242 | -1.33 |
+| 2024 | +0.0057 | 0.471 | 242 | +0.69 |
+| 2025 | +0.0606 | 0.523 | 243 | +2.36 |
+| 2026 | +0.0392 | 0.500 | 108 | +1.67 |
 
 #### Diagnostic Plots
 
@@ -486,12 +538,12 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 ### 500ETF_long
 
-- **Selected Model**: SKGLM_HUBER_L1
-- **Tuned Stability Threshold**: 0.40
+- **Selected Model**: SKGLM_MCP
+- **Tuned Stability Threshold**: 0.30
 - **Samples**: 2722 (2015-04-07 → 2026-06-17)
 - **Holdout**: 544 days (2024-03-19 → 2026-06-17)
 - **Target stats**: mean=0.0195%, std=1.1474%, Sharpe=0.27
-- **Selected features (12)**: `bar_ret_3, bar_vol_4, bar_rng_4, bar_vwap_dev_1, max_up_ret, sma100_dist, volume_sma_ratio, yesterday_gap_pct, yesterday_early_realized_vol, yesterday_early_range, yesterday_day_skew, yesterday_day_kurtosis`
+- **Selected features (45)**: `sma100_dist, bar_rng_4, upper_shadow_rejection, bb_width, bar_vwap_dev_1, volume_surge_direction, yesterday_day_vwap_dev, yesterday_early_range, max_up_ret, volatility_regime_intraday, yesterday_intraday_close_position, sma_distance_5d, trend_bar_dominance, yesterday_early_realized_vol, trend_exhaustion_early, bar_rng_3, roc60, shark_32_signal, early_trend_consistency, volume_dryup_ratio, consecutive_bullish_engulfing, yesterday_early_vwap_dev, consecutive_higher_highs, bar_ret_3, vol_gk10, yesterday_gap_pct, yesterday_spike_exhaustion_ratio, body_to_range_ratio, volume_price_corr, spike_exhaustion_ratio, yesterday_day_skew, intraday_bullish_fvg, gap_pct, bar_vol_4, early_bearish_shooting_star, bar_rng_2, yesterday_gap, yesterday_day_late_mom, bar_ret_0, yesterday_opening_gap_reversal, margin_balance, vol_ratio_5_20, first_bar_return, range_expansion_ratio, vol20`
 
 #### Selected Feature Stability Scores (Block Bootstrap)
 
@@ -500,18 +552,51 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
-| sma100_dist | 90.0% | **Selected** | -0.0730 | -0.0389 | -0.90 | 0.0489 | *** Strong Monotonic | +0.0163 | 15:-0.19 16:-0.06 17:-0.09 18:-0.10 19:-0.03 20:-0.07 21:-0.16 22:-0.10 23:-0.12 24:-0.03 25:-0.02 26:+0.05 | 0.0627 |
-| bar_rng_4 | 72.0% | **Selected** | +0.0421 | +0.0002 | +0.00 | 0.0526 | * Non-Monotonic / Weak | -0.0764 | 15:-0.04 16:+0.01 17:-0.05 18:+0.07 19:-0.02 20:+0.02 21:-0.03 22:+0.05 23:-0.01 24:+0.04 25:-0.10 26:-0.15 | 0.0597 |
-| yesterday_gap_pct | 66.8% | **Selected** | +0.0383 | +0.0175 | +0.40 | 0.0000 | * Non-Monotonic / Weak | +0.0535 | 15:+0.09 16:-0.11 17:-0.04 18:-0.05 19:+0.02 20:+0.03 21:+0.07 22:-0.00 23:+0.01 24:+0.06 25:+0.04 26:-0.02 | 0.0545 |
-| max_up_ret | 66.4% | **Selected** | +0.1443 | +0.1276 | +0.90 | 0.0100 | *** Strong Monotonic | +0.1102 | 15:+0.28 16:+0.13 17:+0.16 18:+0.20 19:+0.03 20:+0.11 21:+0.13 22:+0.04 23:+0.11 24:+0.15 25:+0.12 26:-0.02 | 0.0750 |
-| yesterday_early_realized_vol | 62.8% | **Selected** | +0.0155 | +0.0366 | +0.90 | 0.0611 | ** Non-Linear Monotonic | +0.0131 | 15:-0.01 16:+0.10 17:+0.06 18:-0.02 19:+0.04 20:+0.04 21:+0.05 22:-0.01 23:-0.05 24:+0.05 25:-0.01 26:+0.01 | 0.0401 |
-| yesterday_early_range | 62.0% | **Selected** | +0.0143 | +0.0359 | +0.80 | 0.0411 | ** Moderate Monotonic | +0.0219 | 15:+0.00 16:+0.06 17:+0.05 18:-0.00 19:+0.04 20:+0.05 21:-0.04 22:-0.02 23:+0.05 24:+0.07 25:+0.04 26:-0.05 | 0.0406 |
-| bar_vwap_dev_1 | 59.2% | **Selected** | +0.0854 | +0.0651 | +1.00 | 0.0325 | *** Strong Monotonic | +0.0648 | 15:+0.09 16:+0.11 17:+0.14 18:+0.01 19:+0.07 20:+0.02 21:+0.14 22:-0.02 23:+0.11 24:+0.07 25:-0.02 26:+0.08 | 0.0551 |
-| volume_sma_ratio | 53.2% | **Selected** | +0.0146 | +0.0126 | +0.10 | 0.0000 | * Non-Monotonic / Weak | +0.0495 | 15:+0.04 16:-0.13 17:-0.03 18:+0.05 19:+0.08 20:+0.08 21:-0.07 22:-0.02 23:-0.00 24:+0.04 25:+0.02 26:+0.08 | 0.0641 |
-| yesterday_day_skew | 44.8% | **Selected** | -0.0012 | +0.0036 | -0.20 | 0.0000 | * Non-Monotonic / Weak | +0.0245 | 15:+0.02 16:+0.01 17:-0.02 18:-0.01 19:-0.04 20:+0.03 21:-0.01 22:+0.09 23:+0.05 24:+0.03 25:-0.04 26:+0.07 | 0.0394 |
-| bar_ret_3 | 44.8% | **Selected** | -0.0288 | -0.0122 | -0.50 | 0.0143 | * Non-Monotonic / Weak | +0.0030 | 15:+0.00 16:+0.00 17:+0.01 18:-0.11 19:-0.04 20:-0.05 21:-0.08 22:+0.11 23:+0.01 24:-0.02 25:+0.03 26:-0.07 | 0.0552 |
-| yesterday_day_kurtosis | 42.0% | **Selected** | -0.0093 | -0.0422 | -0.90 | 0.0048 | ** Non-Linear Monotonic | -0.0507 | 15:-0.06 16:+0.01 17:-0.11 18:-0.16 19:-0.01 20:+0.10 21:-0.11 22:-0.04 23:-0.05 24:-0.04 25:-0.07 26:-0.04 | 0.0632 |
-| bar_vol_4 | 40.4% | **Selected** | +0.0488 | +0.0099 | +0.40 | 0.0000 | * Non-Monotonic / Weak | +0.0154 | 15:+0.03 16:-0.02 17:-0.06 18:+0.13 19:+0.00 20:+0.10 21:-0.09 22:-0.04 23:-0.02 24:-0.05 25:-0.03 26:+0.16 | 0.0759 |
+| sma100_dist | 84.0% | **Selected** | -0.0730 | -0.0389 | -0.90 | 0.0489 | *** Strong Monotonic | +0.0163 | 15:-0.19 16:-0.06 17:-0.09 18:-0.10 19:-0.03 20:-0.07 21:-0.16 22:-0.10 23:-0.12 24:-0.03 25:-0.02 26:+0.05 | 0.0627 |
+| bar_rng_4 | 70.8% | **Selected** | +0.0421 | +0.0002 | +0.00 | 0.0526 | * Non-Monotonic / Weak | -0.0764 | 15:-0.04 16:+0.01 17:-0.05 18:+0.07 19:-0.02 20:+0.02 21:-0.03 22:+0.05 23:-0.01 24:+0.04 25:-0.10 26:-0.15 | 0.0597 |
+| upper_shadow_rejection | 68.8% | **Selected** | +0.0271 | +0.0156 | +0.30 | 0.0000 | * Non-Monotonic / Weak | +0.0376 | 15:+0.08 16:+0.15 17:+0.07 18:-0.02 19:-0.08 20:-0.01 21:-0.10 22:-0.04 23:+0.05 24:+0.01 25:-0.08 26:+0.27 | 0.1034 |
+| bb_width | 67.2% | **Selected** | -0.0362 | -0.0561 | -1.00 | 0.0631 | ** Non-Linear Monotonic | -0.0604 | 15:-0.01 16:-0.02 17:-0.06 18:-0.09 19:-0.03 20:+0.01 21:+0.06 22:-0.17 23:-0.13 24:-0.11 25:-0.03 26:-0.08 | 0.0619 |
+| bar_vwap_dev_1 | 60.0% | **Selected** | +0.0854 | +0.0651 | +1.00 | 0.0325 | *** Strong Monotonic | +0.0648 | 15:+0.09 16:+0.11 17:+0.14 18:+0.01 19:+0.07 20:+0.02 21:+0.14 22:-0.02 23:+0.11 24:+0.07 25:-0.02 26:+0.08 | 0.0551 |
+| volume_surge_direction | 59.6% | **Selected** | +0.1240 | +0.0946 | +1.00 | 0.0029 | *** Strong Monotonic | +0.1206 | 15:+0.25 16:+0.05 17:+0.04 18:+0.19 19:+0.08 20:+0.06 21:+0.08 22:+0.12 23:+0.03 24:+0.09 25:+0.15 26:+0.07 | 0.0636 |
+| yesterday_day_vwap_dev | 59.2% | **Selected** | -0.0341 | -0.0436 | -0.60 | 0.0316 | ** Moderate Monotonic | -0.0735 | 15:+0.04 16:-0.09 17:-0.03 18:-0.07 19:-0.06 20:-0.14 21:-0.03 22:-0.01 23:-0.06 24:-0.01 25:-0.09 26:-0.15 | 0.0539 |
+| yesterday_early_range | 57.2% | **Selected** | +0.0143 | +0.0359 | +0.80 | 0.0411 | ** Moderate Monotonic | +0.0219 | 15:+0.00 16:+0.06 17:+0.05 18:-0.00 19:+0.04 20:+0.05 21:-0.04 22:-0.02 23:+0.05 24:+0.07 25:+0.04 26:-0.05 | 0.0406 |
+| max_up_ret | 56.4% | **Selected** | +0.1443 | +0.1276 | +0.90 | 0.0100 | *** Strong Monotonic | +0.1102 | 15:+0.28 16:+0.13 17:+0.16 18:+0.20 19:+0.03 20:+0.11 21:+0.13 22:+0.04 23:+0.11 24:+0.15 25:+0.12 26:-0.02 | 0.0750 |
+| volatility_regime_intraday | 54.4% | **Selected** | +0.0169 | +0.0407 | +0.70 | 0.0000 | ** Moderate Monotonic | +0.0479 | 15:-0.03 16:+0.15 17:+0.02 18:+0.01 19:-0.00 20:+0.10 21:+0.05 22:-0.06 23:+0.01 24:+0.01 25:+0.12 26:+0.06 | 0.0593 |
+| yesterday_intraday_close_position | 54.0% | **Selected** | +0.0944 | +0.0926 | +0.80 | 0.0057 | ** Moderate Monotonic | +0.0756 | 15:+0.10 16:+0.07 17:+0.04 18:+0.05 19:+0.08 20:+0.20 21:-0.02 22:+0.21 23:+0.13 24:-0.00 25:+0.06 26:+0.19 | 0.0721 |
+| sma_distance_5d | 53.6% | **Selected** | +0.0003 | +0.0087 | +0.10 | 0.0258 | * Non-Monotonic / Weak | +0.0150 | 15:+0.04 16:-0.10 17:-0.06 18:+0.04 19:+0.03 20:+0.03 21:-0.03 22:+0.05 23:-0.01 24:-0.03 25:-0.04 26:+0.07 | 0.0493 |
+| trend_bar_dominance | 52.0% | **Selected** | -0.0083 | -0.0015 | -0.50 | 0.0039 | ** Moderate Monotonic | +0.0081 | 15:-0.06 16:-0.02 17:+0.07 18:-0.01 19:-0.01 20:+0.02 21:-0.09 22:-0.04 23:+0.14 24:+0.01 25:+0.05 26:-0.14 | 0.0701 |
+| yesterday_early_realized_vol | 52.0% | **Selected** | +0.0155 | +0.0366 | +0.90 | 0.0611 | ** Non-Linear Monotonic | +0.0131 | 15:-0.01 16:+0.10 17:+0.06 18:-0.02 19:+0.04 20:+0.04 21:+0.05 22:-0.01 23:-0.05 24:+0.05 25:-0.01 26:+0.01 | 0.0401 |
+| trend_exhaustion_early | 51.6% | **Selected** | -0.0370 | -0.0474 | -0.60 | 0.0000 | ** Moderate Monotonic | -0.0756 | 15:-0.01 16:-0.11 17:-0.10 18:-0.16 19:+0.01 20:+0.00 21:-0.03 22:+0.00 23:-0.00 24:-0.00 25:-0.06 26:-0.23 | 0.0731 |
+| bar_rng_3 | 46.4% | **Selected** | +0.0385 | +0.0346 | +0.70 | 0.0490 | ** Moderate Monotonic | -0.0003 | 15:+0.00 16:+0.06 17:+0.06 18:+0.10 19:-0.11 20:+0.09 21:+0.00 22:+0.09 23:+0.01 24:+0.06 25:+0.02 26:-0.13 | 0.0706 |
+| roc60 | 46.0% | **Selected** | -0.0246 | -0.0163 | -1.00 | 0.0350 | *** Strong Monotonic | +0.0148 | 15:-0.03 16:-0.08 17:-0.07 18:-0.09 19:-0.01 20:-0.03 21:-0.09 22:-0.10 23:-0.04 24:-0.01 25:+0.01 26:-0.07 | 0.0341 |
+| shark_32_signal | 45.6% | **Selected** | -0.0198 | -0.0298 | N/A | 0.0034 | N/A | +0.0518 | 15:-0.09 16:+0.03 17:+0.03 18:-0.08 19:-0.07 20:-0.05 23:-0.08 25:+0.08 | 0.0612 |
+| early_trend_consistency | 45.6% | **Selected** | +0.0067 | +0.0219 | N/A | 0.0033 | N/A | -0.0047 | 15:+0.04 16:+0.14 17:+0.01 18:+0.08 19:-0.05 20:+0.01 21:+0.05 22:-0.01 23:+0.03 24:-0.04 25:-0.04 26:+0.11 | 0.0575 |
+| volume_dryup_ratio | 45.2% | **Selected** | +0.0252 | +0.0318 | N/A | 0.0034 | N/A | +0.0430 | 15:-0.01 16:+0.12 17:+0.03 18:-0.03 19:+0.10 20:+0.03 22:-0.05 23:+0.07 24:+0.09 25:+0.04 26:-0.10 | 0.0639 |
+| consecutive_bullish_engulfing | 42.8% | **Selected** | +0.0112 | +0.0161 | N/A | 0.0000 | N/A | +0.0987 | 15:-0.11 16:-0.04 17:+0.07 18:-0.09 19:-0.06 20:+0.05 21:+0.09 22:+0.07 23:-0.09 24:+0.15 25:+0.04 26:+0.06 | 0.0825 |
+| yesterday_early_vwap_dev | 42.4% | **Selected** | +0.1047 | +0.0822 | +0.90 | 0.0290 | *** Strong Monotonic | +0.0866 | 15:+0.10 16:+0.09 17:+0.04 18:+0.06 19:+0.03 20:+0.16 21:+0.04 22:+0.16 23:+0.05 24:+0.02 25:+0.04 26:+0.22 | 0.0619 |
+| consecutive_higher_highs | 41.2% | **Selected** | +0.0650 | +0.0609 | +1.00 | 0.0115 | *** Strong Monotonic | +0.0438 | 15:+0.11 16:-0.01 17:+0.06 18:+0.01 19:+0.09 20:+0.03 21:+0.07 22:+0.13 23:+0.07 24:+0.03 25:+0.08 26:-0.02 | 0.0456 |
+| bar_ret_3 | 40.8% | **Selected** | -0.0288 | -0.0122 | -0.50 | 0.0143 | * Non-Monotonic / Weak | +0.0030 | 15:+0.00 16:+0.00 17:+0.01 18:-0.11 19:-0.04 20:-0.05 21:-0.08 22:+0.11 23:+0.01 24:-0.02 25:+0.03 26:-0.07 | 0.0552 |
+| vol_gk10 | 39.2% | **Selected** | +0.0398 | +0.0508 | +0.70 | 0.0865 | ** Moderate Monotonic | -0.0007 | 15:-0.00 16:+0.09 17:+0.09 18:+0.11 19:+0.02 20:-0.06 21:+0.04 22:+0.17 23:+0.05 24:+0.11 25:+0.01 26:-0.09 | 0.0716 |
+| yesterday_gap_pct | 38.8% | **Selected** | +0.0383 | +0.0175 | +0.40 | 0.0000 | * Non-Monotonic / Weak | +0.0535 | 15:+0.09 16:-0.11 17:-0.04 18:-0.05 19:+0.02 20:+0.03 21:+0.07 22:-0.00 23:+0.01 24:+0.06 25:+0.04 26:-0.02 | 0.0545 |
+| yesterday_spike_exhaustion_ratio | 38.8% | **Selected** | +0.0234 | +0.0183 | +0.90 | 0.0063 | *** Strong Monotonic | +0.0239 | 15:+0.15 16:+0.06 17:-0.01 18:-0.01 19:-0.03 20:+0.04 21:+0.05 22:+0.01 23:+0.03 24:+0.07 25:-0.05 26:+0.02 | 0.0509 |
+| body_to_range_ratio | 38.4% | **Selected** | +0.0366 | +0.0520 | +0.70 | 0.0000 | ** Moderate Monotonic | +0.0656 | 15:+0.06 16:+0.11 17:+0.12 18:+0.16 19:-0.00 20:+0.06 21:+0.00 22:-0.00 23:-0.03 24:-0.03 25:+0.06 26:+0.16 | 0.0663 |
+| volume_price_corr | 37.2% | **Selected** | +0.0390 | +0.0495 | +0.60 | 0.0171 | ** Moderate Monotonic | +0.0878 | 15:+0.00 16:+0.21 17:+0.06 18:+0.03 19:-0.02 20:+0.14 21:-0.02 22:-0.01 23:+0.03 24:+0.06 25:+0.13 26:+0.08 | 0.0677 |
+| spike_exhaustion_ratio | 37.2% | **Selected** | -0.0045 | +0.0297 | +0.10 | 0.0256 | * Non-Monotonic / Weak | +0.0272 | 15:-0.09 16:+0.13 17:+0.02 18:-0.03 19:-0.01 20:+0.07 21:+0.06 22:-0.01 23:+0.20 24:+0.03 25:+0.03 26:+0.04 | 0.0714 |
+| yesterday_day_skew | 36.8% | **Selected** | -0.0012 | +0.0036 | -0.20 | 0.0000 | * Non-Monotonic / Weak | +0.0245 | 15:+0.02 16:+0.01 17:-0.02 18:-0.01 19:-0.04 20:+0.03 21:-0.01 22:+0.09 23:+0.05 24:+0.03 25:-0.04 26:+0.07 | 0.0394 |
+| intraday_bullish_fvg | 36.4% | **Selected** | -0.0013 | +0.0292 | N/A | 0.0000 | N/A | -0.0043 | 15:+0.01 16:+0.03 17:+0.07 18:+0.07 19:+0.06 20:-0.07 21:+0.08 22:-0.08 23:+0.10 24:-0.06 25:-0.01 26:+0.13 | 0.0665 |
+| gap_pct | 36.0% | **Selected** | +0.0412 | +0.0358 | +0.60 | 0.0388 | ** Moderate Monotonic | +0.0767 | 15:+0.07 16:+0.04 17:+0.05 18:+0.00 19:+0.08 20:-0.00 21:-0.06 22:+0.02 23:+0.02 24:-0.01 25:+0.06 26:+0.17 | 0.0544 |
+| bar_vol_4 | 36.0% | **Selected** | +0.0488 | +0.0099 | +0.40 | 0.0000 | * Non-Monotonic / Weak | +0.0154 | 15:+0.03 16:-0.02 17:-0.06 18:+0.13 19:+0.00 20:+0.10 21:-0.09 22:-0.04 23:-0.02 24:-0.05 25:-0.03 26:+0.16 | 0.0759 |
+| early_bearish_shooting_star | 35.6% | **Selected** | -0.0140 | -0.0034 | N/A | 0.0022 | N/A | -0.0333 | 15:+0.21 16:+0.04 17:+0.02 18:+0.01 19:-0.07 20:-0.03 21:-0.02 22:-0.04 23:+0.05 24:-0.08 25:-0.04 26:+0.01 | 0.0735 |
+| bar_rng_2 | 34.8% | **Selected** | -0.0040 | +0.0115 | +0.60 | 0.0200 | ** Moderate Monotonic | -0.0411 | 15:-0.01 16:+0.01 17:-0.11 18:+0.05 19:-0.01 20:-0.01 21:+0.02 22:+0.06 23:+0.05 24:+0.03 25:-0.08 26:-0.01 | 0.0481 |
+| yesterday_gap | 34.4% | **Selected** | +0.0383 | +0.0175 | +0.40 | 0.0000 | * Non-Monotonic / Weak | +0.0535 | 15:+0.09 16:-0.11 17:-0.04 18:-0.05 19:+0.02 20:+0.03 21:+0.07 22:-0.00 23:+0.01 24:+0.06 25:+0.04 26:-0.02 | 0.0545 |
+| yesterday_day_late_mom | 34.0% | **Selected** | +0.0062 | -0.0107 | -0.40 | 0.0151 | * Non-Monotonic / Weak | -0.0332 | 15:-0.03 16:+0.02 17:+0.06 18:+0.04 19:+0.00 20:-0.02 21:-0.03 22:+0.00 23:-0.09 24:+0.00 25:-0.02 26:-0.12 | 0.0477 |
+| bar_ret_0 | 34.0% | **Selected** | +0.1463 | +0.1212 | +1.00 | 0.0322 | *** Strong Monotonic | +0.0934 | 15:+0.25 16:+0.14 17:+0.11 18:+0.22 19:+0.11 20:+0.08 21:+0.10 22:+0.04 23:+0.06 24:+0.12 25:+0.13 26:-0.03 | 0.0710 |
+| yesterday_opening_gap_reversal | 33.6% | **Selected** | +0.0125 | +0.0121 | +1.00 | 0.0000 | *** Strong Monotonic | +0.0401 | 15:+0.04 16:-0.12 17:+0.01 18:+0.02 19:+0.01 20:-0.01 21:+0.16 22:-0.08 23:-0.09 24:+0.10 25:+0.02 26:-0.04 | 0.0757 |
+| margin_balance | 33.2% | **Selected** | -0.0182 | -0.0504 | -0.20 | 0.0391 | * Non-Monotonic / Weak | -0.0382 | 15:-0.14 16:-0.04 17:+0.04 18:-0.03 19:-0.07 20:-0.03 21:-0.05 22:+0.00 23:-0.01 24:+0.09 25:-0.05 26:-0.01 | 0.0549 |
+| vol_ratio_5_20 | 32.4% | **Selected** | -0.0009 | -0.0068 | -0.30 | 0.0000 | * Non-Monotonic / Weak | -0.0417 | 15:-0.03 16:-0.06 17:+0.08 18:-0.04 19:+0.03 20:-0.02 21:+0.04 22:+0.07 23:+0.01 24:-0.13 25:+0.00 26:+0.01 | 0.0555 |
+| first_bar_return | 32.0% | **Selected** | +0.1460 | +0.1212 | +1.00 | 0.0323 | *** Strong Monotonic | +0.0934 | 15:+0.25 16:+0.14 17:+0.11 18:+0.22 19:+0.11 20:+0.08 21:+0.10 22:+0.04 23:+0.06 24:+0.12 25:+0.13 26:-0.03 | 0.0710 |
+| range_expansion_ratio | 31.6% | **Selected** | -0.0338 | +0.0137 | -0.30 | 0.0000 | * Non-Monotonic / Weak | -0.0457 | 15:+0.09 16:+0.02 17:-0.02 18:+0.11 19:+0.02 20:-0.01 21:-0.01 22:+0.02 23:+0.05 24:-0.14 25:-0.11 26:+0.08 | 0.0724 |
+| vol20 | 30.4% | **Selected** | +0.0478 | +0.0456 | +0.70 | 0.0619 | ** Moderate Monotonic | +0.0288 | 15:+0.04 16:+0.04 17:+0.12 18:+0.11 19:-0.04 20:-0.03 21:+0.04 22:+0.17 23:+0.08 24:+0.12 25:+0.03 26:-0.06 | 0.0667 |
 
 </details>
 
@@ -519,10 +604,10 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | +0.1066 | +0.1260 | +0.0000 | -0.0748 | +0.1142 |
-| Dir Acc | 0.561 | 0.540 | 0.500 | 0.460 | 0.551 |
-| RMSE | 1.0153% | 1.0703% | 1.0131% | 1.4746% | 1.1190% |
-| L/S Sharpe | +1.56 | +2.77 | — | — | — |
+| IC | +0.1443 | +0.1348 | +0.0000 | -0.0748 | +0.1142 |
+| Dir Acc | 0.551 | 0.529 | 0.500 | 0.460 | 0.551 |
+| RMSE | 1.0025% | 1.1061% | 1.0131% | 1.4746% | 1.1190% |
+| L/S Sharpe | +2.70 | +3.10 | — | — | — |
 
 #### Best Hyperparameters
 
@@ -531,10 +616,11 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 ```json
 {
-  "model_type": "skglm_huber_l1",
-  "stability_threshold": 0.4,
-  "skglm_huber_l1_alpha": 0.0035932059861110265,
-  "skglm_huber_delta": 2.9133121363806618
+  "model_type": "skglm_mcp",
+  "top_k_features": 45,
+  "skglm_mcp_alpha": 0.05127351336076503,
+  "skglm_mcp_gamma": 13.667367270778094,
+  "stability_threshold": 0.304
 }
 ```
 
@@ -544,27 +630,27 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.2308 | +0.1514 |
-| 2 | 0.2134 | +0.1220 |
-| 3 | 0.1886 | +0.0986 |
-| 4 | 0.1649 | +0.0911 |
-| 5 | 0.1555 | +0.0890 |
-| **Overall** | — | +0.1068 |
+| 1 | 0.3267 | +0.0997 |
+| 2 | 0.2399 | +0.0856 |
+| 3 | 0.1874 | +0.1138 |
+| 4 | 0.1647 | +0.1329 |
+| 5 | 0.1621 | +0.1200 |
+| **Overall** | — | +0.0792 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2017 | +0.1169 | 0.558 | 215 | +2.80 |
-| 2018 | +0.2388 | 0.568 | 243 | +4.39 |
-| 2019 | +0.0773 | 0.496 | 244 | +3.17 |
-| 2020 | +0.1455 | 0.535 | 243 | +3.29 |
-| 2021 | +0.1811 | 0.547 | 243 | +3.06 |
-| 2022 | +0.0140 | 0.492 | 242 | +0.69 |
-| 2023 | +0.0982 | 0.545 | 242 | +2.72 |
-| 2024 | +0.1394 | 0.587 | 242 | +3.44 |
-| 2025 | +0.1166 | 0.527 | 243 | +1.68 |
-| 2026 | -0.0077 | 0.491 | 108 | -0.13 |
+| 2017 | +0.0079 | 0.535 | 215 | -0.65 |
+| 2018 | +0.1713 | 0.531 | 243 | +4.34 |
+| 2019 | +0.0645 | 0.467 | 244 | +3.09 |
+| 2020 | +0.1095 | 0.486 | 243 | +3.50 |
+| 2021 | +0.1373 | 0.556 | 243 | +1.88 |
+| 2022 | +0.1066 | 0.496 | 242 | +3.91 |
+| 2023 | +0.1705 | 0.533 | 242 | +3.75 |
+| 2024 | +0.1348 | 0.558 | 242 | +3.32 |
+| 2025 | +0.1408 | 0.543 | 243 | +2.09 |
+| 2026 | +0.0787 | 0.537 | 108 | +3.35 |
 
 #### Diagnostic Plots
 
@@ -599,12 +685,12 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 ### 500ETF_short
 
-- **Selected Model**: SKGLM_HUBER_L1
-- **Tuned Stability Threshold**: 0.60
+- **Selected Model**: SKGLM_MCP
+- **Tuned Stability Threshold**: 0.22
 - **Samples**: 2722 (2015-04-07 → 2026-06-17)
 - **Holdout**: 544 days (2024-03-19 → 2026-06-17)
 - **Target stats**: mean=0.0195%, std=1.1474%, Sharpe=0.27
-- **Selected features (5)**: `gap_pct, bar_body_rng_0, bar_vwap_dev_2, bb_width, yesterday_early_vwap_dev`
+- **Selected features (50)**: `yesterday_early_vwap_dev, bb_width, measured_move_proximity, gap_pct, margin_short_ratio, yesterday_intraday_close_position, bar_vwap_dev_2, yesterday_day_skew, volume_dryup_ratio, early_doji_count, yesterday_opening_gap_reversal, bar_vwap_dev_0, volume_surge_direction, yesterday_early_momentum, yesterday_early_kurtosis, opening_gap_reversal, macd_hist, intraday_bullish_fvg, yesterday_day_realized_vol, volume_weighted_price_position, inside_bar_failure_bull, bar_rng_1, yesterday_day_kurtosis, close_vs_open_range, range_expansion_ratio, bar_rng_2, vwap_cross_count, bar_rng_3, first_bar_body_ratio, first_bar_return, yesterday_early_skew, bar_ret_0, northbound_net, spike_exhaustion_ratio, bar_ret_4, intraday_bearish_fvg, late_bar_momentum, opening_range_size, vol5, upper_shadow_rejection, vwap_touch_count, yesterday_gap_pct, barbed_wire_intensity, bar_rng_0, bar_vwap_dev_1, or_fill_ratio, vol_ratio_10_60, max_down_ret, yesterday_first_bar_return, yesterday_spike_exhaustion_ratio`
 
 #### Selected Feature Stability Scores (Block Bootstrap)
 
@@ -613,11 +699,56 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
-| yesterday_early_vwap_dev | 72.8% | **Selected** | +0.1047 | +0.0822 | +0.90 | 0.0290 | *** Strong Monotonic | +0.0866 | 15:+0.10 16:+0.09 17:+0.04 18:+0.06 19:+0.03 20:+0.16 21:+0.04 22:+0.16 23:+0.05 24:+0.02 25:+0.04 26:+0.22 | 0.0619 |
-| bb_width | 67.6% | **Selected** | -0.0362 | -0.0561 | -1.00 | 0.0631 | ** Non-Linear Monotonic | -0.0604 | 15:-0.01 16:-0.02 17:-0.06 18:-0.09 19:-0.03 20:+0.01 21:+0.06 22:-0.17 23:-0.13 24:-0.11 25:-0.03 26:-0.08 | 0.0619 |
-| gap_pct | 64.8% | **Selected** | +0.0412 | +0.0358 | +0.60 | 0.0388 | ** Moderate Monotonic | +0.0767 | 15:+0.07 16:+0.04 17:+0.05 18:+0.00 19:+0.08 20:-0.00 21:-0.06 22:+0.02 23:+0.02 24:-0.01 25:+0.06 26:+0.17 | 0.0544 |
-| bar_body_rng_0 | 64.8% | **Selected** | +0.1126 | +0.1110 | +1.00 | 0.0287 | *** Strong Monotonic | +0.1015 | 15:+0.25 16:+0.13 17:+0.12 18:+0.17 19:+0.09 20:+0.08 21:+0.11 22:+0.03 23:+0.07 24:+0.11 25:+0.14 26:-0.02 | 0.0650 |
-| bar_vwap_dev_2 | 62.8% | **Selected** | +0.0781 | +0.0729 | +0.80 | 0.0387 | ** Moderate Monotonic | +0.0601 | 15:+0.10 16:+0.03 17:+0.06 18:+0.06 19:+0.06 20:+0.10 21:+0.08 22:+0.03 23:+0.08 24:+0.08 25:+0.06 26:+0.00 | 0.0278 |
+| yesterday_early_vwap_dev | 63.6% | **Selected** | +0.1047 | +0.0822 | +0.90 | 0.0290 | *** Strong Monotonic | +0.0866 | 15:+0.10 16:+0.09 17:+0.04 18:+0.06 19:+0.03 20:+0.16 21:+0.04 22:+0.16 23:+0.05 24:+0.02 25:+0.04 26:+0.22 | 0.0619 |
+| bb_width | 62.4% | **Selected** | -0.0362 | -0.0561 | -1.00 | 0.0631 | ** Non-Linear Monotonic | -0.0604 | 15:-0.01 16:-0.02 17:-0.06 18:-0.09 19:-0.03 20:+0.01 21:+0.06 22:-0.17 23:-0.13 24:-0.11 25:-0.03 26:-0.08 | 0.0619 |
+| measured_move_proximity | 58.0% | **Selected** | +0.0142 | +0.0149 | N/A | 0.0144 | N/A | -0.0136 | 15:+0.05 16:-0.04 17:-0.05 18:+0.06 19:+0.08 20:+0.08 21:-0.03 22:+0.01 23:+0.00 24:-0.15 25:-0.07 26:+0.20 | 0.0848 |
+| gap_pct | 57.2% | **Selected** | +0.0412 | +0.0358 | +0.60 | 0.0388 | ** Moderate Monotonic | +0.0767 | 15:+0.07 16:+0.04 17:+0.05 18:+0.00 19:+0.08 20:-0.00 21:-0.06 22:+0.02 23:+0.02 24:-0.01 25:+0.06 26:+0.17 | 0.0544 |
+| margin_short_ratio | 56.8% | **Selected** | -0.0018 | +0.0092 | +0.60 | 0.0511 | ** Moderate Monotonic | +0.0041 | 15:-0.08 16:+0.02 17:+0.13 18:-0.07 19:-0.09 20:+0.05 21:+0.03 22:+0.08 23:+0.01 24:+0.07 25:-0.03 26:+0.04 | 0.0646 |
+| yesterday_intraday_close_position | 54.0% | **Selected** | +0.0944 | +0.0926 | +0.80 | 0.0057 | ** Moderate Monotonic | +0.0756 | 15:+0.10 16:+0.07 17:+0.04 18:+0.05 19:+0.08 20:+0.20 21:-0.02 22:+0.21 23:+0.13 24:-0.00 25:+0.06 26:+0.19 | 0.0721 |
+| bar_vwap_dev_2 | 54.0% | **Selected** | +0.0781 | +0.0729 | +0.80 | 0.0387 | ** Moderate Monotonic | +0.0601 | 15:+0.10 16:+0.03 17:+0.06 18:+0.06 19:+0.06 20:+0.10 21:+0.08 22:+0.03 23:+0.08 24:+0.08 25:+0.06 26:+0.00 | 0.0278 |
+| yesterday_day_skew | 49.6% | **Selected** | -0.0012 | +0.0036 | -0.20 | 0.0000 | * Non-Monotonic / Weak | +0.0245 | 15:+0.02 16:+0.01 17:-0.02 18:-0.01 19:-0.04 20:+0.03 21:-0.01 22:+0.09 23:+0.05 24:+0.03 25:-0.04 26:+0.07 | 0.0394 |
+| volume_dryup_ratio | 47.2% | **Selected** | +0.0252 | +0.0318 | N/A | 0.0034 | N/A | +0.0430 | 15:-0.01 16:+0.12 17:+0.03 18:-0.03 19:+0.10 20:+0.03 22:-0.05 23:+0.07 24:+0.09 25:+0.04 26:-0.10 | 0.0639 |
+| early_doji_count | 44.0% | **Selected** | -0.0373 | -0.0208 | N/A | 0.0000 | N/A | -0.0617 | 15:-0.10 16:+0.02 17:+0.06 18:-0.08 19:-0.00 20:-0.02 21:-0.03 22:+0.11 23:-0.07 24:-0.00 25:-0.13 26:+0.07 | 0.0700 |
+| yesterday_opening_gap_reversal | 43.6% | **Selected** | +0.0125 | +0.0121 | +1.00 | 0.0000 | *** Strong Monotonic | +0.0401 | 15:+0.04 16:-0.12 17:+0.01 18:+0.02 19:+0.01 20:-0.01 21:+0.16 22:-0.08 23:-0.09 24:+0.10 25:+0.02 26:-0.04 | 0.0757 |
+| bar_vwap_dev_0 | 43.2% | **Selected** | -0.0224 | -0.0317 | N/A | 0.0000 | N/A | N/A | N/A | N/A |
+| volume_surge_direction | 42.0% | **Selected** | +0.1240 | +0.0946 | +1.00 | 0.0029 | *** Strong Monotonic | +0.1206 | 15:+0.25 16:+0.05 17:+0.04 18:+0.19 19:+0.08 20:+0.06 21:+0.08 22:+0.12 23:+0.03 24:+0.09 25:+0.15 26:+0.07 | 0.0636 |
+| yesterday_early_momentum | 38.0% | **Selected** | +0.0983 | +0.0853 | +1.00 | 0.0062 | *** Strong Monotonic | +0.0719 | 15:+0.11 16:+0.08 17:+0.05 18:+0.07 19:+0.04 20:+0.22 21:-0.00 22:+0.16 23:+0.05 24:+0.02 25:+0.03 26:+0.21 | 0.0710 |
+| yesterday_early_kurtosis | 37.6% | **Selected** | -0.0028 | +0.0064 | -0.10 | 0.0000 | * Non-Monotonic / Weak | -0.0444 | 15:-0.06 16:+0.06 17:+0.04 18:+0.09 19:-0.03 20:+0.03 21:+0.05 22:+0.03 23:-0.05 24:-0.05 25:+0.02 26:-0.13 | 0.0601 |
+| opening_gap_reversal | 36.8% | **Selected** | -0.0617 | +0.0043 | -1.00 | 0.0019 | *** Strong Monotonic | +0.0547 | 15:-0.05 16:-0.03 17:-0.02 18:-0.04 19:+0.03 20:-0.05 21:-0.11 22:+0.06 23:+0.06 24:+0.01 25:+0.03 26:+0.06 | 0.0516 |
+| macd_hist | 36.8% | **Selected** | +0.0430 | +0.0232 | +0.30 | 0.0172 | * Non-Monotonic / Weak | +0.0423 | 15:+0.12 16:-0.02 17:-0.07 18:-0.01 19:+0.00 20:+0.02 21:-0.12 22:+0.04 23:-0.01 24:-0.07 25:+0.05 26:+0.09 | 0.0654 |
+| intraday_bullish_fvg | 36.4% | **Selected** | -0.0013 | +0.0292 | N/A | 0.0000 | N/A | -0.0043 | 15:+0.01 16:+0.03 17:+0.07 18:+0.07 19:+0.06 20:-0.07 21:+0.08 22:-0.08 23:+0.10 24:-0.06 25:-0.01 26:+0.13 | 0.0665 |
+| yesterday_day_realized_vol | 36.0% | **Selected** | -0.0043 | +0.0366 | +0.90 | 0.0658 | ** Non-Linear Monotonic | -0.0039 | 15:-0.03 16:+0.04 17:+0.02 18:-0.04 19:+0.02 20:+0.00 21:+0.09 22:+0.06 23:+0.04 24:+0.11 25:-0.01 26:-0.10 | 0.0563 |
+| volume_weighted_price_position | 34.4% | **Selected** | +0.0896 | +0.0934 | +0.90 | 0.0031 | *** Strong Monotonic | +0.0612 | 15:+0.13 16:+0.08 17:+0.11 18:+0.12 19:+0.12 20:+0.03 21:+0.19 22:-0.00 23:+0.08 24:+0.14 25:+0.09 26:-0.13 | 0.0796 |
+| inside_bar_failure_bull | 34.0% | **Selected** | -0.0054 | -0.0022 | N/A | 0.0000 | N/A | -0.0446 | 15:-0.01 16:-0.05 17:-0.02 18:+0.04 19:-0.14 20:+0.11 21:+0.05 22:+0.07 23:-0.06 24:-0.01 25:-0.02 26:-0.07 | 0.0670 |
+| bar_rng_1 | 34.0% | **Selected** | -0.0233 | +0.0046 | +0.00 | 0.0363 | * Non-Monotonic / Weak | -0.0276 | 15:-0.13 16:-0.01 17:-0.02 18:-0.00 19:+0.02 20:+0.02 21:-0.05 22:+0.00 23:+0.17 24:+0.04 25:-0.08 26:-0.07 | 0.0718 |
+| yesterday_day_kurtosis | 32.8% | **Selected** | -0.0093 | -0.0422 | -0.90 | 0.0048 | ** Non-Linear Monotonic | -0.0507 | 15:-0.06 16:+0.01 17:-0.11 18:-0.16 19:-0.01 20:+0.10 21:-0.11 22:-0.04 23:-0.05 24:-0.04 25:-0.07 26:-0.04 | 0.0632 |
+| close_vs_open_range | 32.4% | **Selected** | +0.0983 | +0.0935 | +0.90 | 0.0166 | *** Strong Monotonic | +0.1310 | 15:+0.20 16:+0.07 17:+0.17 18:+0.08 19:+0.02 20:+0.08 21:+0.07 22:+0.05 23:+0.07 24:+0.16 25:+0.15 26:-0.04 | 0.0650 |
+| range_expansion_ratio | 30.4% | **Selected** | -0.0338 | +0.0137 | -0.30 | 0.0000 | * Non-Monotonic / Weak | -0.0457 | 15:+0.09 16:+0.02 17:-0.02 18:+0.11 19:+0.02 20:-0.01 21:-0.01 22:+0.02 23:+0.05 24:-0.14 25:-0.11 26:+0.08 | 0.0724 |
+| bar_rng_2 | 30.0% | **Selected** | -0.0040 | +0.0115 | +0.60 | 0.0200 | ** Moderate Monotonic | -0.0411 | 15:-0.01 16:+0.01 17:-0.11 18:+0.05 19:-0.01 20:-0.01 21:+0.02 22:+0.06 23:+0.05 24:+0.03 25:-0.08 26:-0.01 | 0.0481 |
+| vwap_cross_count | 29.6% | **Selected** | +0.0168 | -0.0040 | -0.50 | 0.0099 | ** Moderate Monotonic | -0.0049 | 15:+0.05 16:-0.09 17:+0.13 18:+0.03 19:+0.00 20:-0.00 21:-0.02 22:-0.05 23:-0.03 24:+0.01 25:-0.05 26:+0.07 | 0.0573 |
+| bar_rng_3 | 29.6% | **Selected** | +0.0385 | +0.0346 | +0.70 | 0.0490 | ** Moderate Monotonic | -0.0003 | 15:+0.00 16:+0.06 17:+0.06 18:+0.10 19:-0.11 20:+0.09 21:+0.00 22:+0.09 23:+0.01 24:+0.06 25:+0.02 26:-0.13 | 0.0706 |
+| first_bar_body_ratio | 29.6% | **Selected** | +0.0445 | +0.0488 | +0.80 | 0.0222 | ** Moderate Monotonic | +0.0870 | 15:-0.04 16:+0.21 17:+0.07 18:+0.04 19:+0.04 20:+0.14 21:-0.04 22:-0.03 23:-0.02 24:+0.01 25:+0.17 26:+0.03 | 0.0813 |
+| first_bar_return | 29.2% | **Selected** | +0.1460 | +0.1212 | +1.00 | 0.0323 | *** Strong Monotonic | +0.0934 | 15:+0.25 16:+0.14 17:+0.11 18:+0.22 19:+0.11 20:+0.08 21:+0.10 22:+0.04 23:+0.06 24:+0.12 25:+0.13 26:-0.03 | 0.0710 |
+| yesterday_early_skew | 28.4% | **Selected** | +0.0063 | +0.0063 | -0.20 | 0.0000 | * Non-Monotonic / Weak | +0.0051 | 15:+0.13 16:+0.01 17:-0.04 18:+0.00 19:+0.02 20:-0.05 21:-0.01 22:+0.05 23:-0.02 24:+0.02 25:+0.00 26:-0.04 | 0.0455 |
+| bar_ret_0 | 27.2% | **Selected** | +0.1463 | +0.1212 | +1.00 | 0.0322 | *** Strong Monotonic | +0.0934 | 15:+0.25 16:+0.14 17:+0.11 18:+0.22 19:+0.11 20:+0.08 21:+0.10 22:+0.04 23:+0.06 24:+0.12 25:+0.13 26:-0.03 | 0.0710 |
+| northbound_net | 27.2% | **Selected** | +0.0326 | +0.0303 | +0.60 | 0.0072 | ** Moderate Monotonic | -0.0371 | 15:-0.01 16:+0.10 17:-0.04 18:+0.05 19:+0.11 20:+0.06 21:-0.02 22:+0.02 23:+0.09 24:-0.01 26:+nan | nan |
+| spike_exhaustion_ratio | 26.8% | **Selected** | -0.0045 | +0.0297 | +0.10 | 0.0256 | * Non-Monotonic / Weak | +0.0272 | 15:-0.09 16:+0.13 17:+0.02 18:-0.03 19:-0.01 20:+0.07 21:+0.06 22:-0.01 23:+0.20 24:+0.03 25:+0.03 26:+0.04 | 0.0714 |
+| bar_ret_4 | 25.6% | **Selected** | +0.0064 | +0.0079 | +0.90 | 0.0457 | *** Strong Monotonic | +0.0224 | 15:-0.07 16:+0.09 17:+0.04 18:-0.04 19:-0.03 20:+0.01 21:-0.05 22:+0.02 23:+0.07 24:+0.10 25:+0.04 26:-0.15 | 0.0709 |
+| intraday_bearish_fvg | 25.2% | **Selected** | -0.0401 | -0.0138 | N/A | 0.0000 | N/A | +0.0120 | 15:-0.01 16:+0.01 17:-0.05 18:+0.00 19:-0.08 20:-0.00 21:-0.03 22:-0.13 23:+0.06 24:+0.03 25:-0.11 26:+0.08 | 0.0621 |
+| late_bar_momentum | 25.2% | **Selected** | -0.0864 | -0.0837 | -1.00 | 0.0247 | *** Strong Monotonic | -0.0574 | 15:-0.18 16:-0.04 17:-0.16 18:-0.18 19:-0.10 20:-0.06 21:-0.14 22:+0.04 23:-0.02 24:-0.03 25:-0.04 26:-0.10 | 0.0657 |
+| opening_range_size | 24.8% | **Selected** | +0.0002 | +0.0524 | +0.90 | 0.0649 | ** Non-Linear Monotonic | +0.0486 | 15:-0.08 16:+0.10 17:+0.05 18:+0.08 19:-0.05 20:+0.07 21:+0.02 22:+0.04 23:+0.10 24:+0.08 25:+0.10 26:+0.04 | 0.0555 |
+| vol5 | 24.0% | **Selected** | +0.0309 | +0.0336 | +0.30 | 0.0372 | * Non-Monotonic / Weak | -0.0154 | 15:+0.01 16:+0.01 17:+0.12 18:+0.02 19:+0.01 20:-0.05 21:+0.10 22:+0.14 23:+0.04 24:-0.01 25:+0.01 26:-0.02 | 0.0564 |
+| upper_shadow_rejection | 24.0% | **Selected** | +0.0271 | +0.0156 | +0.30 | 0.0000 | * Non-Monotonic / Weak | +0.0376 | 15:+0.08 16:+0.15 17:+0.07 18:-0.02 19:-0.08 20:-0.01 21:-0.10 22:-0.04 23:+0.05 24:+0.01 25:-0.08 26:+0.27 | 0.1034 |
+| vwap_touch_count | 23.6% | **Selected** | -0.0054 | -0.0313 | +0.50 | 0.0021 | ** Moderate Monotonic | -0.0415 | 15:-0.01 16:-0.07 17:+0.04 18:-0.04 19:-0.02 20:-0.03 21:-0.05 22:+0.06 23:-0.20 24:+0.05 25:-0.02 26:-0.11 | 0.0693 |
+| yesterday_gap_pct | 23.6% | **Selected** | +0.0383 | +0.0175 | +0.40 | 0.0000 | * Non-Monotonic / Weak | +0.0535 | 15:+0.09 16:-0.11 17:-0.04 18:-0.05 19:+0.02 20:+0.03 21:+0.07 22:-0.00 23:+0.01 24:+0.06 25:+0.04 26:-0.02 | 0.0545 |
+| barbed_wire_intensity | 23.6% | **Selected** | +0.0401 | +0.0193 | N/A | 0.0000 | N/A | +0.0715 | 16:+0.08 18:+0.03 19:-0.07 20:-0.09 21:-0.00 22:-0.02 23:+0.01 24:+0.17 25:+0.07 26:+0.03 | 0.0710 |
+| bar_rng_0 | 23.6% | **Selected** | -0.0001 | +0.0520 | +0.90 | 0.0662 | ** Non-Linear Monotonic | +0.0479 | 15:-0.08 16:+0.10 17:+0.05 18:+0.08 19:-0.04 20:+0.07 21:+0.02 22:+0.04 23:+0.09 24:+0.08 25:+0.10 26:+0.04 | 0.0560 |
+| bar_vwap_dev_1 | 23.2% | **Selected** | +0.0854 | +0.0651 | +1.00 | 0.0325 | *** Strong Monotonic | +0.0648 | 15:+0.09 16:+0.11 17:+0.14 18:+0.01 19:+0.07 20:+0.02 21:+0.14 22:-0.02 23:+0.11 24:+0.07 25:-0.02 26:+0.08 | 0.0551 |
+| or_fill_ratio | 23.2% | **Selected** | +0.0759 | +0.0739 | +0.70 | 0.0000 | ** Moderate Monotonic | +0.1082 | 15:+0.15 16:+0.03 17:+0.16 18:+0.04 19:+0.03 20:+0.05 21:+0.05 22:+0.06 23:+0.07 24:+0.14 25:+0.11 26:-0.04 | 0.0571 |
+| vol_ratio_10_60 | 23.2% | **Selected** | +0.0425 | +0.0374 | +0.60 | 0.0000 | ** Moderate Monotonic | +0.0089 | 15:+0.02 16:+0.06 17:+0.07 18:+0.11 19:+0.08 20:+0.03 21:+0.07 22:-0.01 23:+0.04 24:-0.01 25:+0.04 26:-0.08 | 0.0484 |
+| max_down_ret | 22.8% | **Selected** | +0.1199 | +0.0933 | +1.00 | 0.0371 | *** Strong Monotonic | +0.1319 | 15:+0.20 16:+0.09 17:+0.20 18:+0.10 19:+0.07 20:+0.13 21:+0.07 22:+0.04 23:+0.01 24:+0.13 25:+0.17 26:-0.00 | 0.0651 |
+| yesterday_first_bar_return | 22.8% | **Selected** | -0.0144 | +0.0263 | +0.50 | 0.0083 | * Non-Monotonic / Weak | +0.0867 | 15:+0.02 16:+0.06 17:-0.01 18:-0.13 19:+0.07 20:-0.03 21:-0.07 22:+0.08 23:+0.12 24:+0.02 25:+0.10 26:+0.09 | 0.0723 |
+| yesterday_spike_exhaustion_ratio | 22.4% | **Selected** | +0.0234 | +0.0183 | +0.90 | 0.0063 | *** Strong Monotonic | +0.0239 | 15:+0.15 16:+0.06 17:-0.01 18:-0.01 19:-0.03 20:+0.04 21:+0.05 22:+0.01 23:+0.03 24:+0.07 25:-0.05 26:+0.02 | 0.0509 |
 
 </details>
 
@@ -625,10 +756,10 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | +0.1887 | +0.1260 | +0.0000 | -0.0748 | +0.1142 |
-| Dir Acc | 0.572 | 0.540 | 0.500 | 0.460 | 0.551 |
-| RMSE | 0.9971% | 1.0703% | 1.0131% | 1.4746% | 1.1190% |
-| L/S Sharpe | +2.79 | +2.77 | — | — | — |
+| IC | +0.1512 | +0.1348 | +0.0000 | -0.0748 | +0.1142 |
+| Dir Acc | 0.551 | 0.529 | 0.500 | 0.460 | 0.551 |
+| RMSE | 1.0151% | 1.1061% | 1.0131% | 1.4746% | 1.1190% |
+| L/S Sharpe | +3.06 | +3.10 | — | — | — |
 
 #### Best Hyperparameters
 
@@ -637,10 +768,11 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 ```json
 {
-  "model_type": "skglm_huber_l1",
-  "stability_threshold": 0.6000000000000001,
-  "skglm_huber_l1_alpha": 0.0005678966105035387,
-  "skglm_huber_delta": 2.5296046642638843
+  "model_type": "skglm_mcp",
+  "top_k_features": 50,
+  "skglm_mcp_alpha": 0.01915821173298634,
+  "skglm_mcp_gamma": 9.147639339670102,
+  "stability_threshold": 0.22399999999999998
 }
 ```
 
@@ -650,27 +782,27 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.2040 | +0.1680 |
-| 2 | 0.1848 | +0.1450 |
-| 3 | 0.1759 | +0.1101 |
-| 4 | 0.1541 | +0.0748 |
-| 5 | 0.1460 | +0.1949 |
-| **Overall** | — | +0.1356 |
+| 1 | 0.3870 | +0.0791 |
+| 2 | 0.2962 | +0.1437 |
+| 3 | 0.2612 | +0.1227 |
+| 4 | 0.2289 | +0.1180 |
+| 5 | 0.2086 | +0.1588 |
+| **Overall** | — | +0.1215 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2017 | +0.1335 | 0.540 | 215 | +1.78 |
-| 2018 | +0.1860 | 0.539 | 243 | +4.79 |
-| 2019 | +0.1265 | 0.488 | 244 | +3.88 |
-| 2020 | +0.1698 | 0.572 | 243 | +3.32 |
-| 2021 | +0.1341 | 0.568 | 243 | +1.36 |
-| 2022 | +0.0891 | 0.533 | 242 | +2.92 |
-| 2023 | +0.0813 | 0.525 | 242 | +0.38 |
-| 2024 | +0.1303 | 0.566 | 242 | +1.90 |
-| 2025 | +0.1715 | 0.560 | 243 | +2.37 |
-| 2026 | +0.2094 | 0.574 | 108 | +3.18 |
+| 2017 | -0.0235 | 0.512 | 215 | -2.36 |
+| 2018 | +0.1619 | 0.514 | 243 | +5.05 |
+| 2019 | +0.1095 | 0.504 | 244 | +3.23 |
+| 2020 | +0.1717 | 0.564 | 243 | +3.32 |
+| 2021 | +0.1442 | 0.551 | 243 | +2.66 |
+| 2022 | +0.1172 | 0.504 | 242 | +3.11 |
+| 2023 | +0.1252 | 0.525 | 242 | +2.63 |
+| 2024 | +0.1425 | 0.558 | 242 | +4.08 |
+| 2025 | +0.1795 | 0.584 | 243 | +3.01 |
+| 2026 | +0.0999 | 0.528 | 108 | -0.30 |
 
 #### Diagnostic Plots
 
@@ -706,11 +838,11 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 ### 588000ETF_long
 
 - **Selected Model**: SKGLM_HUBER_L1
-- **Tuned Stability Threshold**: 0.50
+- **Tuned Stability Threshold**: 0.12
 - **Samples**: 1294 (2021-02-09 → 2026-06-17)
 - **Holdout**: 258 days (2025-05-27 → 2026-06-17)
 - **Target stats**: mean=-0.0044%, std=1.3690%, Sharpe=-0.05
-- **Selected features (3)**: `yesterday_day_realized_vol, vol5, roc5`
+- **Selected features (49)**: `yesterday_day_realized_vol, vol5, roc5, pullback_depth_max, volume_weighted_price_position, bar_ret_2, yearly_high_distance, yesterday_day_kurtosis, yesterday_body_ratio, volatility_percentile_20d, yesterday_early_skew, body_to_range_ratio, vwap_deviation_max, sma100_dist, bb_width, yesterday_early_range, bar_vwap_dev_0, yesterday_opening_gap_reversal, vol_ratio_5_20, early_trend_hhi, decision_bar_range_rank, consecutive_bearish_engulfing, yesterday_early_realized_vol, sma200_dist, vol_ratio_10_60, margin_short_ratio, bar_vwap_dev_1, yesterday_pm_return, cci14, decision_bar_reversal_signal, early_range, yesterday_first_bar_volume, capital_net_value, yesterday_day_pm_am_vol_ratio, yesterday_day_vwap_dev, inside_bar_failure_bear, vix_diff_1d, capital_net_ratio, sma10_dist, yesterday_day_skew, inside_bar_compression, early_bullish_hammer, upper_wick_dominance, intraday_bullish_fvg, volume_trend_intraday, volume_percentile_20d, range_expansion_ratio, early_bearish_engulfing_count, yesterday_first_bar_return`
 
 #### Selected Feature Stability Scores (Block Bootstrap)
 
@@ -719,9 +851,55 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
-| yesterday_day_realized_vol | 63.6% | **Selected** | +0.0612 | +0.0458 | +0.90 | 0.0380 | *** Strong Monotonic | -0.0176 | 21:+0.01 22:+0.19 23:-0.06 24:+0.08 25:+0.02 26:+0.03 | 0.0766 |
-| vol5 | 39.2% | **Selected** | +0.0566 | +0.0443 | +0.70 | 0.0240 | ** Moderate Monotonic | -0.0448 | 21:+0.01 22:+0.18 23:+0.11 24:-0.01 25:+0.01 26:-0.02 | 0.0721 |
-| roc5 | 37.6% | **Selected** | -0.0147 | -0.0026 | +0.00 | 0.0000 | * Non-Monotonic / Weak | -0.0143 | 21:-0.06 22:+0.05 23:+0.02 24:-0.08 25:-0.02 26:+0.05 | 0.0509 |
+| yesterday_day_realized_vol | 60.4% | **Selected** | +0.0612 | +0.0458 | +0.90 | 0.0380 | *** Strong Monotonic | -0.0176 | 21:+0.01 22:+0.19 23:-0.06 24:+0.08 25:+0.02 26:+0.03 | 0.0766 |
+| vol5 | 39.6% | **Selected** | +0.0566 | +0.0443 | +0.70 | 0.0240 | ** Moderate Monotonic | -0.0448 | 21:+0.01 22:+0.18 23:+0.11 24:-0.01 25:+0.01 26:-0.02 | 0.0721 |
+| roc5 | 37.2% | **Selected** | -0.0147 | -0.0026 | +0.00 | 0.0000 | * Non-Monotonic / Weak | -0.0143 | 21:-0.06 22:+0.05 23:+0.02 24:-0.08 25:-0.02 26:+0.05 | 0.0509 |
+| pullback_depth_max | 34.0% | **Selected** | -0.1048 | -0.1069 | -0.90 | 0.0000 | *** Strong Monotonic | +0.0285 | 21:-0.23 22:-0.12 23:-0.12 24:-0.10 25:-0.06 26:+0.02 | 0.0752 |
+| volume_weighted_price_position | 33.2% | **Selected** | +0.1182 | +0.1232 | +0.80 | 0.0000 | ** Moderate Monotonic | +0.0681 | 21:+0.29 22:+0.09 23:+0.12 24:+0.09 25:+0.05 26:+0.09 | 0.0787 |
+| bar_ret_2 | 32.0% | **Selected** | +0.0033 | +0.0054 | +0.40 | 0.0000 | * Non-Monotonic / Weak | -0.0651 | 21:+0.01 22:-0.02 23:+0.12 24:-0.01 25:-0.01 26:-0.08 | 0.0577 |
+| yearly_high_distance | 30.0% | **Selected** | +0.0060 | +0.0122 | +0.60 | 0.0005 | ** Moderate Monotonic | -0.0456 | 21:-0.14 22:-0.05 23:-0.05 24:-0.01 25:-0.04 26:-0.03 | 0.0424 |
+| yesterday_day_kurtosis | 30.0% | **Selected** | -0.0229 | -0.0634 | -0.60 | 0.0069 | ** Moderate Monotonic | -0.0356 | 21:-0.11 22:-0.04 23:-0.06 24:-0.08 25:-0.05 26:-0.02 | 0.0309 |
+| yesterday_body_ratio | 30.0% | **Selected** | +0.0004 | +0.0142 | +0.30 | 0.0174 | * Non-Monotonic / Weak | -0.0195 | 21:+0.03 22:-0.00 23:+0.10 24:-0.02 25:+0.03 26:-0.08 | 0.0541 |
+| volatility_percentile_20d | 29.6% | **Selected** | +0.0841 | +0.0665 | +0.90 | 0.0222 | *** Strong Monotonic | -0.0048 | 21:+0.13 22:+0.11 23:+0.02 24:+0.04 25:+0.10 26:-0.05 | 0.0638 |
+| yesterday_early_skew | 28.8% | **Selected** | -0.0420 | -0.0281 | -0.60 | 0.0000 | ** Moderate Monotonic | +0.0190 | 21:-0.10 22:-0.03 23:-0.07 24:+0.05 25:+0.03 26:-0.10 | 0.0603 |
+| body_to_range_ratio | 26.8% | **Selected** | -0.0050 | +0.0154 | -0.30 | 0.0000 | * Non-Monotonic / Weak | -0.0199 | 21:+0.13 22:+0.03 23:-0.02 24:-0.01 25:-0.06 26:-0.02 | 0.0624 |
+| vwap_deviation_max | 25.6% | **Selected** | -0.0189 | -0.0255 | -0.10 | 0.0000 | * Non-Monotonic / Weak | +0.1211 | 21:-0.04 22:-0.09 23:+0.02 24:-0.08 25:-0.04 26:+0.17 | 0.0883 |
+| sma100_dist | 25.2% | **Selected** | -0.0296 | -0.0191 | -0.10 | 0.0556 | * Non-Monotonic / Weak | -0.0392 | 21:-0.03 22:-0.08 23:-0.05 24:-0.08 25:-0.06 26:+0.00 | 0.0286 |
+| bb_width | 24.4% | **Selected** | -0.0634 | -0.0367 | -0.90 | 0.0166 | *** Strong Monotonic | +0.0096 | 21:+0.04 22:-0.12 23:-0.04 24:-0.08 25:-0.02 26:-0.06 | 0.0504 |
+| yesterday_early_range | 24.0% | **Selected** | +0.0117 | +0.0197 | +0.50 | 0.0521 | * Non-Monotonic / Weak | -0.0134 | 21:-0.06 22:+0.11 23:-0.01 24:+0.01 25:+0.04 26:+0.04 | 0.0514 |
+| bar_vwap_dev_0 | 23.6% | **Selected** | -0.0108 | -0.0175 | N/A | 0.0024 | N/A | N/A | N/A | N/A |
+| yesterday_opening_gap_reversal | 22.8% | **Selected** | +0.0670 | +0.0392 | +0.80 | 0.0000 | ** Moderate Monotonic | +0.0945 | 21:+0.01 22:+0.00 23:-0.04 24:+0.08 25:+0.14 26:+0.01 | 0.0600 |
+| vol_ratio_5_20 | 22.8% | **Selected** | +0.0433 | +0.0292 | +0.70 | 0.0033 | ** Moderate Monotonic | -0.0524 | 21:+0.05 22:+0.05 23:+0.12 24:-0.05 25:+0.04 26:-0.04 | 0.0568 |
+| early_trend_hhi | 22.0% | **Selected** | -0.0102 | +0.0073 | N/A | 0.0066 | N/A | -0.0831 | 21:+0.13 22:+0.04 23:+0.00 24:-0.03 25:-0.08 26:-0.02 | 0.0642 |
+| decision_bar_range_rank | 21.6% | **Selected** | -0.0198 | -0.0225 | N/A | 0.0053 | N/A | -0.0827 | 21:+0.05 22:-0.08 23:+0.06 24:-0.04 25:-0.02 26:-0.16 | 0.0763 |
+| consecutive_bearish_engulfing | 19.6% | **Selected** | -0.0152 | -0.0102 | N/A | 0.0000 | N/A | +0.0722 | 21:-0.00 22:-0.05 23:-0.11 24:+0.04 25:+0.07 26:+0.07 | 0.0656 |
+| yesterday_early_realized_vol | 19.2% | **Selected** | +0.0166 | -0.0002 | +0.40 | 0.0017 | * Non-Monotonic / Weak | -0.0335 | 21:-0.05 22:+0.04 23:-0.01 24:-0.04 25:+0.02 26:+0.09 | 0.0490 |
+| sma200_dist | 18.4% | **Selected** | -0.0257 | -0.0033 | -0.30 | 0.0286 | * Non-Monotonic / Weak | -0.0808 | 21:-0.06 22:-0.14 23:-0.08 24:-0.08 25:-0.12 26:-0.02 | 0.0409 |
+| vol_ratio_10_60 | 18.0% | **Selected** | +0.0534 | +0.0124 | +0.70 | 0.0001 | ** Moderate Monotonic | -0.0174 | 21:-0.08 22:+0.04 23:+0.01 24:-0.02 25:+0.09 26:-0.10 | 0.0644 |
+| margin_short_ratio | 17.6% | **Selected** | +0.0183 | +0.0119 | +0.60 | 0.0455 | ** Moderate Monotonic | +0.0593 | 21:-0.05 22:+0.00 23:+0.09 24:+0.02 25:+0.06 26:+0.05 | 0.0440 |
+| bar_vwap_dev_1 | 17.6% | **Selected** | +0.0523 | +0.0531 | +0.90 | 0.0154 | *** Strong Monotonic | +0.0586 | 21:+0.17 22:+0.01 23:+0.12 24:+0.06 25:-0.02 26:-0.01 | 0.0692 |
+| yesterday_pm_return | 16.4% | **Selected** | -0.0155 | -0.0359 | -0.30 | 0.0161 | * Non-Monotonic / Weak | -0.2016 | 21:+0.09 22:-0.01 23:-0.04 24:+0.01 25:-0.09 26:-0.24 | 0.1040 |
+| cci14 | 16.0% | **Selected** | +0.0351 | +0.0282 | +0.70 | 0.0008 | ** Moderate Monotonic | -0.0054 | 21:-0.04 22:+0.08 23:+0.01 24:+0.07 25:+0.00 26:+0.06 | 0.0435 |
+| decision_bar_reversal_signal | 15.6% | **Selected** | -0.0122 | +0.0045 | N/A | 0.0000 | N/A | -0.0337 | 21:-0.01 22:+0.12 23:-0.03 24:-0.04 25:-0.06 26:+0.06 | 0.0616 |
+| early_range | 15.6% | **Selected** | +0.0699 | +0.0144 | +0.50 | 0.0159 | * Non-Monotonic / Weak | +0.0320 | 21:-0.06 22:+0.15 23:-0.07 24:+0.01 25:-0.05 26:+0.07 | 0.0793 |
+| yesterday_first_bar_volume | 15.6% | **Selected** | +0.0932 | +0.0411 | +0.80 | 0.0000 | ** Moderate Monotonic | -0.0210 | 21:+0.04 22:+0.11 23:-0.02 24:-0.03 25:+0.06 26:+0.08 | 0.0493 |
+| capital_net_value | 15.2% | **Selected** | +0.0283 | -0.0619 | -1.00 | 0.0000 | ** Non-Linear Monotonic | -0.0003 | 21:-0.02 22:-0.09 23:-0.04 24:-0.14 25:-0.02 26:-0.03 | 0.0423 |
+| yesterday_day_pm_am_vol_ratio | 15.2% | **Selected** | +0.0100 | +0.0133 | -0.20 | 0.0087 | * Non-Monotonic / Weak | +0.0358 | 21:-0.02 22:+0.04 23:+0.15 24:-0.02 25:-0.05 26:+0.04 | 0.0645 |
+| yesterday_day_vwap_dev | 14.8% | **Selected** | -0.0269 | -0.0599 | -0.50 | 0.0379 | * Non-Monotonic / Weak | -0.1737 | 21:+0.00 22:-0.02 23:-0.06 24:-0.04 25:-0.08 26:-0.20 | 0.0641 |
+| inside_bar_failure_bear | 14.8% | **Selected** | -0.0286 | -0.0152 | N/A | 0.0000 | N/A | -0.0459 | 21:-0.05 22:+0.01 23:-0.08 24:+0.03 25:+0.05 26:-0.11 | 0.0590 |
+| vix_diff_1d | 14.0% | **Selected** | +0.1261 | +0.0665 | +0.80 | 0.0060 | ** Moderate Monotonic | +0.0526 | 23:+0.00 24:+0.16 25:+0.04 26:+0.10 | 0.0598 |
+| capital_net_ratio | 14.0% | **Selected** | -0.0592 | -0.0736 | -0.90 | 0.0000 | *** Strong Monotonic | +0.0038 | 21:-0.03 22:-0.14 23:-0.04 24:-0.14 25:-0.03 26:-0.01 | 0.0524 |
+| sma10_dist | 14.0% | **Selected** | -0.0071 | +0.0024 | -0.10 | 0.0000 | * Non-Monotonic / Weak | -0.0155 | 21:-0.03 22:+0.06 23:+0.01 24:-0.08 25:-0.03 26:+0.04 | 0.0482 |
+| yesterday_day_skew | 14.0% | **Selected** | +0.0144 | +0.0015 | +0.10 | 0.0144 | * Non-Monotonic / Weak | +0.1410 | 21:-0.10 22:+0.04 23:-0.01 24:-0.01 25:+0.04 26:+0.09 | 0.0614 |
+| inside_bar_compression | 14.0% | **Selected** | +0.0090 | +0.0035 | -0.50 | 0.0045 | ** Moderate Monotonic | -0.0683 | 21:-0.06 22:+0.02 23:-0.02 24:+0.10 25:+0.04 26:-0.14 | 0.0787 |
+| early_bullish_hammer | 13.6% | **Selected** | -0.0155 | -0.0151 | N/A | 0.0005 | N/A | -0.0535 | 21:+0.07 22:+0.01 23:-0.03 24:-0.06 25:+0.00 26:-0.09 | 0.0511 |
+| upper_wick_dominance | 12.8% | **Selected** | +0.0288 | -0.0525 | -0.70 | 0.0015 | ** Moderate Monotonic | -0.0613 | 21:-0.07 22:-0.08 23:-0.02 24:-0.04 25:-0.07 26:-0.08 | 0.0233 |
+| intraday_bullish_fvg | 12.8% | **Selected** | +0.0571 | +0.0093 | N/A | 0.0000 | N/A | -0.0572 | 21:+0.00 22:+0.05 23:-0.05 24:+0.06 26:-0.08 | 0.0548 |
+| volume_trend_intraday | 12.8% | **Selected** | +0.0070 | +0.0162 | +0.10 | 0.0000 | * Non-Monotonic / Weak | +0.0382 | 21:-0.09 22:+0.04 23:+0.09 24:+0.03 25:+0.04 26:+0.01 | 0.0544 |
+| volume_percentile_20d | 12.8% | **Selected** | +0.0524 | +0.0294 | +0.30 | 0.0000 | * Non-Monotonic / Weak | -0.0400 | 21:+0.04 22:+0.15 23:-0.03 24:-0.05 25:+0.01 26:+0.01 | 0.0624 |
+| range_expansion_ratio | 12.4% | **Selected** | +0.0225 | +0.0019 | -0.30 | 0.0000 | * Non-Monotonic / Weak | +0.0824 | 21:-0.01 22:+0.09 23:-0.02 24:-0.10 25:-0.03 26:+0.14 | 0.0794 |
+| early_bearish_engulfing_count | 12.4% | **Selected** | +0.0159 | +0.0221 | N/A | 0.0039 | N/A | +0.0585 | 21:+0.06 22:-0.07 23:-0.00 24:+0.09 25:+0.02 26:+0.07 | 0.0542 |
+| yesterday_first_bar_return | 12.4% | **Selected** | -0.0436 | +0.0225 | -0.20 | 0.0000 | * Non-Monotonic / Weak | -0.0411 | 21:+0.10 22:+0.04 23:+0.17 24:-0.05 25:-0.03 26:-0.08 | 0.0883 |
 
 </details>
 
@@ -729,10 +907,10 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | +0.0631 | +0.0168 | +0.0000 | -0.1324 | +0.0184 |
-| Dir Acc | 0.473 | 0.465 | 0.500 | 0.403 | 0.496 |
-| RMSE | 1.4919% | 1.6335% | 1.4761% | 2.1833% | 1.6720% |
-| L/S Sharpe | -1.23 | +0.36 | — | — | — |
+| IC | -0.0699 | -0.0277 | +0.0000 | -0.1324 | +0.0184 |
+| Dir Acc | 0.496 | 0.450 | 0.500 | 0.403 | 0.496 |
+| RMSE | 1.5565% | 1.7441% | 1.4761% | 2.1833% | 1.6720% |
+| L/S Sharpe | -1.34 | +0.12 | — | — | — |
 
 #### Best Hyperparameters
 
@@ -742,9 +920,10 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 ```json
 {
   "model_type": "skglm_huber_l1",
-  "stability_threshold": 0.5,
-  "skglm_huber_l1_alpha": 0.0006427952226492082,
-  "skglm_huber_delta": 1.767444633757302
+  "top_k_features": 49,
+  "skglm_huber_l1_alpha": 0.0003425191734245192,
+  "skglm_huber_delta": 2.426056805267322,
+  "stability_threshold": 0.124
 }
 ```
 
@@ -754,22 +933,22 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.0364 | +0.1000 |
-| 2 | 0.0909 | +0.0404 |
-| 3 | 0.0790 | -0.0287 |
-| 4 | 0.0532 | +0.0463 |
-| 5 | 0.0558 | -0.0318 |
-| **Overall** | — | +0.0307 |
+| 1 | 0.5673 | +0.1646 |
+| 2 | 0.3686 | +0.0803 |
+| 3 | 0.3360 | +0.0760 |
+| 4 | 0.2864 | +0.1065 |
+| 5 | 0.2509 | -0.0666 |
+| **Overall** | — | +0.0720 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2022 | +0.1114 | 0.496 | 240 | +3.46 |
-| 2023 | +0.0216 | 0.541 | 242 | +0.95 |
-| 2024 | +0.0179 | 0.533 | 242 | +2.44 |
-| 2025 | +0.0380 | 0.531 | 243 | +1.18 |
-| 2026 | -0.0349 | 0.463 | 108 | -0.46 |
+| 2022 | +0.1674 | 0.517 | 240 | +4.70 |
+| 2023 | +0.0853 | 0.500 | 242 | +2.41 |
+| 2024 | +0.1341 | 0.504 | 242 | +3.83 |
+| 2025 | +0.0202 | 0.477 | 243 | +0.73 |
+| 2026 | -0.1159 | 0.454 | 108 | -2.53 |
 
 #### Diagnostic Plots
 
@@ -805,11 +984,11 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 ### 588000ETF_short
 
 - **Selected Model**: SKGLM_HUBER_L1
-- **Tuned Stability Threshold**: 0.55
+- **Tuned Stability Threshold**: 0.24
 - **Samples**: 1294 (2021-02-09 → 2026-06-17)
 - **Holdout**: 258 days (2025-05-27 → 2026-06-17)
 - **Target stats**: mean=-0.0044%, std=1.3690%, Sharpe=-0.05
-- **Selected features (3)**: `yesterday_day_pm_am_vol_ratio, yesterday_am_return, num_up_bars`
+- **Selected features (16)**: `volume_weighted_price_position, yesterday_am_return, measured_move_proximity, yesterday_day_pm_am_vol_ratio, yesterday_first_bar_return, yesterday_early_realized_vol, volume_trend_intraday, pullback_depth_max, yesterday_spike_exhaustion_ratio, first_bar_return, bar_ret_0, inside_bar_failure_bear, volatility_percentile_20d, vwap_cross_count, upper_wick_dominance, gap_pct`
 
 #### Selected Feature Stability Scores (Block Bootstrap)
 
@@ -818,9 +997,22 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
-| yesterday_day_pm_am_vol_ratio | 64.8% | **Selected** | +0.0100 | +0.0133 | -0.20 | 0.0087 | * Non-Monotonic / Weak | +0.0358 | 21:-0.02 22:+0.04 23:+0.15 24:-0.02 25:-0.05 26:+0.04 | 0.0645 |
-| yesterday_am_return | 56.8% | **Selected** | +0.0192 | +0.0216 | +0.30 | 0.0439 | * Non-Monotonic / Weak | -0.0564 | 21:+0.04 22:+0.15 23:-0.00 24:-0.05 25:+0.00 26:-0.07 | 0.0739 |
-| num_up_bars | 55.6% | **Selected** | +0.0665 | +0.0679 | +1.00 | 0.0208 | *** Strong Monotonic | -0.0413 | 21:+0.14 22:+0.10 23:+0.13 24:+0.03 25:-0.02 26:-0.03 | 0.0680 |
+| volume_weighted_price_position | 64.0% | **Selected** | +0.1182 | +0.1232 | +0.80 | 0.0000 | ** Moderate Monotonic | +0.0681 | 21:+0.29 22:+0.09 23:+0.12 24:+0.09 25:+0.05 26:+0.09 | 0.0787 |
+| yesterday_am_return | 47.6% | **Selected** | +0.0192 | +0.0216 | +0.30 | 0.0439 | * Non-Monotonic / Weak | -0.0564 | 21:+0.04 22:+0.15 23:-0.00 24:-0.05 25:+0.00 26:-0.07 | 0.0739 |
+| measured_move_proximity | 46.0% | **Selected** | +0.0207 | +0.0108 | N/A | 0.0000 | N/A | +0.0076 | 21:+0.03 22:+0.10 23:-0.04 24:-0.05 25:-0.05 26:+0.06 | 0.0561 |
+| yesterday_day_pm_am_vol_ratio | 45.2% | **Selected** | +0.0100 | +0.0133 | -0.20 | 0.0087 | * Non-Monotonic / Weak | +0.0358 | 21:-0.02 22:+0.04 23:+0.15 24:-0.02 25:-0.05 26:+0.04 | 0.0645 |
+| yesterday_first_bar_return | 42.8% | **Selected** | -0.0436 | +0.0225 | -0.20 | 0.0000 | * Non-Monotonic / Weak | -0.0411 | 21:+0.10 22:+0.04 23:+0.17 24:-0.05 25:-0.03 26:-0.08 | 0.0883 |
+| yesterday_early_realized_vol | 40.4% | **Selected** | +0.0166 | -0.0002 | +0.40 | 0.0017 | * Non-Monotonic / Weak | -0.0335 | 21:-0.05 22:+0.04 23:-0.01 24:-0.04 25:+0.02 26:+0.09 | 0.0490 |
+| volume_trend_intraday | 34.0% | **Selected** | +0.0070 | +0.0162 | +0.10 | 0.0000 | * Non-Monotonic / Weak | +0.0382 | 21:-0.09 22:+0.04 23:+0.09 24:+0.03 25:+0.04 26:+0.01 | 0.0544 |
+| pullback_depth_max | 33.6% | **Selected** | -0.1048 | -0.1069 | -0.90 | 0.0000 | *** Strong Monotonic | +0.0285 | 21:-0.23 22:-0.12 23:-0.12 24:-0.10 25:-0.06 26:+0.02 | 0.0752 |
+| yesterday_spike_exhaustion_ratio | 30.0% | **Selected** | +0.0020 | +0.0285 | +0.20 | 0.0000 | * Non-Monotonic / Weak | +0.0955 | 21:+0.02 22:-0.01 23:+0.05 24:-0.01 25:+0.08 26:+0.02 | 0.0317 |
+| first_bar_return | 27.6% | **Selected** | +0.1231 | +0.0907 | +1.00 | 0.0341 | *** Strong Monotonic | -0.0147 | 21:+0.18 22:+0.13 23:+0.07 24:+0.06 25:+0.03 26:-0.01 | 0.0606 |
+| bar_ret_0 | 27.2% | **Selected** | +0.1230 | +0.0907 | +1.00 | 0.0343 | *** Strong Monotonic | -0.0147 | 21:+0.18 22:+0.13 23:+0.07 24:+0.06 25:+0.03 26:-0.01 | 0.0606 |
+| inside_bar_failure_bear | 27.2% | **Selected** | -0.0286 | -0.0152 | N/A | 0.0000 | N/A | -0.0459 | 21:-0.05 22:+0.01 23:-0.08 24:+0.03 25:+0.05 26:-0.11 | 0.0590 |
+| volatility_percentile_20d | 25.6% | **Selected** | +0.0841 | +0.0665 | +0.90 | 0.0222 | *** Strong Monotonic | -0.0048 | 21:+0.13 22:+0.11 23:+0.02 24:+0.04 25:+0.10 26:-0.05 | 0.0638 |
+| vwap_cross_count | 24.4% | **Selected** | +0.0452 | +0.0319 | N/A | 0.0000 | N/A | -0.0589 | 21:+0.10 22:+0.01 23:+0.07 24:+0.11 25:-0.04 26:-0.16 | 0.0944 |
+| upper_wick_dominance | 24.4% | **Selected** | +0.0288 | -0.0525 | -0.70 | 0.0015 | ** Moderate Monotonic | -0.0613 | 21:-0.07 22:-0.08 23:-0.02 24:-0.04 25:-0.07 26:-0.08 | 0.0233 |
+| gap_pct | 24.4% | **Selected** | +0.0208 | -0.0034 | +0.30 | 0.0207 | * Non-Monotonic / Weak | +0.0165 | 21:+0.03 22:-0.03 23:+0.06 24:-0.07 25:+0.01 26:+0.01 | 0.0423 |
 
 </details>
 
@@ -828,10 +1020,10 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | -0.0205 | +0.0168 | +0.0000 | -0.1324 | +0.0184 |
-| Dir Acc | 0.442 | 0.465 | 0.500 | 0.403 | 0.496 |
-| RMSE | 1.4830% | 1.6335% | 1.4761% | 2.1833% | 1.6720% |
-| L/S Sharpe | -0.87 | +0.36 | — | — | — |
+| IC | -0.0021 | -0.0277 | +0.0000 | -0.1324 | +0.0184 |
+| Dir Acc | 0.477 | 0.450 | 0.500 | 0.403 | 0.496 |
+| RMSE | 1.4982% | 1.7441% | 1.4761% | 2.1833% | 1.6720% |
+| L/S Sharpe | +0.28 | +0.12 | — | — | — |
 
 #### Best Hyperparameters
 
@@ -841,9 +1033,10 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 ```json
 {
   "model_type": "skglm_huber_l1",
-  "stability_threshold": 0.55,
-  "skglm_huber_l1_alpha": 0.04014873717763715,
-  "skglm_huber_delta": 1.6077224224401911
+  "top_k_features": 16,
+  "skglm_huber_l1_alpha": 0.018546932169629448,
+  "skglm_huber_delta": 1.9697946585108415,
+  "stability_threshold": 0.244
 }
 ```
 
@@ -853,22 +1046,22 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.1322 | +0.1117 |
-| 2 | 0.1462 | +0.1483 |
-| 3 | 0.1400 | +0.0008 |
-| 4 | 0.1217 | -0.0110 |
-| 5 | 0.0933 | -0.0507 |
-| **Overall** | — | +0.0372 |
+| 1 | 0.3714 | +0.0361 |
+| 2 | 0.2614 | +0.1503 |
+| 3 | 0.2354 | +0.0881 |
+| 4 | 0.2083 | +0.0881 |
+| 5 | 0.1755 | -0.0471 |
+| **Overall** | — | +0.0573 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2022 | +0.1256 | 0.533 | 240 | +1.71 |
-| 2023 | +0.1095 | 0.541 | 242 | +1.34 |
-| 2024 | -0.0116 | 0.550 | 242 | +0.21 |
-| 2025 | -0.0560 | 0.449 | 243 | +0.38 |
-| 2026 | -0.0262 | 0.472 | 108 | -0.50 |
+| 2022 | +0.0665 | 0.504 | 240 | +1.48 |
+| 2023 | +0.1150 | 0.521 | 242 | +2.32 |
+| 2024 | +0.0782 | 0.550 | 242 | +2.40 |
+| 2025 | +0.0211 | 0.486 | 243 | +0.38 |
+| 2026 | -0.0636 | 0.463 | 108 | +1.24 |
 
 #### Diagnostic Plots
 
@@ -903,12 +1096,12 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 ### 159915ETF_long
 
-- **Selected Model**: SKGLM_HUBER_L1
-- **Tuned Stability Threshold**: 0.50
+- **Selected Model**: SKGLM_MCP
+- **Tuned Stability Threshold**: 0.25
 - **Samples**: 2722 (2015-04-07 → 2026-06-17)
 - **Holdout**: 544 days (2024-03-19 → 2026-06-17)
 - **Target stats**: mean=0.0195%, std=1.4037%, Sharpe=0.22
-- **Selected features (3)**: `sma100_dist, yesterday_early_realized_vol, yesterday_day_vwap_dev`
+- **Selected features (38)**: `sma100_dist, yesterday_early_realized_vol, yesterday_day_vwap_dev, bb_width, bar_rng_2, vwap_cross_count, yesterday_early_range, sma_distance_5d, early_kurtosis, barbed_wire_intensity, volume_dryup_ratio, decision_bar_body, bar_vol_4, yesterday_early_vwap_dev, cci14, bar_ret_2, roc20, yesterday_opening_gap_reversal, yesterday_spike_exhaustion_ratio, gap_pct, bar_ret_0, total_path_length, first_bar_return, yesterday_day_late_mom, volume_surge_direction, roc10, body_to_range_ratio, yesterday_first_bar_return, adx_opening, vol20, bar_rng_3, vol5, yesterday_close_position, decision_bar_reversal_signal, yesterday_gap_pct, bar_vwap_dev_1, yesterday_day_range, first_bar_sentiment`
 
 #### Selected Feature Stability Scores (Block Bootstrap)
 
@@ -917,9 +1110,44 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
-| sma100_dist | 88.0% | **Selected** | -0.0700 | -0.0320 | -0.80 | 0.0358 | ** Moderate Monotonic | -0.0170 | 15:-0.18 16:-0.09 17:-0.08 18:-0.07 19:-0.06 20:-0.07 21:-0.02 22:-0.06 23:-0.13 24:-0.06 25:+0.02 26:-0.10 | 0.0487 |
-| yesterday_early_realized_vol | 83.2% | **Selected** | +0.0581 | +0.0246 | +0.90 | 0.0524 | *** Strong Monotonic | +0.0563 | 15:+0.10 16:+0.11 17:-0.01 18:-0.05 19:+0.00 20:-0.05 21:+0.10 22:-0.04 23:-0.01 24:+0.06 25:+0.02 26:+0.02 | 0.0562 |
-| yesterday_day_vwap_dev | 81.2% | **Selected** | -0.0754 | -0.0876 | -1.00 | 0.0099 | *** Strong Monotonic | -0.1132 | 15:-0.05 16:-0.13 17:-0.11 18:-0.14 19:-0.05 20:-0.20 21:+0.01 22:-0.02 23:-0.08 24:-0.05 25:-0.12 26:-0.21 | 0.0653 |
+| sma100_dist | 84.0% | **Selected** | -0.0700 | -0.0320 | -0.80 | 0.0358 | ** Moderate Monotonic | -0.0170 | 15:-0.18 16:-0.09 17:-0.08 18:-0.07 19:-0.06 20:-0.07 21:-0.02 22:-0.06 23:-0.13 24:-0.06 25:+0.02 26:-0.10 | 0.0487 |
+| yesterday_early_realized_vol | 76.8% | **Selected** | +0.0581 | +0.0246 | +0.90 | 0.0524 | *** Strong Monotonic | +0.0563 | 15:+0.10 16:+0.11 17:-0.01 18:-0.05 19:+0.00 20:-0.05 21:+0.10 22:-0.04 23:-0.01 24:+0.06 25:+0.02 26:+0.02 | 0.0562 |
+| yesterday_day_vwap_dev | 69.6% | **Selected** | -0.0754 | -0.0876 | -1.00 | 0.0099 | *** Strong Monotonic | -0.1132 | 15:-0.05 16:-0.13 17:-0.11 18:-0.14 19:-0.05 20:-0.20 21:+0.01 22:-0.02 23:-0.08 24:-0.05 25:-0.12 26:-0.21 | 0.0653 |
+| bb_width | 63.6% | **Selected** | -0.0495 | -0.0509 | -0.90 | 0.0841 | *** Strong Monotonic | -0.0488 | 15:-0.05 16:-0.06 17:-0.14 18:-0.10 19:+0.03 20:+0.03 21:-0.04 22:-0.08 23:-0.13 24:-0.10 25:-0.04 26:-0.03 | 0.0509 |
+| bar_rng_2 | 63.2% | **Selected** | +0.0328 | +0.0075 | +1.00 | 0.0456 | *** Strong Monotonic | -0.0411 | 15:+0.05 16:+0.02 17:-0.03 18:+0.05 19:-0.04 20:-0.07 21:+0.07 22:-0.02 23:+0.09 24:+0.04 25:-0.06 26:-0.13 | 0.0644 |
+| vwap_cross_count | 61.6% | **Selected** | -0.0141 | -0.0038 | -1.00 | 0.0000 | *** Strong Monotonic | +0.0172 | 15:-0.04 16:-0.04 17:-0.02 18:-0.07 19:-0.01 20:-0.05 21:-0.01 22:+0.15 23:+0.01 24:+0.04 25:-0.01 26:-0.03 | 0.0535 |
+| yesterday_early_range | 60.4% | **Selected** | +0.0428 | +0.0128 | +0.60 | 0.0605 | ** Moderate Monotonic | +0.0088 | 15:-0.02 16:+0.07 17:-0.01 18:-0.04 19:+0.05 20:-0.06 21:+0.04 22:-0.07 23:+0.03 24:+0.01 25:+0.03 26:-0.03 | 0.0436 |
+| sma_distance_5d | 57.6% | **Selected** | -0.0286 | -0.0051 | -0.60 | 0.0193 | ** Moderate Monotonic | -0.0081 | 15:-0.02 16:-0.08 17:-0.09 18:-0.02 19:-0.05 20:-0.02 21:+0.04 22:+0.08 23:+0.01 24:-0.05 25:-0.02 26:-0.03 | 0.0459 |
+| early_kurtosis | 56.0% | **Selected** | +0.0324 | +0.0439 | +0.30 | 0.0000 | * Non-Monotonic / Weak | +0.0481 | 15:+0.01 16:+0.14 17:+0.06 18:+0.17 19:-0.05 20:+0.00 21:+0.02 22:-0.00 23:+0.02 24:+0.06 25:-0.02 26:+0.14 | 0.0665 |
+| barbed_wire_intensity | 50.0% | **Selected** | +0.0225 | +0.0223 | N/A | 0.0000 | N/A | -0.0058 | 15:+0.12 16:-0.07 17:-0.00 19:-0.08 20:+0.00 21:-0.01 23:+0.16 24:+0.09 25:-0.02 26:-0.05 | 0.0781 |
+| volume_dryup_ratio | 45.6% | **Selected** | -0.0073 | +0.0035 | N/A | 0.0061 | N/A | +0.0180 | 15:-0.09 16:+0.01 17:+0.03 18:-0.01 19:+0.07 20:-0.05 21:+0.01 22:+0.04 23:+0.00 24:+0.07 25:-0.06 26:+0.07 | 0.0504 |
+| decision_bar_body | 45.2% | **Selected** | -0.0104 | -0.0186 | +0.10 | 0.0208 | * Non-Monotonic / Weak | -0.0940 | 15:+0.05 16:-0.01 17:+0.09 18:+0.03 19:-0.05 20:+0.01 21:-0.10 22:-0.04 23:+0.10 24:-0.09 25:-0.15 26:-0.04 | 0.0739 |
+| bar_vol_4 | 44.8% | **Selected** | +0.0613 | +0.0322 | +0.90 | 0.0000 | *** Strong Monotonic | +0.0116 | 15:+0.02 16:-0.00 17:-0.05 18:+0.09 19:+0.05 20:+0.14 21:+0.01 22:+0.01 23:+0.06 24:-0.04 25:-0.04 26:+0.16 | 0.0667 |
+| yesterday_early_vwap_dev | 43.2% | **Selected** | +0.0958 | +0.0733 | +0.90 | 0.0020 | *** Strong Monotonic | +0.0806 | 15:+0.06 16:+0.11 17:-0.04 18:+0.14 19:+0.01 20:+0.12 21:-0.00 22:+0.16 23:+0.10 24:+0.00 25:+0.05 26:+0.22 | 0.0737 |
+| cci14 | 42.4% | **Selected** | +0.0420 | +0.0303 | +0.90 | 0.0347 | *** Strong Monotonic | +0.0193 | 15:-0.05 16:+0.05 17:+0.11 18:+0.08 19:+0.04 20:-0.09 21:-0.04 22:+0.05 23:+0.16 24:+0.02 25:+0.06 26:-0.01 | 0.0678 |
+| bar_ret_2 | 40.8% | **Selected** | -0.0017 | +0.0271 | +0.10 | 0.0111 | * Non-Monotonic / Weak | +0.0127 | 15:-0.01 16:-0.06 17:+0.05 18:+0.08 19:+0.05 20:+0.05 21:-0.06 22:+0.06 23:-0.00 24:+0.03 25:+0.12 26:-0.17 | 0.0761 |
+| roc20 | 38.8% | **Selected** | +0.0114 | +0.0205 | +0.10 | 0.0372 | * Non-Monotonic / Weak | -0.0127 | 15:+0.09 16:-0.12 17:-0.05 18:-0.04 19:+0.02 20:+0.05 21:+0.06 22:+0.02 23:-0.09 24:-0.06 25:+0.03 26:-0.08 | 0.0638 |
+| yesterday_opening_gap_reversal | 38.8% | **Selected** | +0.0314 | +0.0227 | +0.80 | 0.0000 | ** Moderate Monotonic | +0.0175 | 15:-0.05 16:-0.10 17:-0.03 18:+0.06 19:+0.02 20:+0.04 21:+0.10 22:+0.02 23:-0.04 24:+0.05 25:+0.04 26:-0.01 | 0.0552 |
+| yesterday_spike_exhaustion_ratio | 37.6% | **Selected** | +0.0174 | +0.0017 | +0.30 | 0.0000 | * Non-Monotonic / Weak | +0.0098 | 15:+0.00 16:+0.05 17:+0.07 18:-0.04 19:+0.04 20:-0.03 21:-0.01 22:-0.06 23:+0.03 24:+0.07 25:-0.03 26:+0.01 | 0.0421 |
+| gap_pct | 36.0% | **Selected** | +0.0430 | +0.0557 | +0.90 | 0.0292 | *** Strong Monotonic | +0.0786 | 15:+0.06 16:+0.01 17:-0.04 18:+0.02 19:+0.13 20:+0.05 21:+0.05 22:+0.06 23:+0.01 24:-0.01 25:+0.07 26:+0.14 | 0.0513 |
+| bar_ret_0 | 36.0% | **Selected** | +0.1479 | +0.1224 | +1.00 | 0.0004 | *** Strong Monotonic | +0.0588 | 15:+0.25 16:+0.19 17:-0.01 18:+0.13 19:+0.19 20:+0.13 21:+0.15 22:+0.07 23:+0.15 24:+0.06 25:+0.12 26:-0.05 | 0.0822 |
+| total_path_length | 35.6% | **Selected** | +0.0543 | +0.0379 | +0.70 | 0.0450 | ** Moderate Monotonic | +0.0185 | 15:+0.02 16:+0.10 17:-0.00 18:+0.09 19:-0.06 20:+0.07 21:+0.00 22:+0.05 23:+0.06 24:+0.01 25:-0.00 26:-0.04 | 0.0488 |
+| first_bar_return | 34.8% | **Selected** | +0.1479 | +0.1224 | +1.00 | 0.0006 | *** Strong Monotonic | +0.0588 | 15:+0.25 16:+0.19 17:-0.01 18:+0.13 19:+0.19 20:+0.13 21:+0.15 22:+0.07 23:+0.15 24:+0.06 25:+0.12 26:-0.05 | 0.0822 |
+| yesterday_day_late_mom | 34.0% | **Selected** | +0.0060 | -0.0198 | -0.40 | 0.0185 | * Non-Monotonic / Weak | -0.0168 | 15:+0.03 16:-0.01 17:+0.00 18:+0.04 19:-0.01 20:-0.05 21:-0.06 22:-0.01 23:-0.14 24:-0.01 25:+0.01 26:-0.13 | 0.0546 |
+| volume_surge_direction | 33.6% | **Selected** | +0.1241 | +0.0922 | +0.90 | 0.0066 | *** Strong Monotonic | +0.1152 | 15:+0.24 16:+0.14 17:-0.05 18:+0.03 19:+0.14 20:+0.15 21:+0.02 22:+0.05 23:+0.14 24:+0.10 25:+0.13 26:+0.06 | 0.0754 |
+| roc10 | 33.2% | **Selected** | -0.0266 | +0.0101 | -0.10 | 0.0326 | * Non-Monotonic / Weak | -0.0090 | 15:+0.02 16:-0.10 17:-0.09 18:-0.08 19:+0.01 20:+0.05 21:-0.02 22:+0.03 23:+0.00 24:-0.07 25:+0.07 26:-0.12 | 0.0624 |
+| body_to_range_ratio | 31.2% | **Selected** | +0.0407 | +0.0615 | +0.90 | 0.0022 | ** Non-Linear Monotonic | +0.0582 | 15:+0.06 16:+0.07 17:+0.04 18:+0.19 19:+0.02 20:+0.03 21:+0.00 22:+0.06 23:+0.09 24:+0.03 25:+0.09 26:+0.04 | 0.0461 |
+| yesterday_first_bar_return | 30.4% | **Selected** | -0.0230 | +0.0092 | -0.30 | 0.0000 | * Non-Monotonic / Weak | +0.0161 | 15:+0.03 16:-0.02 17:+0.01 18:-0.08 19:+0.03 20:-0.07 21:-0.02 22:+0.12 23:+0.10 24:+0.03 25:+0.03 26:-0.05 | 0.0583 |
+| adx_opening | 30.4% | **Selected** | +0.0130 | +0.0176 | N/A | 0.0018 | N/A | -0.0144 | 15:-0.05 16:-0.03 17:+0.08 18:+0.09 19:-0.03 20:-0.00 21:+0.05 22:+0.08 23:+0.04 24:-0.05 25:+0.07 26:-0.09 | 0.0580 |
+| vol20 | 29.6% | **Selected** | +0.0529 | +0.0262 | +1.00 | 0.0611 | *** Strong Monotonic | +0.0274 | 15:-0.01 16:+0.06 17:+0.11 18:+0.10 19:-0.07 20:-0.09 21:+0.04 22:+0.08 23:+0.03 24:+0.05 25:+0.02 26:+0.05 | 0.0594 |
+| bar_rng_3 | 29.6% | **Selected** | +0.0632 | +0.0497 | +0.90 | 0.0303 | *** Strong Monotonic | +0.0291 | 15:+0.06 16:+0.12 17:+0.04 18:+0.07 19:-0.05 20:+0.06 21:-0.00 22:+0.16 23:+0.03 24:+0.14 25:+0.00 26:-0.12 | 0.0757 |
+| vol5 | 28.4% | **Selected** | +0.0497 | +0.0222 | +0.70 | 0.0431 | ** Moderate Monotonic | +0.0271 | 15:+0.07 16:+0.00 17:+0.11 18:+0.03 19:-0.05 20:-0.10 21:+0.10 22:+0.10 23:+0.06 24:-0.07 25:+0.04 26:+0.10 | 0.0691 |
+| yesterday_close_position | 27.2% | **Selected** | -0.0592 | -0.0639 | -0.80 | 0.0245 | ** Moderate Monotonic | -0.0772 | 15:-0.03 16:-0.10 17:-0.09 18:-0.07 19:-0.04 20:-0.18 21:+0.01 22:-0.01 23:-0.08 24:-0.01 25:-0.10 26:-0.18 | 0.0585 |
+| decision_bar_reversal_signal | 26.8% | **Selected** | -0.0004 | -0.0014 | N/A | 0.0000 | N/A | -0.0331 | 15:-0.07 16:-0.05 17:+0.02 18:+0.04 19:+0.10 20:-0.03 21:-0.03 22:-0.05 23:+0.07 24:+0.02 25:+0.04 26:-0.11 | 0.0593 |
+| yesterday_gap_pct | 26.4% | **Selected** | +0.0393 | +0.0355 | +0.60 | 0.0166 | ** Moderate Monotonic | +0.0505 | 15:+0.08 16:-0.11 17:+0.00 18:-0.02 19:+0.02 20:+0.01 21:+0.11 22:+0.01 23:+0.02 24:+0.09 25:+0.10 26:-0.03 | 0.0608 |
+| bar_vwap_dev_1 | 26.4% | **Selected** | +0.0451 | +0.0482 | +0.70 | 0.0067 | ** Moderate Monotonic | +0.0609 | 15:+0.03 16:+0.06 17:-0.01 18:-0.04 19:+0.09 20:-0.04 21:+0.08 22:+0.06 23:+0.19 24:+0.10 25:-0.01 26:+0.05 | 0.0629 |
+| yesterday_day_range | 25.6% | **Selected** | +0.0264 | +0.0154 | +0.80 | 0.0645 | ** Moderate Monotonic | -0.0224 | 15:+0.01 16:+0.08 17:+0.02 18:+0.00 19:+0.09 20:-0.13 21:+0.06 22:-0.04 23:-0.01 24:-0.01 25:-0.02 26:-0.08 | 0.0610 |
+| first_bar_sentiment | 24.8% | **Selected** | +0.1011 | +0.0980 | N/A | 0.0009 | N/A | +0.0571 | 15:+0.30 16:+0.15 17:-0.07 18:+0.08 19:+0.19 20:+0.16 21:+0.08 22:+0.03 23:+0.08 24:+0.05 25:+0.07 26:-0.02 | 0.0954 |
 
 </details>
 
@@ -927,10 +1155,10 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | +0.1099 | +0.0520 | +0.0000 | -0.1212 | +0.0808 |
-| Dir Acc | 0.557 | 0.535 | 0.500 | 0.449 | 0.533 |
-| RMSE | 1.3321% | 1.7517% | 1.3300% | 1.9558% | 1.4395% |
-| L/S Sharpe | +1.58 | +2.80 | — | — | — |
+| IC | +0.1869 | +0.0489 | +0.0000 | -0.1212 | +0.0808 |
+| Dir Acc | 0.564 | 0.535 | 0.500 | 0.449 | 0.533 |
+| RMSE | 1.2863% | 1.9078% | 1.3300% | 1.9558% | 1.4395% |
+| L/S Sharpe | +4.17 | +2.30 | — | — | — |
 
 #### Best Hyperparameters
 
@@ -939,10 +1167,11 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 ```json
 {
-  "model_type": "skglm_huber_l1",
-  "stability_threshold": 0.5,
-  "skglm_huber_l1_alpha": 0.0035656153622325246,
-  "skglm_huber_delta": 2.058049295679166
+  "model_type": "skglm_mcp",
+  "top_k_features": 38,
+  "skglm_mcp_alpha": 0.027471205739589062,
+  "skglm_mcp_gamma": 5.449773309581817,
+  "stability_threshold": 0.24800000000000005
 }
 ```
 
@@ -952,27 +1181,27 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.1613 | +0.0600 |
-| 2 | 0.1257 | +0.0859 |
-| 3 | 0.1108 | +0.0451 |
-| 4 | 0.0970 | +0.0576 |
-| 5 | 0.0857 | +0.0944 |
-| **Overall** | — | +0.0517 |
+| 1 | 0.3397 | +0.1119 |
+| 2 | 0.2676 | +0.2025 |
+| 3 | 0.2621 | +0.1698 |
+| 4 | 0.2401 | +0.1485 |
+| 5 | 0.2254 | +0.1858 |
+| **Overall** | — | +0.1494 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2017 | +0.1060 | 0.521 | 215 | +4.16 |
-| 2018 | +0.0807 | 0.498 | 243 | +2.74 |
-| 2019 | +0.0642 | 0.480 | 244 | +3.19 |
-| 2020 | +0.1134 | 0.514 | 243 | +3.62 |
-| 2021 | +0.0717 | 0.556 | 243 | +0.04 |
-| 2022 | +0.0277 | 0.496 | 242 | +1.13 |
-| 2023 | +0.0828 | 0.496 | 242 | +1.88 |
-| 2024 | +0.0713 | 0.541 | 242 | +0.58 |
-| 2025 | +0.0554 | 0.551 | 243 | +0.90 |
-| 2026 | +0.2032 | 0.556 | 108 | +5.14 |
+| 2017 | +0.0428 | 0.498 | 215 | +0.51 |
+| 2018 | +0.1835 | 0.486 | 243 | +3.54 |
+| 2019 | +0.1224 | 0.525 | 244 | +3.23 |
+| 2020 | +0.2829 | 0.584 | 243 | +7.34 |
+| 2021 | +0.1738 | 0.564 | 243 | +3.56 |
+| 2022 | +0.1735 | 0.562 | 242 | +4.43 |
+| 2023 | +0.1686 | 0.562 | 242 | +5.05 |
+| 2024 | +0.1276 | 0.566 | 242 | +3.79 |
+| 2025 | +0.2134 | 0.568 | 243 | +3.68 |
+| 2026 | +0.1872 | 0.583 | 108 | +1.80 |
 
 #### Diagnostic Plots
 
@@ -1007,12 +1236,12 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 ### 159915ETF_short
 
-- **Selected Model**: SKGLM_HUBER_L1
-- **Tuned Stability Threshold**: 0.40
+- **Selected Model**: SKGLM_MCP
+- **Tuned Stability Threshold**: 0.32
 - **Samples**: 2722 (2015-04-07 → 2026-06-17)
 - **Holdout**: 544 days (2024-03-19 → 2026-06-17)
 - **Target stats**: mean=0.0195%, std=1.4037%, Sharpe=0.22
-- **Selected features (8)**: `gap_pct, bar_rng_3, bar_body_rng_0, max_down_ret, body_to_range_ratio, bb_width, yesterday_gap_pct, yesterday_early_skew`
+- **Selected features (28)**: `upper_wick_dominance, early_bullish_engulfing_count, gap_pct, early_kurtosis, yesterday_body_ratio, yesterday_day_vwap_dev, yesterday_early_momentum, yesterday_day_realized_vol, volume_surge_direction, opening_gap_reversal, bb_width, measured_move_proximity, max_down_ret, adx_opening, bar_rng_2, bar_rng_1, sma100_dist, inside_bar_failure_bull, early_doji_count, gap_fill_ratio, lower_shadow_rejection, vol60, macd_hist, yesterday_early_range, close_vs_open_range, decision_bar_range_rank, range_expansion_ratio, northbound_net`
 
 #### Selected Feature Stability Scores (Block Bootstrap)
 
@@ -1021,14 +1250,34 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Feature | Stability Score | Status | Pearson $r$ | Spearman $\rho$ | Monotonicity Score | Mutual Info | Quality Rating | Holdout IC | Yearly ICs | Yearly IC Std |
 |---------|-----------------|--------|-------------|-----------------|--------------------|-------------|----------------|------------|------------|---------------|
-| bar_body_rng_0 | 72.0% | **Selected** | +0.1195 | +0.1201 | +1.00 | 0.0165 | *** Strong Monotonic | +0.0758 | 15:+0.26 16:+0.18 17:-0.05 18:+0.14 19:+0.19 20:+0.15 21:+0.14 22:+0.05 23:+0.15 24:+0.05 25:+0.15 26:-0.06 | 0.0924 |
-| max_down_ret | 59.6% | **Selected** | +0.0945 | +0.1007 | +0.60 | 0.0051 | ** Moderate Monotonic | +0.0828 | 15:+0.17 16:+0.11 17:+0.01 18:+0.07 19:+0.18 20:+0.12 21:+0.08 22:+0.10 23:+0.17 24:+0.08 25:+0.14 26:-0.09 | 0.0716 |
-| gap_pct | 58.8% | **Selected** | +0.0430 | +0.0557 | +0.90 | 0.0292 | *** Strong Monotonic | +0.0786 | 15:+0.06 16:+0.01 17:-0.04 18:+0.02 19:+0.13 20:+0.05 21:+0.05 22:+0.06 23:+0.01 24:-0.01 25:+0.07 26:+0.14 | 0.0513 |
-| bb_width | 50.8% | **Selected** | -0.0495 | -0.0509 | -0.90 | 0.0841 | *** Strong Monotonic | -0.0488 | 15:-0.05 16:-0.06 17:-0.14 18:-0.10 19:+0.03 20:+0.03 21:-0.04 22:-0.08 23:-0.13 24:-0.10 25:-0.04 26:-0.03 | 0.0509 |
-| yesterday_gap_pct | 46.4% | **Selected** | +0.0393 | +0.0355 | +0.60 | 0.0166 | ** Moderate Monotonic | +0.0505 | 15:+0.08 16:-0.11 17:+0.00 18:-0.02 19:+0.02 20:+0.01 21:+0.11 22:+0.01 23:+0.02 24:+0.09 25:+0.10 26:-0.03 | 0.0608 |
-| yesterday_early_skew | 45.2% | **Selected** | +0.0064 | +0.0023 | +0.30 | 0.0100 | * Non-Monotonic / Weak | -0.0159 | 15:+0.07 16:-0.01 17:+0.00 18:-0.02 19:+0.11 20:-0.04 21:-0.04 22:-0.04 23:-0.01 24:+0.01 25:+0.02 26:-0.04 | 0.0451 |
-| body_to_range_ratio | 44.8% | **Selected** | +0.0407 | +0.0615 | +0.90 | 0.0022 | ** Non-Linear Monotonic | +0.0582 | 15:+0.06 16:+0.07 17:+0.04 18:+0.19 19:+0.02 20:+0.03 21:+0.00 22:+0.06 23:+0.09 24:+0.03 25:+0.09 26:+0.04 | 0.0461 |
-| bar_rng_3 | 42.4% | **Selected** | +0.0632 | +0.0497 | +0.90 | 0.0303 | *** Strong Monotonic | +0.0291 | 15:+0.06 16:+0.12 17:+0.04 18:+0.07 19:-0.05 20:+0.06 21:-0.00 22:+0.16 23:+0.03 24:+0.14 25:+0.00 26:-0.12 | 0.0757 |
+| upper_wick_dominance | 61.6% | **Selected** | -0.0314 | +0.0175 | -0.10 | 0.0000 | * Non-Monotonic / Weak | +0.0092 | 15:-0.05 16:+0.04 17:+0.07 18:+0.10 19:-0.02 20:+0.14 21:-0.07 22:-0.01 23:-0.00 24:-0.01 25:-0.03 26:+0.04 | 0.0604 |
+| early_bullish_engulfing_count | 54.0% | **Selected** | -0.0250 | -0.0105 | N/A | 0.0000 | N/A | +0.0319 | 15:-0.15 16:-0.05 17:-0.04 18:-0.02 19:-0.06 20:-0.01 21:-0.02 22:+0.05 23:+0.04 24:+0.11 25:-0.02 26:-0.01 | 0.0614 |
+| gap_pct | 50.0% | **Selected** | +0.0430 | +0.0557 | +0.90 | 0.0292 | *** Strong Monotonic | +0.0786 | 15:+0.06 16:+0.01 17:-0.04 18:+0.02 19:+0.13 20:+0.05 21:+0.05 22:+0.06 23:+0.01 24:-0.01 25:+0.07 26:+0.14 | 0.0513 |
+| early_kurtosis | 49.6% | **Selected** | +0.0324 | +0.0439 | +0.30 | 0.0000 | * Non-Monotonic / Weak | +0.0481 | 15:+0.01 16:+0.14 17:+0.06 18:+0.17 19:-0.05 20:+0.00 21:+0.02 22:-0.00 23:+0.02 24:+0.06 25:-0.02 26:+0.14 | 0.0665 |
+| yesterday_body_ratio | 46.4% | **Selected** | +0.0008 | -0.0075 | +0.20 | 0.0000 | * Non-Monotonic / Weak | -0.0578 | 15:+0.04 16:+0.05 17:+0.00 18:-0.02 19:+0.06 20:-0.09 21:+0.01 22:-0.04 23:+0.11 24:-0.07 25:-0.11 26:-0.06 | 0.0645 |
+| yesterday_day_vwap_dev | 45.2% | **Selected** | -0.0754 | -0.0876 | -1.00 | 0.0099 | *** Strong Monotonic | -0.1132 | 15:-0.05 16:-0.13 17:-0.11 18:-0.14 19:-0.05 20:-0.20 21:+0.01 22:-0.02 23:-0.08 24:-0.05 25:-0.12 26:-0.21 | 0.0653 |
+| yesterday_early_momentum | 44.4% | **Selected** | +0.0886 | +0.0780 | +1.00 | 0.0000 | *** Strong Monotonic | +0.0713 | 15:+0.08 16:+0.11 17:-0.02 18:+0.14 19:+0.01 20:+0.18 21:-0.02 22:+0.14 23:+0.08 24:+0.01 25:+0.04 26:+0.17 | 0.0702 |
+| yesterday_day_realized_vol | 44.4% | **Selected** | +0.0319 | +0.0234 | +1.00 | 0.0747 | *** Strong Monotonic | +0.0101 | 15:+0.05 16:+0.06 17:+0.01 18:-0.06 19:-0.01 20:-0.08 21:+0.12 22:+0.04 23:-0.02 24:+0.07 25:-0.00 26:-0.06 | 0.0567 |
+| volume_surge_direction | 44.4% | **Selected** | +0.1241 | +0.0922 | +0.90 | 0.0066 | *** Strong Monotonic | +0.1152 | 15:+0.24 16:+0.14 17:-0.05 18:+0.03 19:+0.14 20:+0.15 21:+0.02 22:+0.05 23:+0.14 24:+0.10 25:+0.13 26:+0.06 | 0.0754 |
+| opening_gap_reversal | 44.0% | **Selected** | -0.0752 | +0.0000 | -0.40 | 0.0000 | * Non-Monotonic / Weak | +0.0563 | 15:-0.04 16:-0.06 17:-0.03 18:-0.02 19:+0.02 20:-0.04 21:-0.11 22:+0.07 23:-0.01 24:-0.05 25:+0.08 26:+0.07 | 0.0553 |
+| bb_width | 43.6% | **Selected** | -0.0495 | -0.0509 | -0.90 | 0.0841 | *** Strong Monotonic | -0.0488 | 15:-0.05 16:-0.06 17:-0.14 18:-0.10 19:+0.03 20:+0.03 21:-0.04 22:-0.08 23:-0.13 24:-0.10 25:-0.04 26:-0.03 | 0.0509 |
+| measured_move_proximity | 42.0% | **Selected** | +0.0142 | +0.0234 | +0.50 | 0.0000 | ** Moderate Monotonic | -0.0214 | 15:+0.09 16:-0.02 17:+0.01 18:+0.10 19:-0.03 20:+0.05 21:+0.04 22:+0.06 23:-0.10 24:-0.03 25:-0.08 26:+0.11 | 0.0652 |
+| max_down_ret | 42.0% | **Selected** | +0.0945 | +0.1007 | +0.60 | 0.0051 | ** Moderate Monotonic | +0.0828 | 15:+0.17 16:+0.11 17:+0.01 18:+0.07 19:+0.18 20:+0.12 21:+0.08 22:+0.10 23:+0.17 24:+0.08 25:+0.14 26:-0.09 | 0.0716 |
+| adx_opening | 41.6% | **Selected** | +0.0130 | +0.0176 | N/A | 0.0018 | N/A | -0.0144 | 15:-0.05 16:-0.03 17:+0.08 18:+0.09 19:-0.03 20:-0.00 21:+0.05 22:+0.08 23:+0.04 24:-0.05 25:+0.07 26:-0.09 | 0.0580 |
+| bar_rng_2 | 40.4% | **Selected** | +0.0328 | +0.0075 | +1.00 | 0.0456 | *** Strong Monotonic | -0.0411 | 15:+0.05 16:+0.02 17:-0.03 18:+0.05 19:-0.04 20:-0.07 21:+0.07 22:-0.02 23:+0.09 24:+0.04 25:-0.06 26:-0.13 | 0.0644 |
+| bar_rng_1 | 38.0% | **Selected** | +0.0169 | +0.0028 | +0.50 | 0.0327 | * Non-Monotonic / Weak | -0.0045 | 15:-0.02 16:+0.01 17:-0.07 18:-0.06 19:+0.00 20:+0.03 21:+0.04 22:-0.04 23:+0.10 24:+0.00 25:-0.08 26:+0.00 | 0.0507 |
+| sma100_dist | 37.2% | **Selected** | -0.0700 | -0.0320 | -0.80 | 0.0358 | ** Moderate Monotonic | -0.0170 | 15:-0.18 16:-0.09 17:-0.08 18:-0.07 19:-0.06 20:-0.07 21:-0.02 22:-0.06 23:-0.13 24:-0.06 25:+0.02 26:-0.10 | 0.0487 |
+| inside_bar_failure_bull | 36.8% | **Selected** | -0.0339 | -0.0411 | N/A | 0.0000 | N/A | +0.0005 | 15:-0.12 16:+0.00 17:+0.02 18:-0.06 19:-0.11 20:+0.01 21:-0.11 22:-0.07 23:-0.05 24:+0.01 25:-0.00 26:+0.03 | 0.0517 |
+| early_doji_count | 36.8% | **Selected** | -0.0267 | -0.0201 | N/A | 0.0000 | N/A | -0.0076 | 15:-0.04 16:-0.07 17:+0.00 18:-0.06 19:+0.09 20:-0.01 21:-0.04 22:-0.08 23:-0.04 24:-0.04 25:+0.01 26:+0.04 | 0.0471 |
+| gap_fill_ratio | 35.2% | **Selected** | -0.0203 | -0.0248 | N/A | 0.0000 | N/A | +0.1057 | 15:-0.03 16:+0.06 17:-0.09 18:-0.16 19:-0.05 20:-0.03 21:+0.00 22:-0.12 23:+0.01 24:+0.16 25:+0.02 26:+0.09 | 0.0858 |
+| lower_shadow_rejection | 33.6% | **Selected** | -0.0209 | -0.0154 | -0.40 | 0.0115 | * Non-Monotonic / Weak | -0.0464 | 15:-0.03 16:+0.04 17:-0.00 18:-0.09 19:+0.06 20:-0.11 21:+0.07 22:-0.08 23:+0.01 24:-0.00 25:-0.01 26:-0.06 | 0.0564 |
+| vol60 | 33.2% | **Selected** | +0.0287 | +0.0127 | +0.70 | 0.0335 | ** Moderate Monotonic | -0.0280 | 15:+0.03 16:+0.04 17:+0.10 18:-0.00 19:-0.10 20:-0.11 21:+0.05 22:+0.16 23:+0.09 24:+0.02 25:-0.04 26:-0.00 | 0.0753 |
+| macd_hist | 33.2% | **Selected** | +0.0138 | +0.0168 | +0.60 | 0.0195 | ** Moderate Monotonic | -0.0035 | 15:+0.09 16:-0.04 17:-0.05 18:-0.04 19:-0.00 20:+0.07 21:-0.01 22:-0.00 23:-0.01 24:-0.08 25:+0.06 26:-0.08 | 0.0529 |
+| yesterday_early_range | 33.2% | **Selected** | +0.0428 | +0.0128 | +0.60 | 0.0605 | ** Moderate Monotonic | +0.0088 | 15:-0.02 16:+0.07 17:-0.01 18:-0.04 19:+0.05 20:-0.06 21:+0.04 22:-0.07 23:+0.03 24:+0.01 25:+0.03 26:-0.03 | 0.0436 |
+| close_vs_open_range | 32.8% | **Selected** | -0.0003 | +0.0925 | +0.90 | 0.0000 | ** Non-Linear Monotonic | +0.0992 | 15:+0.13 16:+0.08 17:+0.03 18:+0.01 19:+0.15 20:+0.08 21:+0.10 22:+0.07 23:+0.17 24:+0.10 25:+0.18 26:-0.12 | 0.0789 |
+| decision_bar_range_rank | 32.0% | **Selected** | -0.0274 | -0.0225 | -0.50 | 0.0000 | ** Moderate Monotonic | +0.0025 | 15:-0.00 16:-0.09 17:+0.01 18:+0.02 19:+0.03 20:-0.14 21:+0.02 22:-0.10 23:+0.00 24:-0.03 25:+0.04 26:+0.02 | 0.0577 |
+| range_expansion_ratio | 31.6% | **Selected** | -0.0003 | +0.0254 | +0.30 | 0.0021 | * Non-Monotonic / Weak | -0.0104 | 15:+0.09 16:-0.06 17:-0.03 18:+0.05 19:+0.11 20:-0.01 21:+0.05 22:+0.03 23:+0.06 24:-0.06 25:+0.01 26:-0.05 | 0.0564 |
+| northbound_net | 31.6% | **Selected** | +0.0306 | +0.0285 | +0.60 | 0.0000 | ** Moderate Monotonic | -0.0061 | 15:+0.01 16:+0.07 17:-0.08 18:+0.06 19:+0.13 20:+0.05 21:-0.00 22:+0.01 23:+0.08 24:-0.00 26:+nan | nan |
 
 </details>
 
@@ -1036,10 +1285,10 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Metric | Best Linear | Ridge Base | Zero | Yesterday PM | First 30min Mom |
 |--------|-------------|------------|------|--------------|-----------------|
-| IC | +0.1112 | +0.0520 | +0.0000 | -0.1212 | +0.0808 |
+| IC | +0.1148 | +0.0489 | +0.0000 | -0.1212 | +0.0808 |
 | Dir Acc | 0.555 | 0.535 | 0.500 | 0.449 | 0.533 |
-| RMSE | 1.3058% | 1.7517% | 1.3300% | 1.9558% | 1.4395% |
-| L/S Sharpe | +3.48 | +2.80 | — | — | — |
+| RMSE | 1.3047% | 1.9078% | 1.3300% | 1.9558% | 1.4395% |
+| L/S Sharpe | +2.96 | +2.30 | — | — | — |
 
 #### Best Hyperparameters
 
@@ -1048,10 +1297,11 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 ```json
 {
-  "model_type": "skglm_huber_l1",
-  "stability_threshold": 0.4,
-  "skglm_huber_l1_alpha": 0.004754661786302021,
-  "skglm_huber_delta": 2.8244793401581916
+  "model_type": "skglm_mcp",
+  "top_k_features": 28,
+  "skglm_mcp_alpha": 0.011071719413624564,
+  "skglm_mcp_gamma": 2.3704109870242065,
+  "stability_threshold": 0.316
 }
 ```
 
@@ -1061,27 +1311,27 @@ Optuna-tuned sparse/robust linear models (skglm_huber_l1, skglm_mcp from skglm) 
 
 | Fold | IS IC | OOS IC |
 |------|-------|--------|
-| 1 | 0.2289 | +0.0665 |
-| 2 | 0.1585 | +0.1615 |
-| 3 | 0.1630 | +0.1794 |
-| 4 | 0.1688 | +0.1430 |
-| 5 | 0.1680 | +0.1406 |
-| **Overall** | — | +0.1365 |
+| 1 | 0.3307 | +0.0641 |
+| 2 | 0.2539 | +0.1714 |
+| 3 | 0.2418 | +0.1437 |
+| 4 | 0.2269 | +0.1359 |
+| 5 | 0.2110 | +0.1146 |
+| **Overall** | — | +0.1147 |
 
 #### Year-by-Year OOS IC
 
 | Year | IC | Dir Acc | N | L/S Sharpe |
 |------|-----|---------|---|-----------|
-| 2017 | -0.0234 | 0.470 | 215 | -0.68 |
-| 2018 | +0.1528 | 0.523 | 243 | +3.84 |
-| 2019 | +0.1624 | 0.500 | 244 | +5.92 |
-| 2020 | +0.1603 | 0.556 | 243 | +3.42 |
-| 2021 | +0.1627 | 0.551 | 243 | +3.73 |
-| 2022 | +0.1447 | 0.599 | 242 | +3.59 |
-| 2023 | +0.1610 | 0.579 | 242 | +3.62 |
-| 2024 | +0.1327 | 0.545 | 242 | +4.14 |
-| 2025 | +0.2426 | 0.576 | 243 | +4.16 |
-| 2026 | -0.0549 | 0.509 | 108 | -0.92 |
+| 2017 | -0.0437 | 0.456 | 215 | -1.46 |
+| 2018 | +0.1262 | 0.494 | 243 | +3.15 |
+| 2019 | +0.1035 | 0.496 | 244 | +2.38 |
+| 2020 | +0.2216 | 0.547 | 243 | +4.06 |
+| 2021 | +0.1449 | 0.568 | 243 | +3.63 |
+| 2022 | +0.1569 | 0.591 | 242 | +3.79 |
+| 2023 | +0.1649 | 0.591 | 242 | +2.69 |
+| 2024 | +0.0603 | 0.550 | 242 | +2.10 |
+| 2025 | +0.1364 | 0.543 | 243 | +2.48 |
+| 2026 | +0.1715 | 0.593 | 108 | +2.80 |
 
 #### Diagnostic Plots
 
@@ -1125,14 +1375,14 @@ Four baselines evaluated on the same holdout set:
 
 | ETF/Tag | Best Linear IC > Ridge Base IC? | Best Linear IC > Mom IC? | Best Baseline |
 |---------|---------------------------------|--------------------------|---------------|
-| 300ETF_long | No | Yes | ridge (IC=+0.1028) |
-| 300ETF_short | No | No | ridge (IC=+0.1028) |
-| 50ETF_long | No | Yes | ridge (IC=+0.0912) |
-| 50ETF_short | Yes | Yes | ridge (IC=+0.0912) |
-| 500ETF_long | No | No | ridge (IC=+0.1260) |
-| 500ETF_short | Yes | Yes | ridge (IC=+0.1260) |
-| 588000ETF_long | Yes | Yes | first_30min_mom (IC=+0.0184) |
-| 588000ETF_short | No | No | first_30min_mom (IC=+0.0184) |
+| 300ETF_long | No | Yes | ridge (IC=+0.1183) |
+| 300ETF_short | No | Yes | ridge (IC=+0.1183) |
+| 50ETF_long | No | Yes | ridge (IC=+0.1178) |
+| 50ETF_short | No | Yes | ridge (IC=+0.1178) |
+| 500ETF_long | Yes | Yes | ridge (IC=+0.1348) |
+| 500ETF_short | Yes | Yes | ridge (IC=+0.1348) |
+| 588000ETF_long | No | No | first_30min_mom (IC=+0.0184) |
+| 588000ETF_short | Yes | No | first_30min_mom (IC=+0.0184) |
 | 159915ETF_long | Yes | Yes | first_30min_mom (IC=+0.0808) |
 | 159915ETF_short | Yes | Yes | first_30min_mom (IC=+0.0808) |
 
@@ -1142,16 +1392,16 @@ Four baselines evaluated on the same holdout set:
 
 | ETF/Tag | IS IC | OOS IC | Gap | Assessment |
 |---------|-------|--------|-----|-----------|
-| 300ETF_long | 0.1593 | 0.0566 | +0.1027 | Low |
-| 300ETF_short | 0.0303 | -0.0198 | +0.0501 | Low |
-| 50ETF_long | 0.0975 | 0.0125 | +0.0850 | Low |
-| 50ETF_short | 0.1145 | 0.1183 | -0.0038 | Low |
-| 500ETF_long | 0.1743 | 0.1066 | +0.0677 | Low |
-| 500ETF_short | 0.1212 | 0.1887 | -0.0675 | Low |
-| 588000ETF_long | 0.1372 | 0.0631 | +0.0741 | Low |
-| 588000ETF_short | 0.0909 | -0.0205 | +0.1114 | Low |
-| 159915ETF_long | 0.1215 | 0.1099 | +0.0117 | Low |
-| 159915ETF_short | 0.1429 | 0.1112 | +0.0317 | Low |
+| 300ETF_long | 0.1645 | 0.0510 | +0.1135 | Low |
+| 300ETF_short | 0.0587 | -0.0048 | +0.0634 | Low |
+| 50ETF_long | 0.1761 | 0.0169 | +0.1593 | Low |
+| 50ETF_short | 0.1316 | 0.0845 | +0.0470 | Low |
+| 500ETF_long | 0.1735 | 0.1443 | +0.0293 | Low |
+| 500ETF_short | 0.1679 | 0.1512 | +0.0167 | Low |
+| 588000ETF_long | 0.2491 | -0.0699 | +0.3190 | Moderate |
+| 588000ETF_short | 0.1695 | -0.0021 | +0.1716 | Low |
+| 159915ETF_long | 0.2311 | 0.1869 | +0.0442 | Low |
+| 159915ETF_short | 0.1839 | 0.1148 | +0.0690 | Low |
 
 ### 6.2 Regime Breakdown (Year-by-Year)
 
@@ -1163,16 +1413,16 @@ If IC drops sharply as purge gap increases from 0→5→10, it indicates short-t
 
 | ETF/Tag | Gap=0 | Gap=5 | Gap=10 | Delta(0→10) |
 |---------|-------|-------|--------|------------|
-| 300ETF_long | +0.0870 | +0.0871 | +0.0868 | +0.0002 |
-| 300ETF_short | +0.0335 | +0.0325 | +0.0340 | -0.0005 |
-| 50ETF_long | +0.0598 | +0.0599 | +0.0611 | -0.0013 |
-| 50ETF_short | +0.0426 | +0.0425 | +0.0424 | +0.0003 |
-| 500ETF_long | +0.1105 | +0.1104 | +0.1109 | -0.0004 |
-| 500ETF_short | +0.1387 | +0.1386 | +0.1386 | +0.0001 |
-| 588000ETF_long | +0.0218 | +0.0252 | +0.0235 | -0.0016 |
-| 588000ETF_short | +0.0400 | +0.0398 | +0.0403 | -0.0003 |
-| 159915ETF_long | +0.0687 | +0.0686 | +0.0685 | +0.0002 |
-| 159915ETF_short | +0.1383 | +0.1382 | +0.1371 | +0.0012 |
+| 300ETF_long | +0.0846 | +0.0846 | +0.0836 | +0.0010 |
+| 300ETF_short | +0.0417 | +0.0415 | +0.0420 | -0.0003 |
+| 50ETF_long | +0.0824 | +0.0828 | +0.0828 | -0.0004 |
+| 50ETF_short | +0.0608 | +0.0597 | +0.0602 | +0.0006 |
+| 500ETF_long | +0.1104 | +0.1104 | +0.1097 | +0.0007 |
+| 500ETF_short | +0.1254 | +0.1245 | +0.1244 | +0.0011 |
+| 588000ETF_long | +0.0676 | +0.0721 | +0.0797 | -0.0121 |
+| 588000ETF_short | +0.0643 | +0.0631 | +0.0643 | -0.0000 |
+| 159915ETF_long | +0.1632 | +0.1637 | +0.1644 | -0.0012 |
+| 159915ETF_short | +0.1254 | +0.1259 | +0.1259 | -0.0005 |
 
 ### 6.4 Feature Importance Stability
 
@@ -1185,116 +1435,116 @@ Compare standardized coefficients vs permutation importance (OOS) across feature
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | max_up_ret (+0.0758) | sma100_dist (+0.008469) |
-| 2 | sma100_dist (-0.0610) | max_up_ret (+0.007588) |
-| 3 | bar_body_rng_0 (+0.0492) | yesterday_early_vwap_dev (+0.004899) |
-| 4 | yesterday_early_vwap_dev (+0.0409) | bar_body_rng_0 (+0.002211) |
-| 5 | yesterday_gap_pct (+0.0271) | first_30min_return (+0.000000) |
+| 1 | max_up_ret (+0.0694) | volume_surge_direction (+0.013437) |
+| 2 | sma100_dist (-0.0503) | max_up_ret (+0.006971) |
+| 3 | volume_surge_direction (+0.0374) | sma100_dist (+0.006074) |
+| 4 | yesterday_early_vwap_dev (+0.0246) | yesterday_early_vwap_dev (+0.002361) |
+| 5 | inside_bar_failure_bull (-0.0164) | capital_net_value (+0.000439) |
 
 **300ETF_short**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | bb_width (-0.0481) | northbound_net (+0.000164) |
-| 2 | northbound_net (+0.0415) | first_30min_return (+0.000000) |
-| 3 | gap_pct (+0.0390) | willr14 (+0.000000) |
-| 4 | first_30min_return (+0.0000) | early_realized_vol (+0.000000) |
-| 5 | early_realized_vol (+0.0000) | early_trend (+0.000000) |
+| 1 | gap_pct (+0.0527) | northbound_net (+0.000117) |
+| 2 | inside_bar_failure_bull (-0.0500) | first_30min_return (+0.000000) |
+| 3 | northbound_net (+0.0484) | early_trend (+0.000000) |
+| 4 | bb_width (-0.0372) | early_range (+0.000000) |
+| 5 | volume_dryup_ratio (+0.0359) | early_momentum (+0.000000) |
 
 **50ETF_long**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | sma100_dist (-0.0267) | sma100_dist (+0.002803) |
-| 2 | margin_net_buy (-0.0158) | margin_net_buy (+0.001958) |
-| 3 | first_30min_return (+0.0000) | first_30min_return (+0.000000) |
-| 4 | gap_pct (+0.0000) | gap_pct (+0.000000) |
-| 5 | early_trend (+0.0000) | early_trend (+0.000000) |
+| 1 | bar_ret_1 (-0.2445) | bar_ret_1 (+0.072502) |
+| 2 | bar_vwap_dev_1 (+0.1786) | bar_vwap_dev_1 (+0.047031) |
+| 3 | sma100_dist (-0.1107) | macd_hist (+0.012834) |
+| 4 | macd_hist (-0.0807) | margin_net_buy (+0.011890) |
+| 5 | margin_net_buy (-0.0786) | sma100_dist (+0.010153) |
 
 **50ETF_short**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | bar_vol_2 (-0.0402) | bar_vol_2 (+0.006145) |
-| 2 | iv (-0.0277) | iv (+0.002858) |
-| 3 | gap_pct (+0.0270) | gap_pct (+0.000271) |
-| 4 | first_30min_return (+0.0000) | first_30min_return (+0.000000) |
-| 5 | early_trend (+0.0000) | early_trend (+0.000000) |
+| 1 | bar_vol_2 (-0.0502) | bar_vol_2 (+0.006952) |
+| 2 | adx_opening (+0.0455) | adx_opening (+0.006660) |
+| 3 | northbound_net (+0.0445) | iv (+0.002497) |
+| 4 | iv (-0.0274) | gap_pct (+0.001255) |
+| 5 | gap_pct (+0.0259) | yesterday_day_late_mom (+0.000670) |
 
 **500ETF_long**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | max_up_ret (+0.2043) | max_up_ret (+0.042156) |
-| 2 | sma100_dist (-0.1006) | sma100_dist (+0.010948) |
-| 3 | yesterday_gap_pct (+0.0980) | bar_vol_4 (+0.009588) |
-| 4 | bar_vol_4 (+0.0531) | yesterday_early_range (+0.006676) |
-| 5 | bar_vwap_dev_1 (+0.0357) | volume_sma_ratio (+0.005294) |
+| 1 | max_up_ret (+0.1161) | max_up_ret (+0.028590) |
+| 2 | yesterday_intraday_close_position (+0.0443) | yesterday_intraday_close_position (+0.009794) |
+| 3 | early_realized_vol (+0.0000) | early_realized_vol (+0.000000) |
+| 4 | early_range (+0.0000) | early_range (+0.000000) |
+| 5 | early_trend (+0.0000) | early_trend (+0.000000) |
 
 **500ETF_short**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | bar_body_rng_0 (+0.1167) | yesterday_early_vwap_dev (+0.028973) |
-| 2 | yesterday_early_vwap_dev (+0.1019) | bar_body_rng_0 (+0.018834) |
-| 3 | bar_vwap_dev_2 (+0.1002) | bar_vwap_dev_2 (+0.016264) |
-| 4 | gap_pct (+0.0568) | gap_pct (+0.012377) |
-| 5 | bb_width (-0.0489) | bb_width (+0.001177) |
+| 1 | bar_ret_0 (+0.1856) | bar_ret_0 (+0.057251) |
+| 2 | bar_rng_3 (+0.1209) | yesterday_intraday_close_position (+0.026785) |
+| 3 | yesterday_intraday_close_position (+0.1095) | bar_vwap_dev_2 (+0.012154) |
+| 4 | yesterday_gap_pct (+0.0793) | gap_pct (+0.008386) |
+| 5 | bar_vwap_dev_2 (+0.0743) | bar_vwap_dev_1 (+0.008239) |
 
 **588000ETF_long**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | vol5 (+0.0838) | roc5 (+0.002388) |
-| 2 | roc5 (-0.0587) | gap_pct (+0.000000) |
-| 3 | yesterday_day_realized_vol (+0.0275) | first_30min_return (+0.000000) |
-| 4 | gap_pct (+0.0000) | early_realized_vol (+0.000000) |
-| 5 | first_30min_return (+0.0000) | early_trend (+0.000000) |
+| 1 | sma100_dist (-0.2214) | vol_ratio_10_60 (+0.123246) |
+| 2 | vol5 (+0.2156) | sma100_dist (+0.122634) |
+| 3 | vol_ratio_10_60 (-0.2109) | volume_weighted_price_position (+0.038604) |
+| 4 | roc5 (-0.1820) | range_expansion_ratio (+0.025631) |
+| 5 | volatility_percentile_20d (+0.1689) | vix_diff_1d (+0.024761) |
 
 **588000ETF_short**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | num_up_bars (+0.0649) | num_up_bars (+0.002394) |
-| 2 | gap_pct (+0.0000) | gap_pct (+0.000000) |
-| 3 | first_30min_return (+0.0000) | first_30min_return (+0.000000) |
-| 4 | early_realized_vol (+0.0000) | early_realized_vol (+0.000000) |
-| 5 | early_trend (+0.0000) | early_trend (+0.000000) |
+| 1 | bar_ret_0 (+0.1191) | upper_wick_dominance (+0.000001) |
+| 2 | volatility_percentile_20d (+0.0769) | gap_pct (+0.000000) |
+| 3 | pullback_depth_max (-0.0704) | early_realized_vol (+0.000000) |
+| 4 | vwap_cross_count (+0.0293) | early_range (+0.000000) |
+| 5 | upper_wick_dominance (+0.0239) | early_trend (+0.000000) |
 
 **159915ETF_long**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | yesterday_day_vwap_dev (-0.1089) | yesterday_day_vwap_dev (+0.016356) |
-| 2 | sma100_dist (-0.0941) | sma100_dist (+0.007052) |
-| 3 | yesterday_early_realized_vol (+0.0787) | yesterday_early_realized_vol (+0.006063) |
-| 4 | gap_pct (+0.0000) | gap_pct (+0.000000) |
-| 5 | first_30min_return (+0.0000) | first_30min_return (+0.000000) |
+| 1 | first_bar_return (+0.1990) | first_bar_return (+0.090124) |
+| 2 | yesterday_day_vwap_dev (-0.1815) | gap_pct (+0.068197) |
+| 3 | sma100_dist (-0.1683) | yesterday_day_vwap_dev (+0.059408) |
+| 4 | roc20 (+0.1305) | sma100_dist (+0.056817) |
+| 5 | gap_pct (+0.1096) | roc20 (+0.042255) |
 
 **159915ETF_short**:
 
 | Rank | Standardized Coefficient (Abs) | Permutation Importance |
 |------|--------------------------------|----------------------|
-| 1 | bar_rng_3 (+0.1560) | max_down_ret (+0.063685) |
-| 2 | max_down_ret (+0.1321) | gap_pct (+0.042403) |
-| 3 | bar_body_rng_0 (+0.0962) | yesterday_gap_pct (+0.012414) |
-| 4 | gap_pct (+0.0937) | body_to_range_ratio (+0.009736) |
-| 5 | body_to_range_ratio (+0.0743) | bar_body_rng_0 (+0.008716) |
+| 1 | max_down_ret (+0.1630) | gap_pct (+0.087519) |
+| 2 | yesterday_day_vwap_dev (-0.1540) | max_down_ret (+0.061743) |
+| 3 | gap_pct (+0.1361) | yesterday_day_vwap_dev (+0.035799) |
+| 4 | yesterday_early_momentum (+0.1156) | yesterday_early_momentum (+0.035347) |
+| 5 | bar_rng_2 (+0.1116) | volume_surge_direction (+0.025070) |
 
 ### 6.6 Hyperparameter Sensitivity
 
 Optuna parameter importance shows which parameters most affect CV IC.
 
-- **300ETF_long**: Most influential = `stability_threshold` (85.43%)
-- **300ETF_short**: Most influential = `stability_threshold` (66.20%)
-- **50ETF_long**: Most influential = `stability_threshold` (74.52%)
-- **50ETF_short**: Most influential = `model_type` (56.95%)
-- **500ETF_long**: Most influential = `stability_threshold` (94.70%)
-- **500ETF_short**: Most influential = `stability_threshold` (84.42%)
-- **588000ETF_long**: Most influential = `stability_threshold` (96.95%)
-- **588000ETF_short**: Most influential = `stability_threshold` (84.47%)
-- **159915ETF_long**: Most influential = `stability_threshold` (87.05%)
-- **159915ETF_short**: Most influential = `stability_threshold` (73.90%)
+- **300ETF_long**: Most influential = `top_k_features` (90.67%)
+- **300ETF_short**: Most influential = `top_k_features` (72.21%)
+- **50ETF_long**: Most influential = `top_k_features` (90.62%)
+- **50ETF_short**: Most influential = `top_k_features` (85.58%)
+- **500ETF_long**: Most influential = `top_k_features` (71.01%)
+- **500ETF_short**: Most influential = `top_k_features` (60.81%)
+- **588000ETF_long**: Most influential = `top_k_features` (98.10%)
+- **588000ETF_short**: Most influential = `top_k_features` (93.52%)
+- **159915ETF_long**: Most influential = `top_k_features` (80.31%)
+- **159915ETF_short**: Most influential = `top_k_features` (95.12%)
 
 ## 7. Sensitivity to Prediction Time (Bar Count Comparison)
 
@@ -1351,9 +1601,9 @@ To determine how early the trade_return prediction can be made, we evaluated mod
 
 ## 8. Conclusions & Caveats
 
-**Potentially deployable** (IC>0.03, L/S Sharpe>0.5, beats Ridge Base): 50ETF_short, 500ETF_short, 159915ETF_long, 159915ETF_short
+**Potentially deployable** (IC>0.03, L/S Sharpe>0.5, beats Ridge Base): 500ETF_long, 500ETF_short, 159915ETF_long, 159915ETF_short
 
-**Marginal** (positive IC but weak Sharpe or below Ridge Base): 300ETF_long, 50ETF_long, 500ETF_long
+**Marginal** (positive IC but weak Sharpe or below Ridge Base): 300ETF_long, 50ETF_long, 50ETF_short
 
 **Weak/Not recommended** (negative IC or no edge): 300ETF_short, 588000ETF_long, 588000ETF_short
 
