@@ -639,9 +639,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         model_temp.fit(X_weighted_temp, y_weighted_temp)
 
         coef_norm = float(np.linalg.norm(model_temp.coef_))
+        active_k = int(np.sum(np.abs(model_temp.coef_) > 1e-5))
 
         # Calculate raw yearly metrics
-        raw_metrics, _, _ = calculate_yearly_metrics(y_working, oof_preds, dates_working, K_sel, coef_norm)
+        raw_metrics, _, _ = calculate_yearly_metrics(y_working, oof_preds, dates_working, active_k, coef_norm)
         return raw_metrics, model_temp, scaler_init
 
     # ── Pilot calibration cache ───────────────────────────────────────
@@ -898,21 +899,30 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
 
 def _plot_diagnostics(tag, dates, y_true, y_pred, coefs, feature_names):
-    fig, axes = plt.subplots(1, 2, figsize=(15, 6))
+    fig = plt.figure(figsize=(15, 12))
+    gs = fig.add_gridspec(2, 2)
     
-    # Plot 1: Feature coefficients
-    ax1 = axes[0]
+    # Plot 1: Feature coefficients (takes left column, spans both rows)
+    ax1 = fig.add_subplot(gs[:, 0])
+    
     # Sort coefficients by absolute value
-    sort_idx = np.argsort(np.abs(coefs))
+    abs_coefs = np.abs(coefs)
+    sort_idx = np.argsort(abs_coefs)
+    
+    # Cap to max 20 coefficients to avoid crowding
+    max_coefs = 20
+    if len(sort_idx) > max_coefs:
+        sort_idx = sort_idx[-max_coefs:]
+        
     sorted_coefs = coefs[sort_idx]
     sorted_feats = [feature_names[i] for i in sort_idx]
     
     ax1.barh(sorted_feats, sorted_coefs, color="royalblue")
-    ax1.set_title("Model Coefficients")
+    ax1.set_title(f"Model Coefficients (Top {len(sorted_feats)})")
     ax1.axvline(0, color="gray", linestyle="--")
     
-    # Plot 2: Decile actual vs prediction
-    ax2 = axes[1]
+    # Plot 2: Decile actual vs prediction (top right)
+    ax2 = fig.add_subplot(gs[0, 1])
     df = pd.DataFrame({"y_true": y_true, "y_pred": y_pred})
     df["decile"] = pd.qcut(df["y_pred"], 10, labels=False, duplicates="drop")
     decile_means = df.groupby("decile")["y_true"].mean() * 100 # % return
@@ -922,6 +932,15 @@ def _plot_diagnostics(tag, dates, y_true, y_pred, coefs, feature_names):
     ax2.set_ylabel("Mean Actual return (%)")
     ax2.set_title("Decile Performance Spread")
     ax2.set_xticks(range(1, 11))
+    
+    # Plot 3: Square graph under Decile Performance Spread (left empty for now)
+    ax3 = fig.add_subplot(gs[1, 1])
+    ax3.set_title("Future Diagnostic Plot")
+    ax3.text(0.5, 0.5, "(Empty for now)", ha="center", va="center", color="gray", fontsize=12)
+    ax3.set_xlim(0, 1)
+    ax3.set_ylim(0, 1)
+    ax3.set_xticks([])
+    ax3.set_yticks([])
     
     plt.tight_layout()
     plt.savefig(PLOTS_DIR / f"diagnostics_{tag}.png", dpi=150)
