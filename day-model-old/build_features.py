@@ -11,7 +11,7 @@ Combines:
 
 Primary target: ``trade_return`` = log(close[EXIT_BAR] / open[decision_bar+1])
   - Mirrors actual trade P&L in daytrade/backtest.py exactly
-  - Entry at open of bar after decision; exit at close of bar 42 (14:35)
+  - Entry at open of bar after decision; exit at close of bar 41 (14:30)
 
 Diagnostic target: ``pm_return`` = sum of log returns over bars 24..47 (13:00-15:00)
   - Retained for IC sanity-checks vs the old pm_return baseline.
@@ -140,16 +140,17 @@ WARMUP_DAYS = 60        # drop first 60 days (SMA50/ATR14 warmup)
 # Decision bar = the 5m bar whose CLOSE triggers the signal.
 # Bars are 0-indexed, END-timestamped (bar 0 closes at 9:35, bar 5 closes at 10:00).
 # Entry happens at OPEN of bar (decision_bar + 1).
-# EXIT_BAR = 42 closes at 14:35.
+# EXIT_BAR = 41 closes at 14:30.
 #
-# Picked by first-principles plan: 10:00 entry, 14:35 exit.
-EXIT_BAR = 42
+# Picked by bar-count experiment with trade_return target
+# (see day-model/experiment_bars_results_trade_return.json).
+EXIT_BAR = 41
 DECISION_BAR = {
-    "300ETF":    5,   # 10:00 (bar 5 closes at 10:00, entry at 10:00 open of bar 6)
-    "50ETF":     5,
-    "500ETF":    5,
-    "588000ETF": 5,
-    "159915ETF": 5,
+    "300ETF":    3,   # 9:50 (best IC=+0.056 LS=+2.05 at 4 bars)
+    "50ETF":     2,   # 9:45 (best IC=+0.045 LS=+1.56 at 3 bars)
+    "500ETF":    4,   # 9:55 (best IC=+0.126 LS=+3.45 at 5 bars)
+    "588000ETF": 2,   # 9:45 (least-bad IC=-0.051 LS=-1.23 at 3 bars)
+    "159915ETF": 4,   # 9:55 (best IC=+0.113 LS=+2.62 at 5 bars)
 }
 
 
@@ -893,7 +894,7 @@ def main():
 
     print(f"Building day-model features for: {etfs}")
     print(f"  early window: per-ETF decision_bar (see DECISION_BAR dict in build_features.py)")
-    print(f"  exit bar: {EXIT_BAR} (14:35 close)")
+    print(f"  exit bar: {EXIT_BAR} (14:30 close)")
     print(f"  warmup dropped: {WARMUP_DAYS} days")
 
     summary = []
