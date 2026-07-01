@@ -27,13 +27,12 @@ python3 day-model/generate_report.py
 `train_model.py` implements the following robust modeling chain:
 
 1. **Lockbox Split (Step 0)**: Hold out days from 2024-03-01 to last day.
-2. **BH-FDR Screening (Step 1)**: Robust Spearman rank correlation on 2200 training days. Keep features surviving FDR = 0.20.
-3. **Collinearity Clustering (Step 1.5)**: Hierarchical complete clustering (threshold = 0.7 distance). Select single feature with highest absolute Spearman correlation per cluster.
-4. **Stability Selection (Step 2)**: Lasso path selection across $B=100$ subsamples of size $\lfloor N/2 \rfloor$. Keep features with selection probability $\ge 0.60$ (fallback to top 5 if count < 3).
-5. **Loss Weighting (Step 3)**: Power weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to focus model on tail days.
-6. **LOYO CV with Embargo (Step 4)**: 9 Yearly blocks (2015-2023) with a 10-day embargo at test block boundaries.
-7. **Pilot Normalization (Step 4.1)**: Runs 50 pilot trials, computes median and MAD for each of the 8 metrics to calculate robust z-scores.
-8. **Objective Function**: Maximizes weighted sum of normalized metrics ($w_i$):
+2. **BH-FDR Screening (Step 1)**: Robust Spearman rank correlation on 2200 training days. Keep features surviving FDR = 0.40. Fallback to top 80 by p-value if fewer pass.
+3. **Stability Selection (Step 2)**: ElasticNet path selection (l1_ratio = 0.5) across $B=100$ subsamples of size $\lfloor N/2 \rfloor$ of Step 1 survivors. Keep features with selection probability $\ge 0.60$ (fallback to top 5 if count < 3). Handles collinearity grouping naturally via ElasticNet grouping effect.
+4. **Loss Weighting (Step 3)**: Power weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to focus model on tail days.
+5. **LOYO CV with Embargo (Step 4)**: 9 Yearly blocks (2015-2023) with a 10-day embargo at test block boundaries.
+6. **Pilot Normalization (Step 4.1)**: Runs 50 pilot trials, computes median and MAD for each of the 8 metrics to calculate robust z-scores.
+7. **Objective Function**: Maximizes weighted sum of normalized metrics ($w_i$):
    - $M_1$ (Tail IC IR): 20%
    - $M_2$ (Tail IC Mean): 20%
    - $M_3$ (Yearly Hit Rate): 15%
@@ -42,9 +41,9 @@ python3 day-model/generate_report.py
    - $M_6$ (Top-Bottom Spread): 5%
    - $M_7$ (Feature Parsimony): 10%
    - $M_8$ (Coefficient Bloat): 5%
-9. **Kill Switches**: Trial pruned (returns `-1e9`) if:
+8. **Kill Switches**: Trial pruned (returns `-1e9`) if:
    - Overall IC <= 0
    - Hit Rate < 60%
    - Decile Monotonicity <= 0.4
    - Top-Bottom Spread <= 0
-10. **One-Shot Evaluation (Step 6)**: Fits final model on all 2200 training rows and evaluates on the 500-day lockbox.
+9. **One-Shot Evaluation (Step 6)**: Fits final model on all 2200 training rows and evaluates on the 500-day lockbox.

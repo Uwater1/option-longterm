@@ -26,6 +26,7 @@ import joblib
 from skglm import GeneralizedLinearEstimator
 from skglm.datafits import Huber as SkglmHuber
 from skglm.penalties import L1 as SkglmL1, MCPenalty
+from skglm.solvers import AndersonCD
 
 warnings.filterwarnings("ignore")
 optuna.logging.set_verbosity(optuna.logging.WARNING)
@@ -68,16 +69,19 @@ METRIC_WEIGHTS = {
 # Model Factory
 # ============================================================
 def _build_model(model_type: str, params: dict):
+    solver = AndersonCD(max_epochs=5000, tol=1e-3)
     if model_type == "skglm_huber_l1":
         return GeneralizedLinearEstimator(
             datafit=SkglmHuber(delta=params.get("skglm_huber_delta", 1.35)),
             penalty=SkglmL1(alpha=params["skglm_huber_l1_alpha"]),
+            solver=solver,
         )
     elif model_type == "skglm_mcp":
         return GeneralizedLinearEstimator(
             datafit=SkglmHuber(delta=params.get("skglm_mcp_delta", 1.35)),
             penalty=MCPenalty(alpha=params["skglm_mcp_alpha"],
-                              gamma=params.get("skglm_mcp_gamma", 3.0)),
+                               gamma=params.get("skglm_mcp_gamma", 3.0)),
+            solver=solver,
         )
     elif model_type == "lasso":
         return Lasso(alpha=params.get("lasso_alpha", 0.01), random_state=42, max_iter=2000)
@@ -165,7 +169,7 @@ def benjamini_hochberg(p_values: np.ndarray, fdr_level: float = 0.20) -> np.ndar
     return p_values <= cutoff
 
 
-def run_screening_and_clustering(X_working: np.ndarray, y_working: np.ndarray, feature_names: list):
+def run_screening(X_working: np.ndarray, y_working: np.ndarray):
     # Step 1: Cheap screening
     p_vals = []
     rhos = []
@@ -179,64 +183,39 @@ def run_screening_and_clustering(X_working: np.ndarray, y_working: np.ndarray, f
     p_vals = np.array(p_vals)
     rhos = np.array(rhos)
 
-    screen_mask = benjamini_hochberg(p_vals, fdr_level=0.20)
-    if screen_mask.sum() < 5:
-        # Fallback to top 50 by p-value
-        top_indices = np.argsort(p_vals)[:50]
+    screen_mask = benjamini_hochberg(p_vals, fdr_level=0.40)
+    if screen_mask.sum() < 80:
+        # Fallback to top 80 by p-value
+        top_indices = np.argsort(p_vals)[:80]
         screen_mask = np.zeros(len(p_vals), dtype=bool)
         screen_mask[top_indices] = True
 
-    surviving_idx = np.where(screen_mask)[0]
-    X_surviving = X_working[:, surviving_idx]
-
-    # Step 1.5: Hierarchical Clustering
-    corr_matrix = np.abs(np.corrcoef(X_surviving.T))
-    corr_matrix = np.nan_to_num(corr_matrix, nan=0.0)
-
-    dist_matrix = 1.0 - corr_matrix
-    dist_matrix = np.clip(dist_matrix, 0.0, 2.0)
-
-    cond_dist = squareform((dist_matrix + dist_matrix.T) / 2.0, checks=False)
-    Z = linkage(cond_dist, method='complete')
-    cluster_labels = fcluster(Z, t=0.7, criterion='distance')
-
-    # Keep best feature per cluster
-    cluster_selected_idx = []
-    for label in np.unique(cluster_labels):
-        in_cluster = np.where(cluster_labels == label)[0]
-        orig_idx_in_cluster = surviving_idx[in_cluster]
-        best_feat = orig_idx_in_cluster[np.argmax(np.abs(rhos[orig_idx_in_cluster]))]
-        cluster_selected_idx.append(best_feat)
-
-    cluster_mask = np.zeros(X_working.shape[1], dtype=bool)
-    cluster_mask[cluster_selected_idx] = True
-
-    return cluster_mask, p_vals, rhos
+    return screen_mask, p_vals, rhos
 
 
-def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, cluster_mask: np.ndarray, B: int = 100, pi: float = 0.60):
+def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen_mask: np.ndarray, B: int = 100, pi: float = 0.60):
     # Step 2: Stability Selection
-    cluster_features_idx = np.where(cluster_mask)[0]
-    X_cluster = X_working[:, cluster_features_idx]
+    screened_features_idx = np.where(screen_mask)[0]
+    X_screened = X_working[:, screened_features_idx]
 
     scaler = StandardScaler()
-    X_cluster_scaled = scaler.fit_transform(X_cluster)
+    X_cluster_scaled = scaler.fit_transform(X_screened)
 
     # Pre-compute alphas grid
-    from sklearn.linear_model import lasso_path
-    alphas, _, _ = lasso_path(X_cluster_scaled, y_working, n_alphas=50)
+    from sklearn.linear_model import enet_path
+    alphas, _, _ = enet_path(X_cluster_scaled, y_working, l1_ratio=0.5, n_alphas=50)
 
     subsample_size = X_working.shape[0] // 2
-    selection_matrix = np.zeros((X_cluster.shape[1], len(alphas), B), dtype=bool)
+    selection_matrix = np.zeros((X_screened.shape[1], len(alphas), B), dtype=bool)
 
     rng = np.random.default_rng(42)
     for b in range(B):
         sub_idx = rng.choice(X_working.shape[0], size=subsample_size, replace=False)
-        X_sub = X_cluster[sub_idx]
+        X_sub = X_screened[sub_idx]
         y_sub = y_working[sub_idx]
         
         X_sub_scaled = StandardScaler().fit_transform(X_sub)
-        _, coefs, _ = lasso_path(X_sub_scaled, y_sub, alphas=alphas)
+        _, coefs, _ = enet_path(X_sub_scaled, y_sub, l1_ratio=0.5, alphas=alphas)
         selection_matrix[:, :, b] = (np.abs(coefs) > 1e-5)
 
     sel_probs = np.mean(selection_matrix, axis=2)
@@ -249,11 +228,11 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, cluste
         stability_keep = np.zeros_like(stability_keep, dtype=bool)
         stability_keep[top_idx] = True
 
-    stability_selected_idx = cluster_features_idx[stability_keep]
+    stability_selected_idx = screened_features_idx[stability_keep]
     
     # Store stability score for all FEATURES
     all_stability_scores = np.zeros(X_working.shape[1])
-    for local_i, orig_i in enumerate(cluster_features_idx):
+    for local_i, orig_i in enumerate(screened_features_idx):
         all_stability_scores[orig_i] = stability_scores[local_i]
 
     return stability_selected_idx, all_stability_scores
@@ -262,37 +241,9 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, cluste
 # ============================================================
 # Yearly Blocked CV Engine
 # ============================================================
-def run_loyo_cv(X_feat: np.ndarray, y_target: np.ndarray, dates: pd.Series, model_type: str, params: dict, k_weight: float):
-    unique_years = sorted(list(set(dates.dt.year.values)))
-    oof_preds = np.zeros(len(y_target))
-    
-    dates_val = dates.values
-    for test_year in unique_years:
-        test_mask = dates.dt.year == test_year
-        test_idx = np.where(test_mask)[0]
-        
-        # Test boundaries
-        test_dates = dates_val[test_mask]
-        min_test_date = np.min(test_dates)
-        max_test_date = np.max(test_dates)
-        
-        # Embargo range (10 calendar days buffer around testing block)
-        embargo_start = min_test_date - pd.Timedelta(days=10)
-        embargo_end = max_test_date + pd.Timedelta(days=10)
-        
-        train_mask = (dates.dt.year != test_year) & ((dates_val < embargo_start) | (dates_val > embargo_end))
-        train_idx = np.where(train_mask)[0]
-        
-        if len(train_idx) == 0 or len(test_idx) == 0:
-            continue
-            
-        X_tr, y_tr = X_feat[train_idx], y_target[train_idx]
-        X_te = X_feat[test_idx]
-        
-        scaler = StandardScaler()
-        X_tr_scaled = scaler.fit_transform(X_tr)
-        X_te_scaled = scaler.transform(X_te)
-        
+def run_loyo_cv(loyo_folds: list, model_type: str, params: dict, k_weight: float, n_samples: int):
+    oof_preds = np.zeros(n_samples)
+    for test_idx, X_tr_scaled, X_te_scaled, y_tr in loyo_folds:
         w_tr = compute_sample_weights(y_tr, k_weight)
         X_tr_w, y_tr_w = scale_data_with_weights(X_tr_scaled, y_tr, w_tr)
         
@@ -416,14 +367,14 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single"):
     
     print(f"Split: Working={len(working_idx)} rows, Lockbox={len(lockbox_idx)} rows.")
     
-    # Step 1 & 1.5: Cheap screening & Hierarchical Feature Clustering
-    print("Running feature screening and clustering...")
-    cluster_mask, p_vals, rhos = run_screening_and_clustering(X_working, y_working, FEATURES)
-    print(f"Screened and clustered features: {cluster_mask.sum()} surviving cluster candidates.")
+    # Step 1: Cheap screening
+    print("Running feature screening...")
+    screen_mask, p_vals, rhos = run_screening(X_working, y_working)
+    print(f"Screened features: {screen_mask.sum()} surviving candidates.")
     
     # Step 2: Stability Selection on the survivors
     print("Running stability selection...")
-    stability_selected_idx, stability_scores = run_stability_selection(X_working, y_working, cluster_mask, B=100, pi=0.60)
+    stability_selected_idx, stability_scores = run_stability_selection(X_working, y_working, screen_mask, B=100, pi=0.60)
     
     selected_feature_names = [FEATURES[idx] for idx in stability_selected_idx]
     K_sel = len(stability_selected_idx)
@@ -433,6 +384,36 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single"):
     X_working_final = X_working[:, stability_selected_idx]
     X_lockbox_final = X_lockbox[:, stability_selected_idx]
     
+    # Pre-compute and cache scaled LOYO folds
+    loyo_folds = []
+    unique_years = sorted(list(set(dates_working.dt.year.values)))
+    dates_val = dates_working.values
+    for test_year in unique_years:
+        test_mask = dates_working.dt.year == test_year
+        test_idx = np.where(test_mask)[0]
+        
+        test_dates = dates_val[test_mask]
+        min_test_date = np.min(test_dates)
+        max_test_date = np.max(test_dates)
+        
+        embargo_start = min_test_date - pd.Timedelta(days=10)
+        embargo_end = max_test_date + pd.Timedelta(days=10)
+        
+        train_mask = (dates_working.dt.year != test_year) & ((dates_val < embargo_start) | (dates_val > embargo_end))
+        train_idx = np.where(train_mask)[0]
+        
+        if len(train_idx) == 0 or len(test_idx) == 0:
+            continue
+            
+        X_tr, y_tr = X_working_final[train_idx], y_working[train_idx]
+        X_te = X_working_final[test_idx]
+        
+        scaler = StandardScaler()
+        X_tr_scaled = scaler.fit_transform(X_tr)
+        X_te_scaled = scaler.transform(X_te)
+        
+        loyo_folds.append((test_idx, X_tr_scaled, X_te_scaled, y_tr))
+
     # We fit a ridge model or baseline once to compute scaling factors or norms
     scaler_init = StandardScaler()
     X_working_scaled_init = scaler_init.fit_transform(X_working_final)
@@ -461,7 +442,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single"):
             params["en_l1_ratio"] = trial_params["en_l1_ratio"]
             
         # LOYO CV predictions
-        oof_preds = run_loyo_cv(X_working_final, y_working, dates_working, model_type, params, k_weight)
+        oof_preds = run_loyo_cv(loyo_folds, model_type, params, k_weight, len(y_working))
         
         # Fit final model on working set to compute coefficient norm
         # We reuse the same scaling logic
@@ -507,7 +488,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single"):
             traceback.print_exc()
             return -999.0
             
-    pilot_study.optimize(pilot_objective, n_trials=50)
+    pilot_study.optimize(pilot_objective, n_trials=50, n_jobs=4)
     
     # Gather pilot results
     for t in pilot_study.trials:
@@ -594,7 +575,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single"):
         except Exception as e:
             return -1e9
             
-    study.optimize(main_objective, n_trials=n_trials)
+    study.optimize(main_objective, n_trials=n_trials, n_jobs=4)
     
     # Retrieve best trial results
     best_trial = study.best_trial
