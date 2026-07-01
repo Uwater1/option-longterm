@@ -875,6 +875,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     }
     joblib.dump(scaler_meta, MODELS_DIR / f"scaler_{tag}.joblib")
     
+    active_idx = np.where(np.abs(final_model.coef_) > 1e-5)[0]
+    active_feature_names = [selected_feature_names[i] for i in active_idx]
+
     # Save results json
     results = {
         "etf": etf_name,
@@ -883,6 +886,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "n_samples_working": len(y_working),
         "n_samples_lockbox": len(y_lockbox),
         "selected_features": selected_feature_names,
+        "active_features": active_feature_names,
         "stability_scores": dict(zip(FEATURES, stability_scores.tolist())),
         "best_params": best_params,
         "best_raw_metrics": best_raw_m,
