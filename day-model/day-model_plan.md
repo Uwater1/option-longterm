@@ -76,7 +76,7 @@ Where each $\widetilde{M}_i$ is a **robust z-score normalized** metric (computed
 | **M₄** | **Overall Rank IC** | Mean Spearman rank IC across all rows. | + | General Signal | **0.15** |
 | **M₅** | **Decile Monotonicity** | Spearman correlation between decile rank and mean actual return. | + | Signal Structure | **0.10** |
 | **M₆** | **Top-Bottom Spread** | Mean return spread (Top 10% minus Bottom 10%). | + | Factor Efficacy | **0.05** |
-| **M₇** | **Feature Parsimony** | $-\log(1 + k)$ where $k$ is model size. Penalizes bloated models. | + | Simplicity | **0.10** |
+| **M₇** | **Feature Parsimony** | $-\log(1 + k)$ where $k$ is active model size (coefficients with absolute value $> 10^{-5}$). Penalizes bloated models. | + | Simplicity | **0.10** |
 | **M₈** | **Coefficient Bloat** | $-\|\beta\|_2$. Penalizes large, unstable coefficients. | + | Simplicity | **0.05** |
 
 Before computing the weighted objective, apply **Kill Switches**:

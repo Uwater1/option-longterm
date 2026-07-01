@@ -10,7 +10,7 @@ This report summarizes the performance and features of the remade `day-model` re
 | 50ETF | 79 | `skglm_mcp` | +0.0265 | +0.1151 |
 | 500ETF | 116 | `skglm_huber_l1` | +0.0949 | +0.0726 |
 | 588000ETF | 82 | `skglm_huber_l1` | +0.0045 | +0.0234 |
-| 159915ETF | 113 | `skglm_huber_l1` | +0.1329 | +0.1389 |
+| 159915ETF | 113 | `skglm_mcp` | +0.0962 | +0.0537 |
 
 ## Detailed Trial Metrics & Optimization Objectives
 
@@ -20,7 +20,7 @@ This report summarizes the performance and features of the remade `day-model` re
 | 50ETF | 1.7168 | +0.1946 | 90.0% | 0.4061 | +27.5717% |
 | 500ETF | 1.9453 | +0.2244 | 100.0% | 0.4206 | +65.7431% |
 | 588000ETF | 4.5535 | +0.3491 | 100.0% | 0.4606 | +97.1223% |
-| 159915ETF | 4.4074 | +0.3180 | 100.0% | 0.5733 | +84.2978% |
+| 159915ETF | 1.0625 | +0.1596 | 90.0% | 0.4194 | +42.7152% |
 
 ## Selected Features per ETF
 

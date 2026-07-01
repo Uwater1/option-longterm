@@ -90,7 +90,7 @@ Remove-Item day-model\data\cache_*.joblib
    - $M_4$ (Overall Rank IC): 15%
    - $M_5$ (Decile Monotonicity): 10%
    - $M_6$ (Top-Bottom Spread): 5%
-   - $M_7$ (Feature Parsimony): 10%
+   - $M_7$ (Feature Parsimony): 10% (uses active feature count, i.e., coefficients with absolute value $> 10^{-5}$)
    - $M_8$ (Coefficient Bloat): 5%
 8. **Kill Switches**: Trial pruned (returns `-1e9`) if:
    - Overall IC <= 0
