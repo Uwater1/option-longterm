@@ -6,6 +6,7 @@ Plan to reformulate and optimize the Optuna objective function for `day-model` b
 
 ## 1. Current Settings Baseline
 
+### Linear model:
 Existing target, features, selection, and tuning objective in `day-model/train_model.py`:
 
 *   **Target**: `trade_return = log(close[EXIT_BAR] / open[decision_bar+1])`
@@ -14,6 +15,34 @@ Existing target, features, selection, and tuning objective in `day-model/train_m
 *   **Optuna Objective (Current)**:
     *   `single` side: overall Spearman rank IC.
     *   `long`/`short` side: `0.5 * overall_ic + 0.5 * tail_ic` (top 30% tail).
+
+### Filter model: (will throw away, way too complex and slow)
+* **Target**: `y_true`
+* **Features**: 238 features
+* **Selection**:
+    *   BH-FDR (overall): FDR = 0.2
+    *   Stability selection:
+    *   Algorithm: Subsampling + Randomized Lasso
+    *   Bootstrap subsamples: 200
+    *   Subsample size: ⌊n/2⌋ = 1350
+    *   Selection probability threshold (π): 0.60
+    *   Lambda path: log-uniform between 0.0001 and 0.2 (log10 scale, 100 points)
+* **Hyperparameters:**
+    *   L1 ratio: 0.70 (ElasticNet)
+    *   Tuning method: Optuna Hyperband
+    *   Early stopping: 3 trials
+    *   Evaluated metrics: overall IC, tail IC (top 30%), model size
+* **Optuna objective:**
+    *   `single` side: `0.6 * overall_ic + 0.4 * tail_ic - 0.002 * size`
+    *   `long`/`short` side: `0.6 * tail_ic + 0.4 * overall_ic - 0.002 * size`
+* **Evaluation:**
+    *   Lockbox: held-out 500 days
+    *   Metrics: lockbox IC, lockbox tail IC, lockbox Sharpe (single), lockbox sorted Sharpe (long/short)
+
+
+## New plan:
+* See below Stage
+* for simplicity, will only have 10:00 (open bar entry) ~ 14:35 (close bar exit) return (in log return )
 
 ---
 
@@ -66,11 +95,11 @@ Using skglm's MCP (or Lasso as a comparison baseline), run repeated subsampling 
 For the final coefficient fit, use sample weights w(x) that upweight |x| near the extremes (e.g., w ∝ |x|^k, or a step weight for the outer deciles vs. inner) rather than deleting the inner 80% of rows. Such weight should be fine tuned by Optuna, given Metric Weights is good enough. This keeps n large enough for stable estimation while still optimizing for what you actually care about (tail behavior). skglm's weighted Huber/MCP objective supports this directly.
 
 **Step 4 — Optuna over hyperparameters only, evaluated on a tail-specific metric.**
-Nested CV within the 2200 (5-fold, or purged/embargoed CV if rows are time-ordered/autocorrelated). Optuna optimizes over MCP's (λ, γ) or Huber's δ, but the *objective function* should be foucused outer-decile rows of each validation fold — e.g., rank-IC restricted to |x| in top/bottom 10% of that fold. This directly targets what you said you care about, without ever shrinking the training rows.
+Nested CV within the 2200 (5-fold, or purged/embargoed CV if rows are time-ordered/autocorrelated). Optuna optimizes over MCP's (λ, γ) or Huber's δ, but the *objective function* should be focused on the top/bottom 10% decile rows of each validation fold — e.g., rank-IC saparated to TailIC (top/bottom 10%) and total IC. This directly targets what you said you care about, without ever shrinking the training rows.
 
 **Step 4.5 — Define Metric Weights & Optimization**
 Goal: Maximize a composite metric aligning training objective directly with trading performance, risk, and model parsimony.
-$$Objective = w_1 \cdot \text{Sharpe}_{LS} + w_2 \cdot \overline{\text{TailIC}}_{cv} - w_3 \cdot \text{std}(\text{TailIC}_{cv}) + w_4 \cdot \text{OverallIC} - w_5 \cdot \text{TailRMSE}_{norm} - w_6 \cdot \log(1+\text{NumFeatures}) - w_7 \cdot \text{Some more metrics}$$
+$$Objective = w_1 \cdot \text{Sharpe}_{LS} + w_2 \cdot \overline{\text{TailIC}}_{cv} - w_3 \cdot \text{std}(\text{TailIC}_{cv}) + w_4 \cdot \text{OverallIC} - w_5 \cdot \text{TailRMSE}_{norm} - w_6 \cdot \log(1+\text{NumFeatures}) +- w_7 \cdot \text{Some more metrics}$$
 
 **Step 5 — Sanity check the stability-selected set didn't get re-litigated by Optuna.**
 Freeze the feature set from Step 2 before Step 4 starts. Don't let Optuna re-select features (no per-trial re-screening) — it should only tune penalty strength/shape on a fixed feature set. If you want to test sensitivity, do it as a separate ablation, not inside the main tuning loop.
