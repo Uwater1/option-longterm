@@ -85,6 +85,20 @@
     "yesterday_intraday_close_position",
     "yesterday_opening_gap_reversal"
   ],
+  "active_features": [
+    "first_bar_return",
+    "bar_vol_2",
+    "bar_vwap_dev_0",
+    "consecutive_higher_highs",
+    "volume_concentration",
+    "sma100_dist",
+    "margin_net_buy",
+    "capital_net_ratio",
+    "northbound_net",
+    "yesterday_body_ratio",
+    "yesterday_gap",
+    "yesterday_early_trend"
+  ],
   "stability_scores": {
     "gap_pct": 0.0,
     "first_30min_return": 1.0,
@@ -327,21 +341,21 @@
   },
   "best_params": {
     "model_type": "skglm_mcp",
-    "k_weight": 0.09004300194121453,
-    "skglm_mcp_alpha": 0.012899013929228695,
-    "skglm_mcp_gamma": 1.7696121879757785,
-    "skglm_mcp_delta": 1.0589018909785035
+    "k_weight": 0.46373610707820667,
+    "skglm_mcp_alpha": 0.027368348749285978,
+    "skglm_mcp_gamma": 5.344150584113928,
+    "skglm_mcp_delta": 1.27048003007827
   },
   "best_raw_metrics": [
-    1.7167510736993783,
-    0.19464416365571363,
-    0.9,
-    0.08897263328463098,
-    0.40606060606060596,
-    0.2757173851132393,
-    -4.382026634673881,
-    -0.41822850704193115
+    0.8164745990182875,
+    0.1250319135322451,
+    0.7,
+    0.053201260588930155,
+    0.4048484848484849,
+    0.16783620873776575,
+    -2.5649493574615367,
+    -0.22017361223697662
   ],
-  "lockbox_overall_ic": 0.026544298024477227,
-  "lockbox_tail_ic": 0.11513648761355183
+  "lockbox_overall_ic": 0.03514888653484865,
+  "lockbox_tail_ic": 0.13640646484683183
 }

@@ -25,20 +25,16 @@ python3 day-model/generate_report.py
 ### train_model.py Performance Options
 
 ```bash
-python day-model/train_model.py -e 300 -t 50            # default: cache ON, n_jobs=cpu_count
-python day-model/train_model.py -e 300 --no-cache        # force recompute (ignore caches)
-python day-model/train_model.py -e 300 --optuna-jobs 8   # cap Optuna workers
-python day-model/train_model.py -e 300 --bootstrap-jobs 8 # cap stability-bootstrap workers
+python day-model/train_model.py -e 300 -t 50              # cache ON, n_jobs=cpu_count
+python day-model/train_model.py -e 300 --no-cache          # force recompute
+python day-model/train_model.py -e 300 --optuna-jobs 8     # cap Optuna workers
+python day-model/train_model.py -e 300 --bootstrap-jobs 8  # cap stability-bootstrap workers
+python day-model/train_model.py -e 300 --loyo-jobs 4       # cap LOYO fold workers per trial
 ```
 
-Speedups applied:
-- **fp32 downcast** of feature/target arrays (BLAS-friendly, ~50% memory).
-- **Vectorized Spearman screening** (single matmul over column ranks; replaces 238-call Python loop).
-- **Parallel stability bootstrap** (B=100 fits across `--bootstrap-jobs` workers via joblib).
-- **Disk caches** for selection, LOYO folds, pilot calibration (see below).
-- **Precomputed unweighted scaled matrix** — per-trial cost only re-applies `sqrt(w)`.
-- **Optuna `n_jobs=cpu_count`** with BLAS threads pinned to 1 per worker (env guards `OMP_NUM_THREADS` etc set at import).
-- **Seeded TPESampler** (`seed=42` pilot, `seed=43` main) for reproducibility.
+Speedups: fp32 arrays; vectorized Spearman screen; joblib-parallel stability bootstrap & LOYO folds; disk caches (select/loyo/pilot); precomputed unweighted scaled matrix; numpy-vectorized yearly metrics (no pandas qcut); Optuna `n_jobs=cpu_count` with BLAS threads pinned to 1; skglm `AndersonCD(max_epochs=1500)`; seeded TPESampler (42 pilot, 43 main).
+
+- **LOYO parallelism**: `--loyo-jobs -1` (auto = `cpu_count // optuna-jobs`). Use when running single ETF with low `--optuna-jobs`; auto-throttles to avoid oversubscription when Optuna already saturates cores.
 
 ## Cache invalidation
 

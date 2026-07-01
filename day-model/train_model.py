@@ -44,7 +44,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from scipy.stats import spearmanr, rankdata
+from scipy.stats import rankdata
 from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.spatial.distance import squareform
 from sklearn.preprocessing import StandardScaler
@@ -165,7 +165,7 @@ METRIC_WEIGHTS = {
 # Model Factory
 # ============================================================
 def _build_model(model_type: str, params: dict):
-    solver = AndersonCD(max_epochs=5000, tol=1e-3)
+    solver = AndersonCD(max_epochs=2000, tol=1e-3)
     if model_type == "skglm_huber_l1":
         return GeneralizedLinearEstimator(
             datafit=SkglmHuber(delta=params.get("skglm_huber_delta", 1.35)),
@@ -190,40 +190,62 @@ def _build_model(model_type: str, params: dict):
 # ============================================================
 # Core Metrics
 # ============================================================
-def spearman_ic(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    if len(y_true) < 5 or np.std(y_pred) < 1e-12 or np.std(y_true) < 1e-12:
+def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
+    """Pearson over ranks. Faster than scipy.stats.spearmanr (no overhead)."""
+    if a.shape[0] < 5:
         return 0.0
-    rho, _ = spearmanr(y_pred, y_true)
-    return float(rho) if not np.isnan(rho) else 0.0
+    if np.std(a) < 1e-12 or np.std(b) < 1e-12:
+        return 0.0
+    ra = rankdata(a)
+    rb = rankdata(b)
+    ra -= ra.mean()
+    rb -= rb.mean()
+    denom = np.sqrt((ra * ra).sum() * (rb * rb).sum())
+    if denom < 1e-12:
+        return 0.0
+    return float((ra * rb).sum() / denom)
+
+
+def spearman_ic(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    y_true = np.asarray(y_true, dtype=np.float64)
+    y_pred = np.asarray(y_pred, dtype=np.float64)
+    return _spearman_from_arrays(y_true, y_pred)
 
 
 def compute_decile_monotonicity(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    if len(y_true) < 20 or np.std(y_pred) < 1e-12:
+    n = len(y_true)
+    if n < 20 or np.std(y_pred) < 1e-12:
         return 0.0
-    df = pd.DataFrame({"y_true": y_true, "y_pred": y_pred})
-    try:
-        df["decile"] = pd.qcut(df["y_pred"], 10, labels=False, duplicates="drop")
-        decile_means = df.groupby("decile")["y_true"].mean().sort_index()
-        if len(decile_means) < 3:
-            return 0.0
-        rho, _ = spearmanr(decile_means.index, decile_means.values)
-        return float(rho) if not np.isnan(rho) else 0.0
-    except Exception:
+    order = np.argsort(np.asarray(y_pred, dtype=np.float64), kind="quicksort")
+    yt_sorted = np.asarray(y_true, dtype=np.float64)[order]
+    chunks = np.array_split(yt_sorted, 10)
+    means = np.array([c.mean() if c.size else np.nan for c in chunks])
+    valid = ~np.isnan(means)
+    if valid.sum() < 3:
         return 0.0
+    m = means[valid]
+    r = rankdata(m)
+    k = m.shape[0]
+    a = np.arange(1, k + 1, dtype=np.float64)
+    a -= a.mean()
+    r -= r.mean()
+    denom = np.sqrt((a * a).sum() * (r * r).sum())
+    if denom < 1e-12:
+        return 0.0
+    return float((a * r).sum() / denom)
 
 
 def compute_top_bottom_spread(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    if len(y_true) < 20 or np.std(y_pred) < 1e-12:
+    n = len(y_true)
+    if n < 20 or np.std(y_pred) < 1e-12:
         return 0.0
-    df = pd.DataFrame({"y_true": y_true, "y_pred": y_pred})
-    try:
-        df["decile"] = pd.qcut(df["y_pred"], 10, labels=False, duplicates="drop")
-        decile_means = df.groupby("decile")["y_true"].mean().sort_index()
-        if len(decile_means) < 2:
-            return 0.0
-        return float(decile_means.iloc[-1] - decile_means.iloc[0])
-    except Exception:
+    order = np.argsort(np.asarray(y_pred, dtype=np.float64), kind="quicksort")
+    yt_sorted = np.asarray(y_true, dtype=np.float64)[order]
+    chunks = np.array_split(yt_sorted, 10)
+    first, last = chunks[0], chunks[-1]
+    if first.size == 0 or last.size == 0:
         return 0.0
+    return float(last.mean() - first.mean())
 
 
 # ============================================================
@@ -376,82 +398,76 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen
 # ============================================================
 # Yearly Blocked CV Engine
 # ============================================================
-def run_loyo_cv(loyo_folds: list, model_type: str, params: dict, k_weight: float, n_samples: int):
-    oof_preds = np.zeros(n_samples)
-    for test_idx, X_tr_scaled, X_te_scaled, y_tr in loyo_folds:
-        w_tr = compute_sample_weights(y_tr, k_weight)
-        X_tr_w, y_tr_w = scale_data_with_weights(X_tr_scaled, y_tr, w_tr)
-        
-        model = _build_model(model_type, params)
-        model.fit(X_tr_w, y_tr_w)
-        
-        oof_preds[test_idx] = model.predict(X_te_scaled)
-        
+def _loyo_one_fold(fold, model_type, params, k_weight):
+    test_idx, X_tr_scaled, X_te_scaled, y_tr = fold
+    w_tr = compute_sample_weights(y_tr, k_weight)
+    X_tr_w, y_tr_w = scale_data_with_weights(X_tr_scaled, y_tr, w_tr)
+    model = _build_model(model_type, params)
+    model.fit(X_tr_w, y_tr_w)
+    return test_idx, model.predict(X_te_scaled)
+
+
+def run_loyo_cv(loyo_folds: list, model_type: str, params: dict, k_weight: float,
+                n_samples: int, n_jobs: int = 1):
+    oof_preds = np.zeros(n_samples, dtype=np.float64)
+    if n_jobs and n_jobs > 1 and len(loyo_folds) > 1:
+        results = Parallel(n_jobs=n_jobs, backend="loky")(
+            delayed(_loyo_one_fold)(f, model_type, params, k_weight)
+            for f in loyo_folds
+        )
+        for test_idx, preds in results:
+            oof_preds[test_idx] = preds
+    else:
+        for fold in loyo_folds:
+            test_idx, preds = _loyo_one_fold(fold, model_type, params, k_weight)
+            oof_preds[test_idx] = preds
     return oof_preds
 
 
-def calculate_yearly_metrics(y_true: np.ndarray, y_pred: np.ndarray, dates: pd.Series, k_features: int, coef_norm: float):
-    df = pd.DataFrame({"y_true": y_true, "y_pred": y_pred, "date": dates})
-    df["year"] = df["date"].dt.year
-    unique_years = sorted(list(df["year"].unique()))
-    
-    y_ics = []
-    y_tail_ics = []
-    y_tail_hits = []
-    y_monos = []
-    y_spreads = []
-    
-    for year in unique_years:
-        year_df = df[df["year"] == year]
-        y_t = year_df["y_true"].values
-        y_p = year_df["y_pred"].values
-        
-        # 1. Overall IC
-        ic = spearman_ic(y_t, y_p)
-        y_ics.append(ic)
-        
-        # 2. Tail IC (top/bottom 10%)
-        n_tail = max(5, int(len(y_p) * 0.10))
-        if len(y_p) >= n_tail * 2:
-            top_idx = np.argsort(y_p)[-n_tail:]
-            bot_idx = np.argsort(y_p)[:n_tail]
-            tail_idx = np.concatenate([bot_idx, top_idx])
-            tail_ic = spearman_ic(y_t[tail_idx], y_p[tail_idx])
+def calculate_yearly_metrics(year_groups, y_true: np.ndarray, y_pred: np.ndarray,
+                             k_features: int, coef_norm: float):
+    y_true = np.asarray(y_true, dtype=np.float64)
+    y_pred = np.asarray(y_pred, dtype=np.float64)
+
+    y_ics = np.empty(len(year_groups))
+    y_tail_ics = np.empty(len(year_groups))
+    y_tail_hits = np.empty(len(year_groups))
+    y_monos = np.empty(len(year_groups))
+    y_spreads = np.empty(len(year_groups))
+
+    for i, (_year, idx) in enumerate(year_groups):
+        y_t = y_true[idx]
+        y_p = y_pred[idx]
+
+        y_ics[i] = spearman_ic(y_t, y_p)
+
+        n_tail = max(5, int(y_p.shape[0] * 0.10))
+        if y_p.shape[0] >= n_tail * 2:
+            order = np.argsort(y_p, kind="quicksort")
+            tail_idx = np.concatenate([order[:n_tail], order[-n_tail:]])
+            tail_ic = _spearman_from_arrays(y_t[tail_idx], y_p[tail_idx])
         else:
             tail_ic = 0.0
-        y_tail_ics.append(tail_ic)
-        
-        # 3. Yearly Hit Rate indicator
-        y_tail_hits.append(1.0 if tail_ic > 0 else 0.0)
-        
-        # 4. Decile Monotonicity
-        mono = compute_decile_monotonicity(y_t, y_p)
-        y_monos.append(mono)
-        
-        # 5. Top-Bottom Spread
-        spread = compute_top_bottom_spread(y_t, y_p)
-        y_spreads.append(spread)
-        
-    y_ics = np.array(y_ics)
-    y_tail_ics = np.array(y_tail_ics)
-    y_tail_hits = np.array(y_tail_hits)
-    y_monos = np.array(y_monos)
-    y_spreads = np.array(y_spreads)
-    
-    mean_tail_ic = np.mean(y_tail_ics)
-    std_tail_ic = np.std(y_tail_ics)
-    
+        y_tail_ics[i] = tail_ic
+        y_tail_hits[i] = 1.0 if tail_ic > 0 else 0.0
+
+        y_monos[i] = compute_decile_monotonicity(y_t, y_p)
+        y_spreads[i] = compute_top_bottom_spread(y_t, y_p)
+
+    mean_tail_ic = float(y_tail_ics.mean())
+    std_tail_ic = float(y_tail_ics.std())
+
     m1 = mean_tail_ic / (std_tail_ic + 1e-10)     # Yearly Tail IC IR
     m2 = mean_tail_ic                             # Yearly Tail IC Mean
-    m3 = np.mean(y_tail_hits)                     # Yearly Hit Rate
-    m4 = np.mean(y_ics)                           # Overall Rank IC
-    m5 = np.mean(y_monos)                         # Decile Monotonicity
-    m6 = np.mean(y_spreads)                       # Top-Bottom Spread
+    m3 = float(y_tail_hits.mean())                # Yearly Hit Rate
+    m4 = float(y_ics.mean())                      # Overall Rank IC
+    m5 = float(y_monos.mean())                    # Decile Monotonicity
+    m6 = float(y_spreads.mean())                  # Top-Bottom Spread
     m7 = -np.log(1.0 + k_features)                # Feature Parsimony (penalized)
     m8 = -coef_norm                               # Coefficient Bloat (penalized)
-    
+
     raw_metrics = [m1, m2, m3, m4, m5, m6, m7, m8]
-    return raw_metrics, unique_years, y_tail_ics
+    return raw_metrics, [_y for _y, _ in year_groups], y_tail_ics
 
 
 # ============================================================
@@ -459,10 +475,11 @@ def calculate_yearly_metrics(y_true: np.ndarray, y_pred: np.ndarray, dates: pd.S
 # ============================================================
 def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
               use_cache: bool = True, optuna_n_jobs: int = OPTUNA_N_JOBS,
-              bootstrap_n_jobs: int = BOOTSTRAP_N_JOBS):
+              bootstrap_n_jobs: int = BOOTSTRAP_N_JOBS, loyo_n_jobs: int = 1):
     print(f"\n" + "=" * 80)
     print(f"Starting First-Principles Training for {etf_name} (Side: {side})")
-    print(f"  use_cache={use_cache}  optuna_n_jobs={optuna_n_jobs}  bootstrap_n_jobs={bootstrap_n_jobs}")
+    print(f"  use_cache={use_cache}  optuna_n_jobs={optuna_n_jobs}  "
+          f"bootstrap_n_jobs={bootstrap_n_jobs}  loyo_n_jobs={loyo_n_jobs}")
     print(f"=" * 80)
 
     # Load features parquet
@@ -506,6 +523,11 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     dates_lockbox = df["date"].iloc[lockbox_idx].reset_index(drop=True)
 
     print(f"Split: Working={len(working_idx)} rows, Lockbox={len(lockbox_idx)} rows.")
+
+    # Precompute yearly row-index groups (used by per-trial metric computation).
+    years_working = dates_working.dt.year.values
+    year_groups = [(int(y), np.where(years_working == y)[0])
+                   for y in sorted(np.unique(years_working))]
 
     # ── Cache key parts ───────────────────────────────────────────────
     # Auto-invalidate when: feature parquet regen (mtime), FEATURES list
@@ -626,7 +648,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             params["en_l1_ratio"] = trial_params["en_l1_ratio"]
 
         # LOYO CV predictions
-        oof_preds = run_loyo_cv(loyo_folds, model_type, params, k_weight, len(y_working))
+        oof_preds = run_loyo_cv(loyo_folds, model_type, params, k_weight,
+                                len(y_working), n_jobs=loyo_n_jobs)
 
         # Fit final model on working set to compute coefficient norm.
         # Reuse precomputed standardized matrix; only apply sqrt(w) per trial.
@@ -642,7 +665,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         active_k = int(np.sum(np.abs(model_temp.coef_) > 1e-5))
 
         # Calculate raw yearly metrics
-        raw_metrics, _, _ = calculate_yearly_metrics(y_working, oof_preds, dates_working, active_k, coef_norm)
+        raw_metrics, _, _ = calculate_yearly_metrics(
+            year_groups, y_working, oof_preds, active_k, coef_norm)
         return raw_metrics, model_temp, scaler_init
 
     # ── Pilot calibration cache ───────────────────────────────────────
@@ -962,7 +986,14 @@ if __name__ == "__main__":
                     help=f"Parallel Optuna workers (default {OPTUNA_N_JOBS}).")
     ap.add_argument("--bootstrap-jobs", type=int, default=BOOTSTRAP_N_JOBS,
                     help=f"Parallel workers for stability bootstrap (default {BOOTSTRAP_N_JOBS}).")
+    ap.add_argument("--loyo-jobs", type=int, default=-1,
+                    help=("Parallel workers for LOYO fold fits per trial. "
+                          "-1 = auto (cpu_count // optuna-jobs). Default -1."))
     args = ap.parse_args()
+
+    loyo_jobs_arg = args.loyo_jobs
+    if loyo_jobs_arg < 1:
+        loyo_jobs_arg = max(1, (os.cpu_count() or 4) // max(1, args.optuna_jobs))
 
     etf_arg = args.etf
     if etf_arg in ETF_CLI_MAP and isinstance(ETF_CLI_MAP[etf_arg], list):
@@ -974,7 +1005,8 @@ if __name__ == "__main__":
     print(f"Target ETFs: {etfs}")
     print(f"Optuna main trials: {args.trials}")
     print(f"Cache: {'OFF' if args.no_cache else 'ON'}  "
-          f"optuna_jobs={args.optuna_jobs}  bootstrap_jobs={args.bootstrap_jobs}")
+          f"optuna_jobs={args.optuna_jobs}  bootstrap_jobs={args.bootstrap_jobs}  "
+          f"loyo_jobs={loyo_jobs_arg}")
 
     for etf in etfs:
         t0 = time.perf_counter()
@@ -982,7 +1014,8 @@ if __name__ == "__main__":
             train_etf(etf, n_trials=args.trials, side=args.side,
                       use_cache=not args.no_cache,
                       optuna_n_jobs=args.optuna_jobs,
-                      bootstrap_n_jobs=args.bootstrap_jobs)
+                      bootstrap_n_jobs=args.bootstrap_jobs,
+                      loyo_n_jobs=loyo_jobs_arg)
         except Exception as e:
             print(f"  [ERROR] Failed to train {etf}: {e}")
             import traceback
