@@ -88,13 +88,13 @@ validate_alpha_pnl.py          # Put P&L validator vs 3 baselines (real option p
 compare_alpha_phases.py        # Cross-phase P&L comparison report
 predict_open_high.py           # Open-to-High prediction pipeline
 numba_utils.py                 # Numba BS functions & IV solver
-day-model/                     # Day-Model PM session return predictor
-├── REPORT.md                  # Comprehensive PM return prediction report
+day-model/                     # Day-Model 10:00-14:35 return predictor
+├── REPORT.md                  # Comprehensive return prediction report
 ├── AGENTS.md                  # Feature expansion and workflow guide
+├── day-model_plan.md          # First-principles modeling & selection plan
 ├── build_features.py          # Early-bar + day-level feature engineering (238 features, local caching)
 ├── features_extra.py          # 115 Numba njit extra features (early-bar, day-level, yesterday-mirror)
-├── train_model.py             # Optuna-tuned linear model training & feature selection
-├── feature_select.py          # Stability + LightGBM-importance selectors
+├── train_model.py             # Optuna-tuned linear model training & feature selection (first principles)
 ├── gating_model.py            # Big-move gating classifier
 ├── evaluate_gating.py         # Compile gating winner table + WF PR-AUC grid report
 └── generate_report.py         # Report markdown generator

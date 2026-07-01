@@ -1,25 +1,6 @@
 """
-Phase 2: Train Optuna-tuned sparse/robust linear regression predicting trade_return per ETF.
-Tunes skglm models (skglm_huber_l1, skglm_mcp) via hyperparameter optimization.
-Uses Unified Time-Series Stability Selection (regime-stratified bootstrap, randomized ElasticNet, OOB IC) to select robust feature subsets,
-and tunes the selection threshold as a walk-forward CV hyperparameter.
-
-Target: trade_return = log(close[EXIT_BAR] / open[decision_bar+1])
-        Mirrors actual daytrade P&L (entry at next-bar open after decision, exit at 14:30 close).
-
-Validation: Purged TimeSeriesSplit walk-forward (gap=N between train and test).
-Optuna objective: mean Spearman rank IC across folds (robust to outliers).
-
-Outputs:
-  - models/linear_{ETF}.joblib                     (trained best linear model, full data)
-  - models/scaler_{ETF}.joblib                     (StandardScaler + features metadata)
-  - data/results_{ETF}.json                        (all metrics + diagnostics)
-  - data/optuna_study_{ETF}.sqlite3                (Optuna history)
-  - plots/{diagnostic}_{ETF}.png
-
-Usage:
-    python train_model.py -e all                   # full run, CPU, n_trials=100
-    python train_model.py -e 300 --trials 100      # custom trials
+Phase 2 Remake: Train Optuna-tuned return prediction model based on first principles.
+Implements the 7-step optimization and robust selection plan from day-model_plan.md.
 """
 import argparse
 import json
@@ -33,23 +14,34 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from scipy.stats import spearmanr
+from scipy.cluster.hierarchy import linkage, fcluster
+from scipy.spatial.distance import squareform
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import TimeSeriesSplit
-from sklearn.linear_model import Ridge, Lasso, ElasticNet, HuberRegressor, LassoCV, ElasticNetCV
-from sklearn.inspection import permutation_importance
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import Lasso, ElasticNet, HuberRegressor
 import optuna
 import joblib
-from joblib import Parallel, delayed
 
-# skglm: L1-regularized Huber, MCP, SCAD penalties (not available in sklearn)
+# skglm imports
 from skglm import GeneralizedLinearEstimator
 from skglm.datafits import Huber as SkglmHuber
 from skglm.penalties import L1 as SkglmL1, MCPenalty
 
-SKGLM_MODEL_TYPES = {"skglm_huber_l1", "skglm_mcp"}
-
 warnings.filterwarnings("ignore")
 optuna.logging.set_verbosity(optuna.logging.WARNING)
+
+HERE = Path(__file__).resolve().parent
+DATA_DIR = HERE / "data"
+MODELS_DIR = HERE / "models"
+PLOTS_DIR = HERE / "plots"
+MODELS_DIR.mkdir(parents=True, exist_ok=True)
+PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+
+# Feature list mapping
+import sys
+sys.path.append(str(HERE))
+from build_features import FEATURES
+TARGET = "trade_return"
 
 ETF_CLI_MAP = {
     "300": "300ETF", "50": "50ETF", "500": "500ETF",
@@ -59,72 +51,24 @@ ETF_CLI_MAP = {
     "all": ["300ETF", "50ETF", "500ETF", "588000ETF", "159915ETF"],
 }
 
-HERE = Path(__file__).resolve().parent
-DATA_DIR = HERE / "data"
-MODELS_DIR = HERE / "models"
-PLOTS_DIR = HERE / "plots"
-MODELS_DIR.mkdir(parents=True, exist_ok=True)
-PLOTS_DIR.mkdir(parents=True, exist_ok=True)
-
-# Feature columns (imported from build_features.py)
-import sys
-sys.path.append(str(Path(__file__).resolve().parent))
-from build_features import EARLY_FEATURES, DAY_FEATURES, YESTERDAY_FEATURES, FEATURES
-TARGET = "trade_return"
-
-# Defaults
-DEFAULT_TRIALS = 50          # Phase-3: lowered from 100 to curb Optuna selection bias
-DEFAULT_N_SPLITS = 5
-DEFAULT_PURGE_GAP = 5
-HOLDOUT_FRACTION = 0.20      # last 20% of data is the final OOS holdout
-BLOCK_SIZE = 20              # Block bootstrap contiguous length (approx 1 calendar month)
-N_BOOTSTRAPS = 50            # Number of bootstrap trials for stability selection
-Y_SCALE = 100.0              # target scaling (raw trade_return * 100)
-
-# Nested-CV (honest OOS) defaults — Phase-3 overfit controls
-DEFAULT_NESTED_SPLITS = 5    # outer walk-forward folds
-DEFAULT_INNER_SPLITS = 3     # inner Optuna CV folds (kept small for speed)
-DEFAULT_INNER_TRIALS = 20    # Optuna trials inside each outer fold
-DEFAULT_INNER_BOOTSTRAPS = 25  # stability-selection bootstraps per outer fold
-DEFAULT_SMALL_N = 1500       # below this, tighter top_k cap
-
-# Combinatorial Purged CV (López de Prado) — multi-path OOS estimate
-DEFAULT_CPCV_GROUPS = 8      # split timeline into N groups
-DEFAULT_CPCV_TEST_GROUPS = 2 # number of contiguous test groups per path
-
-# Locked split registry — keeps dev/holdout boundary stable across re-runs
-LOCK_FILE = DATA_DIR / "locked_splits.json"
+# Metric Weights (w_i from Step 4.1)
+METRIC_WEIGHTS = {
+    "m1": 0.20,  # Yearly Tail IC IR
+    "m2": 0.20,  # Yearly Tail IC Mean
+    "m3": 0.15,  # Yearly Hit Rate
+    "m4": 0.15,  # Overall Rank IC
+    "m5": 0.10,  # Decile Monotonicity
+    "m6": 0.05,  # Top-Bottom Spread
+    "m7": 0.10,  # Feature Parsimony
+    "m8": 0.05,  # Coefficient Bloat
+}
 
 
 # ============================================================
-# Model factory (skglm unified — sklearn kept for legacy model loading)
+# Model Factory
 # ============================================================
-# Optuna searches ONLY these two types; sklearn types retained in
-# _build_model() solely for loading previously-trained models.
-_OPTUNA_MODEL_TYPES = ["skglm_huber_l1", "skglm_mcp"]
-
-
 def _build_model(model_type: str, params: dict):
-    """Instantiate a linear model from type string + params dict.
-
-    Supported types: ridge, lasso, elasticnet, huber (sklearn),
-    skglm_huber_l1 (Huber datafit + L1 penalty),
-    skglm_mcp (Quadratic datafit + MCP penalty).
-    """
-    if model_type == "ridge":
-        return Ridge(alpha=params["ridge_alpha"], random_state=42)
-    elif model_type == "lasso":
-        return Lasso(alpha=params["lasso_alpha"], random_state=42,
-                     max_iter=5000, tol=1e-3)
-    elif model_type == "elasticnet":
-        return ElasticNet(alpha=params["en_alpha"],
-                          l1_ratio=params["en_l1_ratio"],
-                          random_state=42, max_iter=5000, tol=1e-3)
-    elif model_type == "huber":
-        return HuberRegressor(alpha=params["huber_alpha"],
-                              epsilon=params["huber_epsilon"],
-                              max_iter=2000)
-    elif model_type == "skglm_huber_l1":
+    if model_type == "skglm_huber_l1":
         return GeneralizedLinearEstimator(
             datafit=SkglmHuber(delta=params.get("skglm_huber_delta", 1.35)),
             penalty=SkglmL1(alpha=params["skglm_huber_l1_alpha"]),
@@ -135,1311 +79,697 @@ def _build_model(model_type: str, params: dict):
             penalty=MCPenalty(alpha=params["skglm_mcp_alpha"],
                               gamma=params.get("skglm_mcp_gamma", 3.0)),
         )
+    elif model_type == "lasso":
+        return Lasso(alpha=params.get("lasso_alpha", 0.01), random_state=42, max_iter=2000)
+    elif model_type == "elasticnet":
+        return ElasticNet(alpha=params.get("en_alpha", 0.01), l1_ratio=params.get("en_l1_ratio", 0.5), random_state=42, max_iter=2000)
     else:
-        raise ValueError(f"Unknown model_type: {model_type!r}")
-
-
-def _safe_fit(model, X, y, sample_weight=None):
-    """Fit model, skipping sample_weight for skglm (not supported)."""
-    if isinstance(model, GeneralizedLinearEstimator):
-        model.fit(X, y)
-    elif sample_weight is not None:
-        model.fit(X, y, sample_weight=sample_weight)
-    else:
-        model.fit(X, y)
-    return model
+        raise ValueError(f"Unknown model_type: {model_type}")
 
 
 # ============================================================
-# Purged TimeSeriesSplit
-# ============================================================
-def purged_tssplit(n: int, n_splits: int, gap: int):
-    """Yield (train_idx, test_idx) for expanding-window walk-forward with a purge gap.
-
-    Train is [0, t_end]; test is [t_end + gap, t_end + gap + test_size].
-    """
-    tscv = TimeSeriesSplit(n_splits=n_splits)
-    for train_idx, test_idx in tscv.split(np.arange(n)):
-        if gap > 0:
-            train_end = train_idx[-1] - gap
-            if train_end < 1:
-                continue
-            train_idx = train_idx[train_idx <= train_end]
-        if len(train_idx) < 50 or len(test_idx) < 30:
-            continue
-        yield train_idx, test_idx
-
-
-# ============================================================
-# Metrics
+# Core Metrics
 # ============================================================
 def spearman_ic(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    if len(y_true) < 5 or np.std(y_pred) < 1e-12:
+    if len(y_true) < 5 or np.std(y_pred) < 1e-12 or np.std(y_true) < 1e-12:
         return 0.0
     rho, _ = spearmanr(y_pred, y_true)
     return float(rho) if not np.isnan(rho) else 0.0
 
 
-def direction_accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    if len(y_true) == 0:
+def compute_decile_monotonicity(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    if len(y_true) < 20 or np.std(y_pred) < 1e-12:
         return 0.0
-    return float(np.mean(np.sign(y_true) == np.sign(y_pred)))
+    df = pd.DataFrame({"y_true": y_true, "y_pred": y_pred})
+    try:
+        df["decile"] = pd.qcut(df["y_pred"], 10, labels=False, duplicates="drop")
+        decile_means = df.groupby("decile")["y_true"].mean().sort_index()
+        if len(decile_means) < 3:
+            return 0.0
+        rho, _ = spearmanr(decile_means.index, decile_means.values)
+        return float(rho) if not np.isnan(rho) else 0.0
+    except Exception:
+        return 0.0
 
 
-def long_short_sharpe(returns: np.ndarray, preds: np.ndarray, n_quant: int = 5) -> dict:
-    """Stratify predictions into quintiles, compute long (top) - short (bottom) return."""
-    if len(returns) < n_quant * 5:
-        return {"ls_mean": 0.0, "ls_sharpe": 0.0, "top_mean": 0.0, "bot_mean": 0.0}
-    q = pd.qcut(preds, n_quant, labels=False, duplicates="drop")
-    valid = ~np.isnan(q)
-    if valid.sum() < n_quant * 5:
-        return {"ls_mean": 0.0, "ls_sharpe": 0.0, "top_mean": 0.0, "bot_mean": 0.0}
-    q = q[valid]
-    r = returns[valid]
-    top = r[q == q.max()]
-    bot = r[q == q.min()]
-    ls = np.concatenate([top, -bot])
-    return {
-        "ls_mean": float(ls.mean()),
-        "ls_sharpe": float(ls.mean() / (ls.std() + 1e-10) * np.sqrt(252)),
-        "top_mean": float(top.mean()),
-        "bot_mean": float(bot.mean()),
-    }
+def compute_top_bottom_spread(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    if len(y_true) < 20 or np.std(y_pred) < 1e-12:
+        return 0.0
+    df = pd.DataFrame({"y_true": y_true, "y_pred": y_pred})
+    try:
+        df["decile"] = pd.qcut(df["y_pred"], 10, labels=False, duplicates="drop")
+        decile_means = df.groupby("decile")["y_true"].mean().sort_index()
+        if len(decile_means) < 2:
+            return 0.0
+        return float(decile_means.iloc[-1] - decile_means.iloc[0])
+    except Exception:
+        return 0.0
 
 
 # ============================================================
-# Unified Multi-Regime Time-Series Feature Stability Selection
+# Weighting & Input Scaling
 # ============================================================
-def _run_stratified_bootstrap_trial(X, y, regimes, block_starts, block_freqs, block_size, randomization_alpha, best_alpha, best_l1_ratio, random_seed):
-    warnings.filterwarnings("ignore")
-    N, D = X.shape
-    n_blocks = int(np.ceil(N / block_size))
+def compute_sample_weights(y: np.ndarray, k: float) -> np.ndarray:
+    w = np.abs(y) ** k
+    mean_w = np.mean(w)
+    if mean_w > 1e-10:
+        w = w / mean_w
+    else:
+        w = np.ones_like(w)
+    return w
+
+
+def scale_data_with_weights(X: np.ndarray, y: np.ndarray, w: np.ndarray):
+    X_w = X * np.sqrt(w)[:, np.newaxis]
+    y_w = y * np.sqrt(w)
+    return X_w, y_w
+
+
+# ============================================================
+# Feature Selection Steps
+# ============================================================
+def benjamini_hochberg(p_values: np.ndarray, fdr_level: float = 0.20) -> np.ndarray:
+    m = len(p_values)
+    sorted_indices = np.argsort(p_values)
+    sorted_p = p_values[sorted_indices]
     
-    rng = np.random.default_rng(random_seed)
+    thresholds = (np.arange(1, m + 1) / m) * fdr_level
+    below = sorted_p <= thresholds
     
-    # Stratified block selection
-    m_blocks = {}
-    total_assigned = 0
-    regimes_list = list(block_starts.keys())
-    for r in regimes_list:
-        m = int(np.round(n_blocks * block_freqs[r]))
-        m_blocks[r] = m
-        total_assigned += m
-        
-    diff = n_blocks - total_assigned
-    if diff != 0 and len(regimes_list) > 0:
-        chosen_regime = int(np.argmax(block_freqs))
-        m_blocks[chosen_regime] = max(0, m_blocks[chosen_regime] + diff)
-        
-    start_indices = []
-    for r, m in m_blocks.items():
-        if m > 0 and len(block_starts[r]) > 0:
-            draws = rng.choice(block_starts[r], size=m, replace=True)
-            start_indices.extend(draws)
-            
-    rng.shuffle(start_indices)
+    if not np.any(below):
+        return np.zeros(m, dtype=bool)
     
-    boot_indices = []
-    for start in start_indices:
-        boot_indices.extend(range(start, start + block_size))
-    boot_indices = boot_indices[:N]
+    max_idx = np.max(np.where(below)[0])
+    cutoff = sorted_p[max_idx]
     
-    all_indices = np.arange(N)
-    oob_indices = np.setdiff1d(all_indices, boot_indices)
-    
-    if len(boot_indices) == 0:
-        boot_indices = np.arange(N)
-        oob_indices = np.array([])
-        
-    X_boot = X[boot_indices]
-    y_boot = y[boot_indices]
-    
+    return p_values <= cutoff
+
+
+def run_screening_and_clustering(X_working: np.ndarray, y_working: np.ndarray, feature_names: list):
+    # Step 1: Cheap screening
+    p_vals = []
+    rhos = []
+    for j in range(X_working.shape[1]):
+        rho, p_val = spearmanr(X_working[:, j], y_working)
+        if np.isnan(p_val):
+            p_val = 1.0
+            rho = 0.0
+        p_vals.append(p_val)
+        rhos.append(rho)
+    p_vals = np.array(p_vals)
+    rhos = np.array(rhos)
+
+    screen_mask = benjamini_hochberg(p_vals, fdr_level=0.20)
+    if screen_mask.sum() < 5:
+        # Fallback to top 50 by p-value
+        top_indices = np.argsort(p_vals)[:50]
+        screen_mask = np.zeros(len(p_vals), dtype=bool)
+        screen_mask[top_indices] = True
+
+    surviving_idx = np.where(screen_mask)[0]
+    X_surviving = X_working[:, surviving_idx]
+
+    # Step 1.5: Hierarchical Clustering
+    corr_matrix = np.abs(np.corrcoef(X_surviving.T))
+    corr_matrix = np.nan_to_num(corr_matrix, nan=0.0)
+
+    dist_matrix = 1.0 - corr_matrix
+    dist_matrix = np.clip(dist_matrix, 0.0, 2.0)
+
+    cond_dist = squareform((dist_matrix + dist_matrix.T) / 2.0, checks=False)
+    Z = linkage(cond_dist, method='complete')
+    cluster_labels = fcluster(Z, t=0.7, criterion='distance')
+
+    # Keep best feature per cluster
+    cluster_selected_idx = []
+    for label in np.unique(cluster_labels):
+        in_cluster = np.where(cluster_labels == label)[0]
+        orig_idx_in_cluster = surviving_idx[in_cluster]
+        best_feat = orig_idx_in_cluster[np.argmax(np.abs(rhos[orig_idx_in_cluster]))]
+        cluster_selected_idx.append(best_feat)
+
+    cluster_mask = np.zeros(X_working.shape[1], dtype=bool)
+    cluster_mask[cluster_selected_idx] = True
+
+    return cluster_mask, p_vals, rhos
+
+
+def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, cluster_mask: np.ndarray, B: int = 100, pi: float = 0.60):
+    # Step 2: Stability Selection
+    cluster_features_idx = np.where(cluster_mask)[0]
+    X_cluster = X_working[:, cluster_features_idx]
+
     scaler = StandardScaler()
-    X_boot_scaled = scaler.fit_transform(X_boot).astype(np.float32)
-    
-    W = rng.uniform(randomization_alpha, 1.0, size=D)
-    X_boot_scaled_rand = X_boot_scaled / W
-    
-    model = ElasticNet(alpha=best_alpha, l1_ratio=best_l1_ratio, random_state=random_seed, max_iter=1000, tol=1e-3)
-    model.fit(X_boot_scaled_rand, y_boot)
-    coef_selected = np.abs(model.coef_) > 1e-5
-    
-    ic_selected = np.ones(D, dtype=bool)
-    if len(oob_indices) >= 10:
-        X_oob = X[oob_indices]
-        y_oob = y[oob_indices]
-        X_oob_scaled = StandardScaler().fit_transform(X_oob).astype(np.float32)
+    X_cluster_scaled = scaler.fit_transform(X_cluster)
+
+    # Pre-compute alphas grid
+    from sklearn.linear_model import lasso_path
+    alphas, _, _ = lasso_path(X_cluster_scaled, y_working, n_alphas=50)
+
+    subsample_size = X_working.shape[0] // 2
+    selection_matrix = np.zeros((X_cluster.shape[1], len(alphas), B), dtype=bool)
+
+    rng = np.random.default_rng(42)
+    for b in range(B):
+        sub_idx = rng.choice(X_working.shape[0], size=subsample_size, replace=False)
+        X_sub = X_cluster[sub_idx]
+        y_sub = y_working[sub_idx]
         
-        for j in range(D):
-            x_oob_j = X_oob_scaled[:, j]
-            rho, pval = spearmanr(x_oob_j, y_oob)
-            if np.isnan(rho):
-                ic_selected[j] = True
-            else:
-                ic_selected[j] = (pval < 0.05) or (abs(rho) > 0.02)
-                
-    joint_selected = coef_selected & ic_selected
-    return joint_selected, coef_selected, ic_selected
+        X_sub_scaled = StandardScaler().fit_transform(X_sub)
+        _, coefs, _ = lasso_path(X_sub_scaled, y_sub, alphas=alphas)
+        selection_matrix[:, :, b] = (np.abs(coefs) > 1e-5)
+
+    sel_probs = np.mean(selection_matrix, axis=2)
+    stability_scores = np.max(sel_probs, axis=1)
+
+    stability_keep = stability_scores >= pi
+    if stability_keep.sum() < 3:
+        # Fallback to top 5 stability features
+        top_idx = np.argsort(stability_scores)[-5:]
+        stability_keep = np.zeros_like(stability_keep, dtype=bool)
+        stability_keep[top_idx] = True
+
+    stability_selected_idx = cluster_features_idx[stability_keep]
+    
+    # Store stability score for all FEATURES
+    all_stability_scores = np.zeros(X_working.shape[1])
+    for local_i, orig_i in enumerate(cluster_features_idx):
+        all_stability_scores[orig_i] = stability_scores[local_i]
+
+    return stability_selected_idx, all_stability_scores
 
 
-class TimeSeriesStabilitySelector:
-    """Unified Multi-Regime Time-Series Feature Stability Selector."""
-    def __init__(self, n_bootstraps=N_BOOTSTRAPS, block_size=BLOCK_SIZE, randomization_alpha=0.5,
-                 l1_ratio=0.8, ic_threshold=0.02, ic_sig_level=0.05,
-                 n_splits=5, purge_gap=5, variance_cap=0.15):
-        self.n_bootstraps = n_bootstraps
-        self.block_size = block_size
-        self.randomization_alpha = randomization_alpha
-        self.l1_ratio = l1_ratio
-        self.ic_threshold = ic_threshold
-        self.ic_sig_level = ic_sig_level
-        self.n_splits = n_splits
-        self.purge_gap = purge_gap
-        self.variance_cap = variance_cap
+# ============================================================
+# Yearly Blocked CV Engine
+# ============================================================
+def run_loyo_cv(X_feat: np.ndarray, y_target: np.ndarray, dates: pd.Series, model_type: str, params: dict, k_weight: float):
+    unique_years = sorted(list(set(dates.dt.year.values)))
+    oof_preds = np.zeros(len(y_target))
+    
+    dates_val = dates.values
+    for test_year in unique_years:
+        test_mask = dates.dt.year == test_year
+        test_idx = np.where(test_mask)[0]
+        
+        # Test boundaries
+        test_dates = dates_val[test_mask]
+        min_test_date = np.min(test_dates)
+        max_test_date = np.max(test_dates)
+        
+        # Embargo range (10 calendar days buffer around testing block)
+        embargo_start = min_test_date - pd.Timedelta(days=10)
+        embargo_end = max_test_date + pd.Timedelta(days=10)
+        
+        train_mask = (dates.dt.year != test_year) & ((dates_val < embargo_start) | (dates_val > embargo_end))
+        train_idx = np.where(train_mask)[0]
+        
+        if len(train_idx) == 0 or len(test_idx) == 0:
+            continue
+            
+        X_tr, y_tr = X_feat[train_idx], y_target[train_idx]
+        X_te = X_feat[test_idx]
+        
+        scaler = StandardScaler()
+        X_tr_scaled = scaler.fit_transform(X_tr)
+        X_te_scaled = scaler.transform(X_te)
+        
+        w_tr = compute_sample_weights(y_tr, k_weight)
+        X_tr_w, y_tr_w = scale_data_with_weights(X_tr_scaled, y_tr, w_tr)
+        
+        model = _build_model(model_type, params)
+        model.fit(X_tr_w, y_tr_w)
+        
+        oof_preds[test_idx] = model.predict(X_te_scaled)
+        
+    return oof_preds
 
-    def fit(self, X, y, features):
-        N, D = X.shape
-        # Detect regimes on daily vol20 feature
-        vol_idx = -1
-        if "vol20" in features:
-            vol_idx = features.index("vol20")
-            vols = X[:, vol_idx]
+
+def calculate_yearly_metrics(y_true: np.ndarray, y_pred: np.ndarray, dates: pd.Series, k_features: int, coef_norm: float):
+    df = pd.DataFrame({"y_true": y_true, "y_pred": y_pred, "date": dates})
+    df["year"] = df["date"].dt.year
+    unique_years = sorted(list(df["year"].unique()))
+    
+    y_ics = []
+    y_tail_ics = []
+    y_tail_hits = []
+    y_monos = []
+    y_spreads = []
+    
+    for year in unique_years:
+        year_df = df[df["year"] == year]
+        y_t = year_df["y_true"].values
+        y_p = year_df["y_pred"].values
+        
+        # 1. Overall IC
+        ic = spearman_ic(y_t, y_p)
+        y_ics.append(ic)
+        
+        # 2. Tail IC (top/bottom 10%)
+        n_tail = max(5, int(len(y_p) * 0.10))
+        if len(y_p) >= n_tail * 2:
+            top_idx = np.argsort(y_p)[-n_tail:]
+            bot_idx = np.argsort(y_p)[:n_tail]
+            tail_idx = np.concatenate([bot_idx, top_idx])
+            tail_ic = spearman_ic(y_t[tail_idx], y_p[tail_idx])
         else:
-            vols = np.zeros(N)
-            for i in range(20, N):
-                vols[i] = np.std(y[i-20:i])
+            tail_ic = 0.0
+        y_tail_ics.append(tail_ic)
         
-        q33 = np.quantile(vols, 0.33)
-        q66 = np.quantile(vols, 0.66)
-        regimes = np.zeros(N, dtype=int)
-        regimes[vols > q33] = 1
-        regimes[vols > q66] = 2
+        # 3. Yearly Hit Rate indicator
+        y_tail_hits.append(1.0 if tail_ic > 0 else 0.0)
+        
+        # 4. Decile Monotonicity
+        mono = compute_decile_monotonicity(y_t, y_p)
+        y_monos.append(mono)
+        
+        # 5. Top-Bottom Spread
+        spread = compute_top_bottom_spread(y_t, y_p)
+        y_spreads.append(spread)
+        
+    y_ics = np.array(y_ics)
+    y_tail_ics = np.array(y_tail_ics)
+    y_tail_hits = np.array(y_tail_hits)
+    y_monos = np.array(y_monos)
+    y_spreads = np.array(y_spreads)
+    
+    mean_tail_ic = np.mean(y_tail_ics)
+    std_tail_ic = np.std(y_tail_ics)
+    
+    m1 = mean_tail_ic / (std_tail_ic + 1e-10)     # Yearly Tail IC IR
+    m2 = mean_tail_ic                             # Yearly Tail IC Mean
+    m3 = np.mean(y_tail_hits)                     # Yearly Hit Rate
+    m4 = np.mean(y_ics)                           # Overall Rank IC
+    m5 = np.mean(y_monos)                         # Decile Monotonicity
+    m6 = np.mean(y_spreads)                       # Top-Bottom Spread
+    m7 = -np.log(1.0 + k_features)                # Feature Parsimony (penalized)
+    m8 = -coef_norm                               # Coefficient Bloat (penalized)
+    
+    raw_metrics = [m1, m2, m3, m4, m5, m6, m7, m8]
+    return raw_metrics, unique_years, y_tail_ics
 
-        # Define block starts and their regimes (overlapping blocks)
-        block_starts = []
-        block_regimes = []
-        for s in range(0, N - self.block_size + 1):
-            block_starts.append(s)
-            mode_r = int(np.bincount(regimes[s:s+self.block_size]).argmax())
-            block_regimes.append(mode_r)
-        
-        block_starts = np.array(block_starts)
-        block_regimes = np.array(block_regimes)
 
-        fold_stability_scores = []
-        fold_coef_scores = []
-        fold_ic_scores = []
+# ============================================================
+# Main ETF Trainer
+# ============================================================
+def train_etf(etf_name: str, n_trials: int = 50, side: str = "single"):
+    print(f"\n" + "=" * 80)
+    print(f"Starting First-Principles Training for {etf_name} (Side: {side})")
+    print(f"=" * 80)
+    
+    # Load features parquet
+    features_path = DATA_DIR / f"features_{etf_name}.parquet"
+    if not features_path.exists():
+        print(f"  [ERROR] Features file not found: {features_path}")
+        return None
         
-        splits = list(purged_tssplit(N, self.n_splits, self.purge_gap))
-        print(f"  [Stability Selection] Running {self.n_splits} splits of walk-forward stability selection...")
+    df = pd.read_parquet(features_path)
+    if "date" not in df.columns:
+        df = df.reset_index()
+    df = df.sort_values("date").reset_index(drop=True)
+    df["date"] = pd.to_datetime(df["date"])
+    
+    # Handle NaNs in features
+    X_df = df[FEATURES].ffill().fillna(df[FEATURES].median())
+    X = X_df.values
+    y = df[TARGET].values
+    
+    N = len(df)
+    print(f"Loaded {N} samples and {X.shape[1]} features.")
+    
+    # Target scaling (consistent with old pipeline target scaling)
+    # trade_return values are typically small log-returns, so we scale by 100.0
+    y_scaled = y * 100.0
+    
+    # Step 0: Lockout split by date (working: before 2024-03-01, lockbox: 2024-03-01 onwards)
+    working_mask = df["date"] < "2024-03-01"
+    lockbox_mask = df["date"] >= "2024-03-01"
+    working_idx = np.where(working_mask)[0]
+    lockbox_idx = np.where(lockbox_mask)[0]
+    
+    X_working = X[working_idx]
+    y_working = y_scaled[working_idx]
+    dates_working = df["date"].iloc[working_idx].reset_index(drop=True)
+    
+    X_lockbox = X[lockbox_idx]
+    y_lockbox = y_scaled[lockbox_idx]
+    dates_lockbox = df["date"].iloc[lockbox_idx].reset_index(drop=True)
+    
+    print(f"Split: Working={len(working_idx)} rows, Lockbox={len(lockbox_idx)} rows.")
+    
+    # Step 1 & 1.5: Cheap screening & Hierarchical Feature Clustering
+    print("Running feature screening and clustering...")
+    cluster_mask, p_vals, rhos = run_screening_and_clustering(X_working, y_working, FEATURES)
+    print(f"Screened and clustered features: {cluster_mask.sum()} surviving cluster candidates.")
+    
+    # Step 2: Stability Selection on the survivors
+    print("Running stability selection...")
+    stability_selected_idx, stability_scores = run_stability_selection(X_working, y_working, cluster_mask, B=100, pi=0.60)
+    
+    selected_feature_names = [FEATURES[idx] for idx in stability_selected_idx]
+    K_sel = len(stability_selected_idx)
+    print(f"Stability selection finished. Kept {K_sel} features: {selected_feature_names}")
+    
+    # Freeze the features for the final and Optuna loops
+    X_working_final = X_working[:, stability_selected_idx]
+    X_lockbox_final = X_lockbox[:, stability_selected_idx]
+    
+    # We fit a ridge model or baseline once to compute scaling factors or norms
+    scaler_init = StandardScaler()
+    X_working_scaled_init = scaler_init.fit_transform(X_working_final)
+    
+    # Define Optuna objective helper
+    # We must collect pilot run metrics to compute robust z-score normalizations
+    pilot_metrics = []
+    
+    def evaluate_params(trial_params):
+        model_type = trial_params["model_type"]
+        k_weight = trial_params["k_weight"]
         
-        for fold_idx, (train_idx, test_idx) in enumerate(splits):
-            X_tr, y_tr = X[train_idx], y[train_idx]
-            regimes_tr = regimes[train_idx]
+        # Build specific parameters dict
+        params = {}
+        if model_type == "skglm_huber_l1":
+            params["skglm_huber_l1_alpha"] = trial_params["skglm_huber_l1_alpha"]
+            params["skglm_huber_delta"] = trial_params["skglm_huber_delta"]
+        elif model_type == "skglm_mcp":
+            params["skglm_mcp_alpha"] = trial_params["skglm_mcp_alpha"]
+            params["skglm_mcp_gamma"] = trial_params["skglm_mcp_gamma"]
+            params["skglm_mcp_delta"] = trial_params["skglm_mcp_delta"]
+        elif model_type == "lasso":
+            params["lasso_alpha"] = trial_params["lasso_alpha"]
+        elif model_type == "elasticnet":
+            params["en_alpha"] = trial_params["en_alpha"]
+            params["en_l1_ratio"] = trial_params["en_l1_ratio"]
             
-            max_start = len(train_idx) - self.block_size
-            if max_start < 1:
-                continue
+        # LOYO CV predictions
+        oof_preds = run_loyo_cv(X_working_final, y_working, dates_working, model_type, params, k_weight)
+        
+        # Fit final model on working set to compute coefficient norm
+        # We reuse the same scaling logic
+        scaler_temp = StandardScaler()
+        X_working_scaled_temp = scaler_temp.fit_transform(X_working_final)
+        w_temp = compute_sample_weights(y_working, k_weight)
+        X_weighted_temp, y_weighted_temp = scale_data_with_weights(X_working_scaled_temp, y_working, w_temp)
+        
+        model_temp = _build_model(model_type, params)
+        model_temp.fit(X_weighted_temp, y_weighted_temp)
+        
+        coef_norm = float(np.linalg.norm(model_temp.coef_))
+        
+        # Calculate raw yearly metrics
+        raw_metrics, _, _ = calculate_yearly_metrics(y_working, oof_preds, dates_working, K_sel, coef_norm)
+        return raw_metrics, model_temp, scaler_temp
+        
+    # Phase 1: Pilot Run (50 trials) to gather MAD metrics
+    print("\nRunning Optuna Pilot Study (50 trials) for normalization calibration...")
+    pilot_study = optuna.create_study(direction="maximize")
+    
+    def pilot_objective(trial):
+        model_type = trial.suggest_categorical("model_type", ["skglm_huber_l1", "skglm_mcp"])
+        k_weight = trial.suggest_float("k_weight", 0.0, 3.0)
+        
+        trial_params = {"model_type": model_type, "k_weight": k_weight}
+        if model_type == "skglm_huber_l1":
+            trial_params["skglm_huber_l1_alpha"] = trial.suggest_float("skglm_huber_l1_alpha", 1e-5, 10.0, log=True)
+            trial_params["skglm_huber_delta"] = trial.suggest_float("skglm_huber_delta", 0.5, 5.0)
+        elif model_type == "skglm_mcp":
+            trial_params["skglm_mcp_alpha"] = trial.suggest_float("skglm_mcp_alpha", 1e-5, 10.0, log=True)
+            trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 1.5, 10.0)
+            trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
+            
+        try:
+            raw_metrics, _, _ = evaluate_params(trial_params)
+            trial.set_user_attr("raw_metrics", raw_metrics)
+            # Objective in pilot: simple average of Tail IC Mean (M2) and Overall Rank IC (M4)
+            return raw_metrics[1] + raw_metrics[3]
+        except Exception as e:
+            import traceback
+            print(f"Pilot trial failed: {e}")
+            traceback.print_exc()
+            return -999.0
+            
+    pilot_study.optimize(pilot_objective, n_trials=50)
+    
+    # Gather pilot results
+    for t in pilot_study.trials:
+        if t.state == optuna.trial.TrialState.COMPLETE:
+            raw_m = t.user_attrs.get("raw_metrics")
+            if raw_m:
+                pilot_metrics.append(raw_m)
                 
-            tr_block_starts = block_starts[block_starts <= max_start]
-            tr_block_regimes = block_regimes[block_starts <= max_start]
+    if len(pilot_metrics) == 0:
+        raise RuntimeError("Optuna pilot run failed entirely. Check skglm model fit/installation.")
+        
+    pilot_metrics = np.array(pilot_metrics)
+    
+    # Compute median and MAD per metric
+    medians = np.median(pilot_metrics, axis=0)
+    mads = np.median(np.abs(pilot_metrics - medians), axis=0)
+    # Avoid zero division
+    mads[mads < 1e-6] = 1.0
+    
+    print("Normalizing constants calibrated from Pilot run:")
+    for i in range(8):
+        print(f"  M{i+1}: Median={medians[i]:.6f}, MAD={mads[i]:.6f}")
+        
+    # Phase 2: Main Study (Optuna Tuning)
+    print(f"\nRunning main Optuna Study ({n_trials} trials) with First-Principles Multi-Metric Objective...")
+    study = optuna.create_study(direction="maximize")
+    
+    best_raw_metrics = None
+    best_model_obj = None
+    best_scaler_obj = None
+    
+    def main_objective(trial):
+        nonlocal best_raw_metrics, best_model_obj, best_scaler_obj
+        
+        model_type = trial.suggest_categorical("model_type", ["skglm_huber_l1", "skglm_mcp"])
+        k_weight = trial.suggest_float("k_weight", 0.0, 3.0)
+        
+        trial_params = {"model_type": model_type, "k_weight": k_weight}
+        if model_type == "skglm_huber_l1":
+            trial_params["skglm_huber_l1_alpha"] = trial.suggest_float("skglm_huber_l1_alpha", 1e-5, 10.0, log=True)
+            trial_params["skglm_huber_delta"] = trial.suggest_float("skglm_huber_delta", 0.5, 5.0)
+        elif model_type == "skglm_mcp":
+            trial_params["skglm_mcp_alpha"] = trial.suggest_float("skglm_mcp_alpha", 1e-5, 10.0, log=True)
+            trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 1.5, 10.0)
+            trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
             
-            regime_starts = {}
-            for r in [0, 1, 2]:
-                regime_starts[r] = tr_block_starts[tr_block_regimes == r]
+        try:
+            raw_metrics, model_obj, scaler_obj = evaluate_params(trial_params)
             
-            counts = np.bincount(regimes_tr, minlength=3)
-            freqs = counts / len(regimes_tr)
+            # Extract metrics for kill switches
+            m1, m2, m3, m4, m5, m6, m7, m8 = raw_metrics
             
-            scaler_tr = StandardScaler()
-            X_tr_scaled = scaler_tr.fit_transform(X_tr).astype(np.float32)
-            
-            try:
-                enet_cv = ElasticNetCV(l1_ratio=self.l1_ratio, cv=5, random_state=42, 
-                                       alphas=np.logspace(-4, 1, 20), tol=1e-2, max_iter=500, n_jobs=-1)
-                enet_cv.fit(X_tr_scaled, y_tr)
-                best_alpha = enet_cv.alpha_
-                best_l1_ratio = enet_cv.l1_ratio_
-            except Exception:
-                best_alpha = 0.01
-                best_l1_ratio = self.l1_ratio
-
-            results = Parallel(n_jobs=-1)(
-                delayed(_run_stratified_bootstrap_trial)(
-                    X_tr, y_tr, regimes_tr, regime_starts, freqs,
-                    self.block_size, self.randomization_alpha,
-                    best_alpha, best_l1_ratio, 42 + fold_idx * 1000 + i
-                )
-                for i in range(self.n_bootstraps)
+            # Hard Constraints / Kill Switches:
+            # 1. Overall IC > 0 (M4 > 0)
+            # 2. Minimum Hit Rate >= 60% (M3 >= 0.60)
+            # 3. Decile Monotonicity > 0.4 (M5 > 0.4)
+            # 4. Feature count ∈ [3, 50] (already frozen and satisfied since K_sel is checked)
+            # 5. Top-Bottom Spread > 0 (M6 > 0)
+            if m4 <= 0 or m3 < 0.60 or m5 <= 0.4 or m6 <= 0:
+                return -1e9 # Pruned due to constraint violation
+                
+            # Normalize metrics
+            norm_metrics = []
+            for i in range(8):
+                n_m = (raw_metrics[i] - medians[i]) / (mads[i] + 1e-10)
+                norm_metrics.append(n_m)
+                
+            # Compute weighted sum
+            objective_val = (
+                METRIC_WEIGHTS["m1"] * norm_metrics[0] +
+                METRIC_WEIGHTS["m2"] * norm_metrics[1] +
+                METRIC_WEIGHTS["m3"] * norm_metrics[2] +
+                METRIC_WEIGHTS["m4"] * norm_metrics[3] +
+                METRIC_WEIGHTS["m5"] * norm_metrics[4] +
+                METRIC_WEIGHTS["m6"] * norm_metrics[5] +
+                METRIC_WEIGHTS["m7"] * norm_metrics[6] +
+                METRIC_WEIGHTS["m8"] * norm_metrics[7]
             )
             
-            joint_selections = np.array([r[0] for r in results])
-            coef_selections = np.array([r[1] for r in results])
-            ic_selections = np.array([r[2] for r in results])
+            # Track best models manually since trial objects don't store objects
+            trial.set_user_attr("raw_metrics", raw_metrics)
+            return objective_val
             
-            fold_stability_scores.append(np.mean(joint_selections, axis=0))
-            fold_coef_scores.append(np.mean(coef_selections, axis=0))
-            fold_ic_scores.append(np.mean(ic_selections, axis=0))
+        except Exception as e:
+            return -1e9
             
-        fold_stability_scores = np.array(fold_stability_scores)
-        fold_coef_scores = np.array(fold_coef_scores)
-        fold_ic_scores = np.array(fold_ic_scores)
+    study.optimize(main_objective, n_trials=n_trials)
+    
+    # Retrieve best trial results
+    best_trial = study.best_trial
+    best_params = best_trial.params
+    best_raw_m = best_trial.user_attrs.get("raw_metrics")
+    
+    if best_raw_m is None:
+        print(f"\n[WARNING] All main study trials violated hard constraints for {etf_name}. Searching for best valid trial...")
+        valid_trials = [t for t in study.trials if t.user_attrs.get("raw_metrics") is not None]
+        if valid_trials:
+            valid_trials.sort(key=lambda t: t.value if t.value is not None else -1e10, reverse=True)
+            best_trial = valid_trials[0]
+            best_params = best_trial.params
+            best_raw_m = best_trial.user_attrs.get("raw_metrics")
+        else:
+            print("[WARNING] No main trials succeeded. Falling back to pilot study's best trial.")
+            pilot_valid = [t for t in pilot_study.trials if t.user_attrs.get("raw_metrics") is not None]
+            if pilot_valid:
+                pilot_valid.sort(key=lambda t: t.value if t.value is not None else -1e10, reverse=True)
+                best_trial = pilot_valid[0]
+                best_params = best_trial.params
+                best_raw_m = best_trial.user_attrs.get("raw_metrics")
+            else:
+                raise RuntimeError("Both main and pilot studies failed to produce any valid trial results.")
+
+    print(f"\nBest hyperparameters found by Optuna:")
+    for k, v in best_params.items():
+        print(f"  {k}: {v}")
         
-        mean_stability = np.mean(fold_stability_scores, axis=0)
-        std_stability = np.std(fold_stability_scores, axis=0)
-        mean_coef = np.mean(fold_coef_scores, axis=0)
-        mean_ic = np.mean(fold_ic_scores, axis=0)
-        
-        stats_df = pd.DataFrame({
-            "feature": features,
-            "mean_stability": mean_stability,
-            "std_stability": std_stability,
-            "mean_coef_selection": mean_coef,
-            "mean_ic_selection": mean_ic
-        })
-        
-        print("\n  Top Feature Stability Scores (Walk-Forward CV):")
-        sorted_stats = stats_df.sort_values(by="mean_stability", ascending=False)
-        for _, row in sorted_stats.iterrows():
-            print(f"    {row['feature']:<25} : Mean={row['mean_stability']:.1%}, Std={row['std_stability']:.1%}, L1={row['mean_coef_selection']:.1%}, IC={row['mean_ic_selection']:.1%}")
-            
-        return stats_df
-
-
-def compute_stability_scores(X, y, features, n_splits=5, gap=5, block_size=BLOCK_SIZE, n_bootstraps=N_BOOTSTRAPS, variance_cap=0.15):
-    selector = TimeSeriesStabilitySelector(
-        n_bootstraps=n_bootstraps,
-        block_size=block_size,
-        randomization_alpha=0.5,
-        l1_ratio=0.8,
-        ic_threshold=0.02,
-        ic_sig_level=0.05,
-        n_splits=n_splits,
-        purge_gap=gap,
-        variance_cap=variance_cap
-    )
-    stats_df = selector.fit(X, y, features)
-    return stats_df["mean_stability"].values, stats_df["std_stability"].values
-
-
-# ============================================================
-# Optuna objective
-# ============================================================
-def _side_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str) -> float:
-    """Side-aware Spearman IC.
-
-    long  : IC between prediction and max(0, y)  — upside ranking quality
-    short : IC between -prediction and max(0, -y) — downside ranking quality
-    single: IC between prediction and y            — overall ranking quality
-    """
-    if side == "long":
-        target = np.maximum(0.0, y_true)
-    elif side == "short":
-        target = np.maximum(0.0, -y_true)
-        y_pred = -y_pred
-    else:
-        target = y_true
-    return spearman_ic(target, y_pred)
-
-
-def _tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str,
-             top_frac: float = 0.3) -> float:
-    """Tail-weighted Spearman IC — IC computed only on the top predictions.
-
-    Phase 2.5 fix: overall IC optimises for rank correlation across ALL
-    predictions, but trading only fires on the top tail.  This function
-    computes IC on the top ``top_frac`` of predictions by conviction.
-
-    For ``long``/``short``: top = highest side-oriented prediction.
-    For ``single``: top = highest |prediction| (strongest conviction either way).
-    """
-    n = len(y_pred)
-    if n < 10:
-        return _side_ic(y_true, y_pred, side)
-    if side == "short":
-        oriented = -y_pred
-    elif side == "long":
-        oriented = y_pred
-    else:
-        oriented = np.abs(y_pred)
-    cutoff = np.nanquantile(oriented, 1.0 - top_frac)
-    mask = oriented >= cutoff
-    if mask.sum() < 5:
-        return _side_ic(y_true, y_pred, side)
-    return spearman_ic(y_true[mask], y_pred[mask])
-
-
-def make_objective(pre_scaled_splits, y, sample_w, stability_scores, fold_std_stability, side="single",
-                   tail_weight: float = 0.0, variance_cap: float = 0.15,
-                   max_top_k: int = 20):
-    def objective(trial: optuna.Trial) -> float:
-        model_type = trial.suggest_categorical(
-            "model_type", _OPTUNA_MODEL_TYPES)
-        # Suggest top K features as a hyperparameter (bounded by capacity cap)
-        top_lo = 3
-        top_hi = max(top_lo, int(max_top_k))
-        top_k_features = trial.suggest_int("top_k_features", top_lo, top_hi, step=1)
-
-        # Select indices by ranking stability scores descending
-        selected_indices = np.argsort(stability_scores)[::-1][:top_k_features]
-
-        if model_type == "skglm_huber_l1":
-            alpha = trial.suggest_float("skglm_huber_l1_alpha", 1e-5, 1e3, log=True)
-            delta = trial.suggest_float("skglm_huber_delta", 1.0, 3.0)
-            params = {"skglm_huber_l1_alpha": alpha, "skglm_huber_delta": delta}
-        elif model_type == "skglm_mcp":
-            alpha = trial.suggest_float("skglm_mcp_alpha", 1e-5, 1e3, log=True)
-            gamma = trial.suggest_float("skglm_mcp_gamma", 1.5, 15.0)
-            params = {"skglm_mcp_alpha": alpha, "skglm_mcp_gamma": gamma}
-
-        model = _build_model(model_type, params)
-
-        ics = []
-        tail_ics = []
-        for Xtr_s, Xte_s, train_idx, test_idx in pre_scaled_splits:
-            Xtr_sel = Xtr_s[:, selected_indices]
-            Xte_sel = Xte_s[:, selected_indices]
-
-            _safe_fit(model, Xtr_sel, y[train_idx], sample_w[train_idx])
-            preds = model.predict(Xte_sel)
-            ics.append(_side_ic(y[test_idx], preds, side))
-            tail_ics.append(_tail_ic(y[test_idx], preds, side))
-
-        mean_ic = float(np.mean(ics)) if ics else -1.0
-        mean_tail = float(np.mean(tail_ics)) if tail_ics else -1.0
-        # Phase 2.5: blend overall IC with tail IC to align with trading
-        return (1.0 - tail_weight) * mean_ic + tail_weight * mean_tail
-    return objective
-
-
-# ============================================================
-# Phase-3 overfit controls: top-K cap, nested CV, CPCV, locked splits
-# ============================================================
-def _top_k_cap(n_dev: int, override: int = None) -> int:
-    """Capacity cap on the number of selected features.
-
-    Rule of thumb: sqrt(n_dev)/4 with hard caps (20 by default, 15 for small n).
-    Driven by sample-size consideration — too many features vs samples invites
-    multiple-testing wins inside Optuna.
-    """
-    if override is not None and override > 0:
-        return max(3, int(override))
-    cap = max(5, int(np.sqrt(n_dev) / 4))
-    cap = min(cap, 20)
-    if n_dev < DEFAULT_SMALL_N:
-        cap = min(cap, 15)
-    return cap
-
-
-def _load_or_create_locked_split(tag: str, n: int, holdout_n: int):
-    """Lock dev/holdout boundary in a JSON registry.
-
-    Re-running Optuna on a different split inflates apparent holdout IC.
-    First run writes the boundary; subsequent runs reuse it (clamped to n).
-    Returns (train_dev_idx, holdout_idx).
-    """
-    locked = {}
-    if LOCK_FILE.exists():
-        try:
-            locked = json.load(open(LOCK_FILE))
-        except Exception:
-            locked = {}
-    key = f"{tag}__n{n}"
-    if key in locked:
-        ho = int(locked[key])
-    else:
-        ho = holdout_n
-        locked[key] = ho
-        try:
-            with open(LOCK_FILE, "w") as f:
-                json.dump(locked, f, indent=2)
-        except Exception:
-            pass
-    ho = max(10, min(ho, n - 50))
-    train_dev_idx = np.arange(0, n - ho)
-    holdout_idx = np.arange(n - ho, n)
-    return train_dev_idx, holdout_idx
-
-
-def _optuna_sampler(sampler_name: str, seed: int = 42):
-    if sampler_name == "random":
-        return optuna.samplers.RandomSampler(seed=seed)
-    return optuna.samplers.TPESampler(seed=seed)
-
-
-def _inner_optuna_search(X_inner, y_inner, sw_inner, stab_scores, features,
-                         side, tail_weight, n_inner_splits, gap,
-                         n_inner_trials, sampler, max_top_k):
-    """Run Optuna inside an outer fold. Returns best_params dict."""
-    pre_scaled_splits = []
-    for tr, te in purged_tssplit(len(y_inner), n_inner_splits, gap):
-        sc = StandardScaler().fit(X_inner[tr])
-        Xtr_s = sc.transform(X_inner[tr]).astype(np.float32)
-        Xte_s = sc.transform(X_inner[te]).astype(np.float32)
-        pre_scaled_splits.append((Xtr_s, Xte_s, tr, te))
-    if not pre_scaled_splits:
-        return {"model_type": "skglm_huber_l1",
-                "top_k_features": 5,
-                "skglm_huber_l1_alpha": 0.01,
-                "skglm_huber_delta": 1.35}
-    obj = make_objective(pre_scaled_splits, y_inner, sw_inner, stab_scores, None,
-                         side=side, tail_weight=tail_weight, variance_cap=0.15,
-                         max_top_k=max_top_k)
-    study = optuna.create_study(direction="maximize", sampler=sampler,
-                                pruner=optuna.pruners.MedianPruner(n_warmup_steps=5))
-    study.optimize(obj, n_trials=n_inner_trials, show_progress_bar=False)
-    return study.best_params
-
-
-def _outer_fold_predict(X_inner, y_inner, sw_inner, stab_target_inner,
-                        X_outer, features, side, tail_weight,
-                        n_inner_splits, gap, n_inner_trials, n_bootstraps,
-                        sampler_seed, max_top_k, ridge_alpha=1.0):
-    """One outer fold: stability selection + inner Optuna + skglm fit + Ridge control.
-
-    Returns dict with oos_preds (skglm), ridge_oos_preds, best_params,
-    selected_indices, n_selected.
-    """
-    # 1) stability selection on inner-train (uses side-aware target)
-    stab_scores, stab_std = compute_stability_scores(
-        X_inner, stab_target_inner, features,
-        n_splits=n_inner_splits, gap=gap, n_bootstraps=n_bootstraps)
-
-    # 2) inner Optuna
-    sampler = _optuna_sampler("tpe", seed=sampler_seed)
-    best_params = _inner_optuna_search(
-        X_inner, y_inner, sw_inner, stab_scores, features,
-        side, tail_weight, n_inner_splits, gap, n_inner_trials, sampler, max_top_k)
-
-    top_k = int(best_params["top_k_features"])
-    selected_indices = np.argsort(stab_scores)[::-1][:top_k]
-
-    # 3) fit skglm on inner-train selected features, predict outer-test
-    sc = StandardScaler().fit(X_inner)
-    Xtr_sel = sc.transform(X_inner)[:, selected_indices].astype(np.float32)
-    Xte_sel = sc.transform(X_outer)[:, selected_indices].astype(np.float32)
-    model = _build_model(best_params["model_type"], best_params)
-    _safe_fit(model, Xtr_sel, y_inner, sw_inner)
-    preds_oos = model.predict(Xte_sel) / Y_SCALE
-
-    # 4) Ridge control — same selected features, no further tuning
-    ridge = Ridge(alpha=ridge_alpha, random_state=42)
-    ridge.fit(Xtr_sel, y_inner, sample_weight=sw_inner)
-    preds_ridge = ridge.predict(Xte_sel) / Y_SCALE
-
-    return {
-        "oos_preds": preds_oos,
-        "ridge_oos_preds": preds_ridge,
-        "best_params": best_params,
-        "selected_indices": selected_indices,
-        "n_selected": top_k,
-    }
-
-
-def nested_cv_evaluate(X, y_raw, sample_w, stab_target_full, features, side, tail_weight,
-                       n_outer=DEFAULT_NESTED_SPLITS, gap=DEFAULT_PURGE_GAP,
-                       n_inner_splits=DEFAULT_INNER_SPLITS,
-                       n_inner_trials=DEFAULT_INNER_TRIALS,
-                       n_bootstraps=DEFAULT_INNER_BOOTSTRAPS,
-                       max_top_k=20, base_seed=42, dates=None):
-    """Honest OOS estimate via nested purged walk-forward CV.
-
-    Outer loop walks forward over the full dataset. Inside each outer fold:
-      * stability selection + Optuna are run on inner-train only
-      * skglm model and Ridge control are evaluated on the outer test fold
-    No information from outside the inner-train window leaks into outer preds.
-    Returns dict with preds arrays, per-fold IC for skglm + Ridge, and overall.
-    """
-    n = len(y_raw)
-    y = (y_raw * Y_SCALE).astype(np.float32)
-    stab_target = (stab_target_full * Y_SCALE).astype(np.float32)
-    preds_full = np.full(n, np.nan)
-    ridge_full = np.full(n, np.nan)
-    fold_meta = []
-
-    splits = list(purged_tssplit(n, n_outer, gap))
-    print(f"  [Nested CV] {len(splits)} outer folds × "
-          f"{n_inner_trials} inner trials (gap={gap}) ...")
-    for fi, (tr, te) in enumerate(splits):
-        t0 = time.time()
-        res = _outer_fold_predict(
-            X[tr], y[tr], sample_w[tr], stab_target[tr],
-            X[te], features, side, tail_weight,
-            n_inner_splits, gap, n_inner_trials, n_bootstraps,
-            base_seed + fi * 7919, max_top_k)
-        preds_full[te] = res["oos_preds"]
-        ridge_full[te] = res["ridge_oos_preds"]
-        ic_sk = spearman_ic(y_raw[te], res["oos_preds"])
-        ic_rg = spearman_ic(y_raw[te], res["ridge_oos_preds"])
-        fold_meta.append({
-            "fold": fi,
-            "n_train": int(len(tr)), "n_test": int(len(te)),
-            "ic_skglm": float(ic_sk), "ic_ridge": float(ic_rg),
-            "n_selected": int(res["n_selected"]),
-            "best_params": res["best_params"],
-            "train_end": str(dates[tr[-1]].date()) if dates is not None else None,
-            "test_start": str(dates[te[0]].date()) if dates is not None else None,
-            "elapsed_sec": float(time.time() - t0),
-        })
-        print(f"    fold {fi}: n_tr={len(tr)} n_te={len(te)} "
-              f"IC(skglm)={ic_sk:+.4f}  IC(ridge)={ic_rg:+.4f}  "
-              f"k={res['n_selected']}  ({time.time()-t0:.0f}s)")
-
-    valid = ~np.isnan(preds_full)
-    overall_skglm = spearman_ic(y_raw[valid], preds_full[valid])
-    overall_ridge = spearman_ic(y_raw[valid], ridge_full[valid])
-    dir_skglm = direction_accuracy(y_raw[valid], preds_full[valid])
-    ls_skglm = long_short_sharpe(y_raw[valid], preds_full[valid])
-    ls_ridge = long_short_sharpe(y_raw[valid], ridge_full[valid])
-
-    # Per-year breakdown (using outer-fold preds, fully OOS to selection)
-    yearly = {}
-    if dates is not None:
-        df = pd.DataFrame({"d": dates, "y": y_raw, "p": preds_full, "r": ridge_full})
-        df["year"] = pd.to_datetime(df["d"]).dt.year
-        for yr, g in df.dropna(subset=["p"]).groupby("year"):
-            if len(g) >= 20:
-                yearly[int(yr)] = {
-                    "ic_skglm": spearman_ic(g["y"].values, g["p"].values),
-                    "ic_ridge": spearman_ic(g["y"].values, g["r"].values),
-                    "n": int(len(g)),
-                }
-
-    return {
-        "preds": preds_full,
-        "ridge_preds": ridge_full,
-        "overall_ic_skglm": float(overall_skglm),
-        "overall_ic_ridge": float(overall_ridge),
-        "dir_skglm": float(dir_skglm),
-        "ls_sharpe_skglm": float(ls_skglm["ls_sharpe"]),
-        "ls_sharpe_ridge": float(ls_ridge["ls_sharpe"]),
-        "per_fold": fold_meta,
-        "yearly": yearly,
-        "valid_mask": valid,
-        # Deployability gate: skglm must beat Ridge by >0.02 IC OOS
-        "deployable": bool(overall_skglm - overall_ridge > 0.02
-                           and overall_skglm > 0.0),
-        "edge_over_ridge": float(overall_skglm - overall_ridge),
-    }
-
-
-def _cpcv_paths(n: int, n_groups: int = DEFAULT_CPCV_GROUPS,
-                n_test_groups: int = DEFAULT_CPCV_TEST_GROUPS,
-                gap: int = DEFAULT_PURGE_GAP):
-    """Combinatorial Purged Cross-Validation paths (López de Prado).
-
-    Split the timeline into ``n_groups`` contiguous groups. For each combination
-    of ``n_test_groups`` contiguous groups, the test set is that span (with a
-    purge of ``gap`` samples at each boundary) and the train set is everything
-    else. Yields multiple (train_idx, test_idx) paths.
-    """
-    boundaries = np.linspace(0, n, n_groups + 1).astype(int)
-    paths = []
-    for start in range(n_groups - n_test_groups + 1):
-        te_lo = boundaries[start]
-        te_hi = boundaries[start + n_test_groups]
-        # purge around the test window
-        te_lo_p = max(0, te_lo - gap)
-        te_hi_p = min(n, te_hi + gap)
-        test_idx = np.arange(te_lo, te_hi)
-        train_idx = np.concatenate([
-            np.arange(0, te_lo_p),
-            np.arange(te_hi_p, n),
-        ])
-        train_idx = train_idx[train_idx < n]
-        if len(train_idx) < 50 or len(test_idx) < 30:
-            continue
-        paths.append((train_idx, test_idx))
-    return paths
-
-
-def cpcv_evaluate(X, y_raw, sample_w, stab_target_full, features, side, tail_weight,
-                  selected_indices_locked, best_params_locked,
-                  n_groups=DEFAULT_CPCV_GROUPS, n_test_groups=DEFAULT_CPCV_TEST_GROUPS,
-                  gap=DEFAULT_PURGE_GAP, dates=None, ridge_alpha=1.0):
-    """Multi-path OOS IC using a *locked* (already tuned) configuration.
-
-    Unlike nested CV this does NOT re-tune per path; it uses the deployed
-    feature set + params and only varies the train/test split. Gives a
-    distribution of OOS IC rather than a single point estimate.
-    """
-    n = len(y_raw)
-    y = (y_raw * Y_SCALE).astype(np.float32)
-    paths = _cpcv_paths(n, n_groups, n_test_groups, gap)
-    if not paths:
-        return {"path_ics_skglm": [], "path_ics_ridge": [],
-                "mean_ic_skglm": 0.0, "mean_ic_ridge": 0.0,
-                "n_paths": 0}
-    sk_ics, rg_ics = [], []
-    for pi, (tr, te) in enumerate(paths):
-        sc = StandardScaler().fit(X[tr])
-        Xtr_sel = sc.transform(X[tr])[:, selected_indices_locked].astype(np.float32)
-        Xte_sel = sc.transform(X[te])[:, selected_indices_locked].astype(np.float32)
-        m = _build_model(best_params_locked["model_type"], best_params_locked)
-        _safe_fit(m, Xtr_sel, y[tr], sample_w[tr])
-        p_sk = m.predict(Xte_sel) / Y_SCALE
-        ridge = Ridge(alpha=ridge_alpha, random_state=42)
-        ridge.fit(Xtr_sel, y[tr], sample_weight=sample_w[tr])
-        p_rg = ridge.predict(Xte_sel) / Y_SCALE
-        sk_ics.append(spearman_ic(y_raw[te], p_sk))
-        rg_ics.append(spearman_ic(y_raw[te], p_rg))
-    sk_arr = np.array(sk_ics)
-    rg_arr = np.array(rg_ics)
-    return {
-        "n_paths": len(paths),
-        "path_ics_skglm": [float(x) for x in sk_ics],
-        "path_ics_ridge": [float(x) for x in rg_ics],
-        "mean_ic_skglm": float(sk_arr.mean()) if len(sk_arr) else 0.0,
-        "std_ic_skglm": float(sk_arr.std()) if len(sk_arr) else 0.0,
-        "mean_ic_ridge": float(rg_arr.mean()) if len(rg_arr) else 0.0,
-        "std_ic_ridge": float(rg_arr.std()) if len(rg_arr) else 0.0,
-        "min_ic_skglm": float(sk_arr.min()) if len(sk_arr) else 0.0,
-    }
-
-
-
-def train_etf(etf_name: str, n_trials: int, n_splits: int, gap: int,
-              side: str = "single",
-              run_nested: bool = True, run_cpcv: bool = True,
-              n_outer: int = DEFAULT_NESTED_SPLITS,
-              n_inner_splits: int = DEFAULT_INNER_SPLITS,
-              n_inner_trials: int = DEFAULT_INNER_TRIALS,
-              n_inner_bootstraps: int = DEFAULT_INNER_BOOTSTRAPS,
-              sampler_name: str = "tpe",
-              max_top_k_override: int = 0,
-              ridge_alpha: float = 1.0) -> dict:
-    """Train one linear model for an ETF.
-
-    side="single" (default): symmetric target ``y = trade_return``.
-    side="long":  asymmetric stability target ``y = max(0, trade_return)`` (upside specialist).
-    side="short": asymmetric stability target ``y = max(0, -trade_return)`` (downside specialist).
-    """
-    if side not in ("single", "long", "short"):
-        raise ValueError(f"side must be single|long|short, got {side!r}")
-
-    t0 = time.time()
-    feat_path = DATA_DIR / f"features_{etf_name}.parquet"
-    if not feat_path.exists():
-        print(f"  [SKIP] {etf_name}: missing {feat_path.name}. Run build_features.py first.")
-        return {}
-
-    feat = pd.read_parquet(feat_path).sort_index()
-    feat = feat.dropna(subset=FEATURES + [TARGET]).copy()
-    X = feat[FEATURES].values.astype(np.float32)
-    # Always train on the raw trade_return so the model preserves full regression
-    # signal (including the magnitude of negative returns).  The clipped target
-    # is used ONLY for stability-selection feature pruning so each side picks
-    # features that are relevant to its regime (upside / downside).
-    y_raw = feat[TARGET].values.astype(np.float32)
-    n = len(feat)
-    if side == "long":
-        y_clip_raw = np.maximum(0.0, y_raw)
-    elif side == "short":
-        y_clip_raw = np.maximum(0.0, -y_raw)
-    else:
-        y_clip_raw = y_raw.copy()
-    y = (y_raw * Y_SCALE).astype(np.float32)          # training target (raw)
-    y_clip = (y_clip_raw * Y_SCALE).astype(np.float32)  # stability-selection target (asymmetric)
-    # Sample weights: gently emphasize the side's active regime without
-    # distorting the overall regression.  lambda=0.5 means a +2σ day gets
-    # only ~2× weight; most days stay near 1×.
-    sigma = float(y_raw.std()) + 1e-10
-    if side == "long":
-        sample_w = 1.0 + 0.5 * np.maximum(0.0, y_raw) / sigma
-    elif side == "short":
-        sample_w = 1.0 + 0.5 * np.maximum(0.0, -y_raw) / sigma
-    else:
-        sample_w = np.ones(n)
-    sample_w = sample_w.astype(np.float32)
-    dates = feat.index
-    full_y_raw = pd.Series(y_raw, index=dates)
-
-    tag = etf_name if side == "single" else f"{etf_name}_{side}"
-    active = y_clip_raw > 0
-    n_active = int(active.sum())
-    clip_label = "upside" if side == "long" else "downside" if side == "short" else "all"
-    sharpe_str = (f"{y_raw[active].mean()/y_raw[active].std()*np.sqrt(252):.2f}"
-                  if n_active > 5 else "n/a")
-    print(f"\n[{tag}] {n} samples, {len(FEATURES)} features (side={side}), "
-          f"target Sharpe={y_raw.mean()/y_raw.std()*np.sqrt(252):.2f} "
-          f"({clip_label} active-day Sharpe={sharpe_str} on {n_active} days; "
-          f"scaled x{Y_SCALE:.0f})")
-
-    # ── 1) Holdout: last 20% is final OOS (locked across re-runs) ──
-    holdout_n = int(n * HOLDOUT_FRACTION)
-    train_dev_idx, holdout_idx = _load_or_create_locked_split(tag, n, holdout_n)
-    X_dev, y_dev, dates_dev = X[train_dev_idx], y[train_dev_idx], dates[train_dev_idx]
-    X_ho, y_ho, dates_ho = X[holdout_idx], y[holdout_idx], dates[holdout_idx]
-    sw_dev = sample_w[train_dev_idx]
-    y_clip_dev = y_clip[train_dev_idx]
-    print(f"  dev (Optuna): {len(X_dev)}, holdout (final OOS, locked): {len(X_ho)}")
-
-    # Top-K capacity cap (Phase-3 overfit control)
-    max_top_k = _top_k_cap(len(X_dev), override=max_top_k_override or None)
-    print(f"  [top_k cap] max_top_k={max_top_k}  (sqrt(n_dev)/4 rule, "
-          f"n_dev={len(X_dev)})")
-
-    # ── 2) Stability Selection on dev set ──
-    # Phase 2.4 fix: use the asymmetric (clipped) target for dual models so
-    # feature selection isolates regime-specific tail drivers, not overall
-    # variance.  Single model keeps the raw target.
-    if side != "single":
-        stab_target = y_clip_dev
-        print(f"  [Stability Selection] Using ASYMMETRIC target ({clip_label}) "
-              f"for feature pruning (Phase 2.4 fix)")
-    else:
-        stab_target = y_dev
-    stability_scores, fold_std_stability = compute_stability_scores(X_dev, stab_target, FEATURES, n_splits=n_splits, gap=gap)
-
-    # ── 3) Optuna hyperparameter search — side-specific objective ──
-    print(f"  Optuna: {n_trials} trials, {n_splits} folds, purge_gap={gap} "
-          f"(side={side}) ...")
-    study_path = DATA_DIR / f"optuna_study_{tag}.sqlite3"
-    if study_path.exists():
-        study_path.unlink()
-    storage = f"sqlite:///{study_path}"
-    study = optuna.create_study(
-        study_name=f"linear_{tag}", direction="maximize",
-        storage=storage, load_if_exists=False,
-        sampler=_optuna_sampler(sampler_name),
-        pruner=optuna.pruners.MedianPruner(n_warmup_steps=10),
-    )
-    # Pre-scale features once for each cross-validation split of Optuna
-    pre_scaled_splits = []
-    for train_idx, test_idx in purged_tssplit(len(y_dev), n_splits, gap):
-        scaler = StandardScaler().fit(X_dev[train_idx])
-        Xtr_s = scaler.transform(X_dev[train_idx]).astype(np.float32)
-        Xte_s = scaler.transform(X_dev[test_idx]).astype(np.float32)
-        pre_scaled_splits.append((Xtr_s, Xte_s, train_idx, test_idx))
-
-    # Phase 2.5: weight the objective toward the trading tail for dual models
-    # (0.0 for single = pure overall IC, 0.5 for dual = equal weight tail+overall)
-    tail_weight = 0.0 if side == "single" else 0.5
-    obj = make_objective(pre_scaled_splits, y_dev, sw_dev, stability_scores, fold_std_stability,
-                         side=side, tail_weight=tail_weight, variance_cap=0.15,
-                         max_top_k=max_top_k)
-    study.optimize(obj, n_trials=n_trials, show_progress_bar=False)
-
-    best_params = study.best_params
-    best_cv_ic = study.best_value
-    print(f"  best CV IC: {best_cv_ic:.4f}  params: {best_params}")
-
-    # ── 4) Final model: train on all dev data, evaluate on holdout ──
-    scaler = StandardScaler().fit(X_dev)
-    X_dev_s = scaler.transform(X_dev)
-    X_ho_s = scaler.transform(X_ho)
-
-    best_top_k = best_params["top_k_features"]
-    selected_indices = np.argsort(stability_scores)[::-1][:best_top_k]
-    selected_features = [FEATURES[i] for i in selected_indices]
-
-    # Store dynamic stability threshold back into best_params for downstream compat
-    best_params["stability_threshold"] = float(stability_scores[selected_indices[-1]])
-    print(f"  Final selected features ({len(selected_features)}): {selected_features}")
-
-    X_dev_sel = X_dev_s[:, selected_indices]
-    X_ho_sel = X_ho_s[:, selected_indices]
-
+    print(f"Best trial raw metrics:")
+    print(f"  M1 (Tail IC IR):      {best_raw_m[0]:.4f}")
+    print(f"  M2 (Tail IC Mean):    {best_raw_m[1]:.4f}")
+    print(f"  M3 (Hit Rate):        {best_raw_m[2]:.4f}")
+    print(f"  M4 (Overall IC):      {best_raw_m[3]:.4f}")
+    print(f"  M5 (Monotonicity):    {best_raw_m[4]:.4f}")
+    print(f"  M6 (Top-Bot Spread):  {best_raw_m[5]:.4f}")
+    print(f"  M7 (Parsimony):       {best_raw_m[6]:.4f}")
+    print(f"  M8 (Coef Bloat):      {best_raw_m[7]:.4f}")
+    
+    # Refit final model on 2200 working rows
     model_type = best_params["model_type"]
-    final_model = _build_model(model_type, best_params)
-
-    _safe_fit(final_model, X_dev_sel, y_dev, sw_dev)
-    preds_ho = final_model.predict(X_ho_sel)
-    preds_is = final_model.predict(X_dev_sel)
-
-    # ── 5) Metrics ──
-    preds_ho_raw = preds_ho / Y_SCALE
-    preds_is_raw = preds_is / Y_SCALE
-    y_ho_raw = y_ho / Y_SCALE
-    y_dev_raw = y_dev / Y_SCALE
-
-    holdout_ic = _side_ic(y_ho_raw, preds_ho_raw, side)
-    holdout_dir = direction_accuracy(y_ho_raw, preds_ho_raw)
-    holdout_rmse = float(np.sqrt(np.mean((y_ho_raw - preds_ho_raw) ** 2)))
-    holdout_ls = long_short_sharpe(y_ho_raw, preds_ho_raw)
-
-    is_ic = _side_ic(y_dev_raw, preds_is_raw, side)
-
-    print(f"  HOLDOUT: IC={holdout_ic:.4f}  Dir={holdout_dir:.3f}  "
-          f"RMSE={holdout_rmse*100:.4f}%  L/S Sharpe={holdout_ls['ls_sharpe']:.2f}")
-    print(f"  OVERFITTING GAP: IS IC={is_ic:.4f} vs OOS IC={holdout_ic:.4f}  "
-          f"(gap={is_ic - holdout_ic:+.4f})")
-
-    # ── 6) Walk-forward OOS predictions across all folds (purged) ──
-    wf_preds = np.full(n, np.nan)
-    wf_is_ic_per_fold = []
-    wf_oos_ic_per_fold = []
-    for train_idx, test_idx in purged_tssplit(n, n_splits, gap):
-        sc = StandardScaler().fit(X[train_idx])
-        Xtr_s = sc.transform(X[train_idx])
-        Xte_s = sc.transform(X[test_idx])
-
-        Xtr_sel = Xtr_s[:, selected_indices]
-        Xte_sel = Xte_s[:, selected_indices]
-
-        m = _build_model(model_type, best_params)
-        _safe_fit(m, Xtr_sel, y[train_idx], sample_w[train_idx])
-        wf_preds[test_idx] = m.predict(Xte_sel) / Y_SCALE
-        wf_is_ic_per_fold.append(spearman_ic(y[train_idx] / Y_SCALE, m.predict(Xtr_sel) / Y_SCALE))
-        wf_oos_ic_per_fold.append(spearman_ic(y[test_idx] / Y_SCALE, wf_preds[test_idx]))
-
-    wf_valid = ~np.isnan(wf_preds)
-    wf_overall_ic = spearman_ic(y_raw[wf_valid], wf_preds[wf_valid])
-
-    # ── 7) Year-by-year OOS IC ──
-    wf_df = pd.DataFrame({"date": dates, "y": y_raw, "pred": wf_preds})
-    wf_df["year"] = wf_df["date"].dt.year
-    yearly_ic = {}
-    for yr, g in wf_df.dropna(subset=["pred"]).groupby("year"):
-        if len(g) >= 20:
-            yearly_ic[int(yr)] = {
-                "ic": spearman_ic(g["y"].values, g["pred"].values),
-                "dir": direction_accuracy(g["y"].values, g["pred"].values),
-                "n": len(g),
-                "ls_sharpe": long_short_sharpe(g["y"].values, g["pred"].values)["ls_sharpe"],
-            }
-
-    # ── 8) Baselines (on holdout, unscaled units) ──
-    baselines = {}
-    baselines["zero"] = {
-        "ic": 0.0, "dir": 0.5,
-        "rmse": float(np.sqrt(np.mean(y_ho_raw ** 2))),
-    }
-    ylag = full_y_raw.shift(1).reindex(dates_ho).values
-    valid_lag = ~np.isnan(ylag)
-    baselines["yesterday_pm"] = {
-        "ic": spearman_ic(y_ho_raw[valid_lag], ylag[valid_lag]) if valid_lag.sum() > 5 else 0.0,
-        "dir": direction_accuracy(y_ho_raw[valid_lag], ylag[valid_lag]) if valid_lag.sum() > 5 else 0.5,
-        "rmse": float(np.sqrt(np.mean((y_ho_raw[valid_lag] - ylag[valid_lag]) ** 2))) if valid_lag.sum() > 5 else 0.0,
-    }
-    col = FEATURES.index("first_30min_return")
-    baselines["first_30min_mom"] = {
-        "ic": spearman_ic(y_ho_raw, X_ho[:, col]),
-        "dir": direction_accuracy(y_ho_raw, X_ho[:, col]),
-        "rmse": float(np.sqrt(np.mean((y_ho_raw - X_ho[:, col]) ** 2))),
-    }
-    ridge_base = Ridge(alpha=1.0, random_state=42)
-    ridge_base.fit(X_dev_s, y_dev)
-    ridge_base_ho = ridge_base.predict(X_ho_s) / Y_SCALE
-    baselines["ridge"] = {
-        "ic": spearman_ic(y_ho_raw, ridge_base_ho),
-        "dir": direction_accuracy(y_ho_raw, ridge_base_ho),
-        "rmse": float(np.sqrt(np.mean((y_ho_raw - ridge_base_ho) ** 2))),
-        "ls_sharpe": long_short_sharpe(y_ho_raw, ridge_base_ho)["ls_sharpe"],
-    }
-
-    # ── 8.5) Nested CV (honest OOS) + Ridge control + CPCV ───────────
-    nested_result = None
-    if run_nested:
-        print(f"\n  === Nested CV (honest OOS, side={side}) ===")
-        nested_result = nested_cv_evaluate(
-            X, y_raw, sample_w, y_clip_raw, FEATURES, side, tail_weight,
-            n_outer=n_outer, gap=gap, n_inner_splits=n_inner_splits,
-            n_inner_trials=n_inner_trials, n_bootstraps=n_inner_bootstraps,
-            max_top_k=max_top_k, base_seed=42, dates=dates)
-        print(f"  NESTED overall IC: skglm={nested_result['overall_ic_skglm']:+.4f}  "
-              f"ridge={nested_result['overall_ic_ridge']:+.4f}  "
-              f"edge={nested_result['edge_over_ridge']:+.4f}  "
-              f"deployable={nested_result['deployable']}")
-        print(f"  NESTED L/S Sharpe: skglm={nested_result['ls_sharpe_skglm']:+.2f}  "
-              f"ridge={nested_result['ls_sharpe_ridge']:+.2f}  "
-              f"dir(skglm)={nested_result['dir_skglm']:.3f}")
-        if nested_result["yearly"]:
-            print("  NESTED yearly IC (skglm | ridge):")
-            for yr, v in sorted(nested_result["yearly"].items()):
-                print(f"    {yr}: {v['ic_skglm']:+.3f} | {v['ic_ridge']:+.3f}  (n={v['n']})")
-
-    cpcv_result = None
-    if run_cpcv:
-        print(f"\n  === Combinatorial Purged CV (locked config) ===")
-        cpcv_result = cpcv_evaluate(
-            X, y_raw, sample_w, y_clip_raw, FEATURES, side, tail_weight,
-            selected_indices_locked=selected_indices,
-            best_params_locked=best_params,
-            n_groups=DEFAULT_CPCV_GROUPS, n_test_groups=DEFAULT_CPCV_TEST_GROUPS,
-            gap=gap, dates=dates, ridge_alpha=ridge_alpha)
-        print(f"  CPCV paths={cpcv_result['n_paths']}  "
-              f"mean IC skglm={cpcv_result['mean_ic_skglm']:+.4f} "
-              f"(±{cpcv_result['std_ic_skglm']:.4f}, "
-              f"min={cpcv_result['min_ic_skglm']:+.4f})  "
-              f"ridge={cpcv_result['mean_ic_ridge']:+.4f} "
-              f"(±{cpcv_result['std_ic_ridge']:.4f})")
-
-    # Deployability gate — uses nested CV (most honest) when available,
-    # else falls back to holdout edge over Ridge.
-    if nested_result is not None:
-        deployable = bool(nested_result["deployable"])
-        deployability_basis = "nested_cv"
-    else:
-        deployable = bool(holdout_ic - baselines["ridge"]["ic"] > 0.02
-                          and holdout_ic > 0.0)
-        deployability_basis = "holdout"
-    print(f"  DEPLOYABLE={deployable}  (basis={deployability_basis})")
-
-    # ── 9) Standardized Coefficients & Permutation Importance ──
-    coefs = np.zeros(len(FEATURES))
-    coefs[selected_indices] = final_model.coef_
-    coef_imp = dict(zip(FEATURES, coefs.tolist()))
-
-    perm = permutation_importance(
-        final_model, X_ho_sel, y_ho, n_repeats=10, random_state=42,
-        scoring="neg_mean_squared_error",
-        n_jobs=1 if isinstance(final_model, GeneralizedLinearEstimator) else -1,
-    )
-    perm_imp_sel = dict(zip(selected_features, perm.importances_mean.tolist()))
-    perm_imp = {feat: perm_imp_sel.get(feat, 0.0) for feat in FEATURES}
-
-    # ── 10) Purge-gap sensitivity ──
-    purge_sens = {}
-    for g in [0, 5, 10]:
-        ics_g = []
-        for train_idx, test_idx in purged_tssplit(n, n_splits, g):
-            sc = StandardScaler().fit(X[train_idx])
-            Xtr_s = sc.transform(X[train_idx])
-            Xte_s = sc.transform(X[test_idx])
-
-            Xtr_sel = Xtr_s[:, selected_indices]
-            Xte_sel = Xte_s[:, selected_indices]
-
-            m = _build_model(model_type, best_params)
-            _safe_fit(m, Xtr_sel, y[train_idx], sample_w[train_idx])
-            preds = m.predict(Xte_sel) / Y_SCALE
-            ics_g.append(spearman_ic(y_raw[test_idx], preds))
-        purge_sens[g] = {"mean_ic": float(np.mean(ics_g)) if ics_g else 0.0,
-                         "n_folds": len(ics_g)}
-
-    # ── 11) Optuna hyperparameter importance ──
-    try:
-        optuna_param_imp = optuna.importance.get_param_importances(study)
-        optuna_param_imp = {k: float(v) for k, v in optuna_param_imp.items()}
-    except Exception:
-        optuna_param_imp = {}
-
-    # ── 12) Save model + scaler ──
+    k_weight = best_params["k_weight"]
+    
+    params = {}
+    if model_type == "skglm_huber_l1":
+        params["skglm_huber_l1_alpha"] = best_params["skglm_huber_l1_alpha"]
+        params["skglm_huber_delta"] = best_params["skglm_huber_delta"]
+    elif model_type == "skglm_mcp":
+        params["skglm_mcp_alpha"] = best_params["skglm_mcp_alpha"]
+        params["skglm_mcp_gamma"] = best_params["skglm_mcp_gamma"]
+        params["skglm_mcp_delta"] = best_params["skglm_mcp_delta"]
+        
+    # Scale final working features
+    scaler_final = StandardScaler()
+    X_working_scaled = scaler_final.fit_transform(X_working_final)
+    
+    w_final = compute_sample_weights(y_working, k_weight)
+    X_weighted_final, y_weighted_final = scale_data_with_weights(X_working_scaled, y_working, w_final)
+    
+    final_model = _build_model(model_type, params)
+    final_model.fit(X_weighted_final, y_weighted_final)
+    
+    # Step 6: One-shot evaluation on 500 holdout lockbox
+    X_lockbox_scaled = scaler_final.transform(X_lockbox_final)
+    preds_lockbox = final_model.predict(X_lockbox_scaled)
+    
+    lockbox_ic = spearman_ic(y_lockbox, preds_lockbox)
+    
+    n_tail_lock = max(5, int(len(y_lockbox) * 0.10))
+    top_idx_lock = np.argsort(preds_lockbox)[-n_tail_lock:]
+    bot_idx_lock = np.argsort(preds_lockbox)[:n_tail_lock]
+    tail_idx_lock = np.concatenate([bot_idx_lock, top_idx_lock])
+    lockbox_tail_ic = spearman_ic(y_lockbox[tail_idx_lock], preds_lockbox[tail_idx_lock])
+    
+    print(f"\n=== ONE-SHOT LOCKBOX EVALUATION ===")
+    print(f"  Lockbox Size:       {len(y_lockbox)} days")
+    print(f"  Lockbox Overall IC: {lockbox_ic:.4f}")
+    print(f"  Lockbox Tail IC:    {lockbox_tail_ic:.4f}")
+    print(f"====================================")
+    
+    # Save the models/scalers/results to files
+    tag = etf_name if side == "single" else f"{etf_name}_{side}"
+    
     joblib.dump(final_model, MODELS_DIR / f"linear_{tag}.joblib")
-    joblib.dump({"scaler": scaler,
-                 "features": FEATURES,
-                 "selected_features": selected_features,
-                 "stability_scores": dict(zip(FEATURES, stability_scores.tolist())),
-                 "fold_std_stability": dict(zip(FEATURES, fold_std_stability.tolist())),
-                 "best_params": best_params,
-                 "best_model_type": model_type,
-                 "holdout_ic": holdout_ic,
-                 "train_end_date": str(dates_dev[-1].date()),
-                 "holdout_start_date": str(dates_ho[0].date()),
-                 "y_scale": Y_SCALE,
-                 "side": side,
-                 "target": "raw_trade_return",
-                 "stability_target": ("clipped_trade_return" if side != "single" else "trade_return"),
-                 "optuna_objective": ("tail_weighted_ic" if side != "single" else "overall_ic"),
-                 "sample_weight_lambda": 0.5 if side != "single" else 0.0,
-                 # Phase-3 overfit-control metadata
-                 "max_top_k": int(max_top_k),
-                 "nested_overall_ic_skglm": (nested_result["overall_ic_skglm"]
-                                              if nested_result else None),
-                 "nested_overall_ic_ridge": (nested_result["overall_ic_ridge"]
-                                              if nested_result else None),
-                 "nested_edge_over_ridge": (nested_result["edge_over_ridge"]
-                                             if nested_result else None),
-                 "nested_deployable": (nested_result["deployable"]
-                                        if nested_result else None),
-                 "cpcv_mean_ic_skglm": (cpcv_result["mean_ic_skglm"]
-                                         if cpcv_result else None),
-                 "cpcv_min_ic_skglm": (cpcv_result["min_ic_skglm"]
-                                        if cpcv_result else None),
-                 "deployable": bool(deployable),
-                 "deployability_basis": deployability_basis},
-                MODELS_DIR / f"scaler_{tag}.joblib")
-
-    # ── 13) Plots ──
-    _plot_diagnostics(tag, dates_ho, y_ho_raw, preds_ho_raw,
-                      wf_df, coef_imp, perm_imp, optuna_param_imp,
-                      purge_sens, yearly_ic, study)
-
-    elapsed = time.time() - t0
-    print(f"  [{tag}] done in {elapsed:.0f}s ({elapsed/60:.1f}min)")
-
-    return {
+    
+    # Save scaler and feature metadata (compatible with deploy.py loader)
+    scaler_meta = {
+        "scaler": scaler_final,
+        "features": FEATURES,
+        "selected_features": selected_feature_names,
+        "stability_scores": dict(zip(FEATURES, stability_scores.tolist())),
+        "best_params": best_params,
+        "best_model_type": model_type,
+        "holdout_ic": lockbox_ic,
+        "holdout_tail_ic": lockbox_tail_ic,
+        "side": side,
+        "target": TARGET,
+    }
+    joblib.dump(scaler_meta, MODELS_DIR / f"scaler_{tag}.joblib")
+    
+    # Save results json
+    results = {
         "etf": etf_name,
         "side": side,
         "tag": tag,
-        "n_samples": int(n),
-        "n_features": len(FEATURES),
-        "selected_features": selected_features,
-        "n_selected_features": len(selected_features),
+        "n_samples_working": len(y_working),
+        "n_samples_lockbox": len(y_lockbox),
+        "selected_features": selected_feature_names,
         "stability_scores": dict(zip(FEATURES, stability_scores.tolist())),
-        "fold_std_stability": dict(zip(FEATURES, fold_std_stability.tolist())),
-        "date_range": [str(dates[0].date()), str(dates[-1].date())],
-        "holdout_n": int(len(X_ho)),
-        "holdout_range": [str(dates_ho[0].date()), str(dates_ho[-1].date())],
-        "best_cv_ic": float(best_cv_ic),
         "best_params": best_params,
-        "is_ic": float(is_ic),
-        "holdout_ic": float(holdout_ic),
-        "holdout_dir_acc": float(holdout_dir),
-        "holdout_rmse": holdout_rmse,
-        "holdout_long_short": holdout_ls,
-        "walk_forward_overall_ic": float(wf_overall_ic),
-        "walk_forward_is_ic_per_fold": wf_is_ic_per_fold,
-        "walk_forward_oos_ic_per_fold": wf_oos_ic_per_fold,
-        "yearly_ic": yearly_ic,
-        "baselines": baselines,
-        "coefficient_importance": coef_imp,
-        "permutation_importance": perm_imp,
-        "purge_sensitivity": purge_sens,
-        "optuna_param_importance": optuna_param_imp,
-        "target_stats": {
-            "mean_pct": float(y_raw.mean() * 100),
-            "std_pct": float(y_raw.std() * 100),
-            "sharpe_ann": float(y_raw.mean() / y_raw.std() * np.sqrt(252)),
-        },
-        "y_scale": Y_SCALE,
-        "elapsed_sec": elapsed,
-        # ── Phase-3 overfit-control metrics ──
-        "max_top_k": int(max_top_k),
-        "sampler": sampler_name,
-        "nested_cv": (
-            {
-                "overall_ic_skglm": nested_result["overall_ic_skglm"],
-                "overall_ic_ridge": nested_result["overall_ic_ridge"],
-                "edge_over_ridge": nested_result["edge_over_ridge"],
-                "dir_skglm": nested_result["dir_skglm"],
-                "ls_sharpe_skglm": nested_result["ls_sharpe_skglm"],
-                "ls_sharpe_ridge": nested_result["ls_sharpe_ridge"],
-                "per_fold": nested_result["per_fold"],
-                "yearly": nested_result["yearly"],
-                "deployable": nested_result["deployable"],
-            } if nested_result is not None else None
-        ),
-        "cpcv": (
-            {
-                "n_paths": cpcv_result["n_paths"],
-                "mean_ic_skglm": cpcv_result["mean_ic_skglm"],
-                "std_ic_skglm": cpcv_result["std_ic_skglm"],
-                "min_ic_skglm": cpcv_result["min_ic_skglm"],
-                "mean_ic_ridge": cpcv_result["mean_ic_ridge"],
-                "std_ic_ridge": cpcv_result["std_ic_ridge"],
-                "path_ics_skglm": cpcv_result["path_ics_skglm"],
-                "path_ics_ridge": cpcv_result["path_ics_ridge"],
-            } if cpcv_result is not None else None
-        ),
-        "deployable": bool(deployable),
-        "deployability_basis": deployability_basis,
+        "best_raw_metrics": best_raw_m,
+        "lockbox_overall_ic": lockbox_ic,
+        "lockbox_tail_ic": lockbox_tail_ic,
     }
+    with open(DATA_DIR / f"results_{tag}.json", "w") as f:
+        json.dump(results, f, indent=2, default=str)
+        
+    # Generate diagnostic plots
+    _plot_diagnostics(tag, dates_lockbox, y_lockbox, preds_lockbox, final_model.coef_, selected_feature_names)
+    
+    return results
 
 
-# ============================================================
-# Plots
-# ============================================================
-def _plot_diagnostics(etf, dates_ho, y_ho, preds_ho, wf_df,
-                      coef_imp, perm_imp, optuna_imp, purge_sens,
-                      yearly_ic, study):
-    fig, axes = plt.subplots(1, 2, figsize=(13, 5))
-    ax = axes[0]
-    ax.scatter(preds_ho * 100, y_ho * 100, alpha=0.3, s=10, c="steelblue")
-    lim = max(abs(y_ho).max(), abs(preds_ho).max()) * 100 * 1.05
-    ax.set_xlim(-lim, lim); ax.set_ylim(-lim, lim)
-    ax.axhline(0, color="black", lw=0.5); ax.axvline(0, color="black", lw=0.5)
-    ax.plot([-lim, lim], [-lim, lim], "r--", lw=0.8)
-    ax.set_xlabel("Predicted trade return (%)"); ax.set_ylabel("Actual trade return (%)")
-    ic = spearman_ic(y_ho, preds_ho)
-    ax.set_title(f"{etf} Holdout: IC={ic:.3f}")
-    ax.grid(alpha=0.3)
-
-    ax = axes[1]
-    q = pd.qcut(preds_ho, 5, labels=False, duplicates="drop")
-    valid = ~np.isnan(q)
-    if valid.sum() > 50:
-        idx_top = np.where((q == q[valid].max()) & valid)[0]
-        idx_bot = np.where((q == q[valid].min()) & valid)[0]
-        ls = np.zeros(len(y_ho))
-        ls[idx_top] = y_ho[idx_top]
-        ls[idx_bot] = -y_ho[idx_bot]
-        cum = np.cumsum(ls)
-        ax.plot(pd.to_datetime(dates_ho), cum * 100, color="purple", lw=1.2)
-        ax.axhline(0, color="black", lw=0.5)
-        ax.set_xlabel("Date"); ax.set_ylabel("Cumulative L/S return (%)")
-        ax.set_title(f"{etf} TopQ - BotQ Cumulative")
-        ax.grid(alpha=0.3)
+def _plot_diagnostics(tag, dates, y_true, y_pred, coefs, feature_names):
+    fig, axes = plt.subplots(1, 2, figsize=(15, 6))
+    
+    # Plot 1: Feature coefficients
+    ax1 = axes[0]
+    # Sort coefficients by absolute value
+    sort_idx = np.argsort(np.abs(coefs))
+    sorted_coefs = coefs[sort_idx]
+    sorted_feats = [feature_names[i] for i in sort_idx]
+    
+    ax1.barh(sorted_feats, sorted_coefs, color="royalblue")
+    ax1.set_title("Model Coefficients")
+    ax1.axvline(0, color="gray", linestyle="--")
+    
+    # Plot 2: Decile actual vs prediction
+    ax2 = axes[1]
+    df = pd.DataFrame({"y_true": y_true, "y_pred": y_pred})
+    df["decile"] = pd.qcut(df["y_pred"], 10, labels=False, duplicates="drop")
+    decile_means = df.groupby("decile")["y_true"].mean() * 100 # % return
+    
+    ax2.bar(decile_means.index + 1, decile_means.values, color="teal")
+    ax2.set_xlabel("Predicted Decile (1=Low, 10=High)")
+    ax2.set_ylabel("Mean Actual return (%)")
+    ax2.set_title("Decile Performance Spread")
+    ax2.set_xticks(range(1, 11))
+    
     plt.tight_layout()
-    plt.savefig(PLOTS_DIR / f"holdout_scatter_{etf}.png", dpi=110)
+    plt.savefig(PLOTS_DIR / f"diagnostics_{tag}.png", dpi=150)
     plt.close()
 
-    fig, ax = plt.subplots(figsize=(12, 4))
-    wf_v = wf_df.dropna(subset=["pred"]).copy()
-    if len(wf_v) > 90:
-        y_arr = wf_v["y"].values
-        p_arr = wf_v["pred"].values
-        dates_arr = wf_v["date"].values
-        win = 90
-        rolling_ics = []
-        rolling_dates = []
-        for i in range(win, len(wf_v)):
-            window_y = y_arr[i - win:i]
-            window_p = p_arr[i - win:i]
-            if len(window_y) >= 30 and np.std(window_p) > 1e-12:
-                rolling_ics.append(spearman_ic(window_y, window_p))
-                rolling_dates.append(dates_arr[i])
-        if rolling_dates:
-            ax.plot(rolling_dates, rolling_ics, color="steelblue", lw=1)
-            ax.axhline(0, color="black", lw=0.5)
-            ax.set_title(f"{etf}: {win}-day rolling OOS Spearman IC")
-            ax.set_ylabel("Spearman IC"); ax.grid(alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(PLOTS_DIR / f"ic_timeseries_{etf}.png", dpi=110)
-    plt.close()
 
-    fig, axes = plt.subplots(1, 2, figsize=(13, 6))
-    for ax, imp, title in [
-        (axes[0], coef_imp, "Standardized Coefficient"),
-        (axes[1], perm_imp, "Permutation Importance (OOS)"),
-    ]:
-        filtered_imp = {k: v for k, v in imp.items() if abs(v) > 1e-9}
-        if not filtered_imp:
-            filtered_imp = imp
-        s = pd.Series(filtered_imp).sort_values()
-        ax.barh(s.index, s.values, color="steelblue")
-        ax.set_title(f"{etf}: {title}")
-        ax.grid(alpha=0.3, axis="x")
-    plt.tight_layout()
-    plt.savefig(PLOTS_DIR / f"feature_importance_{etf}.png", dpi=110)
-    plt.close()
-
-    if yearly_ic:
-        fig, ax = plt.subplots(figsize=(9, 4))
-        yrs = sorted(yearly_ic.keys())
-        ics = [yearly_ic[y]["ic"] for y in yrs]
-        colors = ["green" if v > 0 else "red" for v in ics]
-        ax.bar(yrs, ics, color=colors)
-        ax.axhline(0, color="black", lw=0.5)
-        ax.set_title(f"{etf}: OOS Spearman IC by Year (walk-forward)")
-        ax.set_ylabel("Spearman IC"); ax.grid(alpha=0.3, axis="y")
-        plt.tight_layout()
-        plt.savefig(PLOTS_DIR / f"yearly_ic_{etf}.png", dpi=110)
-        plt.close()
-
-    fig, ax = plt.subplots(figsize=(6, 4))
-    keys = sorted(purge_sens.keys())
-    ax.plot(keys, [purge_sens[k]["mean_ic"] for k in keys], "o-", color="purple")
-    ax.set_xticks(keys); ax.set_xlabel("Purge gap (trading days)")
-    ax.set_ylabel("Mean OOS IC")
-    ax.set_title(f"{etf}: Purge-gap sensitivity (leakage diagnostic)")
-    ax.axhline(0, color="black", lw=0.5)
-    ax.grid(alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(PLOTS_DIR / f"purge_sensitivity_{etf}.png", dpi=110)
-    plt.close()
-
-    if optuna_imp:
-        fig, ax = plt.subplots(figsize=(8, 5))
-        s = pd.Series(optuna_imp).sort_values()
-        ax.barh(s.index, s.values, color="orange")
-        ax.set_title(f"{etf}: Optuna hyperparameter importance")
-        ax.grid(alpha=0.3, axis="x")
-        plt.tight_layout()
-        plt.savefig(PLOTS_DIR / f"optuna_param_importance_{etf}.png", dpi=110)
-        plt.close()
-
-
-def main():
+if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("-e", "--etf", default="all")
-    ap.add_argument("--trials", type=int, default=DEFAULT_TRIALS)
-    ap.add_argument("--quick", action="store_true", help="smoke test (20 trials)")
-    ap.add_argument("--splits", type=int, default=DEFAULT_N_SPLITS)
-    ap.add_argument("--gap", type=int, default=DEFAULT_PURGE_GAP)
-    ap.add_argument("--gpu", action="store_true", help="ignored, kept for compatibility")
-    ap.add_argument("--side", default="single",
-                    choices=["single", "long", "short", "both"],
-                    help="single=legacy symmetric model; long/short/both=train "
-                         "asymmetric dual models")
-    # Phase-3 overfit-control knobs
-    ap.add_argument("--sampler", default="tpe", choices=["tpe", "random"],
-                    help="Optuna sampler (random=RandomSampler ablation)")
-    ap.add_argument("--max-top-k", type=int, default=0,
-                    help="override the sqrt(n)/4 top-K capacity cap (0=auto)")
-    ap.add_argument("--no-nested", action="store_true",
-                    help="skip nested CV (faster, less honest OOS)")
-    ap.add_argument("--no-cpcv", action="store_true",
-                    help="skip Combinatorial Purged CV")
-    ap.add_argument("--nested-splits", type=int, default=DEFAULT_NESTED_SPLITS,
-                    help="outer walk-forward folds for nested CV")
-    ap.add_argument("--inner-splits", type=int, default=DEFAULT_INNER_SPLITS,
-                    help="inner Optuna CV folds inside each outer fold")
-    ap.add_argument("--inner-trials", type=int, default=DEFAULT_INNER_TRIALS,
-                    help="Optuna trials inside each outer fold (nested CV)")
-    ap.add_argument("--inner-bootstraps", type=int, default=DEFAULT_INNER_BOOTSTRAPS,
-                    help="stability-selection bootstraps per outer fold")
-    ap.add_argument("--ridge-alpha", type=float, default=1.0,
-                    help="Ridge alpha for the stability-selected control")
+    ap.add_argument("-e", "--etf", default="300", help="300|50|500|588000|159915|all")
+    ap.add_argument("-t", "--trials", type=int, default=50, help="Optuna trials count")
+    ap.add_argument("--side", default="single", choices=["single"])
     args = ap.parse_args()
-
-    if args.quick:
-        args.trials = min(args.trials, 20)
-
+    
     etf_arg = args.etf
     if etf_arg in ETF_CLI_MAP and isinstance(ETF_CLI_MAP[etf_arg], list):
         etfs = ETF_CLI_MAP[etf_arg]
     else:
         etfs = [ETF_CLI_MAP.get(etf_arg, etf_arg)]
-
-    sides = ["long", "short"] if args.side == "both" else [args.side]
-
-    print(f"Training Linear day-models for: {etfs}")
-    print(f"  trials={args.trials}  splits={args.splits}  purge_gap={args.gap}  "
-          f"holdout_frac={HOLDOUT_FRACTION}  sides={sides}")
-
-    t_start = time.time()
-    all_results = {}
+        
+    print(f"Remade train_model.py execution context initialized.")
+    print(f"Target ETFs: {etfs}")
+    print(f"Optuna main trials: {args.trials}")
+    
     for etf in etfs:
-        for side in sides:
-            try:
-                res = train_etf(etf, n_trials=args.trials, n_splits=args.splits,
-                                gap=args.gap, side=side,
-                                run_nested=not args.no_nested,
-                                run_cpcv=not args.no_cpcv,
-                                n_outer=args.nested_splits,
-                                n_inner_splits=args.inner_splits,
-                                n_inner_trials=args.inner_trials,
-                                n_inner_bootstraps=args.inner_bootstraps,
-                                sampler_name=args.sampler,
-                                max_top_k_override=args.max_top_k,
-                                ridge_alpha=args.ridge_alpha)
-                if res:
-                    key = res.get("tag", etf)
-                    all_results[key] = res
-                    suffix = "" if side == "single" else f"_{side}"
-                    with open(DATA_DIR / f"results_{etf}{suffix}.json", "w") as f:
-                        json.dump(res, f, indent=2, default=str)
-            except Exception as e:
-                print(f"  [ERROR] {etf} ({side}): {e}")
-                import traceback; traceback.print_exc()
-
-    print("\n" + "=" * 118)
-    print(f"{'Tag':<18} {'Model':<14} {'k':<5} {'HoldIC':>8} {'NestIC':>8} {'RidgeIC':>8} {'Edge':>7} {'CPCVmean':>9} {'CPCVmin':>8} {'Dir':>6} {'Deploy':>7}")
-    print("-" * 118)
-    for key, r in all_results.items():
-        best_model = r["best_params"]["model_type"].upper()
-        n_sel = r["n_selected_features"]
-        ho_ic = r['holdout_ic']
-        n_ic = r['nested_cv']['overall_ic_skglm'] if r.get('nested_cv') else float('nan')
-        n_rg = r['nested_cv']['overall_ic_ridge'] if r.get('nested_cv') else float('nan')
-        edge = r['nested_cv']['edge_over_ridge'] if r.get('nested_cv') else float('nan')
-        cp_mean = r['cpcv']['mean_ic_skglm'] if r.get('cpcv') else float('nan')
-        cp_min = r['cpcv']['min_ic_skglm'] if r.get('cpcv') else float('nan')
-        dep = "YES" if r.get('deployable') else "no"
-        print(f"{key:<18} {best_model:<14} {n_sel:<5d} {ho_ic:>8.4f} {n_ic:>8.4f} "
-              f"{n_rg:>8.4f} {edge:>+7.4f} {cp_mean:>+9.4f} {cp_min:>+8.4f} "
-              f"{r['holdout_dir_acc']:>6.3f} {dep:>7}")
-    print("=" * 118)
-
-    results_tag = "all" + ("" if args.side == "single" else f"_{args.side}")
-    with open(DATA_DIR / f"results_{results_tag}.json", "w") as f:
-        json.dump(all_results, f, indent=2, default=str)
-    total_time = time.time() - t_start
-    print(f"\nTotal wall time: {total_time:.0f}s ({total_time/60:.1f}min)")
-    print(f"Combined results → {DATA_DIR / f'results_{results_tag}.json'}")
-
-
-if __name__ == "__main__":
-    main()
+        try:
+            train_etf(etf, n_trials=args.trials, side=args.side)
+        except Exception as e:
+            print(f"  [ERROR] Failed to train {etf}: {e}")
+            import traceback
+            traceback.print_exc()
