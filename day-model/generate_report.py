@@ -35,18 +35,19 @@ def main():
     lines.append("")
     lines.append("## Out-of-Sample Lockbox Performance (2024-03 to Last Day)")
     lines.append("")
-    lines.append("| ETF | Selected Features | Best Model Type | Lockbox Overall IC | Lockbox Tail IC |")
-    lines.append("| :--- | :---: | :---: | :---: | :---: |")
+    lines.append("| ETF | Selected Features | Active Features | Best Model Type | Lockbox Overall IC | Lockbox Tail IC |")
+    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: |")
     
     for etf in ETF_ORDER:
         if etf not in results_dict:
             continue
         r = results_dict[etf]
         feats_count = len(r["selected_features"])
+        active_count = len(r.get("active_features", r["selected_features"]))
         model_type = r["best_params"]["model_type"]
         overall_ic = r["lockbox_overall_ic"]
         tail_ic = r["lockbox_tail_ic"]
-        lines.append(f"| {etf} | {feats_count} | `{model_type}` | {overall_ic:+.4f} | {tail_ic:+.4f} |")
+        lines.append(f"| {etf} | {feats_count} | {active_count} | `{model_type}` | {overall_ic:+.4f} | {tail_ic:+.4f} |")
         
     lines.append("")
     lines.append("## Detailed Trial Metrics & Optimization Objectives")
@@ -70,8 +71,10 @@ def main():
             continue
         r = results_dict[etf]
         lines.append(f"### {etf}")
-        lines.append(f"- **Total selected features**: {len(r['selected_features'])}")
-        lines.append("- **Features**: " + ", ".join([f"`{f}`" for f in r["selected_features"]]))
+        lines.append(f"- **Total selected features (Stability Selection)**: {len(r['selected_features'])}")
+        active_feats = r.get("active_features", r["selected_features"])
+        lines.append(f"- **Active features (Non-zero weights)**: {len(active_feats)}")
+        lines.append("- **Active features**: " + ", ".join([f"`{f}`" for f in active_feats]))
         lines.append("")
         
     lines.append("## Methodology Overview")
