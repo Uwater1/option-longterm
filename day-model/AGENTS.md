@@ -22,6 +22,57 @@ python3 day-model/train_model.py -e all --trials 50
 python3 day-model/generate_report.py
 ```
 
+### train_model.py Performance Options
+
+```bash
+python day-model/train_model.py -e 300 -t 50            # default: cache ON, n_jobs=cpu_count
+python day-model/train_model.py -e 300 --no-cache        # force recompute (ignore caches)
+python day-model/train_model.py -e 300 --optuna-jobs 8   # cap Optuna workers
+python day-model/train_model.py -e 300 --bootstrap-jobs 8 # cap stability-bootstrap workers
+```
+
+Speedups applied:
+- **fp32 downcast** of feature/target arrays (BLAS-friendly, ~50% memory).
+- **Vectorized Spearman screening** (single matmul over column ranks; replaces 238-call Python loop).
+- **Parallel stability bootstrap** (B=100 fits across `--bootstrap-jobs` workers via joblib).
+- **Disk caches** for selection, LOYO folds, pilot calibration (see below).
+- **Precomputed unweighted scaled matrix** — per-trial cost only re-applies `sqrt(w)`.
+- **Optuna `n_jobs=cpu_count`** with BLAS threads pinned to 1 per worker (env guards `OMP_NUM_THREADS` etc set at import).
+- **Seeded TPESampler** (`seed=42` pilot, `seed=43` main) for reproducibility.
+
+## Cache invalidation
+
+`train_model.py` writes three disk caches per ETF in `day-model/data/`:
+
+| File | Contents |
+|---|---|
+| `cache_select_{etf}_{hash}.joblib` | `screen_mask`, `p_vals`, `rhos`, `stability_selected_idx`, `stability_scores` |
+| `cache_loyo_{etf}_{hash}.joblib` | List of pre-scaled LOYO folds `(test_idx, X_tr_scaled, X_te_scaled, y_tr)` |
+| `cache_pilot_{etf}_{hash}.joblib` | Pilot records `[{params, raw_metrics}, ...]` |
+
+**Auto-invalidated** (key mismatch triggers recompute) when any of these change:
+- ETF name
+- `len(FEATURES)` (FEATURES list length)
+- `features_{etf}.parquet` mtime (parquet regen via `build_features.py`)
+- Working-set row/col count
+- `STABILITY_B`, `STABILITY_PI`, `SCREEN_FDR`, `SCREEN_FALLBACK_K`
+- `LOCKBOX_DATE` constant
+- `TARGET` column name
+- Selected-feature index tuple (LOYO + pilot caches)
+- `PILOT_N_TRIALS`, `PILOT_SEED` (pilot cache only)
+
+**Manual clear required when**:
+- Editing `FEATURES`/`EARLY_FEATURES`/`DAY_FEATURES`/`YESTERDAY_FEATURES` lists in `build_features.py` **without** regenerating parquet (cache only sees `len(FEATURES)`, not the names).
+- Changing `METRIC_WEIGHTS` (affects main study scoring, not caches — but stale pilot medians/MADs may bias normalization; clear `cache_pilot_*`).
+- Changing the LOYO embargo window, year-block logic, or scaling code in `_compute_loyo`.
+- Changing `run_screening` / `run_stability_selection` internals (e.g. enet `l1_ratio`, alpha count).
+
+**Purge all caches**:
+```powershell
+Remove-Item day-model\data\cache_*.joblib
+```
+
+
 ## Remade Predictor Architecture (First Principles)
 
 `train_model.py` implements the following robust modeling chain:
