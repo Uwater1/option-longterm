@@ -28,6 +28,16 @@ os.environ.setdefault("OMP_NUM_THREADS", "1")
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("MKL_NUM_THREADS", "1")
 os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
+# Suppress sklearn/skglm ConvergenceWarnings in worker subprocesses too.
+os.environ.setdefault("PYTHONWARNINGS", "ignore")
+
+import warnings
+# Suppress sklearn/skglm ConvergenceWarnings flooding stderr (these are benign
+# for L1/MCP path fits that hit iteration caps).
+warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=Warning)
+from sklearn.exceptions import ConvergenceWarning as _SklearnConvergenceWarning
+warnings.filterwarnings("ignore", category=_SklearnConvergenceWarning)
 
 import numpy as np
 import pandas as pd

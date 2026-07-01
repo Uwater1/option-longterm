@@ -6,21 +6,21 @@ This report summarizes the performance and features of the remade `day-model` re
 
 | ETF | Selected Features | Best Model Type | Lockbox Overall IC | Lockbox Tail IC |
 | :--- | :---: | :---: | :---: | :---: |
-| 300ETF | 78 | `skglm_huber_l1` | -0.0021 | +0.0486 |
-| 50ETF | 79 | `skglm_huber_l1` | +0.0320 | +0.2110 |
-| 500ETF | 116 | `skglm_huber_l1` | +0.1264 | +0.0347 |
-| 588000ETF | 82 | `skglm_mcp` | +0.0146 | +0.0697 |
-| 159915ETF | 113 | `skglm_huber_l1` | +0.1373 | +0.2722 |
+| 300ETF | 78 | `skglm_mcp` | +0.0370 | +0.0745 |
+| 50ETF | 79 | `skglm_mcp` | +0.0265 | +0.1151 |
+| 500ETF | 116 | `skglm_huber_l1` | +0.0949 | +0.0726 |
+| 588000ETF | 82 | `skglm_huber_l1` | +0.0045 | +0.0234 |
+| 159915ETF | 113 | `skglm_huber_l1` | +0.1329 | +0.1389 |
 
 ## Detailed Trial Metrics & Optimization Objectives
 
 | ETF | Yearly Tail IC IR | Yearly Tail IC Mean | Hit Rate | Decile Monotonicity | Top-Bottom Spread |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 1.2641 | +0.1902 | 90.0% | 0.4618 | +36.9428% |
-| 50ETF | 1.4102 | +0.1920 | 90.0% | 0.3224 | +29.9012% |
-| 500ETF | 1.7554 | +0.2500 | 100.0% | 0.5382 | +64.9640% |
-| 588000ETF | 6.7663 | +0.4240 | 100.0% | 0.4727 | +69.9800% |
-| 159915ETF | 5.1250 | +0.3286 | 100.0% | 0.5539 | +75.5970% |
+| 300ETF | 1.6218 | +0.2551 | 100.0% | 0.4267 | +52.6846% |
+| 50ETF | 1.7168 | +0.1946 | 90.0% | 0.4061 | +27.5717% |
+| 500ETF | 1.9453 | +0.2244 | 100.0% | 0.4206 | +65.7431% |
+| 588000ETF | 4.5535 | +0.3491 | 100.0% | 0.4606 | +97.1223% |
+| 159915ETF | 4.4074 | +0.3180 | 100.0% | 0.5733 | +84.2978% |
 
 ## Selected Features per ETF
 
