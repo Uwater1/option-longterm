@@ -78,7 +78,7 @@ def main():
     lines.append("1. **Lockbox Split**: From 2024-03-01 to last day (OOS holdout).")
     lines.append("2. **BH-FDR Screening**: Retains features with robust marginal Spearman correlation at FDR = 0.20.")
     lines.append("3. **Hierarchical Clustering**: Groups collinear features (threshold = 0.7 distance) and keeps the single strongest feature per cluster.")
-    lines.append("4. **Stability Selection**: Runs Lasso path over $B=100$ subsamples, selecting features with frequency $\ge 0.60$.")
+    lines.append(r"4. **Stability Selection**: Runs Lasso path over $B=100$ subsamples, selecting features with frequency $\ge 0.60$.")
     lines.append("5. **Weighted Fitting**: Employs sample weights $w(y) = |y|^k$ to focus on tail-day returns.")
     lines.append("6. **Optuna Objective**: Standardized multi-metric maximization (Stability, General Signal, Signal Structure, Complexity Constraints).")
     
