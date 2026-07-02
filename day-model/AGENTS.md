@@ -77,7 +77,7 @@ Remove-Item day-model\data\cache_*.joblib
 `train_model.py` implements the following robust modeling chain:
 
 1. **Lockbox Split (Step 0)**: Hold out days from 2024-03-01 to last day (OOS lockbox data completely ignored during training).
-2. **Selection Validation Split (Step 0.5)**: Dates from 2021-01-01 to 2021-12-31 carved out from working set for selection-blind validation.
+2. **Selection Validation Split (Step 0.5)**: Six non-contiguous 3-month blocks carved out from the working set for selection-blind validation, with a 10-day temporal embargo applied to training boundaries to prevent temporal data leakage.
 3. **BH-FDR Screening (Step 1)**: Robust Spearman rank correlation on selection train subset. Keep features surviving FDR = 0.40. Fallback to top 50 by p-value if fewer pass.
 4. **Cluster Stability Selection (CSS) + VIF Pruning (Step 2)**: Groups screened features using Complete Linkage hierarchical clustering (correlation distance threshold of 0.25, i.e., $|r| \ge 0.75$). During stability selection ($B=100$ subsamples), voting is aggregated at the cluster level. A single representative feature with the highest individual stability score is selected from each stable cluster ($\ge 0.60$ voting frequency). Then, **iterative VIF pruning** (VIF threshold of 10.0) is applied to these representatives to eliminate multivariate collinearity.
 5. **Loss Weighting (Step 3)**: Power weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to focus model on tail days.
@@ -88,14 +88,15 @@ Remove-Item day-model\data\cache_*.joblib
    - Val Tail IC: 40%
    - Val Monotonicity: 15%
    - Val Top-Bottom Spread: 5%
-9. **Kill Switches / Hard Constraints**: Trial pruned (returns `-1e9`) if CV metrics violate constraints:
+9. **Kill Switches / Hard Constraints**: Trial pruned (returns `-1e9`) if CV metrics violate constraints or model is degenerate:
    - Overall IC <= 0
    - Hit Rate < 60%
    - Decile Monotonicity <= 0.25
    - Top-Bottom Spread <= 0
    - Active features count exceeds ESS-based cap ($active\_k > ESS / 25.0$)
+   - Model weight Gini index > 0.85 (weight concentration guardrail)
 10. **One-Shot Evaluation & Diagnostics Plotting (Step 6)**: Handled entirely in `generate_report.py`. Evaluates final model on 500-day lockbox, updates OOS metrics in results JSON/scaler bundles, and generates 2x2 diagnostics plots. Calculates regularized condition number.
 11. **L2 Regularization Component**: Enforces 10% L2 Ridge regularization in both model families to stabilize joint-coefficient assignments under severe multicollinearity.
-12. **Multiple comparison deflation**: Computes **Deflated CV Overall IC** to correct for multiple trials / search-budget inflation.
+12. **Multiple comparison deflation**: Computes **Deflated CV Overall IC**, **Deflated Val Overall IC**, **Deflated Val Tail IC**, and **Deflated Objective** to correct for multiple trials / search-budget inflation across all completed Optuna trials.
 13. **Model Quality & Generalization Diagnostics**: Calculates condition numbers, ESS of tail-focus weights, Gini coefficient, and CV-to-OOS Generalization Gap for rank IC & decile monotonicity. Saves findings to `REPORT.md`.
 

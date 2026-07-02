@@ -46,8 +46,14 @@ Plan to reformulate and optimize the Optuna objective function for `day-model` b
 
 **Step 0 — Lock the holdout sequentially and partition validation split.**
 Partition the entire dataset chronologically:
-- **Selection Train**: `date < 2024-03-01` excluding `2021-01-01 <= date < 2022-01-01` (approx 1923 rows). Features are selected here, and CPCV cross-validation is run here.
-- **Selection Validation**: `2021-01-01 <= date < 2022-01-01` (approx 243 rows). Excluded from feature selection, used for selection-blind hyperparameter validation in the Optuna objective.
+- **Selection Train**: `date < 2024-03-01` excluding the 6 non-contiguous 3-month validation blocks and a 10-day temporal embargo around them. Features are selected here, and CPCV cross-validation is run here.
+- **Selection Validation**: 6 non-contiguous 3-month blocks (totaling ~18 months / ~370 trading days) carved out from the working set for selection-blind validation:
+  - Block 1: `2016-10-01` to `2017-01-01`
+  - Block 2: `2018-07-01` to `2018-10-01`
+  - Block 3: `2020-04-01` to `2020-07-01`
+  - Block 4: `2021-07-01` to `2021-10-01`
+  - Block 5: `2022-10-01` to `2023-01-01`
+  - Block 6: `2023-07-01` to `2023-10-01`
 - **OOS Lockbox**: `date >= 2024-03-01` (approx 556 rows). Completely untouched during training, evaluated one-shot at the end.
 
 **Step 1 — Cheap screening on selection train set.**
@@ -67,8 +73,8 @@ For coefficient fits, use sample weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned 
 
 > **Mistake (Previous Attempt)**: Pushing tail-weighting parameters (exponent $k$) without constraints collapsed the Effective Sample Size (ESS) to 16.6% on 159915ETF, training the model on effectively very few outlier days. Enforcing a hard ESS floor $\ge 20\%$ during optimization completely fixes this.
 
-**Step 4 — Optuna over hyperparameters only, evaluated on a selection validation block.**
-Chronological splits partition the working set into a `selection train` block (before `2024-03-01` excluding the validation block) and a held-out `selection validation` block (from `2021-01-01` to `2021-12-31`).
+**Step 4 — Optuna over hyperparameters only, evaluated on selection validation blocks.**
+Chronological splits partition the working set into a `selection train` block (before `2024-03-01` excluding the validation blocks and their embargos) and held-out `selection validation` blocks (the 6 non-contiguous 3-month blocks).
 Combinatorial Purged Cross-Validation (CPCV) splits (6 groups, 2 test groups, yielding 15 folds) are constructed strictly within the `selection train` subset, applying a 10-day embargo at test boundaries. Optuna tunes model type selection (`skglm_huber_l1` vs `skglm_mcp`), their respective regularization parameters (alphas, gamma, delta), and the loss weight exponent $k$.
 Both model families enforce a mandatory $10\%$ L2 Ridge regularization component (`skglm_huber_l1` uses `L1_plus_L2` with `l1_ratio = 0.9` and `skglm_mcp` uses custom `MCP_plus_L2` with `mu = 0.1 * alpha` from `penalties.py`) to guarantee minimum eigenvalues and compress condition numbers.
 
@@ -76,25 +82,28 @@ Both model families enforce a mandatory $10\%$ L2 Ridge regularization component
 
 $$ \text{Objective} = \sum_{i=1}^{4} w_i \cdot \widetilde{V}_i $$
 
-Where each $\widetilde{V}_i$ is a **robust z-score normalized** metric evaluated on the selection-blind chronological validation set (computed via a 50-trial Optuna pilot run using Median Absolute Deviation), and weights $w_i$ are pre-defined constants:
+Where each $\widetilde{V}_i$ is a **robust z-score normalized** metric evaluated on the selection-blind chronological validation blocks (computed via a 50-trial Optuna pilot run using Median Absolute Deviation), and weights $w_i$ are pre-defined constants:
 
 | ID | Metric ($\widetilde{V}_i$) | Definition | Sign | Category | Weight ($w_i$) |
 | :--- | :--- | :--- | :---: | :--- | :---: |
-| **V₁** | **Val Overall IC** | Spearman rank correlation computed over all rows in the selection validation block. | + | General Signal | **0.40** |
-| **V₂** | **Val Tail IC** | Spearman rank correlation computed on top/bottom 10% rows of the selection validation block. | + | Tail Power | **0.40** |
-| **V₃** | **Val Monotonicity** | Spearman correlation between decile rank and mean actual return on the selection validation block. | + | Signal Structure | **0.15** |
-| **V₄** | **Val Top-Bottom Spread** | Mean return spread (Top 10% minus Bottom 10%) on the selection validation block. | + | Factor Efficacy | **0.05** |
+| **V₁** | **Val Overall IC** | Spearman rank correlation computed over all rows in the selection validation blocks. | + | General Signal | **0.40** |
+| **V₂** | **Val Tail IC** | Spearman rank correlation computed on top/bottom 10% rows of the selection validation blocks. | + | Tail Power | **0.40** |
+| **V₃** | **Val Monotonicity** | Spearman correlation between decile rank and mean actual return on the selection validation blocks. | + | Signal Structure | **0.15** |
+| **V₄** | **Val Top-Bottom Spread** | Mean return spread (Top 10% minus Bottom 10%) on the selection validation blocks. | + | Factor Efficacy | **0.05** |
+
+Before choosing the final model, we compute the **Deflated Validation IC** and **Deflated Validation Tail IC** (using Marcos Lopez de Prado's method) across completed trials to account for search-budget overfit.
 
 Before computing the weighted objective, apply **Kill Switches / Hard Constraints** evaluated on the cross-validation folds metrics ($M_1$ through $M_6$) constructed on the selection training block:
 * Overall IC > 0 ($M_4 > 0$)
 * Minimum Hit Rate >= 60% ($M_3 \ge 0.60$)
 * Decile Monotonicity > 0.25 ($M_5 \ge 0.25$)
 * Top-Bottom Spread > 0 ($M_6 > 0$)
-* **Active features count under ESS cap**: $active\_k \le \text{max}(3, \text{int}(ESS / 25.0))$ (prevents parameter bloat relative to sample size, using global divisor constant 25.0).
+* **Active features count under ESS cap**: $active\_k \le \text{max}(3, \text{int}(ESS / 25.0))$ (prevents parameter bloat relative to sample size).
+* **Model weight concentration guardrail**: Gini coefficient of model coefficients $\le 0.85$ (prevents degenerate collapse to 1-2 active features).
 * If any condition fails, return `-1e9` (pruned).
 
 **Continuous Soft Constraints**:
-* **ESS Floor**: The hard discontinuous $ESS \ge 20\%$ floor on the selection training subset is converted to a continuous soft penalty in the objective function: $ess\_penalty = -10.0 \times (0.20 - ess\_pct)$ when $ess\_pct < 0.20$ (and $0$ otherwise). This allows Optuna's TPE sampler to navigate the optimization landscape smoothly rather than falling off a cliff.
+* **ESS Floor**: The hard discontinuous $ESS \ge 20\%$ floor on the selection training subset is converted to a continuous soft penalty in the objective function: $ess\_penalty = -10.0 \times (0.20 - ess\_pct)$ when $ess\_pct < 0.20$ (and $0$ otherwise). This allows Optuna's TPE sampler to navigate the optimization landscape smoothly.
 
 **Step 5 — Freeze feature set.**
 Stability-selected cluster representatives are frozen before Optuna tuning begins.
