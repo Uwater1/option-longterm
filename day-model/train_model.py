@@ -65,6 +65,11 @@ from skglm.solvers import AndersonCD
 warnings.filterwarnings("ignore")
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
+# Pin seeds globally for reproducibility
+import random
+random.seed(42)
+np.random.seed(42)
+
 LOCKBOX_DATE = "2024-03-01"
 PILOT_N_TRIALS = 50
 PILOT_SEED = 42
@@ -512,18 +517,26 @@ def _loyo_one_fold(fold, model_type, params, k_weight):
 
 def run_loyo_cv(loyo_folds: list, model_type: str, params: dict, k_weight: float,
                 n_samples: int, n_jobs: int = 1):
-    oof_preds = np.zeros(n_samples, dtype=np.float64)
+    oof_pred_sum = np.zeros(n_samples, dtype=np.float64)
+    oof_pred_cnt = np.zeros(n_samples, dtype=np.float64)
+    
     if n_jobs and n_jobs > 1 and len(loyo_folds) > 1:
         results = Parallel(n_jobs=n_jobs, backend="loky")(
             delayed(_loyo_one_fold)(f, model_type, params, k_weight)
             for f in loyo_folds
         )
         for test_idx, preds in results:
-            oof_preds[test_idx] = preds
+            oof_pred_sum[test_idx] += preds
+            oof_pred_cnt[test_idx] += 1
     else:
         for fold in loyo_folds:
             test_idx, preds = _loyo_one_fold(fold, model_type, params, k_weight)
-            oof_preds[test_idx] = preds
+            oof_pred_sum[test_idx] += preds
+            oof_pred_cnt[test_idx] += 1
+            
+    oof_preds = np.zeros(n_samples, dtype=np.float64)
+    mask = oof_pred_cnt > 0
+    oof_preds[mask] = oof_pred_sum[mask] / oof_pred_cnt[mask]
     return oof_preds
 
 
@@ -567,13 +580,26 @@ def calculate_yearly_metrics(year_groups, y_true: np.ndarray, y_pred: np.ndarray
     m5 = float(y_monos.mean())                    # Decile Monotonicity
     m6 = float(y_spreads.mean())                  # Top-Bottom Spread
     if ess > 0.0:
-        m7 = -float(k_features) / (ess / 15.0)    # Tie sparsity penalty to ESS directly
+        m7 = -float(k_features) / (ess / 30.0)    # Tie sparsity penalty to ESS directly (tightened to 30)
     else:
         m7 = -np.log(1.0 + k_features)            # Feature Parsimony (fallback)
     m8 = -coef_norm                               # Coefficient Bloat (penalized)
 
     raw_metrics = [m1, m2, m3, m4, m5, m6, m7, m8]
     return raw_metrics, [_y for _y, _ in year_groups], y_tail_ics
+
+
+def compute_deflated_metric(values: list, best_value: float, rho: float = 0.5) -> float:
+    """Expected multiple-comparison overfit correction for choosing the maximum
+
+    of N correlated trial configurations (Marcos Lopez de Prado).
+    """
+    n = len(values)
+    if n <= 1:
+        return best_value
+    std_val = np.std(values)
+    overfit_bias = std_val * np.sqrt(2.0 * np.log(n)) * np.sqrt(1.0 - rho)
+    return float(best_value - overfit_bias)
 
 
 # ============================================================
@@ -643,7 +669,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # length changes, or any of the deterministic knobs below change.
     # See AGENTS.md "Cache invalidation" for manual-clear guidance.
     select_key = [
-        "v4", etf_name, len(FEATURES), int(parquet_mtime),
+        "v5", etf_name, len(FEATURES), int(parquet_mtime),
         int(X_working.shape[0]), int(X_working.shape[1]),
         STABILITY_B, STABILITY_PI, SCREEN_FDR, SCREEN_FALLBACK_K,
         LOCKBOX_DATE, TARGET,
@@ -784,40 +810,58 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # ── LOYO folds cache (depends on selected features only) ──────────
     loyo_key = [
-        "v4", etf_name, len(FEATURES), int(parquet_mtime),
+        "v5", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         LOCKBOX_DATE, TARGET,
     ]
     loyo_cache_path = CACHE_DIR / f"cache_loyo_{etf_name}_{_cache_key(loyo_key)}.joblib"
 
     def _compute_loyo():
+        from itertools import combinations
+        n = len(y_working)
+        n_groups = 6
+        n_test_groups = 2
+        gap_days = 10
+        
+        boundaries = np.linspace(0, n, n_groups + 1).astype(int)
         folds = []
-        unique_years = sorted(list(set(dates_working.dt.year.values)))
-        dates_val = dates_working.values
-        for test_year in unique_years:
-            test_mask = dates_working.dt.year == test_year
-            test_idx = np.where(test_mask)[0]
-
-            test_dates = dates_val[test_mask]
-            min_test_date = np.min(test_dates)
-            max_test_date = np.max(test_dates)
-
-            embargo_start = min_test_date - pd.Timedelta(days=10)
-            embargo_end = max_test_date + pd.Timedelta(days=10)
-
-            train_mask = (dates_working.dt.year != test_year) & ((dates_val < embargo_start) | (dates_val > embargo_end))
-            train_idx = np.where(train_mask)[0]
-
+        
+        group_indices = list(range(n_groups))
+        for test_comb in combinations(group_indices, n_test_groups):
+            test_idx_list = []
+            for g in test_comb:
+                test_idx_list.append(np.arange(boundaries[g], boundaries[g+1]))
+            test_idx = np.concatenate(test_idx_list)
+            
+            all_indices = np.arange(n)
+            in_test = np.zeros(n, dtype=bool)
+            in_test[test_idx] = True
+            train_idx_raw = all_indices[~in_test]
+            
+            min_test_dates = [dates_working.values[boundaries[g]] for g in test_comb]
+            max_test_dates = [dates_working.values[boundaries[g+1] - 1] for g in test_comb]
+            
+            train_dates = dates_working.values[train_idx_raw]
+            keep_train = np.ones(len(train_idx_raw), dtype=bool)
+            
+            for min_d, max_d in zip(min_test_dates, max_test_dates):
+                embargo_start = pd.Timestamp(min_d) - pd.Timedelta(days=gap_days)
+                embargo_end = pd.Timestamp(max_d) + pd.Timedelta(days=gap_days)
+                in_embargo = (train_dates >= embargo_start.to_datetime64()) & (train_dates <= embargo_end.to_datetime64())
+                keep_train[in_embargo] = False
+                
+            train_idx = train_idx_raw[keep_train]
+            
             if len(train_idx) == 0 or len(test_idx) == 0:
                 continue
-
+                
             X_tr, y_tr = X_working_final[train_idx], y_working[train_idx]
             X_te = X_working_final[test_idx]
-
+            
             scaler = StandardScaler()
             X_tr_scaled = scaler.fit_transform(X_tr)
             X_te_scaled = scaler.transform(X_te)
-
+            
             folds.append((
                 test_idx.astype(np.int64),
                 _to_f32(X_tr_scaled),
@@ -894,7 +938,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # ── Pilot calibration cache ───────────────────────────────────────
     pilot_key = [
-        "v4", etf_name, len(FEATURES), int(parquet_mtime),
+        "v5", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         LOCKBOX_DATE, TARGET, PILOT_N_TRIALS, PILOT_SEED,
     ]
@@ -1027,9 +1071,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             ess = float((sum_w ** 2) / sum_w2) if sum_w2 > 1e-10 else float(len(w_temp))
             ess_pct = ess / len(w_temp)
 
-            # Active feature cap based on ESS: events-per-variable heuristic
+            # Active feature cap based on ESS: events-per-variable heuristic (tightened divisor to 30)
             active_k = int(np.sum(np.abs(_model_obj.coef_) > 1e-5))
-            max_active_features = max(3, int(ess / 15.0))
+            max_active_features = max(3, int(ess / 30.0))
 
             # Hard Constraints / Kill Switches:
             pruning_reasons = []
@@ -1181,6 +1225,19 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             else:
                 raise RuntimeError("Both main and pilot studies failed to produce any valid trial results.")
 
+    # Calculate Deflated CV IC and Deflated Objective to adjust for multiple trials (Search-Budget Overfit)
+    completed_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE and t.value is not None and t.value > -1e8]
+    trial_m4_values = []
+    trial_objective_values = []
+    for t in completed_trials:
+        m = t.user_attrs.get("raw_metrics")
+        if m is not None:
+            trial_m4_values.append(m[3]) # M4 is index 3
+            trial_objective_values.append(t.value)
+
+    deflated_cv_ic = compute_deflated_metric(trial_m4_values, best_raw_m[3], rho=0.5)
+    deflated_objective = compute_deflated_metric(trial_objective_values, best_trial.value, rho=0.5)
+
     print(f"\nBest hyperparameters found by Optuna:")
     for k, v in best_params.items():
         print(f"  {k}: {v}")
@@ -1190,6 +1247,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     print(f"  M2 (Tail IC Mean):    {best_raw_m[1]:.4f}")
     print(f"  M3 (Hit Rate):        {best_raw_m[2]:.4f}")
     print(f"  M4 (Overall IC):      {best_raw_m[3]:.4f}")
+    print(f"  Deflated CV Overall IC: {deflated_cv_ic:.4f}")
     print(f"  M5 (Monotonicity):    {best_raw_m[4]:.4f}")
     print(f"  M6 (Top-Bot Spread):  {best_raw_m[5]:.4f}")
     print(f"  M7 (Parsimony):       {best_raw_m[6]:.4f}")
@@ -1287,6 +1345,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "best_model_type": model_type,
         "holdout_ic": np.nan,
         "holdout_tail_ic": np.nan,
+        "deflated_cv_ic": deflated_cv_ic,
         "side": side,
         "target": TARGET,
     }
@@ -1315,6 +1374,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "stability_scores": dict(zip(FEATURES, stability_scores.tolist())),
         "best_params": best_params,
         "best_raw_metrics": best_raw_m,
+        "deflated_cv_ic": deflated_cv_ic,
+        "deflated_objective": deflated_objective,
         "lockbox_overall_ic": np.nan,
         "lockbox_tail_ic": np.nan,
         "diagnostics": {

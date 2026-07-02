@@ -29,13 +29,14 @@ python3 day-model/generate_report.py
 python day-model/train_model.py -e 300 -t 100             # cache ON, n_jobs=cpu_count
 python day-model/train_model.py -e 300 --no-cache          # force recompute
 python day-model/train_model.py -e 300 --optuna-jobs 8     # cap Optuna workers
+python day-model/train_model.py -e 300 --optuna-jobs 1     # sequential (guarantees 100% determinism)
 python day-model/train_model.py -e 300 --bootstrap-jobs 8  # cap stability-bootstrap workers
 python day-model/train_model.py -e 300 --loyo-jobs 4       # cap LOYO fold workers per trial
 ```
 
-Speedups: fp32 arrays; vectorized Spearman screen; joblib-parallel stability bootstrap & LOYO folds; disk caches (select/loyo/pilot); precomputed unweighted scaled matrix; numpy-vectorized yearly metrics (no pandas qcut); Optuna process-parallel optimization via joblib (loky backend) and JournalFileBackend storage to bypass Python GIL; BLAS threads pinned to 1; skglm `AndersonCD(max_epochs=2000)`; seeded TPESampler (42 pilot, 43 main).
+Speedups: fp32 arrays; vectorized Spearman screen; joblib-parallel stability bootstrap & CPCV folds; disk caches (select/loyo/pilot); precomputed unweighted scaled matrix; numpy-vectorized yearly metrics (no pandas qcut); Optuna process-parallel optimization via joblib (loky backend) and JournalFileBackend storage to bypass Python GIL; BLAS threads pinned to 1; skglm `AndersonCD(max_epochs=2000)`; seeded TPESampler (42 pilot, 43 main).
 
-- **LOYO parallelism**: `--loyo-jobs -1` (auto = `cpu_count // optuna-jobs`). Use when running single ETF with low `--optuna-jobs`; auto-throttles to avoid oversubscription when Optuna already saturates cores.
+- **CPCV parallelism**: `--loyo-jobs -1` (auto = `cpu_count // optuna-jobs`). Use when running single ETF with low `--optuna-jobs`; auto-throttles to avoid oversubscription when Optuna already saturates cores.
 
 ## Cache invalidation
 
@@ -43,9 +44,9 @@ Speedups: fp32 arrays; vectorized Spearman screen; joblib-parallel stability boo
 
 | File | Contents |
 |---|---|
-| `cache_select_{etf}_{hash}.joblib` | `screen_mask`, `p_vals`, `rhos`, `stability_selected_idx`, `stability_scores` (version `v4` cache key, includes VIF pruning) |
-| `cache_loyo_{etf}_{hash}.joblib` | List of pre-scaled LOYO folds `(test_idx, X_tr_scaled, X_te_scaled, y_tr)` (version `v4` cache key) |
-| `cache_pilot_{etf}_{hash}.joblib` | Pilot records `[{params, raw_metrics}, ...]` (version `v4` cache key) |
+| `cache_select_{etf}_{hash}.joblib` | `screen_mask`, `p_vals`, `rhos`, `stability_selected_idx`, `stability_scores` (version `v5` cache key, includes VIF pruning) |
+| `cache_loyo_{etf}_{hash}.joblib` | List of pre-scaled CPCV folds `(test_idx, X_tr_scaled, X_te_scaled, y_tr)` (version `v5` cache key) |
+| `cache_pilot_{etf}_{hash}.joblib` | Pilot records `[{params, raw_metrics}, ...]` (version `v5` cache key) |
 
 **Auto-invalidated** (key mismatch triggers recompute) when any of these change:
 - ETF name
@@ -55,13 +56,13 @@ Speedups: fp32 arrays; vectorized Spearman screen; joblib-parallel stability boo
 - `STABILITY_B`, `STABILITY_PI`, `SCREEN_FDR`, `SCREEN_FALLBACK_K`
 - `LOCKBOX_DATE` constant
 - `TARGET` column name
-- Selected-feature index tuple (LOYO + pilot caches)
+- Selected-feature index tuple (CPCV + pilot caches)
 - `PILOT_N_TRIALS`, `PILOT_SEED` (pilot cache only)
 
 **Manual clear required when**:
 - Editing `FEATURES`/`EARLY_FEATURES`/`DAY_FEATURES`/`YESTERDAY_FEATURES` lists in `build_features.py` **without** regenerating parquet (cache only sees `len(FEATURES)`, not the names).
 - Changing `METRIC_WEIGHTS` (affects main study scoring, not caches — but stale pilot medians/MADs may bias normalization; clear `cache_pilot_*`).
-- Changing the LOYO embargo window, year-block logic, or scaling code in `_compute_loyo`.
+- Changing the CPCV group/test window logic, embargo window, or scaling code in `_compute_loyo`.
 - Changing `run_screening` / `run_stability_selection` internals (e.g. enet `l1_ratio`, alpha count).
 - Changing hierarchical clustering thresholds or distance metrics for CSS.
 
@@ -79,7 +80,7 @@ Remove-Item day-model\data\cache_*.joblib
 2. **BH-FDR Screening (Step 1)**: Robust Spearman rank correlation on 2200 training days. Keep features surviving FDR = 0.40. Fallback to top 40 by p-value if fewer pass.
 3. **Cluster Stability Selection (CSS) + VIF Pruning (Step 2)**: Groups screened features using Complete Linkage hierarchical clustering (correlation distance threshold of 0.25, i.e., $|r| \ge 0.75$). During stability selection ($B=100$ subsamples), voting is aggregated at the cluster level. A single representative feature with the highest individual stability score is selected from each stable cluster ($\ge 0.60$ voting frequency). Then, **iterative VIF pruning** (Variance Inflation Factor threshold of 10.0) is applied to these representatives to eliminate multivariate collinearity.
 4. **Loss Weighting (Step 3)**: Power weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to focus model on tail days.
-5. **LOYO CV with Embargo (Step 4)**: 9 Yearly blocks (2015-2023) with a 10-day embargo at test block boundaries.
+5. **CPCV with Embargo (Step 4)**: Combinatorial Purged Cross-Validation with 6 chronological groups and 2 test groups ($\binom{6}{2} = 15$ folds), with a 10-day embargo at test block boundaries. Overlapping OOS fold predictions are aggregated via averaging.
 6. **Pilot Normalization (Step 4.1)**: Runs 50 pilot trials, computes median and MAD for each of the 8 metrics to calculate robust z-scores.
 7. **Objective Function**: Maximizes weighted sum of normalized metrics ($w_i$), plus a soft penalty for ESS under 20% (`ess_penalty = -10.0 * (0.20 - ess_pct)`):
    - $M_1$ (Tail IC IR): 25%
@@ -88,15 +89,17 @@ Remove-Item day-model\data\cache_*.joblib
    - $M_4$ (Overall Rank IC): 15%
    - $M_5$ (Decile Monotonicity): 15%
    - $M_6$ (Top-Bottom Spread): 5%
-   - $M_7$ (Feature Parsimony): 0% (sparsity metric scaled by ESS: $M_7 = -k_{features} / (ESS / 15.0)$)
+   - $M_7$ (Feature Parsimony): 0% (sparsity metric scaled by ESS: $M_7 = -k_{features} / (ESS / 30.0)$)
    - $M_8$ (Coefficient Bloat): 0% (regularized by CV)
 8. **Kill Switches / Hard Constraints**: Trial pruned (returns `-1e9`) if:
    - Overall IC <= 0
    - Hit Rate < 60%
    - Decile Monotonicity <= 0.25
    - Top-Bottom Spread <= 0
-   - Active features count exceeds ESS-based cap ($active\_k > ESS / 15.0$)
-9. **One-Shot Evaluation & Diagnostics Plotting (Step 6)**: Handled entirely in `generate_report.py` to keep training fast. Evaluates final model on 500-day lockbox, updates OOS metrics in results JSON/scaler bundles on disk, and generates 2x2 diagnostics plots (`plots/diagnostics_{tag}.png`) containing Coefficients, OOS decile spread, and All data decile spread.
+   - Active features count exceeds ESS-based cap ($active\_k > ESS / 30.0$)
+9. **One-Shot Evaluation & Diagnostics Plotting (Step 6)**: Handled entirely in `generate_report.py` to keep training fast. Evaluates final model on 500-day lockbox, updates OOS metrics in results JSON/scaler bundles on disk, and generates 2x2 diagnostics plots. Calculates **Raw Design Matrix Condition Number**, **Raw Normal Equations Condition Number**, and **Regularized Normal Equations Condition Number** ($\kappa(X^TX + N\lambda_{L2}I)$).
 10. **L2 Regularization Component**: Enforces $10\%$ L2 Ridge regularization in both model families (`skglm_huber_l1` uses `L1_plus_L2(alpha, l1_ratio=0.9)` and `skglm_mcp` uses custom `MCP_plus_L2(alpha, gamma, mu=0.1 * alpha)` from `penalties.py`) to stabilize joint-coefficient assignments under severe multicollinearity.
+11. **Multiple comparison deflation**: Computes **Deflated CV Overall IC** and **Deflated CV Objective** to correct for multiple trials / search-budget inflation across the Optuna search history.
+
 11. **Model Quality & Generalization Diagnostics**: `train_model.py` calculates raw/regularized condition numbers ($\kappa$) & collinearity alerts, Effective Sample Size (ESS) of tail-focus weights, and Gini coefficient index. Saves to `results_*.json`. `generate_report.py` computes CV-to-OOS Generalization Gap for rank IC & decile monotonicity, compiling findings into `REPORT.md`.
 

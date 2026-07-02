@@ -65,7 +65,7 @@ For the final coefficient fit, use sample weights $w(y_i) = |y_i|^k$ (exponent $
 > **Mistake (Previous Attempt)**: Pushing tail-weighting parameters (exponent $k$) without constraints collapsed the Effective Sample Size (ESS) to 16.6% on 159915ETF, training the model on effectively very few outlier days. Enforcing a hard ESS floor $\ge 20\%$ during optimization completely fixes this.
 
 **Step 4 — Optuna over hyperparameters only, evaluated on a tail-specific metric.**
-Nested Yearly CV (2015-2023) within the working set, applying a 10-day embargo at training year boundaries to prevent temporal leak. Optuna tunes model type selection (`skglm_huber_l1` vs `skglm_mcp`), their respective regularization parameters (alphas, gamma, delta), and the loss weight exponent $k$.
+Combinatorial Purged Cross-Validation (CPCV) splits (6 groups, 2 test groups, yielding 15 folds) within the working set, applying a 10-day embargo at test boundaries to prevent temporal leak. Overlapping OOS fold predictions are aggregated via averaging. Optuna tunes model type selection (`skglm_huber_l1` vs `skglm_mcp`), their respective regularization parameters (alphas, gamma, delta), and the loss weight exponent $k$.
 Both model families enforce a mandatory $10\%$ L2 Ridge regularization component (`skglm_huber_l1` uses `L1_plus_L2` with `l1_ratio = 0.9` and `skglm_mcp` uses custom `MCP_plus_L2` with `mu = 0.1 * alpha` from `penalties.py`) to guarantee minimum eigenvalues and compress condition numbers.
 
 ### Step 4.1 — Define Metric Weights & Optimization Objective
@@ -82,7 +82,7 @@ Where each $\widetilde{M}_i$ is a **robust z-score normalized** metric (computed
 | **M₄** | **Overall Rank IC** | Mean Spearman rank IC across all rows. | + | General Signal | **0.15** |
 | **M₅** | **Decile Monotonicity** | Spearman correlation between decile rank and mean actual return. | + | Signal Structure | **0.15** |
 | **M₆** | **Top-Bottom Spread** | Mean return spread (Top 10% minus Bottom 10%). | + | Factor Efficacy | **0.05** |
-| **M₇** | **Feature Parsimony** | Sparsity metric scaled by ESS: $-k / (ESS / 15.0)$ where $k$ is active model size (coefficients with absolute value $> 10^{-5}$). (weight set to 0.00 since CSS controls sparsity). | + | Simplicity | **0.00** |
+| **M₇** | **Feature Parsimony** | Sparsity metric scaled by ESS: $-k / (ESS / 30.0)$ where $k$ is active model size (coefficients with absolute value $> 10^{-5}$). (weight set to 0.00 since CSS controls sparsity). | + | Simplicity | **0.00** |
 | **M₈** | **Coefficient Bloat** | $-\|\beta\|_2$. (weight set to 0.00 since CSS controls sparsity). | + | Simplicity | **0.00** |
 
 Before computing the weighted objective, apply **Kill Switches / Hard Constraints**:
@@ -90,7 +90,7 @@ Before computing the weighted objective, apply **Kill Switches / Hard Constraint
 * Minimum Hit Rate >= 60% (M3 >= 0.60)
 * Decile Monotonicity > 0.25 (M5 >= 0.25)
 * Top-Bottom Spread > 0 (M6 > 0)
-* **Active features count under ESS cap**: $active\_k \le \text{max}(3, \text{int}(ESS / 15.0))$ (prevents parameter bloat relative to sample size).
+* **Active features count under ESS cap**: $active\_k \le \text{max}(3, \text{int}(ESS / 30.0))$ (prevents parameter bloat relative to sample size).
 * If any condition fails, return `-1e9` (pruned).
 
 **Continuous Soft Constraints**:

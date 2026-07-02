@@ -277,8 +277,8 @@ def main():
     lines.append("")
     lines.append("### Model Multi-Collinearity & Weight Concentration")
     lines.append("")
-    lines.append("| ETF | Condition Number ($\\kappa$) | Collinear Pairs ($\\ge 0.85$) | Gini (Weight Concentration) | Tail Weight ESS | Tail Weight ESS % |")
-    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: |")
+    lines.append("| ETF | Raw X Cond | Reg normal eq kappa | Collinear Pairs ($\\ge 0.85$) | Gini (Weight Concentration) | Tail Weight ESS | Tail Weight ESS % |")
+    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: |")
     
     for etf in ETF_ORDER:
         if etf not in results_dict:
@@ -287,12 +287,15 @@ def main():
         diag = r.get("diagnostics", {})
         mq = diag.get("model_quality", {})
         
-        cond = mq.get("condition_number")
-        cond_str = f"{cond:.2f}" if cond is not None else "N/A"
-        if cond is not None and cond > 100:
-            cond_str += " [SEVERE]"
-        elif cond is not None and cond > 30:
-            cond_str += " [MODERATE]"
+        cond_raw = mq.get("condition_number_raw", mq.get("condition_number"))
+        cond_raw_str = f"{cond_raw:.2f}" if cond_raw is not None else "N/A"
+        
+        cond_reg = mq.get("condition_number_regularized", mq.get("condition_number"))
+        cond_reg_str = f"{cond_reg:.2f}" if cond_reg is not None else "N/A"
+        if cond_reg is not None and cond_reg > 100:
+            cond_reg_str += " [SEVERE]"
+        elif cond_reg is not None and cond_reg > 30:
+            cond_reg_str += " [MODERATE]"
             
         coll = mq.get("collinear_pairs")
         coll_str = str(len(coll)) if coll is not None else "N/A"
@@ -314,13 +317,13 @@ def main():
         elif ess_pct is not None and ess_pct < 0.20:
             ess_pct_str += " [LOW]"
             
-        lines.append(f"| {etf} | {cond_str} | {coll_str} | {gini_str} | {ess_str} | {ess_pct_str} |")
+        lines.append(f"| {etf} | {cond_raw_str} | {cond_reg_str} | {coll_str} | {gini_str} | {ess_str} | {ess_pct_str} |")
 
     lines.append("")
     lines.append("### Generalization Gap (CV vs Out-of-Sample)")
     lines.append("")
-    lines.append("| ETF | CV Overall IC | OOS Lockbox IC | IC Gen Gap | CV Monotonicity | OOS Monotonicity | Mono Gen Gap |")
-    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: |")
+    lines.append("| ETF | CV Overall IC | Deflated CV IC | OOS Lockbox IC | IC Gen Gap | CV Monotonicity | OOS Monotonicity | Mono Gen Gap |")
+    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
     
     for etf in ETF_ORDER:
         if etf not in results_dict:
@@ -328,6 +331,7 @@ def main():
         r = results_dict[etf]
         
         cv_ic = r["best_raw_metrics"][3]
+        deflated_cv_ic = r.get("deflated_cv_ic", np.nan)
         oos_ic = r.get("lockbox_overall_ic", np.nan)
         ic_gap = r.get("ic_generalization_gap", np.nan)
         
@@ -335,6 +339,7 @@ def main():
         oos_mono = r.get("lockbox_monotonicity", np.nan)
         mono_gap = r.get("mono_generalization_gap", np.nan)
         
+        deflated_cv_ic_str = f"{deflated_cv_ic:+.4f}" if not np.isnan(deflated_cv_ic) else "N/A"
         oos_ic_str = f"{oos_ic:+.4f}" if not np.isnan(oos_ic) else "N/A"
         ic_gap_str = f"{ic_gap:+.4f}" if not np.isnan(ic_gap) else "N/A"
         if not np.isnan(ic_gap) and ic_gap > 0.05:
@@ -345,7 +350,7 @@ def main():
         if not np.isnan(mono_gap) and mono_gap > 0.20:
             mono_gap_str += " [DEGRADED]"
             
-        lines.append(f"| {etf} | {cv_ic:+.4f} | {oos_ic_str} | {ic_gap_str} | {cv_mono:+.4f} | {oos_mono_str} | {mono_gap_str} |")
+        lines.append(f"| {etf} | {cv_ic:+.4f} | {deflated_cv_ic_str} | {oos_ic_str} | {ic_gap_str} | {cv_mono:+.4f} | {oos_mono_str} | {mono_gap_str} |")
 
     lines.append("")
     lines.append("### Feature Selection Metrics & Fallbacks")

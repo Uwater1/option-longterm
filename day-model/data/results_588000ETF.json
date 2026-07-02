@@ -58,10 +58,7 @@
     "aroon_osc",
     "sma20_dist",
     "bar_body_rng_2",
-    "intraday_close_position",
-    "consecutive_bullish_engulfing",
     "late_bar_momentum",
-    "barbed_wire_intensity",
     "volatility_percentile_20d",
     "early_skew",
     "early_kurtosis",
@@ -309,31 +306,33 @@
   },
   "best_params": {
     "model_type": "skglm_mcp",
-    "k_weight": 0.08884952267117209,
-    "skglm_mcp_alpha": 0.025644898004291764,
-    "skglm_mcp_gamma": 9.802399348022101,
-    "skglm_mcp_delta": 4.406323745052362
+    "k_weight": 0.24833696210401648,
+    "skglm_mcp_alpha": 0.044863067606254706,
+    "skglm_mcp_gamma": 4.338591749713884,
+    "skglm_mcp_delta": 4.6395221684573285
   },
   "best_raw_metrics": [
-    2.982594570553075,
-    0.28365197066617126,
+    1.6093706485142225,
+    0.33280502826814984,
     1.0,
-    0.1861704430304993,
-    0.7848484848484849,
-    0.9795264706629614,
-    -0.4450259364781559,
-    -0.30518779158592224
+    0.18805040122173558,
+    0.7242424242424242,
+    0.9448404728790978,
+    -0.7911908193763484,
+    -0.3656153678894043
   ],
-  "lockbox_overall_ic": 0.030039798455233694,
-  "lockbox_tail_ic": 0.012208977310283682,
+  "deflated_cv_ic": 0.13454931540926943,
+  "deflated_objective": -0.8452768537256801,
+  "lockbox_overall_ic": 0.024206292364641228,
+  "lockbox_tail_ic": -0.03911992716349361,
   "diagnostics": {
     "timings": {
-      "data_loading": 0.07003713499580044,
-      "feature_selection": 1.1095533500047168,
-      "loyo_folds": 0.019223862007493153,
-      "pilot_study": 1.1761390640022,
-      "main_study": 2.4059748639992904,
-      "final_refit": 0.005760439002187923
+      "data_loading": 0.07157767300668638,
+      "feature_selection": 1.3586275540001225,
+      "loyo_folds": 0.07237250600883272,
+      "pilot_study": 1.3023575840052217,
+      "main_study": 2.363648195998394,
+      "final_refit": 0.007369364000624046
     },
     "screening": {
       "total_features": 238,
@@ -348,28 +347,28 @@
     },
     "optuna_main": {
       "total_trials": 100,
-      "completed_count": 63,
-      "pruned_count": 37,
+      "completed_count": 31,
+      "pruned_count": 69,
       "failed_count": 0,
       "pruning_reasons": {
-        "M4 (Overall IC <= 0)": 8,
+        "M4 (Overall IC <= 0)": 13,
         "M3 (Hit Rate < 60%)": 12,
-        "M5 (Monotonicity <= 0.25)": 8,
-        "M6 (Top-Bottom Spread <= 0)": 8,
-        "exceeds ESS-based cap": 25
+        "M5 (Monotonicity <= 0.25)": 14,
+        "M6 (Top-Bottom Spread <= 0)": 13,
+        "exceeds ESS-based cap": 55
       }
     },
     "model_quality": {
-      "condition_number": 77.9408950805664,
+      "condition_number": 75.99078369140625,
       "condition_number_raw": 8.983695983886719,
-      "condition_number_regularized": 77.9408950805664,
+      "condition_number_regularized": 75.99078369140625,
       "collinear_pairs": [],
-      "effective_sample_size": 707.8239135742188,
-      "effective_sample_size_pct": 0.9591109940030065,
-      "gini_coefficient": 0.6518633464312888
+      "effective_sample_size": 682.5155029296875,
+      "effective_sample_size_pct": 0.924817754647273,
+      "gini_coefficient": 0.7369320046183296
     }
   },
-  "lockbox_monotonicity": 0.41818181818181815,
-  "ic_generalization_gap": 0.1561306445752656,
-  "mono_generalization_gap": 0.36666666666666675
+  "lockbox_monotonicity": 0.09090909090909091,
+  "ic_generalization_gap": 0.16384410885709436,
+  "mono_generalization_gap": 0.6333333333333333
 }
