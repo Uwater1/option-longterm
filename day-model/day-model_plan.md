@@ -86,6 +86,9 @@ Before computing the weighted objective, apply **Kill Switches**:
 * Top-Bottom Spread > 0 (M6 > 0)
 If any condition fails, return `-1e9` (pruned).
 
+> Problems: [WARNING] All main study trials violated hard constraints for 50ETF. Searching for best valid trial... [WARNING] No main trials succeeded. Falling back to pilot study's best trial.
+> (luckly this problem only True for 50ETF)
+
 **Step 5 — Freeze feature set.**
 Stability-selected features are frozen before Optuna tuning begins.
 
