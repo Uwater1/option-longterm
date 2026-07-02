@@ -32,6 +32,12 @@ warnings.filterwarnings("ignore", message=".*InconsistentVersion.*")
 
 from . import MODEL_DIR, DATA_DIR, ETFS
 
+# Import custom penalties for skglm model deserialization
+try:
+    from penalties import MCP_plus_L2
+except ImportError:
+    pass
+
 SIDES = ("single", "long", "short")
 
 

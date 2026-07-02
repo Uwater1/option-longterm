@@ -16,12 +16,20 @@ A missing gating artifact returns ``None`` (caller treats as "no gate").
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 import joblib
 import numpy as np
 import pandas as pd
 
 from . import DATA_DIR
+
+# Import custom penalties for skglm model deserialization
+try:
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+    from penalties import MCP_plus_L2
+except ImportError:
+    pass
 
 # day-model/gating_model/ holds the canonical promoted artifacts.
 GATING_DIR = (DATA_DIR.parent / "gating_model").resolve()

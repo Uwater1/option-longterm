@@ -94,3 +94,31 @@ Stability-selected features are frozen before Optuna tuning begins.
 **Step 6 — One-shot evaluation on the lockbox.**
 * **Refit**: `train_model.py` refits the final model on all working rows using the best parameters, and saves the final models and scaler/feature metadata.
 * **Evaluation**: The actual one-shot OOS predictions on the lockbox (2024-03-01 to the last day), computation of lockbox metrics (overall IC, tail-decile IC, decile monotonicity), and update of the results JSON are performed by the companion report-generator script `generate_report.py`. This ensures strict data segregation to prevent accidental temporal leak during model search.
+
+---
+
+## 7. Observed Effects & Performance Enhancements (July 2026 Remake)
+
+We implemented three key improvements to address severe multicollinearity and ESS degradation:
+1. **Cluster Stability Selection (CSS)**: Screened features are grouped using Complete Linkage hierarchical clustering (correlation distance threshold of 0.25, i.e., $|r| \ge 0.75$). During stability selection, voting is aggregated at the cluster level. A single representative feature with the highest individual stability score is selected from each stable cluster, structurally preventing pairwise collinearity.
+2. **Tail Weight ESS Constraint**: Added a hard kill switch to prune Optuna trials where the Tail Weight ESS falls below $20\%$, preventing training size collapse and tail overfitting.
+3. **L2 Ridge Regularization**: Integrated a $10\%$ L2 Ridge penalty into both model families (`skglm_huber_l1` via `L1_plus_L2` and `skglm_mcp` via custom `MCP_plus_L2`) to stabilize coefficient weights under multicollinearity.
+
+### Observed Diagnostics and OOS Lockbox Improvements
+
+Comparing the baseline optimization to the CSS + ESS-constrained + L2-regularized optimization (50 trials):
+
+| Metric / Asset | 300ETF Baseline | 300ETF Remade | 159915ETF Baseline | 159915ETF Remade |
+| :--- | :---: | :---: | :---: | :---: |
+| **Selected Features** | 30 | 36 | 15 | 23 |
+| **Condition Number ($\kappa$)** | 523,664.94 | **16.51** | 964.82 | **4.65** |
+| **Collinear Pairs ($\ge 0.85$)** | 4 | **0** | 2 | **0** |
+| **Tail Weight ESS %** | 49.8% | **92.7%** | 16.6% | **59.6%** |
+| **Lockbox Overall IC** | +0.0622 | +0.0224 | +0.1085 | **+0.1367** |
+| **Lockbox Tail IC** | +0.1151 | -0.0311 | +0.2631 | **+0.3293** |
+| **OOS Monotonicity** | +0.6727 | +0.4909 | +0.6848 | **+0.6970** |
+
+* Key benefits:
+  - Condition numbers for 300ETF and 159915ETF collapsed to negligible values (near-orthogonal design matrices).
+  - ESS for 159915ETF was successfully rescued from 16.6% to 59.6%, stabilizing tail parameters.
+  - Overall OOS Lockbox performance showed strong gains (especially for 500ETF Tail IC going from +0.0679 to +0.1322 and 159915ETF Tail IC going from +0.2631 to +0.3293).

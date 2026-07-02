@@ -2,6 +2,7 @@
 Phase 3: Generate day-model/REPORT.md summary from training results.
 """
 import json
+import sys
 import argparse
 from pathlib import Path
 import pandas as pd
@@ -11,6 +12,10 @@ import matplotlib.pyplot as plt
 from scipy.stats import spearmanr, rankdata
 
 HERE = Path(__file__).resolve().parent
+sys.path.append(str(HERE.parent))
+# Import custom penalty so joblib can deserialize the model successfully
+from penalties import MCP_plus_L2
+
 DATA_DIR = HERE / "data"
 MODELS_DIR = HERE / "models"
 PLOTS_DIR = HERE / "plots"
