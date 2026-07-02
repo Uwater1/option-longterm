@@ -44,63 +44,63 @@ Plan to reformulate and optimize the Optuna objective function for `day-model` b
 
 ## 4. Practical Plan
 
-**Step 0 — Lock the holdout first sequentially.**
-Partition the entire dataset chronologically. Everything before **2024-03-01** (approx 2166 rows) forms the working training set. Everything from **2024-03-01 to the last day** (approx 556 rows) is the out-of-sample lockbox. Do not touch the lockbox again until step 6.
+**Step 0 — Lock the holdout sequentially and partition validation split.**
+Partition the entire dataset chronologically:
+- **Selection Train**: `date < 2024-03-01` excluding `2021-01-01 <= date < 2022-01-01` (approx 1923 rows). Features are selected here, and CPCV cross-validation is run here.
+- **Selection Validation**: `2021-01-01 <= date < 2022-01-01` (approx 243 rows). Excluded from feature selection, used for selection-blind hyperparameter validation in the Optuna objective.
+- **OOS Lockbox**: `date >= 2024-03-01` (approx 556 rows). Completely untouched during training, evaluated one-shot at the end.
 
-**Step 1 — Cheap screening on full working set.**
-Compute robust marginal association per feature (Spearman rank correlation) between each of the 238 features and the target. Apply BH-FDR correction across the tests (FDR = 0.40). If fewer than 40 features pass, fallback to the top 50 features by p-value.
+**Step 1 — Cheap screening on selection train set.**
+Compute robust marginal association per feature (Spearman rank correlation) between each of the 238 features and the target, utilizing only the selection train subset. Apply BH-FDR correction across the tests (FDR = 0.40). If fewer than 40 features pass, fallback to the top 50 features by p-value.
 
 > **Mistake (Previous Attempt)**: Clustering slightly correlated features ($|r| \ge 0.3$) and dropping them based on univariate ranking discarded complementary multivariate features, causing model collapse to $\le 2$ active weights. We incorrectly tried to rely on ElasticNet grouping effect without pre-clustering. Grouping into complete correlation clusters *after* screening but *before* stability voting resolves this without discarding joint predictive power.
 
-**Step 2 — Cluster Stability Selection (CSS) + VIF Pruning.**
-Perform Complete Linkage hierarchical clustering on Step 1 survivors using correlation distance (threshold $t = 0.25$, i.e. $|r| \ge 0.75$). Run repeated subsampling ($B=100$, subsample size $\lfloor N/2 \rfloor$) and fit ElasticNet paths (l1_ratio = 0.5). Aggregate selection votes at the *cluster level* (i.e. did any member of the cluster get selected in the subsample?). Keep clusters selected in $\ge 0.60$ fraction of subsamples (fallback to top 5 if count < 3). For each kept cluster, select the single representative feature with the highest individual stability score (tie-broken by Spearman correlation absolute values). 
+**Step 2 — Cluster Stability Selection (CSS) + VIF Pruning on selection train set.**
+Perform Complete Linkage hierarchical clustering on Step 1 survivors using correlation distance (threshold $t = 0.25$, i.e. $|r| \ge 0.75$). Run repeated subsampling ($B=100$, subsample size $\lfloor N/2 \rfloor$) and fit ElasticNet paths (l1_ratio = 0.5) on selection train. Aggregate selection votes at the *cluster level* (i.e. did any member of the cluster get selected in the subsample?). Keep clusters selected in $\ge 0.60$ fraction of subsamples (fallback to top 5 if count < 3). For each kept cluster, select the single representative feature with the highest individual stability score (tie-broken by Spearman correlation absolute values). 
 
 After selecting representatives, perform **iterative VIF pruning** using standard OLS on the representatives. In each step, compute Variance Inflation Factors (VIFs) for all remaining features, identifying the highest VIF. If it exceeds $10.0$, drop the feature and repeat, continuing until all remaining selected features have VIF $\le 10.0$. This eliminates multivariate collinearity among three or more variables that pairwise clustering ignores.
 
 > **Mistake (Previous Attempt)**: Standard (loss-agnostic, individual-feature) stability selection failed under correlation by vote-splitting, which led to severe collinearity in selected sets (condition numbers up to 6.4M for 50ETF, 3.7M for 500ETF). Pairwise clustering alone resolved most issues but left multivariate collinearity intact for 50ETF and 500ETF. Integrating VIF pruning post-CSS completely eliminates joint collinearity.
 
 **Step 3 — Loss Weighting via Input Scaling.**
-For the final coefficient fit, use sample weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to upweight tail days. Implement weights by scaling inputs $X$ and targets $y$ by $\sqrt{w}$.
+For coefficient fits, use sample weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to upweight tail days. Implement weights by scaling inputs $X$ and targets $y$ by $\sqrt{w}$. During Optuna tuning, Kish ESS is calculated on the selection train subset to apply active feature caps and soft ESS penalties. For the final refit, sample weights and Kish ESS are evaluated on the full working set.
 
 > **Mistake (Previous Attempt)**: Pushing tail-weighting parameters (exponent $k$) without constraints collapsed the Effective Sample Size (ESS) to 16.6% on 159915ETF, training the model on effectively very few outlier days. Enforcing a hard ESS floor $\ge 20\%$ during optimization completely fixes this.
 
-**Step 4 — Optuna over hyperparameters only, evaluated on a tail-specific metric.**
-Combinatorial Purged Cross-Validation (CPCV) splits (6 groups, 2 test groups, yielding 15 folds) within the working set, applying a 10-day embargo at test boundaries to prevent temporal leak. Overlapping OOS fold predictions are aggregated via averaging. Optuna tunes model type selection (`skglm_huber_l1` vs `skglm_mcp`), their respective regularization parameters (alphas, gamma, delta), and the loss weight exponent $k$.
+**Step 4 — Optuna over hyperparameters only, evaluated on a selection validation block.**
+Chronological splits partition the working set into a `selection train` block (before `2024-03-01` excluding the validation block) and a held-out `selection validation` block (from `2021-01-01` to `2021-12-31`).
+Combinatorial Purged Cross-Validation (CPCV) splits (6 groups, 2 test groups, yielding 15 folds) are constructed strictly within the `selection train` subset, applying a 10-day embargo at test boundaries. Optuna tunes model type selection (`skglm_huber_l1` vs `skglm_mcp`), their respective regularization parameters (alphas, gamma, delta), and the loss weight exponent $k$.
 Both model families enforce a mandatory $10\%$ L2 Ridge regularization component (`skglm_huber_l1` uses `L1_plus_L2` with `l1_ratio = 0.9` and `skglm_mcp` uses custom `MCP_plus_L2` with `mu = 0.1 * alpha` from `penalties.py`) to guarantee minimum eigenvalues and compress condition numbers.
 
 ### Step 4.1 — Define Metric Weights & Optimization Objective
 
-$$ \text{Objective} = \sum_{i=1}^{8} w_i \cdot \widetilde{M}_i $$
+$$ \text{Objective} = \sum_{i=1}^{4} w_i \cdot \widetilde{V}_i $$
 
-Where each $\widetilde{M}_i$ is a **robust z-score normalized** metric (computed via a 50-trial Optuna pilot run using Median Absolute Deviation), and weights $w_i$ are pre-defined constants:
+Where each $\widetilde{V}_i$ is a **robust z-score normalized** metric evaluated on the selection-blind chronological validation set (computed via a 50-trial Optuna pilot run using Median Absolute Deviation), and weights $w_i$ are pre-defined constants:
 
-| ID | Metric ($\widetilde{M}_i$) | Definition | Sign | Category | Weight ($w_i$) |
+| ID | Metric ($\widetilde{V}_i$) | Definition | Sign | Category | Weight ($w_i$) |
 | :--- | :--- | :--- | :---: | :--- | :---: |
-| **M₁** | **Yearly Tail IC IR** | $\frac{\overline{\text{IC}_{\text{tail, year}}}}{\sigma(\text{IC}_{\text{tail, year}})}$ — Mean divided by Standard Deviation of Spearman IC computed *only* on top/bottom 10% rows for each year. | + | Tail Stability | **0.25** |
-| **M₂** | **Yearly Tail IC Mean** | Mean of the yearly tail ICs. Measures absolute strength of tail predictions. | + | Tail Power | **0.25** |
-| **M₃** | **Yearly Hit Rate** | Percentage of years where Tail IC is strictly $> 0$. | + | Temporal Consistency | **0.15** |
-| **M₄** | **Overall Rank IC** | Mean Spearman rank IC across all rows. | + | General Signal | **0.15** |
-| **M₅** | **Decile Monotonicity** | Spearman correlation between decile rank and mean actual return. | + | Signal Structure | **0.15** |
-| **M₆** | **Top-Bottom Spread** | Mean return spread (Top 10% minus Bottom 10%). | + | Factor Efficacy | **0.05** |
-| **M₇** | **Feature Parsimony** | Sparsity metric scaled by ESS: $-k / (ESS / 30.0)$ where $k$ is active model size (coefficients with absolute value $> 10^{-5}$). (weight set to 0.00 since CSS controls sparsity). | + | Simplicity | **0.00** |
-| **M₈** | **Coefficient Bloat** | $-\|\beta\|_2$. (weight set to 0.00 since CSS controls sparsity). | + | Simplicity | **0.00** |
+| **V₁** | **Val Overall IC** | Spearman rank correlation computed over all rows in the selection validation block. | + | General Signal | **0.40** |
+| **V₂** | **Val Tail IC** | Spearman rank correlation computed on top/bottom 10% rows of the selection validation block. | + | Tail Power | **0.40** |
+| **V₃** | **Val Monotonicity** | Spearman correlation between decile rank and mean actual return on the selection validation block. | + | Signal Structure | **0.15** |
+| **V₄** | **Val Top-Bottom Spread** | Mean return spread (Top 10% minus Bottom 10%) on the selection validation block. | + | Factor Efficacy | **0.05** |
 
-Before computing the weighted objective, apply **Kill Switches / Hard Constraints**:
-* Overall IC > 0 (M4 > 0)
-* Minimum Hit Rate >= 60% (M3 >= 0.60)
-* Decile Monotonicity > 0.25 (M5 >= 0.25)
-* Top-Bottom Spread > 0 (M6 > 0)
-* **Active features count under ESS cap**: $active\_k \le \text{max}(3, \text{int}(ESS / 30.0))$ (prevents parameter bloat relative to sample size).
+Before computing the weighted objective, apply **Kill Switches / Hard Constraints** evaluated on the cross-validation folds metrics ($M_1$ through $M_6$) constructed on the selection training block:
+* Overall IC > 0 ($M_4 > 0$)
+* Minimum Hit Rate >= 60% ($M_3 \ge 0.60$)
+* Decile Monotonicity > 0.25 ($M_5 \ge 0.25$)
+* Top-Bottom Spread > 0 ($M_6 > 0$)
+* **Active features count under ESS cap**: $active\_k \le \text{max}(3, \text{int}(ESS / 25.0))$ (prevents parameter bloat relative to sample size, using global divisor constant 25.0).
 * If any condition fails, return `-1e9` (pruned).
 
 **Continuous Soft Constraints**:
-* **ESS Floor**: The hard discontinuous $ESS \ge 20\%$ floor is converted to a continuous soft penalty in the objective function: $ess\_penalty = -10.0 \times (0.20 - ess\_pct)$ when $ess\_pct < 0.20$ (and $0$ otherwise). This allows Optuna's TPE sampler to navigate the optimization landscape smoothly rather than falling off a cliff.
+* **ESS Floor**: The hard discontinuous $ESS \ge 20\%$ floor on the selection training subset is converted to a continuous soft penalty in the objective function: $ess\_penalty = -10.0 \times (0.20 - ess\_pct)$ when $ess\_pct < 0.20$ (and $0$ otherwise). This allows Optuna's TPE sampler to navigate the optimization landscape smoothly rather than falling off a cliff.
 
 **Step 5 — Freeze feature set.**
 Stability-selected cluster representatives are frozen before Optuna tuning begins.
 
 **Step 6 — One-shot evaluation on the lockbox.**
-* **Refit**: `train_model.py` refits the final model on all working rows using the best parameters, and saves the final models and scaler/feature metadata. Calculates the **Raw Design Matrix Condition Number**, the **Raw Normal Equations Condition Number**, and the **Regularized Normal Equations Condition Number** ($\kappa(X^TX + N \lambda_{L2} I)$) to show the exact numerical stability of the estimator under regularized normal equations.
+* **Refit**: `train_model.py` refits the final model on the full working set (Selection Train + Selection Validation, i.e., all rows before `2024-03-01`) using the best parameters, and saves the final models and scaler/feature metadata. Calculates the **Raw Design Matrix Condition Number**, the **Raw Normal Equations Condition Number**, and the **Regularized Normal Equations Condition Number** ($\kappa(X^TX + N \lambda_{L2} I)$) to show the exact numerical stability of the estimator under regularized normal equations.
 * **Evaluation**: The actual one-shot OOS predictions on the lockbox (2024-03-01 to the last day), computation of lockbox metrics (overall IC, tail-decile IC, decile monotonicity), and update of the results JSON are performed by the companion report-generator script `generate_report.py`.
 
 ---
