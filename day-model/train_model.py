@@ -72,7 +72,7 @@ STABILITY_B = 100
 STABILITY_PI = 0.60
 STABILITY_Q = 35
 SCREEN_FDR = 0.40
-SCREEN_FALLBACK_K = 40 # Doublc check this 
+SCREEN_FALLBACK_K = 50 # Doublc Research this 
 
 # Sample-weighting scale_data_with_weights can be done without a full rescale
 # of the standardized X (sqrt(w) is row-wise); we precompute the unweighted
