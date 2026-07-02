@@ -135,25 +135,55 @@ def main():
                 ax2 = fig.add_subplot(gs[0, 1])
                 df_oos = pd.DataFrame({"y_true": y_lockbox, "y_pred": preds_lockbox})
                 df_oos["decile"] = pd.qcut(df_oos["y_pred"], 10, labels=False, duplicates="drop")
-                decile_means_oos = df_oos.groupby("decile")["y_true"].mean()
+                decile_stats_oos = df_oos.groupby("decile")["y_true"].agg(["mean", "median", "std"])
+                deciles_oos = decile_stats_oos.index + 1
                 
-                ax2.bar(decile_means_oos.index + 1, decile_means_oos.values, color="teal")
+                # Mean as bars (LHS)
+                ax2.bar(deciles_oos, decile_stats_oos["mean"], color="green", alpha=0.9, label="Mean")
+                # Median as points (LHS)
+                ax2.scatter(deciles_oos, decile_stats_oos["median"], color="darkorange", marker="o", s=50, label="Median", zorder=3)
                 ax2.set_xlabel("Predicted Decile (1=Low, 10=High)")
-                ax2.set_ylabel("Mean Actual return (%)")
+                ax2.set_ylabel("Mean / Median return (%)")
                 ax2.set_title("Decile Performance Spread (OOS data)")
                 ax2.set_xticks(range(1, 11))
+                
+                # S.d as points (RHS axis)
+                ax2_twin = ax2.twinx()
+                ax2_twin.scatter(deciles_oos, decile_stats_oos["std"], color="crimson", marker="x", s=50, label="S.D.", zorder=3)
+                ax2_twin.set_ylabel("S.D. of return (%)", color="crimson")
+                ax2_twin.tick_params(axis='y', labelcolor="crimson")
+                
+                # Combined legend
+                h1, l1 = ax2.get_legend_handles_labels()
+                h2, l2 = ax2_twin.get_legend_handles_labels()
+                ax2.legend(h1 + h2, l1 + l2, loc="upper left")
                 
                 # Plot 3: Decile actual vs prediction (All data) (bottom right)
                 ax3 = fig.add_subplot(gs[1, 1])
                 df_all = pd.DataFrame({"y_true": y_scaled, "y_pred": preds})
                 df_all["decile"] = pd.qcut(df_all["y_pred"], 10, labels=False, duplicates="drop")
-                decile_means_all = df_all.groupby("decile")["y_true"].mean()
+                decile_stats_all = df_all.groupby("decile")["y_true"].agg(["mean", "median", "std"])
+                deciles_all = decile_stats_all.index + 1
                 
-                ax3.bar(decile_means_all.index + 1, decile_means_all.values, color="teal")
+                # Mean as bars (LHS)
+                ax3.bar(deciles_all, decile_stats_all["mean"], color="green", alpha=0.9, label="Mean")
+                # Median as points (LHS)
+                ax3.scatter(deciles_all, decile_stats_all["median"], color="darkorange", marker="o", s=50, label="Median", zorder=3)
                 ax3.set_xlabel("Predicted Decile (1=Low, 10=High)")
-                ax3.set_ylabel("Mean Actual return (%)")
+                ax3.set_ylabel("Mean / Median return (%)")
                 ax3.set_title("Decile Performance Spread (All data)")
                 ax3.set_xticks(range(1, 11))
+                
+                # S.d as points (RHS axis)
+                ax3_twin = ax3.twinx()
+                ax3_twin.scatter(deciles_all, decile_stats_all["std"], color="crimson", marker="x", s=50, label="S.D.", zorder=3)
+                ax3_twin.set_ylabel("S.D. of return (%)", color="crimson")
+                ax3_twin.tick_params(axis='y', labelcolor="crimson")
+                
+                # Combined legend
+                h3, l3 = ax3.get_legend_handles_labels()
+                h4, l4 = ax3_twin.get_legend_handles_labels()
+                ax3.legend(h3 + h4, l3 + l4, loc="upper left")
                 
                 plt.tight_layout()
                 diagnostics_plot_name = f"diagnostics_{tag}.png"
