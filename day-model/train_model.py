@@ -508,21 +508,15 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # Target scaling (consistent with old pipeline target scaling)
     y_scaled = (y * np.float32(100.0)).astype(np.float32)
 
-    # Step 0: Lockout split by date
+    # Step 0: Lockout split by date (ignoring OOS lockbox data to keep it untouched during training)
     working_mask = df["date"] < LOCKBOX_DATE
-    lockbox_mask = df["date"] >= LOCKBOX_DATE
     working_idx = np.where(working_mask)[0]
-    lockbox_idx = np.where(lockbox_mask)[0]
 
     X_working = _to_f32(X[working_idx])
     y_working = y_scaled[working_idx].astype(np.float32)
     dates_working = df["date"].iloc[working_idx].reset_index(drop=True)
 
-    X_lockbox = _to_f32(X[lockbox_idx])
-    y_lockbox = y_scaled[lockbox_idx].astype(np.float32)
-    dates_lockbox = df["date"].iloc[lockbox_idx].reset_index(drop=True)
-
-    print(f"Split: Working={len(working_idx)} rows, Lockbox={len(lockbox_idx)} rows.")
+    print(f"Split: Working={len(working_idx)} rows (Lockbox OOS data ignored during training).")
 
     # Precompute yearly row-index groups (used by per-trial metric computation).
     years_working = dates_working.dt.year.values
@@ -571,7 +565,6 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # Freeze the features for the final and Optuna loops
     X_working_final = _to_f32(X_working[:, stability_selected_idx])
-    X_lockbox_final = _to_f32(X_lockbox[:, stability_selected_idx])
 
     # ── LOYO folds cache (depends on selected features only) ──────────
     loyo_key = [
@@ -861,24 +854,6 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     final_model = _build_model(model_type, params)
     final_model.fit(X_weighted_final, y_weighted_final)
     
-    # Step 6: One-shot evaluation on 500 holdout lockbox
-    X_lockbox_scaled = scaler_final.transform(X_lockbox_final)
-    preds_lockbox = final_model.predict(X_lockbox_scaled)
-    
-    lockbox_ic = spearman_ic(y_lockbox, preds_lockbox)
-    
-    n_tail_lock = max(5, int(len(y_lockbox) * 0.10))
-    top_idx_lock = np.argsort(preds_lockbox)[-n_tail_lock:]
-    bot_idx_lock = np.argsort(preds_lockbox)[:n_tail_lock]
-    tail_idx_lock = np.concatenate([bot_idx_lock, top_idx_lock])
-    lockbox_tail_ic = spearman_ic(y_lockbox[tail_idx_lock], preds_lockbox[tail_idx_lock])
-    
-    print(f"\n=== ONE-SHOT LOCKBOX EVALUATION ===")
-    print(f"  Lockbox Size:       {len(y_lockbox)} days")
-    print(f"  Lockbox Overall IC: {lockbox_ic:.4f}")
-    print(f"  Lockbox Tail IC:    {lockbox_tail_ic:.4f}")
-    print(f"====================================")
-    
     # Save the models/scalers/results to files
     tag = etf_name if side == "single" else f"{etf_name}_{side}"
     
@@ -892,8 +867,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "stability_scores": dict(zip(FEATURES, stability_scores.tolist())),
         "best_params": best_params,
         "best_model_type": model_type,
-        "holdout_ic": lockbox_ic,
-        "holdout_tail_ic": lockbox_tail_ic,
+        "holdout_ic": np.nan,
+        "holdout_tail_ic": np.nan,
         "side": side,
         "target": TARGET,
     }
@@ -908,71 +883,21 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "side": side,
         "tag": tag,
         "n_samples_working": len(y_working),
-        "n_samples_lockbox": len(y_lockbox),
+        "n_samples_lockbox": 0,
         "selected_features": selected_feature_names,
         "active_features": active_feature_names,
         "stability_scores": dict(zip(FEATURES, stability_scores.tolist())),
         "best_params": best_params,
         "best_raw_metrics": best_raw_m,
-        "lockbox_overall_ic": lockbox_ic,
-        "lockbox_tail_ic": lockbox_tail_ic,
+        "lockbox_overall_ic": np.nan,
+        "lockbox_tail_ic": np.nan,
     }
     with open(DATA_DIR / f"results_{tag}.json", "w") as f:
         json.dump(results, f, indent=2, default=str)
         
-    # Generate diagnostic plots
-    _plot_diagnostics(tag, dates_lockbox, y_lockbox, preds_lockbox, final_model.coef_, selected_feature_names)
-    
     return results
 
 
-def _plot_diagnostics(tag, dates, y_true, y_pred, coefs, feature_names):
-    fig = plt.figure(figsize=(15, 12))
-    gs = fig.add_gridspec(2, 2)
-    
-    # Plot 1: Feature coefficients (takes left column, spans both rows)
-    ax1 = fig.add_subplot(gs[:, 0])
-    
-    # Sort coefficients by absolute value
-    abs_coefs = np.abs(coefs)
-    sort_idx = np.argsort(abs_coefs)
-    
-    # Cap to max 20 coefficients to avoid crowding
-    max_coefs = 20
-    if len(sort_idx) > max_coefs:
-        sort_idx = sort_idx[-max_coefs:]
-        
-    sorted_coefs = coefs[sort_idx]
-    sorted_feats = [feature_names[i] for i in sort_idx]
-    
-    ax1.barh(sorted_feats, sorted_coefs, color="royalblue")
-    ax1.set_title(f"Model Coefficients (Top {len(sorted_feats)})")
-    ax1.axvline(0, color="gray", linestyle="--")
-    
-    # Plot 2: Decile actual vs prediction (top right)
-    ax2 = fig.add_subplot(gs[0, 1])
-    df = pd.DataFrame({"y_true": y_true, "y_pred": y_pred})
-    df["decile"] = pd.qcut(df["y_pred"], 10, labels=False, duplicates="drop")
-    decile_means = df.groupby("decile")["y_true"].mean() * 100 # % return
-    
-    ax2.bar(decile_means.index + 1, decile_means.values, color="teal")
-    ax2.set_xlabel("Predicted Decile (1=Low, 10=High)")
-    ax2.set_ylabel("Mean Actual return (%)")
-    ax2.set_title("Decile Performance Spread")
-    ax2.set_xticks(range(1, 11))
-    
-    # Plot 3: Square graph under Decile Performance Spread (left empty for now)
-    ax3 = fig.add_subplot(gs[1, 1])
-    ax3.set_title("Future Diagnostic Plot")
-    ax3.text(0.5, 0.5, "(Empty for now)", ha="center", va="center", color="gray", fontsize=12)
-    ax3.set_xlim(0, 1)
-    ax3.set_ylim(0, 1)
-    ax3.set_xticks([])
-    ax3.set_yticks([])
-    
-    plt.tight_layout()
-    plt.savefig(PLOTS_DIR / f"diagnostics_{tag}.png", dpi=150)
-    plt.close()
 
 
 if __name__ == "__main__":
