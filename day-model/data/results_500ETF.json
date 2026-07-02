@@ -307,31 +307,34 @@
     "yesterday_spike_exhaustion_ratio": 0.0
   },
   "best_params": {
-    "model_type": "skglm_huber_l1",
-    "k_weight": 0.00045760590146470825,
-    "skglm_huber_l1_alpha": 1.8049246256635322e-05,
-    "skglm_huber_delta": 0.7595286881554855
+    "model_type": "skglm_mcp",
+    "k_weight": 0.3035012168576243,
+    "skglm_mcp_alpha": 2.216196048530558e-05,
+    "skglm_mcp_gamma": 8.726759593786715,
+    "skglm_mcp_delta": 0.5565316400483803
   },
   "best_raw_metrics": [
-    3.236070858074573,
-    0.2315508909408416,
+    2.0838871262021215,
+    0.2518513863112416,
     1.0,
-    0.18317521627035618,
-    0.7224242424242424,
-    0.7165955054612057,
-    -0.203366105329526,
-    -0.3932625651359558
+    0.178271133641308,
+    0.7139393939393939,
+    0.8059944614028254,
+    -0.44932789385052174,
+    -0.5383502840995789
   ],
-  "lockbox_overall_ic": 0.1443563732096076,
-  "lockbox_tail_ic": 0.08529179721840273,
+  "deflated_cv_ic": 0.1470937832132615,
+  "deflated_objective": -3.237469602179021,
+  "lockbox_overall_ic": 0.14739967607919296,
+  "lockbox_tail_ic": 0.06715956991186348,
   "diagnostics": {
     "timings": {
-      "data_loading": 0.10030044401355553,
-      "feature_selection": 1.4527034940110752,
-      "loyo_folds": 0.10597221599891782,
-      "pilot_study": 1.5486706039955607,
-      "main_study": 2.5404083959874697,
-      "final_refit": 1.2297632609988796
+      "data_loading": 0.09993303300871048,
+      "feature_selection": 1.4672164479998173,
+      "loyo_folds": 0.14671732099668588,
+      "pilot_study": 1.559961069986457,
+      "main_study": 3.533218177006347,
+      "final_refit": 0.013883485007681884
     },
     "screening": {
       "total_features": 238,
@@ -346,28 +349,28 @@
     },
     "optuna_main": {
       "total_trials": 100,
-      "completed_count": 79,
-      "pruned_count": 21,
+      "completed_count": 67,
+      "pruned_count": 33,
       "failed_count": 0,
       "pruning_reasons": {
-        "M4 (Overall IC <= 0)": 7,
-        "M3 (Hit Rate < 60%)": 7,
-        "M5 (Monotonicity <= 0.25)": 7,
-        "M6 (Top-Bottom Spread <= 0)": 7,
-        "exceeds ESS-based cap": 14
+        "M4 (Overall IC <= 0)": 13,
+        "M3 (Hit Rate < 60%)": 14,
+        "M5 (Monotonicity <= 0.25)": 14,
+        "M6 (Top-Bottom Spread <= 0)": 0,
+        "exceeds ESS-based cap": 19
       }
     },
     "model_quality": {
-      "condition_number": 2532220.5,
+      "condition_number": 2062303.0,
       "condition_number_raw": 4995548.5,
-      "condition_number_regularized": 2532220.5,
+      "condition_number_regularized": 2062303.0,
       "collinear_pairs": [],
-      "effective_sample_size": 2138.99951171875,
-      "effective_sample_size_pct": 0.9875344006088412,
-      "gini_coefficient": 0.40028119546159613
+      "effective_sample_size": 1936.2252197265625,
+      "effective_sample_size_pct": 0.8939174606309153,
+      "gini_coefficient": 0.4106160359581337
     }
   },
   "lockbox_monotonicity": 0.8181818181818182,
-  "ic_generalization_gap": 0.03881884306074859,
-  "mono_generalization_gap": -0.09575757575757582
+  "ic_generalization_gap": 0.03087145756211504,
+  "mono_generalization_gap": -0.10424242424242436
 }

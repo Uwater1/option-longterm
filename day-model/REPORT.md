@@ -6,43 +6,43 @@ This report summarizes the performance and features of the remade `day-model` re
 
 | ETF | Selected Features | Active Features | Best Model Type | Lockbox Overall IC | Lockbox Tail IC |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 35 | 35 | `skglm_mcp` | +0.0343 | -0.0308 |
-| 50ETF | 32 | 32 | `skglm_mcp` | -0.0004 | +0.1967 |
-| 500ETF | 29 | 29 | `skglm_huber_l1` | +0.1444 | +0.0853 |
-| 588000ETF | 38 | 21 | `skglm_mcp` | +0.0300 | +0.0122 |
-| 159915ETF | 23 | 23 | `skglm_huber_l1` | +0.1276 | +0.3335 |
+| 300ETF | 35 | 13 | `skglm_mcp` | +0.0308 | -0.0438 |
+| 50ETF | 32 | 32 | `skglm_mcp` | -0.0117 | +0.1794 |
+| 500ETF | 29 | 29 | `skglm_mcp` | +0.1474 | +0.0672 |
+| 588000ETF | 38 | 18 | `skglm_mcp` | +0.0242 | -0.0391 |
+| 159915ETF | 23 | 23 | `skglm_mcp` | +0.1205 | +0.3295 |
 
 ## Detailed Trial Metrics & Optimization Objectives
 
 | ETF | Yearly Tail IC IR | Yearly Tail IC Mean | Hit Rate | Decile Monotonicity | Top-Bottom Spread |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 1.2916 | +0.1947 | 100.0% | 0.4630 | +41.6389% |
-| 50ETF | 1.6710 | +0.2557 | 90.0% | 0.4339 | +34.9527% |
-| 500ETF | 3.2361 | +0.2316 | 100.0% | 0.7224 | +71.6596% |
-| 588000ETF | 2.9826 | +0.2837 | 100.0% | 0.7848 | +97.9526% |
-| 159915ETF | 3.4285 | +0.3372 | 100.0% | 0.5988 | +111.1121% |
+| 300ETF | 1.1928 | +0.1884 | 100.0% | 0.4206 | +38.7720% |
+| 50ETF | 2.5862 | +0.2271 | 100.0% | 0.4970 | +44.9538% |
+| 500ETF | 2.0839 | +0.2519 | 100.0% | 0.7139 | +80.5994% |
+| 588000ETF | 1.6094 | +0.3328 | 100.0% | 0.7242 | +94.4840% |
+| 159915ETF | 2.9480 | +0.3637 | 100.0% | 0.5842 | +125.5701% |
 
 ## Model Quality & Generalization Diagnostics
 
 ### Model Multi-Collinearity & Weight Concentration
 
-| ETF | Condition Number ($\kappa$) | Collinear Pairs ($\ge 0.85$) | Gini (Weight Concentration) | Tail Weight ESS | Tail Weight ESS % |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 116.70 [SEVERE] | 0 | 0.4448 | 1767.9 | 81.6% |
-| 50ETF | 4099331.00 [SEVERE] | 0 | 0.4610 | 1960.3 | 90.5% |
-| 500ETF | 2532220.50 [SEVERE] | 0 | 0.4003 | 2139.0 | 98.8% |
-| 588000ETF | 77.94 [MODERATE] | 0 | 0.6519 | 707.8 | 95.9% |
-| 159915ETF | 21.64 | 0 | 0.3196 | 1631.2 | 75.3% |
+| ETF | Raw X Cond | Reg normal eq kappa | Collinear Pairs ($\ge 0.85$) | Gini (Weight Concentration) | Tail Weight ESS | Tail Weight ESS % |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| 300ETF | 10.81 | 110.08 [SEVERE] | 0 | 0.8196 | 2125.5 | 98.1% |
+| 50ETF | 6031930.00 | 72250.49 [SEVERE] | 0 | 0.4115 | 2111.8 | 97.5% |
+| 500ETF | 4995548.50 | 2062303.00 [SEVERE] | 0 | 0.4106 | 1936.2 | 89.4% |
+| 588000ETF | 8.98 | 75.99 [MODERATE] | 0 | 0.7369 | 682.5 | 92.5% |
+| 159915ETF | 4.65 | 21.64 | 0 | 0.2840 | 2107.4 | 97.3% |
 
 ### Generalization Gap (CV vs Out-of-Sample)
 
-| ETF | CV Overall IC | OOS Lockbox IC | IC Gen Gap | CV Monotonicity | OOS Monotonicity | Mono Gen Gap |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | +0.1018 | +0.0343 | +0.0675 [OVERFIT] | +0.4630 | +0.3697 | +0.0933 |
-| 50ETF | +0.0903 | -0.0004 | +0.0908 [OVERFIT] | +0.4339 | +0.3455 | +0.0885 |
-| 500ETF | +0.1832 | +0.1444 | +0.0388 | +0.7224 | +0.8182 | -0.0958 |
-| 588000ETF | +0.1862 | +0.0300 | +0.1561 [OVERFIT] | +0.7848 | +0.4182 | +0.3667 [DEGRADED] |
-| 159915ETF | +0.1815 | +0.1276 | +0.0539 [OVERFIT] | +0.5988 | +0.5030 | +0.0958 |
+| ETF | CV Overall IC | Deflated CV IC | OOS Lockbox IC | IC Gen Gap | CV Monotonicity | OOS Monotonicity | Mono Gen Gap |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 300ETF | +0.1113 | +0.0953 | +0.0308 | +0.0805 [OVERFIT] | +0.4206 | +0.6364 | -0.2158 |
+| 50ETF | +0.1119 | +0.0915 | -0.0117 | +0.1237 [OVERFIT] | +0.4970 | +0.2000 | +0.2970 [DEGRADED] |
+| 500ETF | +0.1783 | +0.1471 | +0.1474 | +0.0309 | +0.7139 | +0.8182 | -0.1042 |
+| 588000ETF | +0.1881 | +0.1345 | +0.0242 | +0.1638 [OVERFIT] | +0.7242 | +0.0909 | +0.6333 [DEGRADED] |
+| 159915ETF | +0.1785 | +0.1505 | +0.1205 | +0.0580 [OVERFIT] | +0.5842 | +0.7212 | -0.1370 |
 
 ### Feature Selection Metrics & Fallbacks
 
@@ -58,18 +58,18 @@ This report summarizes the performance and features of the remade `day-model` re
 
 | ETF | Total Trials | Completed | Pruned / Failed | M4 Pruned | M3 Pruned | M5 Pruned | M6 Pruned |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 100 | 74 | 26 | 10 | 11 | 12 | 10 |
-| 50ETF | 100 | 82 | 18 | 6 | 7 | 12 | 6 |
-| 500ETF | 100 | 79 | 21 | 7 | 7 | 7 | 7 |
-| 588000ETF | 100 | 63 | 37 | 8 | 12 | 8 | 8 |
-| 159915ETF | 100 | 82 | 18 | 9 | 11 | 10 | 9 |
+| 300ETF | 100 | 69 | 31 | 11 | 17 | 17 | 0 |
+| 50ETF | 100 | 69 | 31 | 1 | 7 | 8 | 3 |
+| 500ETF | 100 | 67 | 33 | 13 | 14 | 14 | 0 |
+| 588000ETF | 100 | 31 | 69 | 13 | 12 | 14 | 13 |
+| 159915ETF | 100 | 78 | 22 | 6 | 8 | 8 | 1 |
 
 ## Selected Features per ETF
 
 ### 300ETF
 - **Total selected features (Stability Selection)**: 35
-- **Active features (Non-zero weights)**: 35
-- **Active features**: `yesterday_early_trend`, `yesterday_intraday_close_position`, `yesterday_am_return`, `northbound_net`, `bar_ret_0`, `bar_body_rng_0`, `volume_surge_direction`, `max_up_ret`, `rally_strength_max`, `pullback_depth_max`, `volume_weighted_price_position`, `opening_momentum_score`, `consecutive_higher_highs`, `consecutive_lower_lows`, `yesterday_day_close_pos`, `yesterday_day_vwap_dev`, `bar_vwap_dev_2`, `bar_vwap_dev_3`, `late_bar_momentum`, `inside_bar_failure_bull`, `range_expansion_ratio`, `vwap_touch_count`, `open_efficiency`, `volume_concentration`, `northbound_sell`, `yesterday_day_kurtosis`, `vix_iv_spread`, `vix`, `max_down_ret`, `short_balance_quantity`, `margin_balance`, `short_sell_quantity`, `capital_net_ratio`, `early_bearish_engulfing_count`, `intraday_autocorr`
+- **Active features (Non-zero weights)**: 13
+- **Active features**: `yesterday_early_trend`, `yesterday_am_return`, `northbound_net`, `bar_ret_0`, `consecutive_higher_highs`, `yesterday_day_close_pos`, `inside_bar_failure_bull`, `vwap_touch_count`, `volume_concentration`, `vix_iv_spread`, `capital_net_ratio`, `early_bearish_engulfing_count`, `intraday_autocorr`
 
 ![300ETF Diagnostics](plots/diagnostics_300ETF.png)
 
@@ -89,8 +89,8 @@ This report summarizes the performance and features of the remade `day-model` re
 
 ### 588000ETF
 - **Total selected features (Stability Selection)**: 38
-- **Active features (Non-zero weights)**: 21
-- **Active features**: `capital_net_ratio`, `vix_iv_spread`, `vol60`, `volume_concentration`, `yesterday_day_kurtosis`, `volume_weighted_price_position`, `upper_shadow_rejection`, `upper_wick_dominance`, `volume_percentile_20d`, `yesterday_first_bar_volume`, `aroon_osc`, `sma20_dist`, `bar_body_rng_2`, `intraday_close_position`, `consecutive_bullish_engulfing`, `late_bar_momentum`, `barbed_wire_intensity`, `volatility_percentile_20d`, `early_skew`, `early_kurtosis`, `range_expansion_final_bar`
+- **Active features (Non-zero weights)**: 18
+- **Active features**: `capital_net_ratio`, `vix_iv_spread`, `vol60`, `volume_concentration`, `yesterday_day_kurtosis`, `volume_weighted_price_position`, `upper_shadow_rejection`, `upper_wick_dominance`, `volume_percentile_20d`, `yesterday_first_bar_volume`, `aroon_osc`, `sma20_dist`, `bar_body_rng_2`, `late_bar_momentum`, `volatility_percentile_20d`, `early_skew`, `early_kurtosis`, `range_expansion_final_bar`
 
 ![588000ETF Diagnostics](plots/diagnostics_588000ETF.png)
 
