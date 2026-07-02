@@ -92,12 +92,14 @@
     "early_skew",
     "early_kurtosis",
     "bar_body_rng_2",
+    "max_up_ret",
     "barbed_wire_intensity",
     "volume_concentration",
     "range_expansion_final_bar",
     "volume_weighted_price_position",
     "late_bar_momentum",
     "decision_bar_body",
+    "upper_shadow_rejection",
     "upper_wick_dominance",
     "sma20_dist",
     "aroon_osc",
@@ -105,7 +107,9 @@
     "capital_net_ratio",
     "vix_iv_spread",
     "volatility_percentile_20d",
-    "volume_percentile_20d"
+    "volume_percentile_20d",
+    "yesterday_first_bar_return",
+    "yesterday_first_bar_volume"
   ],
   "stability_scores": {
     "gap_pct": 0.0,
@@ -349,20 +353,20 @@
   },
   "best_params": {
     "model_type": "skglm_mcp",
-    "k_weight": 2.644272280931144,
-    "skglm_mcp_alpha": 0.033304562754340857,
-    "skglm_mcp_gamma": 4.157683074549175,
-    "skglm_mcp_delta": 1.1811542467221494
+    "k_weight": 1.4212872809563475,
+    "skglm_mcp_alpha": 0.06324391563110045,
+    "skglm_mcp_gamma": 6.094034536889675,
+    "skglm_mcp_delta": 4.2993795571240305
   },
   "best_raw_metrics": [
-    2.7648833609878776,
-    0.3678671056236873,
+    5.054324126761669,
+    0.2970208245610964,
     1.0,
-    0.1306553314189645,
-    0.41515151515151516,
-    1.0359809319907596,
-    -2.8903717578961645,
-    -1.6317777633666992
+    0.11766172418666401,
+    0.4939393939393939,
+    1.071350221368585,
+    -3.091042453358316,
+    -0.9583238363265991
   ],
   "lockbox_overall_ic": NaN,
   "lockbox_tail_ic": NaN

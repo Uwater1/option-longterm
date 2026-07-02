@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "50ETF",
   "n_samples_working": 2166,
-  "n_samples_lockbox": 556,
+  "n_samples_lockbox": 0,
   "selected_features": [
     "first_30min_return",
     "first_bar_return",
@@ -86,31 +86,32 @@
     "yesterday_opening_gap_reversal"
   ],
   "active_features": [
+    "first_30min_return",
     "first_bar_return",
+    "bar_vol_2",
     "bar_rng_4",
     "bar_vwap_dev_0",
     "bar_vwap_dev_2",
     "first_bar_sentiment",
     "intraday_bullish_fvg",
+    "gap_fill_ratio",
     "shark_32_signal",
     "consecutive_higher_highs",
     "consecutive_lower_lows",
-    "volume_surge_max",
-    "open_to_current_return",
     "macd_hist",
     "sma100_dist",
     "rsi21",
     "buy_on_margin_value",
     "margin_net_buy",
+    "capital_sell_value",
     "capital_net_ratio",
     "northbound_net",
     "iv",
-    "vix_iv_spread",
     "vix_diff_1d",
     "yesterday_body_ratio",
     "yesterday_close_position",
     "measured_move_proximity",
-    "yesterday_early_vwap_dev"
+    "yesterday_early_trend"
   ],
   "stability_scores": {
     "gap_pct": 0.0,
@@ -354,21 +355,21 @@
   },
   "best_params": {
     "model_type": "skglm_mcp",
-    "k_weight": 0.09004300194121453,
-    "skglm_mcp_alpha": 0.012899013929228695,
-    "skglm_mcp_gamma": 1.7696121879757785,
-    "skglm_mcp_delta": 1.0589018909785035
+    "k_weight": 0.5941608657841743,
+    "skglm_mcp_alpha": 0.010832675002709017,
+    "skglm_mcp_gamma": 9.935489632094136,
+    "skglm_mcp_delta": 0.7763608386523931
   },
   "best_raw_metrics": [
-    1.7167510736993783,
-    0.19464416365571363,
+    1.4417204553249479,
+    0.2101041570690246,
     0.9,
-    0.08897263328463098,
-    0.40606060606060596,
-    0.2757173851132393,
-    -4.382026634673881,
-    -0.41822850704193115
+    0.0700604084358156,
+    0.3103030303030303,
+    0.3906125884939976,
+    -3.295836866004329,
+    -0.5735045671463013
   ],
-  "lockbox_overall_ic": 0.026544298024477227,
-  "lockbox_tail_ic": 0.11513648761355183
+  "lockbox_overall_ic": NaN,
+  "lockbox_tail_ic": NaN
 }
