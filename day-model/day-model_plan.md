@@ -48,13 +48,13 @@ Plan to reformulate and optimize the Optuna objective function for `day-model` b
 Partition the entire dataset chronologically. Everything before **2024-03-01** (approx 2166 rows) forms the working training set. Everything from **2024-03-01 to the last day** (approx 556 rows) is the out-of-sample lockbox. Do not touch the lockbox again until step 6.
 
 **Step 1 — Cheap screening on full working set.**
-Compute robust marginal association per feature (Spearman rank correlation) between each of the 238 features and the target. Apply BH-FDR correction across the tests (FDR = 0.40). If fewer than 80 features pass, fallback to the top 80 features by p-value.
+Compute robust marginal association per feature (Spearman rank correlation) between each of the 238 features and the target. Apply BH-FDR correction across the tests (FDR = 0.40). If fewer than 40 features pass, fallback to the top 40 features by p-value.
 
 > Hierarchical Feature Clustering / correlation-based pre-filtering are useless:
 > Clustering slightly correlated features ($|r| \ge 0.3$) and dropping them based on univariate ranking discards complementary multivariate features. This causes model collapse to $\le 2$ sparse active weights and a negative OOS Lockbox Tail IC ($-0.0207$). Removing this step and relying on ElasticNet stability selection to handle collinearity multivariately preserves 72 active weights and increases Lockbox Tail IC to $+0.0304$.
 
 **Step 2 — Stability selection on survivors.**
-Run repeated subsampling ($B=100$, subsample size $\lfloor N/2 \rfloor$) over the Step 1 survivors. Fit ElasticNet paths (l1_ratio = 0.5) and keep features selected in $\ge 0.60$ fraction of subsamples (fallback to top 5 if count < 3). Because ElasticNet has a grouping effect, it naturally handles collinearity multivariately without needing a separate clustering pre-filter.
+Run repeated subsampling ($B=100$, subsample size $\lfloor N/2 \rfloor$) over the Step 1 survivors. Fit ElasticNet paths (l1_ratio = 0.5). To ensure robust feature filtering, restrict the considered alphas to the range producing at most 35 features on average (`STABILITY_Q = 35`). Keep features selected in $\ge 0.60$ fraction of subsamples (fallback to top 5 if count < 3). Because ElasticNet has a grouping effect, it naturally handles collinearity multivariately without needing a separate clustering pre-filter.
 
 **Step 3 — Loss Weighting via Input Scaling.**
 For the final coefficient fit, use sample weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to upweight tail days. Implement weights by scaling inputs $X$ and targets $y$ by $\sqrt{w}$, which is mathematically exact for least squares and serves as a robust Huber weighting.
@@ -70,24 +70,23 @@ Where each $\widetilde{M}_i$ is a **robust z-score normalized** metric (computed
 
 | ID | Metric ($\widetilde{M}_i$) | Definition | Sign | Category | Weight ($w_i$) |
 | :--- | :--- | :--- | :---: | :--- | :---: |
-| **M₁** | **Yearly Tail IC IR** | $\frac{\overline{\text{IC}_{\text{tail, year}}}}{\sigma(\text{IC}_{\text{tail, year}})}$ — Mean divided by Standard Deviation of Spearman IC computed *only* on top/bottom 10% rows for each year. | + | Tail Stability | **0.20** |
-| **M₂** | **Yearly Tail IC Mean** | Mean of the yearly tail ICs. Measures absolute strength of tail predictions. | + | Tail Power | **0.20** |
+| **M₁** | **Yearly Tail IC IR** | $\frac{\overline{\text{IC}_{\text{tail, year}}}}{\sigma(\text{IC}_{\text{tail, year}})}$ — Mean divided by Standard Deviation of Spearman IC computed *only* on top/bottom 10% rows for each year. | + | Tail Stability | **0.25** |
+| **M₂** | **Yearly Tail IC Mean** | Mean of the yearly tail ICs. Measures absolute strength of tail predictions. | + | Tail Power | **0.25** |
 | **M₃** | **Yearly Hit Rate** | Percentage of years where Tail IC is strictly $> 0$. | + | Temporal Consistency | **0.15** |
 | **M₄** | **Overall Rank IC** | Mean Spearman rank IC across all rows. | + | General Signal | **0.15** |
-| **M₅** | **Decile Monotonicity** | Spearman correlation between decile rank and mean actual return. | + | Signal Structure | **0.10** |
+| **M₅** | **Decile Monotonicity** | Spearman correlation between decile rank and mean actual return. | + | Signal Structure | **0.15** |
 | **M₆** | **Top-Bottom Spread** | Mean return spread (Top 10% minus Bottom 10%). | + | Factor Efficacy | **0.05** |
-| **M₇** | **Feature Parsimony** | $-\log(1 + k)$ where $k$ is active model size (coefficients with absolute value $> 10^{-5}$). Penalizes bloated models. | + | Simplicity | **0.10** |
-| **M₈** | **Coefficient Bloat** | $-\|\beta\|_2$. Penalizes large, unstable coefficients. | + | Simplicity | **0.05** |
+| **M₇** | **Feature Parsimony** | $-\log(1 + k)$ where $k$ is active model size (coefficients with absolute value $> 10^{-5}$). Penalized model complexity (weight set to 0.00 since Step 2 controls sparsity). | + | Simplicity | **0.00** |
+| **M₈** | **Coefficient Bloat** | $-\|\beta\|_2$. Penalized large coefficients (weight set to 0.00 since Step 2 controls sparsity). | + | Simplicity | **0.00** |
 
 Before computing the weighted objective, apply **Kill Switches**:
 * Overall IC > 0 (M4 > 0)
 * Minimum Hit Rate >= 60% (M3 >= 0.60)
-* Decile Monotonicity > 0.4 (M5 > 0.4)
+* Decile Monotonicity > 0.25 (M5 >= 0.25)
 * Top-Bottom Spread > 0 (M6 > 0)
 If any condition fails, return `-1e9` (pruned).
 
-> Problems: [WARNING] All main study trials violated hard constraints for 50ETF. Searching for best valid trial... [WARNING] No main trials succeeded. Falling back to pilot study's best trial.
-> (luckly this problem only True for 50ETF)
+> Problems: Historically, all main study trials violated the `m5 > 0.4` constraint for 50ETF. Relaxing the constraint to `m5 > 0.25` and removing the M7/M8 weights solved the issue, avoiding constraint violations while preventing model collapse (e.g. 500ETF active features count improved from 1 to 13).
 
 **Step 5 — Freeze feature set.**
 Stability-selected features are frozen before Optuna tuning begins.

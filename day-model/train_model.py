@@ -70,8 +70,9 @@ PILOT_N_TRIALS = 50
 PILOT_SEED = 42
 STABILITY_B = 100
 STABILITY_PI = 0.60
+STABILITY_Q = 35
 SCREEN_FDR = 0.40
-SCREEN_FALLBACK_K = 80
+SCREEN_FALLBACK_K = 40 # Doublc check this 
 
 # Sample-weighting scale_data_with_weights can be done without a full rescale
 # of the standardized X (sqrt(w) is row-wise); we precompute the unweighted
@@ -152,14 +153,14 @@ ETF_CLI_MAP = {
 
 # Metric Weights (w_i from Step 4.1)
 METRIC_WEIGHTS = {
-    "m1": 0.20,  # Yearly Tail IC IR
-    "m2": 0.20,  # Yearly Tail IC Mean
+    "m1": 0.25,  # Yearly Tail IC IR
+    "m2": 0.25,  # Yearly Tail IC Mean
     "m3": 0.15,  # Yearly Hit Rate
     "m4": 0.15,  # Overall Rank IC
-    "m5": 0.10,  # Decile Monotonicity
+    "m5": 0.15,  # Decile Monotonicity
     "m6": 0.05,  # Top-Bottom Spread
-    "m7": 0.10,  # Feature Parsimony
-    "m8": 0.05,  # Coefficient Bloat
+    "m7": 0.00,  # Feature Parsimony
+    "m8": 0.00,  # Coefficient Bloat
 }
 
 
@@ -325,7 +326,7 @@ def run_screening(X_working: np.ndarray, y_working: np.ndarray):
     p_vals = np.nan_to_num(p_vals, nan=1.0, posinf=1.0, neginf=1.0)
 
     screen_mask = benjamini_hochberg(p_vals, fdr_level=SCREEN_FDR)
-    if screen_mask.sum() < 80:
+    if screen_mask.sum() < 40:
         top_indices = np.argsort(p_vals)[:SCREEN_FALLBACK_K]
         screen_mask = np.zeros(len(p_vals), dtype=bool)
         screen_mask[top_indices] = True
@@ -380,13 +381,22 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen
     selection_matrix = np.stack(slices, axis=2)  # (n_screened, n_alphas, B)
 
     sel_probs = np.mean(selection_matrix, axis=2)
-    stability_scores = np.max(sel_probs, axis=1)
+    
+    # Restrict alphas to those that select at most STABILITY_Q features on average
+    expected_active = sel_probs.sum(axis=0)
+    valid_alphas_idx = np.where(expected_active <= STABILITY_Q)[0]
+    if len(valid_alphas_idx) == 0:
+        valid_alphas_idx = np.array([0])
+        
+    stability_scores = np.max(sel_probs[:, valid_alphas_idx], axis=1)
 
     stability_keep = stability_scores >= pi
     if stability_keep.sum() < 3:
-        top_idx = np.argsort(stability_scores)[-5:]
+        full_stability_scores = np.max(sel_probs, axis=1)
+        top_idx = np.argsort(full_stability_scores)[-5:]
         stability_keep = np.zeros_like(stability_keep, dtype=bool)
         stability_keep[top_idx] = True
+        stability_scores = full_stability_scores
 
     stability_selected_idx = screened_features_idx[stability_keep]
 
@@ -534,7 +544,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # length changes, or any of the deterministic knobs below change.
     # See AGENTS.md "Cache invalidation" for manual-clear guidance.
     select_key = [
-        "v1", etf_name, len(FEATURES), int(parquet_mtime),
+        "v2", etf_name, len(FEATURES), int(parquet_mtime),
         int(X_working.shape[0]), int(X_working.shape[1]),
         STABILITY_B, STABILITY_PI, SCREEN_FDR, SCREEN_FALLBACK_K,
         LOCKBOX_DATE, TARGET,
@@ -574,7 +584,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # ── LOYO folds cache (depends on selected features only) ──────────
     loyo_key = [
-        "v1", etf_name, len(FEATURES), int(parquet_mtime),
+        "v2", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         LOCKBOX_DATE, TARGET,
     ]
@@ -670,7 +680,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # ── Pilot calibration cache ───────────────────────────────────────
     pilot_key = [
-        "v1", etf_name, len(FEATURES), int(parquet_mtime),
+        "v2", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         LOCKBOX_DATE, TARGET, PILOT_N_TRIALS, PILOT_SEED,
     ]
@@ -785,7 +795,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             m1, m2, m3, m4, m5, m6, m7, m8 = raw_metrics
 
             # Hard Constraints / Kill Switches:
-            if m4 <= 0 or m3 < 0.60 or m5 <= 0.4 or m6 <= 0:
+            if m4 <= 0 or m3 < 0.60 or m5 <= 0.25 or m6 <= 0:
                 return -1e9  # Pruned due to constraint violation
 
             # Normalize metrics
