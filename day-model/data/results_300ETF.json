@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "300ETF",
   "n_samples_working": 2166,
-  "n_samples_lockbox": 0,
+  "n_samples_lockbox": 556,
   "selected_features": [
     "first_30min_return",
     "first_bar_return",
@@ -346,6 +346,6 @@
     -1.3862943611198906,
     -0.11368581652641296
   ],
-  "lockbox_overall_ic": NaN,
-  "lockbox_tail_ic": NaN
+  "lockbox_overall_ic": -0.009684153776353484,
+  "lockbox_tail_ic": 0.032811200349925226
 }

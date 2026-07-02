@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "588000ETF",
   "n_samples_working": 738,
-  "n_samples_lockbox": 0,
+  "n_samples_lockbox": 556,
   "selected_features": [
     "first_30min_return",
     "early_trend",
@@ -368,6 +368,6 @@
     -3.091042453358316,
     -0.9583238363265991
   ],
-  "lockbox_overall_ic": NaN,
-  "lockbox_tail_ic": NaN
+  "lockbox_overall_ic": 0.029565053695652804,
+  "lockbox_tail_ic": -0.023883383285158766
 }
