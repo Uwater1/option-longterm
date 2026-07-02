@@ -42,9 +42,9 @@ Speedups: fp32 arrays; vectorized Spearman screen; joblib-parallel stability boo
 
 | File | Contents |
 |---|---|
-| `cache_select_{etf}_{hash}.joblib` | `screen_mask`, `p_vals`, `rhos`, `stability_selected_idx`, `stability_scores` |
-| `cache_loyo_{etf}_{hash}.joblib` | List of pre-scaled LOYO folds `(test_idx, X_tr_scaled, X_te_scaled, y_tr)` |
-| `cache_pilot_{etf}_{hash}.joblib` | Pilot records `[{params, raw_metrics}, ...]` |
+| `cache_select_{etf}_{hash}.joblib` | `screen_mask`, `p_vals`, `rhos`, `stability_selected_idx`, `stability_scores` (version `v3` cache key) |
+| `cache_loyo_{etf}_{hash}.joblib` | List of pre-scaled LOYO folds `(test_idx, X_tr_scaled, X_te_scaled, y_tr)` (version `v3` cache key) |
+| `cache_pilot_{etf}_{hash}.joblib` | Pilot records `[{params, raw_metrics}, ...]` (version `v3` cache key) |
 
 **Auto-invalidated** (key mismatch triggers recompute) when any of these change:
 - ETF name
@@ -62,6 +62,7 @@ Speedups: fp32 arrays; vectorized Spearman screen; joblib-parallel stability boo
 - Changing `METRIC_WEIGHTS` (affects main study scoring, not caches — but stale pilot medians/MADs may bias normalization; clear `cache_pilot_*`).
 - Changing the LOYO embargo window, year-block logic, or scaling code in `_compute_loyo`.
 - Changing `run_screening` / `run_stability_selection` internals (e.g. enet `l1_ratio`, alpha count).
+- Changing hierarchical clustering thresholds or distance metrics for CSS.
 
 **Purge all caches**:
 ```powershell
@@ -75,7 +76,7 @@ Remove-Item day-model\data\cache_*.joblib
 
 1. **Lockbox Split (Step 0)**: Hold out days from 2024-03-01 to last day (OOS lockbox data completely ignored during training to ensure isolation).
 2. **BH-FDR Screening (Step 1)**: Robust Spearman rank correlation on 2200 training days. Keep features surviving FDR = 0.40. Fallback to top 40 by p-value if fewer pass.
-3. **Stability Selection (Step 2)**: ElasticNet path selection (l1_ratio = 0.5) across $B=100$ subsamples of size $\lfloor N/2 \rfloor$ of Step 1 survivors. Restricts alpha path to alphas yielding at most 35 features on average (`STABILITY_Q = 35`). Keep features with selection probability $\ge 0.60$ (fallback to top 5 if count < 3). Handles collinearity grouping naturally via ElasticNet grouping effect.
+3. **Cluster Stability Selection (CSS) (Step 2)**: Groups screened features using Complete Linkage hierarchical clustering (correlation distance threshold of 0.25, i.e., $|r| \ge 0.75$). During stability selection ($B=100$ subsamples), voting is aggregated at the cluster level. A single representative feature with the highest individual stability score is selected from each stable cluster ($\ge 0.60$ voting frequency), structurally preventing pairwise collinearity in the selected support.
 4. **Loss Weighting (Step 3)**: Power weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to focus model on tail days.
 5. **LOYO CV with Embargo (Step 4)**: 9 Yearly blocks (2015-2023) with a 10-day embargo at test block boundaries.
 6. **Pilot Normalization (Step 4.1)**: Runs 50 pilot trials, computes median and MAD for each of the 8 metrics to calculate robust z-scores.
@@ -93,6 +94,8 @@ Remove-Item day-model\data\cache_*.joblib
    - Hit Rate < 60%
    - Decile Monotonicity <= 0.25
    - Top-Bottom Spread <= 0
+   - Tail Weight ESS % < 20% (prevents training size collapse on outliers)
 9. **One-Shot Evaluation & Diagnostics Plotting (Step 6)**: Handled entirely in `generate_report.py` to keep training fast. Evaluates final model on 500-day lockbox, updates OOS metrics in results JSON/scaler bundles on disk, and generates 2x2 diagnostics plots (`plots/diagnostics_{tag}.png`) containing Coefficients, OOS decile spread, and All data decile spread.
-10. **Model Quality & Generalization Diagnostics**: `train_model.py` calculates condition number ($\kappa$) & collinearity alerts, Effective Sample Size (ESS) of tail-focus weights, and Gini coefficient index. Saves to `results_*.json`. `generate_report.py` computes CV-to-OOS Generalization Gap for rank IC & decile monotonicity, compiling findings into `REPORT.md`.
+10. **L2 Regularization Component**: Enforces $10\%$ L2 Ridge regularization in both model families (`skglm_huber_l1` uses `L1_plus_L2(alpha, l1_ratio=0.9)` and `skglm_mcp` uses custom `MCP_plus_L2(alpha, gamma, mu=0.1 * alpha)` from `penalties.py`) to stabilize joint-coefficient assignments under severe multicollinearity.
+11. **Model Quality & Generalization Diagnostics**: `train_model.py` calculates condition number ($\kappa$) & collinearity alerts, Effective Sample Size (ESS) of tail-focus weights, and Gini coefficient index. Saves to `results_*.json`. `generate_report.py` computes CV-to-OOS Generalization Gap for rank IC & decile monotonicity, compiling findings into `REPORT.md`.
 

@@ -165,21 +165,29 @@ METRIC_WEIGHTS = {
 
 
 # ============================================================
-# Model Factory
+# Shared Penalties & Model Factory
 # ============================================================
+sys.path.append(str(HERE.parent))
+from penalties import MCP_plus_L2
+
+
 def _build_model(model_type: str, params: dict):
     solver = AndersonCD(max_epochs=2000, tol=1e-3)
     if model_type == "skglm_huber_l1":
+        # Use ElasticNet (L1 + L2) with l1_ratio = 0.9 for L2 regularization
+        from skglm.penalties import L1_plus_L2
         return GeneralizedLinearEstimator(
             datafit=SkglmHuber(delta=params.get("skglm_huber_delta", 1.35)),
-            penalty=SkglmL1(alpha=params["skglm_huber_l1_alpha"]),
+            penalty=L1_plus_L2(alpha=params["skglm_huber_l1_alpha"], l1_ratio=0.9),
             solver=solver,
         )
     elif model_type == "skglm_mcp":
+        # Use custom MCP_plus_L2 penalty with mu = 0.1 * alpha for L2 regularization
         return GeneralizedLinearEstimator(
             datafit=SkglmHuber(delta=params.get("skglm_mcp_delta", 1.35)),
-            penalty=MCPenalty(alpha=params["skglm_mcp_alpha"],
-                               gamma=params.get("skglm_mcp_gamma", 3.0)),
+            penalty=MCP_plus_L2(alpha=params["skglm_mcp_alpha"],
+                               gamma=params.get("skglm_mcp_gamma", 3.0),
+                               mu=0.1 * params["skglm_mcp_alpha"]),
             solver=solver,
         )
     elif model_type == "lasso":
@@ -351,26 +359,36 @@ def _stability_one_bootstrap(b: int, X_screened: np.ndarray, y_working: np.ndarr
     return (np.abs(coefs) > 1e-5).astype(bool)
 
 
-def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen_mask: np.ndarray,
-                            B: int = STABILITY_B, pi: float = STABILITY_PI,
-                            n_jobs: int = BOOTSTRAP_N_JOBS):
-    # Step 2: Stability Selection
+def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen_mask: np.ndarray, rhos: np.ndarray,
+                             B: int = STABILITY_B, pi: float = STABILITY_PI,
+                             n_jobs: int = BOOTSTRAP_N_JOBS):
+    # Step 2: Cluster Stability Selection (CSS)
     screened_features_idx = np.where(screen_mask)[0]
     X_screened = X_working[:, screened_features_idx]
 
     scaler = StandardScaler()
     X_cluster_scaled = scaler.fit_transform(X_screened)
 
+    # Hierarchical Clustering based on correlation to handle collinearity
+    n_screened = X_screened.shape[1]
+    if n_screened > 1:
+        corr = np.corrcoef(X_cluster_scaled, rowvar=False)
+        dist = 1.0 - np.abs(corr)
+        dist = np.clip(dist, 0.0, 2.0)
+        dist = (dist + dist.T) / 2.0
+        np.fill_diagonal(dist, 0.0)
+        linkage_matrix = linkage(squareform(dist), method="complete")
+        cluster_labels = fcluster(linkage_matrix, t=0.25, criterion="distance") # t=0.25 means |r| >= 0.75
+    else:
+        cluster_labels = np.ones(n_screened, dtype=int)
+
     alphas, _, _ = enet_path(X_cluster_scaled, y_working, l1_ratio=0.5, n_alphas=50)
     alphas = _to_f32(alphas)
 
     n_total = X_working.shape[0]
     subsample_size = n_total // 2
-    n_screened = X_screened.shape[1]
 
-    # Parallelize the B bootstrap fits across cores. The original code seeded
-    # a single default_rng(42) and called .choice sequentially; we preserve
-    # that exact per-bootstrap RNG stream by deriving seeds 42+b from base.
+    # Parallelize the B bootstrap fits across cores.
     base_seed = 42
     slices = Parallel(n_jobs=n_jobs, backend="loky")(
         delayed(_stability_one_bootstrap)(
@@ -380,30 +398,59 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen
     )
     selection_matrix = np.stack(slices, axis=2)  # (n_screened, n_alphas, B)
 
-    sel_probs = np.mean(selection_matrix, axis=2)
+    # CSS Aggregation: Group selection matrix by cluster labels
+    num_clusters = cluster_labels.max()
+    cluster_to_features = {g: [] for g in range(1, num_clusters + 1)}
+    for local_idx, label in enumerate(cluster_labels):
+        cluster_to_features[label].append(local_idx)
+
+    # For each subsample and alpha, check if ANY feature in each cluster is active
+    cluster_selection_matrix = np.zeros((num_clusters, selection_matrix.shape[1], B), dtype=bool)
+    for g in range(1, num_clusters + 1):
+        feature_indices = cluster_to_features[g]
+        cluster_selection_matrix[g - 1] = np.any(selection_matrix[feature_indices], axis=0)
+
+    cluster_sel_probs = np.mean(cluster_selection_matrix, axis=2) # (num_clusters, n_alphas)
     
-    # Restrict alphas to those that select at most STABILITY_Q features on average
-    expected_active = sel_probs.sum(axis=0)
-    valid_alphas_idx = np.where(expected_active <= STABILITY_Q)[0]
+    # Restrict alphas to those that select at most STABILITY_Q clusters on average
+    expected_active_clusters = cluster_sel_probs.sum(axis=0)
+    valid_alphas_idx = np.where(expected_active_clusters <= STABILITY_Q)[0]
     if len(valid_alphas_idx) == 0:
         valid_alphas_idx = np.array([0])
         
-    stability_scores = np.max(sel_probs[:, valid_alphas_idx], axis=1)
+    cluster_stability_scores = np.max(cluster_sel_probs[:, valid_alphas_idx], axis=1)
 
-    stability_keep = stability_scores >= pi
-    if stability_keep.sum() < 3:
-        full_stability_scores = np.max(sel_probs, axis=1)
-        top_idx = np.argsort(full_stability_scores)[-5:]
-        stability_keep = np.zeros_like(stability_keep, dtype=bool)
-        stability_keep[top_idx] = True
-        stability_scores = full_stability_scores
+    stable_clusters_keep = cluster_stability_scores >= pi
+    if stable_clusters_keep.sum() < 3:
+        full_cluster_stability_scores = np.max(cluster_sel_probs, axis=1)
+        top_clusters = np.argsort(full_cluster_stability_scores)[-5:]
+        stable_clusters_keep = np.zeros_like(stable_clusters_keep, dtype=bool)
+        stable_clusters_keep[top_clusters] = True
+        cluster_stability_scores = full_cluster_stability_scores
 
-    stability_selected_idx = screened_features_idx[stability_keep]
+    # For each cluster, compute individual feature stability scores for ranking representatives
+    individual_sel_probs = np.mean(selection_matrix, axis=2)
+    individual_stability_scores = np.max(individual_sel_probs[:, valid_alphas_idx], axis=1)
 
+    stability_selected_idx = []
     all_stability_scores = np.zeros(X_working.shape[1])
-    for local_i, orig_i in enumerate(screened_features_idx):
-        all_stability_scores[orig_i] = stability_scores[local_i]
 
+    for g in range(1, num_clusters + 1):
+        feature_indices = cluster_to_features[g]
+        for local_i in feature_indices:
+            orig_i = screened_features_idx[local_i]
+            # Store individual stability score by default
+            all_stability_scores[orig_i] = individual_stability_scores[local_i]
+            
+        if stable_clusters_keep[g - 1]:
+            # Select representative: highest individual stability score, tie-break by absolute Spearman correlation rho
+            best_local_feat = max(feature_indices, key=lambda idx: (individual_stability_scores[idx], abs(rhos[screened_features_idx[idx]])))
+            best_orig_i = screened_features_idx[best_local_feat]
+            stability_selected_idx.append(best_orig_i)
+            # Store cluster stability score for the representative
+            all_stability_scores[best_orig_i] = cluster_stability_scores[g - 1]
+
+    stability_selected_idx = np.array(stability_selected_idx)
     return stability_selected_idx, all_stability_scores
 
 
@@ -549,7 +596,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # length changes, or any of the deterministic knobs below change.
     # See AGENTS.md "Cache invalidation" for manual-clear guidance.
     select_key = [
-        "v2", etf_name, len(FEATURES), int(parquet_mtime),
+        "v3", etf_name, len(FEATURES), int(parquet_mtime),
         int(X_working.shape[0]), int(X_working.shape[1]),
         STABILITY_B, STABILITY_PI, SCREEN_FDR, SCREEN_FALLBACK_K,
         LOCKBOX_DATE, TARGET,
@@ -567,7 +614,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         t_stab_start = time.perf_counter()
         print("Running stability selection...")
         stability_selected_idx, stability_scores = run_stability_selection(
-            X_working, y_working, screen_mask,
+            X_working, y_working, screen_mask, rhos,
             B=STABILITY_B, pi=STABILITY_PI, n_jobs=bootstrap_n_jobs,
         )
         t_stab = time.perf_counter() - t_stab_start
@@ -682,7 +729,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # ── LOYO folds cache (depends on selected features only) ──────────
     loyo_key = [
-        "v2", etf_name, len(FEATURES), int(parquet_mtime),
+        "v3", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         LOCKBOX_DATE, TARGET,
     ]
@@ -787,7 +834,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # ── Pilot calibration cache ───────────────────────────────────────
     pilot_key = [
-        "v2", etf_name, len(FEATURES), int(parquet_mtime),
+        "v3", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         LOCKBOX_DATE, TARGET, PILOT_N_TRIALS, PILOT_SEED,
     ]
@@ -913,6 +960,13 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             # Extract metrics for kill switches
             m1, m2, m3, m4, m5, m6, m7, m8 = raw_metrics
 
+            # Calculate Kish ESS percentage
+            w_temp = compute_sample_weights(y_working, k_weight)
+            sum_w = w_temp.sum()
+            sum_w2 = (w_temp ** 2).sum()
+            ess = float((sum_w ** 2) / sum_w2) if sum_w2 > 1e-10 else float(len(w_temp))
+            ess_pct = ess / len(w_temp)
+
             # Hard Constraints / Kill Switches:
             pruning_reasons = []
             if m4 <= 0:
@@ -923,6 +977,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 pruning_reasons.append("M5 (Monotonicity <= 0.25)")
             if m6 <= 0:
                 pruning_reasons.append("M6 (Top-Bottom Spread <= 0)")
+            if ess_pct < 0.20:
+                pruning_reasons.append("ESS percentage too low (ESS < 20%)")
 
             if pruning_reasons:
                 trial.set_user_attr("pruned_reasons", pruning_reasons)
@@ -977,6 +1033,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "M3 (Hit Rate < 60%)": 0,
         "M5 (Monotonicity <= 0.25)": 0,
         "M6 (Top-Bottom Spread <= 0)": 0,
+        "ESS percentage too low (ESS < 20%)": 0,
     }
     exception_reasons = []
     

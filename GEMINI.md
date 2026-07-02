@@ -88,6 +88,7 @@ validate_alpha_pnl.py          # Put P&L validator vs 3 baselines (real option p
 compare_alpha_phases.py        # Cross-phase P&L comparison report
 predict_open_high.py           # Open-to-High prediction pipeline
 numba_utils.py                 # Numba BS functions & IV solver
+penalties.py                   # Custom skglm penalties (e.g., MCP_plus_L2)
 day-model/                     # Day-Model 10:00-14:35 return predictor
 ├── REPORT.md                  # Comprehensive return prediction report
 ├── AGENTS.md                  # Feature expansion and workflow guide
