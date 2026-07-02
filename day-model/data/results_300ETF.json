@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "300ETF",
   "n_samples_working": 2166,
-  "n_samples_lockbox": 556,
+  "n_samples_lockbox": 0,
   "selected_features": [
     "first_30min_return",
     "first_bar_return",
@@ -310,21 +310,21 @@
   },
   "best_params": {
     "model_type": "skglm_mcp",
-    "k_weight": 1.0783109262281236,
-    "skglm_mcp_alpha": 0.00010637593534268415,
-    "skglm_mcp_gamma": 3.4716529032372576,
-    "skglm_mcp_delta": 0.578407225593291
+    "k_weight": 0.9239721047108224,
+    "skglm_mcp_alpha": 0.0001146488733045583,
+    "skglm_mcp_gamma": 6.540314036879236,
+    "skglm_mcp_delta": 0.7933382473270512
   },
   "best_raw_metrics": [
-    1.4080379090387585,
-    0.19759636056560378,
-    0.9,
-    0.0996198079176786,
-    0.4872727272727273,
-    0.43205571696089784,
+    1.4255294562966794,
+    0.19151042442772503,
+    1.0,
+    0.10317263169428514,
+    0.456969696969697,
+    0.4065640338103706,
     -3.4339872044851463,
-    -0.6739067435264587
+    -0.6579063534736633
   ],
-  "lockbox_overall_ic": 0.0644154100018441,
-  "lockbox_tail_ic": 0.11446926492798051
+  "lockbox_overall_ic": NaN,
+  "lockbox_tail_ic": NaN
 }

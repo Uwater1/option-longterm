@@ -12,40 +12,40 @@ Split: Working=2166 rows (Lockbox OOS data ignored during training).
 Running feature screening...
 Screened features: 63 surviving candidates.
 Running stability selection...
-  [cache] write cache_select_300ETF_9059147922a38ba9.joblib
+  [cache] write cache_select_300ETF_4b3d2a70dcb6e591.joblib
 Stability selection finished. Kept 30 features: ['first_30min_return', 'first_bar_return', 'bar_ret_0', 'bar_vwap_dev_2', 'bar_vwap_dev_3', 'inside_bar_failure_bull', 'consecutive_higher_highs', 'consecutive_lower_lows', 'early_bearish_engulfing_count', 'pullback_depth_max', 'rally_strength_max', 'vwap_touch_count', 'volume_weighted_price_position', 'intraday_autocorr', 'open_to_current_return', 'margin_balance', 'short_sell_quantity', 'capital_net_ratio', 'northbound_net', 'vix', 'vix_iv_spread', 'yesterday_close_position', 'yesterday_pm_return', 'yesterday_am_return', 'yesterday_early_trend', 'yesterday_early_vwap_dev', 'yesterday_day_close_pos', 'yesterday_day_vwap_dev', 'yesterday_day_kurtosis', 'yesterday_intraday_close_position']
-  [cache] write cache_loyo_300ETF_bddcad8ffb57f440.joblib
+  [cache] write cache_loyo_300ETF_3e1f91b6129a920b.joblib
 
 Running Optuna Pilot Study (50 trials) for normalization calibration...
-  [cache] write cache_pilot_300ETF_d906a332e5d6e0c5.joblib
+  [cache] write cache_pilot_300ETF_5365e40beef2367f.joblib
 Normalizing constants calibrated from Pilot run:
-  M1: Median=1.157566, MAD=0.155069
-  M2: Median=0.153332, MAD=0.022030
+  M1: Median=1.113806, MAD=0.183968
+  M2: Median=0.160740, MAD=0.037737
   M3: Median=0.900000, MAD=1.000000
-  M4: Median=0.092956, MAD=0.012825
-  M5: Median=0.370303, MAD=0.036970
-  M6: Median=0.328820, MAD=0.066709
+  M4: Median=0.096480, MAD=0.012614
+  M5: Median=0.360000, MAD=0.048485
+  M6: Median=0.359818, MAD=0.083303
   M7: Median=-3.433987, MAD=1.000000
-  M8: Median=-0.490059, MAD=0.370078
+  M8: Median=-0.512183, MAD=0.166929
 
 Running main Optuna Study (50 trials) with First-Principles Multi-Metric Objective...
 
 Best hyperparameters found by Optuna:
   model_type: skglm_mcp
-  k_weight: 1.0783109262281236
-  skglm_mcp_alpha: 0.00010637593534268415
-  skglm_mcp_gamma: 3.4716529032372576
-  skglm_mcp_delta: 0.578407225593291
+  k_weight: 0.9239721047108224
+  skglm_mcp_alpha: 0.0001146488733045583
+  skglm_mcp_gamma: 6.540314036879236
+  skglm_mcp_delta: 0.7933382473270512
 Best trial raw metrics:
-  M1 (Tail IC IR):      1.4080
-  M2 (Tail IC Mean):    0.1976
-  M3 (Hit Rate):        0.9000
-  M4 (Overall IC):      0.0996
-  M5 (Monotonicity):    0.4873
-  M6 (Top-Bot Spread):  0.4321
+  M1 (Tail IC IR):      1.4255
+  M2 (Tail IC Mean):    0.1915
+  M3 (Hit Rate):        1.0000
+  M4 (Overall IC):      0.1032
+  M5 (Monotonicity):    0.4570
+  M6 (Top-Bot Spread):  0.4066
   M7 (Parsimony):       -3.4340
-  M8 (Coef Bloat):      -0.6739
-[300ETF] elapsed 35.8s
+  M8 (Coef Bloat):      -0.6579
+[300ETF] elapsed 28.2s
 
 ================================================================================
 Starting First-Principles Training for 50ETF (Side: single)
@@ -54,41 +54,42 @@ Starting First-Principles Training for 50ETF (Side: single)
 Loaded 2722 samples and 238 features.
 Split: Working=2166 rows (Lockbox OOS data ignored during training).
 Running feature screening...
-Screened features: 40 surviving candidates.
+Screened features: 50 surviving candidates.
 Running stability selection...
-  [cache] write cache_select_50ETF_7ba361a1e38934ba.joblib
-Stability selection finished. Kept 38 features: ['first_30min_return', 'first_bar_return', 'bar_ret_0', 'bar_rng_4', 'bar_body_rng_0', 'bar_vwap_dev_0', 'num_up_bars', 'max_down_ret', 'volume_slope', 'first_bar_sentiment', 'consecutive_higher_highs', 'volume_surge_max', 'volume_surge_direction', 'volume_weighted_price_position', 'net_volume_flow', 'late_bar_momentum', 'trend_strength_intraday', 'close_above_open_count', 'open_to_current_return', 'opening_auction_imbalance', 'sma100_dist', 'roc20', 'stoch_d', 'buy_on_margin_value', 'margin_net_buy', 'capital_buy_volume', 'capital_net_value', 'capital_net_ratio', 'northbound_net', 'iv', 'iv_vol_ratio', 'vix_iv_spread', 'vix_iv_ratio', 'vix_diff_1d', 'yesterday_body_ratio', 'measured_move_proximity', 'yesterday_early_vwap_dev', 'yesterday_intraday_close_position']
-  [cache] write cache_loyo_50ETF_b3cad7d42f6e8b31.joblib
+  [cache] write cache_select_50ETF_d6eb0db9cc340edc.joblib
+Stability selection finished. Kept 31 features: ['first_30min_return', 'first_bar_return', 'bar_ret_0', 'bar_rng_4', 'bar_vwap_dev_0', 'first_bar_sentiment', 'consecutive_higher_highs', 'volume_concentration', 'volume_surge_direction', 'rally_strength_max', 'volume_weighted_price_position', 'late_bar_momentum', 'open_to_current_return', 'sma20_dist', 'sma100_dist', 'roc20', 'buy_on_margin_value', 'margin_net_buy', 'capital_buy_value', 'capital_net_ratio', 'northbound_net', 'iv', 'iv_vol_ratio', 'vix_iv_spread', 'vix_iv_ratio', 'vix_diff_1d', 'yesterday_body_ratio', 'measured_move_proximity', 'yesterday_early_vwap_dev', 'yesterday_day_vwap_dev', 'yesterday_intraday_close_position']
+  [cache] write cache_loyo_50ETF_b5a93445d4e00804.joblib
 
 Running Optuna Pilot Study (50 trials) for normalization calibration...
-  [cache] write cache_pilot_50ETF_21ec0bada7576f62.joblib
+  [cache] write cache_pilot_50ETF_ea3b001d0853ddf5.joblib
 Normalizing constants calibrated from Pilot run:
-  M1: Median=1.052859, MAD=0.286791
-  M2: Median=0.159220, MAD=0.036061
+  M1: Median=1.276477, MAD=0.307057
+  M2: Median=0.189263, MAD=0.039408
   M3: Median=0.800000, MAD=0.100000
-  M4: Median=0.064165, MAD=0.014590
-  M5: Median=0.329091, MAD=0.052121
-  M6: Median=0.293433, MAD=0.084257
-  M7: Median=-3.091042, MAD=0.572519
-  M8: Median=-0.401756, MAD=0.401756
+  M4: Median=0.086876, MAD=0.010172
+  M5: Median=0.369697, MAD=0.056970
+  M6: Median=0.288710, MAD=0.054136
+  M7: Median=-3.433987, MAD=0.031749
+  M8: Median=-0.492236, MAD=0.248290
 
 Running main Optuna Study (50 trials) with First-Principles Multi-Metric Objective...
 
 Best hyperparameters found by Optuna:
-  model_type: skglm_huber_l1
-  k_weight: 0.8453953578889382
-  skglm_huber_l1_alpha: 0.001897318241846652
-  skglm_huber_delta: 0.5447063894743303
+  model_type: skglm_mcp
+  k_weight: 0.5630244446607385
+  skglm_mcp_alpha: 0.0007490538244479235
+  skglm_mcp_gamma: 9.543946163359733
+  skglm_mcp_delta: 0.6392851691693826
 Best trial raw metrics:
-  M1 (Tail IC IR):      1.4749
-  M2 (Tail IC Mean):    0.2201
+  M1 (Tail IC IR):      1.3795
+  M2 (Tail IC Mean):    0.2084
   M3 (Hit Rate):        0.9000
-  M4 (Overall IC):      0.0918
-  M5 (Monotonicity):    0.4497
-  M6 (Top-Bot Spread):  0.4045
+  M4 (Overall IC):      0.1099
+  M5 (Monotonicity):    0.4473
+  M6 (Top-Bot Spread):  0.3398
   M7 (Parsimony):       -3.4657
-  M8 (Coef Bloat):      -0.4898
-[50ETF] elapsed 4.2s
+  M8 (Coef Bloat):      -0.4674
+[50ETF] elapsed 4.5s
 
 ================================================================================
 Starting First-Principles Training for 500ETF (Side: single)
@@ -97,41 +98,41 @@ Starting First-Principles Training for 500ETF (Side: single)
 Loaded 2722 samples and 238 features.
 Split: Working=2166 rows (Lockbox OOS data ignored during training).
 Running feature screening...
-Screened features: 117 surviving candidates.
+Screened features: 115 surviving candidates.
 Running stability selection...
-  [cache] write cache_select_500ETF_a321337d8b1b49eb.joblib
+  [cache] write cache_select_500ETF_981efe6655445ccd.joblib
 Stability selection finished. Kept 13 features: ['bar_ret_0', 'bar_rng_0', 'bar_rng_3', 'bar_vwap_dev_0', 'bar_vwap_dev_2', 'max_up_ret', 'volume_surge_direction', 'sma100_dist', 'northbound_net', 'yesterday_early_trend', 'yesterday_day_vwap_dev', 'yesterday_day_kurtosis', 'yesterday_intraday_close_position']
-  [cache] write cache_loyo_500ETF_f5a19c5fffb259cd.joblib
+  [cache] write cache_loyo_500ETF_850d51f469959e7a.joblib
 
 Running Optuna Pilot Study (50 trials) for normalization calibration...
-  [cache] write cache_pilot_500ETF_c0f901b2c401d940.joblib
+  [cache] write cache_pilot_500ETF_131fdc33bd2795a3.joblib
 Normalizing constants calibrated from Pilot run:
-  M1: Median=1.835220, MAD=0.124366
-  M2: Median=0.277235, MAD=0.007058
+  M1: Median=1.671450, MAD=0.227279
+  M2: Median=0.266789, MAD=0.017015
   M3: Median=1.000000, MAD=1.000000
-  M4: Median=0.145716, MAD=0.003589
-  M5: Median=0.506667, MAD=0.024242
-  M6: Median=0.872843, MAD=0.025791
+  M4: Median=0.143601, MAD=0.007275
+  M5: Median=0.501818, MAD=0.020000
+  M6: Median=0.881953, MAD=0.078073
   M7: Median=-2.639057, MAD=1.000000
-  M8: Median=-0.435429, MAD=0.110512
+  M8: Median=-0.397096, MAD=0.172651
 
 Running main Optuna Study (50 trials) with First-Principles Multi-Metric Objective...
 
 Best hyperparameters found by Optuna:
   model_type: skglm_huber_l1
-  k_weight: 0.5685363007681687
-  skglm_huber_l1_alpha: 1.0199222006152108e-05
-  skglm_huber_delta: 1.3704351393028353
+  k_weight: 0.41294686968583183
+  skglm_huber_l1_alpha: 1.2025425621615647e-05
+  skglm_huber_delta: 0.5395030695273964
 Best trial raw metrics:
-  M1 (Tail IC IR):      1.9575
-  M2 (Tail IC Mean):    0.2873
+  M1 (Tail IC IR):      1.9309
+  M2 (Tail IC Mean):    0.2874
   M3 (Hit Rate):        1.0000
-  M4 (Overall IC):      0.1499
-  M5 (Monotonicity):    0.5382
-  M6 (Top-Bot Spread):  0.9507
+  M4 (Overall IC):      0.1584
+  M5 (Monotonicity):    0.5212
+  M6 (Top-Bot Spread):  0.9764
   M7 (Parsimony):       -2.6391
-  M8 (Coef Bloat):      -0.4892
-[500ETF] elapsed 3.7s
+  M8 (Coef Bloat):      -0.4087
+[500ETF] elapsed 5.3s
 
 ================================================================================
 Starting First-Principles Training for 588000ETF (Side: single)
@@ -140,42 +141,41 @@ Starting First-Principles Training for 588000ETF (Side: single)
 Loaded 1294 samples and 238 features.
 Split: Working=738 rows (Lockbox OOS data ignored during training).
 Running feature screening...
-Screened features: 83 surviving candidates.
+Screened features: 85 surviving candidates.
 Running stability selection...
-  [cache] write cache_select_588000ETF_de028617db7f5324.joblib
-Stability selection finished. Kept 23 features: ['early_skew', 'early_kurtosis', 'bar_body_rng_2', 'barbed_wire_intensity', 'consecutive_bullish_engulfing', 'volume_concentration', 'volume_acceleration', 'range_expansion_final_bar', 'volume_weighted_price_position', 'late_bar_momentum', 'decision_bar_body', 'upper_shadow_rejection', 'upper_wick_dominance', 'sma20_dist', 'vol60', 'capital_net_ratio', 'vix_iv_spread', 'volatility_percentile_20d', 'volume_percentile_20d', 'yesterday_first_bar_return', 'yesterday_first_bar_volume', 'yesterday_day_late_mom', 'yesterday_day_kurtosis']
-  [cache] write cache_loyo_588000ETF_5491225e74f1f945.joblib
+  [cache] write cache_select_588000ETF_4222444aac5cd5cd.joblib
+Stability selection finished. Kept 22 features: ['early_skew', 'early_kurtosis', 'bar_body_rng_2', 'barbed_wire_intensity', 'consecutive_bullish_engulfing', 'volume_concentration', 'volume_acceleration', 'range_expansion_final_bar', 'volume_weighted_price_position', 'late_bar_momentum', 'decision_bar_body', 'upper_shadow_rejection', 'upper_wick_dominance', 'sma20_dist', 'vol60', 'capital_net_ratio', 'vix_iv_spread', 'volatility_percentile_20d', 'volume_percentile_20d', 'yesterday_first_bar_return', 'yesterday_first_bar_volume', 'yesterday_day_kurtosis']
+  [cache] write cache_loyo_588000ETF_852bed470bcbd1b4.joblib
 
 Running Optuna Pilot Study (50 trials) for normalization calibration...
-  [cache] write cache_pilot_588000ETF_f6db852b1c97bd85.joblib
+  [cache] write cache_pilot_588000ETF_9d6ba5a431c569c3.joblib
 Normalizing constants calibrated from Pilot run:
-  M1: Median=2.428117, MAD=0.383629
-  M2: Median=0.278586, MAD=0.030725
+  M1: Median=2.513665, MAD=0.238049
+  M2: Median=0.319744, MAD=0.026883
   M3: Median=1.000000, MAD=1.000000
-  M4: Median=0.186232, MAD=0.012099
-  M5: Median=0.684848, MAD=0.077273
-  M6: Median=0.827566, MAD=0.158443
-  M7: Median=-3.113268, MAD=0.064785
-  M8: Median=-0.543278, MAD=0.402321
+  M4: Median=0.183943, MAD=0.008573
+  M5: Median=0.633333, MAD=0.051515
+  M6: Median=0.907345, MAD=0.078244
+  M7: Median=-3.135494, MAD=1.000000
+  M8: Median=-1.206747, MAD=0.407055
 
 Running main Optuna Study (50 trials) with First-Principles Multi-Metric Objective...
 
 Best hyperparameters found by Optuna:
-  model_type: skglm_mcp
-  k_weight: 2.8545920461379035
-  skglm_mcp_alpha: 0.0038671772422627627
-  skglm_mcp_gamma: 9.792091631543219
-  skglm_mcp_delta: 4.884928251969511
+  model_type: skglm_huber_l1
+  k_weight: 0.5580619696536151
+  skglm_huber_l1_alpha: 0.0032313774259814104
+  skglm_huber_delta: 3.8825981557375706
 Best trial raw metrics:
-  M1 (Tail IC IR):      3.2615
-  M2 (Tail IC Mean):    0.3175
+  M1 (Tail IC IR):      3.9839
+  M2 (Tail IC Mean):    0.3211
   M3 (Hit Rate):        1.0000
-  M4 (Overall IC):      0.2006
-  M5 (Monotonicity):    0.6636
-  M6 (Top-Bot Spread):  0.8164
-  M7 (Parsimony):       -3.1781
-  M8 (Coef Bloat):      -1.6482
-[588000ETF] elapsed 3.4s
+  M4 (Overall IC):      0.1916
+  M5 (Monotonicity):    0.6364
+  M6 (Top-Bot Spread):  0.8521
+  M7 (Parsimony):       -3.0910
+  M8 (Coef Bloat):      -0.4925
+[588000ETF] elapsed 3.0s
 
 ================================================================================
 Starting First-Principles Training for 159915ETF (Side: single)
@@ -186,36 +186,36 @@ Split: Working=2166 rows (Lockbox OOS data ignored during training).
 Running feature screening...
 Screened features: 114 surviving candidates.
 Running stability selection...
-  [cache] write cache_select_159915ETF_715557c60abe7f12.joblib
+  [cache] write cache_select_159915ETF_ba789270b4483031.joblib
 Stability selection finished. Kept 15 features: ['gap_pct', 'first_bar_return', 'early_kurtosis', 'bar_ret_0', 'bar_vol_5', 'max_up_ret', 'inside_bar_failure_bull', 'gap_fill_ratio', 'margin_net_buy', 'northbound_net', 'yesterday_gap', 'yesterday_gap_pct', 'yesterday_early_vwap_dev', 'yesterday_day_vwap_dev', 'yesterday_opening_gap_reversal']
-  [cache] write cache_loyo_159915ETF_9e629d7a64e95672.joblib
+  [cache] write cache_loyo_159915ETF_51646b380bfc64b3.joblib
 
 Running Optuna Pilot Study (50 trials) for normalization calibration...
-  [cache] write cache_pilot_159915ETF_30c8200b9fdf7d10.joblib
+  [cache] write cache_pilot_159915ETF_6be10d398281971a.joblib
 Normalizing constants calibrated from Pilot run:
-  M1: Median=2.857102, MAD=0.164421
-  M2: Median=0.320155, MAD=0.008511
+  M1: Median=2.577577, MAD=0.224382
+  M2: Median=0.316955, MAD=0.008047
   M3: Median=1.000000, MAD=1.000000
-  M4: Median=0.180545, MAD=0.001496
-  M5: Median=0.573939, MAD=0.025455
-  M6: Median=0.977800, MAD=0.040887
+  M4: Median=0.180161, MAD=0.004592
+  M5: Median=0.581212, MAD=0.018182
+  M6: Median=0.942084, MAD=0.064498
   M7: Median=-2.772589, MAD=1.000000
-  M8: Median=-0.787171, MAD=0.173740
+  M8: Median=-1.138052, MAD=0.769375
 
 Running main Optuna Study (50 trials) with First-Principles Multi-Metric Objective...
 
 Best hyperparameters found by Optuna:
   model_type: skglm_huber_l1
-  k_weight: 1.1683033400428982
-  skglm_huber_l1_alpha: 0.0012078894143123184
-  skglm_huber_delta: 2.5788533010255605
+  k_weight: 1.4808548144950568
+  skglm_huber_l1_alpha: 8.400965118751651e-05
+  skglm_huber_delta: 0.6130908241058237
 Best trial raw metrics:
-  M1 (Tail IC IR):      3.0478
-  M2 (Tail IC Mean):    0.3206
+  M1 (Tail IC IR):      3.0853
+  M2 (Tail IC Mean):    0.3403
   M3 (Hit Rate):        1.0000
-  M4 (Overall IC):      0.1821
-  M5 (Monotonicity):    0.6182
-  M6 (Top-Bot Spread):  1.0154
+  M4 (Overall IC):      0.1820
+  M5 (Monotonicity):    0.5927
+  M6 (Top-Bot Spread):  1.0214
   M7 (Parsimony):       -2.7726
-  M8 (Coef Bloat):      -0.6913
-[159915ETF] elapsed 5.0s
+  M8 (Coef Bloat):      -0.7324
+[159915ETF] elapsed 4.9s
