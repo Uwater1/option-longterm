@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 import joblib
 import matplotlib.pyplot as plt
-from scipy.stats import spearmanr
+from scipy.stats import spearmanr, rankdata
 
 HERE = Path(__file__).resolve().parent
 DATA_DIR = HERE / "data"
@@ -25,6 +25,28 @@ def spearman_ic(y_true: np.ndarray, y_pred: np.ndarray) -> float:
         return 0.0
     rho, _ = spearmanr(y_pred, y_true)
     return float(rho) if not np.isnan(rho) else 0.0
+
+def compute_decile_monotonicity(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    n = len(y_true)
+    if n < 20 or np.std(y_pred) < 1e-12:
+        return 0.0
+    order = np.argsort(np.asarray(y_pred, dtype=np.float64), kind="quicksort")
+    yt_sorted = np.asarray(y_true, dtype=np.float64)[order]
+    chunks = np.array_split(yt_sorted, 10)
+    means = np.array([c.mean() if c.size else np.nan for c in chunks])
+    valid = ~np.isnan(means)
+    if valid.sum() < 3:
+        return 0.0
+    m = means[valid]
+    r = rankdata(m)
+    k = m.shape[0]
+    a = np.arange(1, k + 1, dtype=np.float64)
+    a -= a.mean()
+    r -= r.mean()
+    denom = np.sqrt((a * a).sum() * (r * r).sum())
+    if denom < 1e-12:
+        return 0.0
+    return float((a * r).sum() / denom)
 
 def main():
     print("Generating day-model REPORT.md...")
@@ -100,6 +122,18 @@ def main():
                 r["lockbox_tail_ic"] = lockbox_tail_ic
                 r["n_samples_lockbox"] = len(y_lockbox)
 
+                # Compute Generalization Gap
+                cv_overall_ic = float(r["best_raw_metrics"][3])
+                ic_generalization_gap = cv_overall_ic - lockbox_ic
+                
+                lockbox_mono = compute_decile_monotonicity(y_lockbox, preds_lockbox)
+                cv_mono = float(r["best_raw_metrics"][4])
+                mono_generalization_gap = cv_mono - lockbox_mono
+                
+                r["lockbox_monotonicity"] = lockbox_mono
+                r["ic_generalization_gap"] = ic_generalization_gap
+                r["mono_generalization_gap"] = mono_generalization_gap
+
                 # Write updated result to JSON
                 with open(DATA_DIR / f"results_{tag}.json", "w") as f_json:
                     json.dump(r, f_json, indent=2, default=str)
@@ -107,6 +141,9 @@ def main():
                 # Write updated lockbox ICs to scaler bundle so scores.py / deploy.py read them correctly
                 scaler_meta["holdout_ic"] = lockbox_ic
                 scaler_meta["holdout_tail_ic"] = lockbox_tail_ic
+                scaler_meta["holdout_mono"] = lockbox_mono
+                scaler_meta["ic_gen_gap"] = ic_generalization_gap
+                scaler_meta["mono_gen_gap"] = mono_generalization_gap
                 joblib.dump(scaler_meta, scaler_path)
 
                 # ─── Generate 2x2 Diagnostics Plot ───
@@ -231,27 +268,79 @@ def main():
         lines.append(f"| {etf} | {m[0]:.4f} | {m[1]:+.4f} | {m[2]*100:.1f}% | {m[4]:.4f} | {m[5]*100:+.4f}% |")
         
     lines.append("")
-    lines.append("## Training Process Diagnostics & Execution Profiling")
+    lines.append("## Model Quality & Generalization Diagnostics")
     lines.append("")
-    lines.append("### Stage Durations (seconds)")
+    lines.append("### Model Multi-Collinearity & Weight Concentration")
     lines.append("")
-    lines.append("| ETF | Data Load | Feature Select | LOYO Folds | Pilot Study | Main Study | Final Refit | Total |")
-    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+    lines.append("| ETF | Condition Number ($\\kappa$) | Collinear Pairs ($\\ge 0.85$) | Gini (Weight Concentration) | Tail Weight ESS | Tail Weight ESS % |")
+    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: |")
     
     for etf in ETF_ORDER:
         if etf not in results_dict:
             continue
         r = results_dict[etf]
         diag = r.get("diagnostics", {})
-        timings = diag.get("timings", {})
-        load_t = timings.get("data_loading", 0.0)
-        sel_t = timings.get("feature_selection", 0.0)
-        loyo_t = timings.get("loyo_folds", 0.0)
-        pilot_t = timings.get("pilot_study", 0.0)
-        main_t = timings.get("main_study", 0.0)
-        refit_t = timings.get("final_refit", 0.0)
-        total_t = load_t + sel_t + loyo_t + pilot_t + main_t + refit_t
-        lines.append(f"| {etf} | {load_t:.1f}s | {sel_t:.1f}s | {loyo_t:.1f}s | {pilot_t:.1f}s | {main_t:.1f}s | {refit_t:.1f}s | {total_t:.1f}s |")
+        mq = diag.get("model_quality", {})
+        
+        cond = mq.get("condition_number")
+        cond_str = f"{cond:.2f}" if cond is not None else "N/A"
+        if cond is not None and cond > 100:
+            cond_str += " [SEVERE]"
+        elif cond is not None and cond > 30:
+            cond_str += " [MODERATE]"
+            
+        coll = mq.get("collinear_pairs")
+        coll_str = str(len(coll)) if coll is not None else "N/A"
+        if coll is not None and len(coll) > 0:
+            coll_str += " [WARNING]"
+            
+        gini = mq.get("gini_coefficient")
+        gini_str = f"{gini:.4f}" if gini is not None else "N/A"
+        if gini is not None and gini > 0.85:
+            gini_str += " [HIGH]"
+            
+        ess = mq.get("effective_sample_size")
+        ess_str = f"{ess:.1f}" if ess is not None else "N/A"
+        
+        ess_pct = mq.get("effective_sample_size_pct")
+        ess_pct_str = f"{ess_pct*100:.1f}%" if ess_pct is not None else "N/A"
+        if ess_pct is not None and ess_pct < 0.05:
+            ess_pct_str += " [CRITICAL]"
+        elif ess_pct is not None and ess_pct < 0.20:
+            ess_pct_str += " [LOW]"
+            
+        lines.append(f"| {etf} | {cond_str} | {coll_str} | {gini_str} | {ess_str} | {ess_pct_str} |")
+
+    lines.append("")
+    lines.append("### Generalization Gap (CV vs Out-of-Sample)")
+    lines.append("")
+    lines.append("| ETF | CV Overall IC | OOS Lockbox IC | IC Gen Gap | CV Monotonicity | OOS Monotonicity | Mono Gen Gap |")
+    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: |")
+    
+    for etf in ETF_ORDER:
+        if etf not in results_dict:
+            continue
+        r = results_dict[etf]
+        
+        cv_ic = r["best_raw_metrics"][3]
+        oos_ic = r.get("lockbox_overall_ic", np.nan)
+        ic_gap = r.get("ic_generalization_gap", np.nan)
+        
+        cv_mono = r["best_raw_metrics"][4]
+        oos_mono = r.get("lockbox_monotonicity", np.nan)
+        mono_gap = r.get("mono_generalization_gap", np.nan)
+        
+        oos_ic_str = f"{oos_ic:+.4f}" if not np.isnan(oos_ic) else "N/A"
+        ic_gap_str = f"{ic_gap:+.4f}" if not np.isnan(ic_gap) else "N/A"
+        if not np.isnan(ic_gap) and ic_gap > 0.05:
+            ic_gap_str += " [OVERFIT]"
+            
+        oos_mono_str = f"{oos_mono:+.4f}" if not np.isnan(oos_mono) else "N/A"
+        mono_gap_str = f"{mono_gap:+.4f}" if not np.isnan(mono_gap) else "N/A"
+        if not np.isnan(mono_gap) and mono_gap > 0.20:
+            mono_gap_str += " [DEGRADED]"
+            
+        lines.append(f"| {etf} | {cv_ic:+.4f} | {oos_ic_str} | {ic_gap_str} | {cv_mono:+.4f} | {oos_mono_str} | {mono_gap_str} |")
 
     lines.append("")
     lines.append("### Feature Selection Metrics & Fallbacks")

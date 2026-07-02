@@ -646,6 +646,40 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # Freeze the features for the final and Optuna loops
     X_working_final = _to_f32(X_working[:, stability_selected_idx])
 
+    # ── Feature Quality Diagnostics (Multicollinearity & Condition Number) ──
+    if K_sel > 1:
+        corr_matrix = np.corrcoef(X_working_final, rowvar=False)
+        collinear_pairs = []
+        for i in range(K_sel):
+            for j in range(i + 1, K_sel):
+                if abs(corr_matrix[i, j]) >= 0.85:
+                    collinear_pairs.append((selected_feature_names[i], selected_feature_names[j], float(corr_matrix[i, j])))
+        
+        # Standardize X_working_final to compute condition number correctly
+        X_scaled_tmp = (X_working_final - X_working_final.mean(axis=0)) / (X_working_final.std(axis=0) + 1e-10)
+        _, s, _ = np.linalg.svd(X_scaled_tmp, full_matrices=False)
+        s_min = s.min()
+        condition_number = float(s.max() / s_min) if s_min > 1e-10 else float("inf")
+    else:
+        collinear_pairs = []
+        condition_number = 1.0
+
+    print("\n  [DIAGNOSTICS] Selected Feature Quality:")
+    print(f"    Selected Features Condition Number: {condition_number:.2f}")
+    if condition_number > 100:
+        print(f"    [WARNING] Severe multicollinearity detected (condition number > 100)!")
+    elif condition_number > 30:
+        print(f"    [WARNING] Moderate multicollinearity detected (condition number > 30).")
+    else:
+        print(f"    Feature matrix is numerically stable.")
+
+    if collinear_pairs:
+        print(f"    [WARNING] Found {len(collinear_pairs)} highly collinear pairs (|rho| >= 0.85):")
+        for f1, f2, val in collinear_pairs:
+            print(f"      - {f1} <-> {f2}: rho = {val:+.4f}")
+    else:
+        print("    No highly collinear feature pairs found.")
+
     # ── LOYO folds cache (depends on selected features only) ──────────
     loyo_key = [
         "v2", etf_name, len(FEATURES), int(parquet_mtime),
@@ -1054,6 +1088,37 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     
     final_model = _build_model(model_type, params)
     final_model.fit(X_weighted_final, y_weighted_final)
+
+    # ── Weight Concentration & Effective Sample Size Diagnostics ──
+    sum_w = w_final.sum()
+    sum_w2 = (w_final ** 2).sum()
+    ess = float((sum_w ** 2) / sum_w2) if sum_w2 > 1e-10 else float(len(w_final))
+    ess_pct = ess / len(w_final)
+    
+    abs_coefs = np.abs(final_model.coef_)
+    sum_abs = abs_coefs.sum()
+    if sum_abs > 1e-10:
+        sorted_c = np.sort(abs_coefs)
+        m = len(sorted_c)
+        index = np.arange(1, m + 1)
+        gini = float((2.0 * (index * sorted_c).sum()) / (m * sum_abs) - (m + 1) / m)
+    else:
+        gini = 0.0
+
+    print("\n  [DIAGNOSTICS] Final Model Diagnostics:")
+    print(f"    Effective Sample Size (ESS) under tail-focus: {ess:.1f} / {len(w_final)} ({ess_pct*100:.1f}%)")
+    if ess_pct < 0.05:
+        print(f"    [WARNING] ESS is extremely low (< 5%)! Model is highly sensitive to a few extreme tail days.")
+    elif ess_pct < 0.20:
+        print(f"    [WARNING] ESS is low (< 20%). Fit is dominated by tail returns.")
+    else:
+        print(f"    ESS is healthy.")
+
+    print(f"    Model Weight Concentration (Gini Index): {gini:.4f}")
+    if gini > 0.85:
+        print(f"    [WARNING] Extremely high weight concentration! A very small subset of features dominates the model.")
+    elif gini < 0.15:
+        print(f"    [WARNING] Extremely low weight concentration (all weights are near-identical).")
     
     # Save the models/scalers/results to files
     tag = etf_name if side == "single" else f"{etf_name}_{side}"
@@ -1119,6 +1184,13 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 "pruned_count": int(pruned_count),
                 "failed_count": int(failed_count),
                 "pruning_reasons": reason_counts,
+            },
+            "model_quality": {
+                "condition_number": float(condition_number),
+                "collinear_pairs": [[p[0], p[1], float(p[2])] for p in collinear_pairs],
+                "effective_sample_size": float(ess),
+                "effective_sample_size_pct": float(ess_pct),
+                "gini_coefficient": float(gini),
             }
         }
     }

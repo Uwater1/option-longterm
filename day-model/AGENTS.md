@@ -94,5 +94,5 @@ Remove-Item day-model\data\cache_*.joblib
    - Decile Monotonicity <= 0.25
    - Top-Bottom Spread <= 0
 9. **One-Shot Evaluation & Diagnostics Plotting (Step 6)**: Handled entirely in `generate_report.py` to keep training fast. Evaluates final model on 500-day lockbox, updates OOS metrics in results JSON/scaler bundles on disk, and generates 2x2 diagnostics plots (`plots/diagnostics_{tag}.png`) containing Coefficients, OOS decile spread, and All data decile spread.
-10. **Diagnostics & Timing Profiling**: `train_model.py` performs step-by-step diagnostics (screening correlation details, stability scores percentiles, LOYO CV fold shapes, pilot metric distributions, Optuna main pruning reason breakdowns, execution timings). Saves metadata to `results_*.json`. `generate_report.py` compiles metadata into markdown timing, fallback, and pruning tables in `REPORT.md`.
+10. **Model Quality & Generalization Diagnostics**: `train_model.py` calculates condition number ($\kappa$) & collinearity alerts, Effective Sample Size (ESS) of tail-focus weights, and Gini coefficient index. Saves to `results_*.json`. `generate_report.py` computes CV-to-OOS Generalization Gap for rank IC & decile monotonicity, compiling findings into `REPORT.md`.
 
