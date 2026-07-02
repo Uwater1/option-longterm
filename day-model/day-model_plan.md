@@ -28,7 +28,7 @@ Plan to reformulate and optimize the Optuna objective function for `day-model` b
 **Turning a selection procedure into something with actual error control:**
 - Meinshausen & Bühlmann (2010), *Stability Selection* — based on subsampling in combination with high-dimensional selection algorithms; it provides finite sample control for some error rates of false discoveries and hence a transparent principle to choose a proper amount of regularisation.
 - Shah & Samworth (2013), *Complementary Pairs Stability Selection (CPSS)* — derives bounds on the expected number of variables included that have low selection probability under the original procedure, and on the expected number of high-selection-probability variables excluded, without requiring exchangeability assumptions on the model. This is the practical, less-conservative variant of stability selection you'd actually implement.
-- For an FDR-controlled alternative to stability selection: Barber & Candès knockoffs — a variable selection procedure that controls the false discovery rate in any finite-sample setting, though it's more finicky to construct correctly with only 230 real (non-Gaussian, non-synthetic) features.
+- Faletto & Bien (2022), *Cluster Stability Selection (CSS)* — proves that standard stability selection fails under high correlation due to vote-splitting across proxy features. Grouping features into correlation clusters first, aggregating votes at the cluster level, and selecting representatives resolves this issue.
 
 ---
 
@@ -37,7 +37,7 @@ Plan to reformulate and optimize the Optuna objective function for `day-model` b
 1. **Do feature screening/selection on the full distribution, not the tails.** Reserve the tail-focus for (a) the loss weighting and (b) the evaluation metric, not for defining the training rows.
 2. **Huber's robustness and MCP's non-convex thresholding solve different problems and you want both, in sequence, not conflated.** Huber protects you from y-outliers (heavy-tailed noise in the response). MCP is about β-sparsity (removing dead features). Doing MCP on the tail-only subset makes it fight both the outlier problem *and* the small-n problem at once — separate the concerns.
 3. **BH-FDR at the univariate screening stage is a dimensionality reducer, not a final answer.** It gets you from 230 → maybe 40–70 candidates cheaply, using the full n. It should never be your only selection step because it ignores joint/collinear structure (two correlated features can both pass, and MCP later has to figure out which one actually matters).
-4. **Stability selection is what turns "MCP+Optuna picked these features" into something you can trust isn't a CV-tuning artifact.** With only 2700 rows, a single Optuna-tuned λ path is very likely to overfit its own hyperparameter search. Aggregating selections over many subsamples (Meinshausen–Bühlmann / CPSS) is the standard fix and gives you an actual error bound on false inclusions.
+4. **Group/Cluster-level stability selection solves the vote-splitting of collinear proxies where plain stability selection fails.** Under high correlation, plain stability selection dilutes voting probabilities across proxies, leading to either zero selections or random picks. Grouping features into correlation clusters first ($|r| \ge 0.75$), voting at the cluster level, and then selecting the most stable representative is the correct geometry.
 5. **Triple-dipping risk:** BH-screening + stability selection + Optuna tuning + tail-focus, all run on the same 2200 rows, will silently leak information into your "final" model unless you enforce strict sample separation between stages. This is the single most likely way your holdout ends up not meaning anything.
 
 ---
@@ -50,17 +50,21 @@ Partition the entire dataset chronologically. Everything before **2024-03-01** (
 **Step 1 — Cheap screening on full working set.**
 Compute robust marginal association per feature (Spearman rank correlation) between each of the 238 features and the target. Apply BH-FDR correction across the tests (FDR = 0.40). If fewer than 40 features pass, fallback to the top 50 features by p-value.
 
-> Hierarchical Feature Clustering / correlation-based pre-filtering are useless:
-> Clustering slightly correlated features ($|r| \ge 0.3$) and dropping them based on univariate ranking discards complementary multivariate features. This causes model collapse to $\le 2$ sparse active weights and a negative OOS Lockbox Tail IC ($-0.0207$). Removing this step and relying on ElasticNet stability selection to handle collinearity multivariately preserves 72 active weights and increases Lockbox Tail IC to $+0.0304$.
+> **Mistake (Previous Attempt)**: Clustering slightly correlated features ($|r| \ge 0.3$) and dropping them based on univariate ranking discarded complementary multivariate features, causing model collapse to $\le 2$ active weights. We incorrectly tried to rely on ElasticNet grouping effect without pre-clustering. Grouping into complete correlation clusters *after* screening but *before* stability voting resolves this without discarding joint predictive power.
 
-**Step 2 — Stability selection on survivors.**
-Run repeated subsampling ($B=100$, subsample size $\lfloor N/2 \rfloor$) over the Step 1 survivors. Fit ElasticNet paths (l1_ratio = 0.5). To ensure robust feature filtering, restrict the considered alphas to the range producing at most 35 features on average (`STABILITY_Q = 35`). Keep features selected in $\ge 0.60$ fraction of subsamples (fallback to top 5 if count < 3). Because ElasticNet has a grouping effect, it naturally handles collinearity multivariately without needing a separate clustering pre-filter.
+**Step 2 — Cluster Stability Selection (CSS).**
+Perform Complete Linkage hierarchical clustering on Step 1 survivors using correlation distance (threshold $t = 0.25$, i.e. $|r| \ge 0.75$). Run repeated subsampling ($B=100$, subsample size $\lfloor N/2 \rfloor$) and fit ElasticNet paths (l1_ratio = 0.5). Aggregate selection votes at the *cluster level* (i.e. did any member of the cluster get selected in the subsample?). Keep clusters selected in $\ge 0.60$ fraction of subsamples (fallback to top 5 if count < 3). For each kept cluster, select the single representative feature with the highest individual stability score (tie-broken by Spearman correlation absolute values).
+
+> **Mistake (Previous Attempt)**: Standard (loss-agnostic, individual-feature) stability selection failed under correlation by vote-splitting, which led to severe collinearity in selected sets (condition numbers up to 6.4M for 50ETF, 3.7M for 500ETF). Relying on ElasticNet grouping effect was insufficient. Cluster Stability Selection (CSS) solves vote-splitting and enforces sparsity cleanly.
 
 **Step 3 — Loss Weighting via Input Scaling.**
-For the final coefficient fit, use sample weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to upweight tail days. Implement weights by scaling inputs $X$ and targets $y$ by $\sqrt{w}$, which is mathematically exact for least squares and serves as a robust Huber weighting.
+For the final coefficient fit, use sample weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to upweight tail days. Implement weights by scaling inputs $X$ and targets $y$ by $\sqrt{w}$.
+
+> **Mistake (Previous Attempt)**: Pushing tail-weighting parameters (exponent $k$) without constraints collapsed the Effective Sample Size (ESS) to 16.6% on 159915ETF, training the model on effectively very few outlier days. Enforcing a hard ESS floor $\ge 20\%$ during optimization completely fixes this.
 
 **Step 4 — Optuna over hyperparameters only, evaluated on a tail-specific metric.**
 Nested Yearly CV (2015-2023) within the working set, applying a 10-day embargo at training year boundaries to prevent temporal leak. Optuna tunes model type selection (`skglm_huber_l1` vs `skglm_mcp`), their respective regularization parameters (alphas, gamma, delta), and the loss weight exponent $k$.
+Both model families enforce a mandatory $10\%$ L2 Ridge regularization component (`skglm_huber_l1` uses `L1_plus_L2` with `l1_ratio = 0.9` and `skglm_mcp` uses custom `MCP_plus_L2` with `mu = 0.1 * alpha` from `penalties.py`) to guarantee minimum eigenvalues and compress condition numbers.
 
 ### Step 4.1 — Define Metric Weights & Optimization Objective
 
@@ -76,35 +80,27 @@ Where each $\widetilde{M}_i$ is a **robust z-score normalized** metric (computed
 | **M₄** | **Overall Rank IC** | Mean Spearman rank IC across all rows. | + | General Signal | **0.15** |
 | **M₅** | **Decile Monotonicity** | Spearman correlation between decile rank and mean actual return. | + | Signal Structure | **0.15** |
 | **M₆** | **Top-Bottom Spread** | Mean return spread (Top 10% minus Bottom 10%). | + | Factor Efficacy | **0.05** |
-| **M₇** | **Feature Parsimony** | $-\log(1 + k)$ where $k$ is active model size (coefficients with absolute value $> 10^{-5}$). Penalized model complexity (weight set to 0.00 since Step 2 controls sparsity). | + | Simplicity | **0.00** |
-| **M₈** | **Coefficient Bloat** | $-\|\beta\|_2$. Penalized large coefficients (weight set to 0.00 since Step 2 controls sparsity). | + | Simplicity | **0.00** |
+| **M₇** | **Feature Parsimony** | $-\log(1 + k)$ where $k$ is active model size (coefficients with absolute value $> 10^{-5}$). (weight set to 0.00 since CSS controls sparsity). | + | Simplicity | **0.00** |
+| **M₈** | **Coefficient Bloat** | $-\|\beta\|_2$. (weight set to 0.00 since CSS controls sparsity). | + | Simplicity | **0.00** |
 
 Before computing the weighted objective, apply **Kill Switches**:
 * Overall IC > 0 (M4 > 0)
 * Minimum Hit Rate >= 60% (M3 >= 0.60)
 * Decile Monotonicity > 0.25 (M5 >= 0.25)
 * Top-Bottom Spread > 0 (M6 > 0)
+* **Tail Weight ESS % >= 20%** (Kish ESS floor)
 * If any condition fails, return `-1e9` (pruned).
 
-> Problems: Historically, all main study trials violated the `m5 > 0.4` constraint for 50ETF. Relaxing the constraint to `m5 > 0.25` and removing the M7/M8 weights solved the issue, avoiding constraint violations while preventing model collapse (e.g. 500ETF active features count improved from 1 to 13).
-
 **Step 5 — Freeze feature set.**
-Stability-selected features are frozen before Optuna tuning begins.
+Stability-selected cluster representatives are frozen before Optuna tuning begins.
 
 **Step 6 — One-shot evaluation on the lockbox.**
 * **Refit**: `train_model.py` refits the final model on all working rows using the best parameters, and saves the final models and scaler/feature metadata.
-* **Evaluation**: The actual one-shot OOS predictions on the lockbox (2024-03-01 to the last day), computation of lockbox metrics (overall IC, tail-decile IC, decile monotonicity), and update of the results JSON are performed by the companion report-generator script `generate_report.py`. This ensures strict data segregation to prevent accidental temporal leak during model search.
+* **Evaluation**: The actual one-shot OOS predictions on the lockbox (2024-03-01 to the last day), computation of lockbox metrics (overall IC, tail-decile IC, decile monotonicity), and update of the results JSON are performed by the companion report-generator script `generate_report.py`.
 
 ---
 
-## 7. Observed Effects & Performance Enhancements (July 2026 Remake)
-
-We implemented three key improvements to address severe multicollinearity and ESS degradation:
-1. **Cluster Stability Selection (CSS)**: Screened features are grouped using Complete Linkage hierarchical clustering (correlation distance threshold of 0.25, i.e., $|r| \ge 0.75$). During stability selection, voting is aggregated at the cluster level. A single representative feature with the highest individual stability score is selected from each stable cluster, structurally preventing pairwise collinearity.
-2. **Tail Weight ESS Constraint**: Added a hard kill switch to prune Optuna trials where the Tail Weight ESS falls below $20\%$, preventing training size collapse and tail overfitting.
-3. **L2 Ridge Regularization**: Integrated a $10\%$ L2 Ridge penalty into both model families (`skglm_huber_l1` via `L1_plus_L2` and `skglm_mcp` via custom `MCP_plus_L2`) to stabilize coefficient weights under multicollinearity.
-
-### Observed Diagnostics and OOS Lockbox Improvements
+## 5. Observed Effects & Performance Enhancements (July 2026 Remake)
 
 Comparing the baseline optimization to the CSS + ESS-constrained + L2-regularized optimization (50 trials):
 
