@@ -10,7 +10,7 @@ This report summarizes the performance and features of the remade `day-model` re
 | 50ETF | 31 | 31 | `skglm_mcp` | +0.0132 | +0.1534 |
 | 500ETF | 13 | 13 | `skglm_huber_l1` | +0.1219 | +0.0468 |
 | 588000ETF | 22 | 21 | `skglm_huber_l1` | +0.0242 | -0.0111 |
-| 159915ETF | 15 | 15 | `skglm_huber_l1` | +0.1143 | +0.3002 |
+| 159915ETF | 15 | 15 | `skglm_mcp` | +0.1143 | +0.3053 |
 
 ## Detailed Trial Metrics & Optimization Objectives
 
@@ -20,7 +20,39 @@ This report summarizes the performance and features of the remade `day-model` re
 | 50ETF | 1.3795 | +0.2084 | 90.0% | 0.4473 | +33.9839% |
 | 500ETF | 1.9309 | +0.2874 | 100.0% | 0.5212 | +97.6411% |
 | 588000ETF | 3.9839 | +0.3211 | 100.0% | 0.6364 | +85.2081% |
-| 159915ETF | 3.0853 | +0.3403 | 100.0% | 0.5927 | +102.1440% |
+| 159915ETF | 3.0758 | +0.3395 | 100.0% | 0.5818 | +102.6038% |
+
+## Training Process Diagnostics & Execution Profiling
+
+### Stage Durations (seconds)
+
+| ETF | Data Load | Feature Select | LOYO Folds | Pilot Study | Main Study | Final Refit | Total |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 300ETF | 0.0s | 0.0s | 0.0s | 0.0s | 0.0s | 0.0s | 0.0s |
+| 50ETF | 0.0s | 0.0s | 0.0s | 0.0s | 0.0s | 0.0s | 0.0s |
+| 500ETF | 0.0s | 0.0s | 0.0s | 0.0s | 0.0s | 0.0s | 0.0s |
+| 588000ETF | 0.0s | 0.0s | 0.0s | 0.0s | 0.0s | 0.0s | 0.0s |
+| 159915ETF | 0.1s | 0.0s | 0.0s | 0.0s | 8.4s | 5.8s | 14.3s |
+
+### Feature Selection Metrics & Fallbacks
+
+| ETF | Screening Input | BH-FDR Pass | Screen Fallback? | Stability Input | Stability Pass | Stability Fallback? | Kept Features |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 300ETF | N/A | N/A | NO | N/A | N/A | NO | **30** |
+| 50ETF | N/A | N/A | NO | N/A | N/A | NO | **31** |
+| 500ETF | N/A | N/A | NO | N/A | N/A | NO | **13** |
+| 588000ETF | N/A | N/A | NO | N/A | N/A | NO | **22** |
+| 159915ETF | 238 | 114 | NO | 114 | 15 | NO | **15** |
+
+### Optuna Main Study & Pruning Reasons
+
+| ETF | Total Trials | Completed | Pruned / Failed | M4 Pruned | M3 Pruned | M5 Pruned | M6 Pruned |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 300ETF | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 50ETF | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 500ETF | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 588000ETF | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 159915ETF | 5 | 5 | 0 | 0 | 0 | 0 | 0 |
 
 ## Selected Features per ETF
 

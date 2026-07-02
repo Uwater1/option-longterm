@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "300ETF",
   "n_samples_working": 2166,
-  "n_samples_lockbox": 556,
+  "n_samples_lockbox": 0,
   "selected_features": [
     "first_30min_return",
     "first_bar_return",
@@ -310,21 +310,54 @@
   },
   "best_params": {
     "model_type": "skglm_mcp",
-    "k_weight": 0.9239721047108224,
-    "skglm_mcp_alpha": 0.0001146488733045583,
-    "skglm_mcp_gamma": 6.540314036879236,
-    "skglm_mcp_delta": 0.7933382473270512
+    "k_weight": 0.5660173746619328,
+    "skglm_mcp_alpha": 2.9813415210959033e-05,
+    "skglm_mcp_gamma": 3.7106487185600354,
+    "skglm_mcp_delta": 0.8931320119031712
   },
   "best_raw_metrics": [
-    1.4255294562966794,
-    0.19151042442772503,
+    1.2571997508785424,
+    0.19629956469541016,
     1.0,
-    0.10317263169428514,
-    0.456969696969697,
-    0.4065640338103706,
+    0.10726519094808165,
+    0.4242424242424242,
+    0.4506907956364635,
     -3.4339872044851463,
-    -0.6579063534736633
+    -0.572436511516571
   ],
-  "lockbox_overall_ic": 0.06426285966389315,
-  "lockbox_tail_ic": 0.11260760680687447
+  "lockbox_overall_ic": NaN,
+  "lockbox_tail_ic": NaN,
+  "diagnostics": {
+    "timings": {
+      "data_loading": 0.10496312000032049,
+      "feature_selection": 0.0011633170070126653,
+      "loyo_folds": 0.015410460997372866,
+      "pilot_study": 0.0010832760017365217,
+      "main_study": 18.551487535994966,
+      "final_refit": 5.2899465700029396
+    },
+    "screening": {
+      "total_features": 238,
+      "bh_pass_count": 63,
+      "fallback_triggered": false,
+      "keep_count": 63
+    },
+    "stability": {
+      "fallback_triggered": false,
+      "pass_pi_count": 30,
+      "keep_count": 30
+    },
+    "optuna_main": {
+      "total_trials": 50,
+      "completed_count": 40,
+      "pruned_count": 10,
+      "failed_count": 0,
+      "pruning_reasons": {
+        "M4 (Overall IC <= 0)": 10,
+        "M3 (Hit Rate < 60%)": 10,
+        "M5 (Monotonicity <= 0.25)": 10,
+        "M6 (Top-Bottom Spread <= 0)": 10
+      }
+    }
+  }
 }

@@ -494,6 +494,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
           f"bootstrap_n_jobs={bootstrap_n_jobs}  loyo_n_jobs={loyo_n_jobs}")
     print(f"=" * 80)
 
+    timings = {}
+    t_start = time.perf_counter()
+
     # Load features parquet
     features_path = DATA_DIR / f"features_{etf_name}.parquet"
     if not features_path.exists():
@@ -539,6 +542,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     year_groups = [(int(y), np.where(years_working == y)[0])
                    for y in sorted(np.unique(years_working))]
 
+    timings["data_loading"] = time.perf_counter() - t_start
+
     # ── Cache key parts ───────────────────────────────────────────────
     # Auto-invalidate when: feature parquet regen (mtime), FEATURES list
     # length changes, or any of the deterministic knobs below change.
@@ -553,31 +558,90 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # Step 1 + 2: Cheap screening + Stability selection (cached).
     def _compute_selection():
+        t_sel_start = time.perf_counter()
         print("Running feature screening...")
         screen_mask, p_vals, rhos = run_screening(X_working, y_working)
+        t_screen = time.perf_counter() - t_sel_start
         print(f"Screened features: {screen_mask.sum()} surviving candidates.")
+        
+        t_stab_start = time.perf_counter()
         print("Running stability selection...")
         stability_selected_idx, stability_scores = run_stability_selection(
             X_working, y_working, screen_mask,
             B=STABILITY_B, pi=STABILITY_PI, n_jobs=bootstrap_n_jobs,
         )
+        t_stab = time.perf_counter() - t_stab_start
         return {
             "screen_mask": screen_mask,
             "p_vals": p_vals,
             "rhos": rhos,
             "stability_selected_idx": np.asarray(stability_selected_idx),
             "stability_scores": np.asarray(stability_scores),
+            "time_screen": t_screen,
+            "time_stability": t_stab,
         }
 
+    t_select_block_start = time.perf_counter()
     sel = _load_or_compute(select_cache_path, select_key, _compute_selection,
                            use_cache=use_cache)
+    timings["feature_selection"] = time.perf_counter() - t_select_block_start
+
     screen_mask = sel["screen_mask"]
     stability_selected_idx = sel["stability_selected_idx"]
     stability_scores = sel["stability_scores"]
 
+    # ── Feature Screening (Step 1) Diagnostics ──
+    p_vals = sel["p_vals"]
+    rhos = sel["rhos"]
+    bh_mask = benjamini_hochberg(p_vals, fdr_level=SCREEN_FDR)
+    bh_pass_count = bh_mask.sum()
+    fallback_triggered = (bh_pass_count < 40)
+
+    print("\n  [DIAGNOSTICS] Feature Screening (Step 1) Details:")
+    print(f"    Total features input: {len(FEATURES)}")
+    print(f"    Features passing BH-FDR (FDR={SCREEN_FDR}): {bh_pass_count}")
+    if fallback_triggered:
+        print(f"    [WARNING] Fallback triggered! Kept top {screen_mask.sum()} features by p-value instead.")
+    else:
+        print(f"    No fallback needed. Kept {screen_mask.sum()} features.")
+
+    abs_rhos = np.abs(rhos)
+    print(f"    Spearman rho absolute values - Min: {abs_rhos.min():.4f}, Median: {np.median(abs_rhos):.4f}, Max: {abs_rhos.max():.4f}")
+    print(f"    p-values - Min: {p_vals.min():.2e}, Median: {np.median(p_vals):.4f}, Max: {p_vals.max():.4f}")
+
+    sorted_idx = np.argsort(rhos)
+    print("    Top 5 positive Spearman correlations:")
+    for idx in sorted_idx[-5:][::-1]:
+        print(f"      - {FEATURES[idx]}: rho = {rhos[idx]:+.4f}, p = {p_vals[idx]:.2e}")
+    print("    Top 5 negative Spearman correlations:")
+    for idx in sorted_idx[:5]:
+        print(f"      - {FEATURES[idx]}: rho = {rhos[idx]:+.4f}, p = {p_vals[idx]:.2e}")
+
+    # ── Stability Selection (Step 2) Diagnostics ──
+    screened_idx = np.where(screen_mask)[0]
+    scores_on_screened = stability_scores[screened_idx]
+    pass_pi_count = np.sum(scores_on_screened >= STABILITY_PI)
+    stab_fallback_triggered = (pass_pi_count < 3)
+
+    print("\n  [DIAGNOSTICS] Stability Selection (Step 2) Details:")
+    print(f"    Features input to Stability Selection: {len(screened_idx)}")
+    print(f"    Features with stability score >= {STABILITY_PI}: {pass_pi_count}")
+    if stab_fallback_triggered:
+        print(f"    [WARNING] Fallback triggered! Kept top {len(stability_selected_idx)} features by stability score instead.")
+    else:
+        print(f"    No fallback needed. Kept {len(stability_selected_idx)} features.")
+
+    if len(scores_on_screened) > 0:
+        pcts = np.percentile(scores_on_screened, [25, 50, 75, 90, 95])
+        print(f"    Stability score percentiles on screened features - 25%: {pcts[0]:.2f}, 50%: {pcts[1]:.2f}, 75%: {pcts[2]:.2f}, 90%: {pcts[3]:.2f}, 95%: {pcts[4]:.2f}")
+
     selected_feature_names = [FEATURES[idx] for idx in stability_selected_idx]
     K_sel = len(stability_selected_idx)
-    print(f"Stability selection finished. Kept {K_sel} features: {selected_feature_names}")
+    print("    Stability selected features & scores:")
+    for idx in stability_selected_idx:
+        print(f"      - {FEATURES[idx]}: score = {stability_scores[idx]:.2f}")
+
+    print(f"Stability selection finished. Kept {K_sel} features.")
 
     # Freeze the features for the final and Optuna loops
     X_working_final = _to_f32(X_working[:, stability_selected_idx])
@@ -626,8 +690,17 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             ))
         return folds
 
+    t_loyo_block_start = time.perf_counter()
     loyo_folds = _load_or_compute(loyo_cache_path, loyo_key, _compute_loyo,
                                   use_cache=use_cache)
+    timings["loyo_folds"] = time.perf_counter() - t_loyo_block_start
+
+    print("\n  [DIAGNOSTICS] LOYO CV Folds Details:")
+    print(f"    Number of folds (years): {len(loyo_folds)}")
+    for i, fold in enumerate(loyo_folds):
+        test_idx, X_tr_scaled, X_te_scaled, y_tr = fold
+        test_years = dates_working.iloc[test_idx].dt.year.unique()
+        print(f"      Fold {i+1}: Test Year(s) = {list(test_years)}, Train shape = {X_tr_scaled.shape}, Test shape = {X_te_scaled.shape}")
 
     # Precompute the *unweighted* standardized full-working matrix once.
     # Per-trial cost only requires re-applying row-wise sqrt(w).
@@ -742,8 +815,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                     pilot_records.append({"params": params, "raw_metrics": raw_m})
         return pilot_records
 
+    t_pilot_block_start = time.perf_counter()
     pilot_records = _load_or_compute(pilot_cache_path, pilot_key, _compute_pilot,
                                      use_cache=use_cache)
+    timings["pilot_study"] = time.perf_counter() - t_pilot_block_start
 
     if len(pilot_records) == 0:
         raise RuntimeError("Optuna pilot run failed entirely. Check skglm model fit/installation.")
@@ -756,12 +831,22 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # Avoid zero division
     mads[mads < 1e-6] = 1.0
 
+    print("\n  [DIAGNOSTICS] Optuna Pilot Study Details:")
+    print(f"    Total pilot trials loaded/run: {len(pilot_records)}")
+    print("    Raw metrics distribution across pilot study:")
+    metric_names = ["M1 (Tail IC IR)", "M2 (Tail IC Mean)", "M3 (Hit Rate)", "M4 (Overall IC)", 
+                    "M5 (Monotonicity)", "M6 (Top-Bot Spread)", "M7 (Parsimony)", "M8 (Coef Bloat)"]
+    for i in range(8):
+        vals = pilot_metrics[:, i]
+        print(f"      {metric_names[i]:<20}: Min = {vals.min():.4f}, Median = {medians[i]:.4f}, Max = {vals.max():.4f}, MAD = {mads[i]:.4f}")
+
     print("Normalizing constants calibrated from Pilot run:")
     for i in range(8):
         print(f"  M{i+1}: Median={medians[i]:.6f}, MAD={mads[i]:.6f}")
 
     # Phase 2: Main Study (Optuna Tuning)
     print(f"\nRunning main Optuna Study ({n_trials} trials) with First-Principles Multi-Metric Objective...")
+    t_main_block_start = time.perf_counter()
     if main_db_path.exists():
         main_db_path.unlink()
     main_storage = JournalStorage(JournalFileBackend(str(main_db_path)))
@@ -795,7 +880,19 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             m1, m2, m3, m4, m5, m6, m7, m8 = raw_metrics
 
             # Hard Constraints / Kill Switches:
-            if m4 <= 0 or m3 < 0.60 or m5 <= 0.25 or m6 <= 0:
+            pruning_reasons = []
+            if m4 <= 0:
+                pruning_reasons.append("M4 (Overall IC <= 0)")
+            if m3 < 0.60:
+                pruning_reasons.append("M3 (Hit Rate < 60%)")
+            if m5 <= 0.25:
+                pruning_reasons.append("M5 (Monotonicity <= 0.25)")
+            if m6 <= 0:
+                pruning_reasons.append("M6 (Top-Bottom Spread <= 0)")
+
+            if pruning_reasons:
+                trial.set_user_attr("pruned_reasons", pruning_reasons)
+                trial.set_user_attr("raw_metrics", raw_metrics)
                 return -1e9  # Pruned due to constraint violation
 
             # Normalize metrics
@@ -819,7 +916,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             trial.set_user_attr("raw_metrics", raw_metrics)
             return objective_val
 
-        except Exception:
+        except Exception as e:
+            trial.set_user_attr("pruned_reasons", [f"Exception: {str(e)}"])
             return -1e9
 
     def run_main_trial():
@@ -830,8 +928,67 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         delayed(run_main_trial)() for _ in range(n_trials)
     )
 
+    timings["main_study"] = time.perf_counter() - t_main_block_start
+
     study = optuna.load_study(study_name=f"main_{tag}", storage=main_storage)
     
+    # Pruning analysis & Diagnostics
+    total_trials = len(study.trials)
+    pruned_count = 0
+    completed_count = 0
+    failed_count = 0
+    
+    reason_counts = {
+        "M4 (Overall IC <= 0)": 0,
+        "M3 (Hit Rate < 60%)": 0,
+        "M5 (Monotonicity <= 0.25)": 0,
+        "M6 (Top-Bottom Spread <= 0)": 0,
+    }
+    exception_reasons = []
+    
+    for t in study.trials:
+        if t.state == optuna.trial.TrialState.PRUNED or (t.state == optuna.trial.TrialState.COMPLETE and t.value is not None and t.value <= -1e8):
+            pruned_count += 1
+            reasons = t.user_attrs.get("pruned_reasons", [])
+            if not reasons:
+                reasons = ["Unknown / Hard constraint"]
+            for r in reasons:
+                if r in reason_counts:
+                    reason_counts[r] += 1
+                else:
+                    if r not in exception_reasons:
+                        exception_reasons.append(r)
+        elif t.state == optuna.trial.TrialState.COMPLETE:
+            completed_count += 1
+        elif t.state == optuna.trial.TrialState.FAIL:
+            failed_count += 1
+
+    print("\n  [DIAGNOSTICS] Main Optuna Study Trial Summary:")
+    print(f"    Total trials run: {total_trials}")
+    print(f"    Successful complete trials: {completed_count}")
+    print(f"    Pruned/Failed trials: {pruned_count + failed_count}")
+    print("    Pruning reason breakdown:")
+    for reason, cnt in reason_counts.items():
+        print(f"      - {reason}: {cnt} times")
+    if exception_reasons:
+        print("    Exceptions encountered during trials:")
+        for exc in exception_reasons:
+            print(f"      - {exc}")
+
+    # Track optimization path / progression
+    sorted_trials = sorted(study.trials, key=lambda t: t.number)
+    best_value = -1e10
+    progression = []
+    for t in sorted_trials:
+        if t.state == optuna.trial.TrialState.COMPLETE and t.value is not None and t.value > -1e8:
+            if t.value > best_value:
+                best_value = t.value
+                progression.append((t.number, best_value, t.params))
+
+    print("\n  [DIAGNOSTICS] Objective Progression (Optimization path):")
+    for step, val, params in progression:
+        print(f"    Trial {step:3d}: Best Objective = {val:+.4f} | params = {params}")
+
     # Retrieve best trial results
     best_trial = study.best_trial
     best_params = best_trial.params
@@ -874,6 +1031,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     print(f"  M7 (Parsimony):       {best_raw_m[6]:.4f}")
     print(f"  M8 (Coef Bloat):      {best_raw_m[7]:.4f}")
     
+    t_refit_start = time.perf_counter()
     # Refit final model on 2200 working rows
     model_type = best_params["model_type"]
     k_weight = best_params["k_weight"]
@@ -920,6 +1078,14 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     active_idx = np.where(np.abs(final_model.coef_) > 1e-5)[0]
     active_feature_names = [selected_feature_names[i] for i in active_idx]
 
+    timings["final_refit"] = time.perf_counter() - t_refit_start
+
+    print("\n  [DIAGNOSTICS] Execution Time Profiling:")
+    for stage, secs in timings.items():
+        print(f"    {stage:<20}: {secs:6.1f}s")
+    total_time = sum(timings.values())
+    print(f"    {'Total Duration':<20}: {total_time:6.1f}s")
+
     # Save results json
     results = {
         "etf": etf_name,
@@ -934,6 +1100,27 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "best_raw_metrics": best_raw_m,
         "lockbox_overall_ic": np.nan,
         "lockbox_tail_ic": np.nan,
+        "diagnostics": {
+            "timings": timings,
+            "screening": {
+                "total_features": len(FEATURES),
+                "bh_pass_count": int(bh_pass_count),
+                "fallback_triggered": bool(fallback_triggered),
+                "keep_count": int(screen_mask.sum()),
+            },
+            "stability": {
+                "fallback_triggered": bool(stab_fallback_triggered),
+                "pass_pi_count": int(pass_pi_count),
+                "keep_count": int(len(stability_selected_idx)),
+            },
+            "optuna_main": {
+                "total_trials": int(total_trials),
+                "completed_count": int(completed_count),
+                "pruned_count": int(pruned_count),
+                "failed_count": int(failed_count),
+                "pruning_reasons": reason_counts,
+            }
+        }
     }
     with open(DATA_DIR / f"results_{tag}.json", "w") as f:
         json.dump(results, f, indent=2, default=str)
@@ -950,9 +1137,6 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     return results
 
 
-
-
-
 class _TeeWriter:
     """Duplicate writes to console and a log file simultaneously."""
     def __init__(self, filepath, stream):
@@ -960,11 +1144,13 @@ class _TeeWriter:
         self._stream = stream
     def write(self, data):
         self._stream.write(data)
-        self._file.write(data)
-        self._file.flush()
+        if not self._file.closed:
+            self._file.write(data)
+            self._file.flush()
     def flush(self):
         self._stream.flush()
-        self._file.flush()
+        if not self._file.closed:
+            self._file.flush()
     def isatty(self):
         return self._stream.isatty()
     def fileno(self):

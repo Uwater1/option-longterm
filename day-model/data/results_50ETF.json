@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "50ETF",
   "n_samples_working": 2166,
-  "n_samples_lockbox": 556,
+  "n_samples_lockbox": 0,
   "selected_features": [
     "first_30min_return",
     "first_bar_return",
@@ -49,7 +49,6 @@
     "volume_surge_direction",
     "rally_strength_max",
     "volume_weighted_price_position",
-    "late_bar_momentum",
     "open_to_current_return",
     "sma20_dist",
     "sma100_dist",
@@ -312,21 +311,54 @@
   },
   "best_params": {
     "model_type": "skglm_mcp",
-    "k_weight": 0.5630244446607385,
-    "skglm_mcp_alpha": 0.0007490538244479235,
-    "skglm_mcp_gamma": 9.543946163359733,
-    "skglm_mcp_delta": 0.6392851691693826
+    "k_weight": 0.7892640222355527,
+    "skglm_mcp_alpha": 0.0015020058518127326,
+    "skglm_mcp_gamma": 4.766572142174928,
+    "skglm_mcp_delta": 1.671194284983146
   },
   "best_raw_metrics": [
-    1.3795227450937828,
-    0.20843087750079445,
-    0.9,
-    0.10987549400712002,
-    0.44727272727272727,
-    0.3398394794578158,
-    -3.4657359027997265,
-    -0.46744972467422485
+    1.7784365477592254,
+    0.2275755927100233,
+    1.0,
+    0.09888294951842291,
+    0.44363636363636355,
+    0.37525616837945386,
+    -3.4339872044851463,
+    -0.6055952310562134
   ],
-  "lockbox_overall_ic": 0.013242337058813277,
-  "lockbox_tail_ic": 0.15343104327241155
+  "lockbox_overall_ic": NaN,
+  "lockbox_tail_ic": NaN,
+  "diagnostics": {
+    "timings": {
+      "data_loading": 0.08760437500313856,
+      "feature_selection": 0.0005885699938517064,
+      "loyo_folds": 0.015953326001181267,
+      "pilot_study": 0.0012091969983885065,
+      "main_study": 3.6964842909947038,
+      "final_refit": 0.020880405994830653
+    },
+    "screening": {
+      "total_features": 238,
+      "bh_pass_count": 8,
+      "fallback_triggered": true,
+      "keep_count": 50
+    },
+    "stability": {
+      "fallback_triggered": false,
+      "pass_pi_count": 31,
+      "keep_count": 31
+    },
+    "optuna_main": {
+      "total_trials": 50,
+      "completed_count": 40,
+      "pruned_count": 10,
+      "failed_count": 0,
+      "pruning_reasons": {
+        "M4 (Overall IC <= 0)": 10,
+        "M3 (Hit Rate < 60%)": 10,
+        "M5 (Monotonicity <= 0.25)": 10,
+        "M6 (Top-Bottom Spread <= 0)": 10
+      }
+    }
+  }
 }

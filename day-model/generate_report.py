@@ -231,6 +231,79 @@ def main():
         lines.append(f"| {etf} | {m[0]:.4f} | {m[1]:+.4f} | {m[2]*100:.1f}% | {m[4]:.4f} | {m[5]*100:+.4f}% |")
         
     lines.append("")
+    lines.append("## Training Process Diagnostics & Execution Profiling")
+    lines.append("")
+    lines.append("### Stage Durations (seconds)")
+    lines.append("")
+    lines.append("| ETF | Data Load | Feature Select | LOYO Folds | Pilot Study | Main Study | Final Refit | Total |")
+    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+    
+    for etf in ETF_ORDER:
+        if etf not in results_dict:
+            continue
+        r = results_dict[etf]
+        diag = r.get("diagnostics", {})
+        timings = diag.get("timings", {})
+        load_t = timings.get("data_loading", 0.0)
+        sel_t = timings.get("feature_selection", 0.0)
+        loyo_t = timings.get("loyo_folds", 0.0)
+        pilot_t = timings.get("pilot_study", 0.0)
+        main_t = timings.get("main_study", 0.0)
+        refit_t = timings.get("final_refit", 0.0)
+        total_t = load_t + sel_t + loyo_t + pilot_t + main_t + refit_t
+        lines.append(f"| {etf} | {load_t:.1f}s | {sel_t:.1f}s | {loyo_t:.1f}s | {pilot_t:.1f}s | {main_t:.1f}s | {refit_t:.1f}s | {total_t:.1f}s |")
+
+    lines.append("")
+    lines.append("### Feature Selection Metrics & Fallbacks")
+    lines.append("")
+    lines.append("| ETF | Screening Input | BH-FDR Pass | Screen Fallback? | Stability Input | Stability Pass | Stability Fallback? | Kept Features |")
+    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+    
+    for etf in ETF_ORDER:
+        if etf not in results_dict:
+            continue
+        r = results_dict[etf]
+        diag = r.get("diagnostics", {})
+        scr = diag.get("screening", {})
+        stab = diag.get("stability", {})
+        
+        scr_in = scr.get("total_features", "N/A")
+        scr_pass = scr.get("bh_pass_count", "N/A")
+        scr_fb = "YES [WARNING]" if scr.get("fallback_triggered", False) else "NO"
+        
+        stab_in = scr.get("keep_count", "N/A")
+        stab_pass = stab.get("pass_pi_count", "N/A")
+        stab_fb = "YES [WARNING]" if stab.get("fallback_triggered", False) else "NO"
+        
+        kept = stab.get("keep_count", len(r["selected_features"]))
+        lines.append(f"| {etf} | {scr_in} | {scr_pass} | {scr_fb} | {stab_in} | {stab_pass} | {stab_fb} | **{kept}** |")
+
+    lines.append("")
+    lines.append("### Optuna Main Study & Pruning Reasons")
+    lines.append("")
+    lines.append("| ETF | Total Trials | Completed | Pruned / Failed | M4 Pruned | M3 Pruned | M5 Pruned | M6 Pruned |")
+    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+    
+    for etf in ETF_ORDER:
+        if etf not in results_dict:
+            continue
+        r = results_dict[etf]
+        diag = r.get("diagnostics", {})
+        opt = diag.get("optuna_main", {})
+        
+        tot = opt.get("total_trials", 0)
+        comp = opt.get("completed_count", 0)
+        pruned_failed = opt.get("pruned_count", 0) + opt.get("failed_count", 0)
+        
+        reasons = opt.get("pruning_reasons", {})
+        m4_p = reasons.get("M4 (Overall IC <= 0)", 0)
+        m3_p = reasons.get("M3 (Hit Rate < 60%)", 0)
+        m5_p = reasons.get("M5 (Monotonicity <= 0.25)", 0)
+        m6_p = reasons.get("M6 (Top-Bottom Spread <= 0)", 0)
+        
+        lines.append(f"| {etf} | {tot} | {comp} | {pruned_failed} | {m4_p} | {m3_p} | {m5_p} | {m6_p} |")
+
+    lines.append("")
     lines.append("## Selected Features per ETF")
     lines.append("")
     for etf in ETF_ORDER:
