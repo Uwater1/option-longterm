@@ -89,45 +89,31 @@
     "yesterday_day_kurtosis"
   ],
   "active_features": [
-    "early_trend",
     "early_skew",
     "early_kurtosis",
     "bar_ret_0",
     "bar_body_rng_2",
-    "bar_vwap_dev_1",
-    "cl_pos_in_range",
+    "max_up_ret",
     "barbed_wire_intensity",
-    "consecutive_down_closes",
-    "consecutive_lower_lows",
-    "consecutive_bullish_engulfing",
+    "or_fill_ratio",
     "volume_concentration",
-    "pullback_ratio",
-    "rally_ratio",
-    "pullback_depth_ratio",
     "rally_strength_max",
     "range_expansion_final_bar",
-    "vwap_cross_count",
     "volume_weighted_price_position",
-    "intraday_slope",
-    "opening_range_position",
-    "session_high_proximity",
-    "session_low_proximity",
+    "late_bar_momentum",
     "decision_bar_body",
     "upper_shadow_rejection",
     "upper_wick_dominance",
-    "stoch_opening",
     "sma20_dist",
-    "willr14",
     "aroon_osc",
     "vol60",
-    "capital_net_value",
     "capital_net_ratio",
     "vix_iv_spread",
-    "vix_iv_ratio",
     "volatility_percentile_20d",
     "volume_percentile_20d",
     "yesterday_first_bar_return",
-    "yesterday_first_bar_volume"
+    "yesterday_first_bar_volume",
+    "yesterday_day_kurtosis"
   ],
   "stability_scores": {
     "gap_pct": 0.0,
@@ -371,20 +357,20 @@
   },
   "best_params": {
     "model_type": "skglm_huber_l1",
-    "k_weight": 2.9723792365499806,
-    "skglm_huber_l1_alpha": 0.024515966308052136,
-    "skglm_huber_delta": 4.0010278464013345
+    "k_weight": 0.7960389490799112,
+    "skglm_huber_l1_alpha": 0.034073758744001696,
+    "skglm_huber_delta": 4.504798723908011
   },
   "best_raw_metrics": [
-    7.617629288855907,
-    0.2810658597937456,
+    2.8325741857070796,
+    0.32921105595291505,
     1.0,
-    0.1444934621276627,
-    0.6848484848484848,
-    0.7891476607366639,
-    -3.6888794541139363,
-    -1.8905612230300903
+    0.1568053431412732,
+    0.6242424242424243,
+    0.9930054492947296,
+    -3.258096538021482,
+    -0.47161903977394104
   ],
-  "lockbox_overall_ic": 0.023456105576007226,
-  "lockbox_tail_ic": 0.049516802100788126
+  "lockbox_overall_ic": 0.036075714290369876,
+  "lockbox_tail_ic": -0.01562693735950214
 }

@@ -148,7 +148,6 @@
     "first_bar_sentiment",
     "opening_range_size",
     "first_bar_body_ratio",
-    "close_vs_open_range",
     "inside_bar_failure_bull",
     "gap_fill_ratio",
     "early_doji_count",
@@ -161,7 +160,6 @@
     "volume_acceleration",
     "volume_surge_direction",
     "pullback_ratio",
-    "rally_ratio",
     "pullback_depth_ratio",
     "pullback_depth_max",
     "rally_strength_max",
@@ -176,14 +174,9 @@
     "high_low_sequence_momentum",
     "opening_momentum_score",
     "trend_exhaustion_early",
-    "opening_range_position",
     "session_high_proximity",
-    "session_low_proximity",
-    "close_above_open_count",
     "open_to_current_return",
-    "upper_wick_dominance",
     "rsi_opening",
-    "stoch_opening",
     "vwap_reversion_strength",
     "momentum_strength_intraday",
     "volatility_regime_intraday",
@@ -472,21 +465,21 @@
   },
   "best_params": {
     "model_type": "skglm_mcp",
-    "k_weight": 0.04895031462491772,
-    "skglm_mcp_alpha": 1.400539244029084e-05,
-    "skglm_mcp_gamma": 3.093796231770215,
-    "skglm_mcp_delta": 1.4318895480684253
+    "k_weight": 0.004645768855416676,
+    "skglm_mcp_alpha": 0.0004643780621147456,
+    "skglm_mcp_gamma": 2.9786480869472465,
+    "skglm_mcp_delta": 1.6980429549222225
   },
   "best_raw_metrics": [
-    3.9139083543476465,
-    0.3222968024509886,
+    4.4198555645954505,
+    0.3233713958620884,
     1.0,
-    0.14915906936167908,
-    0.5975757575757574,
-    0.9391618519041861,
-    -4.700480365792417,
-    -2.5909461975097656
+    0.146613043016279,
+    0.5830303030303031,
+    0.9098605411290055,
+    -4.634728988229636,
+    -1.628783941268921
   ],
-  "lockbox_overall_ic": 0.13659908638881868,
-  "lockbox_tail_ic": 0.1572901498172705
+  "lockbox_overall_ic": 0.13183335658040013,
+  "lockbox_tail_ic": 0.1533228440234903
 }
