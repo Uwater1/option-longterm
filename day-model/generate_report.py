@@ -128,8 +128,12 @@ def main():
                 r["n_samples_lockbox"] = len(y_lockbox)
 
                 # Compute Generalization Gap
-                cv_overall_ic = float(r["best_raw_metrics"][3])
-                ic_generalization_gap = cv_overall_ic - lockbox_ic
+                sel_val_ic = r.get("selection_val_overall_ic", np.nan)
+                if not np.isnan(sel_val_ic):
+                    ic_generalization_gap = sel_val_ic - lockbox_ic
+                else:
+                    cv_overall_ic = float(r["best_raw_metrics"][3])
+                    ic_generalization_gap = cv_overall_ic - lockbox_ic
                 
                 lockbox_mono = compute_decile_monotonicity(y_lockbox, preds_lockbox)
                 cv_mono = float(r["best_raw_metrics"][4])
@@ -320,10 +324,10 @@ def main():
         lines.append(f"| {etf} | {cond_raw_str} | {cond_reg_str} | {coll_str} | {gini_str} | {ess_str} | {ess_pct_str} |")
 
     lines.append("")
-    lines.append("### Generalization Gap (CV vs Out-of-Sample)")
+    lines.append("### Generalization Gap (CV vs Selection Validation vs Out-of-Sample)")
     lines.append("")
-    lines.append("| ETF | CV Overall IC | Deflated CV IC | OOS Lockbox IC | IC Gen Gap | CV Monotonicity | OOS Monotonicity | Mono Gen Gap |")
-    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+    lines.append("| ETF | CV Overall IC | Deflated CV IC | Selection Val IC | OOS Lockbox IC | IC Gen Gap (SelVal-OOS) | CV Monotonicity | OOS Monotonicity | Mono Gen Gap |")
+    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
     
     for etf in ETF_ORDER:
         if etf not in results_dict:
@@ -332,6 +336,7 @@ def main():
         
         cv_ic = r["best_raw_metrics"][3]
         deflated_cv_ic = r.get("deflated_cv_ic", np.nan)
+        sel_val_ic = r.get("selection_val_overall_ic", np.nan)
         oos_ic = r.get("lockbox_overall_ic", np.nan)
         ic_gap = r.get("ic_generalization_gap", np.nan)
         
@@ -340,6 +345,7 @@ def main():
         mono_gap = r.get("mono_generalization_gap", np.nan)
         
         deflated_cv_ic_str = f"{deflated_cv_ic:+.4f}" if not np.isnan(deflated_cv_ic) else "N/A"
+        sel_val_ic_str = f"{sel_val_ic:+.4f}" if not np.isnan(sel_val_ic) else "N/A"
         oos_ic_str = f"{oos_ic:+.4f}" if not np.isnan(oos_ic) else "N/A"
         ic_gap_str = f"{ic_gap:+.4f}" if not np.isnan(ic_gap) else "N/A"
         if not np.isnan(ic_gap) and ic_gap > 0.05:
@@ -350,7 +356,7 @@ def main():
         if not np.isnan(mono_gap) and mono_gap > 0.20:
             mono_gap_str += " [DEGRADED]"
             
-        lines.append(f"| {etf} | {cv_ic:+.4f} | {deflated_cv_ic_str} | {oos_ic_str} | {ic_gap_str} | {cv_mono:+.4f} | {oos_mono_str} | {mono_gap_str} |")
+        lines.append(f"| {etf} | {cv_ic:+.4f} | {deflated_cv_ic_str} | {sel_val_ic_str} | {oos_ic_str} | {ic_gap_str} | {cv_mono:+.4f} | {oos_mono_str} | {mono_gap_str} |")
 
     lines.append("")
     lines.append("### Feature Selection Metrics & Fallbacks")
@@ -423,11 +429,13 @@ def main():
         
     lines.append("## Methodology Overview")
     lines.append("1. **Lockbox Split**: From 2024-03-01 to last day (OOS holdout).")
-    lines.append("2. **BH-FDR Screening**: Retains features with robust marginal Spearman correlation at FDR = 0.20.")
-    lines.append("3. **Hierarchical Clustering**: Groups collinear features (threshold = 0.7 distance) and keeps the single strongest feature per cluster.")
-    lines.append(r"4. **Stability Selection**: Runs Lasso path over $B=100$ subsamples, selecting features with frequency $\ge 0.60$.")
-    lines.append("5. **Weighted Fitting**: Employs sample weights $w(y) = |y|^k$ to focus on tail-day returns.")
-    lines.append("6. **Optuna Objective**: Standardized multi-metric maximization (Stability, General Signal, Signal Structure, Complexity Constraints).")
+    lines.append("2. **Selection Validation Split**: Dates from 2021-01-01 to 2021-12-31 carved out from the working set for selection-blind validation.")
+    lines.append("3. **BH-FDR Screening**: Retains features with robust marginal Spearman correlation at FDR = 0.40 (run only on selection training set, excluding 2021).")
+    lines.append("4. **Hierarchical Clustering**: Groups collinear features (correlation threshold |r| >= 0.75, distance = 0.25) and aggregates bootstrap votes at cluster level.")
+    lines.append(r"5. **Stability Selection**: Runs ElasticNet path (l1_ratio = 0.5) over $B=100$ subsamples on screened features, selecting clusters with frequency $\ge 0.60$, then selecting the most stable representative.")
+    lines.append("6. **VIF Pruning**: Iteratively drops features with Variance Inflation Factor (VIF) > 10.0 to eliminate multi-collinearity.")
+    lines.append("7. **Weighted Fitting**: Employs sample weights $w(y) = |y|^k$ to focus on tail-day returns.")
+    lines.append("8. **Optuna Objective**: Standardized multi-metric maximization evaluated on the selection-blind validation block, subject to hard CV constraints and continuous ESS penalties.")
     
     with open(REPORT_PATH, "w") as f:
         f.write("\n".join(lines))

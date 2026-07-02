@@ -71,6 +71,8 @@ random.seed(42)
 np.random.seed(42)
 
 LOCKBOX_DATE = "2024-03-01"
+SELECTION_VAL_START = "2021-01-01"
+SELECTION_VAL_END = "2022-01-01"
 PILOT_N_TRIALS = 50
 PILOT_SEED = 42
 STABILITY_B = 100
@@ -78,6 +80,7 @@ STABILITY_PI = 0.60
 STABILITY_Q = 35
 SCREEN_FDR = 0.40
 SCREEN_FALLBACK_K = 50 # Doublc Research this 
+ACTIVE_FEATURE_ESS_DIVISOR = 25.0
 
 # Sample-weighting scale_data_with_weights can be done without a full rescale
 # of the standardized X (sqrt(w) is row-wise); we precompute the unweighted
@@ -580,7 +583,7 @@ def calculate_yearly_metrics(year_groups, y_true: np.ndarray, y_pred: np.ndarray
     m5 = float(y_monos.mean())                    # Decile Monotonicity
     m6 = float(y_spreads.mean())                  # Top-Bottom Spread
     if ess > 0.0:
-        m7 = -float(k_features) / (ess / 30.0)    # Tie sparsity penalty to ESS directly (tightened to 30)
+        m7 = -float(k_features) / (ess / ACTIVE_FEATURE_ESS_DIVISOR)    # Tie sparsity penalty to ESS directly
     else:
         m7 = -np.log(1.0 + k_features)            # Feature Parsimony (fallback)
     m8 = -coef_norm                               # Coefficient Bloat (penalized)
@@ -655,12 +658,26 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     y_working = y_scaled[working_idx].astype(np.float32)
     dates_working = df["date"].iloc[working_idx].reset_index(drop=True)
 
-    print(f"Split: Working={len(working_idx)} rows (Lockbox OOS data ignored during training).")
+    # Nest feature selection & validation to eliminate leakage bias
+    sel_val_mask = (df["date"] >= SELECTION_VAL_START) & (df["date"] < SELECTION_VAL_END)
+    sel_val_idx = np.where(sel_val_mask)[0]
+    X_sel_val = _to_f32(X[sel_val_idx])
+    y_sel_val = y_scaled[sel_val_idx].astype(np.float32)
+    dates_sel_val = df["date"].iloc[sel_val_idx].reset_index(drop=True)
 
-    # Precompute yearly row-index groups (used by per-trial metric computation).
-    years_working = dates_working.dt.year.values
-    year_groups = [(int(y), np.where(years_working == y)[0])
-                   for y in sorted(np.unique(years_working))]
+    sel_train_mask = (df["date"] < LOCKBOX_DATE) & (~sel_val_mask)
+    sel_train_idx = np.where(sel_train_mask)[0]
+    X_sel_train = _to_f32(X[sel_train_idx])
+    y_sel_train = y_scaled[sel_train_idx].astype(np.float32)
+    dates_sel_train = df["date"].iloc[sel_train_idx].reset_index(drop=True)
+
+    print(f"Split: Working={len(working_idx)} rows (Lockbox OOS data ignored during training).")
+    print(f"       Selection Train={len(sel_train_idx)} rows, Selection Val={len(sel_val_idx)} rows.")
+
+    # Precompute yearly row-index groups for the Selection Train subset (used by per-trial CV metric computation).
+    years_sel_train = dates_sel_train.dt.year.values
+    year_groups = [(int(y), np.where(years_sel_train == y)[0])
+                   for y in sorted(np.unique(years_sel_train))]
 
     timings["data_loading"] = time.perf_counter() - t_start
 
@@ -669,10 +686,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # length changes, or any of the deterministic knobs below change.
     # See AGENTS.md "Cache invalidation" for manual-clear guidance.
     select_key = [
-        "v5", etf_name, len(FEATURES), int(parquet_mtime),
-        int(X_working.shape[0]), int(X_working.shape[1]),
+        "v6", etf_name, len(FEATURES), int(parquet_mtime),
+        int(X_sel_train.shape[0]), int(X_sel_train.shape[1]),
         STABILITY_B, STABILITY_PI, SCREEN_FDR, SCREEN_FALLBACK_K,
-        LOCKBOX_DATE, TARGET,
+        SELECTION_VAL_START, SELECTION_VAL_END, TARGET,
     ]
     select_cache_path = CACHE_DIR / f"cache_select_{etf_name}_{_cache_key(select_key)}.joblib"
 
@@ -680,14 +697,14 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     def _compute_selection():
         t_sel_start = time.perf_counter()
         print("Running feature screening...")
-        screen_mask, p_vals, rhos = run_screening(X_working, y_working)
+        screen_mask, p_vals, rhos = run_screening(X_sel_train, y_sel_train)
         t_screen = time.perf_counter() - t_sel_start
         print(f"Screened features: {screen_mask.sum()} surviving candidates.")
         
         t_stab_start = time.perf_counter()
         print("Running stability selection...")
         stability_selected_idx, stability_scores = run_stability_selection(
-            X_working, y_working, screen_mask, rhos,
+            X_sel_train, y_sel_train, screen_mask, rhos,
             B=STABILITY_B, pi=STABILITY_PI, n_jobs=bootstrap_n_jobs,
         )
         t_stab = time.perf_counter() - t_stab_start
@@ -695,7 +712,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         # Run iterative VIF pruning to eliminate multivariate collinearity
         print("Running iterative VIF pruning...")
         t_vif_start = time.perf_counter()
-        vif_pruned_idx = run_vif_pruning(X_working, stability_selected_idx, FEATURES, threshold=10.0)
+        vif_pruned_idx = run_vif_pruning(X_sel_train, stability_selected_idx, FEATURES, threshold=10.0)
         t_vif = time.perf_counter() - t_vif_start
         print(f"VIF pruning finished. Dropped {len(stability_selected_idx) - len(vif_pruned_idx)} collinear features. Kept {len(vif_pruned_idx)} representatives.")
 
@@ -772,19 +789,21 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     print(f"Stability selection finished. Kept {K_sel} features.")
 
     # Freeze the features for the final and Optuna loops
+    X_sel_train_final = _to_f32(X_sel_train[:, stability_selected_idx])
+    X_sel_val_final = _to_f32(X_sel_val[:, stability_selected_idx])
     X_working_final = _to_f32(X_working[:, stability_selected_idx])
 
     # ── Feature Quality Diagnostics (Multicollinearity & Condition Number) ──
     if K_sel > 1:
-        corr_matrix = np.corrcoef(X_working_final, rowvar=False)
+        corr_matrix = np.corrcoef(X_sel_train_final, rowvar=False)
         collinear_pairs = []
         for i in range(K_sel):
             for j in range(i + 1, K_sel):
                 if abs(corr_matrix[i, j]) >= 0.85:
                     collinear_pairs.append((selected_feature_names[i], selected_feature_names[j], float(corr_matrix[i, j])))
         
-        # Standardize X_working_final to compute condition number correctly
-        X_scaled_tmp = (X_working_final - X_working_final.mean(axis=0)) / (X_working_final.std(axis=0) + 1e-10)
+        # Standardize X_sel_train_final to compute condition number correctly
+        X_scaled_tmp = (X_sel_train_final - X_sel_train_final.mean(axis=0)) / (X_sel_train_final.std(axis=0) + 1e-10)
         _, s, _ = np.linalg.svd(X_scaled_tmp, full_matrices=False)
         s_min = s.min()
         condition_number = float(s.max() / s_min) if s_min > 1e-10 else float("inf")
@@ -810,15 +829,15 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # ── LOYO folds cache (depends on selected features only) ──────────
     loyo_key = [
-        "v5", etf_name, len(FEATURES), int(parquet_mtime),
+        "v6", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
-        LOCKBOX_DATE, TARGET,
+        SELECTION_VAL_START, SELECTION_VAL_END, TARGET,
     ]
     loyo_cache_path = CACHE_DIR / f"cache_loyo_{etf_name}_{_cache_key(loyo_key)}.joblib"
 
     def _compute_loyo():
         from itertools import combinations
-        n = len(y_working)
+        n = len(y_sel_train)
         n_groups = 6
         n_test_groups = 2
         gap_days = 10
@@ -838,10 +857,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             in_test[test_idx] = True
             train_idx_raw = all_indices[~in_test]
             
-            min_test_dates = [dates_working.values[boundaries[g]] for g in test_comb]
-            max_test_dates = [dates_working.values[boundaries[g+1] - 1] for g in test_comb]
+            min_test_dates = [dates_sel_train.values[boundaries[g]] for g in test_comb]
+            max_test_dates = [dates_sel_train.values[boundaries[g+1] - 1] for g in test_comb]
             
-            train_dates = dates_working.values[train_idx_raw]
+            train_dates = dates_sel_train.values[train_idx_raw]
             keep_train = np.ones(len(train_idx_raw), dtype=bool)
             
             for min_d, max_d in zip(min_test_dates, max_test_dates):
@@ -855,8 +874,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             if len(train_idx) == 0 or len(test_idx) == 0:
                 continue
                 
-            X_tr, y_tr = X_working_final[train_idx], y_working[train_idx]
-            X_te = X_working_final[test_idx]
+            X_tr, y_tr = X_sel_train_final[train_idx], y_sel_train[train_idx]
+            X_te = X_sel_train_final[test_idx]
             
             scaler = StandardScaler()
             X_tr_scaled = scaler.fit_transform(X_tr)
@@ -879,13 +898,15 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     print(f"    Number of folds (years): {len(loyo_folds)}")
     for i, fold in enumerate(loyo_folds):
         test_idx, X_tr_scaled, X_te_scaled, y_tr = fold
-        test_years = dates_working.iloc[test_idx].dt.year.unique()
+        test_years = dates_sel_train.iloc[test_idx].dt.year.unique()
         print(f"      Fold {i+1}: Test Year(s) = {list(test_years)}, Train shape = {X_tr_scaled.shape}, Test shape = {X_te_scaled.shape}")
 
-    # Precompute the *unweighted* standardized full-working matrix once.
+    # Precompute the *unweighted* standardized selection train matrix once.
     # Per-trial cost only requires re-applying row-wise sqrt(w).
     scaler_init = StandardScaler()
-    X_working_scaled_base = _to_f32(scaler_init.fit_transform(X_working_final))
+    X_sel_train_scaled_base = _to_f32(scaler_init.fit_transform(X_sel_train_final))
+    # Standardize selection validation features using the selection train scaler.
+    X_sel_val_scaled_base = _to_f32(scaler_init.transform(X_sel_val_final))
 
     # Define Optuna objective helper
     pilot_metrics = []
@@ -911,14 +932,13 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
         # LOYO CV predictions
         oof_preds = run_loyo_cv(loyo_folds, model_type, params, k_weight,
-                                len(y_working), n_jobs=loyo_n_jobs)
+                                len(y_sel_train), n_jobs=loyo_n_jobs)
 
-        # Fit final model on working set to compute coefficient norm.
-        # Reuse precomputed standardized matrix; only apply sqrt(w) per trial.
-        w_temp = compute_sample_weights(y_working, k_weight).astype(np.float32)
+        # Fit model on selection train set to compute coefficient norm.
+        w_temp = compute_sample_weights(y_sel_train, k_weight).astype(np.float32)
         sqrt_w = np.sqrt(w_temp)[:, np.newaxis]
-        X_weighted_temp = X_working_scaled_base * sqrt_w
-        y_weighted_temp = y_working * sqrt_w[:, 0]
+        X_weighted_temp = X_sel_train_scaled_base * sqrt_w
+        y_weighted_temp = y_sel_train * sqrt_w[:, 0]
 
         model_temp = _build_model(model_type, params)
         model_temp.fit(X_weighted_temp, y_weighted_temp)
@@ -931,16 +951,34 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         sum_w2 = (w_temp ** 2).sum()
         ess = float((sum_w ** 2) / sum_w2) if sum_w2 > 1e-10 else float(len(w_temp))
 
-        # Calculate raw yearly metrics (with ESS-scaled parsimony)
+        # Calculate raw yearly metrics (with ESS-scaled parsimony) on CV folds
         raw_metrics, _, _ = calculate_yearly_metrics(
-            year_groups, y_working, oof_preds, active_k, coef_norm, ess=ess)
-        return raw_metrics, model_temp, scaler_init
+            year_groups, y_sel_train, oof_preds, active_k, coef_norm, ess=ess)
+
+        # Predict on selection validation block and compute validation metrics
+        val_preds = model_temp.predict(X_sel_val_scaled_base)
+        val_ic = spearman_ic(y_sel_val, val_preds)
+
+        n_tail_val = max(5, int(len(y_sel_val) * 0.10))
+        if len(y_sel_val) >= n_tail_val * 2:
+            order_val = np.argsort(val_preds, kind="quicksort")
+            tail_idx_val = np.concatenate([order_val[:n_tail_val], order_val[-n_tail_val:]])
+            val_tail_ic = spearman_ic(y_sel_val[tail_idx_val], val_preds[tail_idx_val])
+        else:
+            val_tail_ic = 0.0
+
+        val_mono = compute_decile_monotonicity(y_sel_val, val_preds)
+        val_spread = compute_top_bottom_spread(y_sel_val, val_preds)
+
+        val_metrics = [val_ic, val_tail_ic, val_mono, val_spread]
+
+        return raw_metrics, val_metrics, model_temp, scaler_init
 
     # ── Pilot calibration cache ───────────────────────────────────────
     pilot_key = [
-        "v5", etf_name, len(FEATURES), int(parquet_mtime),
+        "v6", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
-        LOCKBOX_DATE, TARGET, PILOT_N_TRIALS, PILOT_SEED,
+        SELECTION_VAL_START, SELECTION_VAL_END, TARGET, PILOT_N_TRIALS, PILOT_SEED,
     ]
     pilot_cache_path = CACHE_DIR / f"cache_pilot_{etf_name}_{_cache_key(pilot_key)}.joblib"
 
@@ -971,11 +1009,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
 
             try:
-                raw_metrics, _, _ = evaluate_params(trial_params)
+                raw_metrics, val_metrics, _, _ = evaluate_params(trial_params)
                 trial.set_user_attr("raw_metrics", raw_metrics)
+                trial.set_user_attr("val_metrics", val_metrics)
                 trial.set_user_attr("params", trial_params)
-                # Objective in pilot: simple average of Tail IC Mean (M2) and Overall Rank IC (M4)
-                return raw_metrics[1] + raw_metrics[3]
+                # Objective in pilot: simple sum of Val Overall IC and Val Tail IC on the selection validation block
+                return val_metrics[0] + val_metrics[1]
             except Exception as e:
                 import traceback
                 print(f"Pilot trial failed: {e}")
@@ -995,9 +1034,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         for t in final_pilot_study.trials:
             if t.state == optuna.trial.TrialState.COMPLETE:
                 raw_m = t.user_attrs.get("raw_metrics")
+                val_m = t.user_attrs.get("val_metrics")
                 params = t.user_attrs.get("params")
-                if raw_m is not None and params is not None:
-                    pilot_records.append({"params": params, "raw_metrics": raw_m})
+                if raw_m is not None and val_m is not None and params is not None:
+                    pilot_records.append({"params": params, "raw_metrics": raw_m, "val_metrics": val_m})
         return pilot_records
 
     t_pilot_block_start = time.perf_counter()
@@ -1009,25 +1049,32 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         raise RuntimeError("Optuna pilot run failed entirely. Check skglm model fit/installation.")
 
     pilot_metrics = np.array([r["raw_metrics"] for r in pilot_records])
+    pilot_val_metrics = np.array([r["val_metrics"] for r in pilot_records])
 
-    # Compute median and MAD per metric
-    medians = np.median(pilot_metrics, axis=0)
-    mads = np.median(np.abs(pilot_metrics - medians), axis=0)
+    # Compute median and MAD per metric on selection validation block
+    val_medians = np.median(pilot_val_metrics, axis=0)
+    val_mads = np.median(np.abs(pilot_val_metrics - val_medians), axis=0)
     # Avoid zero division
-    mads[mads < 1e-6] = 1.0
+    val_mads[val_mads < 1e-6] = 1.0
 
     print("\n  [DIAGNOSTICS] Optuna Pilot Study Details:")
     print(f"    Total pilot trials loaded/run: {len(pilot_records)}")
-    print("    Raw metrics distribution across pilot study:")
+    print("    Raw CV metrics distribution across pilot study:")
     metric_names = ["M1 (Tail IC IR)", "M2 (Tail IC Mean)", "M3 (Hit Rate)", "M4 (Overall IC)", 
                     "M5 (Monotonicity)", "M6 (Top-Bot Spread)", "M7 (Parsimony)", "M8 (Coef Bloat)"]
     for i in range(8):
         vals = pilot_metrics[:, i]
-        print(f"      {metric_names[i]:<20}: Min = {vals.min():.4f}, Median = {medians[i]:.4f}, Max = {vals.max():.4f}, MAD = {mads[i]:.4f}")
+        print(f"      {metric_names[i]:<20}: Min = {vals.min():.4f}, Median = {np.median(vals):.4f}, Max = {vals.max():.4f}")
 
-    print("Normalizing constants calibrated from Pilot run:")
-    for i in range(8):
-        print(f"  M{i+1}: Median={medians[i]:.6f}, MAD={mads[i]:.6f}")
+    print("    Selection Validation metrics distribution across pilot study:")
+    val_metric_names = ["Val IC", "Val Tail IC", "Val Monotonicity", "Val Top-Bot Spread"]
+    for i in range(4):
+        vals = pilot_val_metrics[:, i]
+        print(f"      {val_metric_names[i]:<20}: Min = {vals.min():.4f}, Median = {val_medians[i]:.4f}, Max = {vals.max():.4f}, MAD = {val_mads[i]:.4f}")
+
+    print("Normalizing constants calibrated from Pilot run (Selection Validation):")
+    for i in range(4):
+        print(f"  Val{i+1}: Median={val_medians[i]:.6f}, MAD={val_mads[i]:.6f}")
 
     # Phase 2: Main Study (Optuna Tuning)
     print(f"\nRunning main Optuna Study ({n_trials} trials) with First-Principles Multi-Metric Objective...")
@@ -1059,23 +1106,23 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
 
         try:
-            raw_metrics, _model_obj, _scaler_obj = evaluate_params(trial_params)
+            raw_metrics, val_metrics, _model_obj, _scaler_obj = evaluate_params(trial_params)
 
-            # Extract metrics for kill switches
+            # Extract metrics for kill switches (CV folds)
             m1, m2, m3, m4, m5, m6, m7, m8 = raw_metrics
 
-            # Calculate Kish ESS percentage
-            w_temp = compute_sample_weights(y_working, k_weight)
+            # Calculate Kish ESS percentage on selection train subset
+            w_temp = compute_sample_weights(y_sel_train, k_weight)
             sum_w = w_temp.sum()
             sum_w2 = (w_temp ** 2).sum()
             ess = float((sum_w ** 2) / sum_w2) if sum_w2 > 1e-10 else float(len(w_temp))
             ess_pct = ess / len(w_temp)
 
-            # Active feature cap based on ESS: events-per-variable heuristic (tightened divisor to 30)
+            # Active feature cap based on ESS: events-per-variable heuristic
             active_k = int(np.sum(np.abs(_model_obj.coef_) > 1e-5))
-            max_active_features = max(3, int(ess / 30.0))
+            max_active_features = max(3, int(ess / ACTIVE_FEATURE_ESS_DIVISOR))
 
-            # Hard Constraints / Kill Switches:
+            # Hard Constraints / Kill Switches (on CV folds to ensure training stability):
             pruning_reasons = []
             if m4 <= 0:
                 pruning_reasons.append("M4 (Overall IC <= 0)")
@@ -1091,6 +1138,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             if pruning_reasons:
                 trial.set_user_attr("pruned_reasons", pruning_reasons)
                 trial.set_user_attr("raw_metrics", raw_metrics)
+                trial.set_user_attr("val_metrics", val_metrics)
                 return -1e9  # Pruned due to constraint violation
 
             # Soft ESS constraint penalty
@@ -1098,25 +1146,22 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             if ess_pct < 0.20:
                 ess_penalty = -10.0 * (0.20 - ess_pct)
 
-            # Normalize metrics
-            norm_metrics = []
-            for i in range(8):
-                n_m = (raw_metrics[i] - medians[i]) / (mads[i] + 1e-10)
-                norm_metrics.append(n_m)
+            # Normalize selection validation metrics
+            norm_val_metrics = []
+            for i in range(4):
+                n_m = (val_metrics[i] - val_medians[i]) / (val_mads[i] + 1e-10)
+                norm_val_metrics.append(n_m)
 
-            # Compute weighted sum
+            # Compute weighted sum on selection validation metrics
             objective_val = (
-                METRIC_WEIGHTS["m1"] * norm_metrics[0] +
-                METRIC_WEIGHTS["m2"] * norm_metrics[1] +
-                METRIC_WEIGHTS["m3"] * norm_metrics[2] +
-                METRIC_WEIGHTS["m4"] * norm_metrics[3] +
-                METRIC_WEIGHTS["m5"] * norm_metrics[4] +
-                METRIC_WEIGHTS["m6"] * norm_metrics[5] +
-                METRIC_WEIGHTS["m7"] * norm_metrics[6] +
-                METRIC_WEIGHTS["m8"] * norm_metrics[7]
+                0.40 * norm_val_metrics[0] +  # Val Overall IC
+                0.40 * norm_val_metrics[1] +  # Val Tail IC
+                0.15 * norm_val_metrics[2] +  # Val Monotonicity
+                0.05 * norm_val_metrics[3]    # Val Spread
             ) + ess_penalty
 
             trial.set_user_attr("raw_metrics", raw_metrics)
+            trial.set_user_attr("val_metrics", val_metrics)
             return objective_val
 
         except Exception as e:
@@ -1201,6 +1246,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     best_trial = study.best_trial
     best_params = best_trial.params
     best_raw_m = best_trial.user_attrs.get("raw_metrics")
+    best_val_m = best_trial.user_attrs.get("val_metrics")
     
     if best_raw_m is None:
         print(f"\n[WARNING] All main study trials violated hard constraints for {etf_name}. Searching for best valid trial...")
@@ -1210,20 +1256,25 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             best_trial = valid_trials[0]
             best_params = best_trial.params
             best_raw_m = best_trial.user_attrs.get("raw_metrics")
+            best_val_m = best_trial.user_attrs.get("val_metrics")
         else:
             print("[WARNING] No main trials succeeded. Falling back to pilot study's best trial.")
-            # Pick pilot record maximizing M2+M4 (pilot objective).
+            # Pick pilot record maximizing Val IC + Val Tail IC.
             pilot_valid_sorted = sorted(
                 pilot_records,
-                key=lambda r: (r["raw_metrics"][1] + r["raw_metrics"][3]),
+                key=lambda r: (r["val_metrics"][0] + r["val_metrics"][1]),
                 reverse=True,
             )
             if pilot_valid_sorted:
                 best_rec = pilot_valid_sorted[0]
                 best_params = best_rec["params"]
                 best_raw_m = best_rec["raw_metrics"]
+                best_val_m = best_rec["val_metrics"]
             else:
                 raise RuntimeError("Both main and pilot studies failed to produce any valid trial results.")
+
+    if best_val_m is None:
+        best_val_m = [np.nan, np.nan, np.nan, np.nan]
 
     # Calculate Deflated CV IC and Deflated Objective to adjust for multiple trials (Search-Budget Overfit)
     completed_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE and t.value is not None and t.value > -1e8]
@@ -1242,7 +1293,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     for k, v in best_params.items():
         print(f"  {k}: {v}")
         
-    print(f"Best trial raw metrics:")
+    print(f"Best trial raw metrics (CV Folds):")
     print(f"  M1 (Tail IC IR):      {best_raw_m[0]:.4f}")
     print(f"  M2 (Tail IC Mean):    {best_raw_m[1]:.4f}")
     print(f"  M3 (Hit Rate):        {best_raw_m[2]:.4f}")
@@ -1252,6 +1303,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     print(f"  M6 (Top-Bot Spread):  {best_raw_m[5]:.4f}")
     print(f"  M7 (Parsimony):       {best_raw_m[6]:.4f}")
     print(f"  M8 (Coef Bloat):      {best_raw_m[7]:.4f}")
+
+    print(f"Best trial Selection Validation metrics:")
+    print(f"  Val Overall IC:       {best_val_m[0]:.4f}")
+    print(f"  Val Tail IC:          {best_val_m[1]:.4f}")
+    print(f"  Val Monotonicity:     {best_val_m[2]:.4f}")
+    print(f"  Val Top-Bot Spread:   {best_val_m[3]:.4f}")
     
     t_refit_start = time.perf_counter()
     # Refit final model on 2200 working rows
@@ -1346,6 +1403,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "holdout_ic": np.nan,
         "holdout_tail_ic": np.nan,
         "deflated_cv_ic": deflated_cv_ic,
+        "selection_val_overall_ic": best_val_m[0],
+        "selection_val_tail_ic": best_val_m[1],
+        "selection_val_monotonicity": best_val_m[2],
+        "selection_val_spread": best_val_m[3],
         "side": side,
         "target": TARGET,
     }
@@ -1374,6 +1435,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "stability_scores": dict(zip(FEATURES, stability_scores.tolist())),
         "best_params": best_params,
         "best_raw_metrics": best_raw_m,
+        "selection_val_overall_ic": best_val_m[0],
+        "selection_val_tail_ic": best_val_m[1],
+        "selection_val_monotonicity": best_val_m[2],
+        "selection_val_spread": best_val_m[3],
         "deflated_cv_ic": deflated_cv_ic,
         "deflated_objective": deflated_objective,
         "lockbox_overall_ic": np.nan,

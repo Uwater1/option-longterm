@@ -9,169 +9,180 @@ Starting First-Principles Training for 300ETF (Side: single)
 ================================================================================
 Loaded 2722 samples and 238 features.
 Split: Working=2166 rows (Lockbox OOS data ignored during training).
-  [cache] hit   cache_select_300ETF_1e75ddde237db5d2.joblib
+       Selection Train=1923 rows, Selection Val=243 rows.
+Running feature screening...
+Screened features: 56 surviving candidates.
+Running stability selection...
+Running iterative VIF pruning...
+VIF pruning finished. Dropped 0 collinear features. Kept 32 representatives.
+  [cache] write cache_select_300ETF_6bd5422891491e92.joblib
 
   [DIAGNOSTICS] Feature Screening (Step 1) Details:
     Total features input: 238
-    Features passing BH-FDR (FDR=0.4): 63
-    No fallback needed. Kept 63 features.
-    Spearman rho absolute values - Min: 0.0000, Median: 0.0177, Max: 0.0981
-    p-values - Min: 4.49e-06, Median: 0.4099, Max: 1.0000
+    Features passing BH-FDR (FDR=0.4): 56
+    No fallback needed. Kept 56 features.
+    Spearman rho absolute values - Min: 0.0000, Median: 0.0176, Max: 0.0926
+    p-values - Min: 4.59e-05, Median: 0.4417, Max: 1.0000
     Top 5 positive Spearman correlations:
-      - bar_body_rng_0: rho = +0.0981, p = 4.49e-06
-      - bar_ret_0: rho = +0.0957, p = 7.82e-06
-      - first_bar_return: rho = +0.0957, p = 7.82e-06
-      - volume_weighted_price_position: rho = +0.0934, p = 1.29e-05
-      - vix_iv_spread: rho = +0.0834, p = 9.96e-05
+      - bar_ret_0: rho = +0.0926, p = 4.59e-05
+      - first_bar_return: rho = +0.0926, p = 4.59e-05
+      - bar_body_rng_0: rho = +0.0920, p = 5.15e-05
+      - yesterday_intraday_close_position: rho = +0.0883, p = 1.02e-04
+      - vix_iv_spread: rho = +0.0865, p = 1.42e-04
     Top 5 negative Spearman correlations:
-      - late_bar_momentum: rho = -0.0655, p = 2.25e-03
-      - pullback_depth_max: rho = -0.0587, p = 6.21e-03
-      - capital_net_value: rho = -0.0572, p = 7.70e-03
-      - capital_net_ratio: rho = -0.0546, p = 1.10e-02
-      - yesterday_day_vwap_dev: rho = -0.0517, p = 1.61e-02
+      - yesterday_day_vwap_dev: rho = -0.0591, p = 9.49e-03
+      - late_bar_momentum: rho = -0.0580, p = 1.09e-02
+      - northbound_sell: rho = -0.0518, p = 2.30e-02
+      - pullback_depth_max: rho = -0.0502, p = 2.77e-02
+      - inside_bar_failure_bull: rho = -0.0452, p = 4.73e-02
 
   [DIAGNOSTICS] Stability Selection (Step 2) Details:
-    Features input to Stability Selection: 63
-    Features with stability score >= 0.6: 61
-    No fallback needed. Kept 35 features.
-    Stability score percentiles on screened features - 25%: 0.86, 50%: 0.94, 75%: 0.99, 90%: 1.00, 95%: 1.00
+    Features input to Stability Selection: 56
+    Features with stability score >= 0.6: 54
+    No fallback needed. Kept 32 features.
+    Stability score percentiles on screened features - 25%: 0.98, 50%: 1.00, 75%: 1.00, 90%: 1.00, 95%: 1.00
     Stability selected features & scores:
-      - yesterday_early_trend: score = 1.00
-      - yesterday_intraday_close_position: score = 0.97
-      - yesterday_am_return: score = 1.00
-      - northbound_net: score = 0.99
-      - bar_ret_0: score = 0.94
-      - bar_body_rng_0: score = 1.00
-      - volume_surge_direction: score = 0.93
-      - max_up_ret: score = 0.92
-      - rally_strength_max: score = 0.98
-      - pullback_depth_max: score = 0.97
-      - volume_weighted_price_position: score = 0.99
-      - opening_momentum_score: score = 1.00
-      - consecutive_higher_highs: score = 0.97
-      - consecutive_lower_lows: score = 0.97
-      - yesterday_day_close_pos: score = 0.96
-      - yesterday_day_vwap_dev: score = 1.00
-      - bar_vwap_dev_2: score = 0.96
-      - bar_vwap_dev_3: score = 0.94
-      - late_bar_momentum: score = 0.94
-      - inside_bar_failure_bull: score = 0.97
-      - range_expansion_ratio: score = 0.93
-      - vwap_touch_count: score = 1.00
-      - open_efficiency: score = 0.96
+      - northbound_sell: score = 1.00
       - volume_concentration: score = 1.00
-      - northbound_sell: score = 0.91
-      - yesterday_day_kurtosis: score = 0.96
-      - vix_iv_spread: score = 1.00
-      - vix: score = 0.98
-      - max_down_ret: score = 0.78
+      - range_expansion_ratio: score = 1.00
+      - open_efficiency: score = 1.00
+      - decision_bar_body: score = 1.00
+      - inside_bar_failure_bull: score = 1.00
+      - yesterday_day_close_pos: score = 1.00
+      - yesterday_day_vwap_dev: score = 1.00
+      - max_down_ret: score = 0.91
       - short_balance_quantity: score = 1.00
-      - margin_balance: score = 0.94
-      - short_sell_quantity: score = 0.99
+      - margin_balance: score = 1.00
+      - short_sell_quantity: score = 1.00
+      - capital_net_value: score = 1.00
       - capital_net_ratio: score = 1.00
-      - early_bearish_engulfing_count: score = 0.99
-      - intraday_autocorr: score = 1.00
-Stability selection finished. Kept 35 features.
+      - vix_iv_ratio: score = 1.00
+      - vix: score = 1.00
+      - yesterday_early_vwap_dev: score = 1.00
+      - yesterday_intraday_close_position: score = 1.00
+      - yesterday_am_return: score = 1.00
+      - northbound_net: score = 0.98
+      - trend_strength_intraday: score = 1.00
+      - close_vs_open_range: score = 1.00
+      - consecutive_higher_highs: score = 1.00
+      - rally_strength_max: score = 1.00
+      - pullback_depth_max: score = 1.00
+      - volume_weighted_price_position: score = 1.00
+      - bar_ret_0: score = 0.99
+      - bar_body_rng_0: score = 1.00
+      - volume_surge_direction: score = 1.00
+      - max_up_ret: score = 0.91
+      - late_bar_momentum: score = 1.00
+      - early_bearish_engulfing_count: score = 1.00
+Stability selection finished. Kept 32 features.
 
   [DIAGNOSTICS] Selected Feature Quality:
-    Selected Features Condition Number: 10.81
+    Selected Features Condition Number: 9.10
     Feature matrix is numerically stable.
     No highly collinear feature pairs found.
-  [cache] hit   cache_loyo_300ETF_279b7632a489df66.joblib
+  [cache] write cache_loyo_300ETF_4e541da353c02272.joblib
 
   [DIAGNOSTICS] LOYO CV Folds Details:
     Number of folds (years): 15
-      Fold 1: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2017), np.int32(2018)], Train shape = (1436, 35), Test shape = (722, 35)
-      Fold 2: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2018), np.int32(2019)], Train shape = (1426, 35), Test shape = (722, 35)
-      Fold 3: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2019), np.int32(2020), np.int32(2021)], Train shape = (1423, 35), Test shape = (722, 35)
-      Fold 4: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2021), np.int32(2022)], Train shape = (1422, 35), Test shape = (722, 35)
-      Fold 5: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1430, 35), Test shape = (722, 35)
-      Fold 6: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2019)], Train shape = (1433, 35), Test shape = (722, 35)
-      Fold 7: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2019), np.int32(2020), np.int32(2021)], Train shape = (1416, 35), Test shape = (722, 35)
-      Fold 8: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2021), np.int32(2022)], Train shape = (1415, 35), Test shape = (722, 35)
-      Fold 9: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1423, 35), Test shape = (722, 35)
-      Fold 10: Test Year(s) = [np.int32(2018), np.int32(2019), np.int32(2020), np.int32(2021)], Train shape = (1430, 35), Test shape = (722, 35)
-      Fold 11: Test Year(s) = [np.int32(2018), np.int32(2019), np.int32(2021), np.int32(2022)], Train shape = (1418, 35), Test shape = (722, 35)
-      Fold 12: Test Year(s) = [np.int32(2018), np.int32(2019), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1426, 35), Test shape = (722, 35)
-      Fold 13: Test Year(s) = [np.int32(2019), np.int32(2020), np.int32(2021), np.int32(2022)], Train shape = (1430, 35), Test shape = (722, 35)
-      Fold 14: Test Year(s) = [np.int32(2019), np.int32(2020), np.int32(2021), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1423, 35), Test shape = (722, 35)
-      Fold 15: Test Year(s) = [np.int32(2021), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1437, 35), Test shape = (722, 35)
-  [cache] hit   cache_pilot_300ETF_766478578055b40d.joblib
+      Fold 1: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2017)], Train shape = (1276, 32), Test shape = (641, 32)
+      Fold 2: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2019)], Train shape = (1262, 32), Test shape = (640, 32)
+      Fold 3: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2019), np.int32(2020)], Train shape = (1261, 32), Test shape = (641, 32)
+      Fold 4: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2020), np.int32(2022)], Train shape = (1262, 32), Test shape = (640, 32)
+      Fold 5: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1268, 32), Test shape = (641, 32)
+      Fold 6: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2019)], Train shape = (1269, 32), Test shape = (641, 32)
+      Fold 7: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2019), np.int32(2020)], Train shape = (1254, 32), Test shape = (642, 32)
+      Fold 8: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2020), np.int32(2022)], Train shape = (1255, 32), Test shape = (641, 32)
+      Fold 9: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1261, 32), Test shape = (642, 32)
+      Fold 10: Test Year(s) = [np.int32(2017), np.int32(2018), np.int32(2019), np.int32(2020)], Train shape = (1267, 32), Test shape = (641, 32)
+      Fold 11: Test Year(s) = [np.int32(2017), np.int32(2018), np.int32(2019), np.int32(2020), np.int32(2022)], Train shape = (1253, 32), Test shape = (640, 32)
+      Fold 12: Test Year(s) = [np.int32(2017), np.int32(2018), np.int32(2019), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1259, 32), Test shape = (641, 32)
+      Fold 13: Test Year(s) = [np.int32(2019), np.int32(2020), np.int32(2022)], Train shape = (1267, 32), Test shape = (641, 32)
+      Fold 14: Test Year(s) = [np.int32(2019), np.int32(2020), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1258, 32), Test shape = (642, 32)
+      Fold 15: Test Year(s) = [np.int32(2020), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1274, 32), Test shape = (641, 32)
+
+Running Optuna Pilot Study (50 trials) for normalization calibration...
+  [cache] write cache_pilot_300ETF_c3158d1ec5d46f98.joblib
 
   [DIAGNOSTICS] Optuna Pilot Study Details:
     Total pilot trials loaded/run: 50
-    Raw metrics distribution across pilot study:
-      M1 (Tail IC IR)     : Min = -0.2017, Median = 0.9860, Max = 1.8994, MAD = 0.2412
-      M2 (Tail IC Mean)   : Min = -0.0192, Median = 0.1620, Max = 0.2186, MAD = 0.0231
-      M3 (Hit Rate)       : Min = 0.2000, Median = 0.8000, Max = 1.0000, MAD = 0.1000
-      M4 (Overall IC)     : Min = -0.0144, Median = 0.0901, Max = 0.1064, MAD = 0.0054
-      M5 (Monotonicity)   : Min = -0.0212, Median = 0.3248, Max = 0.4521, MAD = 0.0612
-      M6 (Top-Bot Spread) : Min = 0.0301, Median = 0.3406, Max = 0.4970, MAD = 0.0504
-      M7 (Parsimony)      : Min = -19.2206, Median = -0.6154, Max = -0.0000, MAD = 0.6154
-      M8 (Coef Bloat)     : Min = -2.7350, Median = -0.5118, Max = -0.0000, MAD = 0.5118
-Normalizing constants calibrated from Pilot run:
-  M1: Median=0.986015, MAD=0.241237
-  M2: Median=0.162036, MAD=0.023091
-  M3: Median=0.800000, MAD=0.100000
-  M4: Median=0.090124, MAD=0.005443
-  M5: Median=0.324848, MAD=0.061212
-  M6: Median=0.340571, MAD=0.050380
-  M7: Median=-0.615362, MAD=0.615362
-  M8: Median=-0.511833, MAD=0.511833
+    Raw CV metrics distribution across pilot study:
+      M1 (Tail IC IR)     : Min = -0.2536, Median = 1.1049, Max = 1.4695
+      M2 (Tail IC Mean)   : Min = -0.0187, Median = 0.1419, Max = 0.2036
+      M3 (Hit Rate)       : Min = 0.2222, Median = 0.7778, Max = 0.8889
+      M4 (Overall IC)     : Min = -0.0102, Median = 0.0854, Max = 0.1084
+      M5 (Monotonicity)   : Min = -0.0047, Median = 0.3192, Max = 0.4869
+      M6 (Top-Bot Spread) : Min = -0.0435, Median = 0.3106, Max = 0.4536
+      M7 (Parsimony)      : Min = -14.6637, Median = -1.5121, Max = -0.0000
+      M8 (Coef Bloat)     : Min = -2.5163, Median = -0.9402, Max = -0.0000
+    Selection Validation metrics distribution across pilot study:
+      Val IC              : Min = 0.0000, Median = 0.0879, Max = 0.1416, MAD = 0.0276
+      Val Tail IC         : Min = -0.0179, Median = 0.0494, Max = 0.3007, MAD = 0.0494
+      Val Monotonicity    : Min = -0.3212, Median = 0.3152, Max = 0.5515, MAD = 0.1394
+      Val Top-Bot Spread  : Min = -0.1341, Median = 0.0128, Max = 0.4602, MAD = 0.0980
+Normalizing constants calibrated from Pilot run (Selection Validation):
+  Val1: Median=0.087949, MAD=0.027569
+  Val2: Median=0.049392, MAD=0.049392
+  Val3: Median=0.315152, MAD=0.139394
+  Val4: Median=0.012774, MAD=0.097985
 
 Running main Optuna Study (100 trials) with First-Principles Multi-Metric Objective...
 
   [DIAGNOSTICS] Main Optuna Study Trial Summary:
     Total trials run: 100
-    Successful complete trials: 69
-    Pruned/Failed trials: 31
+    Successful complete trials: 51
+    Pruned/Failed trials: 49
     Pruning reason breakdown:
-      - M4 (Overall IC <= 0): 11 times
-      - M3 (Hit Rate < 60%): 17 times
-      - M5 (Monotonicity <= 0.25): 17 times
-      - M6 (Top-Bottom Spread <= 0): 0 times
-      - exceeds ESS-based cap: 14 times
+      - M4 (Overall IC <= 0): 16 times
+      - M3 (Hit Rate < 60%): 26 times
+      - M5 (Monotonicity <= 0.25): 24 times
+      - M6 (Top-Bottom Spread <= 0): 4 times
+      - exceeds ESS-based cap: 23 times
 
   [DIAGNOSTICS] Objective Progression (Optimization path):
-    Trial   0: Best Objective = -0.4048 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 2.307454792673698, 'skglm_huber_l1_alpha': 0.29247061707013966, 'skglm_huber_delta': 2.900630040987565}
-    Trial   1: Best Objective = +0.1767 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.32993250442722843, 'skglm_mcp_alpha': 7.591760782507299e-05, 'skglm_mcp_gamma': 5.146647640285563, 'skglm_mcp_delta': 2.5121644992163237}
-    Trial   3: Best Objective = +0.5799 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 0.3137019888242607, 'skglm_huber_l1_alpha': 0.002124546494534022, 'skglm_huber_delta': 1.428074972329521}
-    Trial  20: Best Objective = +1.2655 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.4946767289964533, 'skglm_mcp_alpha': 0.05495794536826648, 'skglm_mcp_gamma': 7.593832172162011, 'skglm_mcp_delta': 4.057502332224717}
-    Trial  26: Best Objective = +1.6649 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.0741309480605929, 'skglm_mcp_alpha': 0.030431249348483725, 'skglm_mcp_gamma': 8.955771305173453, 'skglm_mcp_delta': 4.986759102916151}
+    Trial   0: Best Objective = -1.1138 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.5608672929843956, 'skglm_mcp_alpha': 0.004874037218721709, 'skglm_mcp_gamma': 2.092874046477962, 'skglm_mcp_delta': 2.626931835012204}
+    Trial   3: Best Objective = -0.8312 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 1.193925991729896, 'skglm_huber_l1_alpha': 0.013870883206686543, 'skglm_huber_delta': 2.1907677685230538}
+    Trial   4: Best Objective = +0.6744 | params = {'model_type': 'skglm_mcp', 'k_weight': 2.8907518116802673, 'skglm_mcp_alpha': 0.2196109954044559, 'skglm_mcp_gamma': 2.90642906857212, 'skglm_mcp_delta': 3.4121808326852903}
+    Trial  63: Best Objective = +1.8428 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 0.04604742243355131, 'skglm_huber_l1_alpha': 0.07344504877715714, 'skglm_huber_delta': 3.3307902517279095}
+    Trial  67: Best Objective = +2.7738 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 0.04323938201664668, 'skglm_huber_l1_alpha': 0.10984438979346792, 'skglm_huber_delta': 2.8933552062655865}
 
 Best hyperparameters found by Optuna:
-  model_type: skglm_mcp
-  k_weight: 0.0741309480605929
-  skglm_mcp_alpha: 0.030431249348483725
-  skglm_mcp_gamma: 8.955771305173453
-  skglm_mcp_delta: 4.986759102916151
-Best trial raw metrics:
-  M1 (Tail IC IR):      1.1928
-  M2 (Tail IC Mean):    0.1884
-  M3 (Hit Rate):        1.0000
-  M4 (Overall IC):      0.1113
-  Deflated CV Overall IC: 0.0953
-  M5 (Monotonicity):    0.4206
-  M6 (Top-Bot Spread):  0.3877
-  M7 (Parsimony):       -0.1835
-  M8 (Coef Bloat):      -0.1502
+  model_type: skglm_huber_l1
+  k_weight: 0.04323938201664668
+  skglm_huber_l1_alpha: 0.10984438979346792
+  skglm_huber_delta: 2.8933552062655865
+Best trial raw metrics (CV Folds):
+  M1 (Tail IC IR):      0.8868
+  M2 (Tail IC Mean):    0.1572
+  M3 (Hit Rate):        0.7778
+  M4 (Overall IC):      0.0796
+  Deflated CV Overall IC: 0.0574
+  M5 (Monotonicity):    0.4411
+  M6 (Top-Bot Spread):  0.3908
+  M7 (Parsimony):       -0.0132
+  M8 (Coef Bloat):      -0.0362
+Best trial Selection Validation metrics:
+  Val Overall IC:       0.1207
+  Val Tail IC:          0.2767
+  Val Monotonicity:     0.5515
+  Val Top-Bot Spread:   0.4111
 
   [DIAGNOSTICS] Final Model Diagnostics:
-    Effective Sample Size (ESS) under tail-focus: 2125.5 / 2166 (98.1%)
+    Effective Sample Size (ESS) under tail-focus: 2134.3 / 2166 (98.5%)
     ESS is healthy.
-    Model Weight Concentration (Gini Index): 0.8196
-    Raw Design Matrix Condition Number: 10.81
-    Regularized Normal Equations Condition Number (kappa): 110.08
+    Model Weight Concentration (Gini Index): 0.9688
+    [WARNING] Extremely high weight concentration! A very small subset of features dominates the model.
+    Raw Design Matrix Condition Number: 9.38
+    Regularized Normal Equations Condition Number (kappa): 75.23
 
   [DIAGNOSTICS] Execution Time Profiling:
     data_loading        :    0.1s
-    feature_selection   :    0.0s
-    loyo_folds          :    0.0s
-    pilot_study         :    0.0s
-    main_study          :   25.5s
-    final_refit         :    5.8s
-    Total Duration      :   31.4s
-[300ETF] elapsed 31.5s
+    feature_selection   :    3.7s
+    loyo_folds          :    0.1s
+    pilot_study         :   22.3s
+    main_study          :    5.1s
+    final_refit         :    3.1s
+    Total Duration      :   34.3s
+[300ETF] elapsed 34.4s
 
 ================================================================================
 Starting First-Principles Training for 50ETF (Side: single)
@@ -179,177 +190,182 @@ Starting First-Principles Training for 50ETF (Side: single)
 ================================================================================
 Loaded 2722 samples and 238 features.
 Split: Working=2166 rows (Lockbox OOS data ignored during training).
+       Selection Train=1923 rows, Selection Val=243 rows.
 Running feature screening...
 Screened features: 50 surviving candidates.
 Running stability selection...
 Running iterative VIF pruning...
-    [VIF Pruning] Drop feature 'open_to_current_return' (VIF: 16.71 > 10.0)
-VIF pruning finished. Dropped 1 collinear features. Kept 32 representatives.
-  [cache] write cache_select_50ETF_d37ccd466fc488b0.joblib
+    [VIF Pruning] Drop feature 'open_to_current_return' (VIF: 10.04 > 10.0)
+VIF pruning finished. Dropped 1 collinear features. Kept 33 representatives.
+  [cache] write cache_select_50ETF_e96e82bd3026bfdd.joblib
 
   [DIAGNOSTICS] Feature Screening (Step 1) Details:
     Total features input: 238
-    Features passing BH-FDR (FDR=0.4): 8
+    Features passing BH-FDR (FDR=0.4): 5
     [WARNING] Fallback triggered! Kept top 50 features by p-value instead.
-    Spearman rho absolute values - Min: 0.0000, Median: 0.0217, Max: 0.0660
-    p-values - Min: 2.10e-03, Median: 0.3115, Max: 1.0000
+    Spearman rho absolute values - Min: 0.0000, Median: 0.0205, Max: 0.0742
+    p-values - Min: 1.12e-03, Median: 0.3692, Max: 1.0000
     Top 5 positive Spearman correlations:
-      - volume_weighted_price_position: rho = +0.0660, p = 2.10e-03
-      - vix_iv_ratio: rho = +0.0651, p = 2.42e-03
-      - vix_iv_spread: rho = +0.0623, p = 3.69e-03
-      - bar_ret_0: rho = +0.0561, p = 8.94e-03
-      - first_bar_return: rho = +0.0561, p = 8.94e-03
+      - vix_iv_ratio: rho = +0.0742, p = 1.12e-03
+      - vix_iv_spread: rho = +0.0720, p = 1.56e-03
+      - volume_weighted_price_position: rho = +0.0680, p = 2.80e-03
+      - northbound_net: rho = +0.0643, p = 4.75e-03
+      - yesterday_early_vwap_dev: rho = +0.0604, p = 8.00e-03
     Top 5 negative Spearman correlations:
-      - capital_net_value: rho = -0.0587, p = 6.27e-03
-      - capital_net_ratio: rho = -0.0558, p = 9.31e-03
-      - sma100_dist: rho = -0.0462, p = 3.13e-02
-      - margin_net_buy: rho = -0.0455, p = 3.43e-02
-      - buy_on_margin_value: rho = -0.0449, p = 3.67e-02
+      - iv_vol_ratio: rho = -0.0537, p = 1.83e-02
+      - buy_on_margin_value: rho = -0.0500, p = 2.81e-02
+      - capital_net_value: rho = -0.0497, p = 2.92e-02
+      - margin_net_buy: rho = -0.0476, p = 3.69e-02
+      - spike_exhaustion_ratio: rho = -0.0462, p = 4.25e-02
 
   [DIAGNOSTICS] Stability Selection (Step 2) Details:
     Features input to Stability Selection: 50
     Features with stability score >= 0.6: 50
-    No fallback needed. Kept 32 features.
+    No fallback needed. Kept 33 features.
     Stability score percentiles on screened features - 25%: 0.99, 50%: 1.00, 75%: 1.00, 90%: 1.00, 95%: 1.00
     Stability selected features & scores:
-      - yesterday_early_vwap_dev: score = 1.00
-      - yesterday_intraday_close_position: score = 1.00
-      - northbound_net: score = 1.00
-      - yesterday_day_vwap_dev: score = 1.00
-      - measured_move_proximity: score = 0.99
-      - capital_buy_value: score = 1.00
-      - capital_net_value: score = 1.00
-      - vix_diff_1d: score = 1.00
-      - buy_on_margin_value: score = 1.00
-      - iv: score = 1.00
-      - bar_rng_4: score = 0.99
-      - margin_net_buy: score = 1.00
-      - volume_slope: score = 1.00
-      - volume_concentration: score = 1.00
-      - yesterday_body_ratio: score = 1.00
-      - roc20: score = 1.00
-      - stoch_d: score = 1.00
-      - twenty_gap_bars_regime: score = 1.00
-      - sma100_dist: score = 1.00
-      - vix_iv_ratio: score = 1.00
-      - iv_vol_ratio: score = 0.99
-      - bar_vwap_dev_0: score = 1.00
-      - trend_strength_intraday: score = 1.00
-      - consecutive_higher_highs: score = 1.00
-      - rally_strength_max: score = 1.00
-      - volume_weighted_price_position: score = 1.00
-      - bar_ret_0: score = 1.00
+      - gap_fill_ratio: score = 1.00
+      - adx_opening: score = 1.00
+      - iv_diff_1d: score = 1.00
+      - vix_diff_1d: score = 0.99
+      - capital_net_ratio: score = 1.00
+      - volume_surge_max: score = 1.00
+      - northbound_sell: score = 0.99
+      - first_bar_return: score = 1.00
       - first_bar_sentiment: score = 1.00
       - volume_surge_direction: score = 1.00
+      - max_down_ret: score = 1.00
+      - rally_strength_max: score = 0.99
+      - volume_weighted_price_position: score = 1.00
+      - trend_strength_intraday: score = 1.00
+      - consecutive_higher_highs: score = 1.00
+      - vix_iv_ratio: score = 1.00
+      - iv_vol_ratio: score = 1.00
+      - bar_vwap_dev_0: score = 1.00
+      - yesterday_body_ratio: score = 1.00
+      - spike_exhaustion_ratio: score = 1.00
+      - yesterday_early_vwap_dev: score = 1.00
+      - yesterday_intraday_close_position: score = 1.00
+      - yesterday_am_return: score = 0.99
+      - northbound_net: score = 1.00
+      - yesterday_day_vwap_dev: score = 1.00
+      - roc20: score = 1.00
+      - stoch_d: score = 1.00
+      - sma100_dist: score = 1.00
+      - buy_on_margin_value: score = 1.00
+      - iv: score = 1.00
+      - bar_rng_4: score = 1.00
       - max_up_ret: score = 1.00
-      - max_down_ret: score = 0.98
-      - late_bar_momentum: score = 1.00
-Stability selection finished. Kept 32 features.
+      - margin_net_buy: score = 1.00
+Stability selection finished. Kept 33 features.
 
   [DIAGNOSTICS] Selected Feature Quality:
-    Selected Features Condition Number: 6031930.00
+    Selected Features Condition Number: 6313434.00
     [WARNING] Severe multicollinearity detected (condition number > 100)!
     No highly collinear feature pairs found.
-  [cache] write cache_loyo_50ETF_2244124666311eb1.joblib
+  [cache] write cache_loyo_50ETF_f77a44edd3ef07dc.joblib
 
   [DIAGNOSTICS] LOYO CV Folds Details:
     Number of folds (years): 15
-      Fold 1: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2017), np.int32(2018)], Train shape = (1436, 32), Test shape = (722, 32)
-      Fold 2: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2018), np.int32(2019)], Train shape = (1426, 32), Test shape = (722, 32)
-      Fold 3: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2019), np.int32(2020), np.int32(2021)], Train shape = (1423, 32), Test shape = (722, 32)
-      Fold 4: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2021), np.int32(2022)], Train shape = (1422, 32), Test shape = (722, 32)
-      Fold 5: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1430, 32), Test shape = (722, 32)
-      Fold 6: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2019)], Train shape = (1433, 32), Test shape = (722, 32)
-      Fold 7: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2019), np.int32(2020), np.int32(2021)], Train shape = (1416, 32), Test shape = (722, 32)
-      Fold 8: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2021), np.int32(2022)], Train shape = (1415, 32), Test shape = (722, 32)
-      Fold 9: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1423, 32), Test shape = (722, 32)
-      Fold 10: Test Year(s) = [np.int32(2018), np.int32(2019), np.int32(2020), np.int32(2021)], Train shape = (1430, 32), Test shape = (722, 32)
-      Fold 11: Test Year(s) = [np.int32(2018), np.int32(2019), np.int32(2021), np.int32(2022)], Train shape = (1418, 32), Test shape = (722, 32)
-      Fold 12: Test Year(s) = [np.int32(2018), np.int32(2019), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1426, 32), Test shape = (722, 32)
-      Fold 13: Test Year(s) = [np.int32(2019), np.int32(2020), np.int32(2021), np.int32(2022)], Train shape = (1430, 32), Test shape = (722, 32)
-      Fold 14: Test Year(s) = [np.int32(2019), np.int32(2020), np.int32(2021), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1423, 32), Test shape = (722, 32)
-      Fold 15: Test Year(s) = [np.int32(2021), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1437, 32), Test shape = (722, 32)
+      Fold 1: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2017)], Train shape = (1276, 33), Test shape = (641, 33)
+      Fold 2: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2019)], Train shape = (1262, 33), Test shape = (640, 33)
+      Fold 3: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2019), np.int32(2020)], Train shape = (1261, 33), Test shape = (641, 33)
+      Fold 4: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2020), np.int32(2022)], Train shape = (1262, 33), Test shape = (640, 33)
+      Fold 5: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1268, 33), Test shape = (641, 33)
+      Fold 6: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2019)], Train shape = (1269, 33), Test shape = (641, 33)
+      Fold 7: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2019), np.int32(2020)], Train shape = (1254, 33), Test shape = (642, 33)
+      Fold 8: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2020), np.int32(2022)], Train shape = (1255, 33), Test shape = (641, 33)
+      Fold 9: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1261, 33), Test shape = (642, 33)
+      Fold 10: Test Year(s) = [np.int32(2017), np.int32(2018), np.int32(2019), np.int32(2020)], Train shape = (1267, 33), Test shape = (641, 33)
+      Fold 11: Test Year(s) = [np.int32(2017), np.int32(2018), np.int32(2019), np.int32(2020), np.int32(2022)], Train shape = (1253, 33), Test shape = (640, 33)
+      Fold 12: Test Year(s) = [np.int32(2017), np.int32(2018), np.int32(2019), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1259, 33), Test shape = (641, 33)
+      Fold 13: Test Year(s) = [np.int32(2019), np.int32(2020), np.int32(2022)], Train shape = (1267, 33), Test shape = (641, 33)
+      Fold 14: Test Year(s) = [np.int32(2019), np.int32(2020), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1258, 33), Test shape = (642, 33)
+      Fold 15: Test Year(s) = [np.int32(2020), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1274, 33), Test shape = (641, 33)
 
 Running Optuna Pilot Study (50 trials) for normalization calibration...
-  [cache] write cache_pilot_50ETF_2920bd247c09e0e0.joblib
+  [cache] write cache_pilot_50ETF_3f600fc2c2818c1d.joblib
 
   [DIAGNOSTICS] Optuna Pilot Study Details:
     Total pilot trials loaded/run: 50
-    Raw metrics distribution across pilot study:
-      M1 (Tail IC IR)     : Min = -0.2524, Median = 1.6334, Max = 2.3496, MAD = 0.2238
-      M2 (Tail IC Mean)   : Min = -0.0220, Median = 0.2466, Max = 0.2776, MAD = 0.0148
-      M3 (Hit Rate)       : Min = 0.1000, Median = 0.9000, Max = 1.0000, MAD = 1.0000
-      M4 (Overall IC)     : Min = -0.0087, Median = 0.0798, Max = 0.1109, MAD = 0.0138
-      M5 (Monotonicity)   : Min = -0.0042, Median = 0.3636, Max = 0.4861, MAD = 0.0473
-      M6 (Top-Bot Spread) : Min = -0.0287, Median = 0.3580, Max = 0.4943, MAD = 0.0366
-      M7 (Parsimony)      : Min = -36.8178, Median = -0.8332, Max = -0.0000, MAD = 0.8332
-      M8 (Coef Bloat)     : Min = -1.9507, Median = -0.6892, Max = -0.0000, MAD = 0.5055
-Normalizing constants calibrated from Pilot run:
-  M1: Median=1.633385, MAD=0.223762
-  M2: Median=0.246613, MAD=0.014816
-  M3: Median=0.900000, MAD=1.000000
-  M4: Median=0.079845, MAD=0.013834
-  M5: Median=0.363636, MAD=0.047273
-  M6: Median=0.358048, MAD=0.036631
-  M7: Median=-0.833155, MAD=0.833155
-  M8: Median=-0.689168, MAD=0.505452
+    Raw CV metrics distribution across pilot study:
+      M1 (Tail IC IR)     : Min = -0.4483, Median = 1.2028, Max = 1.9242
+      M2 (Tail IC Mean)   : Min = -0.0384, Median = 0.2029, Max = 0.2479
+      M3 (Hit Rate)       : Min = 0.1111, Median = 0.8889, Max = 1.0000
+      M4 (Overall IC)     : Min = -0.0176, Median = 0.0740, Max = 0.0939
+      M5 (Monotonicity)   : Min = -0.0007, Median = 0.3354, Max = 0.4667
+      M6 (Top-Bot Spread) : Min = -0.0567, Median = 0.2747, Max = 0.3914
+      M7 (Parsimony)      : Min = -46.5253, Median = -0.6056, Max = -0.0000
+      M8 (Coef Bloat)     : Min = -2.1502, Median = -0.6315, Max = -0.0000
+    Selection Validation metrics distribution across pilot study:
+      Val IC              : Min = -0.0006, Median = 0.0831, Max = 0.1089, MAD = 0.0179
+      Val Tail IC         : Min = 0.0000, Median = 0.2231, Max = 0.3767, MAD = 0.0408
+      Val Monotonicity    : Min = -0.2121, Median = 0.3455, Max = 0.6242, MAD = 0.1152
+      Val Top-Bot Spread  : Min = -0.4097, Median = 0.1570, Max = 0.6186, MAD = 0.0701
+Normalizing constants calibrated from Pilot run (Selection Validation):
+  Val1: Median=0.083085, MAD=0.017914
+  Val2: Median=0.223133, MAD=0.040816
+  Val3: Median=0.345455, MAD=0.115152
+  Val4: Median=0.156979, MAD=0.070126
 
 Running main Optuna Study (100 trials) with First-Principles Multi-Metric Objective...
 
   [DIAGNOSTICS] Main Optuna Study Trial Summary:
     Total trials run: 100
-    Successful complete trials: 69
-    Pruned/Failed trials: 31
+    Successful complete trials: 75
+    Pruned/Failed trials: 25
     Pruning reason breakdown:
-      - M4 (Overall IC <= 0): 1 times
-      - M3 (Hit Rate < 60%): 7 times
-      - M5 (Monotonicity <= 0.25): 8 times
-      - M6 (Top-Bottom Spread <= 0): 3 times
-      - exceeds ESS-based cap: 23 times
+      - M4 (Overall IC <= 0): 8 times
+      - M3 (Hit Rate < 60%): 8 times
+      - M5 (Monotonicity <= 0.25): 13 times
+      - M6 (Top-Bottom Spread <= 0): 2 times
+      - exceeds ESS-based cap: 17 times
 
   [DIAGNOSTICS] Objective Progression (Optimization path):
-    Trial   6: Best Objective = +0.0444 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 0.19670597832378334, 'skglm_huber_l1_alpha': 0.010513486704866909, 'skglm_huber_delta': 1.5631878466190037}
-    Trial   8: Best Objective = +0.9181 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 0.5445396450798333, 'skglm_huber_l1_alpha': 0.004708774683246465, 'skglm_huber_delta': 4.504596258736811}
-    Trial  10: Best Objective = +1.0298 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.2624115232721762, 'skglm_mcp_alpha': 0.024049367712450462, 'skglm_mcp_gamma': 5.646230846323395, 'skglm_mcp_delta': 2.5507881100173315}
-    Trial  22: Best Objective = +1.1121 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.6726270557616034, 'skglm_mcp_alpha': 0.0006897351102284659, 'skglm_mcp_gamma': 4.581608995292918, 'skglm_mcp_delta': 1.897589575885125}
-    Trial  29: Best Objective = +1.1265 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.49439635170643065, 'skglm_mcp_alpha': 0.0006828231351211335, 'skglm_mcp_gamma': 5.587872330421273, 'skglm_mcp_delta': 1.766257497500161}
-    Trial  30: Best Objective = +1.2653 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.48138044364756366, 'skglm_mcp_alpha': 0.0011007412579540762, 'skglm_mcp_gamma': 3.2133461952874214, 'skglm_mcp_delta': 1.8063806199039552}
-    Trial  59: Best Objective = +1.3092 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.30476417505174336, 'skglm_mcp_alpha': 0.012499494621526002, 'skglm_mcp_gamma': 4.20872546545275, 'skglm_mcp_delta': 2.2701859329880323}
-    Trial  94: Best Objective = +1.6462 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.008825732543302212, 'skglm_mcp_alpha': 0.0006840319117041231, 'skglm_mcp_gamma': 6.424760441350308, 'skglm_mcp_delta': 1.7690146774597908}
+    Trial   4: Best Objective = +0.7986 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.6431899835872855, 'skglm_mcp_alpha': 0.0004000101659993905, 'skglm_mcp_gamma': 6.248501371994893, 'skglm_mcp_delta': 4.908934004987212}
+    Trial  14: Best Objective = +1.2371 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.5393122968852653, 'skglm_mcp_alpha': 0.014871625425229655, 'skglm_mcp_gamma': 4.278451537456982, 'skglm_mcp_delta': 4.193629433021812}
+    Trial  22: Best Objective = +1.4425 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.04689079232711946, 'skglm_mcp_alpha': 0.00536142869508068, 'skglm_mcp_gamma': 5.955258588183966, 'skglm_mcp_delta': 4.968736055478432}
+    Trial  35: Best Objective = +1.4832 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.45013828881184653, 'skglm_mcp_alpha': 0.02192220994809258, 'skglm_mcp_gamma': 4.941040570948595, 'skglm_mcp_delta': 4.372442062067667}
+    Trial  40: Best Objective = +2.0684 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.4617862973453306, 'skglm_mcp_alpha': 0.015690835413558063, 'skglm_mcp_gamma': 4.65253531214075, 'skglm_mcp_delta': 2.916045010425395}
 
 Best hyperparameters found by Optuna:
   model_type: skglm_mcp
-  k_weight: 0.008825732543302212
-  skglm_mcp_alpha: 0.0006840319117041231
-  skglm_mcp_gamma: 6.424760441350308
-  skglm_mcp_delta: 1.7690146774597908
-Best trial raw metrics:
-  M1 (Tail IC IR):      2.5862
-  M2 (Tail IC Mean):    0.2271
-  M3 (Hit Rate):        1.0000
-  M4 (Overall IC):      0.1119
-  Deflated CV Overall IC: 0.0915
-  M5 (Monotonicity):    0.4970
-  M6 (Top-Bot Spread):  0.4495
-  M7 (Parsimony):       -0.4546
-  M8 (Coef Bloat):      -0.3349
+  k_weight: 0.4617862973453306
+  skglm_mcp_alpha: 0.015690835413558063
+  skglm_mcp_gamma: 4.65253531214075
+  skglm_mcp_delta: 2.916045010425395
+Best trial raw metrics (CV Folds):
+  M1 (Tail IC IR):      1.6751
+  M2 (Tail IC Mean):    0.2296
+  M3 (Hit Rate):        0.7778
+  M4 (Overall IC):      0.0868
+  Deflated CV Overall IC: 0.0632
+  M5 (Monotonicity):    0.3980
+  M6 (Top-Bot Spread):  0.4379
+  M7 (Parsimony):       -0.3740
+  M8 (Coef Bloat):      -0.5110
+Best trial Selection Validation metrics:
+  Val Overall IC:       0.1245
+  Val Tail IC:          0.2637
+  Val Monotonicity:     0.8424
+  Val Top-Bot Spread:   0.2942
 
   [DIAGNOSTICS] Final Model Diagnostics:
-    Effective Sample Size (ESS) under tail-focus: 2111.8 / 2166 (97.5%)
+    Effective Sample Size (ESS) under tail-focus: 1737.6 / 2166 (80.2%)
     ESS is healthy.
-    Model Weight Concentration (Gini Index): 0.4115
-    Raw Design Matrix Condition Number: 6031930.00
-    Regularized Normal Equations Condition Number (kappa): 72250.49
+    Model Weight Concentration (Gini Index): 0.5978
+    Raw Design Matrix Condition Number: 5900066.50
+    Regularized Normal Equations Condition Number (kappa): 3011.27
 
   [DIAGNOSTICS] Execution Time Profiling:
     data_loading        :    0.1s
-    feature_selection   :    0.5s
+    feature_selection   :    1.0s
     loyo_folds          :    0.1s
-    pilot_study         :    1.5s
-    main_study          :    3.5s
-    final_refit         :    0.0s
-    Total Duration      :    5.8s
-[50ETF] elapsed 5.8s
+    pilot_study         :    2.7s
+    main_study          :    3.6s
+    final_refit         :    4.2s
+    Total Duration      :   11.7s
+[50ETF] elapsed 11.8s
 
 ================================================================================
 Starting First-Principles Training for 500ETF (Side: single)
@@ -357,175 +373,176 @@ Starting First-Principles Training for 500ETF (Side: single)
 ================================================================================
 Loaded 2722 samples and 238 features.
 Split: Working=2166 rows (Lockbox OOS data ignored during training).
+       Selection Train=1923 rows, Selection Val=243 rows.
 Running feature screening...
-Screened features: 115 surviving candidates.
+Screened features: 123 surviving candidates.
 Running stability selection...
 Running iterative VIF pruning...
-    [VIF Pruning] Drop feature 'max_up_ret' (VIF: 11.13 > 10.0)
-VIF pruning finished. Dropped 1 collinear features. Kept 29 representatives.
-  [cache] write cache_select_500ETF_59ce9da242efc0d0.joblib
+VIF pruning finished. Dropped 0 collinear features. Kept 25 representatives.
+  [cache] write cache_select_500ETF_e42428dfd1fe763f.joblib
 
   [DIAGNOSTICS] Feature Screening (Step 1) Details:
     Total features input: 238
-    Features passing BH-FDR (FDR=0.4): 115
-    No fallback needed. Kept 115 features.
-    Spearman rho absolute values - Min: 0.0000, Median: 0.0252, Max: 0.1283
-    p-values - Min: 1.76e-09, Median: 0.2418, Max: 1.0000
+    Features passing BH-FDR (FDR=0.4): 123
+    No fallback needed. Kept 123 features.
+    Spearman rho absolute values - Min: 0.0000, Median: 0.0311, Max: 0.1300
+    p-values - Min: 9.20e-09, Median: 0.1732, Max: 1.0000
     Top 5 positive Spearman correlations:
-      - max_up_ret: rho = +0.1283, p = 1.76e-09
-      - first_bar_return: rho = +0.1239, p = 6.28e-09
-      - bar_ret_0: rho = +0.1239, p = 6.28e-09
-      - bar_body_rng_0: rho = +0.1104, p = 2.38e-07
-      - opening_auction_imbalance: rho = +0.0954, p = 8.31e-06
+      - bar_ret_0: rho = +0.1300, p = 9.20e-09
+      - first_bar_return: rho = +0.1300, p = 9.20e-09
+      - max_up_ret: rho = +0.1294, p = 1.07e-08
+      - bar_body_rng_0: rho = +0.1144, p = 4.49e-07
+      - yesterday_intraday_close_position: rho = +0.1052, p = 3.55e-06
     Top 5 negative Spearman correlations:
-      - late_bar_momentum: rho = -0.0713, p = 8.80e-04
-      - pullback_depth_max: rho = -0.0686, p = 1.38e-03
-      - margin_balance: rho = -0.0567, p = 8.29e-03
-      - bb_width: rho = -0.0555, p = 9.74e-03
-      - vwap_touch_count: rho = -0.0535, p = 1.27e-02
+      - bb_width: rho = -0.0744, p = 1.08e-03
+      - late_bar_momentum: rho = -0.0712, p = 1.75e-03
+      - pullback_depth_max: rho = -0.0623, p = 6.21e-03
+      - total_balance: rho = -0.0602, p = 8.25e-03
+      - vix_vol_ratio: rho = -0.0583, p = 1.04e-02
 
   [DIAGNOSTICS] Stability Selection (Step 2) Details:
-    Features input to Stability Selection: 115
-    Features with stability score >= 0.6: 35
-    No fallback needed. Kept 29 features.
-    Stability score percentiles on screened features - 25%: 0.18, 50%: 0.35, 75%: 0.63, 90%: 0.82, 95%: 0.87
+    Features input to Stability Selection: 123
+    Features with stability score >= 0.6: 26
+    No fallback needed. Kept 25 features.
+    Stability score percentiles on screened features - 25%: 0.11, 50%: 0.27, 75%: 0.54, 90%: 0.79, 95%: 0.86
     Stability selected features & scores:
-      - vwap_deviation_decision_bar: score = 0.73
-      - early_trend: score = 0.78
-      - bar_vwap_dev_2: score = 0.83
-      - yesterday_early_trend: score = 0.95
-      - yesterday_intraday_close_position: score = 0.84
-      - northbound_net: score = 0.87
-      - yesterday_day_kurtosis: score = 0.77
-      - bar_ret_0: score = 0.64
-      - volume_surge_direction: score = 0.83
-      - bar_vwap_dev_1: score = 0.66
-      - intraday_bullish_fvg: score = 0.66
-      - range_expansion_ratio: score = 0.77
-      - first_bar_body_ratio: score = 0.63
-      - volatility_regime_intraday: score = 0.63
-      - bar_vwap_dev_0: score = 0.85
-      - iv: score = 0.66
-      - short_balance_quantity: score = 0.71
-      - volume_concentration: score = 0.89
-      - yesterday_day_pm_am_vol_ratio: score = 0.70
-      - yesterday_day_vwap_dev: score = 0.95
-      - sma100_dist: score = 0.80
-      - bb_width: score = 0.87
-      - yesterday_early_range: score = 0.78
-      - yesterday_day_realized_vol: score = 0.96
-      - bar_rng_0: score = 0.99
-      - bar_rng_3: score = 0.71
-      - bar_rng_5: score = 0.60
-      - capital_buy_volume: score = 0.81
-      - vol_ratio_10_60: score = 0.63
-Stability selection finished. Kept 29 features.
+      - capital_buy_volume: score = 0.79
+      - bar_vwap_dev_0: score = 0.75
+      - margin_short_ratio: score = 0.69
+      - opening_range_size: score = 0.93
+      - bar_rng_3: score = 0.66
+      - bb_width: score = 0.76
+      - yesterday_day_realized_vol: score = 0.67
+      - intraday_bullish_fvg: score = 0.61
+      - yesterday_early_trend: score = 0.87
+      - yesterday_intraday_close_position: score = 0.89
+      - northbound_net: score = 0.82
+      - macd_hist: score = 0.77
+      - bar_vwap_dev_2: score = 0.73
+      - early_trend: score = 0.72
+      - decision_bar_body: score = 0.76
+      - volume_concentration: score = 0.86
+      - short_sell_quantity: score = 0.82
+      - yesterday_day_pm_am_vol_ratio: score = 0.81
+      - bar_ret_0: score = 0.74
+      - volume_surge_direction: score = 0.79
+      - max_up_ret: score = 0.90
+      - gap_pct: score = 0.94
+      - yesterday_day_close_pos: score = 0.62
+      - yesterday_day_vwap_dev: score = 0.91
+      - sma100_dist: score = 0.82
+Stability selection finished. Kept 25 features.
 
   [DIAGNOSTICS] Selected Feature Quality:
-    Selected Features Condition Number: 4995548.50
+    Selected Features Condition Number: 4895113.00
     [WARNING] Severe multicollinearity detected (condition number > 100)!
     No highly collinear feature pairs found.
-  [cache] write cache_loyo_500ETF_183821af57484c8e.joblib
+  [cache] write cache_loyo_500ETF_088b86c3eb4ed45e.joblib
 
   [DIAGNOSTICS] LOYO CV Folds Details:
     Number of folds (years): 15
-      Fold 1: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2017), np.int32(2018)], Train shape = (1436, 29), Test shape = (722, 29)
-      Fold 2: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2018), np.int32(2019)], Train shape = (1426, 29), Test shape = (722, 29)
-      Fold 3: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2019), np.int32(2020), np.int32(2021)], Train shape = (1423, 29), Test shape = (722, 29)
-      Fold 4: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2021), np.int32(2022)], Train shape = (1422, 29), Test shape = (722, 29)
-      Fold 5: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1430, 29), Test shape = (722, 29)
-      Fold 6: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2019)], Train shape = (1433, 29), Test shape = (722, 29)
-      Fold 7: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2019), np.int32(2020), np.int32(2021)], Train shape = (1416, 29), Test shape = (722, 29)
-      Fold 8: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2021), np.int32(2022)], Train shape = (1415, 29), Test shape = (722, 29)
-      Fold 9: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1423, 29), Test shape = (722, 29)
-      Fold 10: Test Year(s) = [np.int32(2018), np.int32(2019), np.int32(2020), np.int32(2021)], Train shape = (1430, 29), Test shape = (722, 29)
-      Fold 11: Test Year(s) = [np.int32(2018), np.int32(2019), np.int32(2021), np.int32(2022)], Train shape = (1418, 29), Test shape = (722, 29)
-      Fold 12: Test Year(s) = [np.int32(2018), np.int32(2019), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1426, 29), Test shape = (722, 29)
-      Fold 13: Test Year(s) = [np.int32(2019), np.int32(2020), np.int32(2021), np.int32(2022)], Train shape = (1430, 29), Test shape = (722, 29)
-      Fold 14: Test Year(s) = [np.int32(2019), np.int32(2020), np.int32(2021), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1423, 29), Test shape = (722, 29)
-      Fold 15: Test Year(s) = [np.int32(2021), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1437, 29), Test shape = (722, 29)
+      Fold 1: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2017)], Train shape = (1276, 25), Test shape = (641, 25)
+      Fold 2: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2019)], Train shape = (1262, 25), Test shape = (640, 25)
+      Fold 3: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2019), np.int32(2020)], Train shape = (1261, 25), Test shape = (641, 25)
+      Fold 4: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2020), np.int32(2022)], Train shape = (1262, 25), Test shape = (640, 25)
+      Fold 5: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1268, 25), Test shape = (641, 25)
+      Fold 6: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2019)], Train shape = (1269, 25), Test shape = (641, 25)
+      Fold 7: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2019), np.int32(2020)], Train shape = (1254, 25), Test shape = (642, 25)
+      Fold 8: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2020), np.int32(2022)], Train shape = (1255, 25), Test shape = (641, 25)
+      Fold 9: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1261, 25), Test shape = (642, 25)
+      Fold 10: Test Year(s) = [np.int32(2017), np.int32(2018), np.int32(2019), np.int32(2020)], Train shape = (1267, 25), Test shape = (641, 25)
+      Fold 11: Test Year(s) = [np.int32(2017), np.int32(2018), np.int32(2019), np.int32(2020), np.int32(2022)], Train shape = (1253, 25), Test shape = (640, 25)
+      Fold 12: Test Year(s) = [np.int32(2017), np.int32(2018), np.int32(2019), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1259, 25), Test shape = (641, 25)
+      Fold 13: Test Year(s) = [np.int32(2019), np.int32(2020), np.int32(2022)], Train shape = (1267, 25), Test shape = (641, 25)
+      Fold 14: Test Year(s) = [np.int32(2019), np.int32(2020), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1258, 25), Test shape = (642, 25)
+      Fold 15: Test Year(s) = [np.int32(2020), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1274, 25), Test shape = (641, 25)
 
 Running Optuna Pilot Study (50 trials) for normalization calibration...
-  [cache] write cache_pilot_500ETF_506cfa83eaab7dbe.joblib
+  [cache] write cache_pilot_500ETF_473f118fa46691ea.joblib
 
   [DIAGNOSTICS] Optuna Pilot Study Details:
     Total pilot trials loaded/run: 50
-    Raw metrics distribution across pilot study:
-      M1 (Tail IC IR)     : Min = -0.4204, Median = 1.8405, Max = 2.2064, MAD = 0.1106
-      M2 (Tail IC Mean)   : Min = -0.0322, Median = 0.2462, Max = 0.2681, MAD = 0.0054
-      M3 (Hit Rate)       : Min = 0.2000, Median = 1.0000, Max = 1.0000, MAD = 1.0000
-      M4 (Overall IC)     : Min = -0.0180, Median = 0.1678, Max = 0.1779, MAD = 0.0069
-      M5 (Monotonicity)   : Min = 0.0091, Median = 0.6261, Max = 0.7406, MAD = 0.0552
-      M6 (Top-Bot Spread) : Min = 0.0483, Median = 0.7925, Max = 0.8573, MAD = 0.0317
-      M7 (Parsimony)      : Min = -19.7881, Median = -0.5289, Max = -0.0000, MAD = 0.1449
-      M8 (Coef Bloat)     : Min = -1.8214, Median = -0.6209, Max = -0.0000, MAD = 0.1445
-Normalizing constants calibrated from Pilot run:
-  M1: Median=1.840499, MAD=0.110612
-  M2: Median=0.246153, MAD=0.005427
-  M3: Median=1.000000, MAD=1.000000
-  M4: Median=0.167807, MAD=0.006876
-  M5: Median=0.626061, MAD=0.055152
-  M6: Median=0.792487, MAD=0.031666
-  M7: Median=-0.528863, MAD=0.144853
-  M8: Median=-0.620865, MAD=0.144540
+    Raw CV metrics distribution across pilot study:
+      M1 (Tail IC IR)     : Min = -0.1884, Median = 1.2128, Max = 1.4650
+      M2 (Tail IC Mean)   : Min = -0.0092, Median = 0.2055, Max = 0.2772
+      M3 (Hit Rate)       : Min = 0.2222, Median = 0.8889, Max = 1.0000
+      M4 (Overall IC)     : Min = -0.0144, Median = 0.1254, Max = 0.1690
+      M5 (Monotonicity)   : Min = 0.0721, Median = 0.4781, Max = 0.6094
+      M6 (Top-Bot Spread) : Min = 0.0629, Median = 0.6399, Max = 0.9730
+      M7 (Parsimony)      : Min = -12.2947, Median = -3.2132, Max = -0.0000
+      M8 (Coef Bloat)     : Min = -1.9280, Median = -1.1874, Max = -0.0000
+    Selection Validation metrics distribution across pilot study:
+      Val IC              : Min = 0.0000, Median = 0.1059, Max = 0.1534, MAD = 0.0176
+      Val Tail IC         : Min = -0.0784, Median = 0.2954, Max = 0.3663, MAD = 0.0407
+      Val Monotonicity    : Min = -0.1758, Median = 0.2061, Max = 0.5394, MAD = 0.0970
+      Val Top-Bot Spread  : Min = -0.1309, Median = 0.3777, Max = 0.5501, MAD = 0.0748
+Normalizing constants calibrated from Pilot run (Selection Validation):
+  Val1: Median=0.105895, MAD=0.017578
+  Val2: Median=0.295376, MAD=0.040708
+  Val3: Median=0.206061, MAD=0.096970
+  Val4: Median=0.377692, MAD=0.074768
 
 Running main Optuna Study (100 trials) with First-Principles Multi-Metric Objective...
 
   [DIAGNOSTICS] Main Optuna Study Trial Summary:
     Total trials run: 100
-    Successful complete trials: 67
-    Pruned/Failed trials: 33
+    Successful complete trials: 71
+    Pruned/Failed trials: 29
     Pruning reason breakdown:
-      - M4 (Overall IC <= 0): 13 times
-      - M3 (Hit Rate < 60%): 14 times
-      - M5 (Monotonicity <= 0.25): 14 times
+      - M4 (Overall IC <= 0): 10 times
+      - M3 (Hit Rate < 60%): 10 times
+      - M5 (Monotonicity <= 0.25): 10 times
       - M6 (Top-Bottom Spread <= 0): 0 times
       - exceeds ESS-based cap: 19 times
 
   [DIAGNOSTICS] Objective Progression (Optimization path):
-    Trial   1: Best Objective = -0.9189 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 0.6983763112339596, 'skglm_huber_l1_alpha': 1.7102638873351042e-05, 'skglm_huber_delta': 2.098225347433517}
-    Trial   7: Best Objective = +0.0833 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.5648601216066645, 'skglm_mcp_alpha': 0.005900872749399669, 'skglm_mcp_gamma': 5.133111301795983, 'skglm_mcp_delta': 1.536679165776195}
-    Trial   8: Best Objective = +0.4320 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.7497676211041708, 'skglm_mcp_alpha': 0.004096186778834323, 'skglm_mcp_gamma': 1.5832776607899943, 'skglm_mcp_delta': 1.1175210007673757}
-    Trial  12: Best Objective = +1.0080 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 0.5140861158401975, 'skglm_huber_l1_alpha': 0.023405357666718838, 'skglm_huber_delta': 1.4517597763628218}
-    Trial  29: Best Objective = +1.0749 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.26905488278969036, 'skglm_mcp_alpha': 1.3433137558206614e-05, 'skglm_mcp_gamma': 3.4516305297980976, 'skglm_mcp_delta': 0.7282337142875284}
-    Trial  59: Best Objective = +1.1609 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.2510970168757752, 'skglm_mcp_alpha': 4.2148033295473526e-05, 'skglm_mcp_gamma': 9.328750426149231, 'skglm_mcp_delta': 0.955593004697017}
-    Trial  62: Best Objective = +1.1856 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.21668381976606138, 'skglm_mcp_alpha': 4.182242944145655e-05, 'skglm_mcp_gamma': 9.844679014871963, 'skglm_mcp_delta': 0.9375263824514001}
-    Trial  90: Best Objective = +1.1886 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.3149588168885038, 'skglm_mcp_alpha': 0.0012995715043389899, 'skglm_mcp_gamma': 9.192927870252282, 'skglm_mcp_delta': 0.5003696394441529}
-    Trial  91: Best Objective = +1.3012 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.3035012168576243, 'skglm_mcp_alpha': 2.216196048530558e-05, 'skglm_mcp_gamma': 8.726759593786715, 'skglm_mcp_delta': 0.5565316400483803}
+    Trial   0: Best Objective = -0.4761 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.4295298499403335, 'skglm_mcp_alpha': 0.0015629355860364129, 'skglm_mcp_gamma': 5.25199810290351, 'skglm_mcp_delta': 4.159249107560578}
+    Trial  15: Best Objective = -0.2651 | params = {'model_type': 'skglm_mcp', 'k_weight': 1.118012625973634, 'skglm_mcp_alpha': 1.4569247184773381e-05, 'skglm_mcp_gamma': 8.609730107188213, 'skglm_mcp_delta': 1.7613412086603728}
+    Trial  22: Best Objective = -0.1133 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 0.557754420933949, 'skglm_huber_l1_alpha': 1.676369979311337e-05, 'skglm_huber_delta': 0.5433928763002496}
+    Trial  23: Best Objective = +0.1787 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 0.7352008523879915, 'skglm_huber_l1_alpha': 1.776700649616828e-05, 'skglm_huber_delta': 4.978079981081904}
+    Trial  34: Best Objective = +0.4162 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 0.8166663266204411, 'skglm_huber_l1_alpha': 1.0452994748234375e-05, 'skglm_huber_delta': 0.9735927439065302}
+    Trial  68: Best Objective = +0.4177 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 0.9147208562299234, 'skglm_huber_l1_alpha': 0.00010431638018294137, 'skglm_huber_delta': 0.9148324401129716}
+    Trial  76: Best Objective = +0.4565 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 1.0050376352997394, 'skglm_huber_l1_alpha': 2.795853205549933e-05, 'skglm_huber_delta': 0.8626589333137316}
+    Trial  81: Best Objective = +0.5049 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 0.9264282228840355, 'skglm_huber_l1_alpha': 2.5483185966309185e-05, 'skglm_huber_delta': 0.9874750547496661}
+    Trial  82: Best Objective = +0.6859 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 0.9012159277574849, 'skglm_huber_l1_alpha': 2.7320611946233476e-05, 'skglm_huber_delta': 0.9678736393000209}
 
 Best hyperparameters found by Optuna:
-  model_type: skglm_mcp
-  k_weight: 0.3035012168576243
-  skglm_mcp_alpha: 2.216196048530558e-05
-  skglm_mcp_gamma: 8.726759593786715
-  skglm_mcp_delta: 0.5565316400483803
-Best trial raw metrics:
-  M1 (Tail IC IR):      2.0839
-  M2 (Tail IC Mean):    0.2519
-  M3 (Hit Rate):        1.0000
-  M4 (Overall IC):      0.1783
-  Deflated CV Overall IC: 0.1471
-  M5 (Monotonicity):    0.7139
-  M6 (Top-Bot Spread):  0.8060
-  M7 (Parsimony):       -0.4493
-  M8 (Coef Bloat):      -0.5384
+  model_type: skglm_huber_l1
+  k_weight: 0.9012159277574849
+  skglm_huber_l1_alpha: 2.7320611946233476e-05
+  skglm_huber_delta: 0.9678736393000209
+Best trial raw metrics (CV Folds):
+  M1 (Tail IC IR):      1.4197
+  M2 (Tail IC Mean):    0.2661
+  M3 (Hit Rate):        0.8889
+  M4 (Overall IC):      0.1524
+  Deflated CV Overall IC: 0.1162
+  M5 (Monotonicity):    0.5300
+  M6 (Top-Bot Spread):  0.9143
+  M7 (Parsimony):       -0.6576
+  M8 (Coef Bloat):      -0.9029
+Best trial Selection Validation metrics:
+  Val Overall IC:       0.0924
+  Val Tail IC:          0.3182
+  Val Monotonicity:     0.6970
+  Val Top-Bot Spread:   0.3937
 
   [DIAGNOSTICS] Final Model Diagnostics:
-    Effective Sample Size (ESS) under tail-focus: 1936.2 / 2166 (89.4%)
+    Effective Sample Size (ESS) under tail-focus: 1083.5 / 2166 (50.0%)
     ESS is healthy.
-    Model Weight Concentration (Gini Index): 0.4106
-    Raw Design Matrix Condition Number: 4995548.50
-    Regularized Normal Equations Condition Number (kappa): 2062303.00
+    Model Weight Concentration (Gini Index): 0.3824
+    Raw Design Matrix Condition Number: 4799469.00
+    Regularized Normal Equations Condition Number (kappa): 1539992.62
 
   [DIAGNOSTICS] Execution Time Profiling:
     data_loading        :    0.1s
-    feature_selection   :    1.5s
+    feature_selection   :    2.4s
     loyo_folds          :    0.1s
-    pilot_study         :    1.6s
-    main_study          :    3.5s
-    final_refit         :    0.0s
-    Total Duration      :    6.8s
-[500ETF] elapsed 6.9s
+    pilot_study         :    1.8s
+    main_study          :    2.7s
+    final_refit         :    0.2s
+    Total Duration      :    7.4s
+[500ETF] elapsed 7.4s
 
 ================================================================================
 Starting First-Principles Training for 588000ETF (Side: single)
@@ -533,184 +550,176 @@ Starting First-Principles Training for 588000ETF (Side: single)
 ================================================================================
 Loaded 1294 samples and 238 features.
 Split: Working=738 rows (Lockbox OOS data ignored during training).
+       Selection Train=521 rows, Selection Val=217 rows.
 Running feature screening...
-Screened features: 85 surviving candidates.
+Screened features: 63 surviving candidates.
 Running stability selection...
 Running iterative VIF pruning...
-    [VIF Pruning] Drop feature 'rsi_opening' (VIF: 13.79 > 10.0)
-VIF pruning finished. Dropped 1 collinear features. Kept 38 representatives.
-  [cache] write cache_select_588000ETF_a2e5dd93614e1817.joblib
+    [VIF Pruning] Drop feature 'vwap_slope_intraday' (VIF: 27.25 > 10.0)
+    [VIF Pruning] Drop feature 'net_volume_flow' (VIF: 21.04 > 10.0)
+VIF pruning finished. Dropped 2 collinear features. Kept 28 representatives.
+  [cache] write cache_select_588000ETF_66ad2cddf70da2ba.joblib
 
   [DIAGNOSTICS] Feature Screening (Step 1) Details:
     Total features input: 238
-    Features passing BH-FDR (FDR=0.4): 85
-    No fallback needed. Kept 85 features.
-    Spearman rho absolute values - Min: 0.0000, Median: 0.0352, Max: 0.1859
-    p-values - Min: 2.86e-07, Median: 0.3390, Max: 1.0000
+    Features passing BH-FDR (FDR=0.4): 63
+    No fallback needed. Kept 63 features.
+    Spearman rho absolute values - Min: 0.0000, Median: 0.0447, Max: 0.1271
+    p-values - Min: 3.51e-03, Median: 0.3076, Max: 1.0000
     Top 5 positive Spearman correlations:
-      - volume_weighted_price_position: rho = +0.1859, p = 2.86e-07
-      - open_to_current_return: rho = +0.1477, p = 5.11e-05
-      - first_30min_return: rho = +0.1477, p = 5.11e-05
-      - rally_strength_max: rho = +0.1463, p = 5.99e-05
-      - opening_auction_imbalance: rho = +0.1440, p = 7.85e-05
+      - volume_weighted_price_position: rho = +0.1271, p = 3.51e-03
+      - open_to_current_return: rho = +0.1256, p = 3.93e-03
+      - first_30min_return: rho = +0.1256, p = 3.93e-03
+      - high_low_sequence_momentum: rho = +0.1217, p = 5.23e-03
+      - rsi_opening: rho = +0.1217, p = 5.23e-03
     Top 5 negative Spearman correlations:
-      - pullback_depth_max: rho = -0.1291, p = 4.12e-04
-      - late_bar_momentum: rho = -0.1134, p = 1.96e-03
-      - upper_wick_dominance: rho = -0.1016, p = 5.60e-03
-      - pullback_ratio: rho = -0.0978, p = 7.67e-03
-      - pullback_depth_ratio: rho = -0.0977, p = 7.71e-03
+      - early_kurtosis: rho = -0.1087, p = 1.28e-02
+      - pullback_depth_max: rho = -0.0985, p = 2.42e-02
+      - capital_net_ratio: rho = -0.0958, p = 2.83e-02
+      - pullback_depth_ratio: rho = -0.0888, p = 4.24e-02
+      - volume_concentration: rho = -0.0868, p = 4.72e-02
 
   [DIAGNOSTICS] Stability Selection (Step 2) Details:
-    Features input to Stability Selection: 85
-    Features with stability score >= 0.6: 49
-    No fallback needed. Kept 38 features.
-    Stability score percentiles on screened features - 25%: 0.51, 50%: 0.67, 75%: 0.85, 90%: 0.95, 95%: 0.97
+    Features input to Stability Selection: 63
+    Features with stability score >= 0.6: 63
+    No fallback needed. Kept 28 features.
+    Stability score percentiles on screened features - 25%: 0.91, 50%: 0.99, 75%: 1.00, 90%: 1.00, 95%: 1.00
     Stability selected features & scores:
-      - capital_net_ratio: score = 0.97
-      - yesterday_day_late_mom: score = 0.82
-      - vix_iv_spread: score = 0.97
-      - vol60: score = 0.93
+      - bar_body_rng_2: score = 1.00
+      - close_above_open_count: score = 1.00
+      - consecutive_down_closes: score = 1.00
+      - close_vs_open_range: score = 1.00
+      - bar_vwap_dev_3: score = 1.00
+      - momentum_divergence: score = 1.00
       - volume_concentration: score = 1.00
-      - yesterday_day_kurtosis: score = 0.87
-      - bar_ret_0: score = 0.85
-      - volume_surge_direction: score = 0.95
-      - pullback_depth_max: score = 0.78
-      - volume_weighted_price_position: score = 0.96
-      - rally_strength_max: score = 0.75
-      - upper_shadow_rejection: score = 0.83
-      - upper_wick_dominance: score = 0.90
-      - volume_percentile_20d: score = 0.95
-      - yesterday_first_bar_volume: score = 0.87
-      - bar_vol_5: score = 0.75
-      - aroon_osc: score = 0.94
-      - sma20_dist: score = 1.00
-      - volume_sma_ratio_long: score = 0.76
-      - bar_body_rng_2: score = 0.95
-      - momentum_divergence: score = 0.93
-      - bar_vwap_dev_3: score = 0.76
-      - intraday_close_position: score = 0.94
-      - consecutive_higher_highs: score = 0.65
-      - consecutive_lower_lows: score = 0.73
-      - consecutive_down_closes: score = 0.77
-      - consecutive_bullish_engulfing: score = 0.84
-      - bar_body_rng_1: score = 0.96
-      - late_bar_momentum: score = 0.67
-      - vwap_cross_count: score = 0.81
-      - barbed_wire_intensity: score = 0.78
-      - volatility_percentile_20d: score = 0.98
-      - early_skew: score = 0.90
-      - early_kurtosis: score = 0.94
+      - yesterday_day_kurtosis: score = 1.00
+      - bar_body_rng_1: score = 1.00
+      - bar_body_rng_0: score = 1.00
+      - max_down_ret: score = 0.99
+      - rally_strength_max: score = 1.00
+      - volume_weighted_price_position: score = 0.99
+      - max_up_ret: score = 1.00
+      - pullback_depth_max: score = 1.00
+      - capital_net_ratio: score = 1.00
+      - vix_iv_ratio: score = 1.00
+      - bar_vol_4: score = 1.00
+      - yesterday_first_bar_volume: score = 1.00
+      - volume_percentile_20d: score = 1.00
+      - upper_shadow_rejection: score = 1.00
+      - upper_wick_dominance: score = 1.00
+      - early_kurtosis: score = 1.00
+      - bar_rng_5: score = 0.99
       - range_expansion_final_bar: score = 0.99
-      - bar_rng_5: score = 0.66
-      - decision_bar_body: score = 0.82
-      - yesterday_first_bar_return: score = 0.87
-Stability selection finished. Kept 38 features.
+      - roc10: score = 1.00
+      - sma200_dist: score = 1.00
+      - yesterday_first_bar_return: score = 1.00
+Stability selection finished. Kept 28 features.
 
   [DIAGNOSTICS] Selected Feature Quality:
-    Selected Features Condition Number: 8.98
+    Selected Features Condition Number: 9.86
     Feature matrix is numerically stable.
     No highly collinear feature pairs found.
-  [cache] write cache_loyo_588000ETF_6c896cc14052fcf9.joblib
+  [cache] write cache_loyo_588000ETF_d3a294299edea7ea.joblib
 
   [DIAGNOSTICS] LOYO CV Folds Details:
     Number of folds (years): 15
-      Fold 1: Test Year(s) = [np.int32(2021), np.int32(2022)], Train shape = (486, 38), Test shape = (246, 38)
-      Fold 2: Test Year(s) = [np.int32(2021), np.int32(2022)], Train shape = (474, 38), Test shape = (246, 38)
-      Fold 3: Test Year(s) = [np.int32(2021), np.int32(2022), np.int32(2023)], Train shape = (472, 38), Test shape = (246, 38)
-      Fold 4: Test Year(s) = [np.int32(2021), np.int32(2023)], Train shape = (471, 38), Test shape = (246, 38)
-      Fold 5: Test Year(s) = [np.int32(2021), np.int32(2023), np.int32(2024)], Train shape = (478, 38), Test shape = (246, 38)
-      Fold 6: Test Year(s) = [np.int32(2021), np.int32(2022)], Train shape = (478, 38), Test shape = (246, 38)
-      Fold 7: Test Year(s) = [np.int32(2021), np.int32(2022), np.int32(2023)], Train shape = (464, 38), Test shape = (246, 38)
-      Fold 8: Test Year(s) = [np.int32(2021), np.int32(2022), np.int32(2023)], Train shape = (463, 38), Test shape = (246, 38)
-      Fold 9: Test Year(s) = [np.int32(2021), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (470, 38), Test shape = (246, 38)
-      Fold 10: Test Year(s) = [np.int32(2022), np.int32(2023)], Train shape = (480, 38), Test shape = (246, 38)
-      Fold 11: Test Year(s) = [np.int32(2022), np.int32(2023)], Train shape = (465, 38), Test shape = (246, 38)
-      Fold 12: Test Year(s) = [np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (472, 38), Test shape = (246, 38)
-      Fold 13: Test Year(s) = [np.int32(2022), np.int32(2023)], Train shape = (477, 38), Test shape = (246, 38)
-      Fold 14: Test Year(s) = [np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (470, 38), Test shape = (246, 38)
-      Fold 15: Test Year(s) = [np.int32(2023), np.int32(2024)], Train shape = (484, 38), Test shape = (246, 38)
+      Fold 1: Test Year(s) = [np.int32(2022)], Train shape = (340, 28), Test shape = (173, 28)
+      Fold 2: Test Year(s) = [np.int32(2022), np.int32(2023)], Train shape = (329, 28), Test shape = (173, 28)
+      Fold 3: Test Year(s) = [np.int32(2022), np.int32(2023)], Train shape = (330, 28), Test shape = (173, 28)
+      Fold 4: Test Year(s) = [np.int32(2022), np.int32(2023)], Train shape = (328, 28), Test shape = (173, 28)
+      Fold 5: Test Year(s) = [np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (334, 28), Test shape = (173, 28)
+      Fold 6: Test Year(s) = [np.int32(2022), np.int32(2023)], Train shape = (334, 28), Test shape = (174, 28)
+      Fold 7: Test Year(s) = [np.int32(2022), np.int32(2023)], Train shape = (322, 28), Test shape = (174, 28)
+      Fold 8: Test Year(s) = [np.int32(2022), np.int32(2023)], Train shape = (320, 28), Test shape = (174, 28)
+      Fold 9: Test Year(s) = [np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (326, 28), Test shape = (174, 28)
+      Fold 10: Test Year(s) = [np.int32(2022), np.int32(2023)], Train shape = (336, 28), Test shape = (174, 28)
+      Fold 11: Test Year(s) = [np.int32(2022), np.int32(2023)], Train shape = (324, 28), Test shape = (174, 28)
+      Fold 12: Test Year(s) = [np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (330, 28), Test shape = (174, 28)
+      Fold 13: Test Year(s) = [np.int32(2023)], Train shape = (337, 28), Test shape = (174, 28)
+      Fold 14: Test Year(s) = [np.int32(2023), np.int32(2024)], Train shape = (331, 28), Test shape = (174, 28)
+      Fold 15: Test Year(s) = [np.int32(2023), np.int32(2024)], Train shape = (341, 28), Test shape = (174, 28)
 
 Running Optuna Pilot Study (50 trials) for normalization calibration...
-  [cache] write cache_pilot_588000ETF_88a9bb69644e3b04.joblib
+  [cache] write cache_pilot_588000ETF_af26e8eede1adf26.joblib
 
   [DIAGNOSTICS] Optuna Pilot Study Details:
     Total pilot trials loaded/run: 50
-    Raw metrics distribution across pilot study:
-      M1 (Tail IC IR)     : Min = -0.4586, Median = 3.2152, Max = 10.4123, MAD = 1.5923
-      M2 (Tail IC Mean)   : Min = -0.0639, Median = 0.2385, Max = 0.3316, MAD = 0.0250
-      M3 (Hit Rate)       : Min = 0.5000, Median = 1.0000, Max = 1.0000, MAD = 1.0000
-      M4 (Overall IC)     : Min = -0.0888, Median = 0.1406, Max = 0.1785, MAD = 0.0121
-      M5 (Monotonicity)   : Min = -0.2712, Median = 0.5955, Max = 0.7424, MAD = 0.0682
-      M6 (Top-Bot Spread) : Min = -0.0945, Median = 0.6652, Max = 0.8317, MAD = 0.0903
-      M7 (Parsimony)      : Min = -15.7301, Median = -5.6288, Max = -0.0000, MAD = 5.1140
-      M8 (Coef Bloat)     : Min = -2.0108, Median = -1.2083, Max = -0.0000, MAD = 0.6179
-Normalizing constants calibrated from Pilot run:
-  M1: Median=3.215161, MAD=1.592310
-  M2: Median=0.238463, MAD=0.025035
-  M3: Median=1.000000, MAD=1.000000
-  M4: Median=0.140602, MAD=0.012094
-  M5: Median=0.595455, MAD=0.068182
-  M6: Median=0.665247, MAD=0.090341
-  M7: Median=-5.628806, MAD=5.113974
-  M8: Median=-1.208271, MAD=0.617928
+    Raw CV metrics distribution across pilot study:
+      M1 (Tail IC IR)     : Min = -1.3432, Median = 1.2063, Max = 11.8591
+      M2 (Tail IC Mean)   : Min = -0.1213, Median = 0.1814, Max = 0.3186
+      M3 (Hit Rate)       : Min = 0.0000, Median = 1.0000, Max = 1.0000
+      M4 (Overall IC)     : Min = -0.0568, Median = 0.1452, Max = 0.2168
+      M5 (Monotonicity)   : Min = -0.2788, Median = 0.4505, Max = 0.7091
+      M6 (Top-Bot Spread) : Min = -0.2421, Median = 0.4772, Max = 0.9894
+      M7 (Parsimony)      : Min = -17.4788, Median = -1.4894, Max = -0.0000
+      M8 (Coef Bloat)     : Min = -1.9270, Median = -0.4359, Max = -0.0000
+    Selection Validation metrics distribution across pilot study:
+      Val IC              : Min = 0.0000, Median = 0.1457, Max = 0.1889, MAD = 0.0259
+      Val Tail IC         : Min = 0.0000, Median = 0.2693, Max = 0.3754, MAD = 0.0440
+      Val Monotonicity    : Min = -0.3939, Median = 0.5515, Max = 0.8545, MAD = 0.1091
+      Val Top-Bot Spread  : Min = 0.0000, Median = 0.4366, Max = 0.8708, MAD = 0.1824
+Normalizing constants calibrated from Pilot run (Selection Validation):
+  Val1: Median=0.145696, MAD=0.025880
+  Val2: Median=0.269346, MAD=0.044006
+  Val3: Median=0.551515, MAD=0.109091
+  Val4: Median=0.436618, MAD=0.182379
 
 Running main Optuna Study (100 trials) with First-Principles Multi-Metric Objective...
 
   [DIAGNOSTICS] Main Optuna Study Trial Summary:
     Total trials run: 100
-    Successful complete trials: 31
-    Pruned/Failed trials: 69
+    Successful complete trials: 25
+    Pruned/Failed trials: 75
     Pruning reason breakdown:
-      - M4 (Overall IC <= 0): 13 times
-      - M3 (Hit Rate < 60%): 12 times
-      - M5 (Monotonicity <= 0.25): 14 times
-      - M6 (Top-Bottom Spread <= 0): 13 times
-      - exceeds ESS-based cap: 55 times
+      - M4 (Overall IC <= 0): 26 times
+      - M3 (Hit Rate < 60%): 25 times
+      - M5 (Monotonicity <= 0.25): 28 times
+      - M6 (Top-Bottom Spread <= 0): 26 times
+      - exceeds ESS-based cap: 47 times
 
   [DIAGNOSTICS] Objective Progression (Optimization path):
-    Trial  15: Best Objective = -0.1130 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.4756138080964848, 'skglm_mcp_alpha': 0.020799658522101964, 'skglm_mcp_gamma': 3.2745564427340015, 'skglm_mcp_delta': 0.6306448588032438}
-    Trial  49: Best Objective = +0.2123 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.3665634110522079, 'skglm_mcp_alpha': 0.09289852747318389, 'skglm_mcp_gamma': 5.787580837139681, 'skglm_mcp_delta': 4.356580085478495}
-    Trial  50: Best Objective = +0.3214 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.3470001350884868, 'skglm_mcp_alpha': 0.09691830357945282, 'skglm_mcp_gamma': 5.604778920676404, 'skglm_mcp_delta': 4.3486829960414495}
-    Trial  53: Best Objective = +0.7311 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.3632418943882441, 'skglm_mcp_alpha': 0.06229740473774575, 'skglm_mcp_gamma': 4.961067875035886, 'skglm_mcp_delta': 4.290641038364389}
-    Trial  57: Best Objective = +0.8858 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.3386417599162779, 'skglm_mcp_alpha': 0.06308010656787412, 'skglm_mcp_gamma': 4.582182147414144, 'skglm_mcp_delta': 4.300788787433652}
-    Trial  59: Best Objective = +0.9149 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.37356775710236334, 'skglm_mcp_alpha': 0.033223223777154885, 'skglm_mcp_gamma': 4.746407036723237, 'skglm_mcp_delta': 4.149038859583924}
-    Trial  60: Best Objective = +1.2331 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.36358219544416237, 'skglm_mcp_alpha': 0.02773654634529431, 'skglm_mcp_gamma': 4.869099745780817, 'skglm_mcp_delta': 4.184509662546571}
-    Trial  84: Best Objective = +1.3484 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.40763510989326035, 'skglm_mcp_alpha': 0.050494164328991474, 'skglm_mcp_gamma': 4.633730178348408, 'skglm_mcp_delta': 4.60298125797692}
-    Trial  89: Best Objective = +1.7165 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.24833696210401648, 'skglm_mcp_alpha': 0.044863067606254706, 'skglm_mcp_gamma': 4.338591749713884, 'skglm_mcp_delta': 4.6395221684573285}
+    Trial   9: Best Objective = +0.2538 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 0.33023801697486244, 'skglm_huber_l1_alpha': 0.03746150773748657, 'skglm_huber_delta': 3.197916526255045}
+    Trial  10: Best Objective = +0.4497 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 0.8815955153446378, 'skglm_huber_l1_alpha': 0.07830106423809917, 'skglm_huber_delta': 1.2299379745628782}
+    Trial  24: Best Objective = +0.5408 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 1.3492021904705438, 'skglm_huber_l1_alpha': 0.22575593054048576, 'skglm_huber_delta': 3.4043464912323724}
 
 Best hyperparameters found by Optuna:
-  model_type: skglm_mcp
-  k_weight: 0.24833696210401648
-  skglm_mcp_alpha: 0.044863067606254706
-  skglm_mcp_gamma: 4.338591749713884
-  skglm_mcp_delta: 4.6395221684573285
-Best trial raw metrics:
-  M1 (Tail IC IR):      1.6094
-  M2 (Tail IC Mean):    0.3328
+  model_type: skglm_huber_l1
+  k_weight: 1.3492021904705438
+  skglm_huber_l1_alpha: 0.22575593054048576
+  skglm_huber_delta: 3.4043464912323724
+Best trial raw metrics (CV Folds):
+  M1 (Tail IC IR):      1.7121
+  M2 (Tail IC Mean):    0.2988
   M3 (Hit Rate):        1.0000
-  M4 (Overall IC):      0.1881
-  Deflated CV Overall IC: 0.1345
-  M5 (Monotonicity):    0.7242
-  M6 (Top-Bot Spread):  0.9448
-  M7 (Parsimony):       -0.7912
-  M8 (Coef Bloat):      -0.3656
+  M4 (Overall IC):      0.1616
+  Deflated CV Overall IC: 0.0980
+  M5 (Monotonicity):    0.4545
+  M6 (Top-Bot Spread):  1.0093
+  M7 (Parsimony):       -0.5781
+  M8 (Coef Bloat):      -0.1419
+Best trial Selection Validation metrics:
+  Val Overall IC:       0.2003
+  Val Tail IC:          0.1784
+  Val Monotonicity:     0.8545
+  Val Top-Bot Spread:   0.8269
 
   [DIAGNOSTICS] Final Model Diagnostics:
-    Effective Sample Size (ESS) under tail-focus: 682.5 / 738 (92.5%)
+    Effective Sample Size (ESS) under tail-focus: 320.9 / 738 (43.5%)
     ESS is healthy.
-    Model Weight Concentration (Gini Index): 0.7369
-    Raw Design Matrix Condition Number: 8.98
-    Regularized Normal Equations Condition Number (kappa): 75.99
+    Model Weight Concentration (Gini Index): 0.9578
+    [WARNING] Extremely high weight concentration! A very small subset of features dominates the model.
+    Raw Design Matrix Condition Number: 9.61
+    Regularized Normal Equations Condition Number (kappa): 68.86
 
   [DIAGNOSTICS] Execution Time Profiling:
     data_loading        :    0.1s
-    feature_selection   :    1.4s
-    loyo_folds          :    0.1s
+    feature_selection   :    1.3s
+    loyo_folds          :    0.0s
     pilot_study         :    1.3s
-    main_study          :    2.4s
+    main_study          :    2.6s
     final_refit         :    0.0s
-    Total Duration      :    5.2s
-[588000ETF] elapsed 5.2s
+    Total Duration      :    5.3s
+[588000ETF] elapsed 5.4s
 
 ================================================================================
 Starting First-Principles Training for 159915ETF (Side: single)
@@ -718,162 +727,167 @@ Starting First-Principles Training for 159915ETF (Side: single)
 ================================================================================
 Loaded 2722 samples and 238 features.
 Split: Working=2166 rows (Lockbox OOS data ignored during training).
-Running feature screening...
-Screened features: 114 surviving candidates.
-Running stability selection...
-Running iterative VIF pruning...
-VIF pruning finished. Dropped 0 collinear features. Kept 23 representatives.
-  [cache] write cache_select_159915ETF_7523b82301bd5fdb.joblib
+       Selection Train=1923 rows, Selection Val=243 rows.
+  [cache] hit   cache_select_159915ETF_e5ddd89f5a4fbc05.joblib
 
   [DIAGNOSTICS] Feature Screening (Step 1) Details:
     Total features input: 238
-    Features passing BH-FDR (FDR=0.4): 114
-    No fallback needed. Kept 114 features.
-    Spearman rho absolute values - Min: 0.0000, Median: 0.0272, Max: 0.1361
-    p-values - Min: 1.63e-10, Median: 0.2050, Max: 1.0000
+    Features passing BH-FDR (FDR=0.4): 86
+    No fallback needed. Kept 86 features.
+    Spearman rho absolute values - Min: 0.0000, Median: 0.0263, Max: 0.1368
+    p-values - Min: 1.44e-09, Median: 0.2496, Max: 1.0000
     Top 5 positive Spearman correlations:
-      - bar_ret_0: rho = +0.1361, p = 1.63e-10
-      - first_bar_return: rho = +0.1361, p = 1.63e-10
-      - bar_body_rng_0: rho = +0.1271, p = 2.49e-09
-      - max_up_ret: rho = +0.1229, p = 8.49e-09
-      - first_bar_sentiment: rho = +0.1048, p = 9.45e-07
+      - bar_ret_0: rho = +0.1368, p = 1.44e-09
+      - first_bar_return: rho = +0.1368, p = 1.44e-09
+      - bar_body_rng_0: rho = +0.1267, p = 2.15e-08
+      - max_up_ret: rho = +0.1136, p = 5.44e-07
+      - first_bar_sentiment: rho = +0.1083, p = 1.82e-06
     Top 5 negative Spearman correlations:
-      - yesterday_pm_return: rho = -0.0734, p = 6.22e-04
-      - yesterday_day_vwap_dev: rho = -0.0733, p = 6.31e-04
-      - late_bar_momentum: rho = -0.0686, p = 1.39e-03
-      - capital_net_ratio: rho = -0.0648, p = 2.53e-03
-      - pullback_depth_max: rho = -0.0591, p = 5.93e-03
+      - yesterday_day_vwap_dev: rho = -0.0866, p = 1.39e-04
+      - yesterday_pm_return: rho = -0.0835, p = 2.42e-04
+      - late_bar_momentum: rho = -0.0756, p = 8.89e-04
+      - yesterday_day_close_pos: rho = -0.0650, p = 4.30e-03
+      - yesterday_close_position: rho = -0.0650, p = 4.31e-03
 
   [DIAGNOSTICS] Stability Selection (Step 2) Details:
-    Features input to Stability Selection: 114
-    Features with stability score >= 0.6: 25
-    No fallback needed. Kept 23 features.
-    Stability score percentiles on screened features - 25%: 0.17, 50%: 0.32, 75%: 0.56, 90%: 0.87, 95%: 0.92
+    Features input to Stability Selection: 86
+    Features with stability score >= 0.6: 36
+    No fallback needed. Kept 33 features.
+    Stability score percentiles on screened features - 25%: 0.33, 50%: 0.51, 75%: 0.70, 90%: 0.89, 95%: 0.93
     Stability selected features & scores:
-      - capital_net_ratio: score = 0.73
-      - margin_net_buy: score = 0.88
-      - bar_vol_5: score = 0.89
-      - sma20_dist: score = 0.80
-      - macd_hist: score = 0.65
-      - volume_concentration: score = 0.85
-      - early_kurtosis: score = 0.96
-      - inside_bar_failure_bull: score = 0.88
-      - yesterday_early_vwap_dev: score = 1.00
-      - northbound_net: score = 0.81
-      - vix_diff_1d: score = 0.68
-      - bar_vwap_dev_1: score = 0.60
-      - yesterday_gap: score = 0.92
-      - yesterday_opening_gap_reversal: score = 0.79
-      - yesterday_day_vwap_dev: score = 0.98
-      - gap_pct: score = 0.94
-      - first_bar_body_ratio: score = 0.74
       - bb_width: score = 0.94
-      - opening_range_size: score = 0.81
-      - bar_rng_3: score = 0.65
-      - gap_fill_ratio: score = 0.81
-      - bar_ret_0: score = 0.93
-      - max_up_ret: score = 0.73
-Stability selection finished. Kept 23 features.
+      - early_realized_vol: score = 0.68
+      - bar_rng_3: score = 0.83
+      - early_kurtosis: score = 0.87
+      - yesterday_day_close_pos: score = 0.61
+      - yesterday_day_vwap_dev: score = 0.97
+      - gap_pct: score = 0.92
+      - bar_body_rng_2: score = 0.89
+      - bar_vwap_dev_3: score = 0.66
+      - high_low_sequence_momentum: score = 0.69
+      - consecutive_lower_lows: score = 0.72
+      - max_down_ret: score = 0.65
+      - bar_ret_0: score = 0.87
+      - first_bar_sentiment: score = 0.69
+      - max_up_ret: score = 0.64
+      - late_bar_momentum: score = 0.61
+      - first_bar_body_ratio: score = 0.85
+      - upper_wick_dominance: score = 0.64
+      - capital_net_ratio: score = 0.82
+      - margin_net_buy: score = 0.94
+      - inside_bar_failure_bull: score = 0.92
+      - consecutive_bearish_engulfing: score = 0.76
+      - gap_fill_ratio: score = 0.82
+      - roc20: score = 0.72
+      - bar_vol_5: score = 0.91
+      - measured_move_proximity: score = 0.70
+      - yesterday_day_kurtosis: score = 0.65
+      - yesterday_first_30min_return: score = 0.99
+      - yesterday_am_return: score = 0.60
+      - northbound_net: score = 0.93
+      - vix_diff_1d: score = 0.88
+      - volume_concentration: score = 0.86
+      - northbound_sell: score = 0.62
+Stability selection finished. Kept 33 features.
 
   [DIAGNOSTICS] Selected Feature Quality:
-    Selected Features Condition Number: 4.65
+    Selected Features Condition Number: 6.62
     Feature matrix is numerically stable.
     No highly collinear feature pairs found.
-  [cache] write cache_loyo_159915ETF_f8dbd49fd3c9e204.joblib
+  [cache] hit   cache_loyo_159915ETF_c61314b5de6481bc.joblib
 
   [DIAGNOSTICS] LOYO CV Folds Details:
     Number of folds (years): 15
-      Fold 1: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2017), np.int32(2018)], Train shape = (1436, 23), Test shape = (722, 23)
-      Fold 2: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2018), np.int32(2019)], Train shape = (1426, 23), Test shape = (722, 23)
-      Fold 3: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2019), np.int32(2020), np.int32(2021)], Train shape = (1423, 23), Test shape = (722, 23)
-      Fold 4: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2021), np.int32(2022)], Train shape = (1422, 23), Test shape = (722, 23)
-      Fold 5: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1430, 23), Test shape = (722, 23)
-      Fold 6: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2019)], Train shape = (1433, 23), Test shape = (722, 23)
-      Fold 7: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2019), np.int32(2020), np.int32(2021)], Train shape = (1416, 23), Test shape = (722, 23)
-      Fold 8: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2021), np.int32(2022)], Train shape = (1415, 23), Test shape = (722, 23)
-      Fold 9: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1423, 23), Test shape = (722, 23)
-      Fold 10: Test Year(s) = [np.int32(2018), np.int32(2019), np.int32(2020), np.int32(2021)], Train shape = (1430, 23), Test shape = (722, 23)
-      Fold 11: Test Year(s) = [np.int32(2018), np.int32(2019), np.int32(2021), np.int32(2022)], Train shape = (1418, 23), Test shape = (722, 23)
-      Fold 12: Test Year(s) = [np.int32(2018), np.int32(2019), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1426, 23), Test shape = (722, 23)
-      Fold 13: Test Year(s) = [np.int32(2019), np.int32(2020), np.int32(2021), np.int32(2022)], Train shape = (1430, 23), Test shape = (722, 23)
-      Fold 14: Test Year(s) = [np.int32(2019), np.int32(2020), np.int32(2021), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1423, 23), Test shape = (722, 23)
-      Fold 15: Test Year(s) = [np.int32(2021), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1437, 23), Test shape = (722, 23)
-
-Running Optuna Pilot Study (50 trials) for normalization calibration...
-  [cache] write cache_pilot_159915ETF_bf3dc2640e9d3144.joblib
+      Fold 1: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2017)], Train shape = (1276, 33), Test shape = (641, 33)
+      Fold 2: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2019)], Train shape = (1262, 33), Test shape = (640, 33)
+      Fold 3: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2019), np.int32(2020)], Train shape = (1261, 33), Test shape = (641, 33)
+      Fold 4: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2020), np.int32(2022)], Train shape = (1262, 33), Test shape = (640, 33)
+      Fold 5: Test Year(s) = [np.int32(2015), np.int32(2016), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1268, 33), Test shape = (641, 33)
+      Fold 6: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2018), np.int32(2019)], Train shape = (1269, 33), Test shape = (641, 33)
+      Fold 7: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2019), np.int32(2020)], Train shape = (1254, 33), Test shape = (642, 33)
+      Fold 8: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2020), np.int32(2022)], Train shape = (1255, 33), Test shape = (641, 33)
+      Fold 9: Test Year(s) = [np.int32(2016), np.int32(2017), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1261, 33), Test shape = (642, 33)
+      Fold 10: Test Year(s) = [np.int32(2017), np.int32(2018), np.int32(2019), np.int32(2020)], Train shape = (1267, 33), Test shape = (641, 33)
+      Fold 11: Test Year(s) = [np.int32(2017), np.int32(2018), np.int32(2019), np.int32(2020), np.int32(2022)], Train shape = (1253, 33), Test shape = (640, 33)
+      Fold 12: Test Year(s) = [np.int32(2017), np.int32(2018), np.int32(2019), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1259, 33), Test shape = (641, 33)
+      Fold 13: Test Year(s) = [np.int32(2019), np.int32(2020), np.int32(2022)], Train shape = (1267, 33), Test shape = (641, 33)
+      Fold 14: Test Year(s) = [np.int32(2019), np.int32(2020), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1258, 33), Test shape = (642, 33)
+      Fold 15: Test Year(s) = [np.int32(2020), np.int32(2022), np.int32(2023), np.int32(2024)], Train shape = (1274, 33), Test shape = (641, 33)
+  [cache] hit   cache_pilot_159915ETF_eb85b4c0020dd885.joblib
 
   [DIAGNOSTICS] Optuna Pilot Study Details:
     Total pilot trials loaded/run: 50
-    Raw metrics distribution across pilot study:
-      M1 (Tail IC IR)     : Min = -0.5843, Median = 2.5236, Max = 3.0451, MAD = 0.2470
-      M2 (Tail IC Mean)   : Min = -0.0463, Median = 0.3416, Max = 0.3650, MAD = 0.0096
-      M3 (Hit Rate)       : Min = 0.1000, Median = 0.9000, Max = 1.0000, MAD = 1.0000
-      M4 (Overall IC)     : Min = -0.0197, Median = 0.1755, Max = 0.1811, MAD = 0.0029
-      M5 (Monotonicity)   : Min = -0.0721, Median = 0.5818, Max = 0.6448, MAD = 0.0242
-      M6 (Top-Bot Spread) : Min = -0.0762, Median = 1.1003, Max = 1.2332, MAD = 0.0444
-      M7 (Parsimony)      : Min = -21.8395, Median = -0.7504, Max = -0.0000, MAD = 0.4275
-      M8 (Coef Bloat)     : Min = -1.8327, Median = -0.9171, Max = -0.0000, MAD = 0.1963
-Normalizing constants calibrated from Pilot run:
-  M1: Median=2.523565, MAD=0.247046
-  M2: Median=0.341611, MAD=0.009631
-  M3: Median=0.900000, MAD=1.000000
-  M4: Median=0.175508, MAD=0.002921
-  M5: Median=0.581818, MAD=0.024242
-  M6: Median=1.100290, MAD=0.044415
-  M7: Median=-0.750427, MAD=0.427456
-  M8: Median=-0.917100, MAD=0.196312
+    Raw CV metrics distribution across pilot study:
+      M1 (Tail IC IR)     : Min = -0.4459, Median = 1.2227, Max = 2.3006
+      M2 (Tail IC Mean)   : Min = -0.0241, Median = 0.2387, Max = 0.2842
+      M3 (Hit Rate)       : Min = 0.1111, Median = 0.8889, Max = 1.0000
+      M4 (Overall IC)     : Min = -0.0179, Median = 0.1470, Max = 0.1647
+      M5 (Monotonicity)   : Min = 0.0209, Median = 0.5125, Max = 0.6566
+      M6 (Top-Bot Spread) : Min = -0.0177, Median = 0.5857, Max = 0.9395
+      M7 (Parsimony)      : Min = -25.7306, Median = -0.6778, Max = -0.0000
+      M8 (Coef Bloat)     : Min = -2.2533, Median = -0.5933, Max = -0.0000
+    Selection Validation metrics distribution across pilot study:
+      Val IC              : Min = 0.0000, Median = 0.1149, Max = 0.1546, MAD = 0.0109
+      Val Tail IC         : Min = 0.0000, Median = 0.3084, Max = 0.4262, MAD = 0.0595
+      Val Monotonicity    : Min = -0.3333, Median = 0.4606, Max = 0.6727, MAD = 0.0970
+      Val Top-Bot Spread  : Min = -0.4673, Median = 0.6340, Max = 0.9582, MAD = 0.1644
+Normalizing constants calibrated from Pilot run (Selection Validation):
+  Val1: Median=0.114907, MAD=0.010937
+  Val2: Median=0.308402, MAD=0.059488
+  Val3: Median=0.460606, MAD=0.096970
+  Val4: Median=0.633982, MAD=0.164447
 
 Running main Optuna Study (100 trials) with First-Principles Multi-Metric Objective...
 
   [DIAGNOSTICS] Main Optuna Study Trial Summary:
     Total trials run: 100
-    Successful complete trials: 78
-    Pruned/Failed trials: 22
+    Successful complete trials: 52
+    Pruned/Failed trials: 48
     Pruning reason breakdown:
-      - M4 (Overall IC <= 0): 6 times
-      - M3 (Hit Rate < 60%): 8 times
-      - M5 (Monotonicity <= 0.25): 8 times
-      - M6 (Top-Bottom Spread <= 0): 1 times
-      - exceeds ESS-based cap: 14 times
+      - M4 (Overall IC <= 0): 17 times
+      - M3 (Hit Rate < 60%): 16 times
+      - M5 (Monotonicity <= 0.25): 17 times
+      - M6 (Top-Bottom Spread <= 0): 2 times
+      - exceeds ESS-based cap: 31 times
 
   [DIAGNOSTICS] Objective Progression (Optimization path):
-    Trial   5: Best Objective = -1.8171 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 1.2488347636424533, 'skglm_huber_l1_alpha': 0.0415299617016426, 'skglm_huber_delta': 1.7127402533956926}
-    Trial   7: Best Objective = +0.0985 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.668197930452895, 'skglm_mcp_alpha': 1.176680938626408e-05, 'skglm_mcp_gamma': 1.7392249098500299, 'skglm_mcp_delta': 3.9691519926357923}
-    Trial  22: Best Objective = +0.9713 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.04462402819576583, 'skglm_mcp_alpha': 1.451852723814987e-05, 'skglm_mcp_gamma': 1.523150170537623, 'skglm_mcp_delta': 4.851021667531414}
-    Trial  23: Best Objective = +1.1054 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.019012549743347096, 'skglm_mcp_alpha': 1.2596361367510195e-05, 'skglm_mcp_gamma': 1.8684201712654103, 'skglm_mcp_delta': 4.931876569048196}
-    Trial  25: Best Objective = +1.2950 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.09239388855371533, 'skglm_mcp_alpha': 0.001640282805586372, 'skglm_mcp_gamma': 1.7827935295458106, 'skglm_mcp_delta': 4.917139995794664}
-    Trial  88: Best Objective = +1.3598 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.08283371427818277, 'skglm_mcp_alpha': 2.1108982906814213e-05, 'skglm_mcp_gamma': 1.8967994432218382, 'skglm_mcp_delta': 4.953869906334437}
+    Trial   3: Best Objective = +0.2229 | params = {'model_type': 'skglm_mcp', 'k_weight': 0.9764639192654879, 'skglm_mcp_alpha': 1.0449034105539457e-05, 'skglm_mcp_gamma': 7.671827372641288, 'skglm_mcp_delta': 2.3699539946812758}
+    Trial  10: Best Objective = +2.4092 | params = {'model_type': 'skglm_huber_l1', 'k_weight': 0.6518101865492483, 'skglm_huber_l1_alpha': 0.036226258939856926, 'skglm_huber_delta': 2.3734724318333367}
 
 Best hyperparameters found by Optuna:
-  model_type: skglm_mcp
-  k_weight: 0.08283371427818277
-  skglm_mcp_alpha: 2.1108982906814213e-05
-  skglm_mcp_gamma: 1.8967994432218382
-  skglm_mcp_delta: 4.953869906334437
-Best trial raw metrics:
-  M1 (Tail IC IR):      2.9480
-  M2 (Tail IC Mean):    0.3637
-  M3 (Hit Rate):        1.0000
-  M4 (Overall IC):      0.1785
-  Deflated CV Overall IC: 0.1505
-  M5 (Monotonicity):    0.5842
-  M6 (Top-Bot Spread):  1.2557
-  M7 (Parsimony):       -0.3274
-  M8 (Coef Bloat):      -0.4881
+  model_type: skglm_huber_l1
+  k_weight: 0.6518101865492483
+  skglm_huber_l1_alpha: 0.036226258939856926
+  skglm_huber_delta: 2.3734724318333367
+Best trial raw metrics (CV Folds):
+  M1 (Tail IC IR):      1.1332
+  M2 (Tail IC Mean):    0.2233
+  M3 (Hit Rate):        0.8889
+  M4 (Overall IC):      0.1458
+  Deflated CV Overall IC: 0.0933
+  M5 (Monotonicity):    0.5192
+  M6 (Top-Bot Spread):  0.7210
+  M7 (Parsimony):       -0.4403
+  M8 (Coef Bloat):      -0.4102
+Best trial Selection Validation metrics:
+  Val Overall IC:       0.1513
+  Val Tail IC:          0.4164
+  Val Monotonicity:     0.6727
+  Val Top-Bot Spread:   0.7121
 
   [DIAGNOSTICS] Final Model Diagnostics:
-    Effective Sample Size (ESS) under tail-focus: 2107.4 / 2166 (97.3%)
+    Effective Sample Size (ESS) under tail-focus: 1488.3 / 2166 (68.7%)
     ESS is healthy.
-    Model Weight Concentration (Gini Index): 0.2840
-    Raw Design Matrix Condition Number: 4.65
-    Regularized Normal Equations Condition Number (kappa): 21.64
+    Model Weight Concentration (Gini Index): 0.7027
+    Raw Design Matrix Condition Number: 6.63
+    Regularized Normal Equations Condition Number (kappa): 42.37
 
   [DIAGNOSTICS] Execution Time Profiling:
     data_loading        :    0.1s
-    feature_selection   :    1.5s
-    loyo_folds          :    0.1s
-    pilot_study         :    1.8s
-    main_study          :    2.6s
+    feature_selection   :    0.0s
+    loyo_folds          :    0.0s
+    pilot_study         :    0.0s
+    main_study          :    4.1s
     final_refit         :    0.0s
-    Total Duration      :    6.0s
-[159915ETF] elapsed 6.1s
+    Total Duration      :    4.2s
+[159915ETF] elapsed 4.3s
