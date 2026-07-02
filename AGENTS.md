@@ -5,7 +5,7 @@ Covered Call + Bull Put Spread on 50/300/500/588000/159915 ETF.
 ## Commands
 
 ```bash
-source venv/bin/activate                    # Activate env
+source .venv/bin/activate                    # Activate env
 python3 update_data.py                      # Pull ETF/option data from rqdatac
 python3 download_5m_data.py                # Download 5m data
 python3 download_1m_data.py                # Download 1m data (zstd level 5 compressed)
@@ -128,7 +128,7 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 - **238 Features**: 139 early-bar intraday, 74 day-level, 25 prior-day features (shifted 1 day).
 - **Volume Normalization**: Early-morning volume normalized by rolling 20-day daily volume shifted by 1 day (`yesterday_rolling_20d_daily_volume / 48`).
 - **VIX/IV Spread**: `vix_iv_spread = vix - iv`. Missing VIX backfilled via `iv + mean_bias`.
-- **Multicollinearity & Complexity Control**: Controls multivariate collinearity via iterative VIF pruning (threshold <= 10.0) on stable representatives. Overfitting is prevented via a dynamic active feature cap tied to Effective Sample Size: active_features <= ESS / 25. The ESS constraint is softened into the objective as a continuous penalty. Data leakage is eliminated by nesting feature selection (screening, CSS, VIF pruning) and CPCV folds strictly inside a chronological selection train split (`before 2024-03-01 excluding 2021`), and using a held-out selection-validation block (`2021-01-01 <= date < 2022-01-01`) as the objective target for Optuna hyperparameter optimization.
+- **Multicollinearity & Complexity Control**: Controls multivariate collinearity via iterative VIF pruning (threshold <= 10.0) on stable representatives. Overfitting is prevented via a dynamic active feature cap tied to Effective Sample Size (active_features <= ESS / 25) and a Gini coefficient constraint (Gini <= 0.85) to block degenerate/concentrated models. The ESS constraint is softened into the objective as a continuous penalty. Data leakage is eliminated by nesting feature selection (screening, CSS, VIF pruning) and CPCV folds strictly inside a chronological selection train split (excluding the validation blocks and a 10-day embargo), and using 6 non-contiguous 3-month validation blocks spread across different regimes as the objective target for Optuna hyperparameter optimization (deflated via Marcos Lopez de Prado's method).
 
 > Artifacts: `backtest/alpha_put_models.json`, `backtest/alpha_ml_models/`, `backtest/validate_pnl_phase{1,2,3}.json`, `backtest/alpha_phase_comparison.md`.
 
