@@ -280,31 +280,31 @@
   },
   "best_params": {
     "model_type": "skglm_mcp",
-    "k_weight": 0.6144728405439495,
-    "skglm_mcp_alpha": 0.003537164827474964,
-    "skglm_mcp_gamma": 6.413453861395882,
-    "skglm_mcp_delta": 3.2252161635817913
+    "k_weight": 1.662245847277343,
+    "skglm_mcp_alpha": 0.0029066217360901835,
+    "skglm_mcp_gamma": 9.774466943157227,
+    "skglm_mcp_delta": 1.1006513005635516
   },
   "best_raw_metrics": [
-    3.0833922754776144,
-    0.3250784784589243,
+    2.9028054610986866,
+    0.3304754480774797,
     1.0,
-    0.18393068780763416,
-    0.5745454545454545,
-    1.021275075608298,
+    0.18172072532195366,
+    0.6012121212121212,
+    0.9733934583018767,
     -2.772588722239781,
-    -0.5274223685264587
+    -0.8142452836036682
   ],
-  "lockbox_overall_ic": 0.11137319368962009,
-  "lockbox_tail_ic": 0.3116000181126192,
+  "lockbox_overall_ic": 0.1085389107983058,
+  "lockbox_tail_ic": 0.26310901526228103,
   "diagnostics": {
     "timings": {
-      "data_loading": 0.11320036499819253,
-      "feature_selection": 0.0007766380003886297,
-      "loyo_folds": 0.008112718991469592,
-      "pilot_study": 0.0010235270019620657,
-      "main_study": 8.073006264006835,
-      "final_refit": 5.694813208989217
+      "data_loading": 0.09823307799524628,
+      "feature_selection": 0.0007811050018062815,
+      "loyo_folds": 0.009857822995400056,
+      "pilot_study": 0.0017051759932655841,
+      "main_study": 1.1361234029900515,
+      "final_refit": 0.009974248998332769
     },
     "screening": {
       "total_features": 238,
@@ -318,15 +318,15 @@
       "keep_count": 15
     },
     "optuna_main": {
-      "total_trials": 5,
-      "completed_count": 4,
-      "pruned_count": 1,
+      "total_trials": 50,
+      "completed_count": 42,
+      "pruned_count": 8,
       "failed_count": 0,
       "pruning_reasons": {
-        "M4 (Overall IC <= 0)": 1,
-        "M3 (Hit Rate < 60%)": 1,
-        "M5 (Monotonicity <= 0.25)": 1,
-        "M6 (Top-Bottom Spread <= 0)": 1
+        "M4 (Overall IC <= 0)": 8,
+        "M3 (Hit Rate < 60%)": 8,
+        "M5 (Monotonicity <= 0.25)": 8,
+        "M6 (Top-Bottom Spread <= 0)": 8
       }
     },
     "model_quality": {
@@ -343,12 +343,12 @@
           0.9999970173365181
         ]
       ],
-      "effective_sample_size": 1541.4027099609375,
-      "effective_sample_size_pct": 0.7116356001666378,
-      "gini_coefficient": 0.2712937420984718
+      "effective_sample_size": 358.97515869140625,
+      "effective_sample_size_pct": 0.16573183688430576,
+      "gini_coefficient": 0.24010513701492853
     }
   },
-  "lockbox_monotonicity": 0.7333333333333333,
-  "ic_generalization_gap": 0.07255749411801407,
-  "mono_generalization_gap": -0.1587878787878788
+  "lockbox_monotonicity": 0.6848484848484848,
+  "ic_generalization_gap": 0.07318181452364786,
+  "mono_generalization_gap": -0.08363636363636362
 }
