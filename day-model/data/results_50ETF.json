@@ -49,6 +49,7 @@
     "volume_surge_direction",
     "rally_strength_max",
     "volume_weighted_price_position",
+    "late_bar_momentum",
     "open_to_current_return",
     "sma20_dist",
     "sma100_dist",
@@ -310,32 +311,31 @@
     "yesterday_spike_exhaustion_ratio": 0.0
   },
   "best_params": {
-    "model_type": "skglm_mcp",
-    "k_weight": 0.7892640222355527,
-    "skglm_mcp_alpha": 0.0015020058518127326,
-    "skglm_mcp_gamma": 4.766572142174928,
-    "skglm_mcp_delta": 1.671194284983146
+    "model_type": "skglm_huber_l1",
+    "k_weight": 0.527806173819439,
+    "skglm_huber_l1_alpha": 1.1987842499420972e-05,
+    "skglm_huber_delta": 1.542045606431798
   },
   "best_raw_metrics": [
-    1.7784365477592254,
-    0.2275755927100233,
-    1.0,
-    0.09888294951842291,
-    0.44363636363636355,
-    0.37525616837945386,
-    -3.4339872044851463,
-    -0.6055952310562134
+    1.6017875018966146,
+    0.23142816944767058,
+    0.9,
+    0.1058627445875638,
+    0.4375757575757575,
+    0.3427370960070637,
+    -3.4657359027997265,
+    -0.48477959632873535
   ],
-  "lockbox_overall_ic": 0.013337497931222483,
-  "lockbox_tail_ic": 0.14899837476848432,
+  "lockbox_overall_ic": 0.008033378915642214,
+  "lockbox_tail_ic": 0.15878583230622653,
   "diagnostics": {
     "timings": {
-      "data_loading": 0.08760437500313856,
-      "feature_selection": 0.0005885699938517064,
-      "loyo_folds": 0.015953326001181267,
-      "pilot_study": 0.0012091969983885065,
-      "main_study": 3.6964842909947038,
-      "final_refit": 0.020880405994830653
+      "data_loading": 0.10042261499620508,
+      "feature_selection": 0.0007574990013381466,
+      "loyo_folds": 0.01786862500011921,
+      "pilot_study": 0.0012517659924924374,
+      "main_study": 1.5104928789951373,
+      "final_refit": 1.182065949004027
     },
     "screening": {
       "total_features": 238,
@@ -354,14 +354,37 @@
       "pruned_count": 10,
       "failed_count": 0,
       "pruning_reasons": {
-        "M4 (Overall IC <= 0)": 10,
-        "M3 (Hit Rate < 60%)": 10,
+        "M4 (Overall IC <= 0)": 7,
+        "M3 (Hit Rate < 60%)": 7,
         "M5 (Monotonicity <= 0.25)": 10,
-        "M6 (Top-Bottom Spread <= 0)": 10
+        "M6 (Top-Bottom Spread <= 0)": 7
       }
+    },
+    "model_quality": {
+      "condition_number": 6422142.5,
+      "collinear_pairs": [
+        [
+          "first_30min_return",
+          "open_to_current_return",
+          0.999999999978658
+        ],
+        [
+          "first_bar_return",
+          "bar_ret_0",
+          0.9999906984968919
+        ],
+        [
+          "vix_iv_spread",
+          "vix_iv_ratio",
+          0.8675482690006872
+        ]
+      ],
+      "effective_sample_size": 1646.1319580078125,
+      "effective_sample_size_pct": 0.7599870535585469,
+      "gini_coefficient": 0.32180736262478327
     }
   },
-  "lockbox_monotonicity": 0.2606060606060606,
-  "ic_generalization_gap": 0.08554545158720044,
-  "mono_generalization_gap": 0.18303030303030293
+  "lockbox_monotonicity": 0.4303030303030303,
+  "ic_generalization_gap": 0.09782936567192159,
+  "mono_generalization_gap": 0.0072727272727272085
 }
