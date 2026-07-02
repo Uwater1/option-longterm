@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "588000ETF",
   "n_samples_working": 738,
-  "n_samples_lockbox": 556,
+  "n_samples_lockbox": 0,
   "selected_features": [
     "early_skew",
     "early_kurtosis",
@@ -35,6 +35,7 @@
     "barbed_wire_intensity",
     "consecutive_bullish_engulfing",
     "volume_concentration",
+    "volume_acceleration",
     "range_expansion_final_bar",
     "volume_weighted_price_position",
     "late_bar_momentum",
@@ -292,21 +293,55 @@
     "yesterday_spike_exhaustion_ratio": 0.0
   },
   "best_params": {
-    "model_type": "skglm_huber_l1",
-    "k_weight": 0.5580619696536151,
-    "skglm_huber_l1_alpha": 0.0032313774259814104,
-    "skglm_huber_delta": 3.8825981557375706
+    "model_type": "skglm_mcp",
+    "k_weight": 0.2619191553481821,
+    "skglm_mcp_alpha": 0.0005620604124863341,
+    "skglm_mcp_gamma": 6.694211989537063,
+    "skglm_mcp_delta": 3.4603112434120273
   },
   "best_raw_metrics": [
-    3.983874966868474,
-    0.3210627975993957,
+    4.800406296519795,
+    0.3321045937530275,
     1.0,
-    0.19156200695653341,
-    0.6363636363636364,
-    0.8520807900836538,
-    -3.091042453358316,
-    -0.4925006628036499
+    0.1918408546557987,
+    0.6636363636363636,
+    1.0611234839642378,
+    -3.1354942159291497,
+    -0.3984326422214508
   ],
-  "lockbox_overall_ic": 0.02423121829730839,
-  "lockbox_tail_ic": -0.01113147449575215
+  "lockbox_overall_ic": NaN,
+  "lockbox_tail_ic": NaN,
+  "diagnostics": {
+    "timings": {
+      "data_loading": 0.07365497699356638,
+      "feature_selection": 0.0005987650074530393,
+      "loyo_folds": 0.0021740100055467337,
+      "pilot_study": 0.0011956460075452924,
+      "main_study": 2.249281513999449,
+      "final_refit": 0.01032512700476218
+    },
+    "screening": {
+      "total_features": 238,
+      "bh_pass_count": 85,
+      "fallback_triggered": false,
+      "keep_count": 85
+    },
+    "stability": {
+      "fallback_triggered": false,
+      "pass_pi_count": 22,
+      "keep_count": 22
+    },
+    "optuna_main": {
+      "total_trials": 50,
+      "completed_count": 42,
+      "pruned_count": 8,
+      "failed_count": 0,
+      "pruning_reasons": {
+        "M4 (Overall IC <= 0)": 8,
+        "M3 (Hit Rate < 60%)": 8,
+        "M5 (Monotonicity <= 0.25)": 8,
+        "M6 (Top-Bottom Spread <= 0)": 8
+      }
+    }
+  }
 }

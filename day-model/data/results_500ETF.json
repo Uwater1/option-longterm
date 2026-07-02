@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "500ETF",
   "n_samples_working": 2166,
-  "n_samples_lockbox": 556,
+  "n_samples_lockbox": 0,
   "selected_features": [
     "bar_ret_0",
     "bar_rng_0",
@@ -275,21 +275,55 @@
     "yesterday_spike_exhaustion_ratio": 0.0
   },
   "best_params": {
-    "model_type": "skglm_huber_l1",
-    "k_weight": 0.41294686968583183,
-    "skglm_huber_l1_alpha": 1.2025425621615647e-05,
-    "skglm_huber_delta": 0.5395030695273964
+    "model_type": "skglm_mcp",
+    "k_weight": 0.4355335803274445,
+    "skglm_mcp_alpha": 0.00021825313083163953,
+    "skglm_mcp_gamma": 9.727224338395798,
+    "skglm_mcp_delta": 0.5435934404288074
   },
   "best_raw_metrics": [
-    1.930939500292899,
-    0.2873848603796764,
+    1.8940060102434384,
+    0.28774115794055977,
     1.0,
-    0.15842255585182324,
-    0.5212121212121212,
-    0.9764109090535754,
+    0.1593426985910013,
+    0.530909090909091,
+    0.9794746445762975,
     -2.6390573296152584,
-    -0.4086713194847107
+    -0.41520655155181885
   ],
-  "lockbox_overall_ic": 0.12185352574212564,
-  "lockbox_tail_ic": 0.046818400059628125
+  "lockbox_overall_ic": NaN,
+  "lockbox_tail_ic": NaN,
+  "diagnostics": {
+    "timings": {
+      "data_loading": 0.21370414899138268,
+      "feature_selection": 0.010235245994408615,
+      "loyo_folds": 0.01017273600155022,
+      "pilot_study": 0.001018941999063827,
+      "main_study": 1.0437814399920171,
+      "final_refit": 0.016190634996746667
+    },
+    "screening": {
+      "total_features": 238,
+      "bh_pass_count": 115,
+      "fallback_triggered": false,
+      "keep_count": 115
+    },
+    "stability": {
+      "fallback_triggered": false,
+      "pass_pi_count": 13,
+      "keep_count": 13
+    },
+    "optuna_main": {
+      "total_trials": 50,
+      "completed_count": 37,
+      "pruned_count": 13,
+      "failed_count": 0,
+      "pruning_reasons": {
+        "M4 (Overall IC <= 0)": 13,
+        "M3 (Hit Rate < 60%)": 13,
+        "M5 (Monotonicity <= 0.25)": 13,
+        "M6 (Top-Bottom Spread <= 0)": 13
+      }
+    }
+  }
 }

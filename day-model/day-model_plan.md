@@ -48,13 +48,13 @@ Plan to reformulate and optimize the Optuna objective function for `day-model` b
 Partition the entire dataset chronologically. Everything before **2024-03-01** (approx 2166 rows) forms the working training set. Everything from **2024-03-01 to the last day** (approx 556 rows) is the out-of-sample lockbox. Do not touch the lockbox again until step 6.
 
 **Step 1 — Cheap screening on full working set.**
-Compute robust marginal association per feature (Spearman rank correlation) between each of the 238 features and the target. Apply BH-FDR correction across the tests (FDR = 0.40). If fewer than 40 features pass, fallback to the top 40 features by p-value.
+Compute robust marginal association per feature (Spearman rank correlation) between each of the 238 features and the target. Apply BH-FDR correction across the tests (FDR = 0.40). If fewer than 40 features pass, fallback to the top 50 features by p-value.
 
 > Hierarchical Feature Clustering / correlation-based pre-filtering are useless:
 > Clustering slightly correlated features ($|r| \ge 0.3$) and dropping them based on univariate ranking discards complementary multivariate features. This causes model collapse to $\le 2$ sparse active weights and a negative OOS Lockbox Tail IC ($-0.0207$). Removing this step and relying on ElasticNet stability selection to handle collinearity multivariately preserves 72 active weights and increases Lockbox Tail IC to $+0.0304$.
 
 **Step 2 — Stability selection on survivors.**
-Run repeated subsampling ($B=100$, subsample size $\lfloor N/2 \rfloor$) over the Step 1 survivors. Fit ElasticNet paths (l1_ratio = 0.5). To ensure robust feature filtering, restrict the considered alphas to the range producing at most 35 features on average (`STABILITY_Q = 35`). Keep features selected in $\ge 0.60$ fraction of subsamples (fallback to top 5 if count < 3). Because ElasticNet has a grouping effect, it naturally handles collinearity multivariately without needing a separate clustering pre-filter.
+Run repeated subsampling ($B=100$, subsample size $\lfloor N/2 \rfloor$) over the Step 1 survivors. Fit ElasticNet paths (l1_ratio = 0.5). To ensure robust feature filtering, restrict the considered alphas to the range producing at most 40 features on average (`STABILITY_Q = 40`). Keep features selected in $\ge 0.60$ fraction of subsamples (fallback to top 5 if count < 3). Because ElasticNet has a grouping effect, it naturally handles collinearity multivariately without needing a separate clustering pre-filter.
 
 **Step 3 — Loss Weighting via Input Scaling.**
 For the final coefficient fit, use sample weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to upweight tail days. Implement weights by scaling inputs $X$ and targets $y$ by $\sqrt{w}$, which is mathematically exact for least squares and serves as a robust Huber weighting.
