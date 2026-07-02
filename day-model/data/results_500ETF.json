@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "500ETF",
   "n_samples_working": 2166,
-  "n_samples_lockbox": 556,
+  "n_samples_lockbox": 0,
   "selected_features": [
     "first_30min_return",
     "early_realized_vol",
@@ -123,27 +123,7 @@
     "yesterday_intraday_close_position"
   ],
   "active_features": [
-    "first_bar_return",
-    "bar_ret_0",
-    "bar_rng_0",
-    "bar_rng_3",
-    "bar_vwap_dev_0",
-    "bar_vwap_dev_2",
-    "max_up_ret",
-    "opening_range_size",
-    "volume_concentration",
-    "volume_surge_direction",
-    "late_bar_momentum",
-    "sma100_dist",
-    "capital_sell_volume",
-    "capital_sell_value",
-    "northbound_net",
-    "iv",
-    "measured_move_proximity",
-    "yesterday_early_trend",
-    "yesterday_day_realized_vol",
-    "yesterday_day_vwap_dev",
-    "yesterday_intraday_close_position"
+    "max_up_ret"
   ],
   "stability_scores": {
     "gap_pct": 0.0,
@@ -387,20 +367,20 @@
   },
   "best_params": {
     "model_type": "skglm_huber_l1",
-    "k_weight": 0.8031241977648313,
-    "skglm_huber_l1_alpha": 0.01313914051608186,
-    "skglm_huber_delta": 0.5407733131595276
+    "k_weight": 1.0316735786743823,
+    "skglm_huber_l1_alpha": 0.13406718132503556,
+    "skglm_huber_delta": 1.7131987179489125
   },
   "best_raw_metrics": [
-    2.0825019000446203,
-    0.23518478911630464,
-    1.0,
-    0.13856125036510814,
-    0.5187878787878788,
-    0.7223578882165231,
-    -3.091042453358316,
-    -0.28971755504608154
+    1.7789522072994939,
+    0.23334197500585732,
+    0.9,
+    0.11941494562798645,
+    0.4496969696969697,
+    0.5851524797511173,
+    -0.6931471805599453,
+    -0.14703546464443207
   ],
-  "lockbox_overall_ic": 0.12241617721783084,
-  "lockbox_tail_ic": 0.05707008092329193
+  "lockbox_overall_ic": NaN,
+  "lockbox_tail_ic": NaN
 }

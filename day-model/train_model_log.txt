@@ -14,33 +14,33 @@ Stability selection finished. Kept 78 features: ['first_30min_return', 'first_ba
   [cache] hit   cache_loyo_300ETF_af5c5ad500951a9a.joblib
   [cache] hit   cache_pilot_300ETF_e01f62b3978e4ebf.joblib
 Normalizing constants calibrated from Pilot run:
-  M1: Median=1.195170, MAD=0.375616
-  M2: Median=0.182109, MAD=0.035472
+  M1: Median=1.082481, MAD=0.220314
+  M2: Median=0.175160, MAD=0.027132
   M3: Median=0.900000, MAD=0.100000
-  M4: Median=0.085327, MAD=0.008486
-  M5: Median=0.350303, MAD=0.066667
-  M6: Median=0.420141, MAD=0.101651
-  M7: Median=-4.369448, MAD=1.000000
-  M8: Median=-0.874026, MAD=0.874026
+  M4: Median=0.087783, MAD=0.007637
+  M5: Median=0.373939, MAD=0.053939
+  M6: Median=0.426182, MAD=0.061914
+  M7: Median=-4.276666, MAD=0.080043
+  M8: Median=-2.223079, MAD=1.847079
 
 Running main Optuna Study (50 trials) with First-Principles Multi-Metric Objective...
 
 Best hyperparameters found by Optuna:
   model_type: skglm_mcp
-  k_weight: 0.46124323156790487
-  skglm_mcp_alpha: 0.0034466018510900345
-  skglm_mcp_gamma: 5.848504340917488
-  skglm_mcp_delta: 1.595767073286563
+  k_weight: 0.08080035161424881
+  skglm_mcp_alpha: 0.06012208756241702
+  skglm_mcp_gamma: 4.015121304220222
+  skglm_mcp_delta: 3.169068954233235
 Best trial raw metrics:
-  M1 (Tail IC IR):      1.7038
-  M2 (Tail IC Mean):    0.2461
-  M3 (Hit Rate):        1.0000
-  M4 (Overall IC):      0.0945
-  M5 (Monotonicity):    0.4230
-  M6 (Top-Bot Spread):  0.5187
-  M7 (Parsimony):       -4.0073
-  M8 (Coef Bloat):      -1.3952
-[300ETF] elapsed 27.4s
+  M1 (Tail IC IR):      0.8613
+  M2 (Tail IC Mean):    0.1594
+  M3 (Hit Rate):        0.7000
+  M4 (Overall IC):      0.0857
+  M5 (Monotonicity):    0.4315
+  M6 (Top-Bot Spread):  0.4428
+  M7 (Parsimony):       -1.3863
+  M8 (Coef Bloat):      -0.1137
+[300ETF] elapsed 14.1s
 
 ================================================================================
 Starting First-Principles Training for 50ETF (Side: single)
@@ -53,14 +53,14 @@ Stability selection finished. Kept 79 features: ['first_30min_return', 'first_ba
   [cache] hit   cache_loyo_50ETF_3fe446a70623d212.joblib
   [cache] hit   cache_pilot_50ETF_fba246d85cc53040.joblib
 Normalizing constants calibrated from Pilot run:
-  M1: Median=0.661778, MAD=0.283894
-  M2: Median=0.088673, MAD=0.036612
+  M1: Median=0.641123, MAD=0.251849
+  M2: Median=0.090172, MAD=0.050017
   M3: Median=0.700000, MAD=0.100000
-  M4: Median=0.040790, MAD=0.008726
-  M5: Median=0.214545, MAD=0.050303
-  M6: Median=0.140008, MAD=0.072553
-  M7: Median=-4.382027, MAD=1.000000
-  M8: Median=-1.171546, MAD=1.171546
+  M4: Median=0.056074, MAD=0.014326
+  M5: Median=0.252727, MAD=0.058182
+  M6: Median=0.189437, MAD=0.078632
+  M7: Median=-4.042897, MAD=0.326551
+  M8: Median=-0.976105, MAD=0.463580
 
 Running main Optuna Study (50 trials) with First-Principles Multi-Metric Objective...
 
@@ -69,20 +69,20 @@ Running main Optuna Study (50 trials) with First-Principles Multi-Metric Objecti
 
 Best hyperparameters found by Optuna:
   model_type: skglm_mcp
-  k_weight: 0.09004300194121453
-  skglm_mcp_alpha: 0.012899013929228695
-  skglm_mcp_gamma: 1.7696121879757785
-  skglm_mcp_delta: 1.0589018909785035
+  k_weight: 0.5941608657841743
+  skglm_mcp_alpha: 0.010832675002709017
+  skglm_mcp_gamma: 9.935489632094136
+  skglm_mcp_delta: 0.7763608386523931
 Best trial raw metrics:
-  M1 (Tail IC IR):      1.7168
-  M2 (Tail IC Mean):    0.1946
+  M1 (Tail IC IR):      1.4417
+  M2 (Tail IC Mean):    0.2101
   M3 (Hit Rate):        0.9000
-  M4 (Overall IC):      0.0890
-  M5 (Monotonicity):    0.4061
-  M6 (Top-Bot Spread):  0.2757
-  M7 (Parsimony):       -4.3820
-  M8 (Coef Bloat):      -0.4182
-[50ETF] elapsed 13.6s
+  M4 (Overall IC):      0.0701
+  M5 (Monotonicity):    0.3103
+  M6 (Top-Bot Spread):  0.3906
+  M7 (Parsimony):       -3.2958
+  M8 (Coef Bloat):      -0.5735
+[50ETF] elapsed 3.2s
 
 ================================================================================
 Starting First-Principles Training for 500ETF (Side: single)
@@ -95,32 +95,32 @@ Stability selection finished. Kept 116 features: ['first_30min_return', 'early_r
   [cache] hit   cache_loyo_500ETF_792d15285a634578.joblib
   [cache] hit   cache_pilot_500ETF_fd752d5291c9ce2a.joblib
 Normalizing constants calibrated from Pilot run:
-  M1: Median=0.990570, MAD=0.348173
-  M2: Median=0.187495, MAD=0.034446
-  M3: Median=0.800000, MAD=0.100000
-  M4: Median=0.113296, MAD=0.020644
-  M5: Median=0.403636, MAD=0.098788
-  M6: Median=0.595021, MAD=0.095055
-  M7: Median=-4.762174, MAD=1.000000
-  M8: Median=-0.906932, MAD=0.906932
+  M1: Median=1.097807, MAD=0.185234
+  M2: Median=0.188937, MAD=0.019324
+  M3: Median=0.900000, MAD=0.100000
+  M4: Median=0.097077, MAD=0.013731
+  M5: Median=0.390303, MAD=0.038182
+  M6: Median=0.603990, MAD=0.087985
+  M7: Median=-4.672829, MAD=0.089345
+  M8: Median=-4.670170, MAD=4.402029
 
 Running main Optuna Study (50 trials) with First-Principles Multi-Metric Objective...
 
 Best hyperparameters found by Optuna:
   model_type: skglm_huber_l1
-  k_weight: 0.8031241977648313
-  skglm_huber_l1_alpha: 0.01313914051608186
-  skglm_huber_delta: 0.5407733131595276
+  k_weight: 1.0316735786743823
+  skglm_huber_l1_alpha: 0.13406718132503556
+  skglm_huber_delta: 1.7131987179489125
 Best trial raw metrics:
-  M1 (Tail IC IR):      2.0825
-  M2 (Tail IC Mean):    0.2352
-  M3 (Hit Rate):        1.0000
-  M4 (Overall IC):      0.1386
-  M5 (Monotonicity):    0.5188
-  M6 (Top-Bot Spread):  0.7224
-  M7 (Parsimony):       -3.0910
-  M8 (Coef Bloat):      -0.2897
-[500ETF] elapsed 168.5s
+  M1 (Tail IC IR):      1.7790
+  M2 (Tail IC Mean):    0.2333
+  M3 (Hit Rate):        0.9000
+  M4 (Overall IC):      0.1194
+  M5 (Monotonicity):    0.4497
+  M6 (Top-Bot Spread):  0.5852
+  M7 (Parsimony):       -0.6931
+  M8 (Coef Bloat):      -0.1470
+[500ETF] elapsed 22.5s
 
 ================================================================================
 Starting First-Principles Training for 588000ETF (Side: single)
@@ -133,32 +133,33 @@ Stability selection finished. Kept 82 features: ['first_30min_return', 'early_tr
   [cache] hit   cache_loyo_588000ETF_6be781684643a234.joblib
   [cache] hit   cache_pilot_588000ETF_954a269783abe8d3.joblib
 Normalizing constants calibrated from Pilot run:
-  M1: Median=1.855333, MAD=0.701622
-  M2: Median=0.228079, MAD=0.104885
+  M1: Median=1.966686, MAD=0.504900
+  M2: Median=0.245151, MAD=0.081715
   M3: Median=1.000000, MAD=1.000000
-  M4: Median=0.127956, MAD=0.016307
-  M5: Median=0.439394, MAD=0.077273
-  M6: Median=0.553958, MAD=0.196315
-  M7: Median=-4.418841, MAD=1.000000
-  M8: Median=-2.367675, MAD=2.141308
+  M4: Median=0.132049, MAD=0.010258
+  M5: Median=0.448485, MAD=0.063636
+  M6: Median=0.410012, MAD=0.239372
+  M7: Median=-4.262283, MAD=0.156558
+  M8: Median=-3.258410, MAD=2.196769
 
 Running main Optuna Study (50 trials) with First-Principles Multi-Metric Objective...
 
 Best hyperparameters found by Optuna:
-  model_type: skglm_huber_l1
-  k_weight: 0.7960389490799112
-  skglm_huber_l1_alpha: 0.034073758744001696
-  skglm_huber_delta: 4.504798723908011
+  model_type: skglm_mcp
+  k_weight: 1.4212872809563475
+  skglm_mcp_alpha: 0.06324391563110045
+  skglm_mcp_gamma: 6.094034536889675
+  skglm_mcp_delta: 4.2993795571240305
 Best trial raw metrics:
-  M1 (Tail IC IR):      2.8326
-  M2 (Tail IC Mean):    0.3292
+  M1 (Tail IC IR):      5.0543
+  M2 (Tail IC Mean):    0.2970
   M3 (Hit Rate):        1.0000
-  M4 (Overall IC):      0.1568
-  M5 (Monotonicity):    0.6242
-  M6 (Top-Bot Spread):  0.9930
-  M7 (Parsimony):       -3.2581
-  M8 (Coef Bloat):      -0.4716
-[588000ETF] elapsed 1.7s
+  M4 (Overall IC):      0.1177
+  M5 (Monotonicity):    0.4939
+  M6 (Top-Bot Spread):  1.0714
+  M7 (Parsimony):       -3.0910
+  M8 (Coef Bloat):      -0.9583
+[588000ETF] elapsed 2.2s
 
 ================================================================================
 Starting First-Principles Training for 159915ETF (Side: single)
@@ -167,34 +168,34 @@ Starting First-Principles Training for 159915ETF (Side: single)
 Loaded 2722 samples and 238 features.
 Split: Working=2166 rows (Lockbox OOS data ignored during training).
   [cache] hit   cache_select_159915ETF_09220f3ef88b8e85.joblib
-Stability selection finished. Kept 113 features: ['gap_pct', 'first_30min_return', 'early_realized_vol', 'first_bar_return', 'early_vwap_dev', 'early_kurtosis', 'bar_ret_0', 'bar_ret_1', 'bar_ret_2', 'bar_vol_4', 'bar_vol_5', 'bar_rng_0', 'bar_rng_3', 'bar_body_rng_0', 'bar_vwap_dev_1', 'bar_vwap_dev_2', 'bar_vwap_dev_3', 'bar_vwap_dev_5', 'num_up_bars', 'max_up_ret', 'max_down_ret', 'cl_pos_in_range', 'body_to_range_ratio', 'total_path_length', 'volume_slope', 'first_bar_sentiment', 'opening_range_size', 'or_fill_ratio', 'first_bar_body_ratio', 'close_vs_open_range', 'inside_bar_failure_bull', 'gap_fill_ratio', 'early_doji_count', 'consecutive_higher_highs', 'consecutive_lower_lows', 'consecutive_bullish_engulfing', 'consecutive_bearish_engulfing', 'volume_concentration', 'volume_trend_intraday', 'volume_acceleration', 'volume_surge_direconsecutive_bearish_engulfing', 'volume_concentration', 'volume_trend_intraday', 'volume_acceleration', 'volume_surge_direction', 'pullback_ratio', 'rally_ratio', 'range_expansion_ratio', 'pullback_depth_ratio', 'pullback_depth_max', 'rally_strength_max', 'vwap_slope_intraday', 'vwap_deviation_decision_bar', 'volume_weighted_price_position', 'net_volume_flow', 'early_body_momentum', 'open_efficiency', 'late_bar_momentum', 'trend_strength_intraday', 'high_low_sequence_momentum', 'opening_momentum_score', 'trend_exhaustion_early', 'opening_range_position', 'session_high_proximity', 'session_low_proximity', 'close_above_open_count', 'open_to_current_return', 'upper_wick_dominance', 'rsi_opening', 'stoch_opening', 'vwap_reversion_strength', 'momentum_strength_intraday', 'volatility_regime_intraday', 'momentum_divergence', 'opening_auction_imbalance', 'intraday_close_position', 'macd_hist', 'sma20_dist', 'atr14_norm', 'bb_pctb', 'vol20', 'roc20', 'cci14', 'mfi14', 'aroon_osc', 'vol10', 'vol60', 'bb_width', 'vol_pk20', 'vol_gk10', 'vol_gk20', 'margin_net_buy', 'capital_net_value', 'capital_net_ratio', 'northbound_net', 'iv_vol_ratio', 'vix_vol_ratio', 'vix_iv_spread', 'vix_iv_ratio', 'vix_diff_1d', 'yesterday_gap', 'yesterday_close_position', 'volatility_percentile_20d', 'measured_move_proximity', 'yesterday_pm_return', 'yesterday_am_return', 'yesterday_gap_pct', 'yesterday_first_30min_return', 'yesterday_early_trend', 'yesterday_early_momentum', 'yesterday_early_vwap_dev', 'yesterday_day_realized_vol', 'yesterday_day_close_pos', 'yesterday_day_vwap_dev', 'yesterday_day_kurtosis', 'yesterday_intraday_close_position', 'yesterday_opening_gap_reversal']
+Stability selection finished. Kept 113 features: ['gap_pct', 'first_30min_return', 'early_realized_vol', 'first_bar_return', 'early_vwap_dev', 'early_kurtosis', 'bar_ret_0', 'bar_ret_1', 'bar_ret_2', 'bar_vol_4', 'bar_vol_5', 'bar_rng_0', 'bar_rng_3', 'bar_body_rng_0', 'bar_vwap_dev_1', 'bar_vwap_dev_2', 'bar_vwap_dev_3', 'bar_vwap_dev_5', 'num_up_bars', 'max_up_ret', 'max_down_ret', 'cl_pos_in_range', 'body_to_range_ratio', 'total_path_length', 'volume_slope', 'first_bar_sentiment', 'opening_range_size', 'or_fill_ratio', 'first_bar_body_ratio', 'close_vs_open_range', 'inside_bar_failure_bull', 'gap_fill_ratio', 'early_doji_count', 'consecutive_higher_highs', 'consecutive_lower_lows', 'consecutive_bullish_engulfing', 'consecutive_bearish_engulfing', 'volume_concentration', 'volume_trend_intraday', 'volume_acceleration', 'volume_surge_direction', 'pullback_ratio', 'rally_ratio', 'range_expansion_ratio', 'pullback_depth_ratio', 'pullback_depth_max', 'rally_strength_max', 'vwap_slope_intraday', 'vwap_deviation_decision_bar', 'volume_weighted_price_position', 'net_volume_flow', 'early_body_momentum', 'open_efficiency', 'late_bar_momentum', 'trend_strength_intraday', 'high_low_sequence_momentum', 'opening_momentum_score', 'trend_exhaustion_early', 'opening_range_position', 'session_high_proximity', 'session_low_proximity', 'close_above_open_count', 'open_to_current_return', 'upper_wick_dominance', 'rsi_opening', 'stoch_opening', 'vwap_reversion_strength', 'momentum_strength_intraday', 'volatility_regime_intraday', 'momentum_divergence', 'opening_auction_imbalance', 'intraday_close_position', 'macd_hist', 'sma20_dist', 'atr14_norm', 'bb_pctb', 'vol20', 'roc20', 'cci14', 'mfi14', 'aroon_osc', 'vol10', 'vol60', 'bb_width', 'vol_pk20', 'vol_gk10', 'vol_gk20', 'margin_net_buy', 'capital_net_value', 'capital_net_ratio', 'northbound_net', 'iv_vol_ratio', 'vix_vol_ratio', 'vix_iv_spread', 'vix_iv_ratio', 'vix_diff_1d', 'yesterday_gap', 'yesterday_close_position', 'volatility_percentile_20d', 'measured_move_proximity', 'yesterday_pm_return', 'yesterday_am_return', 'yesterday_gap_pct', 'yesterday_first_30min_return', 'yesterday_early_trend', 'yesterday_early_momentum', 'yesterday_early_vwap_dev', 'yesterday_day_realized_vol', 'yesterday_day_close_pos', 'yesterday_day_vwap_dev', 'yesterday_day_kurtosis', 'yesterday_intraday_close_position', 'yesterday_opening_gap_reversal']
   [cache] hit   cache_loyo_159915ETF_0ffd5d843799618e.joblib
   [cache] hit   cache_pilot_159915ETF_f36ad3f09d015e05.joblib
 Normalizing constants calibrated from Pilot run:
-  M1: Median=1.973259, MAD=1.269172
-  M2: Median=0.259917, MAD=0.063254
+  M1: Median=2.731838, MAD=0.711906
+  M2: Median=0.277104, MAD=0.051736
   M3: Median=1.000000, MAD=1.000000
-  M4: Median=0.127681, MAD=0.011046
-  M5: Median=0.514545, MAD=0.030303
-  M6: Median=0.758203, MAD=0.116437
-  M7: Median=-4.736198, MAD=1.000000
-  M8: Median=-2.953724, MAD=2.536377
+  M4: Median=0.130325, MAD=0.005803
+  M5: Median=0.509697, MAD=0.031515
+  M6: Median=0.812913, MAD=0.087136
+  M7: Median=-4.579734, MAD=0.120746
+  M8: Median=-2.734654, MAD=2.395571
 
 Running main Optuna Study (50 trials) with First-Principles Multi-Metric Objective...
 
 Best hyperparameters found by Optuna:
   model_type: skglm_mcp
-  k_weight: 0.004645768855416676
-  skglm_mcp_alpha: 0.0004643780621147456
-  skglm_mcp_gamma: 2.9786480869472465
-  skglm_mcp_delta: 1.6980429549222225
+  k_weight: 1.3821614242959
+  skglm_mcp_alpha: 0.05093065359425136
+  skglm_mcp_gamma: 4.754594576346046
+  skglm_mcp_delta: 1.5122065593449776
 Best trial raw metrics:
-  M1 (Tail IC IR):      4.4199
-  M2 (Tail IC Mean):    0.3234
-  M3 (Hit Rate):        1.0000
-  M4 (Overall IC):      0.1466
-  M5 (Monotonicity):    0.5830
-  M6 (Top-Bot Spread):  0.9099
-  M7 (Parsimony):       -4.6347
-  M8 (Coef Bloat):      -1.6288
-[159915ETF] elapsed 46.0s
+  M1 (Tail IC IR):      1.0953
+  M2 (Tail IC Mean):    0.1943
+  M3 (Hit Rate):        0.8000
+  M4 (Overall IC):      0.1491
+  M5 (Monotonicity):    0.5636
+  M6 (Top-Bot Spread):  0.7496
+  M7 (Parsimony):       -2.3026
+  M8 (Coef Bloat):      -0.8254
+[159915ETF] elapsed 5.7s

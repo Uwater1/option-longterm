@@ -942,6 +942,27 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
 
 
+
+class _TeeWriter:
+    """Duplicate writes to console and a log file simultaneously."""
+    def __init__(self, filepath, stream):
+        self._file = open(filepath, "a", encoding="utf-8")
+        self._stream = stream
+    def write(self, data):
+        self._stream.write(data)
+        self._file.write(data)
+        self._file.flush()
+    def flush(self):
+        self._stream.flush()
+        self._file.flush()
+    def isatty(self):
+        return self._stream.isatty()
+    def fileno(self):
+        return self._stream.fileno()
+    def close(self):
+        self._file.close()
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("-e", "--etf", default="300", help="300|50|500|588000|159915|all")
@@ -956,7 +977,18 @@ if __name__ == "__main__":
     ap.add_argument("--loyo-jobs", type=int, default=-1,
                     help=("Parallel workers for LOYO fold fits per trial. "
                           "-1 = auto (cpu_count // optuna-jobs). Default -1."))
+    ap.add_argument("--log", default=str(HERE / "train_model_log.txt"),
+                    help="Path to output log file (default: day-model/train_model_log.txt). "
+                         "Pass 'none' to disable.")
     args = ap.parse_args()
+
+    # Set up tee logging: mirror stdout/stderr to log file
+    if args.log and args.log.lower() != "none":
+        log_path = Path(args.log)
+        # Truncate at start of run
+        log_path.write_text("", encoding="utf-8")
+        sys.stdout = _TeeWriter(log_path, sys.stdout)
+        sys.stderr = _TeeWriter(log_path, sys.stderr)
 
     loyo_jobs_arg = args.loyo_jobs
     if loyo_jobs_arg < 1:
@@ -988,3 +1020,9 @@ if __name__ == "__main__":
             import traceback
             traceback.print_exc()
         print(f"[{etf}] elapsed {time.perf_counter() - t0:.1f}s")
+
+    # Close log file handles
+    if isinstance(sys.stdout, _TeeWriter):
+        sys.stdout.close()
+    if isinstance(sys.stderr, _TeeWriter):
+        sys.stderr.close()
