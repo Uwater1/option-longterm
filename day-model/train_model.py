@@ -51,6 +51,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import Lasso, ElasticNet, HuberRegressor, enet_path
 import optuna
+from optuna.storages import JournalStorage
+from optuna.storages.journal import JournalFileBackend
 import joblib
 from joblib import Parallel, delayed
 
@@ -505,6 +507,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     N = len(df)
     print(f"Loaded {N} samples and {X.shape[1]} features.")
 
+    tag = etf_name if side == "single" else f"{etf_name}_{side}"
+    pilot_db_path = DATA_DIR / f"optuna_pilot_{tag}.log"
+    main_db_path = DATA_DIR / f"optuna_main_{tag}.log"
+
     # Target scaling (consistent with old pipeline target scaling)
     y_scaled = (y * np.float32(100.0)).astype(np.float32)
 
@@ -672,9 +678,15 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     def _compute_pilot():
         print(f"\nRunning Optuna Pilot Study ({PILOT_N_TRIALS} trials) for normalization calibration...")
+        if pilot_db_path.exists():
+            pilot_db_path.unlink()
+        pilot_storage = JournalStorage(JournalFileBackend(str(pilot_db_path)))
         pilot_study = optuna.create_study(
+            study_name=f"pilot_{tag}",
+            storage=pilot_storage,
             direction="maximize",
             sampler=optuna.samplers.TPESampler(seed=PILOT_SEED),
+            load_if_exists=True
         )
 
         def pilot_objective(trial):
@@ -702,10 +714,17 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 traceback.print_exc()
                 return -999.0
 
-        pilot_study.optimize(pilot_objective, n_trials=PILOT_N_TRIALS, n_jobs=optuna_n_jobs)
+        def run_pilot_trial():
+            local_study = optuna.load_study(study_name=f"pilot_{tag}", storage=pilot_storage)
+            local_study.optimize(pilot_objective, n_trials=1)
+
+        Parallel(n_jobs=optuna_n_jobs)(
+            delayed(run_pilot_trial)() for _ in range(PILOT_N_TRIALS)
+        )
 
         pilot_records = []
-        for t in pilot_study.trials:
+        final_pilot_study = optuna.load_study(study_name=f"pilot_{tag}", storage=pilot_storage)
+        for t in final_pilot_study.trials:
             if t.state == optuna.trial.TrialState.COMPLETE:
                 raw_m = t.user_attrs.get("raw_metrics")
                 params = t.user_attrs.get("params")
@@ -733,9 +752,15 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # Phase 2: Main Study (Optuna Tuning)
     print(f"\nRunning main Optuna Study ({n_trials} trials) with First-Principles Multi-Metric Objective...")
+    if main_db_path.exists():
+        main_db_path.unlink()
+    main_storage = JournalStorage(JournalFileBackend(str(main_db_path)))
     study = optuna.create_study(
+        study_name=f"main_{tag}",
+        storage=main_storage,
         direction="maximize",
         sampler=optuna.samplers.TPESampler(seed=PILOT_SEED + 1),
+        load_if_exists=True
     )
 
     best_raw_metrics = None
@@ -787,7 +812,15 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         except Exception:
             return -1e9
 
-    study.optimize(main_objective, n_trials=n_trials, n_jobs=optuna_n_jobs)
+    def run_main_trial():
+        local_study = optuna.load_study(study_name=f"main_{tag}", storage=main_storage)
+        local_study.optimize(main_objective, n_trials=1)
+
+    Parallel(n_jobs=optuna_n_jobs)(
+        delayed(run_main_trial)() for _ in range(n_trials)
+    )
+
+    study = optuna.load_study(study_name=f"main_{tag}", storage=main_storage)
     
     # Retrieve best trial results
     best_trial = study.best_trial
@@ -895,6 +928,15 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     with open(DATA_DIR / f"results_{tag}.json", "w") as f:
         json.dump(results, f, indent=2, default=str)
         
+    # Clean up Optuna log files to save space and keep workspace clean
+    try:
+        if pilot_db_path.exists():
+            pilot_db_path.unlink()
+        if main_db_path.exists():
+            main_db_path.unlink()
+    except Exception as e:
+        print(f"  [cache] cleanup warning: {e}")
+
     return results
 
 

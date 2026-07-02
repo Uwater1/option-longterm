@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "588000ETF",
   "n_samples_working": 738,
-  "n_samples_lockbox": 556,
+  "n_samples_lockbox": 0,
   "selected_features": [
     "first_30min_return",
     "early_trend",
@@ -91,18 +91,13 @@
   "active_features": [
     "early_skew",
     "early_kurtosis",
-    "bar_ret_0",
     "bar_body_rng_2",
-    "max_up_ret",
     "barbed_wire_intensity",
-    "or_fill_ratio",
     "volume_concentration",
-    "rally_strength_max",
     "range_expansion_final_bar",
     "volume_weighted_price_position",
     "late_bar_momentum",
     "decision_bar_body",
-    "upper_shadow_rejection",
     "upper_wick_dominance",
     "sma20_dist",
     "aroon_osc",
@@ -110,10 +105,7 @@
     "capital_net_ratio",
     "vix_iv_spread",
     "volatility_percentile_20d",
-    "volume_percentile_20d",
-    "yesterday_first_bar_return",
-    "yesterday_first_bar_volume",
-    "yesterday_day_kurtosis"
+    "volume_percentile_20d"
   ],
   "stability_scores": {
     "gap_pct": 0.0,
@@ -356,21 +348,22 @@
     "yesterday_spike_exhaustion_ratio": 0.0
   },
   "best_params": {
-    "model_type": "skglm_huber_l1",
-    "k_weight": 0.7960389490799112,
-    "skglm_huber_l1_alpha": 0.034073758744001696,
-    "skglm_huber_delta": 4.504798723908011
+    "model_type": "skglm_mcp",
+    "k_weight": 2.644272280931144,
+    "skglm_mcp_alpha": 0.033304562754340857,
+    "skglm_mcp_gamma": 4.157683074549175,
+    "skglm_mcp_delta": 1.1811542467221494
   },
   "best_raw_metrics": [
-    2.8325741857070796,
-    0.32921105595291505,
+    2.7648833609878776,
+    0.3678671056236873,
     1.0,
-    0.1568053431412732,
-    0.6242424242424243,
-    0.9930054492947296,
-    -3.258096538021482,
-    -0.47161903977394104
+    0.1306553314189645,
+    0.41515151515151516,
+    1.0359809319907596,
+    -2.8903717578961645,
+    -1.6317777633666992
   ],
-  "lockbox_overall_ic": 0.036075714290369876,
-  "lockbox_tail_ic": -0.01562693735950214
+  "lockbox_overall_ic": NaN,
+  "lockbox_tail_ic": NaN
 }

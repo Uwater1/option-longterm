@@ -32,7 +32,7 @@ python day-model/train_model.py -e 300 --bootstrap-jobs 8  # cap stability-boots
 python day-model/train_model.py -e 300 --loyo-jobs 4       # cap LOYO fold workers per trial
 ```
 
-Speedups: fp32 arrays; vectorized Spearman screen; joblib-parallel stability bootstrap & LOYO folds; disk caches (select/loyo/pilot); precomputed unweighted scaled matrix; numpy-vectorized yearly metrics (no pandas qcut); Optuna `n_jobs=cpu_count` with BLAS threads pinned to 1; skglm `AndersonCD(max_epochs=1500)`; seeded TPESampler (42 pilot, 43 main).
+Speedups: fp32 arrays; vectorized Spearman screen; joblib-parallel stability bootstrap & LOYO folds; disk caches (select/loyo/pilot); precomputed unweighted scaled matrix; numpy-vectorized yearly metrics (no pandas qcut); Optuna process-parallel optimization via joblib (loky backend) and JournalFileBackend storage to bypass Python GIL; BLAS threads pinned to 1; skglm `AndersonCD(max_epochs=2000)`; seeded TPESampler (42 pilot, 43 main).
 
 - **LOYO parallelism**: `--loyo-jobs -1` (auto = `cpu_count // optuna-jobs`). Use when running single ETF with low `--optuna-jobs`; auto-throttles to avoid oversubscription when Optuna already saturates cores.
 
