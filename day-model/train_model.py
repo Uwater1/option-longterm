@@ -342,6 +342,50 @@ def run_screening(X_working: np.ndarray, y_working: np.ndarray):
     return screen_mask, p_vals, rhos
 
 
+def run_vif_pruning(X_working: np.ndarray, selected_idx: np.ndarray, feature_names: list, threshold: float = 10.0) -> np.ndarray:
+    """Iteratively remove the feature with the highest Variance Inflation Factor (VIF)
+
+    above `threshold`, until all remaining selected features have VIF <= threshold.
+    """
+    if len(selected_idx) <= 1:
+        return selected_idx
+
+    current_idx = list(selected_idx)
+    while len(current_idx) > 1:
+        X_sub = X_working[:, current_idx]
+        X_scaled = (X_sub - X_sub.mean(axis=0)) / (X_sub.std(axis=0) + 1e-10)
+
+        n_samples, n_features = X_scaled.shape
+        vifs = np.zeros(n_features)
+        A = np.hstack([np.ones((n_samples, 1), dtype=X_scaled.dtype), X_scaled])
+
+        for i in range(n_features):
+            y = X_scaled[:, i]
+            mask = np.ones(n_features + 1, dtype=bool)
+            mask[i + 1] = False
+            X_other = A[:, mask]
+            coef, residues, rank, s = np.linalg.lstsq(X_other, y, rcond=None)
+            if residues.size > 0:
+                rss = residues[0]
+            else:
+                rss = np.sum((y - X_other @ coef) ** 2)
+            tss = np.sum((y - y.mean()) ** 2)
+            r2 = 1.0 - (rss / tss) if tss > 1e-10 else 0.0
+            r2 = np.clip(r2, 0.0, 1.0 - 1e-15)
+            vifs[i] = 1.0 / (1.0 - r2)
+
+        max_idx = np.argmax(vifs)
+        max_vif = vifs[max_idx]
+        if max_vif > threshold:
+            f_name = feature_names[current_idx[max_idx]]
+            print(f"    [VIF Pruning] Drop feature '{f_name}' (VIF: {max_vif:.2f} > {threshold})")
+            current_idx.pop(max_idx)
+        else:
+            break
+
+    return np.array(current_idx)
+
+
 def _stability_one_bootstrap(b: int, X_screened: np.ndarray, y_working: np.ndarray,
                              alphas: np.ndarray, n_total: int, subsample_size: int,
                              rng_seed: int):
@@ -484,7 +528,7 @@ def run_loyo_cv(loyo_folds: list, model_type: str, params: dict, k_weight: float
 
 
 def calculate_yearly_metrics(year_groups, y_true: np.ndarray, y_pred: np.ndarray,
-                             k_features: int, coef_norm: float):
+                             k_features: int, coef_norm: float, ess: float = 0.0):
     y_true = np.asarray(y_true, dtype=np.float64)
     y_pred = np.asarray(y_pred, dtype=np.float64)
 
@@ -522,7 +566,10 @@ def calculate_yearly_metrics(year_groups, y_true: np.ndarray, y_pred: np.ndarray
     m4 = float(y_ics.mean())                      # Overall Rank IC
     m5 = float(y_monos.mean())                    # Decile Monotonicity
     m6 = float(y_spreads.mean())                  # Top-Bottom Spread
-    m7 = -np.log(1.0 + k_features)                # Feature Parsimony (penalized)
+    if ess > 0.0:
+        m7 = -float(k_features) / (ess / 15.0)    # Tie sparsity penalty to ESS directly
+    else:
+        m7 = -np.log(1.0 + k_features)            # Feature Parsimony (fallback)
     m8 = -coef_norm                               # Coefficient Bloat (penalized)
 
     raw_metrics = [m1, m2, m3, m4, m5, m6, m7, m8]
@@ -596,7 +643,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # length changes, or any of the deterministic knobs below change.
     # See AGENTS.md "Cache invalidation" for manual-clear guidance.
     select_key = [
-        "v3", etf_name, len(FEATURES), int(parquet_mtime),
+        "v4", etf_name, len(FEATURES), int(parquet_mtime),
         int(X_working.shape[0]), int(X_working.shape[1]),
         STABILITY_B, STABILITY_PI, SCREEN_FDR, SCREEN_FALLBACK_K,
         LOCKBOX_DATE, TARGET,
@@ -618,14 +665,22 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             B=STABILITY_B, pi=STABILITY_PI, n_jobs=bootstrap_n_jobs,
         )
         t_stab = time.perf_counter() - t_stab_start
+
+        # Run iterative VIF pruning to eliminate multivariate collinearity
+        print("Running iterative VIF pruning...")
+        t_vif_start = time.perf_counter()
+        vif_pruned_idx = run_vif_pruning(X_working, stability_selected_idx, FEATURES, threshold=10.0)
+        t_vif = time.perf_counter() - t_vif_start
+        print(f"VIF pruning finished. Dropped {len(stability_selected_idx) - len(vif_pruned_idx)} collinear features. Kept {len(vif_pruned_idx)} representatives.")
+
         return {
             "screen_mask": screen_mask,
             "p_vals": p_vals,
             "rhos": rhos,
-            "stability_selected_idx": np.asarray(stability_selected_idx),
+            "stability_selected_idx": np.asarray(vif_pruned_idx),
             "stability_scores": np.asarray(stability_scores),
             "time_screen": t_screen,
-            "time_stability": t_stab,
+            "time_stability": t_stab + t_vif,
         }
 
     t_select_block_start = time.perf_counter()
@@ -729,7 +784,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # ── LOYO folds cache (depends on selected features only) ──────────
     loyo_key = [
-        "v3", etf_name, len(FEATURES), int(parquet_mtime),
+        "v4", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         LOCKBOX_DATE, TARGET,
     ]
@@ -827,14 +882,19 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         coef_norm = float(np.linalg.norm(model_temp.coef_))
         active_k = int(np.sum(np.abs(model_temp.coef_) > 1e-5))
 
-        # Calculate raw yearly metrics
+        # Compute Kish ESS
+        sum_w = w_temp.sum()
+        sum_w2 = (w_temp ** 2).sum()
+        ess = float((sum_w ** 2) / sum_w2) if sum_w2 > 1e-10 else float(len(w_temp))
+
+        # Calculate raw yearly metrics (with ESS-scaled parsimony)
         raw_metrics, _, _ = calculate_yearly_metrics(
-            year_groups, y_working, oof_preds, active_k, coef_norm)
+            year_groups, y_working, oof_preds, active_k, coef_norm, ess=ess)
         return raw_metrics, model_temp, scaler_init
 
     # ── Pilot calibration cache ───────────────────────────────────────
     pilot_key = [
-        "v3", etf_name, len(FEATURES), int(parquet_mtime),
+        "v4", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         LOCKBOX_DATE, TARGET, PILOT_N_TRIALS, PILOT_SEED,
     ]
@@ -967,6 +1027,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             ess = float((sum_w ** 2) / sum_w2) if sum_w2 > 1e-10 else float(len(w_temp))
             ess_pct = ess / len(w_temp)
 
+            # Active feature cap based on ESS: events-per-variable heuristic
+            active_k = int(np.sum(np.abs(_model_obj.coef_) > 1e-5))
+            max_active_features = max(3, int(ess / 15.0))
+
             # Hard Constraints / Kill Switches:
             pruning_reasons = []
             if m4 <= 0:
@@ -977,13 +1041,18 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 pruning_reasons.append("M5 (Monotonicity <= 0.25)")
             if m6 <= 0:
                 pruning_reasons.append("M6 (Top-Bottom Spread <= 0)")
-            if ess_pct < 0.20:
-                pruning_reasons.append("ESS percentage too low (ESS < 20%)")
+            if active_k > max_active_features:
+                pruning_reasons.append(f"Active features count ({active_k}) exceeds ESS-based cap ({max_active_features})")
 
             if pruning_reasons:
                 trial.set_user_attr("pruned_reasons", pruning_reasons)
                 trial.set_user_attr("raw_metrics", raw_metrics)
                 return -1e9  # Pruned due to constraint violation
+
+            # Soft ESS constraint penalty
+            ess_penalty = 0.0
+            if ess_pct < 0.20:
+                ess_penalty = -10.0 * (0.20 - ess_pct)
 
             # Normalize metrics
             norm_metrics = []
@@ -1001,7 +1070,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 METRIC_WEIGHTS["m6"] * norm_metrics[5] +
                 METRIC_WEIGHTS["m7"] * norm_metrics[6] +
                 METRIC_WEIGHTS["m8"] * norm_metrics[7]
-            )
+            ) + ess_penalty
 
             trial.set_user_attr("raw_metrics", raw_metrics)
             return objective_val
@@ -1033,7 +1102,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "M3 (Hit Rate < 60%)": 0,
         "M5 (Monotonicity <= 0.25)": 0,
         "M6 (Top-Bottom Spread <= 0)": 0,
-        "ESS percentage too low (ESS < 20%)": 0,
+        "exceeds ESS-based cap": 0,
     }
     exception_reasons = []
     
@@ -1044,9 +1113,13 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             if not reasons:
                 reasons = ["Unknown / Hard constraint"]
             for r in reasons:
-                if r in reason_counts:
-                    reason_counts[r] += 1
-                else:
+                matched = False
+                for key in reason_counts.keys():
+                    if key in r:
+                        reason_counts[key] += 1
+                        matched = True
+                        break
+                if not matched:
                     if r not in exception_reasons:
                         exception_reasons.append(r)
         elif t.state == optuna.trial.TrialState.COMPLETE:
@@ -1162,6 +1235,25 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     else:
         gini = 0.0
 
+    # L2 regularized condition number computation
+    l2_lambda = 0.0
+    if model_type == "skglm_huber_l1":
+        l2_lambda = best_params["skglm_huber_l1_alpha"] * 0.1
+    elif model_type == "skglm_mcp":
+        l2_lambda = best_params["skglm_mcp_alpha"] * 0.1
+    elif model_type == "elasticnet":
+        l2_lambda = best_params["en_alpha"] * (1.0 - best_params["en_l1_ratio"])
+
+    n_samples_working = X_working_final.shape[0]
+    X_scaled_tmp = (X_working_final - X_working_final.mean(axis=0)) / (X_working_final.std(axis=0) + 1e-10)
+    _, s, _ = np.linalg.svd(X_scaled_tmp, full_matrices=False)
+    s_min = s.min()
+    raw_cond = float(s.max() / s_min) if s_min > 1e-10 else float("inf")
+
+    s_sq_max = (s.max() ** 2) + n_samples_working * l2_lambda
+    s_sq_min = (s.min() ** 2) + n_samples_working * l2_lambda
+    reg_cond = float(s_sq_max / s_sq_min) if s_sq_min > 1e-10 else float("inf")
+
     print("\n  [DIAGNOSTICS] Final Model Diagnostics:")
     print(f"    Effective Sample Size (ESS) under tail-focus: {ess:.1f} / {len(w_final)} ({ess_pct*100:.1f}%)")
     if ess_pct < 0.05:
@@ -1176,6 +1268,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         print(f"    [WARNING] Extremely high weight concentration! A very small subset of features dominates the model.")
     elif gini < 0.15:
         print(f"    [WARNING] Extremely low weight concentration (all weights are near-identical).")
+    
+    print(f"    Raw Design Matrix Condition Number: {raw_cond:.2f}")
+    print(f"    Regularized Normal Equations Condition Number (kappa): {reg_cond:.2f}")
     
     # Save the models/scalers/results to files
     tag = etf_name if side == "single" else f"{etf_name}_{side}"
@@ -1243,7 +1338,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 "pruning_reasons": reason_counts,
             },
             "model_quality": {
-                "condition_number": float(condition_number),
+                "condition_number": float(reg_cond),
+                "condition_number_raw": float(raw_cond),
+                "condition_number_regularized": float(reg_cond),
                 "collinear_pairs": [[p[0], p[1], float(p[2])] for p in collinear_pairs],
                 "effective_sample_size": float(ess),
                 "effective_sample_size_pct": float(ess_pct),
@@ -1291,7 +1388,7 @@ class _TeeWriter:
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("-e", "--etf", default="300", help="300|50|500|588000|159915|all")
-    ap.add_argument("-t", "--trials", type=int, default=50, help="Optuna trials count")
+    ap.add_argument("-t", "--trials", type=int, default=100, help="Optuna trials count")
     ap.add_argument("--side", default="single", choices=["single"])
     ap.add_argument("--no-cache", action="store_true",
                     help="Disable disk caches (selection, LOYO folds, pilot metrics).")

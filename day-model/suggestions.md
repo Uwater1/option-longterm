@@ -1,130 +1,41 @@
-# GPT said:
-Your current results suggest the bottleneck is no longer “find more signal”; it is **make selection stable under correlation and time drift**. The lockbox still shows severe multicollinearity in several ETFs (condition numbers up to the millions) and noticeable CV→lockbox gaps, especially for 50ETF and 588000ETF. The 50ETF also had to fall back from BH-FDR because only 8 features survived screening, which is a strong sign that the selection stage is brittle. Your own plan already flags the risk of tail-focus leaking into training and of “triple-dipping” across screening, stability selection, and Optuna on the same rows.   
+Good news: CSS + the ESS floor + L2 fixed exactly what they were built to fix (300ETF and 159915ETF condition numbers collapsed, ESS floor held). But the report shows three things that CSS didn't touch, and one thing it may have made worse. Here's the diagnosis, in priority order.
 
-The strongest next step, based on newer literature, is to **replace feature-level stability selection with group/subspace-aware selection, then refit once on the frozen support**. A 2025 paper on highly correlated predictors argues that stability should be defined on **feature subspaces**, not individual features, and explicitly generalizes stability selection in that direction. A second 2025 paper finds that **decorrelating variables before lasso improves selection stability**. Together, these papers point to the same conclusion: with strong collinearity, the unit of selection should be a correlated block or subspace, not a single coefficient. ([arXiv][1])
+## 1. CSS fixed *pairwise* collinearity, not *multivariate* collinearity — and that's why 50ETF/500ETF are still broken
 
-There is also a direct warning against pushing tail weighting too early. A 2023 paper on **parameter instability** concludes that the selection stage should use **unweighted observations**, while down-weighting belongs at the forecasting stage. That aligns with the idea that your current tail-weighting objective should be used only after the support is fixed, not as part of the selection search itself. That is an inference from the paper, but it is a very strong one for your setup. ([arXiv][2])
+Look at what actually happened: 300ETF and 159915ETF condition numbers went from severe to single digits. But 50ETF went from 6,422,142 to 6,424,318 (unchanged, still severe) and 500ETF went from 3,675,898 to **5,240,446 — it got worse**, despite CSS running on both.
 
-So the next experiment I would run is this: build correlated groups on the working set only, run **subspace/group stability selection** with unweighted rows, freeze the selected support, and then do a single tail-weighted refit on that frozen support. Keep the current lockbox untouched. This is the cleanest ablation because it directly targets the two pathologies visible in your report: multicollinearity and overfitting across time. A 2024 grouped-regression paper is consistent with that direction as well, since it develops structured sparsity methods specifically for high-dimensional grouped regression under sparsity. ([arXiv][1])
+This is expected, not a bug in your implementation. Complete-linkage clustering at $|r|\ge0.75$ only merges features whose *pairwise* correlation crosses the threshold. Condition number and VIF, by contrast, detect linear dependencies among **three or more** variables even when no single pair looks collinear — VIF isolates the combined effect of all predictors on a variable, catching interactions that pairwise correlation cannot see, and it's well established that multicollinearity can exist among three or more variables even when every pairwise correlation looks fine. Your 500ETF selected 30 "cluster representatives" that are pairwise under 0.75, but some subset of 3-5 of them (plausibly the `bar_rng_0/3/5`, `bar_vwap_dev_0/2` family, which are near-arithmetic transforms of the same underlying bars) are jointly almost perfectly predictable from each other.
 
-If I had to rank the next move in one line: **subspace-aware stability selection first, more Optuna second**. More tuning on the current feature-level pipeline is much less likely to fix the underlying instability than changing the selection geometry itself.  ([arXiv][1])
+**Fix**: add a second pass *after* CSS representative selection — iterative VIF pruning (compute VIF for all kept representatives, drop the highest-VIF feature, repeat until all VIF < ~10, or equivalently until $\kappa$ drops below a target). This is the standard remedy specifically because pairwise correlation filtering alone is insufficient — VIF analysis is the multivariate-context follow-upperformed after pairwise correlation filtering to address redundancy, multicollinearity, and potential feature leakage issues that pairwise filtering alone misses. There's also a 2025 refinement of VIF worth knowing about if you want to be more precise about *why* a variable is flagged (essential vs. non-essential collinearity) — the classical VIF has known limitations that a redefined-VIF approach addresses, published in Computational Economics this year.
 
-# Claude said:
-## What the report is actually telling you
+## 2. Feature counts went *up* almost everywhere, and that's a plausible driver of the worse overfit flags
 
-Before the "next step," it's worth naming what REPORT.md reveals, because it points directly at the fix. Two things stand out:
+Compare kept-feature counts: 300ETF 30→36, 50ETF 31→33, 500ETF 13→**30**, 588000ETF 22→39, 159915ETF 15→23. Every single ETF kept *more* features under CSS than under plain stability selection. Meanwhile the overfit-flag count went from 3/5 to 4/5, and two ETFs (50ETF, 588000ETF) are now `[DEGRADED]` on the monotonicity gap — CV monotonicity of 0.43-0.80 collapsing to OOS monotonicity of 0.18-0.22. That's not a collinearity signature, that's a parameter-count-vs-effective-sample-size signature: 588000ETF has 39 active coefficients fit against a tail-weighted ESS of only 489 (66.3% of ~740).
 
-1. **Your plan document rejected clustering** ("Hierarchical Feature Clustering... are useless... causes model collapse"), concluding ElasticNet stability selection "naturally handles collinearity multivariately without needing a separate clustering pre-filter."
-2. **REPORT.md's own diagnostics contradict that.** Condition numbers are severe across 4/5 ETFs (up to 6.4M for 50ETF, 3.7M for 500ETF), 3/5 ETFs are flagged `[OVERFIT]` on the CV→OOS IC gap, and 159915ETF's tail-weight ESS collapsed to 16.6%.
+Two contributing causes, both fixable:
+- **CSS's "keep the best representative per cluster" rule doesn't cap total cluster count.** At threshold 0.75, weakly-correlated features (0.30-0.74) that would previously have been pruned by BH-FDR fallback-to-50 logic now each form their own singleton "cluster" and survive if individually stable, inflating the kept set.
+- **M₇ (Feature Parsimony) is weighted at 0.00**, on the reasoning that "CSS controls sparsity." It doesn't — CSS controls *redundancy*, not *count*. Note also that naive parameter-counting as a complexity proxy is theoretically shakier than it looks: degrees of freedom and model complexity are not synonymous and can correspond very poorly, with degrees of freedom sometimes failing to even move monotonically with the penalty strength. So don't just re-enable M₇ with the same $-\log(1+k)$ form. Instead, tie the sparsity penalty to your effective sample size directly (see next point).
 
-This isn't actually a contradiction about whether to use clustering — it's that the *particular* clustering approach you rejected (univariate-rank pre-filtering, dropping correlated features before selection) was the wrong implementation, not that correlation-structure information is useless. The most recent methodological literature on exactly this problem agrees, and gives you a better recipe.
+**Fix**: enforce an explicit cap of active-features-to-ESS ratio, e.g. no more than 1 feature per 15-20 effective tail-weighted observations (a biostatistics-style events-per-variable heuristic, adapted to your ESS diagnostic which you already compute). For 588000ETF's ESS of 489, that caps you at ~25-33 features, not 39.
 
-## Recommended next step: replace "no clustering" with correlation-aware stability selection
+## 3. The L2 ridge addition may not be moving the number you're using to judge it
 
-**The core diagnosis, formalized:** Faletto & Bien (2022) prove that when a highly correlated group of features is observed, the Lasso/ElasticNet tends to pick only one of them while highly correlated proxies for an important latent variable, the lasso typically selects one proxy, yet stability selection with the lasso can fail to select any proxy, leading to worse predictive performance than the lasso alone. This "vote-splitting" is precisely why your condition numbers stay severe even after stability selection — ElasticNet's grouping effect reduces vote-splitting somewhat, but it does not remove multicollinearity from the *final selected set*, it just occasionally keeps more than one correlated feature in.
+Check what your "Condition Number ($\kappa$)" diagnostic is actually computed on. If it's $\kappa(X^TX)$ on the raw selected design matrix — which is what it looks like, since 50ETF/500ETF's $\kappa$ barely moved after adding `mu=0.1*alpha` ridge — then the L2 term changes the *estimator* (shrinks and stabilizes coefficients at fit time) but doesn't and can't change that diagnostic, since it's a property of $X$ alone, independent of what penalty you fit with. That's fine as far as it goes, but it means your diagnostic table isn't actually telling you whether the L2 term helped. The more decision-relevant number would be $\kappa(X^TX + \lambda I)$ (the regularized normal equations) or, better, direct coefficient-stability across CPSS resamples (variance of $\hat\beta_j$ across subsamples). Worth adding one of these so you're not chasing a metric the fix can't move.
 
-**Three candidate fixes, from most newest/rigorous to most immediately practical:**
+## 4. The ESS kill switch is starving Optuna's search
 
-**1. Feature Subspace Stability Selection (FSSS) — Zhang, Bien & Taeb, May 2025 (newest).** This reframes the whole selection-stability problem around feature *subspaces* rather than feature *sets*, which matters a lot for you because you're not just trying to find "the" feature set per ETF — you have 5 related ETFs and plausibly redundant feature families (e.g. `yesterday_day_vwap_dev` variants across assets). FSSS outputs *multiple* equally-valid stable models plus a "substitutability" metric identifying which features are interchangeable, rather than forcing one brittle winner. In their synthetic benchmark against plain stability selection and cluster stability selection, plain stability selection collapsed to almost no selections under correlation, while FSSS kept both accuracy and a non-trivial feature count. The catch: it's implemented in a new R package (`substab`), not Python, and would need porting.
+Completed trials dropped substantially (300ETF 34→27, 500ETF 44→31, 588000ETF 45→30) because the hard `ESS ≥ 20%` prune is now eating a large fraction of the budget. A binary kill switch at 50 trials total leaves you with as few as 27 usable trials for a multi-dimensional hyperparameter space (model type, alpha, gamma/delta, l1_ratio, k) — thin. Two options, not mutually exclusive:
+- Raise `n_trials` for the main study now that a chunk gets pruned (you're not exploring less, you're just spending more trials to explore the same amount).
+- Convert the ESS floor from a hard kill switch to a soft term in the multi-objective Pareto front (you already scoped NSGA-II as an option per your notes) — trading off Tail IC IR against ESS directly, rather than a discontinuous -1e9 cliff at exactly 20%, which creates a jagged, hard-to-optimize response surface for Optuna's sampler.
 
-**2. Cluster Stability Selection (CSS) — Faletto & Bien 2022, R package `cssr`.** More mature and directly implementable. Instead of dropping correlated features before selection (what your plan rejected) or letting ElasticNet arbitrate silently, CSS pre-defines clusters and asks whether *any* member of a cluster was selected in each subsample, aggregating votes at the cluster level, then optionally uses cluster-representative or weighted-average features in the final model. The problem CSS addresses is that stability selection doesn't do well when features are highly correlated — if there are clusters of highly correlated features, any one member of the cluster might be a reasonably good choice for a predictive model, and stability selection under-ranks all of them because votes split. This is the most drop-in replacement for your current Step 1–2.
+## 5. 50ETF may not be a methodology problem at all
 
-**3. Stability Selection via Variable Decorrelation (DVS) — Nouraie, Smith & Muller, 2025, R package `DVS`.** Orders features by predictive power (via a screening step similar to your BH-FDR stage), then Gram-Schmidt–orthogonalizes them before running Lasso/ElasticNet stability selection. Because the resulting design is exactly orthogonal, the condition-number problem structurally disappears at the modeling stage. Their real-data example is instructive: on a genomics dataset where plain stability selection was so unstable that the stability-optimal regularization value didn't exist, decorrelation caused a stable optimum to reappear at 0.75 selection stability in contrast to the earlier analysis, the application of the decorrelation method resulted in the existence of a well-defined stability-optimal regularization value, with stability converging to about 0.75. This is closest in spirit to what your Step 1 screening + Step 2 stability selection is already doing — it's a fairly mechanical insertion of a QR step between them.
+BH-FDR passed only 8/238 features for 50ETF (fallback triggered), and after all the fixes its Overall Lockbox IC is now **negative** (-0.0096, worse than the -0.0311→+0.0080 range you had before). Every other ETF has real marginal signal (63-115 features passing screening); 50ETF has almost none. That's consistent across both runs and both pipelines — it's not a selection-instability artifact, it looks like the unified 10:00-14:35 entry/exit window genuinely doesn't capture 50ETF's return structure, or 50ETF's informative features aren't in your current 238-feature set. Before spending more optimization effort on 50ETF specifically, it's worth checking whether its historically-used features (from the "legacy per-ETF customized bars" your plan simplified away) had a materially higher BH-FDR pass rate — if so, the unification, not the model, cost you 50ETF's signal.
 
-**My concrete suggestion:** start with CSS (2) since it plugs into your existing skglm/Optuna pipeline with the least surgery — cluster your 238 features by correlation once, then modify Step 2's CPSS to vote at the cluster level. If condition numbers stay severe afterward, layer in decorrelation (3) at the modeling stage as well.
+## 6. A reproducibility flag worth resolving before you trust any of these numbers
 
-## Two secondary items the report also surfaces
-
-**Tail-weight ESS collapse (159915ETF, 16.6%).** Your $w_i = |y_i|^p$ scheme is mathematically the right instinct (weight, don't subset), but nothing currently bounds how concentrated the weights get. A very recent paper (Aug 2025) formalizes exactly this trade-off any non-uniform sample weighting reduces effective sample size, and when high correlation is present in the data, rare observations with small conditional probabilities can get very large inverse-probability weights that dominate the weighted sample, causing the estimator to be trained on effectively very few observations, and proposes constraining weights to guarantee a minimum relative ESS rather than letting $p$ float freely under Optuna with no ESS floor. Adding a Kish-ESS-based penalty or constraint to your Step 3/Step 4 objective (you already compute ESS% in diagnostics — just not as a kill switch) would directly prevent the 159915ETF failure mode.
-
-**The overfit flags (50ETF, 588000ETF, 159915ETF).** These are plausibly downstream of the same collinearity issue — ill-conditioned designs are exactly where coefficients are unstable across CV folds vs. the lockbox refit. Fixing selection-stage collinearity (above) should shrink these gaps as a side effect; I'd re-run the generalization-gap diagnostic after switching selection methods before reaching for a separate fix.
-
-# GEMINI said:
-Your current pipeline is exceptionally rigorous for a quant framework. Enforcing strict chronological lockboxes, running CPSS (Complementary Pairs Stability Selection), mapping out a multi-metric optimization function via robust MAD z-scores, and introducing a 10-day boundary embargo shows real structural maturity.
-
-However, your `REPORT.md` diagnostics reveal two severe algorithmic bottlenecks that are capping your out-of-sample performance: **Eigenspace Implosion (Severe Multi-Collinearity)** and **Tail-Leverage Collapse (ESS Degradation)**.
-
-Here is a deep-dive research roadmap targeting your exact pain points, leveraging recent econometric and statistical machine learning literature (2024–2026).
+Your plan.md's own "Observed Effects" table reports 300ETF Tail IC as **-0.0311** and 159915ETF Overall IC as **+0.1367**; REPORT.md's final numbers for the same fields are **+0.0145** and **+0.1334**. These aren't rounding differences. If both came from nominally the same pipeline, that's a sign of Optuna sampler seed variance large enough to flip a sign on 300ETF's headline metric — which matters a lot given you're about to make deployment decisions off a single run per ETF. Fix the Optuna sampler/CV seed, and run each ETF's final config across 3-5 seeds to report a range rather than a point estimate before trusting any individual number in the table.
 
 ---
 
-## 1. Pivot from Sample-Weighting to Sparse Expectile Regression
-
-### The Diagnostic Symptom
-
-For **159915ETF**, your Tail Weight Effective Sample Size (ESS %) collapses to **16.6%** (~359 effective days out of 2,166). Your 50ETF and 588000ETF models are suffering from severe out-of-sample generalization gaps (e.g., 588000ETF drops from $+0.1955$ CV IC to $+0.0150$ Lockbox IC).
-
-### The First-Principles Problem
-
-Using sample weights $w(y_i) = |y_i|^k$ transforms your objective function into a customized M-estimator that grants massive statistical leverage to extreme tail observations. When Optuna optimizes $k$ to focus on the tails, it aggressively discards the conditional distribution of normal days. Your model is essentially overfitting to historical idiosyncratic tail noise and structural regimes that do not repeat in the OOS lockbox.
-
-### The Academic Solution: Sparse Expectile Regularization
-
-Instead of scaling the inputs by arbitrary tail weights, adopt **Regularized Expectile Regression**.
-
-* **The Theory:** Expectiles generalize the mean in the same way quantiles generalize the median, but because they are based on squared losses rather than absolute losses, they preserve the computational elegance of gradient-based optimization. Recent financial literature suggests using a high expectile level ($\tau = 0.90$ or $0.95$) to isolate tail dynamics without reducing the design matrix's effective sample size.
-* **The Objective Function:** Replace your input-scaled Huber/MCP loss with an asymmetric squared loss:
-
-$$\mathcal{L}_{\tau}(y, X\beta) = \sum_{i=1}^{n} \rho_{\tau}\left(y_i - x_i^\top \beta\right) + \lambda \Omega(\beta)$$
-
-Where the asymmetric check function $\rho_{\tau}(u)$ is defined as:
-
-$$\rho_{\tau}(u) = |\tau - \mathbb{I}(u < 0)| \cdot u^2$$
-
-* **Why this helps you:** Since $\rho_{\tau}$ uses all observations but weights the *residuals* asymmetrically based on whether they underpredict or overpredict the tail target, you utilize the full information of the design matrix $X$. Your ESS stays near 100%, stabilizing your coefficient paths across time while explicitly optimizing for tail asymmetry.
-
----
-
-## 2. Implement Huber-Elastic-MCP (Enforce Final-Stage $L_2$ Bounding)
-
-### The Diagnostic Symptom
-
-Your condition numbers ($\kappa$) are astronomical—climbing to **6.4 million** for 50ETF and **3.6 million** for 500ETF.
-
-### The First-Principles Problem
-
-You noted in your plan that removing hierarchical clustering saved your model from collapsing to $\le 2$ active weights. While ElasticNet handles collinearity *multivariately* during the Step 2 selection phase, your **Step 4 final fit** branches into *pure* `skglm_mcp` or `skglm_huber_l1`.
-
-Because MCP and $L_1$ penalties lack strong convexity, when they encounter a feature space with a condition number of $10^6$, the proximal coordinate descent engine becomes highly unstable. It randomly assigns weights to one feature over its collinear twin based on tiny training perturbations, wrecking out-of-sample consistency.
-
-### The Academic Solution: The Ridge-MCP Hybrid
-
-You need to explicitly retain an $L_2$ penalty in your final production fit to act as an entry-barrier for the condition number.
-
-* **Actionable Change:** Modify your final estimator to a **Huber Elastic-MCP** framework. Do not let Optuna choose between pure $L_1$ and pure MCP. Force an integrated penalty:
-
-$$\Omega(\beta) = \sum_{j=1}^{p} \text{MCP}_{\lambda, \gamma}(\beta_j) + \frac{\mu}{2}\|\beta\|_2^2$$
-
-* **Why this helps you:** The addition of the quadratic ridge penalty ($\mu$) mathematically guarantees that the minimum eigenvalue of your optimization operator is bounded below by $\mu$. This artificially compresses your condition number from $6,422,142$ down to a manageable target ($\le 1000$), forcing stable joint-coefficient assignments for highly correlated variables like `yesterday_day_vwap_dev` and `yesterday_intraday_close_position`.
-
----
-
-## 3. Transition to "Loss-Guided" Stability Selection
-
-### The Diagnostic Symptom
-
-Despite running CPSS with a strict frequency cutoff ($\ge 0.60$), Optuna is still finding hyperparameter sets ($\alpha, \gamma, \delta$) that game your cross-validation loops, creating severe generalization gaps in your youngest/most volatile asset (588000ETF).
-
-### The First-Principles Problem
-
-Standard Stability Selection (Shah & Samworth, 2013) is a *loss-agnostic* selection procedure. It tracks selection frequencies across subsamples to control the per-family error rate, but it doesn't care if a feature's presence actively lowers out-of-sample prediction error during those subsamples. In highly noisy financial data, completely useless features can pass the selection threshold purely due to co-movement inside specific data chunks.
-
-### The Academic Solution: Loss-Guided Stability Selection
-
-* **The Theory:** Grounded in recent frameworks like *Loss-Guided Stability Selection* (Balzer & Benlahlou, 2025), you inject a validation loss tracking mechanism directly into your subsampling loop.
-* **Actionable Change:** During Step 2, when you draw your $B=100$ subsamples:
-1. Split each subsample into an internal training slice ($N/4$) and an internal validation slice ($N/4$).
-2. Fit your regularization path on the training slice, but score feature importance by measuring the *increase in out-of-sample validation loss* when a specific feature's coefficient is zeroed out.
-3. Aggregate the features whose out-of-sample loss contribution exceeds a strict threshold, rather than tracking mere non-zero frequency counts.
-
-
-
----
-
-## Summary Action Plan
-
-| Step | Current Suboptimal State | Recommended Next Action Step | Expected Structural Benefit |
-| --- | --- | --- | --- |
-| **1** | Tail input scaling ($ | y | ^k$) collapses ESS to 16.6%. |
-| **2** | Final fit uses pure MCP/Huber $L_1$, exploding $\kappa$ to $10^6$. | Enforce a mandatory **$L_2$ Ridge penalty component** in the final MCP loss function. | Compresses condition numbers, stabilizing multivariate weights under high collinearity. |
-| **3** | Loss-agnostic CPSS allows CV hyperparameter gaming. | Upgrade to **Loss-Guided Stability Selection** (Balzer & Benlahlou, 2025). | Bridges the generalization gap by filtering features based on out-of-sample predictive utility. |
+**If I had to rank the next concrete action**: iterative VIF pruning after CSS (fixes 50ETF/500ETF's still-severe $\kappa$ directly, cheap to implement, reuses your existing diagnostic) paired with an ESS-scaled cap on kept-feature count (addresses the new overfit/degraded flags, which are the more worrying regression in this report). The seed-variance check is lower effort and should happen before either, since it'll tell you how much of the "improvement" you're chasing is even real.

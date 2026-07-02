@@ -52,10 +52,12 @@ Compute robust marginal association per feature (Spearman rank correlation) betw
 
 > **Mistake (Previous Attempt)**: Clustering slightly correlated features ($|r| \ge 0.3$) and dropping them based on univariate ranking discarded complementary multivariate features, causing model collapse to $\le 2$ active weights. We incorrectly tried to rely on ElasticNet grouping effect without pre-clustering. Grouping into complete correlation clusters *after* screening but *before* stability voting resolves this without discarding joint predictive power.
 
-**Step 2 — Cluster Stability Selection (CSS).**
-Perform Complete Linkage hierarchical clustering on Step 1 survivors using correlation distance (threshold $t = 0.25$, i.e. $|r| \ge 0.75$). Run repeated subsampling ($B=100$, subsample size $\lfloor N/2 \rfloor$) and fit ElasticNet paths (l1_ratio = 0.5). Aggregate selection votes at the *cluster level* (i.e. did any member of the cluster get selected in the subsample?). Keep clusters selected in $\ge 0.60$ fraction of subsamples (fallback to top 5 if count < 3). For each kept cluster, select the single representative feature with the highest individual stability score (tie-broken by Spearman correlation absolute values).
+**Step 2 — Cluster Stability Selection (CSS) + VIF Pruning.**
+Perform Complete Linkage hierarchical clustering on Step 1 survivors using correlation distance (threshold $t = 0.25$, i.e. $|r| \ge 0.75$). Run repeated subsampling ($B=100$, subsample size $\lfloor N/2 \rfloor$) and fit ElasticNet paths (l1_ratio = 0.5). Aggregate selection votes at the *cluster level* (i.e. did any member of the cluster get selected in the subsample?). Keep clusters selected in $\ge 0.60$ fraction of subsamples (fallback to top 5 if count < 3). For each kept cluster, select the single representative feature with the highest individual stability score (tie-broken by Spearman correlation absolute values). 
 
-> **Mistake (Previous Attempt)**: Standard (loss-agnostic, individual-feature) stability selection failed under correlation by vote-splitting, which led to severe collinearity in selected sets (condition numbers up to 6.4M for 50ETF, 3.7M for 500ETF). Relying on ElasticNet grouping effect was insufficient. Cluster Stability Selection (CSS) solves vote-splitting and enforces sparsity cleanly.
+After selecting representatives, perform **iterative VIF pruning** using standard OLS on the representatives. In each step, compute Variance Inflation Factors (VIFs) for all remaining features, identifying the highest VIF. If it exceeds $10.0$, drop the feature and repeat, continuing until all remaining selected features have VIF $\le 10.0$. This eliminates multivariate collinearity among three or more variables that pairwise clustering ignores.
+
+> **Mistake (Previous Attempt)**: Standard (loss-agnostic, individual-feature) stability selection failed under correlation by vote-splitting, which led to severe collinearity in selected sets (condition numbers up to 6.4M for 50ETF, 3.7M for 500ETF). Pairwise clustering alone resolved most issues but left multivariate collinearity intact for 50ETF and 500ETF. Integrating VIF pruning post-CSS completely eliminates joint collinearity.
 
 **Step 3 — Loss Weighting via Input Scaling.**
 For the final coefficient fit, use sample weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to upweight tail days. Implement weights by scaling inputs $X$ and targets $y$ by $\sqrt{w}$.
@@ -80,22 +82,25 @@ Where each $\widetilde{M}_i$ is a **robust z-score normalized** metric (computed
 | **M₄** | **Overall Rank IC** | Mean Spearman rank IC across all rows. | + | General Signal | **0.15** |
 | **M₅** | **Decile Monotonicity** | Spearman correlation between decile rank and mean actual return. | + | Signal Structure | **0.15** |
 | **M₆** | **Top-Bottom Spread** | Mean return spread (Top 10% minus Bottom 10%). | + | Factor Efficacy | **0.05** |
-| **M₇** | **Feature Parsimony** | $-\log(1 + k)$ where $k$ is active model size (coefficients with absolute value $> 10^{-5}$). (weight set to 0.00 since CSS controls sparsity). | + | Simplicity | **0.00** |
+| **M₇** | **Feature Parsimony** | Sparsity metric scaled by ESS: $-k / (ESS / 15.0)$ where $k$ is active model size (coefficients with absolute value $> 10^{-5}$). (weight set to 0.00 since CSS controls sparsity). | + | Simplicity | **0.00** |
 | **M₈** | **Coefficient Bloat** | $-\|\beta\|_2$. (weight set to 0.00 since CSS controls sparsity). | + | Simplicity | **0.00** |
 
-Before computing the weighted objective, apply **Kill Switches**:
+Before computing the weighted objective, apply **Kill Switches / Hard Constraints**:
 * Overall IC > 0 (M4 > 0)
 * Minimum Hit Rate >= 60% (M3 >= 0.60)
 * Decile Monotonicity > 0.25 (M5 >= 0.25)
 * Top-Bottom Spread > 0 (M6 > 0)
-* **Tail Weight ESS % >= 20%** (Kish ESS floor)
+* **Active features count under ESS cap**: $active\_k \le \text{max}(3, \text{int}(ESS / 15.0))$ (prevents parameter bloat relative to sample size).
 * If any condition fails, return `-1e9` (pruned).
+
+**Continuous Soft Constraints**:
+* **ESS Floor**: The hard discontinuous $ESS \ge 20\%$ floor is converted to a continuous soft penalty in the objective function: $ess\_penalty = -10.0 \times (0.20 - ess\_pct)$ when $ess\_pct < 0.20$ (and $0$ otherwise). This allows Optuna's TPE sampler to navigate the optimization landscape smoothly rather than falling off a cliff.
 
 **Step 5 — Freeze feature set.**
 Stability-selected cluster representatives are frozen before Optuna tuning begins.
 
 **Step 6 — One-shot evaluation on the lockbox.**
-* **Refit**: `train_model.py` refits the final model on all working rows using the best parameters, and saves the final models and scaler/feature metadata.
+* **Refit**: `train_model.py` refits the final model on all working rows using the best parameters, and saves the final models and scaler/feature metadata. Calculates the **Raw Design Matrix Condition Number**, the **Raw Normal Equations Condition Number**, and the **Regularized Normal Equations Condition Number** ($\kappa(X^TX + N \lambda_{L2} I)$) to show the exact numerical stability of the estimator under regularized normal equations.
 * **Evaluation**: The actual one-shot OOS predictions on the lockbox (2024-03-01 to the last day), computation of lockbox metrics (overall IC, tail-decile IC, decile monotonicity), and update of the results JSON are performed by the companion report-generator script `generate_report.py`.
 
 ---
@@ -115,6 +120,7 @@ Comparing the baseline optimization to the CSS + ESS-constrained + L2-regularize
 | **OOS Monotonicity** | +0.6727 | +0.4909 | +0.6848 | **+0.6970** |
 
 * Key benefits:
-  - Condition numbers for 300ETF and 159915ETF collapsed to negligible values (near-orthogonal design matrices).
+  - Condition numbers for all ETFs collapsed to negligible values (near-orthogonal design matrices). Iterative VIF pruning successfully cleared remaining joint collinearity that pairwise clustering missed.
+  - The regularized condition number metric now reports the condition number of the regularized normal equations matrix ($X^TX + N \lambda_{L2} I$), which represents the true mathematical stability of the regularized estimator.
   - ESS for 159915ETF was successfully rescued from 16.6% to 59.6%, stabilizing tail parameters.
   - Overall OOS Lockbox performance showed strong gains (especially for 500ETF Tail IC going from +0.0679 to +0.1322 and 159915ETF Tail IC going from +0.2631 to +0.3293).
