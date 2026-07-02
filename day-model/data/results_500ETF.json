@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "500ETF",
   "n_samples_working": 2166,
-  "n_samples_lockbox": 0,
+  "n_samples_lockbox": 556,
   "selected_features": [
     "bar_ret_0",
     "bar_rng_0",
@@ -290,6 +290,6 @@
     -2.6390573296152584,
     -0.4086713194847107
   ],
-  "lockbox_overall_ic": NaN,
-  "lockbox_tail_ic": NaN
+  "lockbox_overall_ic": 0.12185352574212564,
+  "lockbox_tail_ic": 0.046818400059628125
 }

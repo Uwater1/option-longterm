@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "588000ETF",
   "n_samples_working": 738,
-  "n_samples_lockbox": 0,
+  "n_samples_lockbox": 556,
   "selected_features": [
     "early_skew",
     "early_kurtosis",
@@ -307,6 +307,6 @@
     -3.091042453358316,
     -0.4925006628036499
   ],
-  "lockbox_overall_ic": NaN,
-  "lockbox_tail_ic": NaN
+  "lockbox_overall_ic": 0.02423121829730839,
+  "lockbox_tail_ic": -0.01113147449575215
 }
