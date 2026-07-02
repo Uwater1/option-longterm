@@ -73,7 +73,7 @@ Remove-Item day-model\data\cache_*.joblib
 
 `train_model.py` implements the following robust modeling chain:
 
-1. **Lockbox Split (Step 0)**: Hold out days from 2024-03-01 to last day.
+1. **Lockbox Split (Step 0)**: Hold out days from 2024-03-01 to last day (OOS lockbox data completely ignored during training to ensure isolation).
 2. **BH-FDR Screening (Step 1)**: Robust Spearman rank correlation on 2200 training days. Keep features surviving FDR = 0.40. Fallback to top 80 by p-value if fewer pass.
 3. **Stability Selection (Step 2)**: ElasticNet path selection (l1_ratio = 0.5) across $B=100$ subsamples of size $\lfloor N/2 \rfloor$ of Step 1 survivors. Keep features with selection probability $\ge 0.60$ (fallback to top 5 if count < 3). Handles collinearity grouping naturally via ElasticNet grouping effect.
 4. **Loss Weighting (Step 3)**: Power weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to focus model on tail days.
@@ -93,4 +93,5 @@ Remove-Item day-model\data\cache_*.joblib
    - Hit Rate < 60%
    - Decile Monotonicity <= 0.4
    - Top-Bottom Spread <= 0
-9. **One-Shot Evaluation (Step 6)**: Fits final model on all 2200 training rows and evaluates on the 500-day lockbox.
+9. **One-Shot Evaluation & Diagnostics Plotting (Step 6)**: Handled entirely in `generate_report.py` to keep training fast. Evaluates final model on 500-day lockbox, updates OOS metrics in results JSON/scaler bundles on disk, and generates 2x2 diagnostics plots (`plots/diagnostics_{tag}.png`) containing Coefficients, OOS decile spread, and All data decile spread.
+
