@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "159915ETF",
   "n_samples_working": 2166,
-  "n_samples_lockbox": 0,
+  "n_samples_lockbox": 556,
   "selected_features": [
     "gap_pct",
     "first_bar_return",
@@ -294,6 +294,6 @@
     -2.772588722239781,
     -0.7324375510215759
   ],
-  "lockbox_overall_ic": NaN,
-  "lockbox_tail_ic": NaN
+  "lockbox_overall_ic": 0.11434012850460905,
+  "lockbox_tail_ic": 0.30024840745451
 }
