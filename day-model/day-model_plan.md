@@ -54,13 +54,13 @@ Compute robust marginal association per feature (Spearman rank correlation) betw
 > Clustering slightly correlated features ($|r| \ge 0.3$) and dropping them based on univariate ranking discards complementary multivariate features. This causes model collapse to $\le 2$ sparse active weights and a negative OOS Lockbox Tail IC ($-0.0207$). Removing this step and relying on ElasticNet stability selection to handle collinearity multivariately preserves 72 active weights and increases Lockbox Tail IC to $+0.0304$.
 
 **Step 2 — Stability selection on survivors.**
-Run repeated subsampling ($B=100$, subsample size $\lfloor N/2 \rfloor$) over the Step 1 survivors. Fit ElasticNet paths (l1_ratio = 0.5). To ensure robust feature filtering, restrict the considered alphas to the range producing at most 40 features on average (`STABILITY_Q = 40`). Keep features selected in $\ge 0.60$ fraction of subsamples (fallback to top 5 if count < 3). Because ElasticNet has a grouping effect, it naturally handles collinearity multivariately without needing a separate clustering pre-filter.
+Run repeated subsampling ($B=100$, subsample size $\lfloor N/2 \rfloor$) over the Step 1 survivors. Fit ElasticNet paths (l1_ratio = 0.5). To ensure robust feature filtering, restrict the considered alphas to the range producing at most 35 features on average (`STABILITY_Q = 35`). Keep features selected in $\ge 0.60$ fraction of subsamples (fallback to top 5 if count < 3). Because ElasticNet has a grouping effect, it naturally handles collinearity multivariately without needing a separate clustering pre-filter.
 
 **Step 3 — Loss Weighting via Input Scaling.**
 For the final coefficient fit, use sample weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to upweight tail days. Implement weights by scaling inputs $X$ and targets $y$ by $\sqrt{w}$, which is mathematically exact for least squares and serves as a robust Huber weighting.
 
 **Step 4 — Optuna over hyperparameters only, evaluated on a tail-specific metric.**
-Nested Yearly CV (2015-2023) within the working set, applying a 10-day embargo at training year boundaries to prevent temporal leak. Optuna tunes MCP ($\lambda, \gamma$), Huber $\delta$, and loss weight exponent $k$.
+Nested Yearly CV (2015-2023) within the working set, applying a 10-day embargo at training year boundaries to prevent temporal leak. Optuna tunes model type selection (`skglm_huber_l1` vs `skglm_mcp`), their respective regularization parameters (alphas, gamma, delta), and the loss weight exponent $k$.
 
 ### Step 4.1 — Define Metric Weights & Optimization Objective
 
@@ -84,7 +84,7 @@ Before computing the weighted objective, apply **Kill Switches**:
 * Minimum Hit Rate >= 60% (M3 >= 0.60)
 * Decile Monotonicity > 0.25 (M5 >= 0.25)
 * Top-Bottom Spread > 0 (M6 > 0)
-If any condition fails, return `-1e9` (pruned).
+* If any condition fails, return `-1e9` (pruned).
 
 > Problems: Historically, all main study trials violated the `m5 > 0.4` constraint for 50ETF. Relaxing the constraint to `m5 > 0.25` and removing the M7/M8 weights solved the issue, avoiding constraint violations while preventing model collapse (e.g. 500ETF active features count improved from 1 to 13).
 
@@ -92,4 +92,5 @@ If any condition fails, return `-1e9` (pruned).
 Stability-selected features are frozen before Optuna tuning begins.
 
 **Step 6 — One-shot evaluation on the lockbox.**
-Refit final model on all working rows, predict on lockbox (2024-03-01 to last day), and report out-of-sample overall IC and tail-decile IC.
+* **Refit**: `train_model.py` refits the final model on all working rows using the best parameters, and saves the final models and scaler/feature metadata.
+* **Evaluation**: The actual one-shot OOS predictions on the lockbox (2024-03-01 to the last day), computation of lockbox metrics (overall IC, tail-decile IC, decile monotonicity), and update of the results JSON are performed by the companion report-generator script `generate_report.py`. This ensures strict data segregation to prevent accidental temporal leak during model search.
