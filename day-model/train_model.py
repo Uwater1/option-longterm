@@ -71,21 +71,24 @@ random.seed(42)
 np.random.seed(42)
 
 LOCKBOX_DATE = "2024-03-01"
-VAL_BLOCKS = [
+VAL_BLOCKS_INNER = [
     ("2016-10-01", "2017-01-01"),
     ("2018-07-01", "2018-10-01"),
     ("2020-04-01", "2020-07-01"),
-    ("2021-07-01", "2021-10-01"),
     ("2022-10-01", "2023-01-01"),
+]
+VAL_BLOCKS_OUTER = [
+    ("2021-07-01", "2021-10-01"),
     ("2023-07-01", "2023-10-01"),
 ]
+VAL_BLOCKS = VAL_BLOCKS_INNER + VAL_BLOCKS_OUTER
 PILOT_N_TRIALS = 50
 PILOT_SEED = 42
 STABILITY_B = 100
 STABILITY_PI = 0.60
 STABILITY_Q = 35
-SCREEN_FDR = 0.40
-SCREEN_FALLBACK_K = 50 # Doublc Research this 
+SCREEN_FDR = 0.15
+SCREEN_FALLBACK_K = 50 # Double Research this 
 ACTIVE_FEATURE_ESS_DIVISOR = 8.0
 
 # Sample-weighting scale_data_with_weights can be done without a full rescale
@@ -162,7 +165,7 @@ ETF_CLI_MAP = {
     "588000": "588000ETF", "159915": "159915ETF",
     "300ETF": "300ETF", "50ETF": "50ETF", "500ETF": "500ETF",
     "588000ETF": "588000ETF", "159915ETF": "159915ETF",
-    "all": ["300ETF", "500ETF", "588000ETF", "159915ETF"],
+    "all": ["300ETF", "500ETF", "159915ETF"],
 }
 
 # Metric Weights (w_i from Step 4.1)
@@ -312,7 +315,7 @@ def benjamini_hochberg(p_values: np.ndarray, fdr_level: float = 0.20) -> np.ndar
     return p_values <= cutoff
 
 
-def run_screening(X_working: np.ndarray, y_working: np.ndarray):
+def run_screening(X_working: np.ndarray, y_working: np.ndarray, fdr_level: float = SCREEN_FDR):
     # Step 1: Cheap screening (vectorized Spearman).
     # Spearman(X_j, y) == Pearson(rank(X_j), rank(y)). Rank each column once,
     # then correlations are a single matmul.
@@ -347,7 +350,7 @@ def run_screening(X_working: np.ndarray, y_working: np.ndarray):
     p_vals = 2.0 * norm.sf(np.abs(t_stat))
     p_vals = np.nan_to_num(p_vals, nan=1.0, posinf=1.0, neginf=1.0)
 
-    screen_mask = benjamini_hochberg(p_vals, fdr_level=SCREEN_FDR)
+    screen_mask = benjamini_hochberg(p_vals, fdr_level=fdr_level)
     if screen_mask.sum() < 40:
         top_indices = np.argsort(p_vals)[:SCREEN_FALLBACK_K]
         screen_mask = np.zeros(len(p_vals), dtype=bool)
@@ -702,9 +705,9 @@ def extract_normalized_params(trial):
         norm_log_alpha = (log_alpha - np.log(1e-5)) / (np.log(10.0) - np.log(1e-5))
         vec.append(norm_log_alpha)
         
-        # gamma range [1.5, 10.0]
-        gamma = params.get("skglm_mcp_gamma", 1.5)
-        vec.append((gamma - 1.5) / 8.5)
+        # gamma range [1.01, 3.0]
+        gamma = params.get("skglm_mcp_gamma", 1.01)
+        vec.append((gamma - 1.01) / 1.99)
         
         # delta range [0.5, 5.0]
         delta = params.get("skglm_mcp_delta", 0.5)
@@ -713,7 +716,7 @@ def extract_normalized_params(trial):
     return np.array(vec), model_type
 
 
-def find_plateau_trial(study, r=0.25):
+def find_plateau_trial(study, r=0.25, min_neighbors=3, min_valid_neighbors=3):
     import optuna
     # Get all completed trials
     trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE and t.value is not None]
@@ -741,10 +744,11 @@ def find_plateau_trial(study, r=0.25):
     best_stable_trial = None
     best_plateau_score = -1e10
     
-    print("\n  [DIAGNOSTICS] Plateau Search (r={:.2f}):".format(r))
+    print("\n  [DIAGNOSTICS] Plateau Search (r={:.2f}, min_n={:d}, min_val_n={:d}):".format(r, min_neighbors, min_valid_neighbors))
     for t in valid_trials:
         t_vec = trial_vecs[t.number]
         t_type = trial_types[t.number]
+        t_val = t.user_attrs.get("deflated_objective", t.value)
         
         # Find neighbors (completed trials of SAME model type within distance r)
         neighbors = []
@@ -757,35 +761,44 @@ def find_plateau_trial(study, r=0.25):
             if dist <= r:
                 neighbors.append(other)
                 
-        if not neighbors:
-            valid_ratio = 0.0
-            mean_val = t.value - 1.0
+        # Find valid (feasible) neighbors
+        valid_neighbors = []
+        for n in neighbors:
+            c_vals = n.system_attrs.get("constraints") or n.user_attrs.get("constraints")
+            if c_vals is not None and all(c <= 0 for c in c_vals):
+                valid_neighbors.append(n)
+                
+        if len(neighbors) < min_neighbors or len(valid_neighbors) < min_valid_neighbors:
+            plateau_score = -1e10
+            valid_ratio = len(valid_neighbors) / len(neighbors) if neighbors else 0.0
+            mean_val = np.nan
         else:
-            valid_neighbors = []
-            for n in neighbors:
-                c_vals = n.system_attrs.get("constraints") or n.user_attrs.get("constraints")
-                if c_vals is not None and all(c <= 0 for c in c_vals):
-                    valid_neighbors.append(n)
-            
             valid_ratio = len(valid_neighbors) / len(neighbors)
-            mean_val = np.mean([n.value for n in valid_neighbors]) if valid_neighbors else (t.value - 2.0)
+            mean_val = np.mean([n.user_attrs.get("deflated_objective", n.value) for n in valid_neighbors])
+            val_drop = max(0.0, t_val - mean_val)
+            plateau_score = t_val - 1.5 * val_drop - 1.0 * (1.0 - valid_ratio)
             
-        val_drop = max(0.0, t.value - mean_val)
-        plateau_score = t.value - 1.5 * val_drop - 1.0 * (1.0 - valid_ratio)
-        
-        is_top_5_raw = t in sorted(valid_trials, key=lambda x: x.value, reverse=True)[:5]
+        is_top_5_raw = t in sorted(valid_trials, key=lambda x: x.user_attrs.get("deflated_objective", x.value), reverse=True)[:5]
         if is_top_5_raw:
-            print(f"    Trial {t.number:3d} (val={t.value:+.4f}): neighbors={len(neighbors)}, valid_ratio={valid_ratio:.2f}, neighbor_mean={mean_val:+.4f}, plateau={plateau_score:+.4f}")
+            mean_val_str = f"{mean_val:+.4f}" if not np.isnan(mean_val) else "N/A"
+            plateau_score_str = f"{plateau_score:+.4f}" if plateau_score > -1e9 else "Excluded"
+            print(f"    Trial {t.number:3d} (val={t.value:+.4f}, deflated={t_val:+.4f}): neighbors={len(neighbors)} (valid={len(valid_neighbors)}), valid_ratio={valid_ratio:.2f}, neighbor_mean={mean_val_str}, plateau={plateau_score_str}")
             
-        if plateau_score > best_plateau_score:
+        if plateau_score > -1e9 and plateau_score > best_plateau_score:
             best_plateau_score = plateau_score
             best_stable_trial = t
             
     if best_stable_trial is not None:
-        raw_best = sorted(valid_trials, key=lambda x: x.value, reverse=True)[0]
-        print(f"  Stable trial: {best_stable_trial.number} (val={best_stable_trial.value:+.4f}, plateau={best_plateau_score:+.4f}) vs best {raw_best.number} (val={raw_best.value:+.4f})")
+        raw_best = sorted(valid_trials, key=lambda x: x.user_attrs.get("deflated_objective", x.value), reverse=True)[0]
+        best_stable_deflated = best_stable_trial.user_attrs.get("deflated_objective", best_stable_trial.value)
+        raw_best_deflated = raw_best.user_attrs.get("deflated_objective", raw_best.value)
+        print(f"  Stable trial: {best_stable_trial.number} (val={best_stable_trial.value:+.4f}, deflated={best_stable_deflated:+.4f}, plateau={best_plateau_score:+.4f}) vs best {raw_best.number} (val={raw_best.value:+.4f}, deflated={raw_best_deflated:+.4f})")
         return best_stable_trial
-    return sorted(valid_trials, key=lambda x: x.value, reverse=True)[0]
+        
+    raw_best = sorted(valid_trials, key=lambda x: x.user_attrs.get("deflated_objective", x.value), reverse=True)[0]
+    print(f"  No plateau candidate met neighbor requirements. Falling back to raw best trial: {raw_best.number} (val={raw_best.value:+.4f}, deflated={raw_best.user_attrs.get('deflated_objective', raw_best.value):+.4f})")
+    return raw_best
+
 
 
 # ============================================================
@@ -851,6 +864,27 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     y_sel_val = y_scaled[sel_val_idx].astype(np.float32)
     dates_sel_val = df["date"].iloc[sel_val_idx].reset_index(drop=True)
 
+    # Split validation blocks into inner (for tuning) and outer (held-out for evaluation)
+    sel_val_inner_mask = np.zeros(len(df), dtype=bool)
+    for start_val, end_val in VAL_BLOCKS_INNER:
+        block_mask = (df["date"] >= pd.Timestamp(start_val)) & (df["date"] < pd.Timestamp(end_val))
+        sel_val_inner_mask |= block_mask
+        
+    sel_val_inner_idx = np.where(sel_val_inner_mask)[0]
+    X_sel_val_inner = _to_f32(X[sel_val_inner_idx])
+    y_sel_val_inner = y_scaled[sel_val_inner_idx].astype(np.float32)
+    dates_sel_val_inner = df["date"].iloc[sel_val_inner_idx].reset_index(drop=True)
+
+    sel_val_outer_mask = np.zeros(len(df), dtype=bool)
+    for start_val, end_val in VAL_BLOCKS_OUTER:
+        block_mask = (df["date"] >= pd.Timestamp(start_val)) & (df["date"] < pd.Timestamp(end_val))
+        sel_val_outer_mask |= block_mask
+        
+    sel_val_outer_idx = np.where(sel_val_outer_mask)[0]
+    X_sel_val_outer = _to_f32(X[sel_val_outer_idx])
+    y_sel_val_outer = y_scaled[sel_val_outer_idx].astype(np.float32)
+    dates_sel_val_outer = df["date"].iloc[sel_val_outer_idx].reset_index(drop=True)
+
     # Initial selection train mask, excluding validation blocks
     sel_train_mask = (df["date"] < LOCKBOX_DATE) & (~sel_val_mask)
     
@@ -874,7 +908,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     y_sel_train = y_scaled[sel_train_idx].astype(np.float32)
     dates_sel_train = df["date"].iloc[sel_train_idx].reset_index(drop=True)
 
-    print(f"Split: Working={len(working_idx)} (Lockbox ignored) | Train={len(sel_train_idx)} | Val={len(sel_val_idx)}")
+    print(f"Split: Working={len(working_idx)} (Lockbox ignored) | Train={len(sel_train_idx)} | Val={len(sel_val_idx)} (Inner={len(sel_val_inner_idx)}, Outer={len(sel_val_outer_idx)})")
 
     # Precompute yearly row-index groups for the Selection Train subset (used by per-trial CV metric computation).
     years_sel_train = dates_sel_train.dt.year.values
@@ -883,14 +917,17 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     timings["data_loading"] = time.perf_counter() - t_start
 
+    # Loosen FDR for 588000ETF to prevent feature starvation
+    fdr_level = 0.25 if etf_name == "588000ETF" else SCREEN_FDR
+
     # ── Cache key parts ───────────────────────────────────────────────
     # Auto-invalidate when: feature parquet regen (mtime), FEATURES list
     # length changes, or any of the deterministic knobs below change.
     # See AGENTS.md "Cache invalidation" for manual-clear guidance.
     select_key = [
-        "v8", etf_name, len(FEATURES), int(parquet_mtime),
+        "v10", etf_name, len(FEATURES), int(parquet_mtime),
         int(X_sel_train.shape[0]), int(X_sel_train.shape[1]),
-        STABILITY_B, STABILITY_PI, SCREEN_FDR, SCREEN_FALLBACK_K,
+        STABILITY_B, STABILITY_PI, fdr_level, SCREEN_FALLBACK_K,
         tuple(VAL_BLOCKS), TARGET,
     ]
     select_cache_path = CACHE_DIR / f"cache_select_{etf_name}_{_cache_key(select_key)}.joblib"
@@ -899,7 +936,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     def _compute_selection():
         t_sel_start = time.perf_counter()
         print("Screening features...")
-        screen_mask, p_vals, rhos = run_screening(X_sel_train, y_sel_train)
+        screen_mask, p_vals, rhos = run_screening(X_sel_train, y_sel_train, fdr_level=fdr_level)
         t_screen = time.perf_counter() - t_sel_start
         print(f"Screening kept {screen_mask.sum()} features.")
         
@@ -990,6 +1027,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # Freeze the features for the final and Optuna loops
     X_sel_train_final = _to_f32(X_sel_train[:, stability_selected_idx])
     X_sel_val_final = _to_f32(X_sel_val[:, stability_selected_idx])
+    X_sel_val_inner_final = _to_f32(X_sel_val_inner[:, stability_selected_idx])
+    X_sel_val_outer_final = _to_f32(X_sel_val_outer[:, stability_selected_idx])
     X_working_final = _to_f32(X_working[:, stability_selected_idx])
 
     # ── Feature Quality Diagnostics (Multicollinearity & Condition Number) ──
@@ -1028,7 +1067,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # ── LOYO folds cache (depends on selected features only) ──────────
     loyo_key = [
-        "v9", etf_name, len(FEATURES), int(parquet_mtime),
+        "v10", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         tuple(VAL_BLOCKS), TARGET,
     ]
@@ -1110,6 +1149,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     X_sel_train_scaled_base = _to_f32(scaler_init.fit_transform(X_sel_train_final))
     # Standardize selection validation features using the selection train scaler.
     X_sel_val_scaled_base = _to_f32(scaler_init.transform(X_sel_val_final))
+    X_sel_val_inner_scaled_base = _to_f32(scaler_init.transform(X_sel_val_inner_final))
+    X_sel_val_outer_scaled_base = _to_f32(scaler_init.transform(X_sel_val_outer_final))
 
     # Define Optuna objective helper
     pilot_metrics = []
@@ -1158,20 +1199,20 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         raw_metrics, _, _ = calculate_yearly_metrics(
             year_groups, y_sel_train, oof_preds, active_k, coef_norm, ess=ess)
 
-        # Predict on selection validation block and compute validation metrics
-        val_preds = model_temp.predict(X_sel_val_scaled_base)
-        val_ic = spearman_ic(y_sel_val, val_preds)
+        # Predict on inner selection validation block and compute validation metrics
+        val_preds = model_temp.predict(X_sel_val_inner_scaled_base)
+        val_ic = spearman_ic(y_sel_val_inner, val_preds)
 
-        n_tail_val = max(5, int(len(y_sel_val) * 0.10))
-        if len(y_sel_val) >= n_tail_val * 2:
+        n_tail_val = max(5, int(len(y_sel_val_inner) * 0.10))
+        if len(y_sel_val_inner) >= n_tail_val * 2:
             order_val = np.argsort(val_preds, kind="quicksort")
             tail_idx_val = np.concatenate([order_val[:n_tail_val], order_val[-n_tail_val:]])
-            val_tail_ic = spearman_ic(y_sel_val[tail_idx_val], val_preds[tail_idx_val])
+            val_tail_ic = spearman_ic(y_sel_val_inner[tail_idx_val], val_preds[tail_idx_val])
         else:
             val_tail_ic = 0.0
 
-        val_mono = compute_decile_monotonicity(y_sel_val, val_preds)
-        val_spread = compute_top_bottom_spread(y_sel_val, val_preds)
+        val_mono = compute_decile_monotonicity(y_sel_val_inner, val_preds)
+        val_spread = compute_top_bottom_spread(y_sel_val_inner, val_preds)
 
         val_metrics = [val_ic, val_tail_ic, val_mono, val_spread]
 
@@ -1179,7 +1220,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # ── Pilot calibration cache ───────────────────────────────────────
     pilot_key = [
-        "v9", etf_name, len(FEATURES), int(parquet_mtime),
+        "v10", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         tuple(VAL_BLOCKS), TARGET, PILOT_N_TRIALS, PILOT_SEED,
     ]
@@ -1208,7 +1249,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 trial_params["skglm_huber_delta"] = trial.suggest_float("skglm_huber_delta", 0.5, 5.0)
             elif model_type == "skglm_mcp":
                 trial_params["skglm_mcp_alpha"] = trial.suggest_float("skglm_mcp_alpha", 1e-5, 10.0, log=True)
-                trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 1.5, 10.0)
+                trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 1.01, 3.0)
                 trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
 
             try:
@@ -1314,7 +1355,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             trial_params["skglm_huber_delta"] = trial.suggest_float("skglm_huber_delta", 0.5, 5.0)
         elif model_type == "skglm_mcp":
             trial_params["skglm_mcp_alpha"] = trial.suggest_float("skglm_mcp_alpha", 1e-5, 10.0, log=True)
-            trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 1.5, 10.0)
+            trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 1.01, 3.0)
             trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
 
         try:
@@ -1405,6 +1446,20 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
             trial.set_user_attr("raw_metrics", raw_metrics)
             trial.set_user_attr("val_metrics", val_metrics)
+
+            # Calculate running deflated objective
+            completed_trials = study.get_trials(states=[optuna.trial.TrialState.COMPLETE])
+            completed_values = [t.value for t in completed_trials if t.value is not None and t.value > -1e8]
+            completed_values.append(objective_val)
+            n_comp = len(completed_values)
+            if n_comp <= 1:
+                deflated_obj = objective_val
+            else:
+                std_val = np.std(completed_values)
+                overfit_bias = std_val * np.sqrt(2.0 * np.log(n_comp)) * np.sqrt(1.0 - 0.5)
+                deflated_obj = objective_val - overfit_bias
+            trial.set_user_attr("deflated_objective", deflated_obj)
+
             return objective_val
 
         except Exception as e:
@@ -1546,8 +1601,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                     if c_vals is None:
                         c_vals = t.user_attrs.get("constraints")
                     if c_vals is not None and all(c <= 0 for c in c_vals):
-                        if t.value > best_val:
-                            best_val = t.value
+                        t_def_val = t.user_attrs.get("deflated_objective", t.value)
+                        if t_def_val > best_val:
+                            best_val = t_def_val
                             best_trial = t
             if best_trial is None:
                 best_trial = study.best_trial
@@ -1574,7 +1630,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 if c_vals is not None and all(c <= 0 for c in c_vals):
                     valid_trials.append(t)
         if valid_trials:
-            valid_trials.sort(key=lambda t: t.value if t.value is not None else -1e10, reverse=True)
+            valid_trials.sort(key=lambda t: t.user_attrs.get("deflated_objective", t.value) if t.value is not None else -1e10, reverse=True)
             best_trial = valid_trials[0]
             best_params = best_trial.params
             best_raw_m = best_trial.user_attrs.get("raw_metrics")
@@ -1623,6 +1679,45 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     deflated_val_ic = compute_deflated_metric(trial_val_ic_values, best_val_ic_val, rho=0.5)
     deflated_val_tail_ic = compute_deflated_metric(trial_val_tail_ic_values, best_val_tail_ic_val, rho=0.5)
 
+    model_type = best_params["model_type"]
+    k_weight = best_params["k_weight"]
+    
+    params = {}
+    if model_type == "skglm_huber_l1":
+        params["skglm_huber_l1_alpha"] = best_params["skglm_huber_l1_alpha"]
+        params["skglm_huber_delta"] = best_params["skglm_huber_delta"]
+    elif model_type == "skglm_mcp":
+        params["skglm_mcp_alpha"] = best_params["skglm_mcp_alpha"]
+        params["skglm_mcp_gamma"] = best_params["skglm_mcp_gamma"]
+        params["skglm_mcp_delta"] = best_params["skglm_mcp_delta"]
+
+    # Fit model on selection train set using best params to evaluate outer validation set generalization
+    w_best_tr = compute_sample_weights(y_sel_train, k_weight).astype(np.float32)
+    sqrt_w_best = np.sqrt(w_best_tr)[:, np.newaxis]
+    X_weighted_best_tr = X_sel_train_scaled_base * sqrt_w_best
+    y_weighted_best_tr = y_sel_train * sqrt_w_best[:, 0]
+    
+    best_model_for_val = _build_model(model_type, params)
+    best_model_for_val.fit(X_weighted_best_tr, y_weighted_best_tr)
+    
+    # Predict on outer validation blocks
+    val_preds_outer = best_model_for_val.predict(X_sel_val_outer_scaled_base)
+    val_ic_outer = spearman_ic(y_sel_val_outer, val_preds_outer)
+    
+    n_tail_val_outer = max(5, int(len(y_sel_val_outer) * 0.10))
+    if len(y_sel_val_outer) >= n_tail_val_outer * 2:
+        order_val_outer = np.argsort(val_preds_outer, kind="quicksort")
+        tail_idx_val_outer = np.concatenate([order_val_outer[:n_tail_val_outer], order_val_outer[-n_tail_val_outer:]])
+        val_tail_ic_outer = spearman_ic(y_sel_val_outer[tail_idx_val_outer], val_preds_outer[tail_idx_val_outer])
+    else:
+        val_tail_ic_outer = 0.0
+        
+    val_mono_outer = compute_decile_monotonicity(y_sel_val_outer, val_preds_outer)
+    val_spread_outer = compute_top_bottom_spread(y_sel_val_outer, val_preds_outer)
+    
+    deflated_val_outer_ic = compute_deflated_metric(trial_val_ic_values, val_ic_outer, rho=0.5)
+    deflated_val_outer_tail = compute_deflated_metric(trial_val_tail_ic_values, val_tail_ic_outer, rho=0.5)
+
     print(f"\nBest params:")
     for k, v in best_params.items():
         print(f"  {k}: {v}")
@@ -1638,28 +1733,24 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     print(f"  M7 (Parsimony):   {best_raw_m[6]:.4f}")
     print(f"  M8 (Coef Bloat):  {best_raw_m[7]:.4f}")
 
-    print(f"Best trial Selection Val metrics:")
+    print(f"Best trial Selection Val INNER metrics (Tuned):")
     print(f"  Val IC:           {best_val_m[0]:.4f}")
     print(f"  Deflated Val IC:  {deflated_val_ic:.4f}")
     print(f"  Val Tail IC:      {best_val_m[1]:.4f}")
     print(f"  Deflated Val Tail:{deflated_val_tail_ic:.4f}")
     print(f"  Val Mono:         {best_val_m[2]:.4f}")
     print(f"  Val Spread:       {best_val_m[3]:.4f}")
+
+    print(f"Best trial Selection Val OUTER metrics (Holdout Sanity Check):")
+    print(f"  Outer Val IC:     {val_ic_outer:.4f}")
+    print(f"  Defl Outer Val IC:{deflated_val_outer_ic:.4f}")
+    print(f"  Outer Tail IC:    {val_tail_ic_outer:.4f}")
+    print(f"  Defl Outer Tail:  {deflated_val_outer_tail:.4f}")
+    print(f"  Outer Mono:       {val_mono_outer:.4f}")
+    print(f"  Outer Spread:     {val_spread_outer:.4f}")
     
     t_refit_start = time.perf_counter()
     # Refit final model on 2200 working rows
-    model_type = best_params["model_type"]
-    k_weight = best_params["k_weight"]
-    
-    params = {}
-    if model_type == "skglm_huber_l1":
-        params["skglm_huber_l1_alpha"] = best_params["skglm_huber_l1_alpha"]
-        params["skglm_huber_delta"] = best_params["skglm_huber_delta"]
-    elif model_type == "skglm_mcp":
-        params["skglm_mcp_alpha"] = best_params["skglm_mcp_alpha"]
-        params["skglm_mcp_gamma"] = best_params["skglm_mcp_gamma"]
-        params["skglm_mcp_delta"] = best_params["skglm_mcp_delta"]
-        
     # Scale final working features
     scaler_final = StandardScaler()
     X_working_scaled = scaler_final.fit_transform(X_working_final)
@@ -1747,6 +1838,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "selection_val_tail_ic": best_val_m[1],
         "selection_val_monotonicity": best_val_m[2],
         "selection_val_spread": best_val_m[3],
+        "selection_val_outer_overall_ic": val_ic_outer,
+        "selection_val_outer_tail_ic": val_tail_ic_outer,
+        "selection_val_outer_monotonicity": val_mono_outer,
+        "selection_val_outer_spread": val_spread_outer,
+        "deflated_val_outer_ic": deflated_val_outer_ic,
+        "deflated_val_outer_tail_ic": deflated_val_outer_tail,
         "side": side,
         "target": TARGET,
     }
@@ -1788,9 +1885,15 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "selection_val_tail_ic": best_val_m[1],
         "selection_val_monotonicity": best_val_m[2],
         "selection_val_spread": best_val_m[3],
+        "selection_val_outer_overall_ic": val_ic_outer,
+        "selection_val_outer_tail_ic": val_tail_ic_outer,
+        "selection_val_outer_monotonicity": val_mono_outer,
+        "selection_val_outer_spread": val_spread_outer,
         "deflated_cv_ic": deflated_cv_ic,
         "deflated_val_ic": deflated_val_ic,
         "deflated_val_tail_ic": deflated_val_tail_ic,
+        "deflated_val_outer_ic": deflated_val_outer_ic,
+        "deflated_val_outer_tail_ic": deflated_val_outer_tail,
         "deflated_objective": deflated_objective,
         "pbo": pbo,
         "performance_degradation": perf_deg,
