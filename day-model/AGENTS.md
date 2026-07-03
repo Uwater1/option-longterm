@@ -18,6 +18,7 @@ python3 day-model/build_features.py -e all
 
 # 2. Run first-principles Stability Selection + Optuna training (takes 30s, Agent should always run full set)
 python3 day-model/train_model.py -e all --trials 100
+# IMPORTANT: Agent should always run full set
 
 # 3. Generate summary REPORT.md and tables
 python3 day-model/generate_report.py
@@ -90,10 +91,11 @@ Remove-Item day-model\data\cache_*.joblib
    - Val Top-Bottom Spread: 5%
 9. **Signed Constraints & TPESampler Constrained Optimization**:
    - Hard constraints are evaluated via signed margins (negative = satisfied, positive = violated) and fed to Optuna's `constraints_func` on the `TPESampler`. This gives TPE the gradient information to steer trials into the feasible region, instead of collapsing infeasible trials to a flat `-1e9`.
-   - Hard constraints include: Overall IC <= 0, Hit Rate < 60%, Decile Monotonicity <= 0.25, Top-Bottom Spread <= 0, Active features count exceeds ESS-based cap ($active\_k > ESS / 25.0$), and Active features count under floor ($active\_k < 5$).
+   - Hard constraints include: Overall IC <= 0, Hit Rate < 60%, Decile Monotonicity <= 0.25, Top-Bottom Spread <= 0, Active features count exceeds ESS-based cap ($active\_k > ESS / 8.0$), and Active features count under floor ($active\_k < min\_active\_features$ where $min\_active\_features = min(5, max\_active\_features)$). Dynamic floor scaling prevents contradictory constraints on small-sample datasets (e.g. `588000ETF`).
    - Model weight concentration (Gini index) is converted from a hard switch to a soft, $k$-normalized penalty in the objective function to avoid collapsing the feasible region for sparse models: `gini_cap = 1.0 - 0.40 * (active_k / m_gini)` and `gini_penalty = -10.0 * (gini - gini_cap) if gini > gini_cap else 0.0`.
-10. **One-Shot Evaluation & Diagnostics Plotting (Step 6)**: Handled entirely in `generate_report.py`. Evaluates final model on 500-day lockbox, updates OOS metrics in results JSON/scaler bundles, and generates 2x2 diagnostics plots. Calculates regularized condition number.
+10. **One-Shot Evaluation & Diagnostics Plotting (Step 6)**: Handled entirely in `generate_report.py`. Evaluates final model on 500-day lockbox, updates OOS metrics in results JSON/scaler bundles, and generates 2x2 diagnostics plots. Calculates regularized condition number. Runs a 1000-sample block bootstrap (block size $B=10$) on lockbox OOS data to calculate 95% CIs and flags generalization gaps that are swallowed by the CI as Noise.
 11. **L2 Regularization Component**: Enforces 10% L2 Ridge regularization in both model families to stabilize joint-coefficient assignments under severe multicollinearity.
-12. **Multiple comparison deflation**: Computes **Deflated CV Overall IC**, **Deflated Val Overall IC**, **Deflated Val Tail IC**, and **Deflated Objective** to correct for multiple trials / search-budget inflation across all completed Optuna trials.
+12. **Multiple comparison deflation & Overfitting Diagnostics**: Computes **Deflated CV Overall IC**, **Deflated Val Overall IC**, **Deflated Val Tail IC**, and **Deflated Objective** to correct for multiple trials / search-budget inflation across all completed Optuna trials. Also computes **Probability of Backtest Overfitting (PBO)** and **Performance Degradation** using Combinatorially Symmetric Cross-Validation (CSCV) on the CPCV folds.
 13. **Model Quality & Generalization Diagnostics**: Calculates condition numbers, ESS of tail-focus weights, Gini coefficient, and CV-to-OOS Generalization Gap for rank IC & decile monotonicity. Saves findings to `REPORT.md`.
+14. **Plateau Stable Parameter Selection**: Instead of choosing hyperparameters based on a single point-optimal argmax objective value, the model evaluates valid trials in a normalized hyperparameter space and selects the trial residing in the most stable "parameter plateau" (neighborhood radius $r=0.25$), penalizing parameter cliffs and high invalid neighbor ratios. This resolves fragile point-optimal parameter sensitivity.
 

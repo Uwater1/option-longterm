@@ -55,6 +55,48 @@ def compute_decile_monotonicity(y_true: np.ndarray, y_pred: np.ndarray) -> float
         return 0.0
     return float((a * r).sum() / denom)
 
+
+def block_bootstrap_ci(y_true, y_pred, block_size=10, n_bootstraps=1000):
+    n = len(y_true)
+    if n < block_size:
+        block_size = max(1, n // 5)
+        
+    boot_ics = []
+    boot_monos = []
+    
+    # Generate all starting indices for blocks
+    num_blocks = int(np.ceil(n / block_size))
+    possible_starts = n - block_size + 1
+    
+    # Set seed for reproducibility
+    np.random.seed(42)
+    
+    if possible_starts <= 0:
+        for _ in range(n_bootstraps):
+            idx = np.random.choice(n, size=n, replace=True)
+            y_b = y_true[idx]
+            p_b = y_pred[idx]
+            boot_ics.append(spearman_ic(y_b, p_b))
+            boot_monos.append(compute_decile_monotonicity(y_b, p_b))
+    else:
+        for _ in range(n_bootstraps):
+            starts = np.random.choice(possible_starts, size=num_blocks, replace=True)
+            boot_idx = []
+            for s in starts:
+                boot_idx.extend(range(s, s + block_size))
+            boot_idx = np.array(boot_idx[:n])
+            
+            y_b = y_true[boot_idx]
+            p_b = y_pred[boot_idx]
+            boot_ics.append(spearman_ic(y_b, p_b))
+            boot_monos.append(compute_decile_monotonicity(y_b, p_b))
+            
+    ci_ic = (float(np.percentile(boot_ics, 2.5)), float(np.percentile(boot_ics, 97.5)))
+    ci_mono = (float(np.percentile(boot_monos, 2.5)), float(np.percentile(boot_monos, 97.5)))
+    
+    return ci_ic, ci_mono
+
+
 def main():
     print("Generating day-model REPORT.md...")
     
@@ -131,15 +173,13 @@ def main():
 
                 # Compute Generalization Gap
                 deflated_val_ic = r.get("deflated_val_ic", np.nan)
-                if not np.isnan(deflated_val_ic):
-                    ic_generalization_gap = deflated_val_ic - lockbox_ic
-                else:
-                    sel_val_ic = r.get("selection_val_overall_ic", np.nan)
-                    if not np.isnan(sel_val_ic):
-                        ic_generalization_gap = sel_val_ic - lockbox_ic
-                    else:
-                        cv_overall_ic = float(r["best_raw_metrics"][3])
-                        ic_generalization_gap = cv_overall_ic - lockbox_ic
+                cv_ic_target = deflated_val_ic
+                if np.isnan(cv_ic_target):
+                    cv_ic_target = r.get("selection_val_overall_ic", np.nan)
+                if np.isnan(cv_ic_target):
+                    cv_ic_target = float(r["best_raw_metrics"][3])
+                
+                ic_generalization_gap = cv_ic_target - lockbox_ic
                 
                 lockbox_mono = compute_decile_monotonicity(y_lockbox, preds_lockbox)
                 cv_mono = float(r["best_raw_metrics"][4])
@@ -148,6 +188,21 @@ def main():
                 r["lockbox_monotonicity"] = lockbox_mono
                 r["ic_generalization_gap"] = ic_generalization_gap
                 r["mono_generalization_gap"] = mono_generalization_gap
+
+                # Lockbox block bootstrap
+                ci_ic, ci_mono = block_bootstrap_ci(y_lockbox, preds_lockbox, block_size=10, n_bootstraps=1000)
+                ic_swallowed = ci_ic[0] <= cv_ic_target <= ci_ic[1]
+                mono_swallowed = ci_mono[0] <= cv_mono <= ci_mono[1]
+                
+                r["lockbox_ic_ci"] = ci_ic
+                r["lockbox_mono_ci"] = ci_mono
+                r["lockbox_ic_swallowed"] = ic_swallowed
+                r["lockbox_mono_swallowed"] = mono_swallowed
+                
+                print(f"    OOS Lockbox IC: {lockbox_ic:+.4f} | 95% Block Bootstrap CI: [{ci_ic[0]:+.4f}, {ci_ic[1]:+.4f}]")
+                print(f"      CV IC Target: {cv_ic_target:+.4f} | Swallowed (Noise)? {'YES (Noise)' if ic_swallowed else 'NO (Signal)'}")
+                print(f"    OOS Monotonicity: {lockbox_mono:+.4f} | 95% Block Bootstrap CI: [{ci_mono[0]:+.4f}, {ci_mono[1]:+.4f}]")
+                print(f"      CV Monotonicity: {cv_mono:+.4f} | Swallowed (Noise)? {'YES (Noise)' if mono_swallowed else 'NO (Signal)'}")
 
                 # Write updated result to JSON
                 with open(DATA_DIR / f"results_{tag}.json", "w") as f_json:
@@ -369,6 +424,80 @@ def main():
         lines.append(f"| {etf} | {cv_ic:+.4f} | {deflated_cv_ic_str} | {sel_val_ic_str} | {deflated_val_ic_str} | {oos_ic_str} | {ic_gap_str} | {cv_mono:+.4f} | {oos_mono_str} | {mono_gap_str} |")
 
     lines.append("")
+    lines.append("### Overfitting Diagnostics (PBO & Lockbox Bootstrap CIs)")
+    lines.append("")
+    lines.append("| ETF | PBO | Perf Degradation | OOS Lockbox IC 95% CI | CV IC Target | IC Gen Gap Sig? | OOS Mono 95% CI | CV Mono | Mono Gen Gap Sig? |")
+    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+    
+    for etf in ETF_ORDER:
+        if etf not in results_dict:
+            continue
+        r = results_dict[etf]
+        
+        pbo = r.get("pbo", np.nan)
+        perf_deg = r.get("performance_degradation", np.nan)
+        pbo_str = f"{pbo*100:.1f}%" if not np.isnan(pbo) else "N/A"
+        perf_deg_str = f"{perf_deg:+.4f}" if not np.isnan(perf_deg) else "N/A"
+        
+        ci_ic = r.get("lockbox_ic_ci")
+        ci_ic_str = f"[{ci_ic[0]:+.4f}, {ci_ic[1]:+.4f}]" if ci_ic is not None else "N/A"
+        
+        cv_ic_target = r.get("deflated_val_ic", np.nan)
+        if np.isnan(cv_ic_target):
+            cv_ic_target = r.get("selection_val_overall_ic", np.nan)
+        if np.isnan(cv_ic_target):
+            cv_ic_target = float(r["best_raw_metrics"][3])
+        cv_ic_target_str = f"{cv_ic_target:+.4f}" if not np.isnan(cv_ic_target) else "N/A"
+        
+        ic_swallowed = r.get("lockbox_ic_swallowed")
+        ic_sig_str = "Noise (Not Sig)" if ic_swallowed else ("Signal (Sig)" if ic_swallowed is not None else "N/A")
+        
+        ci_mono = r.get("lockbox_mono_ci")
+        ci_mono_str = f"[{ci_mono[0]:+.4f}, {ci_mono[1]:+.4f}]" if ci_mono is not None else "N/A"
+        
+        cv_mono = float(r["best_raw_metrics"][4])
+        cv_mono_str = f"{cv_mono:+.4f}"
+        
+        mono_swallowed = r.get("lockbox_mono_swallowed")
+        mono_sig_str = "Noise (Not Sig)" if mono_swallowed else ("Signal (Sig)" if mono_swallowed is not None else "N/A")
+        
+        lines.append(f"| {etf} | {pbo_str} | {perf_deg_str} | {ci_ic_str} | {cv_ic_target_str} | **{ic_sig_str}** | {ci_mono_str} | {cv_mono_str} | **{mono_sig_str}** |")
+
+    lines.append("")
+    lines.append("### Lockbox Noise vs Signal Assessment Details")
+    lines.append("")
+    lines.append("Detailed analysis comparing OOS lockbox metrics to their CV target estimates under block bootstrap:")
+    lines.append("")
+    for etf in ETF_ORDER:
+        if etf not in results_dict:
+            continue
+        r = results_dict[etf]
+        
+        cv_ic_target = r.get("deflated_val_ic", np.nan)
+        if np.isnan(cv_ic_target):
+            cv_ic_target = r.get("selection_val_overall_ic", np.nan)
+        if np.isnan(cv_ic_target):
+            cv_ic_target = float(r["best_raw_metrics"][3])
+            
+        ci_ic = r.get("lockbox_ic_ci")
+        ic_swallowed = r.get("lockbox_ic_swallowed")
+        ic_status = "Noise (not statistically significant)" if ic_swallowed else "Signal (statistically significant)"
+        ic_swallowed_str = "swallowed" if ic_swallowed else "not swallowed"
+        
+        cv_mono = float(r["best_raw_metrics"][4])
+        ci_mono = r.get("lockbox_mono_ci")
+        mono_swallowed = r.get("lockbox_mono_swallowed")
+        mono_status = "Noise (not statistically significant)" if mono_swallowed else "Signal (statistically significant)"
+        mono_swallowed_str = "swallowed" if mono_swallowed else "not swallowed"
+        
+        ci_ic_str = f"`[{ci_ic[0]:+.4f}, {ci_ic[1]:+.4f}]`" if ci_ic is not None else "N/A"
+        ci_mono_str = f"`[{ci_mono[0]:+.4f}, {ci_mono[1]:+.4f}]`" if ci_mono is not None else "N/A"
+        
+        lines.append(f"#### {etf}")
+        lines.append(f"- **Rank IC Generalization**: OOS Lockbox IC of **{r['lockbox_overall_ic']:+.4f}** (95% CI: {ci_ic_str}) vs CV Target of **{cv_ic_target:+.4f}**. The CV target is **{ic_swallowed_str}** by the OOS CI, indicating the generalization gap is **{ic_status}**.")
+        lines.append(f"- **Decile Monotonicity Generalization**: OOS Monotonicity of **{r['lockbox_monotonicity']:+.4f}** (95% CI: {ci_mono_str}) vs CV Monotonicity of **{cv_mono:+.4f}**. The CV estimate is **{mono_swallowed_str}** by the OOS CI, indicating the generalization gap is **{mono_status}**.")
+        lines.append("")
+
     lines.append("### Feature Selection Metrics & Fallbacks")
     lines.append("")
     lines.append("| ETF | Screening Input | BH-FDR Pass | Screen Fallback? | Stability Input | Stability Pass | Stability Fallback? | Kept Features |")
@@ -420,6 +549,31 @@ def main():
         gini_p = reasons.get("Gini coefficient", 0)
         
         lines.append(f"| {etf} | {tot} | {comp} | {pruned_failed} | {m4_p} | {m3_p} | {m5_p} | {m6_p} | {ess_p} | {floor_p} | {gini_p} |")
+
+    lines.append("")
+    lines.append("### Hyperparameter Parameter Plateau Selection")
+    lines.append("")
+    lines.append("Instead of selecting hyperparameters based on point-optimal peak objective values, we select hyperparameter configurations that reside on a stable parameter plateau (evaluating trial neighborhoods at radius $r=0.25$).")
+    lines.append("")
+    lines.append("| ETF | Selected Plateau Trial | Plateau Objective | Raw Best Trial | Raw Best Objective |")
+    lines.append("| :--- | :---: | :---: | :---: | :---: |")
+    
+    for etf in ETF_ORDER:
+        if etf not in results_dict:
+            continue
+        r = results_dict[etf]
+        
+        plat_trial = r.get("plateau_trial")
+        plat_val = r.get("plateau_val")
+        raw_trial = r.get("raw_best_trial")
+        raw_val = r.get("raw_best_val")
+        
+        plat_trial_str = str(plat_trial) if plat_trial is not None else "N/A"
+        plat_val_str = f"{plat_val:+.4f}" if plat_val is not None else "N/A"
+        raw_trial_str = str(raw_trial) if raw_trial is not None else "N/A"
+        raw_val_str = f"{raw_val:+.4f}" if raw_val is not None else "N/A"
+        
+        lines.append(f"| {etf} | {plat_trial_str} | {plat_val_str} | {raw_trial_str} | {raw_val_str} |")
 
     lines.append("")
     lines.append("## Selected Features per ETF")
