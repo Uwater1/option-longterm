@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "500ETF",
   "n_samples_working": 2166,
-  "n_samples_lockbox": 0,
+  "n_samples_lockbox": 556,
   "selected_features": [
     "bar_vwap_dev_2",
     "early_momentum",
@@ -302,8 +302,8 @@
   "deflated_val_ic": 0.14473615447024568,
   "deflated_val_tail_ic": 0.33543351708901104,
   "deflated_objective": 0.0720870067725059,
-  "lockbox_overall_ic": NaN,
-  "lockbox_tail_ic": NaN,
+  "lockbox_overall_ic": 0.07743247449217913,
+  "lockbox_tail_ic": 0.02043599494177124,
   "diagnostics": {
     "timings": {
       "data_loading": 0.0831327549967682,
@@ -347,5 +347,8 @@
       "effective_sample_size_pct": 0.9288193693011311,
       "gini_coefficient": 0.9433615672730455
     }
-  }
+  },
+  "lockbox_monotonicity": 0.6363636363636364,
+  "ic_generalization_gap": 0.06730367997806655,
+  "mono_generalization_gap": -0.3187878787878788
 }
