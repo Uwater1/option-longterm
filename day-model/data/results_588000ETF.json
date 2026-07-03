@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "588000ETF",
   "n_samples_working": 738,
-  "n_samples_lockbox": 556,
+  "n_samples_lockbox": 0,
   "selected_features": [
     "bar_vwap_dev_1",
     "late_bar_momentum",
@@ -40,39 +40,7 @@
     "consecutive_bullish_engulfing"
   ],
   "active_features": [
-    "bar_vwap_dev_1",
-    "late_bar_momentum",
-    "vwap_cross_count",
-    "pullback_depth_max",
-    "volume_weighted_price_position",
-    "first_bar_sentiment",
-    "max_down_ret",
-    "early_skew",
-    "roc60",
-    "yesterday_day_pm_am_vol_ratio",
-    "upper_shadow_rejection",
-    "upper_wick_dominance",
-    "bar_vol_5",
-    "volume_percentile_20d",
-    "bar_rng_2",
-    "yesterday_early_range",
-    "vol_ratio_10_60",
-    "vix_iv_ratio",
-    "capital_net_ratio",
-    "early_kurtosis",
-    "volume_acceleration",
-    "adx_opening",
-    "yesterday_day_kurtosis",
-    "bar_body_rng_2",
-    "inside_bar_failure_bull",
-    "pullback_depth_ratio",
-    "bar_vwap_dev_3",
-    "consecutive_higher_highs",
-    "consecutive_lower_lows",
-    "num_up_bars",
-    "max_up_ret",
-    "rally_strength_max",
-    "consecutive_bullish_engulfing"
+    "volume_weighted_price_position"
   ],
   "stability_scores": {
     "gap_pct": 0.0,
@@ -315,40 +283,39 @@
     "yesterday_spike_exhaustion_ratio": 0.0
   },
   "best_params": {
-    "model_type": "skglm_mcp",
-    "k_weight": 0.4033767536412539,
-    "skglm_mcp_alpha": 0.0002761170912288787,
-    "skglm_mcp_gamma": 9.098992091692832,
-    "skglm_mcp_delta": 3.864025464614761
+    "model_type": "skglm_huber_l1",
+    "k_weight": 1.926989311604833,
+    "skglm_huber_l1_alpha": 0.29175559358826353,
+    "skglm_huber_delta": 2.636366159819916
   },
   "best_raw_metrics": [
-    1.7417347759806296,
-    0.25409642267261845,
-    1.0,
-    0.18676084124836498,
-    0.5545454545454546,
-    0.7146039174390735,
-    -1.8346804528308647,
-    -0.6545405387878418
+    0.6872993803347186,
+    0.13410037921210982,
+    0.75,
+    0.08936617516156402,
+    0.2696969696969697,
+    0.3460780026449628,
+    -0.20665268002379078,
+    -0.11427951604127884
   ],
-  "selection_val_overall_ic": 0.12800076581566538,
-  "selection_val_tail_ic": 0.008236808236808236,
-  "selection_val_monotonicity": 0.7333333333333333,
-  "selection_val_spread": 0.19285888952469965,
-  "deflated_cv_ic": 0.18676084124836498,
-  "deflated_val_ic": 0.12800076581566538,
-  "deflated_val_tail_ic": 0.008236808236808236,
-  "deflated_objective": -1000000000.0,
-  "lockbox_overall_ic": 0.006334049539586572,
-  "lockbox_tail_ic": 0.006753908428466402,
+  "selection_val_overall_ic": 0.2125947278327939,
+  "selection_val_tail_ic": 0.29165326014444665,
+  "selection_val_monotonicity": 0.5757575757575758,
+  "selection_val_spread": 0.7297324715127722,
+  "deflated_cv_ic": 0.08805747284945256,
+  "deflated_val_ic": 0.2125947278327939,
+  "deflated_val_tail_ic": 0.29165326014444665,
+  "deflated_objective": 4.479635977138292,
+  "lockbox_overall_ic": NaN,
+  "lockbox_tail_ic": NaN,
   "diagnostics": {
     "timings": {
-      "data_loading": 0.06732691801153123,
-      "feature_selection": 0.9741346929949941,
-      "loyo_folds": 0.043728324002586305,
-      "pilot_study": 1.3036662789963884,
-      "main_study": 2.76408936700318,
-      "final_refit": 0.007050369997159578
+      "data_loading": 0.06810725500690751,
+      "feature_selection": 0.0009153599967248738,
+      "loyo_folds": 0.006901722998009063,
+      "pilot_study": 0.0011371480068191886,
+      "main_study": 3.573154722005711,
+      "final_refit": 0.004853706996073015
     },
     "screening": {
       "total_features": 238,
@@ -363,29 +330,26 @@
     },
     "optuna_main": {
       "total_trials": 100,
-      "completed_count": 0,
-      "pruned_count": 100,
+      "completed_count": 8,
+      "pruned_count": 92,
       "failed_count": 0,
       "pruning_reasons": {
-        "M4 (Overall IC <= 0)": 16,
-        "M3 (Hit Rate < 60%)": 18,
-        "M5 (Monotonicity <= 0.25)": 18,
-        "M6 (Top-Bottom Spread <= 0)": 16,
-        "exceeds ESS-based cap": 72,
-        "Gini coefficient": 12
+        "M4 (Overall IC <= 0)": 30,
+        "M3 (Hit Rate < 60%)": 34,
+        "M5 (Monotonicity <= 0.25)": 34,
+        "M6 (Top-Bottom Spread <= 0)": 30,
+        "exceeds ESS-based cap": 58,
+        "Gini coefficient": 0
       }
     },
     "model_quality": {
-      "condition_number": 73.88475799560547,
+      "condition_number": 55.158077239990234,
       "condition_number_raw": 8.597013473510742,
-      "condition_number_regularized": 73.88475799560547,
+      "condition_number_regularized": 55.158077239990234,
       "collinear_pairs": [],
-      "effective_sample_size": 642.3423461914062,
-      "effective_sample_size_pct": 0.8703825829151847,
-      "gini_coefficient": 0.33066138349999186
+      "effective_sample_size": 175.8511199951172,
+      "effective_sample_size_pct": 0.2382806503998878,
+      "gini_coefficient": 0.9696969644120241
     }
-  },
-  "lockbox_monotonicity": 0.22424242424242424,
-  "ic_generalization_gap": 0.1216667162760788,
-  "mono_generalization_gap": 0.3303030303030303
+  }
 }

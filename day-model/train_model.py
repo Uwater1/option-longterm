@@ -162,7 +162,7 @@ ETF_CLI_MAP = {
     "588000": "588000ETF", "159915": "159915ETF",
     "300ETF": "300ETF", "50ETF": "50ETF", "500ETF": "500ETF",
     "588000ETF": "588000ETF", "159915ETF": "159915ETF",
-    "all": ["300ETF", "50ETF", "500ETF", "588000ETF", "159915ETF"],
+    "all": ["300ETF", "500ETF", "588000ETF", "159915ETF"],
 }
 
 # Metric Weights (w_i from Step 4.1)
@@ -1109,11 +1109,19 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     if main_db_path.exists():
         main_db_path.unlink()
     main_storage = JournalStorage(JournalFileBackend(str(main_db_path)))
+    
+    def constraints_func(trial):
+        return trial.user_attrs.get("constraints", [1e9] * 5)
+
+    sampler = optuna.samplers.TPESampler(
+        seed=PILOT_SEED + 1,
+        constraints_func=constraints_func
+    )
     study = optuna.create_study(
         study_name=f"main_{tag}",
         storage=main_storage,
         direction="maximize",
-        sampler=optuna.samplers.TPESampler(seed=PILOT_SEED + 1),
+        sampler=sampler,
         load_if_exists=True
     )
 
@@ -1151,44 +1159,52 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
             # Calculate weight concentration (Gini index) of model coefficients
             coefs = _model_obj.coef_
+            m_gini = len(coefs)
             abs_coefs = np.abs(coefs)
             sum_abs = abs_coefs.sum()
             if sum_abs > 1e-10:
                 sorted_c = np.sort(abs_coefs)
-                m_gini = len(sorted_c)
                 index = np.arange(1, m_gini + 1)
                 gini = float((2.0 * (index * sorted_c).sum()) / (m_gini * sum_abs) - (m_gini + 1) / m_gini)
             else:
                 gini = 0.0
 
             # Hard Constraints / Kill Switches (on CV folds to ensure training stability):
+            # Refactored to signed margins for TPESampler constraints_func
+            constraints = [
+                0.0 - m4,
+                0.60 - m3,
+                0.25 - m5,
+                0.0 - m6,
+                float(active_k - max_active_features),
+            ]
+
             pruning_reasons = []
-            if m4 <= 0:
+            if constraints[0] > 0:
                 pruning_reasons.append("M4 (Overall IC <= 0)")
-            if m3 < 0.60:
+            if constraints[1] > 0:
                 pruning_reasons.append("M3 (Hit Rate < 60%)")
-            if m5 <= 0.25:
+            if constraints[2] > 0:
                 pruning_reasons.append("M5 (Monotonicity <= 0.25)")
-            if m6 <= 0:
+            if constraints[3] > 0:
                 pruning_reasons.append("M6 (Top-Bottom Spread <= 0)")
-            if active_k > max_active_features:
+            if constraints[4] > 0:
                 pruning_reasons.append(f"Active features count ({active_k}) exceeds ESS-based cap ({max_active_features})")
-            if gini > 0.85:
-                pruning_reasons.append(f"Gini coefficient ({gini:.4f}) exceeds cap (0.85)")
 
-            if pruning_reasons:
-                trial.set_user_attr("pruned_reasons", pruning_reasons)
-                trial.set_user_attr("raw_metrics", raw_metrics)
-                trial.set_user_attr("val_metrics", val_metrics)
-                trial.set_user_attr("gini", gini)
-                return -1e9  # Pruned due to constraint violation
-
+            trial.set_user_attr("constraints", constraints)
+            trial.set_user_attr("pruned_reasons", pruning_reasons)
             trial.set_user_attr("gini", gini)
 
             # Soft ESS constraint penalty
             ess_penalty = 0.0
             if ess_pct < 0.20:
                 ess_penalty = -10.0 * (0.20 - ess_pct)
+
+            # Soft Gini constraint penalty (k-normalized)
+            gini_penalty = 0.0
+            gini_cap = 1.0 - 0.40 * (active_k / m_gini)
+            if gini > gini_cap:
+                gini_penalty = -10.0 * (gini - gini_cap)
 
             # Normalize selection validation metrics
             norm_val_metrics = []
@@ -1202,7 +1218,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 0.40 * norm_val_metrics[1] +  # Val Tail IC
                 0.15 * norm_val_metrics[2] +  # Val Monotonicity
                 0.05 * norm_val_metrics[3]    # Val Spread
-            ) + ess_penalty
+            ) + ess_penalty + gini_penalty
 
             trial.set_user_attr("raw_metrics", raw_metrics)
             trial.set_user_attr("val_metrics", val_metrics)
@@ -1210,10 +1226,19 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
         except Exception as e:
             trial.set_user_attr("pruned_reasons", [f"Exception: {str(e)}"])
+            trial.set_user_attr("constraints", [1e9] * 5)
             return -1e9
 
     def run_main_trial():
-        local_study = optuna.load_study(study_name=f"main_{tag}", storage=main_storage)
+        local_sampler = optuna.samplers.TPESampler(
+            seed=PILOT_SEED + 1,
+            constraints_func=constraints_func
+        )
+        local_study = optuna.load_study(
+            study_name=f"main_{tag}",
+            storage=main_storage,
+            sampler=local_sampler
+        )
         local_study.optimize(main_objective, n_trials=1)
 
     Parallel(n_jobs=optuna_n_jobs)(
@@ -1241,7 +1266,14 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     exception_reasons = []
     
     for t in study.trials:
-        if t.state == optuna.trial.TrialState.PRUNED or (t.state == optuna.trial.TrialState.COMPLETE and t.value is not None and t.value <= -1e8):
+        is_infeasible = False
+        c_vals = t.system_attrs.get("constraints")
+        if c_vals is None:
+            c_vals = t.user_attrs.get("constraints")
+        if c_vals is not None:
+            is_infeasible = any(c > 0 for c in c_vals)
+
+        if t.state == optuna.trial.TrialState.PRUNED or is_infeasible or (t.state == optuna.trial.TrialState.COMPLETE and t.value is not None and t.value <= -1e8):
             pruned_count += 1
             reasons = t.user_attrs.get("pruned_reasons", [])
             if not reasons:
@@ -1278,7 +1310,14 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     best_value = -1e10
     progression = []
     for t in sorted_trials:
-        if t.state == optuna.trial.TrialState.COMPLETE and t.value is not None and t.value > -1e8:
+        is_infeasible = False
+        c_vals = t.system_attrs.get("constraints")
+        if c_vals is None:
+            c_vals = t.user_attrs.get("constraints")
+        if c_vals is not None:
+            is_infeasible = any(c > 0 for c in c_vals)
+
+        if t.state == optuna.trial.TrialState.COMPLETE and t.value is not None and t.value > -1e8 and not is_infeasible:
             if t.value > best_value:
                 best_value = t.value
                 progression.append((t.number, best_value, t.params))
@@ -1288,14 +1327,42 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         print(f"    Trial {step:3d}: Best Objective = {val:+.4f} | params = {params}")
 
     # Retrieve best trial results
-    best_trial = study.best_trial
-    best_params = best_trial.params
-    best_raw_m = best_trial.user_attrs.get("raw_metrics")
-    best_val_m = best_trial.user_attrs.get("val_metrics")
+    best_trial = None
+    try:
+        best_val = -1e10
+        for t in study.trials:
+            if t.state == optuna.trial.TrialState.COMPLETE and t.value is not None:
+                c_vals = t.system_attrs.get("constraints")
+                if c_vals is None:
+                    c_vals = t.user_attrs.get("constraints")
+                if c_vals is not None and all(c <= 0 for c in c_vals):
+                    if t.value > best_val:
+                        best_val = t.value
+                        best_trial = t
+        if best_trial is None:
+            best_trial = study.best_trial
+    except Exception:
+        best_trial = None
+
+    if best_trial is not None:
+        best_params = best_trial.params
+        best_raw_m = best_trial.user_attrs.get("raw_metrics")
+        best_val_m = best_trial.user_attrs.get("val_metrics")
+    else:
+        best_params = None
+        best_raw_m = None
+        best_val_m = None
     
     if best_raw_m is None:
         print(f"\n[WARNING] All main study trials violated hard constraints for {etf_name}. Searching for best valid trial...")
-        valid_trials = [t for t in study.trials if t.user_attrs.get("raw_metrics") is not None]
+        valid_trials = []
+        for t in study.trials:
+            if t.state == optuna.trial.TrialState.COMPLETE:
+                c_vals = t.system_attrs.get("constraints")
+                if c_vals is None:
+                    c_vals = t.user_attrs.get("constraints")
+                if c_vals is not None and all(c <= 0 for c in c_vals):
+                    valid_trials.append(t)
         if valid_trials:
             valid_trials.sort(key=lambda t: t.value if t.value is not None else -1e10, reverse=True)
             best_trial = valid_trials[0]
@@ -1322,7 +1389,17 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         best_val_m = [np.nan, np.nan, np.nan, np.nan]
 
     # Calculate Deflated CV IC and Deflated Objective to adjust for multiple trials (Search-Budget Overfit)
-    completed_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE and t.value is not None and t.value > -1e8]
+    completed_trials = []
+    for t in study.trials:
+        if t.state == optuna.trial.TrialState.COMPLETE and t.value is not None and t.value > -1e8:
+            c_vals = t.system_attrs.get("constraints")
+            if c_vals is None:
+                c_vals = t.user_attrs.get("constraints")
+            is_infeasible = False
+            if c_vals is not None:
+                is_infeasible = any(c > 0 for c in c_vals)
+            if not is_infeasible:
+                completed_trials.append(t)
     trial_m4_values = []
     trial_objective_values = []
     trial_val_ic_values = []

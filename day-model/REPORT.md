@@ -6,8 +6,7 @@ This report summarizes the performance and features of the remade `day-model` re
 
 | ETF | Selected Features | Active Features | Best Model Type | Lockbox Overall IC | Lockbox Tail IC |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 30 | 24 | `skglm_mcp` | +0.0240 | +0.0516 |
-| 50ETF | 34 | 32 | `skglm_huber_l1` | +0.0343 | +0.1186 |
+| 300ETF | 30 | 30 | `skglm_mcp` | +0.0235 | +0.0363 |
 | 500ETF | 28 | 8 | `skglm_mcp` | +0.0833 | +0.1253 |
 | 588000ETF | 33 | 33 | `skglm_mcp` | +0.0063 | +0.0068 |
 | 159915ETF | 34 | 31 | `skglm_mcp` | +0.1228 | +0.3236 |
@@ -16,8 +15,7 @@ This report summarizes the performance and features of the remade `day-model` re
 
 | ETF | Yearly Tail IC IR | Yearly Tail IC Mean | Hit Rate | Decile Monotonicity | Top-Bottom Spread |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 1.1917 | +0.1786 | 90.0% | 0.3212 | +35.4850% |
-| 50ETF | 1.7139 | +0.2121 | 90.0% | 0.3491 | +27.4643% |
+| 300ETF | 1.3421 | +0.1940 | 90.0% | 0.3261 | +38.7621% |
 | 500ETF | 1.1509 | +0.2175 | 90.0% | 0.4715 | +78.7639% |
 | 588000ETF | 1.7417 | +0.2541 | 100.0% | 0.5545 | +71.4604% |
 | 159915ETF | 1.5829 | +0.2741 | 100.0% | 0.6339 | +93.2815% |
@@ -28,8 +26,7 @@ This report summarizes the performance and features of the remade `day-model` re
 
 | ETF | Raw X Cond | Reg normal eq kappa | Collinear Pairs ($\ge 0.85$) | Gini (Weight Concentration) | Tail Weight ESS | Tail Weight ESS % |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 8.47 | 70.70 [MODERATE] | 0 | 0.4683 | 1573.3 | 72.6% |
-| 50ETF | 5890597.50 | 16234.19 [SEVERE] | 0 | 0.4817 | 1385.1 | 63.9% |
+| 300ETF | 8.47 | 71.70 [MODERATE] | 0 | 0.4070 | 1829.2 | 84.5% |
 | 500ETF | 5.23 | 27.01 | 0 | 0.8329 | 1928.1 | 89.0% |
 | 588000ETF | 8.60 | 73.88 [MODERATE] | 0 | 0.3307 | 642.3 | 87.0% |
 | 159915ETF | 7.11 | 50.56 [MODERATE] | 0 | 0.4872 | 1685.0 | 77.8% |
@@ -38,8 +35,7 @@ This report summarizes the performance and features of the remade `day-model` re
 
 | ETF | CV Overall IC | Deflated CV IC | Selection Val IC | Deflated Val IC | OOS Lockbox IC | IC Gen Gap (DefVal-OOS) | CV Monotonicity | OOS Monotonicity | Mono Gen Gap |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | +0.0906 | +0.0770 | +0.1013 | +0.0736 | +0.0240 | +0.0497 | +0.3212 | +0.4667 | -0.1455 |
-| 50ETF | +0.0815 | +0.0572 | +0.1302 | +0.1132 | +0.0343 | +0.0790 [OVERFIT] | +0.3491 | +0.5636 | -0.2145 |
+| 300ETF | +0.0941 | +0.0941 | +0.1006 | +0.1006 | +0.0235 | +0.0771 [OVERFIT] | +0.3261 | +0.4909 | -0.1648 |
 | 500ETF | +0.1329 | +0.1147 | +0.2383 | +0.1740 | +0.0833 | +0.0908 [OVERFIT] | +0.4715 | +0.7576 | -0.2861 |
 | 588000ETF | +0.1868 | +0.1868 | +0.1280 | +0.1280 | +0.0063 | +0.1217 [OVERFIT] | +0.5545 | +0.2242 | +0.3303 [DEGRADED] |
 | 159915ETF | +0.1938 | +0.1462 | +0.1242 | +0.0822 | +0.1228 | -0.0405 | +0.6339 | +0.5152 | +0.1188 |
@@ -49,36 +45,27 @@ This report summarizes the performance and features of the remade `day-model` re
 | ETF | Screening Input | BH-FDR Pass | Screen Fallback? | Stability Input | Stability Pass | Stability Fallback? | Kept Features |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | 300ETF | 238 | 52 | NO | 52 | 51 | NO | **30** |
-| 50ETF | 238 | 0 | YES [WARNING] | 50 | 49 | NO | **34** |
 | 500ETF | 238 | 110 | NO | 110 | 31 | NO | **28** |
 | 588000ETF | 238 | 73 | NO | 73 | 72 | NO | **33** |
 | 159915ETF | 238 | 73 | NO | 73 | 41 | NO | **34** |
 
 ### Optuna Main Study & Pruning Reasons
 
-| ETF | Total Trials | Completed | Pruned / Failed | M4 Pruned | M3 Pruned | M5 Pruned | M6 Pruned | Gini Pruned |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 100 | 59 | 41 | 0 | 8 | 10 | 2 | 9 |
-| 50ETF | 100 | 57 | 43 | 0 | 5 | 13 | 0 | 11 |
-| 500ETF | 100 | 56 | 44 | 2 | 12 | 18 | 0 | 11 |
-| 588000ETF | 100 | 0 | 100 | 16 | 18 | 18 | 16 | 12 |
-| 159915ETF | 100 | 68 | 32 | 2 | 6 | 7 | 1 | 6 |
+| ETF | Total Trials | Completed | Pruned / Failed | M4 Pruned | M3 Pruned | M5 Pruned | M6 Pruned | ESS Pruned | Gini Pruned |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 300ETF | 10 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 500ETF | 100 | 56 | 44 | 2 | 12 | 18 | 0 | 18 | 11 |
+| 588000ETF | 100 | 0 | 100 | 16 | 18 | 18 | 16 | 72 | 12 |
+| 159915ETF | 100 | 68 | 32 | 2 | 6 | 7 | 1 | 20 | 6 |
 
 ## Selected Features per ETF
 
 ### 300ETF
 - **Total selected features (Stability Selection)**: 30
-- **Active features (Non-zero weights)**: 24
-- **Active features**: `total_balance`, `short_balance_quantity`, `northbound_sell`, `max_down_ret`, `volume_concentration`, `range_expansion_ratio`, `yesterday_day_kurtosis`, `bar_ret_0`, `max_up_ret`, `pullback_depth_max`, `volume_weighted_price_position`, `consecutive_higher_highs`, `yesterday_early_vwap_dev`, `yesterday_intraday_close_position`, `yesterday_am_return`, `northbound_net`, `yesterday_day_vwap_dev`, `capital_net_ratio`, `vix_iv_spread`, `iv_diff_1d`, `early_bearish_engulfing_count`, `intraday_autocorr`, `inside_bar_failure_bull`, `vix`
+- **Active features (Non-zero weights)**: 30
+- **Active features**: `total_balance`, `short_balance_quantity`, `northbound_sell`, `max_down_ret`, `volume_concentration`, `range_expansion_ratio`, `yesterday_day_kurtosis`, `bar_ret_0`, `bar_body_rng_0`, `volume_surge_direction`, `max_up_ret`, `late_bar_momentum`, `pullback_depth_max`, `volume_weighted_price_position`, `trend_strength_intraday`, `consecutive_higher_highs`, `bar_vwap_dev_2`, `yesterday_early_vwap_dev`, `yesterday_intraday_close_position`, `yesterday_am_return`, `northbound_net`, `yesterday_day_vwap_dev`, `capital_net_value`, `capital_net_ratio`, `vix_iv_spread`, `iv_diff_1d`, `early_bearish_engulfing_count`, `intraday_autocorr`, `inside_bar_failure_bull`, `vix`
 
 ![300ETF Diagnostics](plots/diagnostics_300ETF.png)
-
-### 50ETF
-- **Total selected features (Stability Selection)**: 34
-- **Active features (Non-zero weights)**: 32
-- **Active features**: `bar_ret_0`, `first_bar_sentiment`, `max_down_ret`, `rally_strength_max`, `volume_weighted_price_position`, `consecutive_higher_highs`, `sma100_dist`, `roc20`, `stoch_d`, `twenty_gap_bars_regime`, `margin_net_buy`, `yesterday_intraday_close_position`, `yesterday_early_vwap_dev`, `northbound_net`, `bar_vwap_dev_1`, `late_bar_momentum`, `bar_vwap_dev_0`, `yesterday_body_ratio`, `iv_vol_ratio`, `iv_diff_1d`, `early_trend_hhi`, `buy_on_margin_value`, `iv`, `bar_rng_2`, `max_up_ret`, `capital_net_ratio`, `capital_buy_volume`, `volume_slope`, `volume_concentration`, `northbound_sell`, `margin_short_ratio`, `spike_exhaustion_ratio`
-
-![50ETF Diagnostics](plots/diagnostics_50ETF.png)
 
 ### 500ETF
 - **Total selected features (Stability Selection)**: 28
