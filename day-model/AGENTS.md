@@ -16,8 +16,8 @@ Check day-model/day-model_plan.md for logic. Also update day-model/day-model_pla
 # 1. Re-generate parquet feature datasets
 python3 day-model/build_features.py -e all
 
-# 2. Run first-principles Stability Selection + Optuna training (takes 30s, Agent should always run full set)
-python3 day-model/train_model.py -e all --trials 100
+# 2. Run first-principles Stability Selection + Optuna training (takes 40s, Agent should always run full set)
+python3 day-model/train_model.py -e all --trials 200 # 200 better for production
 # IMPORTANT: Agent should always run full set
 
 # 3. Generate summary REPORT.md and tables
@@ -27,7 +27,7 @@ python3 day-model/generate_report.py
 ### train_model.py Performance Options
 
 ```bash
-python day-model/train_model.py -e 300 -t 100             # cache ON, n_jobs=cpu_count
+python day-model/train_model.py -e 300 -t 200             # cache ON, n_jobs=cpu_count
 python day-model/train_model.py -e 300 --no-cache          # force recompute
 python day-model/train_model.py -e 300 --optuna-jobs 8     # cap Optuna workers
 python day-model/train_model.py -e 300 --optuna-jobs 1     # sequential (guarantees 100% determinism)
