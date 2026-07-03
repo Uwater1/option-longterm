@@ -713,7 +713,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # length changes, or any of the deterministic knobs below change.
     # See AGENTS.md "Cache invalidation" for manual-clear guidance.
     select_key = [
-        "v7", etf_name, len(FEATURES), int(parquet_mtime),
+        "v8", etf_name, len(FEATURES), int(parquet_mtime),
         int(X_sel_train.shape[0]), int(X_sel_train.shape[1]),
         STABILITY_B, STABILITY_PI, SCREEN_FDR, SCREEN_FALLBACK_K,
         tuple(VAL_BLOCKS), TARGET,
@@ -856,7 +856,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # ── LOYO folds cache (depends on selected features only) ──────────
     loyo_key = [
-        "v7", etf_name, len(FEATURES), int(parquet_mtime),
+        "v8", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         tuple(VAL_BLOCKS), TARGET,
     ]
@@ -1003,7 +1003,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # ── Pilot calibration cache ───────────────────────────────────────
     pilot_key = [
-        "v7", etf_name, len(FEATURES), int(parquet_mtime),
+        "v8", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         tuple(VAL_BLOCKS), TARGET, PILOT_N_TRIALS, PILOT_SEED,
     ]
@@ -1024,7 +1024,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
         def pilot_objective(trial):
             model_type = trial.suggest_categorical("model_type", ["skglm_huber_l1", "skglm_mcp"])
-            k_weight = trial.suggest_float("k_weight", 0.0, 3.0)
+            k_weight = trial.suggest_float("k_weight", 0.0, 1.5)
 
             trial_params = {"model_type": model_type, "k_weight": k_weight}
             if model_type == "skglm_huber_l1":
@@ -1111,7 +1111,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     main_storage = JournalStorage(JournalFileBackend(str(main_db_path)))
     
     def constraints_func(trial):
-        return trial.user_attrs.get("constraints", [1e9] * 5)
+        return trial.user_attrs.get("constraints", [1e9] * 6)
 
     sampler = optuna.samplers.TPESampler(
         seed=PILOT_SEED + 1,
@@ -1129,7 +1129,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     def main_objective(trial):
         model_type = trial.suggest_categorical("model_type", ["skglm_huber_l1", "skglm_mcp"])
-        k_weight = trial.suggest_float("k_weight", 0.0, 3.0)
+        k_weight = trial.suggest_float("k_weight", 0.0, 1.5)
 
         trial_params = {"model_type": model_type, "k_weight": k_weight}
         if model_type == "skglm_huber_l1":
@@ -1177,6 +1177,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 0.25 - m5,
                 0.0 - m6,
                 float(active_k - max_active_features),
+                float(5 - active_k),
             ]
 
             pruning_reasons = []
@@ -1190,6 +1191,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 pruning_reasons.append("M6 (Top-Bottom Spread <= 0)")
             if constraints[4] > 0:
                 pruning_reasons.append(f"Active features count ({active_k}) exceeds ESS-based cap ({max_active_features})")
+            if constraints[5] > 0:
+                pruning_reasons.append(f"Active features count ({active_k}) is less than active feature floor (5)")
 
             trial.set_user_attr("constraints", constraints)
             trial.set_user_attr("pruned_reasons", pruning_reasons)
@@ -1226,7 +1229,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
         except Exception as e:
             trial.set_user_attr("pruned_reasons", [f"Exception: {str(e)}"])
-            trial.set_user_attr("constraints", [1e9] * 5)
+            trial.set_user_attr("constraints", [1e9] * 6)
             return -1e9
 
     def run_main_trial():
@@ -1261,6 +1264,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "M5 (Monotonicity <= 0.25)": 0,
         "M6 (Top-Bottom Spread <= 0)": 0,
         "exceeds ESS-based cap": 0,
+        "active feature floor": 0,
         "Gini coefficient": 0,
     }
     exception_reasons = []
@@ -1510,8 +1514,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     else:
         print(f"    ESS is healthy.")
 
-    print(f"    Model Weight Concentration (Gini Index): {gini:.4f}")
-    if gini > 0.85:
+    active_k = int(np.sum(abs_coefs > 1e-5))
+    gini_cap = 1.0 - 0.40 * (active_k / m)
+    print(f"    Model Weight Concentration (Gini Index): {gini:.4f} (k-normalized cap = {gini_cap:.4f})")
+    if gini > gini_cap:
         print(f"    [WARNING] Extremely high weight concentration! A very small subset of features dominates the model.")
     elif gini < 0.15:
         print(f"    [WARNING] Extremely low weight concentration (all weights are near-identical).")
