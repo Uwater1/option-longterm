@@ -86,7 +86,7 @@ STABILITY_PI = 0.60
 STABILITY_Q = 35
 SCREEN_FDR = 0.40
 SCREEN_FALLBACK_K = 50 # Doublc Research this 
-ACTIVE_FEATURE_ESS_DIVISOR = 25.0
+ACTIVE_FEATURE_ESS_DIVISOR = 8.0
 
 # Sample-weighting scale_data_with_weights can be done without a full rescale
 # of the standardized X (sqrt(w) is row-wise); we precompute the unweighted
@@ -126,22 +126,22 @@ def _load_or_compute(path: Path, expected_key, compute_fn, use_cache: bool = Tru
             blob = joblib.load(path)
             if blob.get("key") == expected_key:
                 if verbose:
-                    print(f"  [cache] hit   {path.name}")
+                    print(f"  Cache hit: {path.name}")
                 return blob["payload"]
             if verbose:
-                print(f"  [cache] stale {path.name} (key mismatch) -> recompute")
+                print(f"  Cache stale: {path.name} -> recompute")
         except Exception as e:
             if verbose:
-                print(f"  [cache] read error {path.name}: {e} -> recompute")
+                print(f"  Cache read error: {path.name} ({e}) -> recompute")
     payload = compute_fn()
     if use_cache:
         try:
             joblib.dump({"key": expected_key, "payload": payload}, path, compress=3)
             if verbose:
-                print(f"  [cache] write {path.name}")
+                print(f"  Cache saved: {path.name}")
         except Exception as e:
             if verbose:
-                print(f"  [cache] write error {path.name}: {e}")
+                print(f"  Cache write error: {path.name} ({e})")
     return payload
 
 
@@ -392,7 +392,7 @@ def run_vif_pruning(X_working: np.ndarray, selected_idx: np.ndarray, feature_nam
         max_vif = vifs[max_idx]
         if max_vif > threshold:
             f_name = feature_names[current_idx[max_idx]]
-            print(f"    [VIF Pruning] Drop feature '{f_name}' (VIF: {max_vif:.2f} > {threshold})")
+            print(f"    Drop '{f_name}' (VIF: {max_vif:.2f} > {threshold})")
             current_idx.pop(max_idx)
         else:
             break
@@ -516,12 +516,27 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen
 # Yearly Blocked CV Engine
 # ============================================================
 def _loyo_one_fold(fold, model_type, params, k_weight):
-    test_idx, X_tr_scaled, X_te_scaled, y_tr = fold
+    if len(fold) == 5:
+        test_idx, X_tr_scaled, X_te_scaled, y_tr, y_te = fold
+    else:
+        test_idx, X_tr_scaled, X_te_scaled, y_tr = fold
+        y_te = None
+        
     w_tr = compute_sample_weights(y_tr, k_weight)
     X_tr_w, y_tr_w = scale_data_with_weights(X_tr_scaled, y_tr, w_tr)
     model = _build_model(model_type, params)
     model.fit(X_tr_w, y_tr_w)
-    return test_idx, model.predict(X_te_scaled)
+    
+    test_preds = model.predict(X_te_scaled)
+    train_preds = model.predict(X_tr_scaled)
+    train_ic = spearman_ic(y_tr, train_preds)
+    
+    if y_te is not None:
+        test_ic = spearman_ic(y_te, test_preds)
+    else:
+        test_ic = 0.0
+        
+    return test_idx, test_preds, train_ic, test_ic
 
 
 def run_loyo_cv(loyo_folds: list, model_type: str, params: dict, k_weight: float,
@@ -529,24 +544,31 @@ def run_loyo_cv(loyo_folds: list, model_type: str, params: dict, k_weight: float
     oof_pred_sum = np.zeros(n_samples, dtype=np.float64)
     oof_pred_cnt = np.zeros(n_samples, dtype=np.float64)
     
+    cv_is_ics = []
+    cv_oos_ics = []
+    
     if n_jobs and n_jobs > 1 and len(loyo_folds) > 1:
         results = Parallel(n_jobs=n_jobs, backend="loky")(
             delayed(_loyo_one_fold)(f, model_type, params, k_weight)
             for f in loyo_folds
         )
-        for test_idx, preds in results:
+        for test_idx, preds, train_ic, test_ic in results:
             oof_pred_sum[test_idx] += preds
             oof_pred_cnt[test_idx] += 1
+            cv_is_ics.append(train_ic)
+            cv_oos_ics.append(test_ic)
     else:
         for fold in loyo_folds:
-            test_idx, preds = _loyo_one_fold(fold, model_type, params, k_weight)
+            test_idx, preds, train_ic, test_ic = _loyo_one_fold(fold, model_type, params, k_weight)
             oof_pred_sum[test_idx] += preds
             oof_pred_cnt[test_idx] += 1
+            cv_is_ics.append(train_ic)
+            cv_oos_ics.append(test_ic)
             
     oof_preds = np.zeros(n_samples, dtype=np.float64)
     mask = oof_pred_cnt > 0
     oof_preds[mask] = oof_pred_sum[mask] / oof_pred_cnt[mask]
-    return oof_preds
+    return oof_preds, np.array(cv_is_ics, dtype=np.float32), np.array(cv_oos_ics, dtype=np.float32)
 
 
 def calculate_yearly_metrics(year_groups, y_true: np.ndarray, y_pred: np.ndarray,
@@ -611,6 +633,161 @@ def compute_deflated_metric(values: list, best_value: float, rho: float = 0.5) -
     return float(best_value - overfit_bias)
 
 
+def compute_pbo_cscv(is_matrix, oos_matrix):
+    """
+    is_matrix: np.ndarray of shape (num_folds, num_trials)
+    oos_matrix: np.ndarray of shape (num_folds, num_trials)
+    """
+    num_folds, num_trials = is_matrix.shape
+    if num_trials <= 1:
+        return 0.0, 0.0
+    
+    # For each fold, find the best IS trial
+    best_is_idx = np.argmax(is_matrix, axis=1) # shape (num_folds,)
+    
+    ranks = []
+    oos_selected = []
+    is_selected = []
+    
+    for c in range(num_folds):
+        best_j = best_is_idx[c]
+        is_selected.append(is_matrix[c, best_j])
+        oos_val_selected = oos_matrix[c, best_j]
+        oos_selected.append(oos_val_selected)
+        
+        # Rank of oos_val_selected among all trials' OOS on fold c
+        better_count = np.sum(oos_matrix[c, :] > oos_val_selected)
+        equal_count = np.sum(oos_matrix[c, :] == oos_val_selected)
+        rank = better_count + 1 + (equal_count - 1) / 2.0
+        ranks.append(rank)
+        
+    ranks = np.array(ranks)
+    relative_ranks = ranks / (num_trials + 1)
+    pbo = np.mean(relative_ranks > 0.5)
+    
+    # Performance degradation: regress oos_selected on is_selected
+    x = np.array(is_selected)
+    y = np.array(oos_selected)
+    if len(x) > 1 and np.var(x) > 1e-10:
+        beta, alpha = np.polyfit(x, y, 1)
+    else:
+        beta = 0.0
+        
+    return float(pbo), float(beta)
+
+
+def extract_normalized_params(trial):
+    params = trial.params
+    model_type = params.get("model_type")
+    
+    vec = []
+    # k_weight range [0.0, 1.5]
+    vec.append(params.get("k_weight", 0.0) / 1.5)
+    
+    if model_type == "skglm_huber_l1":
+        # alpha log-scaled range [1e-5, 10.0]
+        alpha = params.get("skglm_huber_l1_alpha", 1e-5)
+        log_alpha = np.log(max(1e-6, alpha))
+        norm_log_alpha = (log_alpha - np.log(1e-5)) / (np.log(10.0) - np.log(1e-5))
+        vec.append(norm_log_alpha)
+        
+        # delta range [0.5, 5.0]
+        delta = params.get("skglm_huber_delta", 0.5)
+        vec.append((delta - 0.5) / 4.5)
+        
+    elif model_type == "skglm_mcp":
+        # alpha log-scaled range [1e-5, 10.0]
+        alpha = params.get("skglm_mcp_alpha", 1e-5)
+        log_alpha = np.log(max(1e-6, alpha))
+        norm_log_alpha = (log_alpha - np.log(1e-5)) / (np.log(10.0) - np.log(1e-5))
+        vec.append(norm_log_alpha)
+        
+        # gamma range [1.5, 10.0]
+        gamma = params.get("skglm_mcp_gamma", 1.5)
+        vec.append((gamma - 1.5) / 8.5)
+        
+        # delta range [0.5, 5.0]
+        delta = params.get("skglm_mcp_delta", 0.5)
+        vec.append((delta - 0.5) / 4.5)
+        
+    return np.array(vec), model_type
+
+
+def find_plateau_trial(study, r=0.25):
+    import optuna
+    # Get all completed trials
+    trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE and t.value is not None]
+    if not trials:
+        return None
+        
+    # Check constraints for each trial to find valid ones
+    valid_trials = []
+    for t in trials:
+        c_vals = t.system_attrs.get("constraints") or t.user_attrs.get("constraints")
+        if c_vals is not None and all(c <= 0 for c in c_vals):
+            valid_trials.append(t)
+            
+    if not valid_trials:
+        return None
+        
+    # Compute normalized parameter vectors for all completed trials
+    trial_vecs = {}
+    trial_types = {}
+    for t in trials:
+        vec, m_type = extract_normalized_params(t)
+        trial_vecs[t.number] = vec
+        trial_types[t.number] = m_type
+        
+    best_stable_trial = None
+    best_plateau_score = -1e10
+    
+    print("\n  [DIAGNOSTICS] Plateau Search (r={:.2f}):".format(r))
+    for t in valid_trials:
+        t_vec = trial_vecs[t.number]
+        t_type = trial_types[t.number]
+        
+        # Find neighbors (completed trials of SAME model type within distance r)
+        neighbors = []
+        for other in trials:
+            if other.number == t.number:
+                continue
+            if trial_types[other.number] != t_type:
+                continue
+            dist = np.linalg.norm(t_vec - trial_vecs[other.number])
+            if dist <= r:
+                neighbors.append(other)
+                
+        if not neighbors:
+            valid_ratio = 0.0
+            mean_val = t.value - 1.0
+        else:
+            valid_neighbors = []
+            for n in neighbors:
+                c_vals = n.system_attrs.get("constraints") or n.user_attrs.get("constraints")
+                if c_vals is not None and all(c <= 0 for c in c_vals):
+                    valid_neighbors.append(n)
+            
+            valid_ratio = len(valid_neighbors) / len(neighbors)
+            mean_val = np.mean([n.value for n in valid_neighbors]) if valid_neighbors else (t.value - 2.0)
+            
+        val_drop = max(0.0, t.value - mean_val)
+        plateau_score = t.value - 1.5 * val_drop - 1.0 * (1.0 - valid_ratio)
+        
+        is_top_5_raw = t in sorted(valid_trials, key=lambda x: x.value, reverse=True)[:5]
+        if is_top_5_raw:
+            print(f"    Trial {t.number:3d} (val={t.value:+.4f}): neighbors={len(neighbors)}, valid_ratio={valid_ratio:.2f}, neighbor_mean={mean_val:+.4f}, plateau={plateau_score:+.4f}")
+            
+        if plateau_score > best_plateau_score:
+            best_plateau_score = plateau_score
+            best_stable_trial = t
+            
+    if best_stable_trial is not None:
+        raw_best = sorted(valid_trials, key=lambda x: x.value, reverse=True)[0]
+        print(f"  Stable trial: {best_stable_trial.number} (val={best_stable_trial.value:+.4f}, plateau={best_plateau_score:+.4f}) vs best {raw_best.number} (val={raw_best.value:+.4f})")
+        return best_stable_trial
+    return sorted(valid_trials, key=lambda x: x.value, reverse=True)[0]
+
+
 # ============================================================
 # Main ETF Trainer
 # ============================================================
@@ -618,9 +795,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
               use_cache: bool = True, optuna_n_jobs: int = OPTUNA_N_JOBS,
               bootstrap_n_jobs: int = BOOTSTRAP_N_JOBS, loyo_n_jobs: int = 1):
     print(f"\n" + "=" * 80)
-    print(f"Starting First-Principles Training for {etf_name} (Side: {side})")
-    print(f"  use_cache={use_cache}  optuna_n_jobs={optuna_n_jobs}  "
-          f"bootstrap_n_jobs={bootstrap_n_jobs}  loyo_n_jobs={loyo_n_jobs}")
+    print(f"Train {etf_name} (Side: {side})")
+    print(f"Cache: {use_cache} | Jobs: Optuna={optuna_n_jobs}, Bootstrap={bootstrap_n_jobs}, LOYO={loyo_n_jobs}")
     print(f"=" * 80)
 
     timings = {}
@@ -629,7 +805,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # Load features parquet
     features_path = DATA_DIR / f"features_{etf_name}.parquet"
     if not features_path.exists():
-        print(f"  [ERROR] Features file not found: {features_path}")
+        print(f"  ERROR: Features file not found: {features_path}")
         return None
 
     parquet_mtime = int(features_path.stat().st_mtime_ns)
@@ -647,7 +823,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     y = df[TARGET].values.astype(np.float32)
 
     N = len(df)
-    print(f"Loaded {N} samples and {X.shape[1]} features.")
+    print(f"Loaded {N} rows, {X.shape[1]} features.")
 
     tag = etf_name if side == "single" else f"{etf_name}_{side}"
     pilot_db_path = DATA_DIR / f"optuna_pilot_{tag}.log"
@@ -698,8 +874,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     y_sel_train = y_scaled[sel_train_idx].astype(np.float32)
     dates_sel_train = df["date"].iloc[sel_train_idx].reset_index(drop=True)
 
-    print(f"Split: Working={len(working_idx)} rows (Lockbox OOS data ignored during training).")
-    print(f"       Selection Train={len(sel_train_idx)} rows, Selection Val={len(sel_val_idx)} rows.")
+    print(f"Split: Working={len(working_idx)} (Lockbox ignored) | Train={len(sel_train_idx)} | Val={len(sel_val_idx)}")
 
     # Precompute yearly row-index groups for the Selection Train subset (used by per-trial CV metric computation).
     years_sel_train = dates_sel_train.dt.year.values
@@ -723,10 +898,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # Step 1 + 2: Cheap screening + Stability selection (cached).
     def _compute_selection():
         t_sel_start = time.perf_counter()
-        print("Running feature screening...")
+        print("Screening features...")
         screen_mask, p_vals, rhos = run_screening(X_sel_train, y_sel_train)
         t_screen = time.perf_counter() - t_sel_start
-        print(f"Screened features: {screen_mask.sum()} surviving candidates.")
+        print(f"Screening kept {screen_mask.sum()} features.")
         
         t_stab_start = time.perf_counter()
         print("Running stability selection...")
@@ -736,12 +911,11 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         )
         t_stab = time.perf_counter() - t_stab_start
 
-        # Run iterative VIF pruning to eliminate multivariate collinearity
-        print("Running iterative VIF pruning...")
+        print("Pruning VIF...")
         t_vif_start = time.perf_counter()
         vif_pruned_idx = run_vif_pruning(X_sel_train, stability_selected_idx, FEATURES, threshold=10.0)
         t_vif = time.perf_counter() - t_vif_start
-        print(f"VIF pruning finished. Dropped {len(stability_selected_idx) - len(vif_pruned_idx)} collinear features. Kept {len(vif_pruned_idx)} representatives.")
+        print(f"VIF dropped {len(stability_selected_idx) - len(vif_pruned_idx)} collinear. Kept {len(vif_pruned_idx)} features.")
 
         return {
             "screen_mask": screen_mask,
@@ -769,25 +943,24 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     bh_pass_count = bh_mask.sum()
     fallback_triggered = (bh_pass_count < 40)
 
-    print("\n  [DIAGNOSTICS] Feature Screening (Step 1) Details:")
-    print(f"    Total features input: {len(FEATURES)}")
-    print(f"    Features passing BH-FDR (FDR={SCREEN_FDR}): {bh_pass_count}")
+    print("\n  [DIAGNOSTICS] Feature Screening:")
+    print(f"    Input: {len(FEATURES)} | FDR pass: {bh_pass_count}")
     if fallback_triggered:
-        print(f"    [WARNING] Fallback triggered! Kept top {screen_mask.sum()} features by p-value instead.")
+        print(f"    [WARNING] Fallback: kept top {screen_mask.sum()} by p-value.")
     else:
-        print(f"    No fallback needed. Kept {screen_mask.sum()} features.")
+        print(f"    Kept {screen_mask.sum()} features.")
 
     abs_rhos = np.abs(rhos)
-    print(f"    Spearman rho absolute values - Min: {abs_rhos.min():.4f}, Median: {np.median(abs_rhos):.4f}, Max: {abs_rhos.max():.4f}")
-    print(f"    p-values - Min: {p_vals.min():.2e}, Median: {np.median(p_vals):.4f}, Max: {p_vals.max():.4f}")
+    print(f"    Spearman |rho|: Min={abs_rhos.min():.4f}, Med={np.median(abs_rhos):.4f}, Max={abs_rhos.max():.4f}")
+    print(f"    p-value: Min={p_vals.min():.2e}, Med={np.median(p_vals):.4f}, Max={p_vals.max():.4f}")
 
     sorted_idx = np.argsort(rhos)
-    print("    Top 5 positive Spearman correlations:")
+    print("    Top 5 positive correlations:")
     for idx in sorted_idx[-5:][::-1]:
-        print(f"      - {FEATURES[idx]}: rho = {rhos[idx]:+.4f}, p = {p_vals[idx]:.2e}")
-    print("    Top 5 negative Spearman correlations:")
+        print(f"      - {FEATURES[idx]}: rho={rhos[idx]:+.4f}, p={p_vals[idx]:.2e}")
+    print("    Top 5 negative correlations:")
     for idx in sorted_idx[:5]:
-        print(f"      - {FEATURES[idx]}: rho = {rhos[idx]:+.4f}, p = {p_vals[idx]:.2e}")
+        print(f"      - {FEATURES[idx]}: rho={rhos[idx]:+.4f}, p={p_vals[idx]:.2e}")
 
     # ── Stability Selection (Step 2) Diagnostics ──
     screened_idx = np.where(screen_mask)[0]
@@ -795,25 +968,24 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     pass_pi_count = np.sum(scores_on_screened >= STABILITY_PI)
     stab_fallback_triggered = (pass_pi_count < 3)
 
-    print("\n  [DIAGNOSTICS] Stability Selection (Step 2) Details:")
-    print(f"    Features input to Stability Selection: {len(screened_idx)}")
-    print(f"    Features with stability score >= {STABILITY_PI}: {pass_pi_count}")
+    print("\n  [DIAGNOSTICS] Stability Selection:")
+    print(f"    Input: {len(screened_idx)} | Stable count: {pass_pi_count}")
     if stab_fallback_triggered:
-        print(f"    [WARNING] Fallback triggered! Kept top {len(stability_selected_idx)} features by stability score instead.")
+        print(f"    [WARNING] Fallback: kept top {len(stability_selected_idx)} by score.")
     else:
-        print(f"    No fallback needed. Kept {len(stability_selected_idx)} features.")
+        print(f"    Kept {len(stability_selected_idx)} features.")
 
     if len(scores_on_screened) > 0:
         pcts = np.percentile(scores_on_screened, [25, 50, 75, 90, 95])
-        print(f"    Stability score percentiles on screened features - 25%: {pcts[0]:.2f}, 50%: {pcts[1]:.2f}, 75%: {pcts[2]:.2f}, 90%: {pcts[3]:.2f}, 95%: {pcts[4]:.2f}")
+        print(f"    Score percentiles: 25%={pcts[0]:.2f}, 50%={pcts[1]:.2f}, 75%={pcts[2]:.2f}, 90%={pcts[3]:.2f}, 95%={pcts[4]:.2f}")
 
     selected_feature_names = [FEATURES[idx] for idx in stability_selected_idx]
     K_sel = len(stability_selected_idx)
-    print("    Stability selected features & scores:")
+    print("    Selected features & scores:")
     for idx in stability_selected_idx:
-        print(f"      - {FEATURES[idx]}: score = {stability_scores[idx]:.2f}")
+        print(f"      - {FEATURES[idx]}: score={stability_scores[idx]:.2f}")
 
-    print(f"Stability selection finished. Kept {K_sel} features.")
+    print(f"Stability kept {K_sel} features.")
 
     # Freeze the features for the final and Optuna loops
     X_sel_train_final = _to_f32(X_sel_train[:, stability_selected_idx])
@@ -838,25 +1010,25 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         collinear_pairs = []
         condition_number = 1.0
 
-    print("\n  [DIAGNOSTICS] Selected Feature Quality:")
-    print(f"    Selected Features Condition Number: {condition_number:.2f}")
+    print("\n  [DIAGNOSTICS] Feature Quality:")
+    print(f"    Condition Number: {condition_number:.2f}")
     if condition_number > 100:
-        print(f"    [WARNING] Severe multicollinearity detected (condition number > 100)!")
+        print(f"    [WARNING] Severe collinearity (cond > 100)!")
     elif condition_number > 30:
-        print(f"    [WARNING] Moderate multicollinearity detected (condition number > 30).")
+        print(f"    [WARNING] Moderate collinearity (cond > 30).")
     else:
-        print(f"    Feature matrix is numerically stable.")
+        print(f"    Matrix is stable.")
 
     if collinear_pairs:
-        print(f"    [WARNING] Found {len(collinear_pairs)} highly collinear pairs (|rho| >= 0.85):")
+        print(f"    [WARNING] {len(collinear_pairs)} collinear pairs (|rho| >= 0.85):")
         for f1, f2, val in collinear_pairs:
-            print(f"      - {f1} <-> {f2}: rho = {val:+.4f}")
+            print(f"      - {f1} <-> {f2}: rho={val:+.4f}")
     else:
-        print("    No highly collinear feature pairs found.")
+        print("    No collinear pairs.")
 
     # ── LOYO folds cache (depends on selected features only) ──────────
     loyo_key = [
-        "v8", etf_name, len(FEATURES), int(parquet_mtime),
+        "v9", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         tuple(VAL_BLOCKS), TARGET,
     ]
@@ -913,6 +1085,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 _to_f32(X_tr_scaled),
                 _to_f32(X_te_scaled),
                 y_tr.astype(np.float32),
+                y_sel_train[test_idx].astype(np.float32),
             ))
         return folds
 
@@ -921,12 +1094,15 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                                   use_cache=use_cache)
     timings["loyo_folds"] = time.perf_counter() - t_loyo_block_start
 
-    print("\n  [DIAGNOSTICS] LOYO CV Folds Details:")
-    print(f"    Number of folds (years): {len(loyo_folds)}")
+    print("\n  [DIAGNOSTICS] LOYO CV Folds:")
+    print(f"    Folds: {len(loyo_folds)}")
     for i, fold in enumerate(loyo_folds):
-        test_idx, X_tr_scaled, X_te_scaled, y_tr = fold
-        test_years = dates_sel_train.iloc[test_idx].dt.year.unique()
-        print(f"      Fold {i+1}: Test Year(s) = {list(test_years)}, Train shape = {X_tr_scaled.shape}, Test shape = {X_te_scaled.shape}")
+        if len(fold) == 5:
+            test_idx, X_tr_scaled, X_te_scaled, y_tr, y_te = fold
+        else:
+            test_idx, X_tr_scaled, X_te_scaled, y_tr = fold
+        test_years = sorted(dates_sel_train.iloc[test_idx].dt.year.unique())
+        print(f"      Fold {i+1}: Years {[int(y) for y in test_years]} | Train {X_tr_scaled.shape} | Test {X_te_scaled.shape}")
 
     # Precompute the *unweighted* standardized selection train matrix once.
     # Per-trial cost only requires re-applying row-wise sqrt(w).
@@ -958,8 +1134,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             params["en_l1_ratio"] = trial_params["en_l1_ratio"]
 
         # LOYO CV predictions
-        oof_preds = run_loyo_cv(loyo_folds, model_type, params, k_weight,
-                                len(y_sel_train), n_jobs=loyo_n_jobs)
+        oof_preds, cv_is_ics, cv_oos_ics = run_loyo_cv(loyo_folds, model_type, params, k_weight,
+                                                      len(y_sel_train), n_jobs=loyo_n_jobs)
 
         # Fit model on selection train set to compute coefficient norm.
         w_temp = compute_sample_weights(y_sel_train, k_weight).astype(np.float32)
@@ -999,11 +1175,11 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
         val_metrics = [val_ic, val_tail_ic, val_mono, val_spread]
 
-        return raw_metrics, val_metrics, model_temp, scaler_init
+        return raw_metrics, val_metrics, model_temp, scaler_init, cv_is_ics, cv_oos_ics
 
     # ── Pilot calibration cache ───────────────────────────────────────
     pilot_key = [
-        "v8", etf_name, len(FEATURES), int(parquet_mtime),
+        "v9", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         tuple(VAL_BLOCKS), TARGET, PILOT_N_TRIALS, PILOT_SEED,
     ]
@@ -1036,7 +1212,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
 
             try:
-                raw_metrics, val_metrics, _, _ = evaluate_params(trial_params)
+                res = evaluate_params(trial_params)
+                raw_metrics, val_metrics = res[0], res[1]
                 trial.set_user_attr("raw_metrics", raw_metrics)
                 trial.set_user_attr("val_metrics", val_metrics)
                 trial.set_user_attr("params", trial_params)
@@ -1084,27 +1261,27 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # Avoid zero division
     val_mads[val_mads < 1e-6] = 1.0
 
-    print("\n  [DIAGNOSTICS] Optuna Pilot Study Details:")
-    print(f"    Total pilot trials loaded/run: {len(pilot_records)}")
-    print("    Raw CV metrics distribution across pilot study:")
+    print("\n  [DIAGNOSTICS] Optuna Pilot Summary:")
+    print(f"    Trials: {len(pilot_records)}")
+    print("    Raw CV metrics:")
     metric_names = ["M1 (Tail IC IR)", "M2 (Tail IC Mean)", "M3 (Hit Rate)", "M4 (Overall IC)", 
                     "M5 (Monotonicity)", "M6 (Top-Bot Spread)", "M7 (Parsimony)", "M8 (Coef Bloat)"]
     for i in range(8):
         vals = pilot_metrics[:, i]
-        print(f"      {metric_names[i]:<20}: Min = {vals.min():.4f}, Median = {np.median(vals):.4f}, Max = {vals.max():.4f}")
+        print(f"      {metric_names[i]:<20}: Min={vals.min():.4f}, Med={np.median(vals):.4f}, Max={vals.max():.4f}")
 
-    print("    Selection Validation metrics distribution across pilot study:")
+    print("    Validation metrics:")
     val_metric_names = ["Val IC", "Val Tail IC", "Val Monotonicity", "Val Top-Bot Spread"]
     for i in range(4):
         vals = pilot_val_metrics[:, i]
-        print(f"      {val_metric_names[i]:<20}: Min = {vals.min():.4f}, Median = {val_medians[i]:.4f}, Max = {vals.max():.4f}, MAD = {val_mads[i]:.4f}")
+        print(f"      {val_metric_names[i]:<20}: Min={vals.min():.4f}, Med={val_medians[i]:.4f}, Max={vals.max():.4f}, MAD={val_mads[i]:.4f}")
 
-    print("Normalizing constants calibrated from Pilot run (Selection Validation):")
+    print("Calibrated constants:")
     for i in range(4):
-        print(f"  Val{i+1}: Median={val_medians[i]:.6f}, MAD={val_mads[i]:.6f}")
+        print(f"  Val{i+1}: Med={val_medians[i]:.6f}, MAD={val_mads[i]:.6f}")
 
     # Phase 2: Main Study (Optuna Tuning)
-    print(f"\nRunning main Optuna Study ({n_trials} trials) with First-Principles Multi-Metric Objective...")
+    print(f"\nRunning main Optuna Study ({n_trials} trials)...")
     t_main_block_start = time.perf_counter()
     if main_db_path.exists():
         main_db_path.unlink()
@@ -1141,7 +1318,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
 
         try:
-            raw_metrics, val_metrics, _model_obj, _scaler_obj = evaluate_params(trial_params)
+            raw_metrics, val_metrics, _model_obj, _scaler_obj, cv_is_ics, cv_oos_ics = evaluate_params(trial_params)
 
             # Extract metrics for kill switches (CV folds)
             m1, m2, m3, m4, m5, m6, m7, m8 = raw_metrics
@@ -1156,6 +1333,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             # Active feature cap based on ESS: events-per-variable heuristic
             active_k = int(np.sum(np.abs(_model_obj.coef_) > 1e-5))
             max_active_features = max(3, int(ess / ACTIVE_FEATURE_ESS_DIVISOR))
+            min_active_features = min(5, max_active_features)
 
             # Calculate weight concentration (Gini index) of model coefficients
             coefs = _model_obj.coef_
@@ -1177,7 +1355,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 0.25 - m5,
                 0.0 - m6,
                 float(active_k - max_active_features),
-                float(5 - active_k),
+                float(min_active_features - active_k),
             ]
 
             pruning_reasons = []
@@ -1192,11 +1370,13 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             if constraints[4] > 0:
                 pruning_reasons.append(f"Active features count ({active_k}) exceeds ESS-based cap ({max_active_features})")
             if constraints[5] > 0:
-                pruning_reasons.append(f"Active features count ({active_k}) is less than active feature floor (5)")
+                pruning_reasons.append(f"Active features count ({active_k}) is less than active feature floor ({min_active_features})")
 
             trial.set_user_attr("constraints", constraints)
             trial.set_user_attr("pruned_reasons", pruning_reasons)
             trial.set_user_attr("gini", gini)
+            trial.set_user_attr("cv_is_ics", cv_is_ics.tolist())
+            trial.set_user_attr("cv_oos_ics", cv_oos_ics.tolist())
 
             # Soft ESS constraint penalty
             ess_penalty = 0.0
@@ -1297,15 +1477,13 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         elif t.state == optuna.trial.TrialState.FAIL:
             failed_count += 1
 
-    print("\n  [DIAGNOSTICS] Main Optuna Study Trial Summary:")
-    print(f"    Total trials run: {total_trials}")
-    print(f"    Successful complete trials: {completed_count}")
-    print(f"    Pruned/Failed trials: {pruned_count + failed_count}")
-    print("    Pruning reason breakdown:")
+    print("\n  [DIAGNOSTICS] Main Study Summary:")
+    print(f"    Trials: {total_trials} | OK: {completed_count} | Pruned/Failed: {pruned_count + failed_count}")
+    print("    Pruning counts:")
     for reason, cnt in reason_counts.items():
-        print(f"      - {reason}: {cnt} times")
+        print(f"      - {reason}: {cnt}")
     if exception_reasons:
-        print("    Exceptions encountered during trials:")
+        print("    Exceptions:")
         for exc in exception_reasons:
             print(f"      - {exc}")
 
@@ -1326,27 +1504,55 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 best_value = t.value
                 progression.append((t.number, best_value, t.params))
 
-    print("\n  [DIAGNOSTICS] Objective Progression (Optimization path):")
+    print("\n  [DIAGNOSTICS] Objective Progression:")
     for step, val, params in progression:
-        print(f"    Trial {step:3d}: Best Objective = {val:+.4f} | params = {params}")
+        print(f"    Trial {step:3d}: Best={val:+.4f} | params={params}")
 
-    # Retrieve best trial results
+    # Compute PBO and Performance Degradation using Combinatorially Symmetric CV
+    completed_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
+    is_list = []
+    oos_list = []
+    for t in completed_trials:
+        is_ic = t.user_attrs.get("cv_is_ics")
+        oos_ic = t.user_attrs.get("cv_oos_ics")
+        if is_ic is not None and oos_ic is not None:
+            is_list.append(is_ic)
+            oos_list.append(oos_ic)
+
+    pbo = np.nan
+    perf_deg = np.nan
+    if is_list:
+        is_matrix = np.array(is_list).T
+        oos_matrix = np.array(oos_list).T
+        pbo, perf_deg = compute_pbo_cscv(is_matrix, oos_matrix)
+        print(f"\n  [DIAGNOSTICS] Overfitting (CSCV PBO):")
+        print(f"    PBO: {pbo*100:.1f}%")
+        print(f"    IS -> OOS Slope: {perf_deg:+.4f}")
+
+    # Retrieve best trial results (Hyperparameter Plateau Search)
     best_trial = None
     try:
-        best_val = -1e10
-        for t in study.trials:
-            if t.state == optuna.trial.TrialState.COMPLETE and t.value is not None:
-                c_vals = t.system_attrs.get("constraints")
-                if c_vals is None:
-                    c_vals = t.user_attrs.get("constraints")
-                if c_vals is not None and all(c <= 0 for c in c_vals):
-                    if t.value > best_val:
-                        best_val = t.value
-                        best_trial = t
-        if best_trial is None:
-            best_trial = study.best_trial
-    except Exception:
+        best_trial = find_plateau_trial(study, r=0.25)
+    except Exception as e:
+        print(f"  [WARNING] Hyperparameter plateau search failed: {e}. Falling back to default best trial search.")
         best_trial = None
+
+    if best_trial is None:
+        try:
+            best_val = -1e10
+            for t in study.trials:
+                if t.state == optuna.trial.TrialState.COMPLETE and t.value is not None:
+                    c_vals = t.system_attrs.get("constraints")
+                    if c_vals is None:
+                        c_vals = t.user_attrs.get("constraints")
+                    if c_vals is not None and all(c <= 0 for c in c_vals):
+                        if t.value > best_val:
+                            best_val = t.value
+                            best_trial = t
+            if best_trial is None:
+                best_trial = study.best_trial
+        except Exception:
+            best_trial = None
 
     if best_trial is not None:
         best_params = best_trial.params
@@ -1393,17 +1599,6 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         best_val_m = [np.nan, np.nan, np.nan, np.nan]
 
     # Calculate Deflated CV IC and Deflated Objective to adjust for multiple trials (Search-Budget Overfit)
-    completed_trials = []
-    for t in study.trials:
-        if t.state == optuna.trial.TrialState.COMPLETE and t.value is not None and t.value > -1e8:
-            c_vals = t.system_attrs.get("constraints")
-            if c_vals is None:
-                c_vals = t.user_attrs.get("constraints")
-            is_infeasible = False
-            if c_vals is not None:
-                is_infeasible = any(c > 0 for c in c_vals)
-            if not is_infeasible:
-                completed_trials.append(t)
     trial_m4_values = []
     trial_objective_values = []
     trial_val_ic_values = []
@@ -1418,33 +1613,38 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             trial_val_ic_values.append(val_m[0])
             trial_val_tail_ic_values.append(val_m[1])
 
-    deflated_cv_ic = compute_deflated_metric(trial_m4_values, best_raw_m[3], rho=0.5)
-    deflated_objective = compute_deflated_metric(trial_objective_values, best_trial.value, rho=0.5)
-    deflated_val_ic = compute_deflated_metric(trial_val_ic_values, best_val_m[0], rho=0.5)
-    deflated_val_tail_ic = compute_deflated_metric(trial_val_tail_ic_values, best_val_m[1], rho=0.5)
+    best_m4_val = best_raw_m[3] if (best_raw_m is not None and len(best_raw_m) > 3) else np.nan
+    best_obj_val = best_trial.value if best_trial is not None else np.nan
+    best_val_ic_val = best_val_m[0] if (best_val_m is not None and len(best_val_m) > 0) else np.nan
+    best_val_tail_ic_val = best_val_m[1] if (best_val_m is not None and len(best_val_m) > 1) else np.nan
 
-    print(f"\nBest hyperparameters found by Optuna:")
+    deflated_cv_ic = compute_deflated_metric(trial_m4_values, best_m4_val, rho=0.5)
+    deflated_objective = compute_deflated_metric(trial_objective_values, best_obj_val, rho=0.5)
+    deflated_val_ic = compute_deflated_metric(trial_val_ic_values, best_val_ic_val, rho=0.5)
+    deflated_val_tail_ic = compute_deflated_metric(trial_val_tail_ic_values, best_val_tail_ic_val, rho=0.5)
+
+    print(f"\nBest params:")
     for k, v in best_params.items():
         print(f"  {k}: {v}")
         
-    print(f"Best trial raw metrics (CV Folds):")
-    print(f"  M1 (Tail IC IR):      {best_raw_m[0]:.4f}")
-    print(f"  M2 (Tail IC Mean):    {best_raw_m[1]:.4f}")
-    print(f"  M3 (Hit Rate):        {best_raw_m[2]:.4f}")
-    print(f"  M4 (Overall IC):      {best_raw_m[3]:.4f}")
-    print(f"  Deflated CV Overall IC: {deflated_cv_ic:.4f}")
-    print(f"  M5 (Monotonicity):    {best_raw_m[4]:.4f}")
-    print(f"  M6 (Top-Bot Spread):  {best_raw_m[5]:.4f}")
-    print(f"  M7 (Parsimony):       {best_raw_m[6]:.4f}")
-    print(f"  M8 (Coef Bloat):      {best_raw_m[7]:.4f}")
+    print(f"Best trial raw metrics (CV):")
+    print(f"  M1 (Tail IC IR):  {best_raw_m[0]:.4f}")
+    print(f"  M2 (Tail IC Mean):{best_raw_m[1]:.4f}")
+    print(f"  M3 (Hit Rate):    {best_raw_m[2]:.4f}")
+    print(f"  M4 (Overall IC):  {best_raw_m[3]:.4f}")
+    print(f"  Deflated CV IC:   {deflated_cv_ic:.4f}")
+    print(f"  M5 (Mono):        {best_raw_m[4]:.4f}")
+    print(f"  M6 (Spread):      {best_raw_m[5]:.4f}")
+    print(f"  M7 (Parsimony):   {best_raw_m[6]:.4f}")
+    print(f"  M8 (Coef Bloat):  {best_raw_m[7]:.4f}")
 
-    print(f"Best trial Selection Validation metrics:")
-    print(f"  Val Overall IC:       {best_val_m[0]:.4f}")
-    print(f"  Deflated Val IC:      {deflated_val_ic:.4f}")
-    print(f"  Val Tail IC:          {best_val_m[1]:.4f}")
-    print(f"  Deflated Val Tail IC: {deflated_val_tail_ic:.4f}")
-    print(f"  Val Monotonicity:     {best_val_m[2]:.4f}")
-    print(f"  Val Top-Bot Spread:   {best_val_m[3]:.4f}")
+    print(f"Best trial Selection Val metrics:")
+    print(f"  Val IC:           {best_val_m[0]:.4f}")
+    print(f"  Deflated Val IC:  {deflated_val_ic:.4f}")
+    print(f"  Val Tail IC:      {best_val_m[1]:.4f}")
+    print(f"  Deflated Val Tail:{deflated_val_tail_ic:.4f}")
+    print(f"  Val Mono:         {best_val_m[2]:.4f}")
+    print(f"  Val Spread:       {best_val_m[3]:.4f}")
     
     t_refit_start = time.perf_counter()
     # Refit final model on 2200 working rows
@@ -1505,25 +1705,25 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     s_sq_min = (s.min() ** 2) + n_samples_working * l2_lambda
     reg_cond = float(s_sq_max / s_sq_min) if s_sq_min > 1e-10 else float("inf")
 
-    print("\n  [DIAGNOSTICS] Final Model Diagnostics:")
-    print(f"    Effective Sample Size (ESS) under tail-focus: {ess:.1f} / {len(w_final)} ({ess_pct*100:.1f}%)")
+    print("\n  [DIAGNOSTICS] Final Model:")
+    print(f"    ESS: {ess:.1f} / {len(w_final)} ({ess_pct*100:.1f}%)")
     if ess_pct < 0.05:
-        print(f"    [WARNING] ESS is extremely low (< 5%)! Model is highly sensitive to a few extreme tail days.")
+        print(f"    [WARNING] ESS extremely low (< 5%)! Tail sensitive.")
     elif ess_pct < 0.20:
-        print(f"    [WARNING] ESS is low (< 20%). Fit is dominated by tail returns.")
+        print(f"    [WARNING] ESS low (< 20%). Tail dominated.")
     else:
-        print(f"    ESS is healthy.")
+        print(f"    ESS healthy.")
 
     active_k = int(np.sum(abs_coefs > 1e-5))
     gini_cap = 1.0 - 0.40 * (active_k / m)
-    print(f"    Model Weight Concentration (Gini Index): {gini:.4f} (k-normalized cap = {gini_cap:.4f})")
+    print(f"    Gini: {gini:.4f} (cap={gini_cap:.4f})")
     if gini > gini_cap:
-        print(f"    [WARNING] Extremely high weight concentration! A very small subset of features dominates the model.")
+        print(f"    [WARNING] High concentration!")
     elif gini < 0.15:
-        print(f"    [WARNING] Extremely low weight concentration (all weights are near-identical).")
+        print(f"    [WARNING] Low concentration!")
     
-    print(f"    Raw Design Matrix Condition Number: {raw_cond:.2f}")
-    print(f"    Regularized Normal Equations Condition Number (kappa): {reg_cond:.2f}")
+    print(f"    Raw Cond: {raw_cond:.2f}")
+    print(f"    Reg Cond (kappa): {reg_cond:.2f}")
     
     # Save the models/scalers/results to files
     tag = etf_name if side == "single" else f"{etf_name}_{side}"
@@ -1557,11 +1757,20 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     timings["final_refit"] = time.perf_counter() - t_refit_start
 
-    print("\n  [DIAGNOSTICS] Execution Time Profiling:")
+    print("\n  [DIAGNOSTICS] Time Profiling:")
     for stage, secs in timings.items():
-        print(f"    {stage:<20}: {secs:6.1f}s")
+        print(f"    {stage:<18}: {secs:5.1f}s")
     total_time = sum(timings.values())
-    print(f"    {'Total Duration':<20}: {total_time:6.1f}s")
+    print(f"    {'Total':<18}: {total_time:5.1f}s")
+
+    raw_best_t = None
+    try:
+        v_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
+        v_trials = [t for t in v_trials if (t.system_attrs.get("constraints") or t.user_attrs.get("constraints")) is not None and all(c <= 0 for c in (t.system_attrs.get("constraints") or t.user_attrs.get("constraints")))]
+        if v_trials:
+            raw_best_t = sorted(v_trials, key=lambda t: t.value if t.value is not None else -1e10, reverse=True)[0]
+    except Exception:
+        pass
 
     # Save results json
     results = {
@@ -1583,6 +1792,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "deflated_val_ic": deflated_val_ic,
         "deflated_val_tail_ic": deflated_val_tail_ic,
         "deflated_objective": deflated_objective,
+        "pbo": pbo,
+        "performance_degradation": perf_deg,
+        "plateau_trial": int(best_trial.number) if (best_trial is not None and hasattr(best_trial, 'number')) else None,
+        "plateau_val": float(best_trial.value) if (best_trial is not None and hasattr(best_trial, 'value')) else None,
+        "raw_best_trial": int(raw_best_t.number) if raw_best_t is not None else None,
+        "raw_best_val": float(raw_best_t.value) if raw_best_t is not None else None,
         "lockbox_overall_ic": np.nan,
         "lockbox_tail_ic": np.nan,
         "diagnostics": {
@@ -1690,12 +1905,9 @@ if __name__ == "__main__":
     else:
         etfs = [ETF_CLI_MAP.get(etf_arg, etf_arg)]
 
-    print(f"Remade train_model.py execution context initialized.")
-    print(f"Target ETFs: {etfs}")
-    print(f"Optuna main trials: {args.trials}")
-    print(f"Cache: {'OFF' if args.no_cache else 'ON'}  "
-          f"optuna_jobs={args.optuna_jobs}  bootstrap_jobs={args.bootstrap_jobs}  "
-          f"loyo_jobs={loyo_jobs_arg}")
+    print(f"Context initialized.")
+    print(f"ETFs: {etfs} | Trials: {args.trials}")
+    print(f"Cache: {'OFF' if args.no_cache else 'ON'} | jobs: optuna={args.optuna_jobs}, bootstrap={args.bootstrap_jobs}, loyo={loyo_jobs_arg}")
 
     for etf in etfs:
         t0 = time.perf_counter()
