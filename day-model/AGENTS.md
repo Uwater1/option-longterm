@@ -88,13 +88,10 @@ Remove-Item day-model\data\cache_*.joblib
    - Val Tail IC: 40%
    - Val Monotonicity: 15%
    - Val Top-Bottom Spread: 5%
-9. **Kill Switches / Hard Constraints**: Trial pruned (returns `-1e9`) if CV metrics violate constraints or model is degenerate:
-   - Overall IC <= 0
-   - Hit Rate < 60%
-   - Decile Monotonicity <= 0.25
-   - Top-Bottom Spread <= 0
-   - Active features count exceeds ESS-based cap ($active\_k > ESS / 25.0$)
-   - Model weight Gini index > 0.85 (weight concentration guardrail)
+9. **Signed Constraints & TPESampler Constrained Optimization**:
+   - Hard constraints are evaluated via signed margins (negative = satisfied, positive = violated) and fed to Optuna's `constraints_func` on the `TPESampler`. This gives TPE the gradient information to steer trials into the feasible region, instead of collapsing infeasible trials to a flat `-1e9`.
+   - Hard constraints include: Overall IC <= 0, Hit Rate < 60%, Decile Monotonicity <= 0.25, Top-Bottom Spread <= 0, and Active features count exceeds ESS-based cap ($active\_k > ESS / 25.0$).
+   - Model weight concentration (Gini index) is converted from a hard switch to a soft, $k$-normalized penalty in the objective function to avoid collapsing the feasible region for sparse models: `gini_cap = 1.0 - 0.40 * (active_k / m_gini)` and `gini_penalty = -10.0 * (gini - gini_cap) if gini > gini_cap else 0.0`.
 10. **One-Shot Evaluation & Diagnostics Plotting (Step 6)**: Handled entirely in `generate_report.py`. Evaluates final model on 500-day lockbox, updates OOS metrics in results JSON/scaler bundles, and generates 2x2 diagnostics plots. Calculates regularized condition number.
 11. **L2 Regularization Component**: Enforces 10% L2 Ridge regularization in both model families to stabilize joint-coefficient assignments under severe multicollinearity.
 12. **Multiple comparison deflation**: Computes **Deflated CV Overall IC**, **Deflated Val Overall IC**, **Deflated Val Tail IC**, and **Deflated Objective** to correct for multiple trials / search-budget inflation across all completed Optuna trials.

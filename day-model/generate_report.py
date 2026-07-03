@@ -23,7 +23,7 @@ MODELS_DIR = HERE / "models"
 PLOTS_DIR = HERE / "plots"
 REPORT_PATH = HERE / "REPORT.md"
 
-ETF_ORDER = ["300ETF", "50ETF", "500ETF", "588000ETF", "159915ETF"]
+ETF_ORDER = ["300ETF", "500ETF", "588000ETF", "159915ETF"]
 TARGET = "trade_return"
 LOCKBOX_DATE = "2024-03-01"
 
@@ -396,8 +396,8 @@ def main():
     lines.append("")
     lines.append("### Optuna Main Study & Pruning Reasons")
     lines.append("")
-    lines.append("| ETF | Total Trials | Completed | Pruned / Failed | M4 Pruned | M3 Pruned | M5 Pruned | M6 Pruned | Gini Pruned |")
-    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+    lines.append("| ETF | Total Trials | Completed | Pruned / Failed | M4 Pruned | M3 Pruned | M5 Pruned | M6 Pruned | ESS Pruned | Gini Pruned |")
+    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
     
     for etf in ETF_ORDER:
         if etf not in results_dict:
@@ -415,9 +415,10 @@ def main():
         m3_p = reasons.get("M3 (Hit Rate < 60%)", 0)
         m5_p = reasons.get("M5 (Monotonicity <= 0.25)", 0)
         m6_p = reasons.get("M6 (Top-Bottom Spread <= 0)", 0)
+        ess_p = reasons.get("exceeds ESS-based cap", 0)
         gini_p = reasons.get("Gini coefficient", 0)
         
-        lines.append(f"| {etf} | {tot} | {comp} | {pruned_failed} | {m4_p} | {m3_p} | {m5_p} | {m6_p} | {gini_p} |")
+        lines.append(f"| {etf} | {tot} | {comp} | {pruned_failed} | {m4_p} | {m3_p} | {m5_p} | {m6_p} | {ess_p} | {gini_p} |")
 
     lines.append("")
     lines.append("## Selected Features per ETF")
