@@ -41,10 +41,16 @@
     "northbound_net"
   ],
   "active_features": [
+    "sma100_dist",
     "yesterday_day_vwap_dev",
     "gap_pct",
     "bar_ret_0",
     "max_up_ret",
+    "inside_bar_failure_bull",
+    "macd_hist",
+    "bar_vol_5",
+    "capital_net_ratio",
+    "yesterday_gap_pct",
     "yesterday_early_vwap_dev"
   ],
   "stability_scores": {
@@ -289,38 +295,38 @@
   },
   "best_params": {
     "model_type": "skglm_huber_l1",
-    "k_weight": 0.29273518885586525,
-    "skglm_huber_l1_alpha": 0.06825328331455675,
-    "skglm_huber_delta": 1.4878698636581065
+    "k_weight": 0.5537425503309683,
+    "skglm_huber_l1_alpha": 0.09898533283945697,
+    "skglm_huber_delta": 3.5578871151198332
   },
   "best_raw_metrics": [
-    2.4271661876270247,
-    0.2591988890442135,
+    2.8320405714652366,
+    0.35405672499643587,
     1.0,
-    0.1376827170887757,
-    0.5066666666666667,
-    0.7304489131401302,
-    -0.09714105065540564,
-    -0.15053214132785797
+    0.1610960821518745,
+    0.5963636363636364,
+    1.1100101851255717,
+    -0.2349623745655524,
+    -0.32167986035346985
   ],
-  "selection_val_overall_ic": 0.17769501165515744,
-  "selection_val_tail_ic": 0.36819228577303925,
-  "selection_val_monotonicity": 0.7090909090909091,
-  "selection_val_spread": 0.7748842957359374,
-  "deflated_cv_ic": 0.06062732527960675,
-  "deflated_val_ic": 0.09367841851730067,
-  "deflated_val_tail_ic": 0.20892766680751168,
-  "deflated_objective": -2.3423900172717174,
-  "lockbox_overall_ic": 0.1277882408931438,
-  "lockbox_tail_ic": 0.03511563952021516,
+  "selection_val_overall_ic": 0.15916240307762566,
+  "selection_val_tail_ic": 0.29359496482784153,
+  "selection_val_monotonicity": 0.9030303030303031,
+  "selection_val_spread": 0.8166845901226718,
+  "deflated_cv_ic": 0.12039917388080623,
+  "deflated_val_ic": 0.13252874785279614,
+  "deflated_val_tail_ic": 0.1997364562883732,
+  "deflated_objective": -0.3935991794207834,
+  "lockbox_overall_ic": 0.14494006480747745,
+  "lockbox_tail_ic": 0.13477026975277065,
   "diagnostics": {
     "timings": {
-      "data_loading": 0.08987132699985523,
-      "feature_selection": 0.00047363899648189545,
-      "loyo_folds": 0.019375003001186997,
-      "pilot_study": 0.0013724570017075166,
-      "main_study": 3.195211846003076,
-      "final_refit": 0.007961181006976403
+      "data_loading": 0.0873997269954998,
+      "feature_selection": 0.714634575007949,
+      "loyo_folds": 0.12536040499981027,
+      "pilot_study": 1.3184986209962517,
+      "main_study": 3.036807957003475,
+      "final_refit": 0.008220803996664472
     },
     "screening": {
       "total_features": 238,
@@ -335,29 +341,30 @@
     },
     "optuna_main": {
       "total_trials": 100,
-      "completed_count": 71,
-      "pruned_count": 29,
+      "completed_count": 84,
+      "pruned_count": 16,
       "failed_count": 0,
       "pruning_reasons": {
-        "M4 (Overall IC <= 0)": 9,
+        "M4 (Overall IC <= 0)": 5,
         "M3 (Hit Rate < 60%)": 9,
         "M5 (Monotonicity <= 0.25)": 9,
-        "M6 (Top-Bottom Spread <= 0)": 6,
-        "exceeds ESS-based cap": 20,
+        "M6 (Top-Bottom Spread <= 0)": 5,
+        "exceeds ESS-based cap": 2,
+        "active feature floor": 14,
         "Gini coefficient": 0
       }
     },
     "model_quality": {
-      "condition_number": 46.53449249267578,
+      "condition_number": 44.920352935791016,
       "condition_number_raw": 7.112061977386475,
-      "condition_number_regularized": 46.53449249267578,
+      "condition_number_regularized": 44.920352935791016,
       "collinear_pairs": [],
-      "effective_sample_size": 1953.146484375,
-      "effective_sample_size_pct": 0.9017296788434903,
-      "gini_coefficient": 0.8943140760280297
+      "effective_sample_size": 1626.722412109375,
+      "effective_sample_size_pct": 0.751026044371826,
+      "gini_coefficient": 0.8232779943284136
     }
   },
-  "lockbox_monotonicity": 0.7212121212121212,
-  "ic_generalization_gap": -0.03410982237584313,
-  "mono_generalization_gap": -0.21454545454545448
+  "lockbox_monotonicity": 0.8424242424242424,
+  "ic_generalization_gap": -0.012411316954681312,
+  "mono_generalization_gap": -0.24606060606060598
 }
