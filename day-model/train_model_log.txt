@@ -1,5 +1,5 @@
 Context initialized.
-ETFs: ['300ETF', '500ETF', '588000ETF', '159915ETF'] | Trials: 100
+ETFs: ['300ETF', '500ETF', '588000ETF', '159915ETF'] | Trials: 200
 Cache: ON | jobs: optuna=16, bootstrap=16, loyo=1
 
 ================================================================================
@@ -112,76 +112,80 @@ Calibrated constants:
   Val3: Med=0.509091, MAD=0.084848
   Val4: Med=0.384170, MAD=0.063025
 
-Running main Optuna Study (100 trials)...
+Running main Optuna Study (200 trials)...
 
   [DIAGNOSTICS] Main Study Summary:
-    Trials: 100 | OK: 71 | Pruned/Failed: 29
+    Trials: 200 | OK: 145 | Pruned/Failed: 55
     Pruning counts:
-      - M4 (Overall IC <= 0): 4
-      - M3 (Hit Rate < 60%): 14
-      - M5 (Monotonicity <= 0.25): 9
-      - M6 (Top-Bottom Spread <= 0): 2
+      - M4 (Overall IC <= 0): 5
+      - M3 (Hit Rate < 60%): 30
+      - M5 (Monotonicity <= 0.25): 22
+      - M6 (Top-Bottom Spread <= 0): 6
       - exceeds ESS-based cap: 0
-      - active feature floor: 24
+      - active feature floor: 46
       - Gini coefficient: 0
 
   [DIAGNOSTICS] Objective Progression:
     Trial   0: Best=+0.2465 | params={'model_type': 'skglm_mcp', 'k_weight': 0.20008644627898242, 'skglm_mcp_alpha': 0.0002776756005308016, 'skglm_mcp_gamma': 4.280681974394688, 'skglm_mcp_delta': 4.36611870926869}
-    Trial  26: Best=+3.2628 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.5389174135668839, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.819014075591079}
-    Trial  33: Best=+3.3737 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.46503761293406815, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.819014075591079}
-    Trial  79: Best=+3.7325 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.44758891836793474, 'skglm_huber_l1_alpha': 0.03537810577253111, 'skglm_huber_delta': 4.996554903145305}
+    Trial  18: Best=+2.7145 | params={'model_type': 'skglm_huber_l1', 'k_weight': 1.4440761725765536, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.819014075591079}
+    Trial  25: Best=+3.2628 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.5389174135668839, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.819014075591079}
+    Trial  81: Best=+3.3891 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.5116511443271347, 'skglm_huber_l1_alpha': 0.04241839357704955, 'skglm_huber_delta': 4.663911449458259}
+    Trial  86: Best=+3.5348 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.5142812959174219, 'skglm_huber_l1_alpha': 0.044510833087405395, 'skglm_huber_delta': 4.717597535729716}
+    Trial  89: Best=+3.6541 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.5142812959174219, 'skglm_huber_l1_alpha': 0.03780144802754753, 'skglm_huber_delta': 4.717597535729716}
+    Trial  92: Best=+3.6796 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.5052736023240123, 'skglm_huber_l1_alpha': 0.04070463861970537, 'skglm_huber_delta': 4.670117364417034}
+    Trial 141: Best=+4.0603 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.31208395089007446, 'skglm_huber_l1_alpha': 0.03364859584893612, 'skglm_huber_delta': 4.736902109299268}
 
   [DIAGNOSTICS] Overfitting (CSCV PBO):
-    PBO: 53.3%
-    IS -> OOS Slope: -2.3137
+    PBO: 60.0%
+    IS -> OOS Slope: -2.4562
 
   [DIAGNOSTICS] Plateau Search (r=0.25):
-    Trial  33 (val=+3.3737): neighbors=47, valid_ratio=0.70, neighbor_mean=+2.0995, plateau=+1.1645
-    Trial  34 (val=+3.3737): neighbors=47, valid_ratio=0.70, neighbor_mean=+2.0995, plateau=+1.1645
-    Trial  79 (val=+3.7325): neighbors=50, valid_ratio=0.72, neighbor_mean=+1.9527, plateau=+0.7828
-    Trial  80 (val=+3.7325): neighbors=50, valid_ratio=0.72, neighbor_mean=+1.9527, plateau=+0.7828
-    Trial  95 (val=+3.4162): neighbors=50, valid_ratio=0.72, neighbor_mean=+1.9615, plateau=+0.9541
-  Stable trial: 82 (val=+2.2472, plateau=+1.4985) vs best 79 (val=+3.7325)
+    Trial 141 (val=+4.0603): neighbors=127, valid_ratio=0.82, neighbor_mean=+2.5410, plateau=+1.6003
+    Trial 142 (val=+4.0603): neighbors=127, valid_ratio=0.82, neighbor_mean=+2.5410, plateau=+1.6003
+    Trial 143 (val=+4.0603): neighbors=127, valid_ratio=0.82, neighbor_mean=+2.5410, plateau=+1.6003
+    Trial 144 (val=+4.0603): neighbors=127, valid_ratio=0.82, neighbor_mean=+2.5410, plateau=+1.6003
+    Trial 146 (val=+4.0603): neighbors=127, valid_ratio=0.82, neighbor_mean=+2.5410, plateau=+1.6003
+  Stable trial: 198 (val=+3.6353, plateau=+2.3166) vs best 141 (val=+4.0603)
 
 Best params:
   model_type: skglm_huber_l1
-  k_weight: 0.6570744528958828
-  skglm_huber_l1_alpha: 0.03780144802754753
-  skglm_huber_delta: 4.698510561753871
+  k_weight: 0.09641819467922777
+  skglm_huber_l1_alpha: 0.028964048882605318
+  skglm_huber_delta: 4.899490767361832
 Best trial raw metrics (CV):
-  M1 (Tail IC IR):  0.8871
-  M2 (Tail IC Mean):0.1324
-  M3 (Hit Rate):    0.8000
-  M4 (Overall IC):  0.1081
-  Deflated CV IC:   0.0435
-  M5 (Mono):        0.3370
-  M6 (Spread):      0.1785
-  M7 (Parsimony):   -0.1249
-  M8 (Coef Bloat):  -0.2873
+  M1 (Tail IC IR):  0.8543
+  M2 (Tail IC Mean):0.1247
+  M3 (Hit Rate):    0.7000
+  M4 (Overall IC):  0.1082
+  Deflated CV IC:   0.0346
+  M5 (Mono):        0.3721
+  M6 (Spread):      0.2066
+  M7 (Parsimony):   -0.0760
+  M8 (Coef Bloat):  -0.1479
 Best trial Selection Val metrics:
-  Val IC:           0.1169
-  Deflated Val IC:  0.0326
-  Val Tail IC:      0.2687
-  Deflated Val Tail:0.0261
-  Val Mono:         0.5879
-  Val Spread:       0.5276
+  Val IC:           0.1229
+  Deflated Val IC:  0.0301
+  Val Tail IC:      0.2797
+  Deflated Val Tail:0.0339
+  Val Mono:         0.6485
+  Val Spread:       0.4755
 
   [DIAGNOSTICS] Final Model:
-    ESS: 1465.4 / 2166 (67.7%)
+    ESS: 2116.5 / 2166 (97.7%)
     ESS healthy.
-    Gini: 0.7134 (cap=0.7733)
+    Gini: 0.7592 (cap=0.8133)
     Raw Cond: 8.47
-    Reg Cond (kappa): 67.99
+    Reg Cond (kappa): 68.83
 
   [DIAGNOSTICS] Time Profiling:
     data_loading      :   0.1s
     feature_selection :   0.0s
     loyo_folds        :   0.0s
     pilot_study       :   0.0s
-    main_study        :  22.7s
+    main_study        :  25.7s
     final_refit       :   3.1s
-    Total             :  25.9s
-[300ETF] elapsed 26.0s
+    Total             :  28.9s
+[300ETF] elapsed 29.1s
 
 ================================================================================
 Train 500ETF (Side: single)
@@ -291,80 +295,80 @@ Calibrated constants:
   Val3: Med=0.581818, MAD=0.200000
   Val4: Med=0.420079, MAD=0.378345
 
-Running main Optuna Study (100 trials)...
+Running main Optuna Study (200 trials)...
 
   [DIAGNOSTICS] Main Study Summary:
-    Trials: 100 | OK: 75 | Pruned/Failed: 25
+    Trials: 200 | OK: 155 | Pruned/Failed: 45
     Pruning counts:
-      - M4 (Overall IC <= 0): 15
-      - M3 (Hit Rate < 60%): 25
-      - M5 (Monotonicity <= 0.25): 25
+      - M4 (Overall IC <= 0): 6
+      - M3 (Hit Rate < 60%): 33
+      - M5 (Monotonicity <= 0.25): 34
       - M6 (Top-Bottom Spread <= 0): 0
       - exceeds ESS-based cap: 0
-      - active feature floor: 25
+      - active feature floor: 45
       - Gini coefficient: 0
 
   [DIAGNOSTICS] Objective Progression:
     Trial   0: Best=-0.2406 | params={'model_type': 'skglm_mcp', 'k_weight': 0.20008644627898242, 'skglm_mcp_alpha': 0.0002776756005308016, 'skglm_mcp_gamma': 4.280681974394688, 'skglm_mcp_delta': 4.36611870926869}
     Trial  19: Best=+0.5284 | params={'model_type': 'skglm_huber_l1', 'k_weight': 1.4440761725765536, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.819014075591079}
-    Trial  21: Best=+0.6410 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.699392626333358, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.819014075591079}
-    Trial  24: Best=+0.8577 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.5389174135668839, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.819014075591079}
-    Trial  66: Best=+0.9000 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.6643719787368224, 'skglm_huber_l1_alpha': 0.19142621508052352, 'skglm_huber_delta': 4.52757781806923}
-    Trial  67: Best=+0.9764 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.7505099652654094, 'skglm_huber_l1_alpha': 0.19142621508052352, 'skglm_huber_delta': 4.52757781806923}
-    Trial  69: Best=+0.9770 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.7505099652654094, 'skglm_huber_l1_alpha': 0.19142621508052352, 'skglm_huber_delta': 4.5310264430792655}
-    Trial  70: Best=+1.1033 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.7505099652654094, 'skglm_huber_l1_alpha': 0.16849858242801774, 'skglm_huber_delta': 4.5310264430792655}
+    Trial  20: Best=+0.6410 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.699392626333358, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.819014075591079}
+    Trial  26: Best=+0.8577 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.5389174135668839, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.819014075591079}
+    Trial  73: Best=+1.0858 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.30341928396304285, 'skglm_huber_l1_alpha': 0.1034601121157001, 'skglm_huber_delta': 4.66487594474511}
+    Trial  84: Best=+1.0883 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.45658309614926207, 'skglm_huber_l1_alpha': 0.14133938823367923, 'skglm_huber_delta': 4.998972008004317}
+    Trial 103: Best=+1.1243 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.7875891814889606, 'skglm_huber_l1_alpha': 0.10783503953334304, 'skglm_huber_delta': 4.803600956879937}
+    Trial 108: Best=+1.3160 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.7875891814889606, 'skglm_huber_l1_alpha': 0.10783503953334304, 'skglm_huber_delta': 2.7605239531905688}
 
   [DIAGNOSTICS] Overfitting (CSCV PBO):
-    PBO: 0.0%
-    IS -> OOS Slope: -1.6821
+    PBO: 20.0%
+    IS -> OOS Slope: -1.6015
 
   [DIAGNOSTICS] Plateau Search (r=0.25):
-    Trial  70 (val=+1.1033): neighbors=33, valid_ratio=1.00, neighbor_mean=+0.8551, plateau=+0.7311
-    Trial  71 (val=+1.1033): neighbors=33, valid_ratio=1.00, neighbor_mean=+0.8551, plateau=+0.7311
-    Trial  76 (val=+1.0753): neighbors=29, valid_ratio=0.83, neighbor_mean=+0.8806, plateau=+0.6108
-    Trial  79 (val=+1.0845): neighbors=25, valid_ratio=0.80, neighbor_mean=+0.9151, plateau=+0.6304
-    Trial  99 (val=+1.0778): neighbors=31, valid_ratio=0.84, neighbor_mean=+0.8648, plateau=+0.5969
-  Stable trial: 67 (val=+0.9764, plateau=+0.7582) vs best 70 (val=+1.1033)
+    Trial 103 (val=+1.1243): neighbors=79, valid_ratio=0.84, neighbor_mean=+0.7561, plateau=+0.4075
+    Trial 104 (val=+1.1243): neighbors=79, valid_ratio=0.84, neighbor_mean=+0.7561, plateau=+0.4075
+    Trial 108 (val=+1.3160): neighbors=19, valid_ratio=0.79, neighbor_mean=+0.8402, plateau=+0.3918
+    Trial 122 (val=+1.1488): neighbors=78, valid_ratio=0.83, neighbor_mean=+0.7673, plateau=+0.4099
+    Trial 123 (val=+1.1488): neighbors=78, valid_ratio=0.83, neighbor_mean=+0.7673, plateau=+0.4099
+  Stable trial: 120 (val=+0.8941, plateau=+0.6716) vs best 108 (val=+1.3160)
 
 Best params:
   model_type: skglm_huber_l1
-  k_weight: 0.7505099652654094
-  skglm_huber_l1_alpha: 0.19142621508052352
-  skglm_huber_delta: 4.52757781806923
+  k_weight: 0.8646073339803989
+  skglm_huber_l1_alpha: 0.057690638896484514
+  skglm_huber_delta: 2.5554549173543704
 Best trial raw metrics (CV):
-  M1 (Tail IC IR):  0.8458
-  M2 (Tail IC Mean):0.1255
-  M3 (Hit Rate):    0.7000
-  M4 (Overall IC):  0.1055
-  Deflated CV IC:   -0.0250
-  M5 (Mono):        0.3770
-  M6 (Spread):      0.5308
-  M7 (Parsimony):   -0.0393
-  M8 (Coef Bloat):  -0.0868
+  M1 (Tail IC IR):  1.5564
+  M2 (Tail IC Mean):0.2166
+  M3 (Hit Rate):    0.9000
+  M4 (Overall IC):  0.1384
+  Deflated CV IC:   0.0219
+  M5 (Mono):        0.4715
+  M6 (Spread):      0.7495
+  M7 (Parsimony):   -0.1536
+  M8 (Coef Bloat):  -0.3449
 Best trial Selection Val metrics:
-  Val IC:           0.2572
-  Deflated Val IC:  0.0750
-  Val Tail IC:      0.4764
-  Deflated Val Tail:0.0817
-  Val Mono:         0.6364
-  Val Spread:       0.8875
+  Val IC:           0.2085
+  Deflated Val IC:  0.0168
+  Val Tail IC:      0.4792
+  Deflated Val Tail:0.0745
+  Val Mono:         0.7939
+  Val Spread:       0.7441
 
   [DIAGNOSTICS] Final Model:
-    ESS: 1301.8 / 2166 (60.1%)
+    ESS: 1135.2 / 2166 (52.4%)
     ESS healthy.
-    Gini: 0.9186 (cap=0.9571)
+    Gini: 0.6604 (cap=0.8000)
     Raw Cond: 5.23
-    Reg Cond (kappa): 24.17
+    Reg Cond (kappa): 26.32
 
   [DIAGNOSTICS] Time Profiling:
     data_loading      :   0.1s
     feature_selection :   0.0s
     loyo_folds        :   0.0s
     pilot_study       :   0.0s
-    main_study        :   3.9s
+    main_study        :   5.6s
     final_refit       :   0.0s
-    Total             :   4.1s
-[500ETF] elapsed 4.2s
+    Total             :   5.7s
+[500ETF] elapsed 6.0s
 
 ================================================================================
 Train 588000ETF (Side: single)
@@ -479,77 +483,79 @@ Calibrated constants:
   Val3: Med=0.575758, MAD=0.193939
   Val4: Med=0.192859, MAD=0.223418
 
-Running main Optuna Study (100 trials)...
+Running main Optuna Study (200 trials)...
 
   [DIAGNOSTICS] Main Study Summary:
-    Trials: 100 | OK: 58 | Pruned/Failed: 42
+    Trials: 200 | OK: 136 | Pruned/Failed: 64
     Pruning counts:
-      - M4 (Overall IC <= 0): 16
-      - M3 (Hit Rate < 60%): 17
-      - M5 (Monotonicity <= 0.25): 17
-      - M6 (Top-Bottom Spread <= 0): 16
-      - exceeds ESS-based cap: 21
-      - active feature floor: 21
+      - M4 (Overall IC <= 0): 24
+      - M3 (Hit Rate < 60%): 28
+      - M5 (Monotonicity <= 0.25): 24
+      - M6 (Top-Bottom Spread <= 0): 24
+      - exceeds ESS-based cap: 15
+      - active feature floor: 49
       - Gini coefficient: 0
 
   [DIAGNOSTICS] Objective Progression:
     Trial   0: Best=+0.4588 | params={'model_type': 'skglm_mcp', 'k_weight': 0.20008644627898242, 'skglm_mcp_alpha': 0.0002776756005308016, 'skglm_mcp_gamma': 4.280681974394688, 'skglm_mcp_delta': 4.36611870926869}
-    Trial  22: Best=+5.1861 | params={'model_type': 'skglm_huber_l1', 'k_weight': 1.4440761725765536, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.819014075591079}
-    Trial  31: Best=+5.7184 | params={'model_type': 'skglm_huber_l1', 'k_weight': 1.4889682260964205, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.996554903145305}
-    Trial  32: Best=+5.7197 | params={'model_type': 'skglm_huber_l1', 'k_weight': 1.497311830907456, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.968223548705879}
-    Trial  73: Best=+7.8601 | params={'model_type': 'skglm_huber_l1', 'k_weight': 1.2574750194596893, 'skglm_huber_l1_alpha': 0.16849858242801774, 'skglm_huber_delta': 4.996552995883509}
+    Trial  24: Best=+5.1861 | params={'model_type': 'skglm_huber_l1', 'k_weight': 1.4440761725765536, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.819014075591079}
+    Trial  28: Best=+5.6620 | params={'model_type': 'skglm_huber_l1', 'k_weight': 1.4988336218964793, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.996554903145305}
+    Trial  30: Best=+5.7184 | params={'model_type': 'skglm_huber_l1', 'k_weight': 1.4889682260964205, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.996554903145305}
+    Trial  66: Best=+7.8174 | params={'model_type': 'skglm_huber_l1', 'k_weight': 1.4374884329257278, 'skglm_huber_l1_alpha': 0.16849858242801774, 'skglm_huber_delta': 4.606814991550699}
+    Trial  74: Best=+8.0688 | params={'model_type': 'skglm_huber_l1', 'k_weight': 1.4421781245439689, 'skglm_huber_l1_alpha': 0.18251409626652051, 'skglm_huber_delta': 4.729288586146213}
+    Trial 165: Best=+8.3977 | params={'model_type': 'skglm_huber_l1', 'k_weight': 1.0086050056575593, 'skglm_huber_l1_alpha': 0.15848664199225967, 'skglm_huber_delta': 4.599236978994922}
 
   [DIAGNOSTICS] Overfitting (CSCV PBO):
-    PBO: 13.3%
-    IS -> OOS Slope: +0.0420
+    PBO: 6.7%
+    IS -> OOS Slope: +0.1480
 
   [DIAGNOSTICS] Plateau Search (r=0.25):
-    Trial  73 (val=+7.8601): neighbors=39, valid_ratio=0.62, neighbor_mean=+6.0929, plateau=+4.8247
-    Trial  74 (val=+7.8601): neighbors=39, valid_ratio=0.62, neighbor_mean=+6.0929, plateau=+4.8247
-    Trial  84 (val=+7.5359): neighbors=40, valid_ratio=0.60, neighbor_mean=+6.1064, plateau=+4.9917
-    Trial  85 (val=+7.5913): neighbors=43, valid_ratio=0.63, neighbor_mean=+5.9202, plateau=+4.7126
-    Trial  86 (val=+7.5913): neighbors=43, valid_ratio=0.63, neighbor_mean=+5.9202, plateau=+4.7126
-  Stable trial: 75 (val=+6.1962, plateau=+5.8120) vs best 73 (val=+7.8601)
+    Trial 165 (val=+8.3977): neighbors=81, valid_ratio=0.79, neighbor_mean=+6.0452, plateau=+4.6591
+    Trial 166 (val=+8.3977): neighbors=81, valid_ratio=0.79, neighbor_mean=+6.0452, plateau=+4.6591
+    Trial 167 (val=+8.3977): neighbors=81, valid_ratio=0.79, neighbor_mean=+6.0452, plateau=+4.6591
+    Trial 176 (val=+8.2862): neighbors=82, valid_ratio=0.79, neighbor_mean=+6.0564, plateau=+4.7342
+    Trial 197 (val=+8.0705): neighbors=107, valid_ratio=0.76, neighbor_mean=+6.4218, plateau=+5.3545
+  Stable trial: 83 (val=+6.5120, plateau=+6.2220) vs best 165 (val=+8.3977)
 
 Best params:
   model_type: skglm_huber_l1
-  k_weight: 1.3686894989157061
-  skglm_huber_l1_alpha: 0.15304401851978972
-  skglm_huber_delta: 4.996552995883509
+  k_weight: 1.241123651592554
+  skglm_huber_l1_alpha: 0.19743788221721115
+  skglm_huber_delta: 4.0995449208309935
 Best trial raw metrics (CV):
-  M1 (Tail IC IR):  5.0345
-  M2 (Tail IC Mean):0.3151
+  M1 (Tail IC IR):  3.2775
+  M2 (Tail IC Mean):0.2671
   M3 (Hit Rate):    1.0000
-  M4 (Overall IC):  0.1779
-  Deflated CV IC:   -0.0214
-  M5 (Mono):        0.5485
-  M6 (Spread):      0.9743
-  M7 (Parsimony):   -0.2935
-  M8 (Coef Bloat):  -0.3596
+  M4 (Overall IC):  0.1482
+  Deflated CV IC:   -0.0428
+  M5 (Mono):        0.4000
+  M6 (Spread):      0.3238
+  M7 (Parsimony):   -0.2274
+  M8 (Coef Bloat):  -0.2214
 Best trial Selection Val metrics:
-  Val IC:           0.1612
-  Deflated Val IC:  0.0283
-  Val Tail IC:      0.2013
-  Deflated Val Tail:0.0178
-  Val Mono:         0.6970
-  Val Spread:       0.8273
+  Val IC:           0.2304
+  Deflated Val IC:  0.0814
+  Val Tail IC:      0.2005
+  Deflated Val Tail:-0.0365
+  Val Mono:         0.7697
+  Val Spread:       0.6234
 
   [DIAGNOSTICS] Final Model:
-    ESS: 315.0 / 738 (42.7%)
+    ESS: 355.0 / 738 (48.1%)
     ESS healthy.
-    Gini: 0.8930 (cap=0.9030)
+    Gini: 0.9503 (cap=0.9636)
     Raw Cond: 8.60
-    Reg Cond (kappa): 62.70
+    Reg Cond (kappa): 60.07
 
   [DIAGNOSTICS] Time Profiling:
     data_loading      :   0.1s
     feature_selection :   0.0s
     loyo_folds        :   0.0s
     pilot_study       :   0.0s
-    main_study        :   3.6s
+    main_study        :   5.2s
     final_refit       :   0.0s
-    Total             :   3.7s
-[588000ETF] elapsed 3.8s
+    Total             :   5.2s
+[588000ETF] elapsed 5.5s
 
 ================================================================================
 Train 159915ETF (Side: single)
@@ -665,77 +671,77 @@ Calibrated constants:
   Val3: Med=0.648485, MAD=0.127273
   Val4: Med=0.538217, MAD=0.139870
 
-Running main Optuna Study (100 trials)...
+Running main Optuna Study (200 trials)...
 
   [DIAGNOSTICS] Main Study Summary:
-    Trials: 100 | OK: 80 | Pruned/Failed: 20
+    Trials: 200 | OK: 155 | Pruned/Failed: 45
     Pruning counts:
-      - M4 (Overall IC <= 0): 7
-      - M3 (Hit Rate < 60%): 16
-      - M5 (Monotonicity <= 0.25): 16
-      - M6 (Top-Bottom Spread <= 0): 6
+      - M4 (Overall IC <= 0): 9
+      - M3 (Hit Rate < 60%): 22
+      - M5 (Monotonicity <= 0.25): 23
+      - M6 (Top-Bottom Spread <= 0): 3
       - exceeds ESS-based cap: 0
-      - active feature floor: 20
+      - active feature floor: 45
       - Gini coefficient: 0
 
   [DIAGNOSTICS] Objective Progression:
     Trial   0: Best=+0.0871 | params={'model_type': 'skglm_mcp', 'k_weight': 0.20008644627898242, 'skglm_mcp_alpha': 0.0002776756005308016, 'skglm_mcp_gamma': 4.280681974394688, 'skglm_mcp_delta': 4.36611870926869}
-    Trial  16: Best=+0.2825 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.699392626333358, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.819014075591079}
-    Trial  20: Best=+0.5379 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.5389174135668839, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.819014075591079}
-    Trial  30: Best=+1.3003 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.5397430396503731, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 3.3643322455914935}
-    Trial  78: Best=+1.3425 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.6510706114085988, 'skglm_huber_l1_alpha': 0.15304401851978972, 'skglm_huber_delta': 4.694291166087627}
-    Trial  83: Best=+1.6229 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.45658309614926207, 'skglm_huber_l1_alpha': 0.14133938823367923, 'skglm_huber_delta': 4.639700748107859}
-    Trial  89: Best=+1.7870 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.46116442316887685, 'skglm_huber_l1_alpha': 0.14595200219975893, 'skglm_huber_delta': 4.689795884678241}
-    Trial  92: Best=+1.8204 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.46116442316887685, 'skglm_huber_l1_alpha': 0.14595200219975893, 'skglm_huber_delta': 4.610168731875756}
+    Trial  18: Best=+0.2825 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.699392626333358, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.819014075591079}
+    Trial  23: Best=+0.5379 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.5389174135668839, 'skglm_huber_l1_alpha': 0.06825328331455675, 'skglm_huber_delta': 4.819014075591079}
+    Trial  59: Best=+1.1019 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.8138625868376703, 'skglm_huber_l1_alpha': 0.18883870405105654, 'skglm_huber_delta': 4.476121419750387}
+    Trial  63: Best=+1.1654 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.732300500740571, 'skglm_huber_l1_alpha': 0.16849858242801774, 'skglm_huber_delta': 4.631270239270614}
+    Trial  76: Best=+1.7473 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.30401131585030106, 'skglm_huber_l1_alpha': 0.11979727047657536, 'skglm_huber_delta': 4.694291166087627}
+    Trial  84: Best=+2.1842 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.2577413023530869, 'skglm_huber_l1_alpha': 0.12948408296308941, 'skglm_huber_delta': 4.639700748107859}
+    Trial 148: Best=+2.9571 | params={'model_type': 'skglm_huber_l1', 'k_weight': 0.060571118019482784, 'skglm_huber_l1_alpha': 0.09768961131147562, 'skglm_huber_delta': 4.233113065558893}
 
   [DIAGNOSTICS] Overfitting (CSCV PBO):
-    PBO: 0.0%
-    IS -> OOS Slope: -1.5171
+    PBO: 13.3%
+    IS -> OOS Slope: -1.3791
 
   [DIAGNOSTICS] Plateau Search (r=0.25):
-    Trial  83 (val=+1.6229): neighbors=36, valid_ratio=0.81, neighbor_mean=+1.0359, plateau=+0.5480
-    Trial  89 (val=+1.7870): neighbors=37, valid_ratio=0.81, neighbor_mean=+0.9969, plateau=+0.4127
-    Trial  90 (val=+1.7256): neighbors=37, valid_ratio=0.81, neighbor_mean=+0.9989, plateau=+0.4464
-    Trial  91 (val=+1.7256): neighbors=37, valid_ratio=0.81, neighbor_mean=+0.9989, plateau=+0.4464
-    Trial  92 (val=+1.8204): neighbors=36, valid_ratio=0.81, neighbor_mean=+1.0291, plateau=+0.4390
-  Stable trial: 98 (val=+1.4291, plateau=+0.7936) vs best 92 (val=+1.8204)
+    Trial 148 (val=+2.9571): neighbors=100, valid_ratio=0.71, neighbor_mean=+1.7037, plateau=+0.7869
+    Trial 149 (val=+2.9571): neighbors=100, valid_ratio=0.71, neighbor_mean=+1.7037, plateau=+0.7869
+    Trial 180 (val=+2.3644): neighbors=103, valid_ratio=0.76, neighbor_mean=+1.6422, plateau=+1.0385
+    Trial 181 (val=+2.3644): neighbors=103, valid_ratio=0.76, neighbor_mean=+1.6422, plateau=+1.0385
+    Trial 182 (val=+2.3644): neighbors=103, valid_ratio=0.76, neighbor_mean=+1.6422, plateau=+1.0385
+  Stable trial: 97 (val=+1.8383, plateau=+1.4866) vs best 148 (val=+2.9571)
 
 Best params:
   model_type: skglm_huber_l1
-  k_weight: 0.2707359259643817
-  skglm_huber_l1_alpha: 0.09898533283945697
-  skglm_huber_delta: 4.102660820264702
+  k_weight: 0.13984108631737646
+  skglm_huber_l1_alpha: 0.08121464849897107
+  skglm_huber_delta: 4.787816326435444
 Best trial raw metrics (CV):
-  M1 (Tail IC IR):  2.0759
-  M2 (Tail IC Mean):0.2927
+  M1 (Tail IC IR):  2.7687
+  M2 (Tail IC Mean):0.3191
   M3 (Hit Rate):    1.0000
-  M4 (Overall IC):  0.1524
-  Deflated CV IC:   0.0039
-  M5 (Mono):        0.5782
-  M6 (Spread):      0.8969
-  M7 (Parsimony):   -0.0563
-  M8 (Coef Bloat):  -0.2156
+  M4 (Overall IC):  0.1578
+  Deflated CV IC:   0.0245
+  M5 (Mono):        0.5806
+  M6 (Spread):      1.0205
+  M7 (Parsimony):   -0.0631
+  M8 (Coef Bloat):  -0.2215
 Best trial Selection Val metrics:
-  Val IC:           0.1591
+  Val IC:           0.1623
   Deflated Val IC:  0.0472
-  Val Tail IC:      0.2787
-  Deflated Val Tail:0.0464
-  Val Mono:         0.7333
-  Val Spread:       0.8198
+  Val Tail IC:      0.2893
+  Deflated Val Tail:0.0435
+  Val Mono:         0.8424
+  Val Spread:       0.9629
 
   [DIAGNOSTICS] Final Model:
-    ESS: 1975.4 / 2166 (91.2%)
+    ESS: 2080.0 / 2166 (96.0%)
     ESS healthy.
-    Gini: 0.8447 (cap=0.8941)
+    Gini: 0.8146 (cap=0.8588)
     Raw Cond: 7.11
-    Reg Cond (kappa): 44.92
+    Reg Cond (kappa): 45.84
 
   [DIAGNOSTICS] Time Profiling:
-    data_loading      :   0.1s
+    data_loading      :   0.2s
     feature_selection :   0.0s
     loyo_folds        :   0.0s
     pilot_study       :   0.0s
-    main_study        :   3.9s
+    main_study        :   6.0s
     final_refit       :   0.0s
-    Total             :   4.0s
-[159915ETF] elapsed 4.1s
+    Total             :   6.2s
+[159915ETF] elapsed 6.5s
