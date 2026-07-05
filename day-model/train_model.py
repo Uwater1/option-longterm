@@ -93,6 +93,18 @@ SCREEN_FDR = 0.15
 SCREEN_FALLBACK_K = 50 # Double Research this 
 ACTIVE_FEATURE_ESS_DIVISOR = 8.0
 
+# Side-Specific Objective configuration.
+# - "single" (legacy): Tail IC two-sided (top10% U bot10%), weights V1..V4 = [0.40, 0.40, 0.15, 0.05]
+# - "long": Tail IC = pred >= P90(pred) only; drop V4 (Top-Bottom Spread), renormalize.
+# - "short": Tail IC = pred <= P10(pred) only; drop V4, renormalize.
+# Note: CV fold metrics (M1..M6 in calculate_yearly_metrics) stay two-sided for all sides;
+# only the validation objective (V2) and the lockbox Tail IC are side-aware.
+SIDE_CONFIG = {
+    "single": {"tail_def": "two_sided", "weights": [0.40, 0.40, 0.15, 0.05]},
+    "long":   {"tail_def": "top_only",  "weights": [0.45, 0.45, 0.10, 0.00]},
+    "short":  {"tail_def": "bot_only",  "weights": [0.45, 0.45, 0.10, 0.00]},
+}
+
 # Sample-weighting scale_data_with_weights can be done without a full rescale
 # of the standardized X (sqrt(w) is row-wise); we precompute the unweighted
 # standardized matrix once and apply sqrt(w) per trial.
@@ -240,6 +252,40 @@ def spearman_ic(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     y_true = np.asarray(y_true, dtype=np.float64)
     y_pred = np.asarray(y_pred, dtype=np.float64)
     return _spearman_from_arrays(y_true, y_pred)
+
+
+def side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str = "single") -> float:
+    """Side-aware Tail IC.
+
+    - "single" (legacy): Spearman on top 10% + bottom 10% by predicted value.
+    - "long":  Spearman on rows where pred >= P90(pred) (top 10% only).
+    - "short": Spearman on rows where pred <= P10(pred) (bottom 10% only).
+
+    CV fold metrics (M1..M6 in calculate_yearly_metrics) intentionally use
+    the two-sided definition regardless of `side`; only the validation
+    objective (V2) and the lockbox Tail IC use this side-aware helper.
+    """
+    y_true = np.asarray(y_true, dtype=np.float64)
+    y_pred = np.asarray(y_pred, dtype=np.float64)
+    n = y_pred.shape[0]
+    n_tail = max(5, int(n * 0.10))
+    if n < n_tail:
+        return 0.0
+    cfg = SIDE_CONFIG.get(side, SIDE_CONFIG["single"])
+    if cfg["tail_def"] == "top_only":
+        if n < n_tail * 1:
+            return 0.0
+        idx = np.argsort(y_pred, kind="quicksort")[-n_tail:]
+    elif cfg["tail_def"] == "bot_only":
+        if n < n_tail * 1:
+            return 0.0
+        idx = np.argsort(y_pred, kind="quicksort")[:n_tail]
+    else:  # two_sided (legacy)
+        if n < n_tail * 2:
+            return 0.0
+        order = np.argsort(y_pred, kind="quicksort")
+        idx = np.concatenate([order[:n_tail], order[-n_tail:]])
+    return _spearman_from_arrays(y_true[idx], y_pred[idx])
 
 
 def compute_decile_monotonicity(y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -843,7 +889,11 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     df["date"] = pd.to_datetime(df["date"])
 
     # Handle NaNs in features
-    X_df = df[FEATURES].ffill().fillna(df[FEATURES].median())
+    # Robust fill: ffill then per-column median, then 0 for columns entirely NaN
+    # (defensive against stale feature lists / partially-populated parquets).
+    X_df = df[FEATURES].ffill()
+    _col_med = X_df.median().fillna(0.0)
+    X_df = X_df.fillna(_col_med)
     # fp32 downcast: BLAS-friendly, ~50% memory, results within float32 epsilon.
     X = _to_f32(X_df.values)
     y = df[TARGET].values.astype(np.float32)
@@ -1216,13 +1266,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         val_preds = model_temp.predict(X_sel_val_inner_scaled_base)
         val_ic = spearman_ic(y_sel_val_inner, val_preds)
 
-        n_tail_val = max(5, int(len(y_sel_val_inner) * 0.10))
-        if len(y_sel_val_inner) >= n_tail_val * 2:
-            order_val = np.argsort(val_preds, kind="quicksort")
-            tail_idx_val = np.concatenate([order_val[:n_tail_val], order_val[-n_tail_val:]])
-            val_tail_ic = spearman_ic(y_sel_val_inner[tail_idx_val], val_preds[tail_idx_val])
-        else:
-            val_tail_ic = 0.0
+        # Side-aware Tail IC (V2): top-only for long, bot-only for short,
+        # two-sided for legacy single. CV fold M1..M6 stay two-sided.
+        val_tail_ic = side_tail_ic(y_sel_val_inner, val_preds, side)
 
         val_mono = compute_decile_monotonicity(y_sel_val_inner, val_preds)
         val_spread = compute_top_bottom_spread(y_sel_val_inner, val_preds)
@@ -1232,11 +1278,18 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         return raw_metrics, val_metrics, model_temp, scaler_init, cv_is_ics, cv_oos_ics
 
     # ── Pilot calibration cache ───────────────────────────────────────
+    # Pilot val_metrics (V2 Tail IC) are side-aware for `long`/`short`,
+    # so each side needs its own pilot medians/MADs. To preserve the
+    # existing single-side cache (and thus identical single-side results),
+    # the side tag is prepended to the cache key ONLY when side != "single".
+    # Selection and LOYO caches remain on "v10" (side-independent).
     pilot_key = [
         "v10", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         tuple(VAL_BLOCKS), TARGET, PILOT_N_TRIALS, PILOT_SEED,
     ]
+    if side != "single":
+        pilot_key = ["v11_side", side] + pilot_key
     pilot_cache_path = CACHE_DIR / f"cache_pilot_{etf_name}_{_cache_key(pilot_key)}.joblib"
 
     def _compute_pilot():
@@ -1454,12 +1507,16 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 n_m = (val_metrics[i] - val_medians[i]) / (val_mads[i] + 1e-10)
                 norm_val_metrics.append(n_m)
 
-            # Compute weighted sum on selection validation metrics
+            # Compute weighted sum on selection validation metrics.
+            # Weights are side-aware (see SIDE_CONFIG):
+            #   single -> [0.40, 0.40, 0.15, 0.05]
+            #   long/short -> [0.45, 0.45, 0.10, 0.00] (V4 dropped per user spec)
+            _w = SIDE_CONFIG.get(side, SIDE_CONFIG["single"])["weights"]
             objective_val = (
-                0.40 * norm_val_metrics[0] +  # Val Overall IC
-                0.40 * norm_val_metrics[1] +  # Val Tail IC
-                0.15 * norm_val_metrics[2] +  # Val Monotonicity
-                0.05 * norm_val_metrics[3]    # Val Spread
+                _w[0] * norm_val_metrics[0] +  # Val Overall IC (V1)
+                _w[1] * norm_val_metrics[1] +  # Val Tail IC  (V2, side-aware)
+                _w[2] * norm_val_metrics[2] +  # Val Monotonicity (V3)
+                _w[3] * norm_val_metrics[3]    # Val Top-Bottom Spread (V4, 0 for long/short)
             ) + ess_penalty + gini_penalty
 
             trial.set_user_attr("raw_metrics", raw_metrics)
@@ -1722,13 +1779,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     val_preds_outer = best_model_for_val.predict(X_sel_val_outer_scaled_base)
     val_ic_outer = spearman_ic(y_sel_val_outer, val_preds_outer)
     
-    n_tail_val_outer = max(5, int(len(y_sel_val_outer) * 0.10))
-    if len(y_sel_val_outer) >= n_tail_val_outer * 2:
-        order_val_outer = np.argsort(val_preds_outer, kind="quicksort")
-        tail_idx_val_outer = np.concatenate([order_val_outer[:n_tail_val_outer], order_val_outer[-n_tail_val_outer:]])
-        val_tail_ic_outer = spearman_ic(y_sel_val_outer[tail_idx_val_outer], val_preds_outer[tail_idx_val_outer])
-    else:
-        val_tail_ic_outer = 0.0
+    # Side-aware outer Tail IC
+    val_tail_ic_outer = side_tail_ic(y_sel_val_outer, val_preds_outer, side)
         
     val_mono_outer = compute_decile_monotonicity(y_sel_val_outer, val_preds_outer)
     val_spread_outer = compute_top_bottom_spread(y_sel_val_outer, val_preds_outer)
@@ -1993,7 +2045,15 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("-e", "--etf", default="300", help="300|50|500|588000|159915|all")
     ap.add_argument("-t", "--trials", type=int, default=100, help="Optuna trials count")
-    ap.add_argument("--side", default="single", choices=["single"])
+    ap.add_argument("--side", default=None, choices=["single", "long", "short"],
+                    help="Train ONE specific side: single (legacy two-sided Tail IC), "
+                         "long (top-only Tail IC, pred >= P90), short (bot-only, pred <= P10). "
+                         "If omitted (default), trains BOTH long and short via the --both path.")
+    ap.add_argument("--both", action="store_true", default=True,
+                    help="Train BOTH long and short sides for each ETF (DEFAULT). "
+                         "Use --no-both to disable and require --side.")
+    ap.add_argument("--no-both", dest="both", action="store_false",
+                    help="Disable --both; requires --side to be set.")
     ap.add_argument("--no-cache", action="store_true",
                     help="Disable disk caches (selection, LOYO folds, pilot metrics).")
     ap.add_argument("--optuna-jobs", type=int, default=OPTUNA_N_JOBS,
@@ -2026,23 +2086,36 @@ if __name__ == "__main__":
     else:
         etfs = [ETF_CLI_MAP.get(etf_arg, etf_arg)]
 
+    # Side resolution: --both (default) trains both long and short for each ETF.
+    # --no-both requires --side to be specified explicitly.
+    if args.both:
+        if args.side is not None:
+            print(f"[WARNING] Both --both and --side={args.side} set. --both takes precedence; --side ignored.")
+        sides = ["long", "short"]
+    else:
+        if args.side is None:
+            print("[ERROR] --no-both requires --side to be set explicitly (one of: single|long|short).")
+            sys.exit(2)
+        sides = [args.side]
+
     print(f"Context initialized.")
-    print(f"ETFs: {etfs} | Trials: {args.trials}")
+    print(f"ETFs: {etfs} | Sides: {sides} | Trials: {args.trials}")
     print(f"Cache: {'OFF' if args.no_cache else 'ON'} | jobs: optuna={args.optuna_jobs}, bootstrap={args.bootstrap_jobs}, loyo={loyo_jobs_arg}")
 
     for etf in etfs:
-        t0 = time.perf_counter()
-        try:
-            train_etf(etf, n_trials=args.trials, side=args.side,
-                      use_cache=not args.no_cache,
-                      optuna_n_jobs=args.optuna_jobs,
-                      bootstrap_n_jobs=args.bootstrap_jobs,
-                      loyo_n_jobs=loyo_jobs_arg)
-        except Exception as e:
-            print(f"  [ERROR] Failed to train {etf}: {e}")
-            import traceback
-            traceback.print_exc()
-        print(f"[{etf}] elapsed {time.perf_counter() - t0:.1f}s")
+        for side in sides:
+            t0 = time.perf_counter()
+            try:
+                train_etf(etf, n_trials=args.trials, side=side,
+                          use_cache=not args.no_cache,
+                          optuna_n_jobs=args.optuna_jobs,
+                          bootstrap_n_jobs=args.bootstrap_jobs,
+                          loyo_n_jobs=loyo_jobs_arg)
+            except Exception as e:
+                print(f"  [ERROR] Failed to train {etf} ({side}): {e}")
+                import traceback
+                traceback.print_exc()
+            print(f"[{etf}/{side}] elapsed {time.perf_counter() - t0:.1f}s")
 
     # Close log file handles
     if isinstance(sys.stdout, _TeeWriter):

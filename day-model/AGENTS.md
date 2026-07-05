@@ -16,12 +16,42 @@ Check day-model/day-model_plan.md for logic. Also update day-model/day-model_pla
 # 1. Re-generate parquet feature datasets
 python3 day-model/build_features.py -e all
 
-# 2. Run first-principles Stability Selection + Optuna training (takes 40s, Agent should always run full set)
-python3 day-model/train_model.py -e all --trials 100 # 1Don't go beyond 100, overfit risk high
-# IMPORTANT: Agent should always run full set
+# 2. Train BOTH long and short side models per ETF (DEFAULT, takes ~80s per ETF)
+python3 day-model/train_model.py -e all --trials 100  # --both is default
+# IMPORTANT: Agent should always run full set; don't go beyond 100 trials (overfit risk)
 
-# 3. Generate summary REPORT.md and tables
+# 3. Generate summary REPORT.md (ONE 15-panel diagnostics figure per ETF per side)
 python3 day-model/generate_report.py
+```
+
+### Side-Specific Objective (`--both` default | `--side single|long|short`)
+
+The feature pipeline (screening → CSS → VIF → CPCV) is unchanged. Only the **validation objective** and the **lockbox Tail IC** are side-aware:
+
+| Side     | Tail IC definition (V2)                | V1..V4 weights              |
+| :---     | :---                                   | :---                        |
+| `single` | two-sided: top10% + bottom10% (legacy) | `[0.40, 0.40, 0.15, 0.05]` |
+| `long`   | top-only: `pred >= P90(pred)`          | `[0.45, 0.45, 0.10, 0.00]` (V4 dropped, renormalized) |
+| `short`  | bot-only: `pred <= P10(pred)`          | `[0.45, 0.45, 0.10, 0.00]` (V4 dropped, renormalized) |
+
+- CV fold M1..M6 metrics and kill-switches stay **two-sided** for all sides.
+- Side is stored in `results_{tag}.json` and `scaler_{tag}.joblib` under the `side` field.
+- `tag = {ETF}` for `single`, `{ETF}_long` / `{ETF}_short` otherwise.
+- Pilot cache (`cache_pilot_*`) is **side-scoped via hash**: the cache key includes `"v11_side", side` only when `side != "single"`, so the existing single-side pilot cache (and thus single-side results) is preserved byte-identical. Selection and LOYO caches are side-independent.
+- Lockbox Tail IC in `generate_report.py` is side-aware.
+
+```bash
+# Default: train both long and short for each ETF (one command, two artifacts per ETF)
+python3 day-model/train_model.py -e 300 --trials 100           # --both is default
+python3 day-model/train_model.py -e all --trials 100           # trains both sides for all ETFs
+
+# Train ONE specific side only (disables --both)
+python3 day-model/train_model.py -e 300 --no-both --side single --trials 100  # legacy
+python3 day-model/train_model.py -e 300 --no-both --side long   --trials 100  # top-only
+python3 day-model/train_model.py -e 300 --no-both --side short  --trials 100  # bot-only
+
+# generate_report.py auto-picks all results_*.json (single + long + short) and emits
+# ONE 15-panel figure per tag.
 ```
 
 ### train_model.py Performance Options
@@ -45,9 +75,9 @@ Speedups: fp32 arrays; vectorized Spearman screen; joblib-parallel stability boo
 
 | File | Contents |
 |---|---|
-| `cache_select_{etf}_{hash}.joblib` | `screen_mask`, `p_vals`, `rhos`, `stability_selected_idx`, `stability_scores` (version `v6` cache key, isolated to selection train set) |
-| `cache_loyo_{etf}_{hash}.joblib` | List of pre-scaled CPCV folds `(test_idx, X_tr_scaled, X_te_scaled, y_tr)` (version `v6` cache key) |
-| `cache_pilot_{etf}_{hash}.joblib` | Pilot records `[{params, raw_metrics, val_metrics}, ...]` (version `v6` cache key) |
+| `cache_select_{etf}_{hash}.joblib` | `screen_mask`, `p_vals`, `rhos`, `stability_selected_idx`, `stability_scores` (version `v10` cache key, isolated to selection train set; **side-independent**) |
+| `cache_loyo_{etf}_{hash}.joblib` | List of pre-scaled CPCV folds `(test_idx, X_tr_scaled, X_te_scaled, y_tr)` (version `v10` cache key; **side-independent**) |
+| `cache_pilot_{etf}_{hash}.joblib` | Pilot records `[{params, raw_metrics, val_metrics}, ...]`. Key is `"v10"` for `single` (preserves legacy cache byte-identical) and `"v11_side", side` prefix for `long`/`short` (side-scoped via hash). |
 
 **Auto-invalidated** (key mismatch triggers recompute) when any of these change:
 - ETF name
@@ -59,10 +89,12 @@ Speedups: fp32 arrays; vectorized Spearman screen; joblib-parallel stability boo
 - `TARGET` column name
 - Selected-feature index tuple (CPCV + pilot caches)
 - `PILOT_N_TRIALS`, `PILOT_SEED` (pilot cache only)
+- **`--side`** for `long`/`short` only (pilot cache key gets `"v11_side", side` prefix; `single` keeps `"v10"` to preserve byte-identical legacy results)
 
 **Manual clear required when**:
 - Editing `FEATURES`/`EARLY_FEATURES`/`DAY_FEATURES`/`YESTERDAY_FEATURES` lists in `build_features.py` **without** regenerating parquet.
-- Changing `METRIC_WEIGHTS` (affects pilot medians/MADs; clear `cache_pilot_*`).
+- Changing `METRIC_WEIGHTS` or `SIDE_CONFIG` weights (affects pilot medians/MADs; clear `cache_pilot_*`).
+- Editing `side_tail_ic` semantics in `train_model.py` (clear all `cache_pilot_*`).
 - Changing the CPCV group/test window logic, embargo window, or scaling code in `_compute_loyo`.
 - Changing `run_screening` / `run_stability_selection` internals.
 - Changing hierarchical clustering thresholds or distance metrics for CSS.
@@ -84,16 +116,16 @@ Remove-Item day-model\data\cache_*.joblib
 5. **Loss Weighting (Step 3)**: Power weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to focus model on tail days.
 6. **CPCV with Embargo (Step 4)**: Combinatorial Purged Cross-Validation with 6 chronological groups and 2 test groups ($\binom{6}{2} = 15$ folds), with a 10-day embargo at test boundaries. Constructed ONLY on the selection train subset.
 7. **Pilot Normalization (Step 4.1)**: Runs 50 pilot trials, computes median and MAD for each of the 4 selection validation metrics (inner split only) to calculate robust z-scores.
-8. **Objective Function**: Maximizes weighted sum of normalized selection validation metrics, plus a soft penalty for ESS under 20% (`ess_penalty = -10.0 * (0.20 - ess_pct)`):
-   - Val Overall IC: 40%
-   - Val Tail IC: 40%
-   - Val Monotonicity: 15%
-   - Val Top-Bottom Spread: 5%
+8. **Objective Function** (side-aware, see `SIDE_CONFIG`): Maximizes weighted sum of normalized selection validation metrics, plus a soft penalty for ESS under 20% (`ess_penalty = -10.0 * (0.20 - ess_pct)`):
+   - `single`: Val Overall IC 40%, Val Tail IC 40% (two-sided), Val Monotonicity 15%, Val Top-Bottom Spread 5%.
+   - `long`: Val Overall IC 45%, Val Tail IC 45% (`pred >= P90(pred)`), Val Monotonicity 10%, Val Top-Bottom Spread 0% (dropped, renormalized).
+   - `short`: Val Overall IC 45%, Val Tail IC 45% (`pred <= P10(pred)`), Val Monotonicity 10%, Val Top-Bottom Spread 0% (dropped, renormalized).
+   - CV fold metrics M1..M6 (and the kill-switches in step 9) stay two-sided for all sides.
 9. **Signed Constraints & TPESampler Constrained Optimization**:
    - Hard constraints are evaluated via signed margins (negative = satisfied, positive = violated) and fed to Optuna's `constraints_func` on the `TPESampler`. This gives TPE the gradient information to steer trials into the feasible region, instead of collapsing infeasible trials to a flat `-1e9`.
    - Hard constraints include: Overall IC <= 0, Hit Rate < 60%, Decile Monotonicity <= 0.25, Top-Bottom Spread <= 0, Active features count exceeds ESS-based cap ($active\_k > ESS / 8.0$), and Active features count under floor ($active\_k < min\_active\_features$ where $min\_active\_features = min(5, max\_active\_features)$). Dynamic floor scaling prevents contradictory constraints on small-sample datasets (e.g. `588000ETF`).
    - Model weight concentration (Gini index) is converted from a hard switch to a soft, $k$-normalized penalty in the objective function to avoid collapsing the feasible region for sparse models: `gini_cap = 1.0 - 0.40 * (active_k / m_gini)` and `gini_penalty = -10.0 * (gini - gini_cap) if gini > gini_cap else 0.0`.
-10. **One-Shot Evaluation & Diagnostics Plotting (Step 6)**: Handled entirely in `generate_report.py`. Evaluates final model on 500-day lockbox, updates OOS metrics in results JSON/scaler bundles, and generates 2x2 diagnostics plots. Calculates regularized condition number. Runs a 1000-sample block bootstrap (block size $B=10$) on lockbox OOS data to calculate 95% CIs and flags generalization gaps that are swallowed by the CI as Noise.
+10. **One-Shot Evaluation & Diagnostics Plotting (Step 6)**: Handled entirely in `generate_report.py`. Evaluates final model on 500-day lockbox (lockbox Tail IC is side-aware), updates OOS metrics in results JSON/scaler bundles, and generates **15 separate PNG diagnostic plots per ETF tag** (saved to `day-model/plots/`, embedded in `REPORT.md`). Calculates regularized condition number. Runs a 1000-sample block bootstrap (block size $B=10$) on lockbox OOS data to calculate 95% CIs and flags generalization gaps that are swallowed by the CI as Noise.
 11. **L2 Regularization Component**: Enforces 10% L2 Ridge regularization in both model families to stabilize joint-coefficient assignments under severe multicollinearity.
 12. **Multiple comparison deflation & Overfitting Diagnostics**: Computes running **Deflated Objective** and Deflated Val Overall IC to correct for multiple trials / search-budget inflation across completed trials. Selects best trial based on running deflated objective. Also computes **Probability of Backtest Overfitting (PBO)** and **Performance Degradation** using CSCV on the CPCV folds.
 13. **Model Quality & Generalization Diagnostics**: Calculates condition numbers, ESS of tail-focus weights, Gini coefficient, and CV-to-OOS Generalization Gap for rank IC & decile monotonicity. Saves findings to `REPORT.md`.

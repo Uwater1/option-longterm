@@ -430,9 +430,10 @@
     0.21218646461346302
   ],
   "lockbox_mono_ci": [
-    0.24848484848484848,
-    0.9151515151515152
+    0.12696969696969698,
+    0.8912121212121209
   ],
   "lockbox_ic_swallowed": false,
-  "lockbox_mono_swallowed": true
+  "lockbox_mono_swallowed": true,
+  "lockbox_tail_ic_def": "single"
 }

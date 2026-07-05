@@ -84,18 +84,28 @@ Both model families enforce a mandatory $10\%$ L2 Ridge regularization component
 
 $$ \text{Objective} = \sum_{i=1}^{4} w_i \cdot \widetilde{V}_i $$
 
-Where each $\widetilde{V}_i$ is a **robust z-score normalized** metric evaluated on the selection-blind chronological validation blocks (computed via a 50-trial Optuna pilot run using Median Absolute Deviation), and weights $w_i$ are pre-defined constants:
+Where each $\widetilde{V}_i$ is a **robust z-score normalized** metric evaluated on the selection-blind chronological validation blocks (computed via a 50-trial Optuna pilot run using Median Absolute Deviation).
 
-| ID | Metric ($\widetilde{V}_i$) | Definition | Sign | Category | Weight ($w_i$) |
+**Side-Specific Objective (July 2026)**: The Tail IC definition (V2) is now side-aware. Three sides are supported:
+
+| Side     | Tail IC definition (V2)                          | V1..V4 weights                       |
+| :---     | :---                                             | :---                                  |
+| `single` | two-sided: top 10% + bottom 10% by `pred` (legacy) | `[0.40, 0.40, 0.15, 0.05]`         |
+| `long`   | top-only: rows where `pred >= P90(pred)`         | `[0.45, 0.45, 0.10, 0.00]` (V4 dropped, renormalized) |
+| `short`  | bot-only: rows where `pred <= P10(pred)`         | `[0.45, 0.45, 0.10, 0.00]` (V4 dropped, renormalized) |
+
+> **Important**: CV fold metrics $M_1$ through $M_6$ (Yearly Tail IC IR/Mean, Hit Rate, Overall IC, Monotonicity, Spread) and the corresponding kill-switches stay **two-sided** for all sides. Only the validation-side V2 (Val Tail IC) and the lockbox Tail IC in `generate_report.py` use the side-aware definition. This keeps the overfit guardrails (which look at the full distribution) intact while steering hyperparameter search toward the side of interest.
+
+| ID | Metric ($\widetilde{V}_i$) | Definition | Sign | Category | Weight ($w_i$, `single` / `long,short`) |
 | :--- | :--- | :--- | :---: | :--- | :---: |
-| **V₁** | **Val Overall IC** | Spearman rank correlation computed over all rows in the inner selection validation blocks. | + | General Signal | **0.40** |
-| **V₂** | **Val Tail IC** | Spearman rank correlation computed on top/bottom 10% rows of the inner selection validation blocks. | + | Tail Power | **0.40** |
-| **V₃** | **Val Monotonicity** | Spearman correlation between decile rank and mean actual return on the inner selection validation blocks. | + | Signal Structure | **0.15** |
-| **V₄** | **Val Top-Bottom Spread** | Mean return spread (Top 10% minus Bottom 10%) on the inner selection validation blocks. | + | Factor Efficacy | **0.05** |
+| **V₁** | **Val Overall IC** | Spearman rank correlation computed over all rows in the inner selection validation blocks. | + | General Signal | **0.40 / 0.45** |
+| **V₂** | **Val Tail IC** (side-aware) | `single`: Spearman on top/bottom 10% rows. `long`: `pred >= P90(pred)`. `short`: `pred <= P10(pred)`. | + | Tail Power | **0.40 / 0.45** |
+| **V₃** | **Val Monotonicity** | Spearman correlation between decile rank and mean actual return on the inner selection validation blocks. | + | Signal Structure | **0.15 / 0.10** |
+| **V₄** | **Val Top-Bottom Spread** | Mean return spread (Top 10% minus Bottom 10%) on the inner selection validation blocks. **Dropped (weight=0) for `long`/`short`** since the off-side decile is never traded. | + | Factor Efficacy | **0.05 / 0.00** |
 
 We compute the running **Deflated Objective** during the study to adjust for search-budget overfit. The final trial selection (including parameter plateau search) is performed using this deflated score instead of the raw objective, guaranteeing that the selection metric and the deflated honesty score are aligned.
 
-Before computing the weighted objective, apply **Kill Switches / Hard Constraints** evaluated on the cross-validation folds metrics ($M_1$ through $M_6$) constructed on the selection training block:
+Before computing the weighted objective, apply **Kill Switches / Hard Constraints** evaluated on the cross-validation folds metrics ($M_1$ through $M_6$, **always two-sided regardless of side**) constructed on the selection training block:
 * Overall IC > 0 ($M_4 > 0$)
 * Minimum Hit Rate >= 60% ($M_3 \ge 0.60$)
 * Decile Monotonicity > 0.25 ($M_5 \ge 0.25$)
