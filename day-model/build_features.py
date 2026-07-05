@@ -36,6 +36,8 @@ from scipy.stats import skew, kurtosis
 
 # New feature module: 91 early-bar (numba njit) + 14 day-level + 3 yesterday-mirror
 # features from feature.csv. See day-model/features_extra.py for impl details.
+# NOTE: EARLY_EXTRA and YESTERDAY_EXTRA are dynamically filtered at import time
+# to exclude deprecated features (never selected/active across all 5 ETFs) by default.
 from features_extra import (
     EARLY_EXTRA,
     DAY_EXTRA,

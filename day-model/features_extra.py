@@ -112,6 +112,8 @@ FULL_EARLY_EXTRA: list[str] = [
     # their shifts feed yesterday_gap_reversal / yesterday_spike_exhaustion.
 ]
 
+# Dynamically filter out deprecated early extra features by default to manage the
+# candidate-to-sample ratio and eliminate zero-stability collinear features.
 EARLY_EXTRA: list[str] = (
     FULL_EARLY_EXTRA
     if INCLUDE_DEPRECATED
@@ -142,6 +144,7 @@ FULL_YESTERDAY_EXTRA: list[str] = [
     "yesterday_spike_exhaustion_ratio",
 ]
 
+# Dynamically filter out deprecated yesterday features by default to manage dimensionality.
 YESTERDAY_EXTRA: list[str] = (
     FULL_YESTERDAY_EXTRA
     if INCLUDE_DEPRECATED
