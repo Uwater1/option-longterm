@@ -14,9 +14,9 @@ without checking whether the pipeline could even use them — see `day-model/dep
 
 ## 0. Gate: do not propose features until these are true
 
-- [ ] MCP sparsity bug fixed (γ search range), confirmed active-feature-count < selected-
+- [x] MCP sparsity bug fixed (γ search range), confirmed active-feature-count < selected-
       feature-count on a clean run (not 28/29, 26/26, 12/12 — that's ridge behavior, not MCP).
-- [ ] Plateau hyperparameter selector fixed (min-neighbor-count gate), confirmed it never
+- [x] Plateau hyperparameter selector fixed (min-neighbor-count gate), confirmed it never
       again selects a trial with negative objective over a positive raw-best.
 - [x] Feature pruning pass complete — 53 dead-weight features (never selected, active,
       or stable across any of the 5 ETFs) moved to `deprecate_features.py`.
