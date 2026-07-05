@@ -125,14 +125,15 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 ### Day-Model Features & Caching
 - **Index Signals**: Technical indicators use daily/intraday Index data (`000016.XSHG`, `000300.XSHG`, `000905.XSHG`, `000688.XSHG`, `399006.XSHE`) to prevent look-ahead bias. Execution uses ETF prices.
 - **Local Cache**: Ricequant data (Margin, Capital Flow, Northbound Quota, VIX) cached in `data/*.parquet`.
-- **238 Features**: 139 early-bar intraday, 74 day-level, 25 prior-day features (shifted 1 day).
+- **185 Features**: 88 early-bar intraday, 74 day-level, 23 prior-day features (shifted 1 day). 53 deprecated features moved to deprecate_features.py (backward compatible).
 - **Volume Normalization**: Early-morning volume normalized by rolling 20-day daily volume shifted by 1 day (`yesterday_rolling_20d_daily_volume / 48`).
 - **Multicollinearity & Complexity Control**: Controls multivariate collinearity via iterative VIF pruning (threshold <= 10.0) on stable representatives. Overfitting is prevented via a dynamic active feature cap tied to Effective Sample Size (active_features <= ESS / 8.0) and a hard active feature floor (active_features >= 5) evaluated as signed constraints via Optuna's `constraints_func` for TPESampler. Gini weight concentration constraint is softened into the objective as a $k$-normalized soft penalty. Data leakage and search-budget overfitting are eliminated by:
   - Tightening univariate screening (BH-FDR = 0.15, loosened to 0.25 for 588000ETF to prevent feature starvation).
   - Nesting feature selection and CPCV folds strictly inside a chronological selection train split (excluding the validation blocks and a 10-day embargo).
   - Splitting the 6 validation blocks into 4 **Inner Validation** blocks (Optuna tuned) and 2 **Outer Validation** blocks (held-out holdout sanity check).
-  - Restricting the concavity parameter `gamma` bounds for `skglm_mcp` to `[1.01, 3.0]` to guarantee non-convex sparse selection.
-  - Selecting the winning trial using the running **Deflated Objective** (Lopez de Prado overfit adjustment) and a robust parameter plateau search (requiring at least 3 total neighbors and 3 valid neighbors to prevent isolated trials from scoring as plateaus; falls back to raw best trial if criteria not met).
+  - Restricting concavity parameter `gamma` bounds for `skglm_mcp` to `[3.0, 10.0]` to guarantee non-convex sparse selection and prevent near-ridge regime.
+  - Selecting winning trial using running **Deflated Objective** (Lopez de Prado overfit adjustment) and robust parameter plateau search (requiring at least 8 total neighbors and 6 valid neighbors, gated dynamically at 15% and 10% of completed type counts to prevent isolated trials from scoring as plateaus; falls back to raw best trial if criteria not met).
+  - Parallel Optuna worker samplers initialized with unique seeds (`PILOT_SEED + i` for pilot, `PILOT_SEED + 1 + i` for main study) to eliminate parallel race duplicate trials.
 
 > Artifacts: `backtest/alpha_put_models.json`, `backtest/alpha_ml_models/`, `backtest/validate_pnl_phase{1,2,3}.json`, `backtest/alpha_phase_comparison.md`.
 

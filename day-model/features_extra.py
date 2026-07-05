@@ -33,15 +33,21 @@ import pandas as pd
 from numba import njit
 
 
+from deprecate_features import (
+    INCLUDE_DEPRECATED,
+    DEPRECATED_EARLY_EXTRA,
+    DEPRECATED_YESTERDAY_EXTRA,
+)
+
 NaN32 = np.float32(np.nan)
-N_EARLY_EXTRA = 91  # MUST match len(EARLY_EXTRA); kept as int for use inside njit
+N_EARLY_EXTRA = 91  # MUST match len(FULL_EARLY_EXTRA); kept as int for use inside njit
 
 
 # ============================================================
 # Feature name registry (single source of truth — order matters
 # because the njit dispatcher returns values in this exact order)
 # ============================================================
-EARLY_EXTRA: list[str] = [
+FULL_EARLY_EXTRA: list[str] = [
     # --- Brooks open patterns (6) ---
     "opening_gap_reversal", "spike_exhaustion_ratio", "barbed_wire_intensity",
     "wedge_open_flag", "inside_bar_compression", "volume_climax_exhaustion",
@@ -106,6 +112,12 @@ EARLY_EXTRA: list[str] = [
     # their shifts feed yesterday_gap_reversal / yesterday_spike_exhaustion.
 ]
 
+EARLY_EXTRA: list[str] = (
+    FULL_EARLY_EXTRA
+    if INCLUDE_DEPRECATED
+    else [f for f in FULL_EARLY_EXTRA if f not in DEPRECATED_EARLY_EXTRA]
+)
+
 # Day-level (computed in compute_daylevel_indicators, then shifted by 1 upstream)
 DAY_EXTRA: list[str] = [
     # Yesterday OHLCV summary (T-1)
@@ -124,11 +136,17 @@ DAY_EXTRA: list[str] = [
 ]
 
 # Yesterday mirrors (shift of early-frame columns produced upstream)
-YESTERDAY_EXTRA: list[str] = [
+FULL_YESTERDAY_EXTRA: list[str] = [
     "yesterday_intraday_close_position",
     "yesterday_opening_gap_reversal",
     "yesterday_spike_exhaustion_ratio",
 ]
+
+YESTERDAY_EXTRA: list[str] = (
+    FULL_YESTERDAY_EXTRA
+    if INCLUDE_DEPRECATED
+    else [f for f in FULL_YESTERDAY_EXTRA if f not in DEPRECATED_YESTERDAY_EXTRA]
+)
 
 
 # ============================================================
@@ -1045,7 +1063,7 @@ def _early_extras(op: np.ndarray, hi: np.ndarray, lo: np.ndarray,
 
 
 # Constant tuple for use inside njit (must be defined at module load)
-EARLY_EXTRA_N = tuple(EARLY_EXTRA)
+EARLY_EXTRA_N = tuple(FULL_EARLY_EXTRA)
 
 
 # ============================================================
@@ -1067,7 +1085,12 @@ def extract_early_extras(day_5m: pd.DataFrame, prev_close: float,
 
     vals = _early_extras(op, hi, lo, cl, vol,
                          np.float32(prev_close), np.float32(exp_bar_vol))
-    return {name: np.float32(vals[i]) for i, name in enumerate(EARLY_EXTRA)}
+    
+    full_dict = {name: np.float32(vals[i]) for i, name in enumerate(FULL_EARLY_EXTRA)}
+    if INCLUDE_DEPRECATED:
+        return full_dict
+    else:
+        return {k: v for k, v in full_dict.items() if k not in DEPRECATED_EARLY_EXTRA}
 
 
 def empty_early_extras() -> dict:
