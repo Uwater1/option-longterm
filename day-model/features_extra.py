@@ -40,7 +40,7 @@ from deprecate_features import (
 )
 
 NaN32 = np.float32(np.nan)
-N_EARLY_EXTRA = 91  # MUST match len(FULL_EARLY_EXTRA); kept as int for use inside njit
+N_EARLY_EXTRA = 121  # MUST match len(FULL_EARLY_EXTRA); kept as int for use inside njit
 
 
 # ============================================================
@@ -110,6 +110,22 @@ FULL_EARLY_EXTRA: list[str] = [
     "intraday_close_position",
     # NOTE: opening_gap_reversal & spike_exhaustion_ratio already in list;
     # their shifts feed yesterday_gap_reversal / yesterday_spike_exhaustion.
+    # --- Mined Features v1 (30) ---
+    "limit_up_proximity_early", "limit_down_proximity_early",
+    "morning_hhi_persistence", "morning_trend_extrapolated",
+    "early_bar_hhi_volume", "morning_mean_reversion_score",
+    "demark_setup_reversal_early", "brooks_high_low_2_early",
+    "failed_breakout_reversal_early", "price_action_thrust_ratio",
+    "doji_cluster_intensity", "shaved_bars_ratio",
+    "climax_reversal_followthrough", "early_wavetrend_osc",
+    "early_wavetrend_cross", "atr_expansion_flag_early",
+    "volatility_breakout_squeeze", "early_cvd_slope",
+    "early_volume_imbalance_ratio", "early_bid_ask_spread_proxy",
+    "volume_concentration_slope", "liquidity_density_early",
+    "early_vwap_acceleration", "early_order_flow_imbalance",
+    "rbreaker_buy_break_dist_early", "rbreaker_sell_break_dist_early",
+    "rbreaker_sell_setup_proximity_early", "rbreaker_buy_setup_proximity_early",
+    "skypark_gap_reversal_early", "turtle_breakout_strength_early"
 ]
 
 # Dynamically filter out deprecated early extra features by default to manage the
@@ -217,15 +233,11 @@ def _sign(x: float) -> float:
 @njit(cache=True, fastmath=True)
 def _early_extras(op: np.ndarray, hi: np.ndarray, lo: np.ndarray,
                   cl: np.ndarray, vol: np.ndarray,
-                  prev_close: float, exp_bar_vol: float) -> np.ndarray:
-    """Compute every EARLY_EXTRA feature for one day in one shot.
-
-    Parameters
-    ----------
-    op, hi, lo, cl, vol : float32 arrays of length D+1 (bars[0..decision_bar])
-    prev_close          : prior-day adjusted close (Index)
-    exp_bar_vol         : expected 5m volume = sma20(daily volume, T-1) / 48
-    """
+                  prev_close: float, exp_bar_vol: float,
+                  is_20pct: bool, atr_5m_prev: float, bb_width_prev_price: float,
+                  buy_break: float, sell_break: float, sell_setup: float, buy_setup: float,
+                  high20: float, low20: float, atr20: float) -> np.ndarray:
+    """Compute every EARLY_EXTRA feature for one day in one shot."""
     n = len(op)
     out = np.zeros(N_EARLY_EXTRA, dtype=np.float32)
     if n < 1 or prev_close <= 0.0 or exp_bar_vol <= 0.0:
@@ -1062,6 +1074,256 @@ def _early_extras(op: np.ndarray, hi: np.ndarray, lo: np.ndarray,
     # ----- 90 intraday_close_position : (C_D - L0)/(H0 - L0) (yesterday mirror base) -----
     out[90] = np.float32((CD - L0) / (H0 - L0 + 1e-8))
 
+    # ----- 91 limit_up_proximity_early -----
+    limit_up_mult = 1.20 if is_20pct else 1.10
+    out[91] = np.float32((hh - prev_close * limit_up_mult) / (prev_close * limit_up_mult + 1e-8))
+
+    # ----- 92 limit_down_proximity_early -----
+    limit_down_mult = 0.80 if is_20pct else 0.90
+    out[92] = np.float32((ll - prev_close * limit_down_mult) / (prev_close * limit_down_mult + 1e-8))
+
+    # ----- 93 morning_hhi_persistence -----
+    n_up = 0
+    n_dn = 0
+    for i in range(n):
+        s = _sign(float(cl[i]) - float(op[i]))
+        if s > 0.0:
+            n_up += 1
+        elif s < 0.0:
+            n_dn += 1
+    pu = n_up / n if n > 0 else 0.0
+    pd = n_dn / n if n > 0 else 0.0
+    out[93] = np.float32(pu * pu + pd * pd)
+
+    # ----- 94 morning_trend_extrapolated -----
+    slp = _slope(cl, n)
+    xm = (n - 1) / 2.0
+    ym = 0.0
+    for i in range(n):
+        ym += float(cl[i])
+    ym /= n
+    intercept = ym - slp * xm
+    projected_close = slp * 42.0 + intercept
+    out[94] = np.float32((projected_close - CD) / (atr_proxy + 1e-8))
+
+    # ----- 95 early_bar_hhi_volume -----
+    v_sum = 0.0
+    for i in range(n):
+        v_sum += float(vol[i])
+    hhi_vol = 0.0
+    if v_sum > 0.0:
+        for i in range(n):
+            pct = float(vol[i]) / v_sum
+            hhi_vol += pct * pct
+    out[95] = np.float32(hhi_vol)
+
+    # ----- 96 morning_mean_reversion_score -----
+    rev_score = 0.0
+    if n >= 3:
+        for i in range(2, n):
+            rev_score += _sign(float(cl[i]) - float(cl[i - 1])) * _sign(float(cl[i - 1]) - float(cl[i - 2]))
+        rev_score /= (n - 2)
+    out[96] = np.float32(rev_score)
+
+    # ----- 97 demark_setup_reversal_early -----
+    demark_sum = 0.0
+    for i in range(n):
+        if i >= 4:
+            ref = float(cl[i - 4])
+        else:
+            ref = prev_close
+        if float(cl[i]) < ref:
+            demark_sum += 1.0
+        elif float(cl[i]) > ref:
+            demark_sum -= 1.0
+    out[97] = np.float32(demark_sum)
+
+    # ----- 98 brooks_high_low_2_early -----
+    high_breaks = 0
+    low_breaks = 0
+    for i in range(1, n):
+        if float(cl[i]) > float(hi[i - 1]):
+            high_breaks += 1
+        elif float(cl[i]) < float(lo[i - 1]):
+            low_breaks += 1
+    if high_breaks >= 2:
+        out[98] = np.float32(1.0)
+    elif low_breaks >= 2:
+        out[98] = np.float32(-1.0)
+    else:
+        out[98] = np.float32(0.0)
+
+    # ----- 99 failed_breakout_reversal_early -----
+    flag = 0.0
+    if n >= 6:
+        h_max = H0
+        l_min = L0
+        for i in range(n):
+            if float(hi[i]) > h_max:
+                h_max = float(hi[i])
+            if float(lo[i]) < l_min:
+                l_min = float(lo[i])
+        if h_max > H0 and CD < L0:
+            flag = 1.0
+        elif l_min < L0 and CD > H0:
+            flag = -1.0
+    out[99] = np.float32(flag)
+
+    # ----- 100 price_action_thrust_ratio -----
+    body_sum = 0.0
+    for i in range(n):
+        body_sum += abs(float(cl[i]) - float(op[i]))
+    out[100] = np.float32(body_sum / rng_eps)
+
+    # ----- 101 doji_cluster_intensity -----
+    max_doji_run = 0
+    cur_doji_run = 0
+    for i in range(n):
+        rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+        if abs(float(cl[i]) - float(op[i])) < 0.1 * rng_i:
+            cur_doji_run += 1
+            if cur_doji_run > max_doji_run:
+                max_doji_run = cur_doji_run
+        else:
+            cur_doji_run = 0
+    out[101] = np.float32(max_doji_run)
+
+    # ----- 102 shaved_bars_ratio -----
+    shaved_count = 0
+    for i in range(n):
+        if abs(float(cl[i]) - float(hi[i])) < 1e-6 or abs(float(cl[i]) - float(lo[i])) < 1e-6:
+            shaved_count += 1
+    out[102] = np.float32(shaved_count / n if n > 0 else 0.0)
+
+    # ----- 103 climax_reversal_followthrough -----
+    climax_val = -1.0
+    climax_idx = 0
+    for i in range(n):
+        if float(vol[i]) > climax_val:
+            climax_val = float(vol[i])
+            climax_idx = i
+    c_clim = float(cl[climax_idx])
+    o_clim = float(op[climax_idx])
+    val = 0.0
+    if c_clim > o_clim:
+        val = CD - c_clim
+    else:
+        val = o_clim - CD
+    out[103] = np.float32(val / (atr_proxy + 1e-8))
+
+    # ----- 104 early_wavetrend_osc -----
+    ap_bar = np.zeros(n, dtype=np.float32)
+    for i in range(n):
+        ap_bar[i] = (float(hi[i]) + float(lo[i]) + float(cl[i])) / 3.0
+    esa_bar = np.zeros(n, dtype=np.float32)
+    d_bar = np.zeros(n, dtype=np.float32)
+    if n > 0:
+        esa_bar[0] = ap_bar[0]
+        d_bar[0] = 0.0
+        for i in range(1, n):
+            esa_bar[i] = 0.5 * ap_bar[i] + 0.5 * esa_bar[i - 1]
+            d_bar[i] = 0.5 * abs(ap_bar[i] - esa_bar[i]) + 0.5 * d_bar[i - 1]
+    wt1_val = (ap_bar[n - 1] - esa_bar[n - 1]) / (0.015 * d_bar[n - 1] + 1e-8)
+    out[104] = np.float32(wt1_val / 100.0)
+
+    # ----- 105 early_wavetrend_cross -----
+    wt1_prev = 0.0
+    if n >= 2:
+        wt1_prev = (ap_bar[n - 2] - esa_bar[n - 2]) / (0.015 * d_bar[n - 2] + 1e-8)
+    wt2_val = (wt1_val + wt1_prev) / 2.0
+    out[105] = np.float32((wt1_val - wt2_val) / 100.0)
+
+    # ----- 106 atr_expansion_flag_early -----
+    out[106] = np.float32(atr_proxy / (atr14_prev / math.sqrt(48.0) + 1e-8))
+
+    # ----- 107 volatility_breakout_squeeze -----
+    out[107] = np.float32((hh - ll) / (bb_width_prev_price + 1e-8))
+
+    # ----- 108 early_cvd_slope -----
+    cvd = np.zeros(n, dtype=np.float32)
+    cum_cvd = 0.0
+    for i in range(n):
+        cum_cvd += _sign(float(cl[i]) - float(op[i])) * float(vol[i])
+        cvd[i] = cum_cvd
+    out[108] = np.float32(_slope(cvd, n) / (exp_bar_vol + 1e-8))
+
+    # ----- 109 early_volume_imbalance_ratio -----
+    v_up = 0.0
+    v_dn = 0.0
+    for i in range(n):
+        diff = float(cl[i]) - float(op[i])
+        if diff > 0.0:
+            v_up += float(vol[i])
+        else:
+            v_dn += float(vol[i])
+    out[109] = np.float32(v_up / (v_dn + 1e-8))
+
+    # ----- 110 early_bid_ask_spread_proxy -----
+    spread_sum = 0.0
+    for i in range(n):
+        spread_sum += (float(hi[i]) - float(lo[i])) / (float(vol[i]) + 1e-8)
+    out[110] = np.float32(spread_sum / n if n > 0 else 0.0)
+
+    # ----- 111 volume_concentration_slope -----
+    v_shares = np.zeros(n, dtype=np.float32)
+    for i in range(n):
+        v_shares[i] = float(vol[i]) / (total + 1e-8)
+    out[111] = np.float32(_slope(v_shares, n))
+
+    # ----- 112 liquidity_density_early -----
+    c_diff_sum = 0.0
+    for i in range(1, n):
+        c_diff_sum += abs(float(cl[i]) - float(cl[i - 1]))
+    out[112] = np.float32(c_diff_sum / (total + 1e-8))
+
+    # ----- 113 early_vwap_acceleration -----
+    if n >= 6:
+        vwap_first = vwap_arr[0:3].copy()
+        vwap_last = vwap_arr[3:6].copy()
+        out[113] = np.float32((_slope(vwap_last, 3) - _slope(vwap_first, 3)) / (atr_proxy + 1e-8))
+    else:
+        out[113] = np.float32(0.0)
+
+    # ----- 114 early_order_flow_imbalance -----
+    ofi = 0.0
+    for i in range(n):
+        rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+        ofi += ((float(cl[i]) - float(lo[i]) - (float(hi[i]) - float(cl[i]))) / rng_i) * float(vol[i])
+    out[114] = np.float32(ofi / (total + 1e-8))
+
+    # ----- 115 rbreaker_buy_break_dist_early -----
+    out[115] = np.float32((CD - buy_break) / (atr14_prev + 1e-8))
+
+    # ----- 116 rbreaker_sell_break_dist_early -----
+    out[116] = np.float32((CD - sell_break) / (atr14_prev + 1e-8))
+
+    # ----- 117 rbreaker_sell_setup_proximity_early -----
+    out[117] = np.float32((hh - sell_setup) / (atr14_prev + 1e-8))
+
+    # ----- 118 rbreaker_buy_setup_proximity_early -----
+    out[118] = np.float32((ll - buy_setup) / (atr14_prev + 1e-8))
+
+    # ----- 119 skypark_gap_reversal_early -----
+    sky = 0.0
+    if abs(g) >= 0.01 and n >= 2:
+        h15 = float(hi[1])
+        l15 = float(lo[1])
+        for i in range(1, n):
+            if float(hi[i]) > h15:
+                h15 = float(hi[i])
+            if float(lo[i]) < l15:
+                l15 = float(lo[i])
+        sky = ((h15 - H0) - (L0 - l15)) / prev_close
+    out[119] = np.float32(sky)
+
+    # ----- 120 turtle_breakout_strength_early -----
+    turtle = 0.0
+    if CD > high20:
+        turtle = (CD - high20) / (atr20 + 1e-8)
+    elif CD < low20:
+        turtle = (CD - low20) / (atr20 + 1e-8)
+    out[120] = np.float32(turtle)
+
     return out
 
 
@@ -1073,7 +1335,12 @@ EARLY_EXTRA_N = tuple(FULL_EARLY_EXTRA)
 # Public Python wrappers
 # ============================================================
 def extract_early_extras(day_5m: pd.DataFrame, prev_close: float,
-                         exp_bar_vol: float, decision_bar: int) -> dict:
+                         exp_bar_vol: float, decision_bar: int,
+                         is_20pct: bool = False, atr14_prev: float = 0.0,
+                         bb_width_prev_price: float = 0.0, buy_break: float = 0.0,
+                         sell_break: float = 0.0, sell_setup: float = 0.0,
+                         buy_setup: float = 0.0, high20: float = 0.0,
+                         low20: float = 0.0, atr20: float = 0.0) -> dict:
     """Slice bars[0..decision_bar], cast to float32, dispatch to numba helper."""
     bars = day_5m.head(decision_bar + 1)
     if len(bars) < 1 or prev_close is None or np.isnan(prev_close) or prev_close <= 0 \
@@ -1086,8 +1353,13 @@ def extract_early_extras(day_5m: pd.DataFrame, prev_close: float,
     cl = bars["close"].values.astype(np.float32)
     vol = bars["volume"].values.astype(np.float32)
 
-    vals = _early_extras(op, hi, lo, cl, vol,
-                         np.float32(prev_close), np.float32(exp_bar_vol))
+    vals = _early_extras(
+        op, hi, lo, cl, vol,
+        np.float32(prev_close), np.float32(exp_bar_vol),
+        is_20pct, np.float32(atr14_prev), np.float32(bb_width_prev_price),
+        np.float32(buy_break), np.float32(sell_break), np.float32(sell_setup), np.float32(buy_setup),
+        np.float32(high20), np.float32(low20), np.float32(atr20)
+    )
     
     full_dict = {name: np.float32(vals[i]) for i, name in enumerate(FULL_EARLY_EXTRA)}
     if INCLUDE_DEPRECATED:

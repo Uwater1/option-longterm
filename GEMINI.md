@@ -213,3 +213,10 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 
 ## TODO
 - [ ] Improve put buy strategy: [put_improvement_plan.md](file:///home/hallo/Documents/option-longterm/put_improvement_plan.md)
+
+## Daytrade Features Expansion (Mined Features)
+- Added 30 early-bar intraday features using Numba njit (features_extra.py).
+- Added daily options indicators (Volume P/C, Open Interest growth, Term Structure, Corridor Width) in compute_daylevel_indicators (build_features.py).
+- Added technical indicators (TD setup, BB width, inside/outside bars, WaveTrend, Keltner squeeze, Stochastic RSI, sentiment rotations) to daily indicators.
+- Total active day-model features expanded from 185 to 264. Verification completed on all 5 ETFs.
+- Re-trained linear Optuna-tuned prediction models successfully (saved in day-model/models/).
