@@ -416,13 +416,14 @@
   "ic_generalization_gap": -0.09188074110493215,
   "mono_generalization_gap": -0.3721212121212122,
   "lockbox_ic_ci": [
-    0.06829910129909629,
+    0.0682991012990963,
     0.22251382030806957
   ],
   "lockbox_mono_ci": [
-    0.3090909090909091,
-    0.9030303030303031
+    0.3696969696969697,
+    0.9033333333333331
   ],
   "lockbox_ic_swallowed": false,
-  "lockbox_mono_swallowed": true
+  "lockbox_mono_swallowed": true,
+  "lockbox_tail_ic_def": "single"
 }

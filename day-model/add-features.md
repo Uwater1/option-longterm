@@ -10,6 +10,30 @@ mandatory leakage self-test, and batch-size limits. These exist because prior mi
 rounds diluted the candidate pool (formerly 238 features → pruned to 185 features / ~2200 selection-train rows)
 without checking whether the pipeline could even use them — see `day-model/deprecate_features.py`.
 
+## Side-Specific Objective (July 2026, additive to v2)
+
+The feature pipeline (screening → CSS → VIF → Optuna → CPCV) is **unchanged** by the
+side-specific objective. Feature proposals still follow Section 1 (causality self-test)
+and Section 2 (redundancy check) regardless of side.
+
+Only the **validation objective** changes per side:
+
+| Side     | Tail IC definition (V2)                | V1..V4 weights              | CV M1..M6 kill-switches |
+| :---     | :---                                   | :---                        | :---                    |
+| `single` | two-sided: top 10% + bottom 10% (legacy) | `[0.40, 0.40, 0.15, 0.05]` | two-sided (unchanged)   |
+| `long`   | top-only: `pred >= P90(pred)`          | `[0.45, 0.45, 0.10, 0.00]` (V4 dropped, renormalized) | two-sided (unchanged) |
+| `short`  | bot-only: `pred <= P10(pred)`          | `[0.45, 0.45, 0.10, 0.00]` (V4 dropped, renormalized) | two-sided (unchanged) |
+
+Run via `python day-model/train_model.py -e 300 --side long --trials 100`. The `tag`
+field becomes `{ETF}_{side}` (e.g. `300ETF_long`); models/scalers/results live
+side-by-side with `single` artifacts. Lockbox Tail IC in `generate_report.py` is also
+side-aware. See `day-model/day-model_plan.md` Step 4.1 for the full table.
+
+**Why drop V4 (Top-Bottom Spread) for `long`/`short`?** Single-side V4 rewards a wide
+top-minus-bottom spread; for `long` we never trade the bottom decile, so its spread is
+moot. Renormalizing `V1, V2, V3` to `[0.45, 0.45, 0.10]` keeps Overall IC and Tail IC
+co-dominant while trimming structural signal weight.
+
 ---
 
 ## 0. Gate: do not propose features until these are true

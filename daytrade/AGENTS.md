@@ -73,7 +73,7 @@ python -m daytrade.rules --mode dual    # dual-mode signal counts
 python -m daytrade.backtest      # 300ETF test with per-side metrics
 python -m daytrade.calibrate --cost-bps 5
 python -m daytrade.calibrate --cost-bps 30
-python day-model/train_model.py -e all --side both --trials 100  # retrain dual models
+python day-model/train_model.py -e all --trials 100  # retrain both long+short (--both default)
 ```
 
 Outputs:
