@@ -64,8 +64,8 @@ they have the best prior odds of surviving screening.
 
 ## 3. Batch size cap (NEW)
 
-Max **+30% of current candidate count per ETF per mining round** (currently 185 →
-propose ≤55 new features per round, across all contributors combined). Forces
+Max **+60% of current candidate count per ETF per mining round** (currently 185 →
+propose ≤100 new features per round, across all contributors combined). Forces
 prioritization instead of shotgun submission. Rationale: adding candidates without adding
 training rows shrinks the many-weak-signals replication ratio — more features chasing the
 same ~2200 rows makes OOS generalization worse on average, not better, unless each new
@@ -91,6 +91,9 @@ feature is high-conviction.
 ---
 
 ## Required Fields for Proposals (extended)
+
+> [!IMPORTANT]
+> Feature mining agent must deliver proposals in CSV format. Use caveman mode for text fields. Fragments OK. Short synonyms.
 
 | Field | Description |
 |---|---|
