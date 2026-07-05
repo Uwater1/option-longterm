@@ -21,6 +21,8 @@ import os
 import time
 import warnings
 from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # Pin BLAS threads BEFORE importing numpy/sklearn/skglm so Optuna workers
 # (which fork process-parallel) do not oversubscribe the CPU.

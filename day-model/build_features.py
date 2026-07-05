@@ -20,6 +20,8 @@ Outputs: data/features_{ETF}.parquet per ETF.
 """
 import sys
 import os
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # Parse command line argument --include-deprecated first, before importing features_extra!
 if "--include-deprecated" in sys.argv:
@@ -31,6 +33,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import math
 import pandas_ta as ta
 from scipy.stats import skew, kurtosis
 
@@ -38,6 +41,7 @@ from scipy.stats import skew, kurtosis
 # features from feature.csv. See day-model/features_extra.py for impl details.
 # NOTE: EARLY_EXTRA and YESTERDAY_EXTRA are dynamically filtered at import time
 # to exclude deprecated features (never selected/active across all 5 ETFs) by default.
+from numba_utils import black_iv
 from features_extra import (
     EARLY_EXTRA,
     DAY_EXTRA,
@@ -96,7 +100,19 @@ DAY_FEATURES = [
     "northbound_buy", "northbound_sell", "northbound_net",
     # New Option Derived Features (8)
     "iv", "iv_vol_ratio", "vix", "vix_vol_ratio", "vix_iv_spread", "vix_iv_ratio",
-    "iv_diff_1d", "vix_diff_1d"
+    "iv_diff_1d", "vix_diff_1d",
+    # --- Mined Features v1 (44) ---
+    "tech_value_rotation", "yesterday_limit_up_touch", "limit_up_proximity_day", "limit_down_proximity_day",
+    "yesterday_limit_down_touch", "growth_momentum_ratio", "high_beta_vol_ratio", "retail_turnover_acceleration",
+    "vix_skew_proxy", "iv_term_structure", "vix_rolling_percentile_60d", "iv_corridor_width",
+    "yesterday_vix_early_drift", "vix_realized_spread", "iv_acceleration_1d", "option_volume_pc_ratio",
+    "option_oi_growth", "iv_envelope_deviation", "northbound_net_accel", "margin_lever_ratio",
+    "capital_net_accel", "northbound_volume_share", "yesterday_northbound_net_ratio", "margin_buy_repayment_spread",
+    "short_sell_cover_spread", "northbound_momentum_5d", "margin_extreme_rank_252d", "capital_large_order_ratio",
+    "demark_setup_count_day", "consecutive_inside_bars_3d", "outside_bar_reversal_day", "wavetrend_osc_day",
+    "wavetrend_cross_day", "keltner_squeeze_width", "stoch_rsi_divergence", "yesterday_wavetrend_osc",
+    "yesterday_stoch_rsi_cross", "cvd_divergence_day", "yesterday_illiquidity_amihud", "turtle_channel_proximity_day",
+    "chande_momentum_osc_day", "coppock_curve_day", "elder_ray_power_spread"
 ] + DAY_EXTRA
 
 YESTERDAY_FEATURES = [
@@ -107,7 +123,10 @@ YESTERDAY_FEATURES = [
     "yesterday_early_vwap_dev", "yesterday_early_skew", "yesterday_early_kurtosis",
     "yesterday_day_range", "yesterday_day_realized_vol", "yesterday_day_close_pos",
     "yesterday_day_pm_am_vol_ratio", "yesterday_day_late_mom", "yesterday_day_vwap_dev",
-    "yesterday_day_skew", "yesterday_day_kurtosis"
+    "yesterday_day_skew", "yesterday_day_kurtosis",
+    # --- Mined Features v1 Yesterday (6) ---
+    "yesterday_afternoon_reversal", "yesterday_lunch_gap", "yesterday_pm_am_vol_ratio",
+    "yesterday_afternoon_momentum", "yesterday_midday_drawdown", "yesterday_cvd_close"
 ] + YESTERDAY_EXTRA
 
 FEATURES = EARLY_FEATURES + DAY_FEATURES + YESTERDAY_FEATURES
@@ -489,6 +508,291 @@ def compute_daylevel_indicators(df_1d: pd.DataFrame, margin_cache: pd.DataFrame,
     df["iv_diff_1d"] = df["iv"].diff(1)
     df["vix_diff_1d"] = df["vix"].diff(1)
 
+    # ── Mined daily option-derived features ──
+    opt_prices_file = f"{etf_key}ETF_historical_prices.parquet" if etf_key != "50" else "50ETF_historical_prices.parquet"
+    opt_inst_file = f"{etf_key}ETF_instruments.parquet" if etf_key != "50" else "50ETF_instruments.parquet"
+    etf_1d_file = {"50": "50ETF_1d.parquet", "300": "510300_1d.parquet", "500": "500ETF_1d.parquet", "588000": "588000ETF_1d.parquet", "159915": "159915ETF_1d.parquet"}[etf_key]
+    
+    try:
+        opt_prices = pd.read_parquet(DATA_DIR / opt_prices_file)
+        opt_inst = pd.read_parquet(DATA_DIR / opt_inst_file)
+        df_etf_1d = pd.read_parquet(DATA_DIR / etf_1d_file)
+        
+        opt_merged = opt_prices.merge(
+            opt_inst[["order_book_id", "option_type", "maturity_date"]],
+            on="order_book_id",
+            how="inner"
+        )
+        opt_merged["date"] = pd.to_datetime(opt_merged["date"])
+        opt_merged["maturity_date"] = pd.to_datetime(opt_merged["maturity_date"])
+        opt_merged["days_to_maturity"] = (opt_merged["maturity_date"] - opt_merged["date"]).dt.days
+        
+        und_close = df_etf_1d.set_index(pd.to_datetime(df_etf_1d["date"]))["close"]
+        opt_merged["s0"] = opt_merged["date"].map(und_close)
+        opt_merged["strike_dist"] = (opt_merged["strike_price"] - opt_merged["s0"]).abs()
+        
+        # 1. Option volume pc ratio & OI growth (vectorized)
+        vol_by_type = opt_merged.groupby(["date", "option_type"])["volume"].sum().unstack()
+        pc_ratio_series = vol_by_type["P"] / (vol_by_type["C"] + 1e-8)
+        
+        total_oi_series = opt_merged.groupby("date")["open_interest"].sum()
+        oi_growth_series = total_oi_series.pct_change()
+        
+        # 2. Term structure & corridor width
+        term_struct = {}
+        corr_width = {}
+        
+        for date, day_df in opt_merged.groupby("date"):
+            s0 = day_df["s0"].iloc[0]
+            if pd.isna(s0) or s0 <= 0:
+                continue
+                
+            valid_df = day_df[(day_df["days_to_maturity"] >= 10) & (day_df["days_to_maturity"] <= 120)]
+            mats = sorted(valid_df["maturity_date"].unique())
+            if len(mats) < 2:
+                continue
+            
+            T1_dt, T2_dt = mats[0], mats[1]
+            T1_days = (T1_dt - date).days
+            T2_days = (T2_dt - date).days
+            T1 = max(T1_days, 2) / 365.0
+            T2 = max(T2_days, 2) / 365.0
+            
+            near_df = valid_df[valid_df["maturity_date"] == T1_dt]
+            idx_atm = near_df["strike_dist"].idxmin()
+            atm_strike = near_df.loc[idx_atm, "strike_price"]
+            
+            near_atm = near_df[near_df["strike_price"] == atm_strike]
+            c1_row = near_atm[near_atm["option_type"] == "C"]
+            p1_row = near_atm[near_atm["option_type"] == "P"]
+            if c1_row.empty or p1_row.empty:
+                continue
+            c1 = c1_row["close"].iloc[0]
+            p1 = p1_row["close"].iloc[0]
+            
+            next_df = valid_df[valid_df["maturity_date"] == T2_dt]
+            idx_atm_next = next_df["strike_dist"].idxmin()
+            atm_strike_next = next_df.loc[idx_atm_next, "strike_price"]
+            
+            next_atm = next_df[next_df["strike_price"] == atm_strike_next]
+            c2_row = next_atm[next_atm["option_type"] == "C"]
+            p2_row = next_atm[next_atm["option_type"] == "P"]
+            if c2_row.empty or p2_row.empty:
+                continue
+            c2 = c2_row["close"].iloc[0]
+            p2 = p2_row["close"].iloc[0]
+            
+            straddle_1 = c1 + p1
+            straddle_2 = c2 + p2
+            iv1 = straddle_1 / (s0 * math.sqrt(T1) + 1e-8)
+            iv2 = straddle_2 / (s0 * math.sqrt(T2) + 1e-8)
+            
+            term_struct[date] = iv1 / (iv2 + 1e-8)
+            
+            strike_target_up = 1.05 * s0
+            strike_target_dn = 0.95 * s0
+            
+            near_calls = near_df[near_df["option_type"] == "C"]
+            near_puts = near_df[near_df["option_type"] == "P"]
+            if near_calls.empty or near_puts.empty:
+                continue
+                
+            idx_up = (near_calls["strike_price"] - strike_target_up).abs().idxmin()
+            strike_up = near_calls.loc[idx_up, "strike_price"]
+            c_up = near_calls.loc[idx_up, "close"]
+            
+            idx_dn = (near_puts["strike_price"] - strike_target_dn).abs().idxmin()
+            strike_dn = near_puts.loc[idx_dn, "strike_price"]
+            p_dn = near_puts.loc[idx_dn, "close"]
+            
+            r_rate = 0.02
+            iv_up = black_iv(c_up, s0, strike_up, T1, r_rate, True)
+            iv_dn = black_iv(p_dn, s0, strike_dn, T1, r_rate, False)
+            iv_atm = (iv1 + iv2) / 2.0
+            
+            corr_width[date] = (iv_up - iv_dn) / (iv_atm + 1e-8)
+            
+        df["date_dt"] = pd.to_datetime(df["date"])
+        df["option_volume_pc_ratio"] = df["date_dt"].map(pc_ratio_series)
+        df["option_oi_growth"] = df["date_dt"].map(oi_growth_series)
+        df["iv_term_structure"] = df["date_dt"].map(term_struct)
+        df["iv_corridor_width"] = df["date_dt"].map(corr_width)
+        
+    except Exception as e:
+        print(f"    [WARN] Failed to compute option features: {e}")
+        df["option_volume_pc_ratio"] = np.nan
+        df["option_oi_growth"] = np.nan
+        df["iv_term_structure"] = np.nan
+        df["iv_corridor_width"] = np.nan
+
+    # ── Mined daily technical/regime indicators ──
+    df["date_dt"] = pd.to_datetime(df["date"])
+    df["vix_skew_proxy"] = (df["vix"] - df["vix"].shift(1)) / (df["vix"].shift(1) + 1e-8)
+    df["vix_rolling_percentile_60d"] = df["vix"].rolling(60).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1] if len(x) > 0 else np.nan, raw=True)
+    df["vix_realized_spread"] = df["vix"] - df["vol20"]
+    df["iv_acceleration_1d"] = df["iv"].diff(1).diff(1)
+    
+    iv_sma20 = df["iv"].rolling(20).mean()
+    df["iv_envelope_deviation"] = (df["iv"] - iv_sma20) / (iv_sma20 + 1e-8)
+    
+    df["yesterday_vix_early_drift"] = df["vix_diff_1d"]
+    df["northbound_net_accel"] = df["northbound_net"].diff(1) / (df["volume"] + 1e-8)
+    df["margin_lever_ratio"] = df["margin_balance"] / (df["short_balance"] + 1e-8)
+    df["capital_net_accel"] = df["capital_net_ratio"].diff(1)
+    df["northbound_volume_share"] = (df["northbound_buy"] + df["northbound_sell"]) / (df["volume"] + 1e-8)
+    df["yesterday_northbound_net_ratio"] = df["northbound_net"] / (df["volume"] + 1e-8)
+    df["margin_buy_repayment_spread"] = (df["buy_on_margin_value"] - df["margin_repayment"]) / (df["total_balance"] + 1e-8)
+    df["short_sell_cover_spread"] = (df["short_sell_quantity"] - df["short_repayment_quantity"]) / (df["short_balance_quantity"] + 1e-8)
+    df["northbound_momentum_5d"] = df["northbound_net"].rolling(5).sum() / (df["volume"].rolling(5).mean() + 1e-8)
+    df["margin_extreme_rank_252d"] = df["margin_balance"].rolling(252).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1] if len(x) > 0 else np.nan, raw=True)
+    df["capital_large_order_ratio"] = (df["capital_buy_volume"] - df["capital_sell_volume"]) / (df["capital_buy_volume"] + df["capital_sell_volume"] + 1e-8)
+    
+    # TD Sequential Setup Count
+    consec_buy = (df["close_adj"] < df["close_adj"].shift(4)).astype(int)
+    consec_sell = (df["close_adj"] > df["close_adj"].shift(4)).astype(int)
+    buy_count = np.zeros(len(df))
+    sell_count = np.zeros(len(df))
+    b_run = 0
+    s_run = 0
+    for i in range(len(df)):
+        if consec_buy.iloc[i]:
+            b_run = min(b_run + 1, 9)
+            s_run = 0
+        elif consec_sell.iloc[i]:
+            s_run = min(s_run + 1, 9)
+            b_run = 0
+        else:
+            b_run = 0
+            s_run = 0
+        buy_count[i] = b_run
+        sell_count[i] = s_run
+    df["demark_setup_count_day"] = sell_count - buy_count
+    
+    # Inside/Outside Bars
+    inside_bar = (df["high_adj"] <= df["high_adj"].shift(1)) & (df["low_adj"] >= df["low_adj"].shift(1))
+    inside_count = np.zeros(len(df))
+    run = 0
+    for i in range(len(df)):
+        if inside_bar.iloc[i]:
+            run += 1
+        else:
+            run = 0
+        inside_count[i] = run
+    df["consecutive_inside_bars_3d"] = inside_count
+    df["outside_bar_reversal_day"] = ((df["high_adj"] > df["high_adj"].shift(1)) & (df["low_adj"] < df["low_adj"].shift(1))).astype(float)
+    
+    # WaveTrend Day
+    ap = (df["high_adj"] + df["low_adj"] + df["close_adj"]) / 3.0
+    esa = ap.ewm(span=10, adjust=False).mean()
+    d = (ap - esa).abs().ewm(span=10, adjust=False).mean()
+    ci = (ap - esa) / (0.015 * d + 1e-8)
+    wt1 = ci.ewm(span=21, adjust=False).mean()
+    df["wavetrend_osc_day"] = wt1 / 100.0
+    wt2 = df["wavetrend_osc_day"].rolling(4).mean()
+    df["wavetrend_cross_day"] = df["wavetrend_osc_day"] - wt2
+    
+    # Keltner Squeeze Width
+    kc_mid = df["close_adj"].ewm(span=20, adjust=False).mean()
+    kc_tr = pd.concat([(df["high_adj"] - df["low_adj"]).abs(),
+                       (df["high_adj"] - df["close_adj"].shift(1)).abs(),
+                       (df["low_adj"] - df["close_adj"].shift(1)).abs()], axis=1).max(axis=1)
+    kc_atr = kc_tr.rolling(20).mean()
+    keltner_width = (3.0 * kc_atr) / (kc_mid + 1e-8)
+    df["keltner_squeeze_width"] = df["bb_width"] / (keltner_width + 1e-8)
+    
+    # Stochastic RSI
+    rsi = df["rsi14"]
+    rsi_min = rsi.rolling(14).min()
+    rsi_max = rsi.rolling(14).max()
+    stoch_rsi = (rsi - rsi_min) / (rsi_max - rsi_min + 1e-8)
+    df["stoch_rsi_divergence"] = df["close_adj"] / (df["close_adj"].rolling(14).mean() + 1e-8) - stoch_rsi
+    
+    # Cross-ETF sentiment rotations
+    try:
+        df_300 = pd.read_parquet(DATA_DIR / "000300_1d.parquet")
+        df_159915 = pd.read_parquet(DATA_DIR / "399006_1d.parquet")
+        df_588000 = pd.read_parquet(DATA_DIR / "000688_1d.parquet")
+        
+        df_300["date"] = pd.to_datetime(df_300["date"])
+        df_159915["date"] = pd.to_datetime(df_159915["date"])
+        df_588000["date"] = pd.to_datetime(df_588000["date"])
+        
+        c300_s = df_300.set_index("date")["close"]
+        c159915_s = df_159915.set_index("date")["close"]
+        
+        c300_aligned = df["date_dt"].map(c300_s)
+        c159915_aligned = df["date_dt"].map(c159915_s)
+        df["tech_value_rotation"] = c159915_aligned / (c300_aligned + 1e-8)
+        
+        roc_300 = ta.roc(df_300["close"], length=10) / 100.0
+        roc_588000 = ta.roc(df_588000["close"], length=10) / 100.0
+        roc_300_s = pd.Series(roc_300.values, index=df_300["date"])
+        roc_588000_s = pd.Series(roc_588000.values, index=df_588000["date"])
+        
+        df["growth_momentum_ratio"] = df["date_dt"].map(roc_588000_s) - df["date_dt"].map(roc_300_s)
+        
+        lr_300 = np.log(df_300["close"] / df_300["close"].shift(1))
+        lr_588000 = np.log(df_588000["close"] / df_588000["close"].shift(1))
+        v300_s = pd.Series((lr_300.rolling(20).std() * np.sqrt(252)).values, index=df_300["date"])
+        v588000_s = pd.Series((lr_588000.rolling(20).std() * np.sqrt(252)).values, index=df_588000["date"])
+        
+        df["high_beta_vol_ratio"] = df["date_dt"].map(v588000_s) / (df["date_dt"].map(v300_s) + 1e-8)
+    except Exception as e:
+        print(f"    [WARN] Failed cross-ETF rotation: {e}")
+        df["tech_value_rotation"] = np.nan
+        df["growth_momentum_ratio"] = np.nan
+        df["high_beta_vol_ratio"] = np.nan
+        
+    df["retail_turnover_acceleration"] = df["volume"] / (df["volume"].rolling(20).mean() + 1e-8)
+    
+    # Yesterday limits
+    limit_up_mult = 1.20 if etf_key in ["588000", "159915"] else 1.10
+    limit_down_mult = 0.80 if etf_key in ["588000", "159915"] else 0.90
+    prev_close_adj = df["close_adj"].shift(1)
+    
+    df["yesterday_limit_up_touch"] = (df["high_adj"] >= prev_close_adj * limit_up_mult - 1e-5).astype(float)
+    df["yesterday_limit_down_touch"] = (df["low_adj"] <= prev_close_adj * limit_down_mult + 1e-5).astype(float)
+    df["limit_up_proximity_day"] = (df["close_adj"] - prev_close_adj * limit_up_mult) / (prev_close_adj * limit_up_mult + 1e-8)
+    df["limit_down_proximity_day"] = (df["close_adj"] - prev_close_adj * limit_down_mult) / (prev_close_adj * limit_down_mult + 1e-8)
+    
+    df["yesterday_wavetrend_osc"] = df["wavetrend_osc_day"]
+    
+    # Stochastic RSI cross
+    stoch_k = df["stoch_k"]
+    stoch_d = df["stoch_d"]
+    df["yesterday_stoch_rsi_cross"] = stoch_k - stoch_d
+    
+    # CVD divergence
+    daily_cvd = (df["close_adj"] - df["open_adj"]) * df["volume"]
+    df["cvd_divergence_day"] = df["close_adj"] / (df["close_adj"].shift(4) + 1e-8) - daily_cvd / (daily_cvd.shift(4) + 1e-8)
+    
+    # Amihud yesterday illiquidity
+    yesterday_return_inline = (df["close_adj"] - df["close_adj"].shift(1)) / (df["close_adj"].shift(1) + 1e-8)
+    df["yesterday_illiquidity_amihud"] = yesterday_return_inline.abs() / (df["volume"] + 1e-8)
+    
+    # Turtle channel
+    high20 = df["high_adj"].rolling(20).max()
+    low20 = df["low_adj"].rolling(20).min()
+    df["turtle_channel_proximity_day"] = (df["close_adj"] - (high20 + low20) / 2.0) / (high20 - low20 + 1e-8)
+    
+    # Chande
+    diff = df["close_adj"].diff(1)
+    su = diff.clip(lower=0).rolling(14).sum()
+    sd = (-diff).clip(lower=0).rolling(14).sum()
+    df["chande_momentum_osc_day"] = (su - sd) / (su + sd + 1e-8)
+    
+    # Coppock
+    roc14 = ta.roc(df["close_adj"], length=14)
+    roc11 = ta.roc(df["close_adj"], length=11)
+    cc = (roc14 + roc11) if roc14 is not None and roc11 is not None else np.nan
+    df["coppock_curve_day"] = ta.wma(cc, length=10) / 100.0 if cc is not None else np.nan
+    
+    # Elder ray
+    ema13 = df["close_adj"].ewm(span=13, adjust=False).mean()
+    bull_power = df["high_adj"] - ema13
+    bear_power = df["low_adj"] - ema13
+    df["elder_ray_power_spread"] = (bull_power - bear_power) / (atr14 + 1e-8)
+
     # ── New 14 day-level features from features_extra.py ──
     # Computed on full daily Index history ending at T-1 (shifted by 1 below).
     try:
@@ -520,7 +824,12 @@ def compute_daylevel_indicators(df_1d: pd.DataFrame, margin_cache: pd.DataFrame,
 # Early-bar features (first 6 bars of 5m data)
 # ============================================================
 def extract_day_early_features(day_5m: pd.DataFrame, prev_close: float, expected_bar_vol: float,
-                               decision_bar: int = EARLY_BARS - 1) -> dict:
+                               decision_bar: int = EARLY_BARS - 1,
+                               is_20pct: bool = False, atr14_prev: float = 0.0,
+                               bb_width_prev_price: float = 0.0, buy_break: float = 0.0,
+                               sell_break: float = 0.0, sell_setup: float = 0.0,
+                               buy_setup: float = 0.0, high20: float = 0.0,
+                               low20: float = 0.0, atr20: float = 0.0) -> dict:
     """Extract early features strictly causally — only bars [0..decision_bar] are consumed.
 
     Parameters
@@ -622,11 +931,18 @@ def extract_day_early_features(day_5m: pd.DataFrame, prev_close: float, expected
     res["total_path_length"] = float(np.sum(np.abs(bar_ret)))
     res["volume_slope"] = float(_linear_slope(vol) / expected_bar_vol)
 
-    # ── New 91 early-bar features from features_extra.py (numba njit, fp32) ──
+    # ── New 121 early-bar features from features_extra.py (numba njit, fp32) ──
     # Reuses already-sliced op/hi/lo/cl/vol (float64); extract_early_extras
     # casts to float32 and dispatches to the compiled helper.
     try:
-        res.update(extract_early_extras(bars, prev_close, expected_bar_vol, decision_bar))
+        res.update(extract_early_extras(
+            bars, prev_close, expected_bar_vol, decision_bar,
+            is_20pct=is_20pct, atr14_prev=atr14_prev,
+            bb_width_prev_price=bb_width_prev_price, buy_break=buy_break,
+            sell_break=sell_break, sell_setup=sell_setup,
+            buy_setup=buy_setup, high20=high20,
+            low20=low20, atr20=atr20
+        ))
     except Exception:
         # On any failure, fill NaN so the schema stays uniform
         res.update(empty_early_extras())
@@ -666,7 +982,10 @@ def extract_day_full_features(day_5m: pd.DataFrame) -> dict:
         return {
             "day_range": np.nan, "day_realized_vol": np.nan, "day_close_pos": np.nan,
             "day_pm_am_vol_ratio": np.nan, "day_late_mom": np.nan, "day_vwap_dev": np.nan,
-            "day_skew": np.nan, "day_kurtosis": np.nan
+            "day_skew": np.nan, "day_kurtosis": np.nan,
+            "afternoon_reversal": np.nan, "lunch_gap": np.nan, "pm_am_vol_ratio": np.nan,
+            "pm_momentum": np.nan, "midday_liquidity_fade": np.nan, "midday_drawdown": np.nan,
+            "cvd_close": np.nan,
         }
         
     day_open = opens[0]
@@ -689,6 +1008,25 @@ def extract_day_full_features(day_5m: pd.DataFrame) -> dict:
     day_skew = float(skew(log_rets)) if len(log_rets) >= 3 and np.std(log_rets) > 1e-10 else 0.0
     day_kurtosis = float(kurtosis(log_rets, fisher=True)) if len(log_rets) >= 3 and np.std(log_rets) > 1e-10 else 0.0
     
+    afternoon_reversal = np.nan
+    lunch_gap = np.nan
+    pm_momentum = np.nan
+    midday_liquidity_fade = np.nan
+    if len(closes) >= 48:
+        morn_ret = (closes[23] - opens[0]) / (opens[0] + 1e-8)
+        aft_ret = (closes[47] - opens[24]) / (opens[24] + 1e-8)
+        afternoon_reversal = aft_ret - morn_ret
+        
+        lunch_gap = (opens[24] - closes[23]) / (closes[23] + 1e-8)
+        pm_momentum = float(np.log(closes[42] / opens[24]))
+        midday_liquidity_fade = (float(vols[22]) + float(vols[25])) / (float(np.mean(vols)) + 1e-8)
+
+    midday_drawdown = (float(np.min(lows)) - float(opens[0])) / (float(opens[0]) + 1e-8)
+    
+    cvd_close = 0.0
+    for i in range(len(closes)):
+        cvd_close += float(np.sign(closes[i] - opens[i]) * vols[i])
+
     return {
         "day_range": day_range,
         "day_realized_vol": day_realized_vol,
@@ -697,7 +1035,14 @@ def extract_day_full_features(day_5m: pd.DataFrame) -> dict:
         "day_late_mom": day_late_mom,
         "day_vwap_dev": day_vwap_dev,
         "day_skew": day_skew,
-        "day_kurtosis": day_kurtosis
+        "day_kurtosis": day_kurtosis,
+        "afternoon_reversal": afternoon_reversal,
+        "lunch_gap": lunch_gap,
+        "pm_am_vol_ratio": day_pm_am_vol_ratio,
+        "pm_momentum": pm_momentum,
+        "midday_liquidity_fade": midday_liquidity_fade,
+        "midday_drawdown": midday_drawdown,
+        "cvd_close": cvd_close,
     }
 
 
@@ -783,6 +1128,9 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
 
     # ── Day-level indicators (shifted to prior day) ──
     daylevel = compute_daylevel_indicators(df_idx_1d, margin_df, cap_df, quota_df)
+    daylevel["date"] = pd.to_datetime(daylevel["date"])
+    daylevel = daylevel.set_index("date").sort_index()
+    daylevel_dict = daylevel.to_dict(orient="index")
 
     # ── Per-day early features + PM return ──
     df_idx_1d_sorted = df_idx_1d.sort_values("date").reset_index(drop=True).copy()
@@ -817,8 +1165,35 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
             expected_daily_vol = fallback_daily_vol
         expected_bar_vol = expected_daily_vol / 48.0
         
+        # Get indicators from T-1 daily indicators
+        ctx = daylevel_dict.get(date_ts, {})
+        is_20pct = etf_name in ["588000ETF", "159915ETF"]
+        
+        atr14_prev = ctx.get("atr14", 0.0)
+        if pd.isna(atr14_prev) or atr14_prev <= 0.0:
+            atr14_prev = prev_close * 0.02 if not pd.isna(prev_close) else 0.02
+            
+        bb_width_val = ctx.get("bb_width", 0.0)
+        bb_width_prev_price = bb_width_val * prev_close if not pd.isna(prev_close) else 0.0
+        
+        buy_break = ctx.get("buy_break", 0.0)
+        sell_break = ctx.get("sell_break", 0.0)
+        sell_setup = ctx.get("sell_setup", 0.0)
+        buy_setup = ctx.get("buy_setup", 0.0)
+        
+        high20 = ctx.get("high20", 0.0)
+        low20 = ctx.get("low20", 0.0)
+        atr20 = ctx.get("atr20", 0.0)
+        
         # Calculate early features on Index 5m data
-        early = extract_day_early_features(day_idx_df, prev_close, expected_bar_vol, decision_bar=decision_bar)
+        early = extract_day_early_features(
+            day_idx_df, prev_close, expected_bar_vol, decision_bar=decision_bar,
+            is_20pct=is_20pct, atr14_prev=atr14_prev,
+            bb_width_prev_price=bb_width_prev_price, buy_break=buy_break,
+            sell_break=sell_break, sell_setup=sell_setup,
+            buy_setup=buy_setup, high20=high20,
+            low20=low20, atr20=atr20
+        )
         early["date"] = date_ts
         
         # Target/diagnostics calculated on ETF 5m data
@@ -853,15 +1228,19 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
         # Bases for YESTERDAY_EXTRA (yesterday_intraday_close_position,
         # yesterday_opening_gap_reversal, yesterday_spike_exhaustion_ratio)
         "intraday_close_position", "opening_gap_reversal", "spike_exhaustion_ratio",
+        # New full day features
+        "afternoon_reversal", "lunch_gap", "pm_am_vol_ratio",
+        "midday_liquidity_fade", "midday_drawdown", "cvd_close",
     ]
     cols_to_shift = [col for col in cols_to_shift if col in early_df.columns]
     for col in cols_to_shift:
         early_df[f"yesterday_{col}"] = early_df[col].shift(1)
+        
+    # Custom yesterday shift for afternoon momentum
+    if "pm_momentum" in early_df.columns:
+        early_df["yesterday_afternoon_momentum"] = early_df["pm_momentum"].shift(1)
 
     # ── Merge with day-level indicators ──
-    daylevel["date"] = pd.to_datetime(daylevel["date"])
-    daylevel = daylevel.set_index("date").sort_index()
-
     feat = early_df.join(daylevel, how="inner")
 
     # ── Drop warmup rows ──
@@ -871,9 +1250,13 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
     n_before = len(feat)
     feat = feat.dropna(subset=["trade_return"]).copy()
     n_after = len(feat)
+    
+    # Subset to keep only declared features + target + diagnostics
+    all_out_cols = [c for c in FEATURES + ["trade_return", "pm_return"] if c in feat.columns]
+    feat = feat[all_out_cols].copy()
 
     print(f"  samples: {n_after} (dropped {n_before - n_after} NaN-target), "
-          f"features: {len(FEATURES)}")
+          f"features: {len(all_out_cols) - 2}")
     print(f"  target trade_return: mean={feat['trade_return'].mean()*100:.4f}%  "
           f"std={feat['trade_return'].std()*100:.4f}%  "
           f"Sharpe={feat['trade_return'].mean()/feat['trade_return'].std()*np.sqrt(252):.2f}")
