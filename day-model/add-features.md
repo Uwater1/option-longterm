@@ -7,8 +7,8 @@ ETFs. This spec governs how new features get proposed and admitted into the pipe
 
 v2 changes vs v1: adds pre-mining gates, per-ETF prioritization, redundancy checks,
 mandatory leakage self-test, and batch-size limits. These exist because prior mining
-rounds diluted an already-thin candidate pool (238 features / ~2200 selection-train rows)
-without checking whether the pipeline could even use them — see `feature_pruning_plan.md`.
+rounds diluted the candidate pool (formerly 238 features → pruned to 185 features / ~2200 selection-train rows)
+without checking whether the pipeline could even use them — see `day-model/deprecate_features.py`.
 
 ---
 
@@ -18,8 +18,8 @@ without checking whether the pipeline could even use them — see `feature_pruni
       feature-count on a clean run (not 28/29, 26/26, 12/12 — that's ridge behavior, not MCP).
 - [ ] Plateau hyperparameter selector fixed (min-neighbor-count gate), confirmed it never
       again selects a trial with negative objective over a positive raw-best.
-- [ ] Feature pruning pass complete (see `feature_pruning_plan.md`) — dead-weight tier-3
-      features removed or deprecated, so new proposals aren't diluting an already-bloated pool.
+- [x] Feature pruning pass complete — 53 dead-weight features (never selected, active,
+      or stable across any of the 5 ETFs) moved to `deprecate_features.py`.
 
 If any box unchecked, do not run this spec. Fix pipeline, THEN mine.
 
@@ -53,7 +53,7 @@ runs through it in CI before merge.
 
 ## 2. Redundancy check against current active-feature set (NEW)
 
-Before proposing, check `feature_pruning_plan.md` Tier 1 core-signal list for the target
+Before proposing, check `day-model/REPORT.md` (Active Features list) and `deprecate_features.py` for the target
 ETF. A near-duplicate of an already-consistently-active feature (same underlying
 mechanism, different window/normalization) is fine — encouraged even, per Section 4 — but
 must be labeled `variant_of: <existing_feature_name>` in the proposal table, not submitted
@@ -64,8 +64,8 @@ they have the best prior odds of surviving screening.
 
 ## 3. Batch size cap (NEW)
 
-Max **+30% of current candidate count per ETF per mining round** (currently 238 →
-propose ≤64 new features per round, across all contributors combined). Forces
+Max **+30% of current candidate count per ETF per mining round** (currently 185 →
+propose ≤55 new features per round, across all contributors combined). Forces
 prioritization instead of shotgun submission. Rationale: adding candidates without adding
 training rows shrinks the many-weak-signals replication ratio — more features chasing the
 same ~2200 rows makes OOS generalization worse on average, not better, unless each new
@@ -132,5 +132,5 @@ feature is high-conviction.
 Every merged feature gets one line in `FEATURE_CHANGELOG.md`: name, date added, target
 ETF(s), proposing contributor, one-line mechanism summary. When a feature gets deprecated
 via the pruning process, same file gets the deprecation entry with reason and last-active
-run ID. This is the only way frequency-audits like `feature_pruning_plan.md` stay possible
+run ID. This is the only way audits against `deprecate_features.py` stay possible
 without manually re-deriving history from old REPORT.md files.

@@ -1,3 +1,13 @@
+"""
+Registry of deprecated custom features.
+
+RATIONALE:
+These features are custom early-bar and yesterday-mirror indicators that never
+achieved a non-zero stability score and were never selected or active in the
+final model for any of the 5 ETFs (50, 300, 500, 588000, 159915).
+Pruning them reduces candidate-to-sample dimensionality bloat, controlling
+overfitting and collinearity, without degrading validation or OOS metrics.
+"""
 import os
 
 # Flag to include deprecated features for backward compatibility
