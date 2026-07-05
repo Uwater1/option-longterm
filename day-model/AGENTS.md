@@ -144,4 +144,11 @@ We evaluated individual validation block performances using the best parameters 
 ### 3. Hand Trader Consensus
 Hand traders report that trading signals during the 2024–2026 lockbox period were structurally "stronger" and more pronounced. This matches our empirical lockbox results, confirming that the strong lockbox performance is a real regime-driven effect, not a leak.
 
+## Feature Deprecation & Compatibility (July 2026)
+
+- Deprecated 49 early extra and 2 yesterday extra features that were never active or stable across all 5 ETFs.
+- Defined in `day-model/deprecate_features.py`.
+- Backward compatibility: Use `--include-deprecated` flag with `build_features.py` or set `INCLUDE_DEPRECATED=1` environment variable to include them.
+
+
 

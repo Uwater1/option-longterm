@@ -18,6 +18,13 @@ Diagnostic target: ``pm_return`` = sum of log returns over bars 24..47 (13:00-15
 
 Outputs: data/features_{ETF}.parquet per ETF.
 """
+import sys
+import os
+
+# Parse command line argument --include-deprecated first, before importing features_extra!
+if "--include-deprecated" in sys.argv:
+    os.environ["INCLUDE_DEPRECATED"] = "1"
+
 import argparse
 import warnings
 from pathlib import Path
@@ -845,6 +852,7 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
         # yesterday_opening_gap_reversal, yesterday_spike_exhaustion_ratio)
         "intraday_close_position", "opening_gap_reversal", "spike_exhaustion_ratio",
     ]
+    cols_to_shift = [col for col in cols_to_shift if col in early_df.columns]
     for col in cols_to_shift:
         early_df[f"yesterday_{col}"] = early_df[col].shift(1)
 
@@ -883,6 +891,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("-e", "--etf", default="all",
                     help="ETF code: 300/50/500/588000/159915 or 'all'")
+    ap.add_argument("--include-deprecated", action="store_true",
+                    help="Include deprecated features for backward compatibility")
     args = ap.parse_args()
 
     etf_arg = args.etf

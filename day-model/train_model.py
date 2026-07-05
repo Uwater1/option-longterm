@@ -705,9 +705,9 @@ def extract_normalized_params(trial):
         norm_log_alpha = (log_alpha - np.log(1e-5)) / (np.log(10.0) - np.log(1e-5))
         vec.append(norm_log_alpha)
         
-        # gamma range [1.01, 3.0]
-        gamma = params.get("skglm_mcp_gamma", 1.01)
-        vec.append((gamma - 1.01) / 1.99)
+        # gamma range [3.0, 10.0]
+        gamma = params.get("skglm_mcp_gamma", 3.0)
+        vec.append((gamma - 3.0) / 7.0)
         
         # delta range [0.5, 5.0]
         delta = params.get("skglm_mcp_delta", 0.5)
@@ -716,7 +716,7 @@ def extract_normalized_params(trial):
     return np.array(vec), model_type
 
 
-def find_plateau_trial(study, r=0.25, min_neighbors=3, min_valid_neighbors=3):
+def find_plateau_trial(study, r=0.25, min_neighbors=8, min_valid_neighbors=6):
     import optuna
     # Get all completed trials
     trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE and t.value is not None]
@@ -741,10 +741,16 @@ def find_plateau_trial(study, r=0.25, min_neighbors=3, min_valid_neighbors=3):
         trial_vecs[t.number] = vec
         trial_types[t.number] = m_type
         
+    # Count completed trials of each type
+    type_counts = {}
+    for other in trials:
+        m_type = trial_types[other.number]
+        type_counts[m_type] = type_counts.get(m_type, 0) + 1
+
     best_stable_trial = None
     best_plateau_score = -1e10
     
-    print("\n  [DIAGNOSTICS] Plateau Search (r={:.2f}, min_n={:d}, min_val_n={:d}):".format(r, min_neighbors, min_valid_neighbors))
+    print("\n  [DIAGNOSTICS] Plateau Search (r={:.2f}, default_min_n={:d}, default_min_val_n={:d}):".format(r, min_neighbors, min_valid_neighbors))
     for t in valid_trials:
         t_vec = trial_vecs[t.number]
         t_type = trial_types[t.number]
@@ -768,7 +774,12 @@ def find_plateau_trial(study, r=0.25, min_neighbors=3, min_valid_neighbors=3):
             if c_vals is not None and all(c <= 0 for c in c_vals):
                 valid_neighbors.append(n)
                 
-        if len(neighbors) < min_neighbors or len(valid_neighbors) < min_valid_neighbors:
+        # Dynamic density gate based on type counts
+        t_type_count = type_counts.get(t_type, 0)
+        req_neighbors = max(min_neighbors, int(0.15 * t_type_count))
+        req_valid = max(min_valid_neighbors, int(0.10 * t_type_count))
+
+        if len(neighbors) < req_neighbors or len(valid_neighbors) < req_valid:
             plateau_score = -1e10
             valid_ratio = len(valid_neighbors) / len(neighbors) if neighbors else 0.0
             mean_val = np.nan
@@ -782,7 +793,7 @@ def find_plateau_trial(study, r=0.25, min_neighbors=3, min_valid_neighbors=3):
         if is_top_5_raw:
             mean_val_str = f"{mean_val:+.4f}" if not np.isnan(mean_val) else "N/A"
             plateau_score_str = f"{plateau_score:+.4f}" if plateau_score > -1e9 else "Excluded"
-            print(f"    Trial {t.number:3d} (val={t.value:+.4f}, deflated={t_val:+.4f}): neighbors={len(neighbors)} (valid={len(valid_neighbors)}), valid_ratio={valid_ratio:.2f}, neighbor_mean={mean_val_str}, plateau={plateau_score_str}")
+            print(f"    Trial {t.number:3d} (val={t.value:+.4f}, deflated={t_val:+.4f}): neighbors={len(neighbors)} (valid={len(valid_neighbors)}, req={req_neighbors}/{req_valid}), valid_ratio={valid_ratio:.2f}, neighbor_mean={mean_val_str}, plateau={plateau_score_str}")
             
         if plateau_score > -1e9 and plateau_score > best_plateau_score:
             best_plateau_score = plateau_score
@@ -1249,7 +1260,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 trial_params["skglm_huber_delta"] = trial.suggest_float("skglm_huber_delta", 0.5, 5.0)
             elif model_type == "skglm_mcp":
                 trial_params["skglm_mcp_alpha"] = trial.suggest_float("skglm_mcp_alpha", 1e-5, 10.0, log=True)
-                trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 1.01, 3.0)
+                trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 3.0, 10.0)
                 trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
 
             try:
@@ -1266,12 +1277,17 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 traceback.print_exc()
                 return -999.0
 
-        def run_pilot_trial():
-            local_study = optuna.load_study(study_name=f"pilot_{tag}", storage=pilot_storage)
+        def run_pilot_trial(worker_seed):
+            local_sampler = optuna.samplers.TPESampler(seed=worker_seed)
+            local_study = optuna.load_study(
+                study_name=f"pilot_{tag}",
+                storage=pilot_storage,
+                sampler=local_sampler
+            )
             local_study.optimize(pilot_objective, n_trials=1)
 
         Parallel(n_jobs=optuna_n_jobs)(
-            delayed(run_pilot_trial)() for _ in range(PILOT_N_TRIALS)
+            delayed(run_pilot_trial)(PILOT_SEED + i) for i in range(PILOT_N_TRIALS)
         )
 
         pilot_records = []
@@ -1355,7 +1371,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             trial_params["skglm_huber_delta"] = trial.suggest_float("skglm_huber_delta", 0.5, 5.0)
         elif model_type == "skglm_mcp":
             trial_params["skglm_mcp_alpha"] = trial.suggest_float("skglm_mcp_alpha", 1e-5, 10.0, log=True)
-            trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 1.01, 3.0)
+            trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 3.0, 10.0)
             trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
 
         try:
@@ -1467,9 +1483,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             trial.set_user_attr("constraints", [1e9] * 6)
             return -1e9
 
-    def run_main_trial():
+    def run_main_trial(worker_seed):
         local_sampler = optuna.samplers.TPESampler(
-            seed=PILOT_SEED + 1,
+            seed=worker_seed,
             constraints_func=constraints_func
         )
         local_study = optuna.load_study(
@@ -1480,7 +1496,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         local_study.optimize(main_objective, n_trials=1)
 
     Parallel(n_jobs=optuna_n_jobs)(
-        delayed(run_main_trial)() for _ in range(n_trials)
+        delayed(run_main_trial)(PILOT_SEED + 1 + i) for i in range(n_trials)
     )
 
     timings["main_study"] = time.perf_counter() - t_main_block_start

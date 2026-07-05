@@ -6,19 +6,19 @@ This report summarizes the performance and features of the remade `day-model` re
 
 | ETF | Selected Features | Active Features | Best Model Type | Lockbox Overall IC | Lockbox Tail IC |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 29 | 28 | `skglm_mcp` | +0.0201 | +0.0516 |
-| 500ETF | 26 | 26 | `skglm_mcp` | +0.1257 | +0.0312 |
-| 588000ETF | 12 | 12 | `skglm_mcp` | +0.0357 | +0.0361 |
-| 159915ETF | 27 | 13 | `skglm_huber_l1` | +0.1433 | +0.1847 |
+| 300ETF | 29 | 16 | `skglm_huber_l1` | +0.0194 | +0.0590 |
+| 500ETF | 29 | 6 | `skglm_huber_l1` | +0.0962 | +0.1044 |
+| 588000ETF | 20 | 20 | `skglm_huber_l1` | +0.0345 | +0.1580 |
+| 159915ETF | 26 | 7 | `skglm_huber_l1` | +0.1428 | +0.1009 |
 
 ## Detailed Trial Metrics & Optimization Objectives
 
 | ETF | Yearly Tail IC IR | Yearly Tail IC Mean | Hit Rate | Decile Monotonicity | Top-Bottom Spread |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 1.3917 | +0.1865 | 90.0% | 0.4461 | +36.8960% |
-| 500ETF | 1.1263 | +0.2002 | 90.0% | 0.3648 | +65.1645% |
-| 588000ETF | 1.3738 | +0.2336 | 100.0% | 0.4121 | +44.3121% |
-| 159915ETF | 1.6695 | +0.2679 | 90.0% | 0.4388 | +90.0318% |
+| 300ETF | 0.8512 | +0.1495 | 80.0% | 0.3721 | +16.5071% |
+| 500ETF | 0.8396 | +0.1514 | 80.0% | 0.4242 | +50.1136% |
+| 588000ETF | 2.2824 | +0.2345 | 100.0% | 0.6485 | +94.7828% |
+| 159915ETF | 1.9039 | +0.2651 | 100.0% | 0.4824 | +81.7425% |
 
 ## Model Quality & Generalization Diagnostics
 
@@ -26,66 +26,66 @@ This report summarizes the performance and features of the remade `day-model` re
 
 | ETF | Raw X Cond | Reg normal eq kappa | Collinear Pairs ($\ge 0.85$) | Gini (Weight Concentration) | Tail Weight ESS | Tail Weight ESS % |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 8.46 | 71.53 [MODERATE] | 0 | 0.3932 | 2048.8 | 94.6% |
-| 500ETF | 8.62 | 74.21 [MODERATE] | 0 | 0.3591 | 2042.7 | 94.3% |
-| 588000ETF | 5.91 | 34.88 [MODERATE] | 0 | 0.3609 | 692.2 | 93.8% |
-| 159915ETF | 11.01 | 106.27 [SEVERE] | 0 | 0.7211 | 522.3 | 24.1% |
+| 300ETF | 8.46 | 66.35 [MODERATE] | 0 | 0.7146 | 606.7 | 28.0% |
+| 500ETF | 7.02 | 44.47 [MODERATE] | 0 | 0.8820 [HIGH] | 1678.0 | 77.5% |
+| 588000ETF | 8.81 | 77.66 [MODERATE] | 0 | 0.3197 | 596.6 | 80.8% |
+| 159915ETF | 10.86 | 95.12 [MODERATE] | 1 [WARNING] | 0.8487 | 1518.0 | 70.1% |
 
 ### Generalization Gap (CV vs Selection Validation vs Out-of-Sample)
 
 | ETF | CV Overall IC | Deflated CV IC | Selection Val IC | Deflated Val IC | OOS Lockbox IC | IC Gen Gap (DefVal-OOS) | CV Monotonicity | OOS Monotonicity | Mono Gen Gap |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | +0.1053 | +0.0207 | +0.0737 | -0.0248 | +0.0201 | -0.0449 | +0.4461 | +0.6000 | -0.1539 |
-| 500ETF | +0.1210 | +0.0466 | +0.1356 | -0.0273 | +0.1257 | -0.1530 | +0.3648 | +0.7697 | -0.4048 |
-| 588000ETF | +0.1388 | +0.0072 | -0.1745 | -0.3642 | +0.0357 | -0.3999 | +0.4121 | +0.5636 | -0.1515 |
-| 159915ETF | +0.1385 | +0.0372 | +0.1599 | -0.0010 | +0.1433 | -0.1444 | +0.4388 | +0.8424 | -0.4036 |
+| 300ETF | +0.1037 | +0.0241 | +0.1139 | +0.0202 | +0.0194 | +0.0008 | +0.3721 | +0.4667 | -0.0945 |
+| 500ETF | +0.1059 | -0.0040 | +0.2421 | +0.0393 | +0.0962 | -0.0569 | +0.4242 | +0.7333 | -0.3091 |
+| 588000ETF | +0.2038 | -0.0315 | -0.0626 | -0.2155 | +0.0345 | -0.2500 | +0.6485 | +0.4303 | +0.2182 [DEGRADED] |
+| 159915ETF | +0.1383 | +0.0089 | +0.2623 | +0.0565 | +0.1428 | -0.0864 | +0.4824 | +0.9152 | -0.4327 |
 
 ### Overfitting Diagnostics (PBO & Lockbox Bootstrap CIs)
 
 | ETF | PBO | Perf Degradation | OOS Lockbox IC 95% CI | CV IC Target | IC Gen Gap Sig? | OOS Mono 95% CI | CV Mono | Mono Gen Gap Sig? |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 53.3% | -1.1607 | [-0.0686, +0.0982] | -0.0248 | **Noise (Not Sig)** | [-0.3212, +0.7576] | +0.4461 | **Noise (Not Sig)** |
-| 500ETF | 46.7% | -1.5153 | [+0.0458, +0.1985] | -0.0273 | **Signal (Sig)** | [+0.1879, +0.8909] | +0.3648 | **Noise (Not Sig)** |
-| 588000ETF | 13.3% | -1.1496 | [-0.0556, +0.1142] | -0.3642 | **Signal (Sig)** | [-0.2848, +0.6485] | +0.4121 | **Noise (Not Sig)** |
-| 159915ETF | 6.7% | -1.3753 | [+0.0453, +0.2188] | -0.0010 | **Signal (Sig)** | [+0.2242, +0.9030] | +0.4388 | **Noise (Not Sig)** |
+| 300ETF | 53.3% | -1.7464 | [-0.0602, +0.0951] | +0.0202 | **Noise (Not Sig)** | [-0.3339, +0.7579] | +0.3721 | **Noise (Not Sig)** |
+| 500ETF | 20.0% | -1.2227 | [-0.0010, +0.1894] | +0.0393 | **Noise (Not Sig)** | [-0.1758, +0.9030] | +0.4242 | **Noise (Not Sig)** |
+| 588000ETF | 40.0% | -0.9492 | [-0.0500, +0.0994] | -0.2155 | **Signal (Sig)** | [-0.1273, +0.6121] | +0.6485 | **Signal (Sig)** |
+| 159915ETF | 6.7% | -1.4343 | [+0.0483, +0.2352] | +0.0565 | **Noise (Not Sig)** | [+0.2000, +0.9273] | +0.4824 | **Noise (Not Sig)** |
 
 ### Lockbox Noise vs Signal Assessment Details
 
 Detailed analysis comparing OOS lockbox metrics to their CV target estimates under block bootstrap:
 
 #### 300ETF
-- **Rank IC Generalization**: OOS Lockbox IC of **+0.0201** (95% CI: `[-0.0686, +0.0982]`) vs CV Target of **-0.0248**. The CV target is **swallowed** by the OOS CI, indicating the generalization gap is **Noise (not statistically significant)**.
-- **Decile Monotonicity Generalization**: OOS Monotonicity of **+0.6000** (95% CI: `[-0.3212, +0.7576]`) vs CV Monotonicity of **+0.4461**. The CV estimate is **swallowed** by the OOS CI, indicating the generalization gap is **Noise (not statistically significant)**.
+- **Rank IC Generalization**: OOS Lockbox IC of **+0.0194** (95% CI: `[-0.0602, +0.0951]`) vs CV Target of **+0.0202**. The CV target is **swallowed** by the OOS CI, indicating the generalization gap is **Noise (not statistically significant)**.
+- **Decile Monotonicity Generalization**: OOS Monotonicity of **+0.4667** (95% CI: `[-0.3339, +0.7579]`) vs CV Monotonicity of **+0.3721**. The CV estimate is **swallowed** by the OOS CI, indicating the generalization gap is **Noise (not statistically significant)**.
 
 #### 500ETF
-- **Rank IC Generalization**: OOS Lockbox IC of **+0.1257** (95% CI: `[+0.0458, +0.1985]`) vs CV Target of **-0.0273**. The CV target is **not swallowed** by the OOS CI, indicating the generalization gap is **Signal (statistically significant)**.
-- **Decile Monotonicity Generalization**: OOS Monotonicity of **+0.7697** (95% CI: `[+0.1879, +0.8909]`) vs CV Monotonicity of **+0.3648**. The CV estimate is **swallowed** by the OOS CI, indicating the generalization gap is **Noise (not statistically significant)**.
+- **Rank IC Generalization**: OOS Lockbox IC of **+0.0962** (95% CI: `[-0.0010, +0.1894]`) vs CV Target of **+0.0393**. The CV target is **swallowed** by the OOS CI, indicating the generalization gap is **Noise (not statistically significant)**.
+- **Decile Monotonicity Generalization**: OOS Monotonicity of **+0.7333** (95% CI: `[-0.1758, +0.9030]`) vs CV Monotonicity of **+0.4242**. The CV estimate is **swallowed** by the OOS CI, indicating the generalization gap is **Noise (not statistically significant)**.
 
 #### 588000ETF
-- **Rank IC Generalization**: OOS Lockbox IC of **+0.0357** (95% CI: `[-0.0556, +0.1142]`) vs CV Target of **-0.3642**. The CV target is **not swallowed** by the OOS CI, indicating the generalization gap is **Signal (statistically significant)**.
-- **Decile Monotonicity Generalization**: OOS Monotonicity of **+0.5636** (95% CI: `[-0.2848, +0.6485]`) vs CV Monotonicity of **+0.4121**. The CV estimate is **swallowed** by the OOS CI, indicating the generalization gap is **Noise (not statistically significant)**.
+- **Rank IC Generalization**: OOS Lockbox IC of **+0.0345** (95% CI: `[-0.0500, +0.0994]`) vs CV Target of **-0.2155**. The CV target is **not swallowed** by the OOS CI, indicating the generalization gap is **Signal (statistically significant)**.
+- **Decile Monotonicity Generalization**: OOS Monotonicity of **+0.4303** (95% CI: `[-0.1273, +0.6121]`) vs CV Monotonicity of **+0.6485**. The CV estimate is **not swallowed** by the OOS CI, indicating the generalization gap is **Signal (statistically significant)**.
 
 #### 159915ETF
-- **Rank IC Generalization**: OOS Lockbox IC of **+0.1433** (95% CI: `[+0.0453, +0.2188]`) vs CV Target of **-0.0010**. The CV target is **not swallowed** by the OOS CI, indicating the generalization gap is **Signal (statistically significant)**.
-- **Decile Monotonicity Generalization**: OOS Monotonicity of **+0.8424** (95% CI: `[+0.2242, +0.9030]`) vs CV Monotonicity of **+0.4388**. The CV estimate is **swallowed** by the OOS CI, indicating the generalization gap is **Noise (not statistically significant)**.
+- **Rank IC Generalization**: OOS Lockbox IC of **+0.1428** (95% CI: `[+0.0483, +0.2352]`) vs CV Target of **+0.0565**. The CV target is **swallowed** by the OOS CI, indicating the generalization gap is **Noise (not statistically significant)**.
+- **Decile Monotonicity Generalization**: OOS Monotonicity of **+0.9152** (95% CI: `[+0.2000, +0.9273]`) vs CV Monotonicity of **+0.4824**. The CV estimate is **swallowed** by the OOS CI, indicating the generalization gap is **Noise (not statistically significant)**.
 
 ### Feature Selection Metrics & Fallbacks
 
 | ETF | Screening Input | BH-FDR Pass | Screen Fallback? | Stability Input | Stability Pass | Stability Fallback? | Kept Features |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 238 | 15 | YES [WARNING] | 50 | 49 | NO | **29** |
-| 500ETF | 238 | 59 | NO | 59 | 58 | NO | **26** |
-| 588000ETF | 238 | 40 | NO | 40 | 39 | NO | **12** |
-| 159915ETF | 238 | 48 | NO | 48 | 47 | NO | **27** |
+| 300ETF | 185 | 20 | YES [WARNING] | 50 | 49 | NO | **29** |
+| 500ETF | 185 | 67 | NO | 67 | 66 | NO | **29** |
+| 588000ETF | 185 | 42 | NO | 51 | 49 | NO | **20** |
+| 159915ETF | 185 | 47 | NO | 47 | 46 | NO | **26** |
 
 ### Optuna Main Study & Pruning Reasons
 
 | ETF | Total Trials | Completed | Pruned / Failed | M4 Pruned | M3 Pruned | M5 Pruned | M6 Pruned | ESS Pruned | Floor Pruned | Gini Pruned |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 100 | 68 | 32 | 5 | 22 | 19 | 0 | 0 | 29 | 0 |
-| 500ETF | 100 | 86 | 14 | 5 | 7 | 13 | 0 | 0 | 14 | 0 |
-| 588000ETF | 100 | 68 | 32 | 9 | 29 | 13 | 9 | 0 | 17 | 0 |
-| 159915ETF | 100 | 84 | 16 | 3 | 13 | 13 | 2 | 0 | 16 | 0 |
+| 300ETF | 100 | 65 | 35 | 4 | 18 | 19 | 4 | 0 | 31 | 0 |
+| 500ETF | 100 | 60 | 40 | 7 | 31 | 36 | 0 | 0 | 40 | 0 |
+| 588000ETF | 100 | 69 | 31 | 23 | 29 | 23 | 23 | 0 | 30 | 0 |
+| 159915ETF | 100 | 60 | 40 | 11 | 25 | 26 | 9 | 0 | 40 | 0 |
 
 ### Hyperparameter Parameter Plateau Selection
 
@@ -93,10 +93,10 @@ Instead of selecting hyperparameters based on point-optimal peak objective value
 
 | ETF | Selected Plateau Trial | Plateau Objective | Raw Best Trial | Raw Best Objective |
 | :--- | :---: | :---: | :---: | :---: |
-| 300ETF | 0 | +0.1953 | 37 | +1.4946 |
-| 500ETF | 19 | +0.1256 | 91 | +3.1876 |
-| 588000ETF | 1 | -1.9323 | 21 | +1.5235 |
-| 159915ETF | 24 | +1.2057 | 94 | +7.3141 |
+| 300ETF | 79 | +2.1959 | 95 | +3.0132 |
+| 500ETF | 91 | +2.0620 | 28 | +2.3243 |
+| 588000ETF | 58 | +1.3253 | 69 | +3.6578 |
+| 159915ETF | 78 | +2.9922 | 90 | +4.7624 |
 
 ## OOS Lockbox Performance & Leakage Verification (July 2026)
 
@@ -147,29 +147,29 @@ Hand traders report that trading signals during the 2024–2026 lockbox period w
 
 ### 300ETF
 - **Total selected features (Stability Selection)**: 29
-- **Active features (Non-zero weights)**: 28
-- **Active features**: `bar_ret_0`, `bar_body_rng_0`, `volume_surge_direction`, `max_up_ret`, `pullback_depth_max`, `volume_weighted_price_position`, `trend_strength_intraday`, `consecutive_higher_highs`, `bar_vwap_dev_2`, `early_bearish_engulfing_count`, `intraday_autocorr`, `inside_bar_failure_bull`, `margin_balance`, `short_balance_quantity`, `northbound_sell`, `max_down_ret`, `volume_concentration`, `range_expansion_ratio`, `yesterday_day_kurtosis`, `capital_net_value`, `capital_net_ratio`, `vix_iv_spread`, `iv_diff_1d`, `yesterday_early_vwap_dev`, `yesterday_intraday_close_position`, `yesterday_am_return`, `northbound_net`, `yesterday_day_vwap_dev`
+- **Active features (Non-zero weights)**: 16
+- **Active features**: `bar_ret_0`, `bar_body_rng_0`, `pullback_depth_max`, `consecutive_higher_highs`, `early_bearish_engulfing_count`, `intraday_autocorr`, `inside_bar_failure_bull`, `margin_balance`, `volume_concentration`, `yesterday_day_kurtosis`, `capital_net_ratio`, `vix_iv_spread`, `iv_diff_1d`, `yesterday_early_vwap_dev`, `yesterday_am_return`, `northbound_net`
 
 ![300ETF Diagnostics](plots/diagnostics_300ETF.png)
 
 ### 500ETF
-- **Total selected features (Stability Selection)**: 26
-- **Active features (Non-zero weights)**: 26
-- **Active features**: `iv`, `margin_balance`, `yesterday_day_pm_am_vol_ratio`, `yesterday_first_30min_return`, `yesterday_intraday_close_position`, `yesterday_day_kurtosis`, `bar_vwap_dev_3`, `vwap_slope_intraday`, `bar_vwap_dev_2`, `bar_body_rng_2`, `capital_buy_volume`, `total_path_length`, `iv_vol_ratio`, `bb_width`, `vol5`, `sma100_dist`, `bar_vwap_dev_1`, `bar_body_rng_1`, `late_bar_momentum`, `pullback_depth_max`, `volume_weighted_price_position`, `first_bar_return`, `bar_body_rng_0`, `close_vs_open_range`, `consecutive_higher_highs`, `rally_strength_max`
+- **Total selected features (Stability Selection)**: 29
+- **Active features (Non-zero weights)**: 6
+- **Active features**: `bar_vwap_dev_1`, `first_bar_return`, `volume_surge_direction`, `yesterday_intraday_close_position`, `capital_buy_volume`, `sma100_dist`
 
 ![500ETF Diagnostics](plots/diagnostics_500ETF.png)
 
 ### 588000ETF
-- **Total selected features (Stability Selection)**: 12
-- **Active features (Non-zero weights)**: 12
-- **Active features**: `bar_ret_2`, `vol_ratio_10_60`, `bar_body_rng_1`, `bar_vwap_dev_3`, `num_up_bars`, `pullback_depth_ratio`, `pullback_depth_max`, `volume_weighted_price_position`, `max_down_ret`, `max_up_ret`, `rally_strength_max`, `yesterday_day_kurtosis`
+- **Total selected features (Stability Selection)**: 20
+- **Active features (Non-zero weights)**: 20
+- **Active features**: `bar_body_rng_2`, `consecutive_higher_highs`, `or_fill_ratio`, `num_up_bars`, `vol_ratio_10_60`, `vix_iv_ratio`, `roc60`, `yesterday_day_pm_am_vol_ratio`, `capital_net_ratio`, `pullback_depth_max`, `volume_weighted_price_position`, `bar_body_rng_0`, `max_down_ret`, `max_up_ret`, `rally_strength_max`, `upper_wick_dominance`, `bar_body_rng_1`, `late_bar_momentum`, `volume_acceleration`, `yesterday_day_kurtosis`
 
 ![588000ETF Diagnostics](plots/diagnostics_588000ETF.png)
 
 ### 159915ETF
-- **Total selected features (Stability Selection)**: 27
-- **Active features (Non-zero weights)**: 13
-- **Active features**: `yesterday_gap_pct`, `yesterday_early_vwap_dev`, `volume_concentration`, `bar_rng_3`, `yesterday_day_vwap_dev`, `gap_pct`, `capital_net_ratio`, `margin_net_buy`, `pullback_depth_max`, `bar_ret_0`, `max_up_ret`, `max_down_ret`, `inside_bar_failure_bull`
+- **Total selected features (Stability Selection)**: 26
+- **Active features (Non-zero weights)**: 7
+- **Active features**: `yesterday_gap_pct`, `yesterday_early_vwap_dev`, `yesterday_day_vwap_dev`, `gap_pct`, `bar_ret_0`, `max_up_ret`, `inside_bar_failure_bull`
 
 ![159915ETF Diagnostics](plots/diagnostics_159915ETF.png)
 
