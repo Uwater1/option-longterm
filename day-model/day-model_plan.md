@@ -226,3 +226,81 @@ Upgraded model training stability, tail performance, overfit diagnostics, and de
    - Runs `run_quarterly_rolling_refit_test` on post-lockbox quarters.
    - Simulates Static Model (frozen pre-lockbox) vs Rolling Model (refitted quarterly with updated history) on quarterly windows. Measures IC and Tail IC decay rate (QuantBench method).
 
+---
+
+## 8. Feature-Selection Pipeline Constants & Fine-Tuning (July 2026)
+
+The feature-selection pipeline (Steps 1–2) is governed by 6 constants in `train_model.py` (lines 89–94). These control the funnel from ~210 candidate features down to the final selected set fed into Optuna. Their current values were set heuristically; this section documents a systematic sensitivity-analysis protocol to calibrate them.
+
+### 8.1 Constants & Their Pipeline Roles
+
+| Constant | Current | Pipeline Stage | Role |
+|---|---|---|---|
+| `SCREEN_FDR` | 0.50 | Step 1 (Screening) | BH-FDR level for univariate Spearman screening. Controls the initial funnel from ~210 features to the CSS input. |
+| `SCREEN_FALLBACK_K` | 50 | Step 1 (Screening) | Top-K fallback when BH-FDR passes < 40 features. Safety net for low-signal ETFs. |
+| `STABILITY_B` | 80 | Step 2 (CSS) | Number of bootstrap subsamples for cluster stability selection. More = more stable probabilities but slower. |
+| `STABILITY_PI` | 0.80 | Step 2 (CSS) | Minimum cluster selection probability threshold. Higher = more conservative, fewer features. |
+| `STABILITY_Q` | 35 | Step 2 (CSS) | Maximum average active clusters used to restrict the alpha regularization path. Caps model complexity pre-Optuna. |
+| `ACTIVE_FEATURE_ESS_DIVISOR` | 8.0 | Step 4 (Optuna) | Kill-switch denominator: $active\_k \le \max(3, \lfloor ESS / d \rfloor)$. Prevents parameter bloat relative to effective sample size. |
+
+> **Discrepancy note**: Step 1 in Section 4 specifies FDR = 0.15 (loosened to 0.25 for 588000ETF). The code currently uses `SCREEN_FDR = 0.50` by default with a hardcoded `0.25` override for 588000ETF. The sweep protocol will reveal whether 0.50 is actually optimal or whether the plan's 0.15 is preferable.
+
+### 8.2 Sweep Protocol
+
+Implemented in `day-model/sweep_constants.py`. For each constant, the script:
+1. Monkey-patches the target constant in `train_model`.
+2. Runs the full pipeline: screen → CSS → VIF → Optuna (20-trial quick study).
+3. Computes lockbox metrics (Overall IC, Tail IC, Monotonicity) by loading the saved model and predicting on `date >= 2024-03-01`.
+4. Records feature counts at each pipeline stage, condition number, ESS%, Gini, and validation metrics.
+5. Outputs a CSV grid of results.
+
+```bash
+# Example: sweep SCREEN_FDR with default range [0.15, 0.25, 0.35, 0.50, 0.65, 0.80]
+python day-model/sweep_constants.py -e 300 --side single --constant SCREEN_FDR
+
+# Custom values
+python day-model/sweep_constants.py -e 300 --constant STABILITY_PI --values 0.60,0.75,0.80,0.90
+
+# STABILITY_B with Jaccard stability measurement (3 seeds: 42, 123, 456)
+python day-model/sweep_constants.py -e 300 --constant STABILITY_B --stability
+```
+
+### 8.3 Sweep Ranges & Decision Rules
+
+| Constant | Sweep Range | Decision Rule |
+|---|---|---|
+| `SCREEN_FDR` | `[0.15, 0.25, 0.35, 0.50, 0.65, 0.80]` | Maximize `lockbox_tail_ic`. If 0.25 is optimal for all ETFs, remove the 588000ETF hardcoded override. |
+| `STABILITY_B` | `[40, 60, 80, 120]` | Pick the smallest B where Jaccard similarity across 3 seeds exceeds 0.85. |
+| `STABILITY_PI` | `[0.60, 0.70, 0.75, 0.80, 0.85, 0.90]` | Maximize `lockbox_tail_ic` while keeping condition number < 100. |
+| `STABILITY_Q` | `[15, 25, 35, 50, 70]` | Pick Q where Tail IC plateaus (elbow method). |
+| `SCREEN_FALLBACK_K` | `[30, 40, 50, 60, 80]` | Diagnostic: only tune if fallback triggers for >= 2 ETFs. Otherwise keep at 50. |
+| `ACTIVE_FEATURE_ESS_DIVISOR` | `[4.0, 6.0, 8.0, 10.0, 12.0, 16.0]` | Pick divisor where kill-switch prunes < 5% of Optuna trials (guardrail, not primary filter). |
+
+### 8.4 Execution Order
+
+```
+sweep_constants.py (build) -- prerequisite
+  |
+  v
+SCREEN_FDR + SCREEN_FALLBACK_K (diagnostic) -- parallel, highest leverage
+  |
+  v
+STABILITY_B (with --stability) + STABILITY_PI -- parallel (independent stages)
+  |
+  v
+STABILITY_Q -- depends on PI choice
+  |
+  v
+ACTIVE_FEATURE_ESS_DIVISOR -- depends on CSS feature count
+  |
+  v
+Multi-ETF validation (all 5 ETFs x 3 sides, 100 Optuna trials)
+```
+
+### 8.5 Practical Notes
+
+- **Cache invalidation**: Each sweep config changes the `select_key` (train_model.py lines 1188–1193), so disk caches auto-invalidate. No manual cache clearing needed.
+- **Quick Optuna**: Sweep iterations use 20 trials (not 100) to keep wall time manageable. Only the final multi-ETF validation uses 100 trials.
+- **Parallelism**: Default `--optuna-jobs 1` for deterministic trial ordering. Use `--optuna-jobs N` for faster wall time when reproducibility is not critical.
+- **588000ETF special case**: Already overrides FDR to 0.25 and has a separate VIF threshold (5.0 vs 10.0). Track separately in all sweeps.
+
