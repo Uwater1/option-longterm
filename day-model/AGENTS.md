@@ -55,7 +55,7 @@ python3 day-model/train_model.py -e 300 --no-both --side short  --trials 100
 ```bash
 python day-model/train_model.py -e 300 -t 200             # cache ON, n_jobs=cpu_count
 python day-model/train_model.py -e 300 --no-cache          # force recompute
-python day-model/train_model.py -e 300 --skip-step 1 2       # skip Step 1 (screening) and Step 2 (CSS/VIF/Condition) filters
+python day-model/train_model.py -e 300 --skip-step 2       # skip Step 2 (CSS/VIF/Condition) filter (Step 1 skipped by default)
 python day-model/train_model.py -e 300 --optuna-jobs 8     # cap Optuna workers
 python day-model/train_model.py -e 300 --optuna-jobs 1     # sequential (100% deterministic)
 python day-model/train_model.py -e 300 --bootstrap-jobs 8  # cap stability-bootstrap workers
@@ -120,14 +120,14 @@ Remove-Item day-model\data\cache_*.joblib
 
 1. **Lockbox Split (Step 0)**: Hold out days $\ge 2024-03-01$ (OOS data untouched during training).
 2. **Selection Validation Split (Step 0.5)**: 6 non-contiguous 3-month blocks (~370 days) for validation. 4 Inner blocks for Optuna tuning; 2 Outer blocks for generalization check. 10-day embargo at boundaries.
-3. **BH-FDR Screening (Step 1)**: Spearman rank correlation on selection train. Keep features with FDR = 0.50. No fallback — pure BH-FDR.
-4. **CSS + VIF Pruning (Step 2)**: Complete Linkage hierarchical clustering (threshold $t=0.25$, $|r| \ge 0.75$). Subsampling ($B=50$) ElasticNet path votes aggregated at cluster level. Keep clusters selected in $\ge 75\%$ subsamples with max $Q=18$ active clusters. Pick representative with highest individual score. Apply iterative VIF pruning (VIF threshold 10.0) on representatives.
-5. **Loss Weighting (Step 3)**: Power weights $w(y_i) = |y_i|^k$. Scale inputs by $\sqrt{w}$.
-6. **CPCV with Embargo (Step 4)**: 6 groups, 2 test groups (15 folds), 10-day embargo at test boundaries. Run on selection train.
-7. **Pilot Normalization (Step 4.1)**: Run 50 pilot trials to compute median and MAD for validation z-scores.
+3. **BH-FDR Screening (Step 1 - Bypassed)**: Bypassed by default. Univariate screening is not working because dropping features with low marginal linear correlation discards key joint predictive power, causing feature starvation and model collapse.
+4. **CSS + VIF Pruning (Step 1)**: Complete Linkage hierarchical clustering (threshold $t=0.25$, $|r| \ge 0.75$) on all candidate features. Subsampling ($B=50$) ElasticNet path votes aggregated at cluster level. Keep clusters selected in $\ge 75\%$ subsamples with max $Q=18$ active clusters. Pick representative with highest individual score. Apply iterative VIF pruning (VIF threshold 10.0) on representatives.
+5. **Loss Weighting (Step 2)**: Power weights $w(y_i) = |y_i|^k$. Scale inputs by $\sqrt{w}$.
+6. **CPCV with Embargo (Step 3)**: 6 groups, 2 test groups (15 folds), 10-day embargo at test boundaries. Run on selection train.
+7. **Pilot Normalization (Step 3.1)**: Run 50 pilot trials to compute median and MAD for validation z-scores.
 8. **Objective Function**: Maximize weighted sum of normalized validation metrics + ESS soft penalty under 20%.
 9. **Signed Constraints & TPESampler**: Hard constraints (Overall IC > 0, Hit Rate $\ge 60\%$, Monotonicity > 0.25, Spread > 0, Active features $\le ESS / 9$, Gini concentration $\le 0.85$ soft limit). Violation prunes trial.
-10. **One-Shot Evaluation & Plots (Step 6)**: Refit on working set using best parameters. Save final model and scaler. Evaluate OOS lockbox via `generate_report.py` (side-aware Tail IC). Plot 15 diagnostic panels. Run block bootstrap (B=1000, block size 10) for 95% CIs.
+10. **One-Shot Evaluation & Plots (Step 5)**: Refit on working set using best parameters. Save final model and scaler. Evaluate OOS lockbox via `generate_report.py` (side-aware Tail IC). Plot 15 diagnostic panels. Run block bootstrap (B=1000, block size 10) for 95% CIs.
 11. **L2 Regularization**: Mandatory 10% L2 regularization (`skglm_huber_l1` uses `l1_ratio = 0.9`, `skglm_mcp` uses `mu = 0.1 * alpha`) to stabilize design matrix condition number.
 12. **Deflation & Overfit Diagnostics**: Compute running Deflated Objective. Compute PBO and Performance Degradation using CSCV.
 13. **Model Quality**: Calculate condition numbers, ESS, and Gini coefficient.
