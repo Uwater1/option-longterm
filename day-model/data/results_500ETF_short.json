@@ -59,6 +59,7 @@
     "iv",
     "yesterday_day_pm_am_vol_ratio",
     "northbound_sell",
+    "short_repayment_quantity",
     "margin_balance"
   ],
   "stability_scores": {
@@ -328,51 +329,130 @@
     "yesterday_intraday_close_position": 0.0
   },
   "best_params": {
-    "model_type": "skglm_huber_l1",
-    "k_weight": 0.9640317693467241,
-    "skglm_huber_l1_alpha": 0.0020041559092349023,
-    "skglm_huber_delta": 1.857506024981491
+    "model_type": "ridge",
+    "k_weight": 0.008940299253898436,
+    "ridge_alpha": 86.76192233151686
   },
   "best_raw_metrics": [
-    1.9172366157673144,
-    0.2759104991038209,
-    1.0,
-    0.11285555295619318,
-    0.3539393939393939,
-    0.8212753368961339,
-    -0.27800077282138486,
-    -0.7243832945823669
+    1.2382082224398077,
+    0.16138284980019896,
+    0.9,
+    0.13220629132731354,
+    0.41818181818181815,
+    0.7836075783539216,
+    -0.12722225457651468,
+    -0.32944434881210327
   ],
-  "selection_val_overall_ic": 0.14275403710402318,
-  "selection_val_tail_ic": -0.06521739130434782,
-  "selection_val_monotonicity": 0.6484848484848484,
-  "selection_val_spread": 0.4176207016843061,
-  "selection_val_outer_overall_ic": 0.24760231642556307,
-  "selection_val_outer_tail_ic": 0.14685314685314685,
-  "selection_val_outer_monotonicity": 0.6242424242424243,
-  "selection_val_outer_spread": 0.6044666244743918,
-  "deflated_cv_ic": 0.02981372531027332,
-  "deflated_val_ic": 0.029927572557671853,
-  "deflated_val_tail_ic": -0.3509135717391604,
-  "deflated_val_outer_ic": 0.13477585187921176,
-  "deflated_val_outer_tail_ic": -0.1388430335816657,
-  "deflated_objective": -1.9462255341130885,
+  "selection_val_overall_ic": 0.1612909700507622,
+  "selection_val_tail_ic": -0.21956241956241956,
+  "selection_val_monotonicity": 0.6,
+  "selection_val_spread": 0.6109504438377917,
+  "selection_val_outer_overall_ic": 0.23073841787218458,
+  "selection_val_outer_tail_ic": 0.4842105263157895,
+  "selection_val_outer_monotonicity": 0.44242424242424244,
+  "selection_val_outer_spread": 0.7090861149705373,
+  "deflated_cv_ic": 0.1269962914583905,
+  "deflated_val_ic": 0.14058761451435314,
+  "deflated_val_tail_ic": -0.3936036046314682,
+  "deflated_val_outer_ic": 0.2100350623357755,
+  "deflated_val_outer_tail_ic": 0.31016934124674084,
+  "deflated_objective": -0.6725914311351725,
   "pbo": 0.5333333333333333,
-  "performance_degradation": -1.4549231864001502,
-  "plateau_trial": 71,
-  "plateau_val": 0.10533373251057795,
-  "raw_best_trial": 8,
-  "raw_best_val": 1.8240690698531932,
-  "lockbox_overall_ic": 0.15088247405233512,
-  "lockbox_tail_ic": 0.20204861256874188,
+  "performance_degradation": -1.0999726460802726,
+  "mcs_size": 81,
+  "bayesian_prob_true_discovery": 1.0,
+  "quarterly_rolling_test": {
+    "quarterly_runs": [
+      {
+        "quarter": "2024-03 to 2024-06",
+        "static_ic": 0.21581173982020097,
+        "static_tail_ic": 0.5333333333333333,
+        "rolling_ic": 0.21581173982020097,
+        "rolling_tail_ic": 0.5333333333333333
+      },
+      {
+        "quarter": "2024-06 to 2024-09",
+        "static_ic": 0.08507326007326008,
+        "static_tail_ic": -0.1,
+        "rolling_ic": 0.08411172161172162,
+        "rolling_tail_ic": 0.16666666666666666
+      },
+      {
+        "quarter": "2024-09 to 2024-12",
+        "static_ic": 0.30043987818757883,
+        "static_tail_ic": 0.7619047619047619,
+        "rolling_ic": 0.3035159494293888,
+        "rolling_tail_ic": 0.8333333333333334
+      },
+      {
+        "quarter": "2024-12 to 2025-03",
+        "static_ic": 0.2891199360177182,
+        "static_tail_ic": -0.023809523809523808,
+        "rolling_ic": 0.29514903565166567,
+        "rolling_tail_ic": -0.2619047619047619
+      },
+      {
+        "quarter": "2025-03 to 2025-06",
+        "static_ic": -0.07826546800634585,
+        "static_tail_ic": -0.75,
+        "rolling_ic": -0.18043363299841353,
+        "rolling_tail_ic": -0.6
+      },
+      {
+        "quarter": "2025-06 to 2025-09",
+        "static_ic": 0.16652930402930402,
+        "static_tail_ic": 0.25,
+        "rolling_ic": 0.13035714285714287,
+        "rolling_tail_ic": 0.15
+      },
+      {
+        "quarter": "2025-09 to 2025-12",
+        "static_ic": 0.2945645821157218,
+        "static_tail_ic": 0.30952380952380953,
+        "rolling_ic": 0.29473991817650497,
+        "rolling_tail_ic": 0.14285714285714285
+      },
+      {
+        "quarter": "2025-12 to 2026-03",
+        "static_ic": -0.0442701581540057,
+        "static_tail_ic": 0.3333333333333333,
+        "rolling_ic": -0.07933627171376717,
+        "rolling_tail_ic": 0.07142857142857142
+      },
+      {
+        "quarter": "2026-03 to 2026-06",
+        "static_ic": 0.26425171866737174,
+        "static_tail_ic": -0.2833333333333333,
+        "rolling_ic": 0.21554732945531466,
+        "rolling_tail_ic": -0.45
+      },
+      {
+        "quarter": "2026-06 to 2026-06",
+        "static_ic": 0.24175824175824176,
+        "static_tail_ic": 0.4,
+        "rolling_ic": 0.26373626373626374,
+        "rolling_tail_ic": 0.9
+      }
+    ],
+    "mean_static_ic": 0.1735013034509046,
+    "mean_rolling_ic": 0.15431991960260227,
+    "mean_static_tail_ic": 0.14309523809523808,
+    "mean_rolling_tail_ic": 0.14857142857142858
+  },
+  "plateau_trial": 21,
+  "plateau_val": 0.6490119481700464,
+  "raw_best_trial": 47,
+  "raw_best_val": 1.5350475897630698,
+  "lockbox_overall_ic": 0.16033500488087452,
+  "lockbox_tail_ic": 0.19142773183325637,
   "diagnostics": {
     "timings": {
-      "data_loading": 0.09070334400166757,
-      "feature_selection": 0.0007043149962555617,
-      "loyo_folds": 0.016986165996058844,
-      "pilot_study": 1.639642592999735,
-      "main_study": 4.336723810003605,
-      "final_refit": 0.01350921999255661
+      "data_loading": 0.0850174369988963,
+      "feature_selection": 0.0005479450046550483,
+      "loyo_folds": 0.01637022198701743,
+      "pilot_study": 1.1807527640048647,
+      "main_study": 3.417172670000582,
+      "final_refit": 0.09348001099715475
     },
     "screening": {
       "total_features": 264,
@@ -387,41 +467,42 @@
     },
     "optuna_main": {
       "total_trials": 100,
-      "completed_count": 79,
-      "pruned_count": 21,
+      "completed_count": 86,
+      "pruned_count": 14,
       "failed_count": 0,
       "pruning_reasons": {
-        "M4 (Overall IC <= 0)": 5,
-        "M3 (Hit Rate < 60%)": 12,
-        "M5 (Monotonicity <= 0.25)": 15,
+        "M4 (Overall IC <= 0)": 0,
+        "M2 (Yearly Tail IC Mean <= 0)": 3,
+        "M3 (Hit Rate < 60%)": 14,
+        "M5 (Monotonicity <= 0.25)": 0,
         "M6 (Top-Bottom Spread <= 0)": 0,
         "exceeds ESS-based cap": 0,
-        "active feature floor": 21,
+        "active feature floor": 0,
         "Gini coefficient": 0
       }
     },
     "model_quality": {
-      "condition_number": 15471.7744140625,
+      "condition_number": 1.052323579788208,
       "condition_number_raw": 220.9151153564453,
-      "condition_number_regularized": 15471.7744140625,
+      "condition_number_regularized": 1.052323579788208,
       "collinear_pairs": [],
-      "effective_sample_size": 997.540771484375,
-      "effective_sample_size_pct": 0.46054513918946216,
-      "gini_coefficient": 0.49885025374482717
+      "effective_sample_size": 2138.775146484375,
+      "effective_sample_size_pct": 0.9874308155514196,
+      "gini_coefficient": 0.4068742252948947
     }
   },
   "lockbox_tail_ic_def": "short",
-  "lockbox_monotonicity": 0.9030303030303031,
-  "ic_generalization_gap": -0.12095490149466327,
-  "mono_generalization_gap": -0.5490909090909092,
+  "lockbox_monotonicity": 0.7818181818181819,
+  "ic_generalization_gap": -0.019747390366521372,
+  "mono_generalization_gap": -0.3636363636363637,
   "lockbox_ic_ci": [
-    0.06352590046417107,
-    0.2235023949363747
+    0.0778362114125231,
+    0.23551789498310513
   ],
   "lockbox_mono_ci": [
-    0.34515151515151515,
+    0.3936363636363636,
     0.9151515151515152
   ],
-  "lockbox_ic_swallowed": false,
+  "lockbox_ic_swallowed": true,
   "lockbox_mono_swallowed": true
 }
