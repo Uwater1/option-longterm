@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "50ETF",
   "n_samples_working": 2166,
-  "n_samples_lockbox": 0,
+  "n_samples_lockbox": 556,
   "selected_features": [
     "margin_net_buy",
     "iv_corridor_width",
@@ -356,8 +356,8 @@
   "plateau_val": 0.8043399955823817,
   "raw_best_trial": 98,
   "raw_best_val": 1.26730965742325,
-  "lockbox_overall_ic": NaN,
-  "lockbox_tail_ic": NaN,
+  "lockbox_overall_ic": 0.09079356086683568,
+  "lockbox_tail_ic": 0.17466357099384622,
   "diagnostics": {
     "timings": {
       "data_loading": 0.04475620004814118,
@@ -401,5 +401,19 @@
       "effective_sample_size_pct": 0.8419209178244749,
       "gini_coefficient": 0.2944694951002065
     }
-  }
+  },
+  "lockbox_tail_ic_def": "single",
+  "lockbox_monotonicity": 0.7333333333333333,
+  "ic_generalization_gap": -0.023759656793163733,
+  "mono_generalization_gap": -0.28121212121212114,
+  "lockbox_ic_ci": [
+    0.011404437154745362,
+    0.1746507180541527
+  ],
+  "lockbox_mono_ci": [
+    0.07848484848484849,
+    0.7696969696969697
+  ],
+  "lockbox_ic_swallowed": true,
+  "lockbox_mono_swallowed": true
 }

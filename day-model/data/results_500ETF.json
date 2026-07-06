@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "500ETF",
   "n_samples_working": 2166,
-  "n_samples_lockbox": 0,
+  "n_samples_lockbox": 556,
   "selected_features": [
     "bar_rng_0",
     "yesterday_illiquidity_amihud",
@@ -350,8 +350,8 @@
   "plateau_val": -0.39220010505678016,
   "raw_best_trial": 78,
   "raw_best_val": 3.0061207959286644,
-  "lockbox_overall_ic": NaN,
-  "lockbox_tail_ic": NaN,
+  "lockbox_overall_ic": 0.08546207446994958,
+  "lockbox_tail_ic": 0.05986082965736565,
   "diagnostics": {
     "timings": {
       "data_loading": 0.04784230003133416,
@@ -395,5 +395,19 @@
       "effective_sample_size_pct": 0.7798290023733264,
       "gini_coefficient": 0.31517730998059035
     }
-  }
+  },
+  "lockbox_tail_ic_def": "single",
+  "lockbox_monotonicity": 0.6848484848484848,
+  "ic_generalization_gap": -0.06064314480747324,
+  "mono_generalization_gap": -0.24121212121212127,
+  "lockbox_ic_ci": [
+    -0.0039411616501602055,
+    0.1673515777604248
+  ],
+  "lockbox_mono_ci": [
+    0.053939393939393974,
+    0.8548484848484845
+  ],
+  "lockbox_ic_swallowed": true,
+  "lockbox_mono_swallowed": true
 }

@@ -3,7 +3,7 @@
   "side": "single",
   "tag": "588000ETF",
   "n_samples_working": 738,
-  "n_samples_lockbox": 0,
+  "n_samples_lockbox": 556,
   "selected_features": [
     "bar_vwap_dev_2",
     "bar_vwap_dev_3",
@@ -356,8 +356,8 @@
   "plateau_val": -0.5052646434342412,
   "raw_best_trial": 39,
   "raw_best_val": 0.627283054202909,
-  "lockbox_overall_ic": NaN,
-  "lockbox_tail_ic": NaN,
+  "lockbox_overall_ic": 0.012596498115727273,
+  "lockbox_tail_ic": -0.017514753419131987,
   "diagnostics": {
     "timings": {
       "data_loading": 0.03739459998905659,
@@ -401,5 +401,19 @@
       "effective_sample_size_pct": 0.9216398740525491,
       "gini_coefficient": 0.45498527821704093
     }
-  }
+  },
+  "lockbox_tail_ic_def": "single",
+  "lockbox_monotonicity": 0.18787878787878787,
+  "ic_generalization_gap": -0.3770176041489626,
+  "mono_generalization_gap": 0.4,
+  "lockbox_ic_ci": [
+    -0.07407570515791415,
+    0.07830528447586953
+  ],
+  "lockbox_mono_ci": [
+    -0.5272727272727272,
+    0.4554545454545446
+  ],
+  "lockbox_ic_swallowed": false,
+  "lockbox_mono_swallowed": false
 }
