@@ -168,12 +168,15 @@ def run_selection_cached(X_st, y_st, screen_fdr,
         # Step 3: VIF
         vif_idx = tm.run_vif_pruning(X_st, stab_idx, tm.FEATURES, threshold=vif_threshold)
 
+        # Step 3b: Condition pruning
+        cond_idx = tm.run_cond_pruning(X_st, vif_idx, tm.FEATURES, cond_cap=100.0)
+
         result = {
-            "selected_idx": np.asarray(vif_idx),
+            "selected_idx": np.asarray(cond_idx),
             "scores": stab_scores,
             "n_screened": n_screened,
             "n_css": len(stab_idx),
-            "n_vif": len(vif_idx),
+            "n_vif": len(cond_idx),
         }
     finally:
         tm.STABILITY_Q = orig_q
@@ -227,6 +230,32 @@ def evaluate_config(data, selected_idx, model_type, model_params, k_weight,
     model.fit(X_st_w, y_st_w)
 
     active_k = int(np.sum(np.abs(model.coef_) > 1e-5))
+
+    # Regularized condition number check
+    K_sel_vars = X_st_w.shape[1]
+    if K_sel_vars > 1:
+        s_vars = np.linalg.svd(X_st_w, compute_uv=False)
+        s_max_sq = float(s_vars.max() ** 2)
+        s_min_sq = float(s_vars.min() ** 2)
+        
+        N_samples = X_st_w.shape[0]
+        if model_type == "ridge":
+            reg_coef = float(model_params.get("ridge_alpha", 1.0))
+        elif model_type == "skglm_huber_l1":
+            reg_coef = float(N_samples * 0.1 * model_params.get("skglm_huber_l1_alpha", 1e-5))
+        elif model_type == "skglm_mcp":
+            reg_coef = float(N_samples * 0.1 * model_params.get("skglm_mcp_alpha", 1e-5))
+        else:
+            reg_coef = 0.0
+            
+        s_sq_max = s_max_sq + reg_coef
+        s_sq_min = s_min_sq + reg_coef
+        reg_kappa = float(np.sqrt(s_sq_max / s_sq_min)) if s_sq_min > 1e-10 else float("inf")
+    else:
+        reg_kappa = 1.0
+
+    if reg_kappa > 10000.0:
+        return -1e9, {"error": f"reg_kappa={reg_kappa:.2f} > 10000.0"}
 
     # Hard constraints
     if active_k > max_active:

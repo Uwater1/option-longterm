@@ -18,7 +18,7 @@ import joblib
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from scipy.stats import spearmanr, rankdata
+from scipy.stats import spearmanr, rankdata, norm
 
 HERE = Path(__file__).resolve().parent
 sys.path.append(str(HERE.parent))
@@ -40,6 +40,19 @@ SIDE_CONFIG = {
     "long":   {"tail_def": "top_only"},
     "short":  {"tail_def": "bot_only"},
 }
+
+VAL_BLOCKS_INNER = [
+    ("2016-10-01", "2017-01-01"),
+    ("2018-07-01", "2018-10-01"),
+    ("2020-04-01", "2020-07-01"),
+    ("2022-10-01", "2023-01-01"),
+]
+VAL_BLOCKS_OUTER = [
+    ("2021-07-01", "2021-10-01"),
+    ("2023-07-01", "2023-10-01"),
+]
+VAL_BLOCKS = VAL_BLOCKS_INNER + VAL_BLOCKS_OUTER
+SCREEN_FDR = 0.50
 
 
 # ============================================================
@@ -125,6 +138,94 @@ def compute_decile_monotonicity(y_true: np.ndarray, y_pred: np.ndarray) -> float
     if denom < 1e-12:
         return 0.0
     return float((a * r).sum() / denom)
+
+
+def benjamini_hochberg(p_values: np.ndarray, fdr_level: float = 0.20) -> np.ndarray:
+    n = len(p_values)
+    if n == 0:
+        return np.zeros(0, dtype=bool)
+    sorted_idx = np.argsort(p_values)
+    sorted_p = p_values[sorted_idx]
+    
+    thresholds = (np.arange(1, n + 1) / n) * fdr_level
+    pass_idx = np.where(sorted_p <= thresholds)[0]
+    
+    mask = np.zeros(n, dtype=bool)
+    if len(pass_idx) > 0:
+        max_pass_rank = pass_idx.max()
+        mask[sorted_idx[:max_pass_rank + 1]] = True
+    return mask
+
+
+def run_screening(X_working: np.ndarray, y_working: np.ndarray, fdr_level: float = SCREEN_FDR):
+    n, p = X_working.shape
+    X_f64 = X_working.astype(np.float64, copy=False)
+    y_f64 = y_working.astype(np.float64, copy=False)
+
+    X_rank = np.apply_along_axis(rankdata, 0, X_f64).astype(np.float64)
+    y_rank = rankdata(y_f64).astype(np.float64)
+
+    Xc = X_rank - X_rank.mean(axis=0, keepdims=True)
+    yc = y_rank - y_rank.mean()
+    sx = np.sqrt((Xc * Xc).sum(axis=0))
+    sy = np.sqrt((yc * yc).sum())
+    denom = sx * sy
+    denom[denom < 1e-12] = np.nan
+    rhos = (Xc.T @ yc) / denom
+    rhos = np.nan_to_num(rhos, nan=0.0)
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        t_sq_denom = 1.0 - rhos * rhos
+        t_stat = np.where(t_sq_denom > 1e-12,
+                          rhos * np.sqrt(np.maximum((n - 2) / t_sq_denom, 0.0)),
+                          0.0)
+    p_vals = 2.0 * norm.sf(np.abs(t_stat))
+    p_vals = np.nan_to_num(p_vals, nan=1.0, posinf=1.0, neginf=1.0)
+
+    screen_mask = benjamini_hochberg(p_vals, fdr_level=fdr_level)
+
+    return screen_mask, p_vals, rhos
+
+
+def get_step1_passed_features(df, features_all, etf_name):
+    X_df = df[features_all].ffill()
+    _col_med = X_df.median().fillna(0.0)
+    X_df = X_df.fillna(_col_med)
+    X = X_df.values.astype(np.float32)
+    
+    y = df[TARGET].values.astype(np.float32)
+    y_scaled = (y * 100.0).astype(np.float32)
+    
+    sel_val_mask = np.zeros(len(df), dtype=bool)
+    for start_val, end_val in VAL_BLOCKS:
+        block_mask = (df["date"] >= pd.Timestamp(start_val)) & (df["date"] < pd.Timestamp(end_val))
+        sel_val_mask |= block_mask
+        
+    sel_train_mask = (df["date"] < LOCKBOX_DATE) & (~sel_val_mask)
+    
+    gap_days = 10
+    sel_train_dates = df["date"][sel_train_mask]
+    keep_train = np.ones(len(sel_train_dates), dtype=bool)
+    
+    for start_val, end_val in VAL_BLOCKS:
+        embargo_start = pd.Timestamp(start_val) - pd.Timedelta(days=gap_days)
+        embargo_end = pd.Timestamp(end_val) + pd.Timedelta(days=gap_days)
+        in_embargo = (sel_train_dates >= embargo_start) & (sel_train_dates <= embargo_end)
+        keep_train[in_embargo] = False
+        
+    sel_train_indices = df.index[sel_train_mask][keep_train]
+    sel_train_mask = np.zeros(len(df), dtype=bool)
+    sel_train_mask[sel_train_indices] = True
+    
+    sel_train_idx = np.where(sel_train_mask)[0]
+    X_sel_train = X[sel_train_idx]
+    y_sel_train = y_scaled[sel_train_idx]
+    
+    fdr_level = 0.25 if etf_name == "588000ETF" else SCREEN_FDR
+    screen_mask, p_vals, rhos = run_screening(X_sel_train, y_sel_train, fdr_level=fdr_level)
+    
+    passed_features = [features_all[i] for i in range(len(features_all)) if screen_mask[i]]
+    return passed_features
 
 
 # ============================================================
@@ -715,6 +816,18 @@ def _process_tag(tag: str, r: dict):
         r["lockbox_ic_swallowed"] = bool(ci_ic[0] <= cv_ic_target <= ci_ic[1])
         r["lockbox_mono_swallowed"] = bool(ci_mono[0] <= cv_mono <= ci_mono[1])
 
+        # Compute pruned features list
+        features_all = scaler_meta.get("features", [])
+        if features_all:
+            passed_step1 = get_step1_passed_features(df, features_all, etf)
+            stopped_by_step1 = [f for f in features_all if f not in passed_step1]
+            stopped_by_step2 = [f for f in passed_step1 if f not in selected_features]
+            r["features_stopped_by_step1"] = stopped_by_step1
+            r["features_stopped_by_step2"] = stopped_by_step2
+        else:
+            r["features_stopped_by_step1"] = []
+            r["features_stopped_by_step2"] = []
+
         # Persist results JSON + scaler metadata.
         with open(DATA_DIR / f"results_{tag}.json", "w") as f_json:
             json.dump(r, f_json, indent=2, default=str)
@@ -1006,6 +1119,29 @@ def _write_report(results_dict):
         lines.append(f"- **Selected features**: {len(r['selected_features'])}")
         lines.append(f"- **Active features**: {len(active_feats)}")
         lines.append(f"- **Active**: " + ", ".join([f"`{f}`" for f in active_feats]))
+        
+        stopped_1 = r.get("features_stopped_by_step1", [])
+        stopped_2 = r.get("features_stopped_by_step2", [])
+        
+        lines.append(f"- **Stopped by Step 1 (FDR Screening)** ({len(stopped_1)} features):")
+        if stopped_1:
+            lines.append("  <details>")
+            lines.append(f"  <summary>Show {len(stopped_1)} features</summary>")
+            lines.append("  ")
+            lines.append("  " + ", ".join([f"`{f}`" for f in stopped_1]))
+            lines.append("  </details>")
+        else:
+            lines.append("  None")
+            
+        lines.append(f"- **Stopped by Step 2 (Stability & VIF Pruning)** ({len(stopped_2)} features):")
+        if stopped_2:
+            lines.append("  <details>")
+            lines.append(f"  <summary>Show {len(stopped_2)} features</summary>")
+            lines.append("  ")
+            lines.append("  " + ", ".join([f"`{f}`" for f in stopped_2]))
+            lines.append("  </details>")
+        else:
+            lines.append("  None")
         lines.append("")
         plot_file = r.get("diagnostics_plot") or f"diagnostics_{etf}_{side}.png"
         if (PLOTS_DIR / plot_file).exists():

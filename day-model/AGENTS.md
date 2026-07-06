@@ -153,8 +153,10 @@ Upgraded model training stability, tail performance, overfit diagnostics, and de
      - `side_m3 >= 50%` (side-specific Hit Rate >= 50%)
    - Prevents side-specific fold-level sign flips while keeping overfit guardrails intact.
 
-4. **Decoupled Ridge Fallback & Dynamic VIF**:
-   - Decoupled `force_ridge` from hardcoded ETF blacklist. Forced purely by condition number (`kappa > 1e5`), freeing `500ETF` to explore sparse solvers (`skglm_mcp` / `skglm_huber_l1`).
+4. **Decoupled Ridge Fallback & Live Conditioning Constraint**:
+   - Removed static pre-decision `force_ridge` based on raw X condition number. Sampler is free to explore sparse solvers (`skglm_mcp` / `skglm_huber_l1`) and Ridge.
+   - Live per-trial regularized condition number check: rejects/prunes trial if regularized Gram matrix condition number (`reg_kappa`) exceeds `10000.0`.
+   - Added SVD-based condition number check post-VIF (`run_cond_pruning`) to iteratively drop the feature with the largest loading on the smallest singular vector until raw cond < 100.0, catching multi-feature near-collinearity.
    - Dynamic VIF thresholding: `5.0` for highly ill-conditioned `50ETF`, default `10.0` for other ETFs.
    - Raised `ridge_alpha` search upper bound to `10000.0`.
 
