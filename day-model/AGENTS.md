@@ -1,10 +1,9 @@
 # Day-Model Feature Expansion & Return Prediction Workflow
 
 Workflow for day-model feature generation and multi-metric linear return predictor optimization.
-Check day-model/day-model_plan.md for logic. Also update day-model/day-model_plan.md when the logic changes.
+Read [day-model_plan.md](file:///home/hallo/Documents/option-longterm/day-model/day-model_plan.md) for logic. Update both files when logic changes.
 
 ## Target Definition
-
 * **Target**: `trade_return = log(close[EXIT_BAR] / open[decision_bar+1])`
 * **Entry**: 10:00 (bar 5 closes at 10:00, entry at open of bar 6)
 * **Exit**: 14:35 (close of bar 42)
@@ -16,42 +15,39 @@ Check day-model/day-model_plan.md for logic. Also update day-model/day-model_pla
 # 1. Re-generate parquet feature datasets
 python3 day-model/build_features.py -e all
 
-# 2. Train BOTH long and short side models per ETF (DEFAULT, takes ~80s per ETF)
-python3 day-model/train_model.py -e all --trials 100  # --both is default
-# IMPORTANT: Agent should always run full set; don't go beyond 100 trials (overfit risk)
+# 2. Train BOTH long and short side models per ETF (DEFAULT)
+python3 day-model/train_model.py -e all --trials 100
+# Cap trials at 100 to prevent overfit risk.
 
-# 3. Generate summary REPORT.md (ONE 15-panel diagnostics figure per ETF per side)
+# 3. Generate summary REPORT.md and plots
 python3 day-model/generate_report.py
 ```
 
 ### Side-Specific Objective (`--both` default | `--side single|long|short`)
 
-The feature pipeline (screening → CSS → VIF → CPCV) is unchanged. Only the **validation objective** and the **lockbox Tail IC** are side-aware:
+Feature pipeline (screening → CSS → VIF → CPCV) unchanged. Only validation objective (V2) and lockbox Tail IC side-aware:
 
 | Side     | Tail IC definition (V2)                | V1..V4 weights              |
 | :---     | :---                                   | :---                        |
-| `single` | two-sided: top10% + bottom10% (legacy) | `[0.40, 0.40, 0.15, 0.05]` |
-| `long`   | top-only: `pred >= P90(pred)`          | `[0.45, 0.45, 0.10, 0.00]` (V4 dropped, renormalized) |
-| `short`  | bot-only: `pred <= P10(pred)`          | `[0.45, 0.45, 0.10, 0.00]` (V4 dropped, renormalized) |
+| `single` | two-sided: top 10% + bottom 10% (legacy) | `[0.40, 0.40, 0.15, 0.05]` |
+| `long`   | top-only: `pred >= P85(pred)` (top 15%) | `[0.35, 0.50, 0.15, 0.00]` (V4 dropped, renormalized) |
+| `short`  | bot-only: `pred <= P15(pred)` (bot 15%) | `[0.35, 0.50, 0.15, 0.00]` (V4 dropped, renormalized) |
 
-- CV fold M1..M6 metrics and kill-switches stay **two-sided** for all sides.
-- Side is stored in `results_{tag}.json` and `scaler_{tag}.joblib` under the `side` field.
-- `tag = {ETF}` for `single`, `{ETF}_long` / `{ETF}_short` otherwise.
-- Pilot cache (`cache_pilot_*`) is **side-scoped via hash**: the cache key includes `"v11_side", side` only when `side != "single"`, so the existing single-side pilot cache (and thus single-side results) is preserved byte-identical. Selection and LOYO caches are side-independent.
-- Lockbox Tail IC in `generate_report.py` is side-aware.
+* CV fold metrics M1..M6 and kill-switches stay two-sided for all sides.
+* Side stored in `results_{tag}.json` and `scaler_{tag}.joblib` under `side` field.
+* `tag = {ETF}` for `single`, `{ETF}_long` / `{ETF}_short` otherwise.
+* Pilot cache (`cache_pilot_*`) side-scoped via hash: cache key includes `"v11_side", side` when `side != "single"`. Selection and LOYO caches side-independent.
+* Lockbox Tail IC in `generate_report.py` side-aware.
 
 ```bash
-# Default: train both long and short for each ETF (one command, two artifacts per ETF)
-python3 day-model/train_model.py -e 300 --trials 100           # --both is default
-python3 day-model/train_model.py -e all --trials 100           # trains both sides for all ETFs
+# Default: train both long and short for each ETF
+python3 day-model/train_model.py -e 300 --trials 100
+python3 day-model/train_model.py -e all --trials 100
 
 # Train ONE specific side only (disables --both)
-python3 day-model/train_model.py -e 300 --no-both --side single --trials 100  # legacy
-python3 day-model/train_model.py -e 300 --no-both --side long   --trials 100  # top-only
-python3 day-model/train_model.py -e 300 --no-both --side short  --trials 100  # bot-only
-
-# generate_report.py auto-picks all results_*.json (single + long + short) and emits
-# ONE 15-panel figure per tag.
+python3 day-model/train_model.py -e 300 --no-both --side single --trials 100
+python3 day-model/train_model.py -e 300 --no-both --side long   --trials 100
+python3 day-model/train_model.py -e 300 --no-both --side short  --trials 100
 ```
 
 ### train_model.py Performance Options
@@ -60,127 +56,93 @@ python3 day-model/train_model.py -e 300 --no-both --side short  --trials 100  # 
 python day-model/train_model.py -e 300 -t 200             # cache ON, n_jobs=cpu_count
 python day-model/train_model.py -e 300 --no-cache          # force recompute
 python day-model/train_model.py -e 300 --optuna-jobs 8     # cap Optuna workers
-python day-model/train_model.py -e 300 --optuna-jobs 1     # sequential (guarantees 100% determinism)
+python day-model/train_model.py -e 300 --optuna-jobs 1     # sequential (100% deterministic)
 python day-model/train_model.py -e 300 --bootstrap-jobs 8  # cap stability-bootstrap workers
 python day-model/train_model.py -e 300 --loyo-jobs 4       # cap LOYO fold workers per trial
 ```
 
-Speedups: fp32 arrays; vectorized Spearman screen; joblib-parallel stability bootstrap & CPCV folds; disk caches (select/loyo/pilot); precomputed unweighted scaled matrix; numpy-vectorized yearly metrics (no pandas qcut); Optuna process-parallel optimization via joblib (loky backend) and JournalFileBackend storage to bypass Python GIL; BLAS threads pinned to 1; skglm `AndersonCD(max_epochs=2000)`; seeded TPESampler (42 pilot, 43 main).
+Speedups: fp32 arrays, vectorized Spearman screen, parallel stability bootstrap & CPCV folds, disk caches, precomputed unweighted scaled matrix, numpy-vectorized yearly metrics, GIL bypass via Optuna JournalStorage, local BLAS pin = 1, skglm `AndersonCD(max_epochs=2000)`, seeded TPESampler.
 
-- **CPCV parallelism**: `--loyo-jobs -1` (auto = `cpu_count // optuna-jobs`). Use when running single ETF with low `--optuna-jobs`; auto-throttles to avoid oversubscription when Optuna already saturates cores.
+* **CPCV parallelism**: `--loyo-jobs -1` (auto = `cpu_count // optuna-jobs`). Cap to prevent core oversubscription.
 
 ## Cache invalidation
 
-`train_model.py` writes three disk caches per ETF in `day-model/data/`:
+`train_model.py` writes three caches per ETF in `day-model/data/`:
 
 | File | Contents |
 |---|---|
-| `cache_select_{etf}_{hash}.joblib` | `screen_mask`, `p_vals`, `rhos`, `stability_selected_idx`, `stability_scores` (version `v10` cache key, isolated to selection train set; **side-independent**) |
-| `cache_loyo_{etf}_{hash}.joblib` | List of pre-scaled CPCV folds `(test_idx, X_tr_scaled, X_te_scaled, y_tr)` (version `v10` cache key; **side-independent**) |
-| `cache_pilot_{etf}_{hash}.joblib` | Pilot records `[{params, raw_metrics, val_metrics}, ...]`. Key is `"v10"` for `single` (preserves legacy cache byte-identical) and `"v11_side", side` prefix for `long`/`short` (side-scoped via hash). |
+| `cache_select_{etf}_{hash}.joblib` | `screen_mask`, `p_vals`, `rhos`, `stability_selected_idx`, `stability_scores` (version `v10` key; side-independent) |
+| `cache_loyo_{etf}_{hash}.joblib` | CPCV folds `(test_idx, X_tr_scaled, X_te_scaled, y_tr)` (version `v10` key; side-independent) |
+| `cache_pilot_{etf}_{hash}.joblib` | Pilot records `[{params, raw_metrics, val_metrics}]` (version `v11_side` key for long/short; side-scoped) |
 
-**Auto-invalidated** (key mismatch triggers recompute) when any of these change:
-- ETF name
-- `len(FEATURES)` (FEATURES list length)
-- `features_{etf}.parquet` mtime (parquet regen via `build_features.py`)
-- Selection Train row/col count
-- `STABILITY_B`, `STABILITY_PI`, `SCREEN_FDR`, `SCREEN_FALLBACK_K`
-- `SELECTION_VAL_DATE` constant
-- `TARGET` column name
-- Selected-feature index tuple (CPCV + pilot caches)
-- `PILOT_N_TRIALS`, `PILOT_SEED` (pilot cache only)
-- **`--side`** for `long`/`short` only (pilot cache key gets `"v11_side", side` prefix; `single` keeps `"v10"` to preserve byte-identical legacy results)
+**Auto-invalidated** when these change:
+* ETF name
+* `len(FEATURES)`
+* `features_{etf}.parquet` mtime
+* Selection Train shape
+* `STABILITY_B`, `STABILITY_PI`, `SCREEN_FDR`, `SCREEN_FALLBACK_K`
+* `SELECTION_VAL_DATE`
+* `TARGET` column
+* Selected-feature indices
+* `PILOT_N_TRIALS`, `PILOT_SEED`
+* `--side` (only for `long`/`short` via `"v11_side"`)
 
 **Manual clear required when**:
-- Editing `FEATURES`/`EARLY_FEATURES`/`DAY_FEATURES`/`YESTERDAY_FEATURES` lists in `build_features.py` **without** regenerating parquet.
-- Changing `METRIC_WEIGHTS` or `SIDE_CONFIG` weights (affects pilot medians/MADs; clear `cache_pilot_*`).
-- Editing `side_tail_ic` semantics in `train_model.py` (clear all `cache_pilot_*`).
-- Changing the CPCV group/test window logic, embargo window, or scaling code in `_compute_loyo`.
-- Changing `run_screening` / `run_stability_selection` internals.
-- Changing hierarchical clustering thresholds or distance metrics for CSS.
+* Editing `FEATURES` list in `build_features.py` without regenerating parquet.
+* Changing `METRIC_WEIGHTS` or `SIDE_CONFIG` weights (clear `cache_pilot_*`).
+* Editing `side_tail_ic` semantics in `train_model.py` (clear `cache_pilot_*`).
+* Changing CPCV group/test window logic, embargo, or scaling in `_compute_loyo`.
+* Changing screening or stability selection internals.
+* Changing hierarchical clustering thresholds/metrics for CSS.
 
 **Purge all caches**:
 ```powershell
 Remove-Item day-model\data\cache_*.joblib
 ```
 
+## Remade Predictor Architecture
 
-## Remade Predictor Architecture (First Principles)
+1. **Lockbox Split (Step 0)**: Hold out days $\ge 2024-03-01$ (OOS data untouched during training).
+2. **Selection Validation Split (Step 0.5)**: 6 non-contiguous 3-month blocks (~370 days) for validation. 4 Inner blocks for Optuna tuning; 2 Outer blocks for generalization check. 10-day embargo at boundaries.
+3. **BH-FDR Screening (Step 1)**: Spearman rank correlation on selection train. Keep features with FDR = 0.15. Fallback to top 50 by p-value.
+4. **CSS + VIF Pruning (Step 2)**: Complete Linkage hierarchical clustering (threshold $t=0.25$, $|r| \ge 0.75$). Subsampling ($B=100$) ElasticNet path votes aggregated at cluster level. Keep clusters selected in $\ge 60\%$ subsamples. Pick representative with highest individual score. Apply iterative VIF pruning (VIF threshold 10.0) on representatives.
+5. **Loss Weighting (Step 3)**: Power weights $w(y_i) = |y_i|^k$. Scale inputs by $\sqrt{w}$.
+6. **CPCV with Embargo (Step 4)**: 6 groups, 2 test groups (15 folds), 10-day embargo at test boundaries. Run on selection train.
+7. **Pilot Normalization (Step 4.1)**: Run 50 pilot trials to compute median and MAD for validation z-scores.
+8. **Objective Function**: Maximize weighted sum of normalized validation metrics + ESS soft penalty under 20%.
+9. **Signed Constraints & TPESampler**: Hard constraints (Overall IC > 0, Hit Rate $\ge 60\%$, Monotonicity > 0.25, Spread > 0, Active features $\le ESS / 8$, Gini concentration $\le 0.85$ soft limit). Violation prunes trial.
+10. **One-Shot Evaluation & Plots (Step 6)**: Refit on working set using best parameters. Save final model and scaler. Evaluate OOS lockbox via `generate_report.py` (side-aware Tail IC). Plot 15 diagnostic panels. Run block bootstrap (B=1000, block size 10) for 95% CIs.
+11. **L2 Regularization**: Mandatory 10% L2 regularization (`skglm_huber_l1` uses `l1_ratio = 0.9`, `skglm_mcp` uses `mu = 0.1 * alpha`) to stabilize design matrix condition number.
+12. **Deflation & Overfit Diagnostics**: Compute running Deflated Objective. Compute PBO and Performance Degradation using CSCV.
+13. **Model Quality**: Calculate condition numbers, ESS, and Gini coefficient.
+14. **Plateau Parameter Selection**: Select trial residing in the most stable hyperparameter plateau (radius $r=0.25$) using deflated objective.
 
-`train_model.py` implements the following robust modeling chain:
+## Stability & Overfit Upgrades (July 2026)
 
-1. **Lockbox Split (Step 0)**: Hold out days from 2024-03-01 to last day (OOS lockbox data completely ignored during training).
-2. **Selection Validation Split (Step 0.5)**: Six non-contiguous 3-month blocks carved out from the working set for selection-blind validation. They are partitioned into 4 **Inner Validation** blocks (for tuning) and 2 held-out **Outer Validation** blocks (for true generalization assessment), with a 10-day temporal embargo applied to training boundaries.
-3. **BH-FDR Screening (Step 1)**: Robust Spearman rank correlation on selection train subset. Keep features surviving FDR = 0.15. Fallback to top 50 by p-value if fewer pass.
-4. **Cluster Stability Selection (CSS) + VIF Pruning (Step 2)**: Groups screened features using Complete Linkage hierarchical clustering (correlation distance threshold of 0.25, i.e., $|r| \ge 0.75$). During stability selection ($B=100$ subsamples), voting is aggregated at the cluster level. A single representative feature with the highest individual stability score is selected from each stable cluster ($\ge 0.60$ voting frequency). Then, **iterative VIF pruning** (VIF threshold of 10.0) is applied to these representatives to eliminate multivariate collinearity.
-5. **Loss Weighting (Step 3)**: Power weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to focus model on tail days.
-6. **CPCV with Embargo (Step 4)**: Combinatorial Purged Cross-Validation with 6 chronological groups and 2 test groups ($\binom{6}{2} = 15$ folds), with a 10-day embargo at test boundaries. Constructed ONLY on the selection train subset.
-7. **Pilot Normalization (Step 4.1)**: Runs 50 pilot trials, computes median and MAD for each of the 4 selection validation metrics (inner split only) to calculate robust z-scores.
-8. **Objective Function** (side-aware, see `SIDE_CONFIG`): Maximizes weighted sum of normalized selection validation metrics, plus a soft penalty for ESS under 20% (`ess_penalty = -10.0 * (0.20 - ess_pct)`):
-   - `single`: Val Overall IC 40%, Val Tail IC 40% (two-sided), Val Monotonicity 15%, Val Top-Bottom Spread 5%.
-   - `long`: Val Overall IC 45%, Val Tail IC 45% (`pred >= P90(pred)`), Val Monotonicity 10%, Val Top-Bottom Spread 0% (dropped, renormalized).
-   - `short`: Val Overall IC 45%, Val Tail IC 45% (`pred <= P10(pred)`), Val Monotonicity 10%, Val Top-Bottom Spread 0% (dropped, renormalized).
-   - CV fold metrics M1..M6 (and the kill-switches in step 9) stay two-sided for all sides.
-9. **Signed Constraints & TPESampler Constrained Optimization**:
-   - Hard constraints are evaluated via signed margins (negative = satisfied, positive = violated) and fed to Optuna's `constraints_func` on the `TPESampler`. This gives TPE the gradient information to steer trials into the feasible region, instead of collapsing infeasible trials to a flat `-1e9`.
-   - Hard constraints include: Overall IC <= 0, Hit Rate < 60%, Decile Monotonicity <= 0.25, Top-Bottom Spread <= 0, Active features count exceeds ESS-based cap ($active\_k > ESS / 8.0$), and Active features count under floor ($active\_k < min\_active\_features$ where $min\_active\_features = min(5, max\_active\_features)$). Dynamic floor scaling prevents contradictory constraints on small-sample datasets (e.g. `588000ETF`).
-   - Model weight concentration (Gini index) is converted from a hard switch to a soft, $k$-normalized penalty in the objective function to avoid collapsing the feasible region for sparse models: `gini_cap = 1.0 - 0.40 * (active_k / m_gini)` and `gini_penalty = -10.0 * (gini - gini_cap) if gini > gini_cap else 0.0`.
-10. **One-Shot Evaluation & Diagnostics Plotting (Step 6)**: Handled entirely in `generate_report.py`. Evaluates final model on 500-day lockbox (lockbox Tail IC is side-aware), updates OOS metrics in results JSON/scaler bundles, and generates **15 separate PNG diagnostic plots per ETF tag** (saved to `day-model/plots/`, embedded in `REPORT.md`). Calculates regularized condition number. Runs a 1000-sample block bootstrap (block size $B=10$) on lockbox OOS data to calculate 95% CIs and flags generalization gaps that are swallowed by the CI as Noise.
-11. **L2 Regularization Component**: Enforces 10% L2 Ridge regularization in both model families to stabilize joint-coefficient assignments under severe multicollinearity.
-12. **Multiple comparison deflation & Overfitting Diagnostics**: Computes running **Deflated Objective** and Deflated Val Overall IC to correct for multiple trials / search-budget inflation across completed trials. Selects best trial based on running deflated objective. Also computes **Probability of Backtest Overfitting (PBO)** and **Performance Degradation** using CSCV on the CPCV folds.
-13. **Model Quality & Generalization Diagnostics**: Calculates condition numbers, ESS of tail-focus weights, Gini coefficient, and CV-to-OOS Generalization Gap for rank IC & decile monotonicity. Saves findings to `REPORT.md`.
-14. **Plateau Stable Parameter Selection**: Instead of choosing hyperparameters based on a single point-optimal raw objective value, the model evaluates valid trials in a normalized hyperparameter space and selects the trial residing in the most stable "parameter plateau" (neighborhood radius $r=0.25$) using the running **deflated objective**, penalizing parameter cliffs.
+Upgraded model training stability, tail performance, overfit diagnostics, and decay monitoring:
 
-## OOS Lockbox Performance & Leakage Verification (July 2026)
+1. **Bootstrap Bagging Feature Selector (Soloff et al. 2024 JMLR)**:
+   - Wraps final model fit in bootstrap aggregation ($B=100$) over Selection Train.
+   - Computes feature inclusion frequency. Keeps features with inclusion frequency $> 50\%$.
+   - Prevents sparse selector collapse to 2-3 active features on small samples.
+   - Refits final model on Working set restricted to bagged features.
 
-We conducted a rigorous verification of the out-of-sample (OOS) lockbox performance for `500ETF` and `159915ETF` to rule out leakage and investigate the underlying mechanism.
+2. **Soften Tail IC to 15% (P85/P15)**:
+   - Uses 15% threshold for `long` and `short` sides in `side_tail_ic` and `side_tail_mask`.
+   - Long/short validation weights set to `[0.35, 0.50, 0.15, 0.00]`.
 
-### 1. Embargo Asymmetry Check at Lockbox Boundary
-To verify if the lack of a temporal embargo at the transition into the lockbox (`2024-03-01`) artificially inflated the lockbox scores (since features at the beginning of the lockbox look back into training data), we re-fit the models with a 10-day and 20-day temporal embargo before `LOCKBOX_DATE` (completely excluding those days from the final model refit):
-- **500ETF**:
-  - Baseline (No Embargo) Lockbox IC: `+0.1257`
-  - 10-day Embargo Lockbox IC: `+0.1255`
-  - 20-day Embargo Lockbox IC: `+0.1250`
-- **159915ETF**:
-  - Baseline (No Embargo) Lockbox IC: `+0.1300`
-  - 10-day Embargo Lockbox IC: `+0.1303`
-  - 20-day Embargo Lockbox IC: `+0.1308`
+3. **Yearly Tail IC Constraint**:
+   - Cross-validation fold Tail IC made side-aware.
+   - Added `M2 (Yearly Tail IC Mean) > 0` hard constraint to main objective.
 
-*Conclusion*: The impact of the boundary embargo is negligible (<0.0004 for 10d), confirming that there is no boundary leak inflating lockbox performance.
+4. **Dynamic Ridge Fallback**:
+   - Forces Ridge-only model search/fitting if selected features condition number is severe ($\kappa > 10^5$) or if ETF is `500ETF`/`50ETF`.
+   - Ridge bypasses active feature constraints.
 
-### 2. Validation Block & COVID (2020-Q2) Regime Analysis
-We evaluated individual validation block performances using the best parameters to see if validation averages were dragged down by a specific regime:
-- **500ETF**:
-  - Block 1 (2016-10 to 2017-01): `IC = -0.1076`
-  - Block 2 (2018-07 to 2018-10): `IC = +0.2738`
-  - Block 3 (2020-04 to 2020-07) (COVID): `IC = +0.3733`
-  - Block 4 (2022-10 to 2023-01): `IC = +0.1463`
-  - Block 5 (2021-07 to 2021-10): `IC = +0.3344`
-  - Block 6 (2023-07 to 2023-10): `IC = +0.1420`
-  - *Average*: `+0.1937`
-- **159915ETF**:
-  - Block 1 (2016-10 to 2017-01): `IC = +0.0657`
-  - Block 2 (2018-07 to 2018-10): `IC = +0.1856`
-  - Block 3 (2020-04 to 2020-07) (COVID): `IC = +0.2605`
-  - Block 4 (2022-10 to 2023-01): `IC = +0.2001`
-  - Block 5 (2021-07 to 2021-10): `IC = +0.1899`
-  - Block 6 (2023-07 to 2023-10): `IC = +0.0894`
-  - *Average*: `+0.1652`
+5. **Model Confidence Set (MCS) & Bayesian True Discovery**:
+   - Hansen's MCS (sequential t-test, alpha=10%) identifies statistically indistinguishable trials.
+   - Empirical Bayes posterior probability of true discovery $P(\theta_{OOS} > 0 | data)$ logs discovery confidence.
 
-*Conclusion*:
-- The COVID block (Block 3) was actually the highest-performing validation block for both ETFs, so it does not drag down validation.
-- Some individual blocks (like Block 1 for 500ETF at `-0.1076`) drag validation down, indicating validation averages are somewhat conservative.
-- The raw (undeflated) pooled outer validation ICs (`+0.1682` for 500ETF, `+0.1341` for 159915ETF) are very close to the raw lockbox ICs (`+0.1257` and `+0.1300`), which shows normal, healthy generalization.
-- The apparent "OOS beats validation" gap is a statistical artifact of multiple-testing adjustment: the validation IC is heavily deflated using Marcos Lopez de Prado deflation (to correct for the 100 trials search space), whereas the lockbox is evaluated once and is undeflated.
-
-### 3. Hand Trader Consensus
-Hand traders report that trading signals during the 2024–2026 lockbox period were structurally "stronger" and more pronounced. This matches our empirical lockbox results, confirming that the strong lockbox performance is a real regime-driven effect, not a leak.
-
-## Feature Deprecation & Compatibility (July 2026)
-
-- Deprecated 49 early extra and 2 yesterday extra features that were never active or stable across all 5 ETFs.
-- Defined in `day-model/deprecate_features.py`.
-- Backward compatibility: Use `--include-deprecated` flag with `build_features.py` or set `INCLUDE_DEPRECATED=1` environment variable to include them.
-
-
-
+6. **Quarterly Rolling Refit decay check**:
+   - Runs `run_quarterly_rolling_refit_test` post-lockbox.
+   - Compares Static vs Rolling Model performance on quarterly windows (QuantBench method).

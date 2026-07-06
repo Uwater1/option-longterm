@@ -345,7 +345,7 @@
   "raw_best_trial": 95,
   "raw_best_val": 4.735751096736893,
   "lockbox_overall_ic": 0.0634631002635507,
-  "lockbox_tail_ic": 0.046464646464646465,
+  "lockbox_tail_ic": 0.15968679895673504,
   "diagnostics": {
     "timings": {
       "data_loading": 0.09766819099604618,
