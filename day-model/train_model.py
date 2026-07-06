@@ -86,11 +86,11 @@ VAL_BLOCKS_OUTER = [
 VAL_BLOCKS = VAL_BLOCKS_INNER + VAL_BLOCKS_OUTER
 PILOT_N_TRIALS = 50
 PILOT_SEED = 42
-STABILITY_B = 50      # Meta-Optuna grand median (was 80)
-STABILITY_PI = 0.75   # Meta-Optuna grand median (was 0.80)
-STABILITY_Q = 18      # Meta-Optuna grand median (was 35)
-SCREEN_FDR = 0.50     # Meta-Optuna grand median (was 0.55)
-ACTIVE_FEATURE_ESS_DIVISOR = 9.0  # Meta-Optuna grand median (was 8.0)
+STABILITY_B = 80      
+STABILITY_PI = 0.60   
+STABILITY_Q = 35      
+SCREEN_FDR = 0.60     
+ACTIVE_FEATURE_ESS_DIVISOR = 9.0  
 
 # Side-Specific Objective configuration.
 # - "single" (legacy): Tail IC two-sided (top10% U bot10%), weights V1..V4 = [0.40, 0.40, 0.15, 0.05]
