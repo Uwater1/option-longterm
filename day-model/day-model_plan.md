@@ -91,16 +91,16 @@ Where each $\widetilde{V}_i$ is a **robust z-score normalized** metric evaluated
 | Side     | Tail IC definition (V2)                          | V1..V4 weights                       |
 | :---     | :---                                             | :---                                  |
 | `single` | two-sided: top 10% + bottom 10% by `pred` (legacy) | `[0.40, 0.40, 0.15, 0.05]`         |
-| `long`   | top-only: rows where `pred >= P90(pred)`         | `[0.45, 0.45, 0.10, 0.00]` (V4 dropped, renormalized) |
-| `short`  | bot-only: rows where `pred <= P10(pred)`         | `[0.45, 0.45, 0.10, 0.00]` (V4 dropped, renormalized) |
+| `long`   | top-only: rows where `pred >= P85(pred)` (top 15%) | `[0.35, 0.50, 0.15, 0.00]` (V4 dropped, renormalized) |
+| `short`  | bot-only: rows where `pred <= P15(pred)` (bot 15%) | `[0.35, 0.50, 0.15, 0.00]` (V4 dropped, renormalized) |
 
 > **Important**: CV fold metrics $M_1$ through $M_6$ (Yearly Tail IC IR/Mean, Hit Rate, Overall IC, Monotonicity, Spread) and the corresponding kill-switches stay **two-sided** for all sides. Only the validation-side V2 (Val Tail IC) and the lockbox Tail IC in `generate_report.py` use the side-aware definition. This keeps the overfit guardrails (which look at the full distribution) intact while steering hyperparameter search toward the side of interest.
 
 | ID | Metric ($\widetilde{V}_i$) | Definition | Sign | Category | Weight ($w_i$, `single` / `long,short`) |
 | :--- | :--- | :--- | :---: | :--- | :---: |
-| **V₁** | **Val Overall IC** | Spearman rank correlation computed over all rows in the inner selection validation blocks. | + | General Signal | **0.40 / 0.45** |
-| **V₂** | **Val Tail IC** (side-aware) | `single`: Spearman on top/bottom 10% rows. `long`: `pred >= P90(pred)`. `short`: `pred <= P10(pred)`. | + | Tail Power | **0.40 / 0.45** |
-| **V₃** | **Val Monotonicity** | Spearman correlation between decile rank and mean actual return on the inner selection validation blocks. | + | Signal Structure | **0.15 / 0.10** |
+| **V₁** | **Val Overall IC** | Spearman rank correlation computed over all rows in the inner selection validation blocks. | + | General Signal | **0.40 / 0.35** |
+| **V₂** | **Val Tail IC** (side-aware) | `single`: Spearman on top/bottom 10% rows. `long`: `pred >= P85(pred)`. `short`: `pred <= P15(pred)`. | + | Tail Power | **0.40 / 0.50** |
+| **V₃** | **Val Monotonicity** | Spearman correlation between decile rank and mean actual return on the inner selection validation blocks. | + | Signal Structure | **0.15 / 0.15** |
 | **V₄** | **Val Top-Bottom Spread** | Mean return spread (Top 10% minus Bottom 10%) on the inner selection validation blocks. **Dropped (weight=0) for `long`/`short`** since the off-side decile is never traded. | + | Factor Efficacy | **0.05 / 0.00** |
 
 We compute the running **Deflated Objective** during the study to adjust for search-budget overfit. The final trial selection (including parameter plateau search) is performed using this deflated score instead of the raw objective, guaranteeing that the selection metric and the deflated honesty score are aligned.
@@ -192,4 +192,37 @@ We evaluated individual validation block performances using the best parameters 
 
 ### 3. Hand Trader Consensus
 Hand traders report that trading signals during the 2024–2026 lockbox period were structurally "stronger" and more pronounced. This matches our empirical lockbox results, confirming that the strong lockbox performance is a real regime-driven effect, not a leak.
+
+
+## 7. Day-Model Overfit & Stability Upgrades (July 2026)
+
+Upgraded model training stability, tail performance, overfit diagnostics, and decay monitoring:
+
+1. **Bootstrap Bagging Feature Selector (Soloff et al. 2024 JMLR)**:
+   - Wraps final model fit in bootstrap aggregation ($B=100$) over Selection Train.
+   - Fits best model hyperparameters on $B$ bootstrap draws of Selection Train.
+   - Computes per-feature inclusion frequency. Keeps features with inclusion frequency $> 50\%$.
+   - Prevents point-estimate sparse penalty collapse to 2-3 active features on small samples.
+   - Refits final model on Working set restricted to these bagged features.
+
+2. **Soften Tail IC to 15% (P85/P15)**:
+   - Modified `side_tail_ic` and `side_tail_mask` to use 15% threshold for `long` and `short` sides (top 15% / bottom 15% only) instead of 10% (P90/P10). Softens small-sample noise.
+   - Set weights for `long`/`short` validation objective `[V1, V2, V3, V4]` to `[0.35, 0.50, 0.15, 0.00]` (renormalized V4 drop).
+
+3. **Yearly Tail IC Constraint**:
+   - Passed `side` to `calculate_yearly_metrics` to make cross-validation fold Tail IC side-aware.
+   - Added `M2 (Yearly Tail IC Mean) > 0` hard constraint to main objective (7 total constraints). Prunes configurations with negative tail performance.
+
+4. **Dynamic Ridge Fallback**:
+   - Added `"ridge"` model type support to `_build_model`.
+   - Automatically forces Ridge-only model search/fitting if selected features condition number is severe ($\kappa > 10^5$) or if ETF is `500ETF`/`50ETF` (to bypass severe collinearity/sparsity instability).
+   - Ridge bypasses the sparse active feature floor & cap constraints. L2 regularizer matches `ridge_alpha`.
+
+5. **Model Confidence Set (MCS) & Bayesian True Discovery**:
+   - Hansen's MCS (sequential paired t-test, alpha=10%) identifies statistically indistinguishable trials from the best.
+   - Empirical Bayes posterior probability of true discovery ($P(\theta_{OOS} > 0 | data)$) computed per trial. Logs MCS size and posterior probability.
+
+6. **Quarterly Rolling Refit decay check**:
+   - Runs `run_quarterly_rolling_refit_test` on post-lockbox quarters.
+   - Simulates Static Model (frozen pre-lockbox) vs Rolling Model (refitted quarterly with updated history) on quarterly windows. Measures IC and Tail IC decay rate (QuantBench method).
 

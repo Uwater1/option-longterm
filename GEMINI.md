@@ -220,3 +220,11 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 - Added technical indicators (TD setup, BB width, inside/outside bars, WaveTrend, Keltner squeeze, Stochastic RSI, sentiment rotations) to daily indicators.
 - Total active day-model features expanded from 185 to 264. Verification completed on all 5 ETFs.
 - Re-trained linear Optuna-tuned prediction models successfully (saved in day-model/models/).
+
+## Day-Model Overfit & Stability Upgrades (July 2026)
+- **Soloff et al. Bootstrap Bagging Selection**: Wrapped final model fit in bootstrap aggregation ($B=100$) over Selection Train. Features kept if inclusion frequency $> 50\%$. Prevents point-fit sparsity collapse to 2-3 features.
+- **Softened Tail IC**: Changed threshold to 15% (P85/P15) for long/short sides (top/bottom 15% only) to reduce small-sample noise. Set weights for long/short validation objective to `[0.35, 0.50, 0.15, 0.00]`.
+- **Yearly Tail IC Constraint**: Passed side to `calculate_yearly_metrics` for side-aware CV folds. Added `M2 (Yearly Tail IC Mean) > 0` hard constraint to main objective (7 total constraints).
+- **Dynamic Ridge Fallback**: Added `"ridge"` model type. Forces Ridge-only search/fitting if selected features condition number is severe ($\kappa > 10^5$) or if ETF is `500ETF`/`50ETF` (to bypass severe collinearity/sparsity instability).
+- **Overfit Diagnostics**: Added sequential paired t-test Hansen's Model Confidence Set (MCS, alpha=10%) and Empirical Bayes posterior probability of true discovery ($P(\theta_{OOS} > 0 | data)$) per trial.
+- **Quarterly Rolling Refit decay check**: Measures IC and Tail IC decay rate on quarterly windows post-lockbox using Static Model vs quarterly Rolling Model (QuantBench method).

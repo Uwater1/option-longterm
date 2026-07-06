@@ -101,8 +101,8 @@ ACTIVE_FEATURE_ESS_DIVISOR = 8.0
 # only the validation objective (V2) and the lockbox Tail IC are side-aware.
 SIDE_CONFIG = {
     "single": {"tail_def": "two_sided", "weights": [0.40, 0.40, 0.15, 0.05]},
-    "long":   {"tail_def": "top_only",  "weights": [0.45, 0.45, 0.10, 0.00]},
-    "short":  {"tail_def": "bot_only",  "weights": [0.45, 0.45, 0.10, 0.00]},
+    "long":   {"tail_def": "top_only",  "weights": [0.35, 0.50, 0.15, 0.00]},
+    "short":  {"tail_def": "bot_only",  "weights": [0.35, 0.50, 0.15, 0.00]},
 }
 
 # Sample-weighting scale_data_with_weights can be done without a full rescale
@@ -225,6 +225,9 @@ def _build_model(model_type: str, params: dict):
         return Lasso(alpha=params.get("lasso_alpha", 0.01), random_state=42, max_iter=2000)
     elif model_type == "elasticnet":
         return ElasticNet(alpha=params.get("en_alpha", 0.01), l1_ratio=params.get("en_l1_ratio", 0.5), random_state=42, max_iter=2000)
+    elif model_type == "ridge":
+        from sklearn.linear_model import Ridge
+        return Ridge(alpha=params.get("ridge_alpha", 1.0), random_state=42, max_iter=2000)
     else:
         raise ValueError(f"Unknown model_type: {model_type}")
 
@@ -258,17 +261,14 @@ def side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str = "single") -
     """Side-aware Tail IC.
 
     - "single" (legacy): Spearman on top 10% + bottom 10% by predicted value.
-    - "long":  Spearman on rows where pred >= P90(pred) (top 10% only).
-    - "short": Spearman on rows where pred <= P10(pred) (bottom 10% only).
-
-    CV fold metrics (M1..M6 in calculate_yearly_metrics) intentionally use
-    the two-sided definition regardless of `side`; only the validation
-    objective (V2) and the lockbox Tail IC use this side-aware helper.
+    - "long":  Spearman on rows where pred >= P85(pred) (top 15% only).
+    - "short": Spearman on rows where pred <= P15(pred) (bottom 15% only).
     """
     y_true = np.asarray(y_true, dtype=np.float64)
     y_pred = np.asarray(y_pred, dtype=np.float64)
     n = y_pred.shape[0]
-    n_tail = max(5, int(n * 0.10))
+    pct = 0.15 if side in ["long", "short"] else 0.10
+    n_tail = max(5, int(n * pct))
     if n < n_tail:
         return 0.0
     cfg = SIDE_CONFIG.get(side, SIDE_CONFIG["single"])
@@ -623,7 +623,8 @@ def run_loyo_cv(loyo_folds: list, model_type: str, params: dict, k_weight: float
 
 
 def calculate_yearly_metrics(year_groups, y_true: np.ndarray, y_pred: np.ndarray,
-                             k_features: int, coef_norm: float, ess: float = 0.0):
+                             k_features: int, coef_norm: float, ess: float = 0.0,
+                             side: str = "single"):
     y_true = np.asarray(y_true, dtype=np.float64)
     y_pred = np.asarray(y_pred, dtype=np.float64)
 
@@ -638,14 +639,7 @@ def calculate_yearly_metrics(year_groups, y_true: np.ndarray, y_pred: np.ndarray
         y_p = y_pred[idx]
 
         y_ics[i] = spearman_ic(y_t, y_p)
-
-        n_tail = max(5, int(y_p.shape[0] * 0.10))
-        if y_p.shape[0] >= n_tail * 2:
-            order = np.argsort(y_p, kind="quicksort")
-            tail_idx = np.concatenate([order[:n_tail], order[-n_tail:]])
-            tail_ic = _spearman_from_arrays(y_t[tail_idx], y_p[tail_idx])
-        else:
-            tail_ic = 0.0
+        tail_ic = side_tail_ic(y_t, y_p, side)
         y_tail_ics[i] = tail_ic
         y_tail_hits[i] = 1.0 if tail_ic > 0 else 0.0
 
@@ -682,6 +676,89 @@ def compute_deflated_metric(values: list, best_value: float, rho: float = 0.5) -
     std_val = np.std(values)
     overfit_bias = std_val * np.sqrt(2.0 * np.log(n)) * np.sqrt(1.0 - rho)
     return float(best_value - overfit_bias)
+
+
+def compute_model_confidence_set(oos_matrix: np.ndarray, alpha: float = 0.10) -> list:
+    """Hansen's Model Confidence Set (MCS) using paired t-test approximation.
+    oos_matrix: shape (N_models, N_folds)
+    Returns: list of remaining model indices (0-based indexes in oos_matrix).
+    """
+    N, F = oos_matrix.shape
+    if N <= 1:
+        return list(range(N))
+    
+    remaining = list(range(N))
+    while len(remaining) > 1:
+        # Find index of best model in the remaining set
+        means = oos_matrix[remaining].mean(axis=1)
+        best_idx_in_rem = np.argmax(means)
+        best_trial_idx = remaining[best_idx_in_rem]
+        
+        worst_p = 1.0
+        worst_rem_idx = None
+        
+        for idx in remaining:
+            if idx == best_trial_idx:
+                continue
+            diffs = oos_matrix[best_trial_idx] - oos_matrix[idx]
+            mean_diff = diffs.mean()
+            std_diff = diffs.std(ddof=1)
+            se_diff = std_diff / np.sqrt(F)
+            if se_diff < 1e-8:
+                t_stat = 0.0
+            else:
+                t_stat = mean_diff / se_diff
+            
+            # One-sided t-test: is idx significantly worse than best_trial_idx?
+            from scipy.stats import t as t_dist
+            p_val = 1.0 - t_dist.cdf(t_stat, df=F-1)
+            if p_val < worst_p:
+                worst_p = p_val
+                worst_rem_idx = idx
+                
+        if worst_p < alpha and worst_rem_idx is not None:
+            remaining.remove(worst_rem_idx)
+        else:
+            break
+            
+    return remaining
+
+
+def compute_bayesian_true_discovery_prob(oos_matrix: np.ndarray, best_trial_idx: int) -> float:
+    """Computes the Empirical Bayes posterior probability that the best trial
+    has a true OOS IC > 0.
+    oos_matrix: shape (N_models, N_folds)
+    """
+    N, F = oos_matrix.shape
+    if N == 0:
+        return 0.0
+        
+    means = oos_matrix.mean(axis=1)
+    variances = oos_matrix.var(axis=1, ddof=1)
+    
+    # Empirical prior parameters
+    prior_mean = float(means.mean())
+    prior_var = float(means.var(ddof=1)) if N > 1 else 0.05
+    if prior_var < 1e-8:
+        prior_var = 0.05
+        
+    # Likelihood variance (pooled from sample variances of folds)
+    liq_var = float(variances.mean())
+    if liq_var < 1e-8:
+        liq_var = 0.05
+        
+    # Posterior for the best trial
+    best_mean = means[best_trial_idx]
+    best_var = variances[best_trial_idx] if variances[best_trial_idx] > 1e-8 else liq_var
+    
+    # Posterior variance and mean
+    post_var = 1.0 / (1.0 / prior_var + F / best_var)
+    post_mean = post_var * (prior_mean / prior_var + F * best_mean / best_var)
+    
+    # P(theta > 0 | data) using standard normal CDF
+    from scipy.stats import norm
+    prob = float(1.0 - norm.cdf(0.0, loc=post_mean, scale=np.sqrt(post_var)))
+    return prob
 
 
 def compute_pbo_cscv(is_matrix, oos_matrix):
@@ -725,6 +802,114 @@ def compute_pbo_cscv(is_matrix, oos_matrix):
         beta = 0.0
         
     return float(pbo), float(beta)
+
+
+def run_quarterly_rolling_refit_test(df: pd.DataFrame, bagged_selected_idx: np.ndarray,
+                                     model_type: str, params: dict, k_weight: float,
+                                     side: str = "single") -> dict:
+    """Measures IC decay per quarter post-lockbox using a static model
+    vs a quarterly rolling refit model (QuantBench method).
+    """
+    # Restrict features
+    features_bagged = [FEATURES[i] for i in bagged_selected_idx]
+    
+    # Lockbox starts at pd.Timestamp(LOCKBOX_DATE)
+    lockbox_start = pd.Timestamp(LOCKBOX_DATE)
+    end_date = df["date"].max()
+    
+    # We generate quarterly boundaries starting from LOCKBOX_DATE
+    quarter_bounds = []
+    curr = lockbox_start
+    while curr <= end_date:
+        quarter_bounds.append(curr)
+        curr = curr + pd.DateOffset(months=3)
+    if quarter_bounds[-1] < end_date:
+        quarter_bounds.append(end_date + pd.Timedelta(days=1))
+        
+    quarter_results = []
+    
+    # Targets scaling
+    y_scaled = (df[TARGET].values * 100.0).astype(np.float32)
+    X = df[features_bagged].ffill().fillna(df[features_bagged].median().fillna(0.0)).values.astype(np.float32)
+    
+    # 1. Fit the static model (pre-lockbox only)
+    static_train_mask = df["date"] < lockbox_start
+    static_train_idx = np.where(static_train_mask)[0]
+    
+    X_static_tr = X[static_train_idx]
+    y_static_tr = y_scaled[static_train_idx]
+    
+    scaler_static = StandardScaler()
+    X_static_tr_scaled = scaler_static.fit_transform(X_static_tr)
+    
+    w_static = compute_sample_weights(y_static_tr, k_weight)
+    X_static_weighted, y_static_weighted = scale_data_with_weights(X_static_tr_scaled, y_static_tr, w_static)
+    
+    static_model = _build_model(model_type, params)
+    static_model.fit(X_static_weighted, y_static_weighted)
+    
+    print("\n  [DIAGNOSTICS] Quarterly Rolling Refit Test (Lockbox decay):")
+    print(f"    {'Quarter':<22} | {'Static IC':<9} | {'Static Tail':<11} | {'Roll IC':<8} | {'Roll Tail':<9}")
+    print(f"    {'-'*22}-|-{'-'*9}-|-{'-'*11}-|-{'-'*8}-|-{'-'*9}")
+    
+    for i in range(len(quarter_bounds) - 1):
+        q_start = quarter_bounds[i]
+        q_end = quarter_bounds[i+1]
+        
+        q_mask = (df["date"] >= q_start) & (df["date"] < q_end)
+        q_idx = np.where(q_mask)[0]
+        if len(q_idx) < 5:
+            continue
+            
+        q_X = X[q_idx]
+        q_y = y_scaled[q_idx]
+        
+        # Eval static model
+        q_X_scaled_static = scaler_static.transform(q_X)
+        static_preds = static_model.predict(q_X_scaled_static)
+        static_ic = spearman_ic(q_y, static_preds)
+        static_tail_ic = side_tail_ic(q_y, static_preds, side)
+        
+        # Train rolling model (on all data before q_start)
+        roll_train_mask = df["date"] < q_start
+        roll_train_idx = np.where(roll_train_mask)[0]
+        
+        X_roll_tr = X[roll_train_idx]
+        y_roll_tr = y_scaled[roll_train_idx]
+        
+        scaler_roll = StandardScaler()
+        X_roll_tr_scaled = scaler_roll.fit_transform(X_roll_tr)
+        
+        w_roll = compute_sample_weights(y_roll_tr, k_weight)
+        X_roll_weighted, y_roll_weighted = scale_data_with_weights(X_roll_tr_scaled, y_roll_tr, w_roll)
+        
+        roll_model = _build_model(model_type, params)
+        roll_model.fit(X_roll_weighted, y_roll_weighted)
+        
+        # Eval rolling model
+        q_X_scaled_roll = scaler_roll.transform(q_X)
+        roll_preds = roll_model.predict(q_X_scaled_roll)
+        roll_ic = spearman_ic(q_y, roll_preds)
+        roll_tail_ic = side_tail_ic(q_y, roll_preds, side)
+        
+        q_name = f"{q_start.strftime('%Y-%m')} to {q_end.strftime('%Y-%m')}"
+        print(f"    {q_name:<22} | {static_ic:+9.4f} | {static_tail_ic:+11.4f} | {roll_ic:+8.4f} | {roll_tail_ic:+9.4f}")
+        
+        quarter_results.append({
+            "quarter": q_name,
+            "static_ic": static_ic,
+            "static_tail_ic": static_tail_ic,
+            "rolling_ic": roll_ic,
+            "rolling_tail_ic": roll_tail_ic,
+        })
+        
+    return {
+        "quarterly_runs": quarter_results,
+        "mean_static_ic": float(np.mean([x["static_ic"] for x in quarter_results])) if quarter_results else 0.0,
+        "mean_rolling_ic": float(np.mean([x["rolling_ic"] for x in quarter_results])) if quarter_results else 0.0,
+        "mean_static_tail_ic": float(np.mean([x["static_tail_ic"] for x in quarter_results])) if quarter_results else 0.0,
+        "mean_rolling_tail_ic": float(np.mean([x["rolling_tail_ic"] for x in quarter_results])) if quarter_results else 0.0,
+    }
 
 
 def extract_normalized_params(trial):
@@ -1114,6 +1299,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     print("\n  [DIAGNOSTICS] Feature Quality:")
     print(f"    Condition Number: {condition_number:.2f}")
+    force_ridge = (condition_number > 1e5) or (etf_name in ["500ETF", "50ETF"])
+    if force_ridge:
+        print(f"    [WARNING] Severe condition number or target ETF. Forcing Ridge-only fallback model search to ensure numerical stability.")
     if condition_number > 100:
         print(f"    [WARNING] Severe collinearity (cond > 100)!")
     elif condition_number > 30:
@@ -1236,6 +1424,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         elif model_type == "elasticnet":
             params["en_alpha"] = trial_params["en_alpha"]
             params["en_l1_ratio"] = trial_params["en_l1_ratio"]
+        elif model_type == "ridge":
+            params["ridge_alpha"] = trial_params["ridge_alpha"]
 
         # LOYO CV predictions
         oof_preds, cv_is_ics, cv_oos_ics = run_loyo_cv(loyo_folds, model_type, params, k_weight,
@@ -1260,7 +1450,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
         # Calculate raw yearly metrics (with ESS-scaled parsimony) on CV folds
         raw_metrics, _, _ = calculate_yearly_metrics(
-            year_groups, y_sel_train, oof_preds, active_k, coef_norm, ess=ess)
+            year_groups, y_sel_train, oof_preds, active_k, coef_norm, ess=ess, side=side)
 
         # Predict on inner selection validation block and compute validation metrics
         val_preds = model_temp.predict(X_sel_val_inner_scaled_base)
@@ -1286,7 +1476,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     pilot_key = [
         "v10", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
-        tuple(VAL_BLOCKS), TARGET, PILOT_N_TRIALS, PILOT_SEED,
+        tuple(VAL_BLOCKS), TARGET, PILOT_N_TRIALS, PILOT_SEED, force_ridge
     ]
     if side != "single":
         pilot_key = ["v11_side", side] + pilot_key
@@ -1306,7 +1496,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         )
 
         def pilot_objective(trial):
-            model_type = trial.suggest_categorical("model_type", ["skglm_huber_l1", "skglm_mcp"])
+            if force_ridge:
+                model_type = trial.suggest_categorical("model_type", ["ridge"])
+            else:
+                model_type = trial.suggest_categorical("model_type", ["skglm_huber_l1", "skglm_mcp", "ridge"])
             k_weight = trial.suggest_float("k_weight", 0.0, 1.5)
 
             trial_params = {"model_type": model_type, "k_weight": k_weight}
@@ -1317,6 +1510,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 trial_params["skglm_mcp_alpha"] = trial.suggest_float("skglm_mcp_alpha", 1e-5, 10.0, log=True)
                 trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 3.0, 10.0)
                 trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
+            elif model_type == "ridge":
+                trial_params["ridge_alpha"] = trial.suggest_float("ridge_alpha", 1e-3, 100.0, log=True)
 
             try:
                 res = evaluate_params(trial_params)
@@ -1400,7 +1595,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     main_storage = JournalStorage(JournalFileBackend(str(main_db_path)))
     
     def constraints_func(trial):
-        return trial.user_attrs.get("constraints", [1e9] * 6)
+        return trial.user_attrs.get("constraints", [1e9] * 7)
 
     sampler = optuna.samplers.TPESampler(
         seed=PILOT_SEED + 1,
@@ -1417,7 +1612,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     best_raw_metrics = None
 
     def main_objective(trial):
-        model_type = trial.suggest_categorical("model_type", ["skglm_huber_l1", "skglm_mcp"])
+        if force_ridge:
+            model_type = trial.suggest_categorical("model_type", ["ridge"])
+        else:
+            model_type = trial.suggest_categorical("model_type", ["skglm_huber_l1", "skglm_mcp", "ridge"])
         k_weight = trial.suggest_float("k_weight", 0.0, 1.5)
 
         trial_params = {"model_type": model_type, "k_weight": k_weight}
@@ -1428,6 +1626,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             trial_params["skglm_mcp_alpha"] = trial.suggest_float("skglm_mcp_alpha", 1e-5, 10.0, log=True)
             trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 3.0, 10.0)
             trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
+        elif model_type == "ridge":
+            trial_params["ridge_alpha"] = trial.suggest_float("ridge_alpha", 1e-3, 100.0, log=True)
 
         try:
             raw_metrics, val_metrics, _model_obj, _scaler_obj, cv_is_ics, cv_oos_ics = evaluate_params(trial_params)
@@ -1461,27 +1661,42 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
             # Hard Constraints / Kill Switches (on CV folds to ensure training stability):
             # Refactored to signed margins for TPESampler constraints_func
-            constraints = [
-                0.0 - m4,
-                0.60 - m3,
-                0.25 - m5,
-                0.0 - m6,
-                float(active_k - max_active_features),
-                float(min_active_features - active_k),
-            ]
+            if model_type == "ridge":
+                # Ridge is non-sparse, bypass active feature floor/cap constraints
+                constraints = [
+                    0.0 - m4,
+                    0.0 - m2,  # Yearly Tail IC Mean > 0
+                    0.60 - m3,
+                    0.25 - m5,
+                    0.0 - m6,
+                    0.0,
+                    0.0,
+                ]
+            else:
+                constraints = [
+                    0.0 - m4,
+                    0.0 - m2,  # Yearly Tail IC Mean > 0
+                    0.60 - m3,
+                    0.25 - m5,
+                    0.0 - m6,
+                    float(active_k - max_active_features),
+                    float(min_active_features - active_k),
+                ]
 
             pruning_reasons = []
             if constraints[0] > 0:
                 pruning_reasons.append("M4 (Overall IC <= 0)")
             if constraints[1] > 0:
-                pruning_reasons.append("M3 (Hit Rate < 60%)")
+                pruning_reasons.append("M2 (Yearly Tail IC Mean <= 0)")
             if constraints[2] > 0:
-                pruning_reasons.append("M5 (Monotonicity <= 0.25)")
+                pruning_reasons.append("M3 (Hit Rate < 60%)")
             if constraints[3] > 0:
-                pruning_reasons.append("M6 (Top-Bottom Spread <= 0)")
+                pruning_reasons.append("M5 (Monotonicity <= 0.25)")
             if constraints[4] > 0:
-                pruning_reasons.append(f"Active features count ({active_k}) exceeds ESS-based cap ({max_active_features})")
+                pruning_reasons.append("M6 (Top-Bottom Spread <= 0)")
             if constraints[5] > 0:
+                pruning_reasons.append(f"Active features count ({active_k}) exceeds ESS-based cap ({max_active_features})")
+            if constraints[6] > 0:
                 pruning_reasons.append(f"Active features count ({active_k}) is less than active feature floor ({min_active_features})")
 
             trial.set_user_attr("constraints", constraints)
@@ -1539,7 +1754,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
         except Exception as e:
             trial.set_user_attr("pruned_reasons", [f"Exception: {str(e)}"])
-            trial.set_user_attr("constraints", [1e9] * 6)
+            trial.set_user_attr("constraints", [1e9] * 7)
             return -1e9
 
     def run_main_trial(worker_seed):
@@ -1570,6 +1785,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     
     reason_counts = {
         "M4 (Overall IC <= 0)": 0,
+        "M2 (Yearly Tail IC Mean <= 0)": 0,
         "M3 (Hit Rate < 60%)": 0,
         "M5 (Monotonicity <= 0.25)": 0,
         "M6 (Top-Bottom Spread <= 0)": 0,
@@ -1729,6 +1945,30 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     if best_val_m is None:
         best_val_m = [np.nan, np.nan, np.nan, np.nan]
 
+    # ── Model Confidence Set (MCS) & Bayesian True Discovery Posterior ──
+    mcs_size = 0
+    bayesian_prob_true_discovery = 0.0
+    if oos_list:
+        oos_matrix_full = np.array(oos_list)
+        best_trial_completed_idx = None
+        if best_trial is not None:
+            for idx_comp, t in enumerate(completed_trials):
+                if t.number == best_trial.number:
+                    best_trial_completed_idx = idx_comp
+                    break
+        if best_trial_completed_idx is None:
+            best_trial_completed_idx = int(np.argmax(oos_matrix_full.mean(axis=1)))
+            
+        try:
+            mcs_indices = compute_model_confidence_set(oos_matrix_full, alpha=0.10)
+            mcs_size = len(mcs_indices)
+            bayesian_prob_true_discovery = compute_bayesian_true_discovery_prob(oos_matrix_full, best_trial_completed_idx)
+            print(f"\n  [DIAGNOSTICS] Model Confidence Set (MCS) & Bayesian Discovery:")
+            print(f"    MCS size: {mcs_size} / {len(completed_trials)} trials (alpha=10%)")
+            print(f"    Bayesian prob of true discovery: {bayesian_prob_true_discovery:.2%}")
+        except Exception as e:
+            print(f"  [WARNING] MCS/Bayesian calculation failed: {e}")
+
     # Calculate Deflated CV IC and Deflated Objective to adjust for multiple trials (Search-Budget Overfit)
     trial_m4_values = []
     trial_objective_values = []
@@ -1765,6 +2005,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         params["skglm_mcp_alpha"] = best_params["skglm_mcp_alpha"]
         params["skglm_mcp_gamma"] = best_params["skglm_mcp_gamma"]
         params["skglm_mcp_delta"] = best_params["skglm_mcp_delta"]
+    elif model_type == "ridge":
+        params["ridge_alpha"] = best_params["ridge_alpha"]
 
     # Fit model on selection train set using best params to evaluate outer validation set generalization
     w_best_tr = compute_sample_weights(y_sel_train, k_weight).astype(np.float32)
@@ -1820,10 +2062,50 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     print(f"  Outer Spread:     {val_spread_outer:.4f}")
     
     t_refit_start = time.perf_counter()
-    # Refit final model on 2200 working rows
-    # Scale final working features
+    # ── Soloff et al. Bootstrap Bagging Feature Selector ──
+    # Run B=100 bootstrap fits on selection train to find stable active support.
+    print(f"\nRunning Soloff et al. Bootstrap Bagging Feature Selection (B=100) on selection-train...")
+    n_samples_train = len(y_sel_train)
+    B_bag = 100
+    active_counts = np.zeros(len(stability_selected_idx))
+    rng = np.random.default_rng(PILOT_SEED)
+    
+    for b in range(B_bag):
+        boot_idx = rng.choice(n_samples_train, size=n_samples_train, replace=True)
+        X_b = X_sel_train_scaled_base[boot_idx]
+        y_b = y_sel_train[boot_idx]
+        
+        w_b = compute_sample_weights(y_b, k_weight).astype(np.float32)
+        sqrt_w_b = np.sqrt(w_b)[:, np.newaxis]
+        X_b_weighted = X_b * sqrt_w_b
+        y_b_weighted = y_b * sqrt_w_b[:, 0]
+        
+        model_b = _build_model(model_type, params)
+        model_b.fit(X_b_weighted, y_b_weighted)
+        
+        active_counts += (np.abs(model_b.coef_) > 1e-5).astype(int)
+        
+    inclusion_freqs = active_counts / B_bag
+    print("  Per-feature bootstrap inclusion frequency:")
+    for idx_in_sel, feat_name in enumerate(selected_feature_names):
+        print(f"    - {feat_name}: {inclusion_freqs[idx_in_sel]:.2%}")
+        
+    bagged_mask = inclusion_freqs > 0.50
+    bagged_selected_idx_in_sel = np.where(bagged_mask)[0]
+    
+    # Check if empty, fallback to top 3
+    if len(bagged_selected_idx_in_sel) == 0:
+        print("  [WARNING] No features had >50% inclusion frequency! Keeping top 3 features by frequency.")
+        bagged_selected_idx_in_sel = np.argsort(inclusion_freqs)[-3:]
+        
+    bagged_selected_idx = stability_selected_idx[bagged_selected_idx_in_sel]
+    bagged_feature_names = [selected_feature_names[i] for i in bagged_selected_idx_in_sel]
+    print(f"  Bagged selection kept {len(bagged_feature_names)} features: {bagged_feature_names}")
+
+    # Scale final working features restricted to bagged features
+    X_working_final_bagged = X_working[:, bagged_selected_idx]
     scaler_final = StandardScaler()
-    X_working_scaled = scaler_final.fit_transform(X_working_final)
+    X_working_scaled = scaler_final.fit_transform(X_working_final_bagged)
     
     w_final = compute_sample_weights(y_working, k_weight)
     X_weighted_final, y_weighted_final = scale_data_with_weights(X_working_scaled, y_working, w_final)
@@ -1855,9 +2137,11 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         l2_lambda = best_params["skglm_mcp_alpha"] * 0.1
     elif model_type == "elasticnet":
         l2_lambda = best_params["en_alpha"] * (1.0 - best_params["en_l1_ratio"])
+    elif model_type == "ridge":
+        l2_lambda = best_params["ridge_alpha"]
 
-    n_samples_working = X_working_final.shape[0]
-    X_scaled_tmp = (X_working_final - X_working_final.mean(axis=0)) / (X_working_final.std(axis=0) + 1e-10)
+    n_samples_working = X_working_final_bagged.shape[0]
+    X_scaled_tmp = (X_working_final_bagged - X_working_final_bagged.mean(axis=0)) / (X_working_final_bagged.std(axis=0) + 1e-10)
     _, s, _ = np.linalg.svd(X_scaled_tmp, full_matrices=False)
     s_min = s.min()
     raw_cond = float(s.max() / s_min) if s_min > 1e-10 else float("inf")
@@ -1895,7 +2179,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     scaler_meta = {
         "scaler": scaler_final,
         "features": FEATURES,
-        "selected_features": selected_feature_names,
+        "selected_features": bagged_feature_names,
         "stability_scores": dict(zip(FEATURES, stability_scores.tolist())),
         "best_params": best_params,
         "best_model_type": model_type,
@@ -1920,7 +2204,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     joblib.dump(scaler_meta, MODELS_DIR / f"scaler_{tag}.joblib")
     
     active_idx = np.where(np.abs(final_model.coef_) > 1e-5)[0]
-    active_feature_names = [selected_feature_names[i] for i in active_idx]
+    active_feature_names = [bagged_feature_names[i] for i in active_idx]
 
     timings["final_refit"] = time.perf_counter() - t_refit_start
 
@@ -1939,6 +2223,13 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     except Exception:
         pass
 
+    # ── Quarterly Rolling Refit Test (QuantBench decay check) ──
+    try:
+        quarterly_test_res = run_quarterly_rolling_refit_test(df, bagged_selected_idx, model_type, params, k_weight, side)
+    except Exception as e:
+        print(f"  [WARNING] Quarterly rolling refit test failed: {e}")
+        quarterly_test_res = {}
+
     # Save results json
     results = {
         "etf": etf_name,
@@ -1946,7 +2237,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "tag": tag,
         "n_samples_working": len(y_working),
         "n_samples_lockbox": 0,
-        "selected_features": selected_feature_names,
+        "selected_features": bagged_feature_names,
         "active_features": active_feature_names,
         "stability_scores": dict(zip(FEATURES, stability_scores.tolist())),
         "best_params": best_params,
@@ -1967,6 +2258,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "deflated_objective": deflated_objective,
         "pbo": pbo,
         "performance_degradation": perf_deg,
+        "mcs_size": mcs_size,
+        "bayesian_prob_true_discovery": bayesian_prob_true_discovery,
+        "quarterly_rolling_test": quarterly_test_res,
         "plateau_trial": int(best_trial.number) if (best_trial is not None and hasattr(best_trial, 'number')) else None,
         "plateau_val": float(best_trial.value) if (best_trial is not None and hasattr(best_trial, 'value')) else None,
         "raw_best_trial": int(raw_best_t.number) if raw_best_t is not None else None,

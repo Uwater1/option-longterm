@@ -68,7 +68,8 @@ def side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str = "single") -
     y_true = np.asarray(y_true, dtype=np.float64)
     y_pred = np.asarray(y_pred, dtype=np.float64)
     n = y_pred.shape[0]
-    n_tail = max(5, int(n * 0.10))
+    pct = 0.15 if side in ["long", "short"] else 0.10
+    n_tail = max(5, int(n * pct))
     if n < n_tail:
         return 0.0
     cfg = SIDE_CONFIG.get(side, SIDE_CONFIG["single"])
@@ -88,7 +89,8 @@ def side_tail_mask(y_pred: np.ndarray, side: str) -> np.ndarray:
     """Boolean mask selecting side-tail rows from y_pred."""
     y_pred = np.asarray(y_pred, dtype=np.float64)
     n = y_pred.shape[0]
-    n_tail = max(5, int(n * 0.10))
+    pct = 0.15 if side in ["long", "short"] else 0.10
+    n_tail = max(5, int(n * pct))
     cfg = SIDE_CONFIG.get(side, SIDE_CONFIG["single"])
     mask = np.zeros(n, dtype=bool)
     if cfg["tail_def"] == "top_only":
