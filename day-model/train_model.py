@@ -508,6 +508,7 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen
     n_screened = X_screened.shape[1]
     if n_screened > 1:
         corr = np.corrcoef(X_cluster_scaled, rowvar=False)
+        corr = np.nan_to_num(corr, nan=0.0)
         dist = 1.0 - np.abs(corr)
         dist = np.clip(dist, 0.0, 2.0)
         dist = (dist + dist.T) / 2.0
@@ -1070,7 +1071,7 @@ def find_plateau_trial(study, r=0.25, min_neighbors=8, min_valid_neighbors=6):
 def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
               use_cache: bool = True, optuna_n_jobs: int = OPTUNA_N_JOBS,
               bootstrap_n_jobs: int = BOOTSTRAP_N_JOBS, loyo_n_jobs: int = 1,
-              skip_step12: bool = False):
+              skip_step1: bool = False, skip_step2: bool = False):
     print(f"\n" + "=" * 80)
     print(f"Train {etf_name} (Side: {side})")
     print(f"Cache: {use_cache} | Jobs: Optuna={optuna_n_jobs}, Bootstrap={bootstrap_n_jobs}, LOYO={loyo_n_jobs}")
@@ -1206,64 +1207,51 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         int(X_sel_train.shape[0]), int(X_sel_train.shape[1]),
         STABILITY_B, STABILITY_PI, fdr_level,
         tuple(VAL_BLOCKS), TARGET, vif_threshold,
-        skip_step12,
+        skip_step1, skip_step2,
     ]
     select_cache_path = CACHE_DIR / f"cache_select_{etf_name}_{_cache_key(select_key)}.joblib"
 
     # Step 1 + 2: Cheap screening + Stability selection (cached).
     def _compute_selection():
-        if skip_step12:
-            print("Skipping Step 1 and 2 filters (screening and CSS)...")
-            t_sel_start = time.perf_counter()
+        t_sel_start = time.perf_counter()
+        
+        # Step 1: Cheap screening
+        if skip_step1:
+            print("Skipping Step 1 filter (screening)...")
+            # Calculate screening stats purely for diagnostics
             _, p_vals, rhos = run_screening(X_sel_train, y_sel_train, fdr_level=fdr_level)
             n_feats = X_sel_train.shape[1]
             screen_mask = np.ones(n_feats, dtype=bool)
-            stability_selected_idx = np.arange(n_feats)
-            stability_scores = np.ones(n_feats, dtype=np.float32)
             t_screen = time.perf_counter() - t_sel_start
-
-            print("Pruning VIF (collinearity gate)...")
-            t_vif_start = time.perf_counter()
-            vif_pruned_idx = run_vif_pruning(X_sel_train, stability_selected_idx, FEATURES, threshold=vif_threshold)
-            t_vif = time.perf_counter() - t_vif_start
-            print(f"VIF dropped {len(stability_selected_idx) - len(vif_pruned_idx)} collinear. Kept {len(vif_pruned_idx)} features.")
-
-            print("Pruning condition number (structural gate)...")
-            t_cond_start = time.perf_counter()
-            cond_pruned_idx = run_cond_pruning(X_sel_train, vif_pruned_idx, FEATURES, cond_cap=100.0)
-            t_cond = time.perf_counter() - t_cond_start
-            print(f"Condition pruning dropped {len(vif_pruned_idx) - len(cond_pruned_idx)} features. Kept {len(cond_pruned_idx)} features.")
-
-            return {
-                "screen_mask": screen_mask,
-                "p_vals": p_vals,
-                "rhos": rhos,
-                "stability_selected_idx": np.asarray(cond_pruned_idx),
-                "stability_scores": stability_scores,
-                "time_screen": t_screen,
-                "time_stability": t_vif + t_cond,
-            }
-        t_sel_start = time.perf_counter()
-        print("Screening features...")
-        screen_mask, p_vals, rhos = run_screening(X_sel_train, y_sel_train, fdr_level=fdr_level)
-        t_screen = time.perf_counter() - t_sel_start
-        print(f"Screening kept {screen_mask.sum()} features.")
+        else:
+            print("Screening features...")
+            screen_mask, p_vals, rhos = run_screening(X_sel_train, y_sel_train, fdr_level=fdr_level)
+            t_screen = time.perf_counter() - t_sel_start
+            print(f"Screening kept {screen_mask.sum()} features.")
         
+        # Step 2: Stability Selection
         t_stab_start = time.perf_counter()
-        print("Running stability selection...")
-        stability_selected_idx, stability_scores = run_stability_selection(
-            X_sel_train, y_sel_train, screen_mask, rhos,
-            B=STABILITY_B, pi=STABILITY_PI, n_jobs=bootstrap_n_jobs,
-        )
-        t_stab = time.perf_counter() - t_stab_start
+        if skip_step2:
+            print("Skipping Step 2 filter (CSS)...")
+            screened_features_idx = np.where(screen_mask)[0]
+            stability_selected_idx = screened_features_idx
+            stability_scores = np.ones(len(FEATURES), dtype=np.float32)
+            t_stab = 0.0
+        else:
+            print("Running stability selection...")
+            stability_selected_idx, stability_scores = run_stability_selection(
+                X_sel_train, y_sel_train, screen_mask, rhos,
+                B=STABILITY_B, pi=STABILITY_PI, n_jobs=bootstrap_n_jobs,
+            )
+            t_stab = time.perf_counter() - t_stab_start
 
-        print("Pruning VIF...")
+        print("Pruning VIF (collinearity gate)...")
         t_vif_start = time.perf_counter()
         vif_pruned_idx = run_vif_pruning(X_sel_train, stability_selected_idx, FEATURES, threshold=vif_threshold)
         t_vif = time.perf_counter() - t_vif_start
         print(f"VIF dropped {len(stability_selected_idx) - len(vif_pruned_idx)} collinear. Kept {len(vif_pruned_idx)} features.")
 
-        print("Pruning condition number...")
+        print("Pruning condition number (structural gate)...")
         t_cond_start = time.perf_counter()
         cond_pruned_idx = run_cond_pruning(X_sel_train, vif_pruned_idx, FEATURES, cond_cap=100.0)
         t_cond = time.perf_counter() - t_cond_start
@@ -2328,7 +2316,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "deflated_val_outer_tail_ic": deflated_val_outer_tail,
         "side": side,
         "target": TARGET,
-        "skip_step12": skip_step12,
+        "skip_step1": skip_step1,
+        "skip_step2": skip_step2,
     }
     joblib.dump(scaler_meta, MODELS_DIR / f"scaler_{tag}.joblib")
     
@@ -2364,7 +2353,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "etf": etf_name,
         "side": side,
         "tag": tag,
-        "skip_step12": skip_step12,
+        "skip_step1": skip_step1,
+        "skip_step2": skip_step2,
         "n_samples_working": len(y_working),
         "n_samples_lockbox": 0,
         "selected_features": bagged_feature_names,
@@ -2478,8 +2468,8 @@ if __name__ == "__main__":
                     help="Disable --both; requires --side to be set.")
     ap.add_argument("--no-cache", action="store_true",
                     help="Disable disk caches (selection, LOYO folds, pilot metrics).")
-    ap.add_argument("--skip-step12", action="store_true", default=False,
-                    help="Skip Step 1 (Spearman correlation screening) and Step 2 (CSS/VIF/Condition) filters.")
+    ap.add_argument("--skip-step", nargs="+", choices=["1", "2", "12"], default=[],
+                    help="Skip feature selection steps: 1 (screening), 2 (CSS), or 12 (both).")
     ap.add_argument("--optuna-jobs", type=int, default=OPTUNA_N_JOBS,
                     help=f"Parallel Optuna workers (default {OPTUNA_N_JOBS}).")
     ap.add_argument("--bootstrap-jobs", type=int, default=BOOTSTRAP_N_JOBS,
@@ -2491,6 +2481,15 @@ if __name__ == "__main__":
                     help="Path to output log file (default: day-model/train_model_log.txt). "
                          "Pass 'none' to disable.")
     args = ap.parse_args()
+
+    skip_step1 = False
+    skip_step2 = False
+    if args.skip_step:
+        for s in args.skip_step:
+            if "1" in s:
+                skip_step1 = True
+            if "2" in s:
+                skip_step2 = True
 
     # Set up tee logging: mirror stdout/stderr to log file
     if args.log and args.log.lower() != "none":
@@ -2534,7 +2533,9 @@ if __name__ == "__main__":
                           use_cache=not args.no_cache,
                           optuna_n_jobs=args.optuna_jobs,
                           bootstrap_n_jobs=args.bootstrap_jobs,
-                          loyo_n_jobs=loyo_jobs_arg)
+                          loyo_n_jobs=loyo_jobs_arg,
+                          skip_step1=skip_step1,
+                          skip_step2=skip_step2)
             except Exception as e:
                 print(f"  [ERROR] Failed to train {etf} ({side}): {e}")
                 import traceback
