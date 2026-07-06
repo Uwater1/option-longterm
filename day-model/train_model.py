@@ -86,10 +86,10 @@ VAL_BLOCKS_OUTER = [
 VAL_BLOCKS = VAL_BLOCKS_INNER + VAL_BLOCKS_OUTER
 PILOT_N_TRIALS = 50
 PILOT_SEED = 42
-STABILITY_B = 80      
+STABILITY_B = 100      
 STABILITY_PI = 0.60   
 STABILITY_Q = 35      
-SCREEN_FDR = 0.95     
+SCREEN_FDR = 0.85     
 ACTIVE_FEATURE_ESS_DIVISOR = 9.0  
 
 # Side-Specific Objective configuration.
@@ -1069,7 +1069,8 @@ def find_plateau_trial(study, r=0.25, min_neighbors=8, min_valid_neighbors=6):
 # ============================================================
 def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
               use_cache: bool = True, optuna_n_jobs: int = OPTUNA_N_JOBS,
-              bootstrap_n_jobs: int = BOOTSTRAP_N_JOBS, loyo_n_jobs: int = 1):
+              bootstrap_n_jobs: int = BOOTSTRAP_N_JOBS, loyo_n_jobs: int = 1,
+              skip_step12: bool = False):
     print(f"\n" + "=" * 80)
     print(f"Train {etf_name} (Side: {side})")
     print(f"Cache: {use_cache} | Jobs: Optuna={optuna_n_jobs}, Bootstrap={bootstrap_n_jobs}, LOYO={loyo_n_jobs}")
@@ -1203,13 +1204,45 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     select_key = [
         "v13_vif_cond", etf_name, len(FEATURES), int(parquet_mtime),
         int(X_sel_train.shape[0]), int(X_sel_train.shape[1]),
-    STABILITY_B, STABILITY_PI, fdr_level,
+        STABILITY_B, STABILITY_PI, fdr_level,
         tuple(VAL_BLOCKS), TARGET, vif_threshold,
+        skip_step12,
     ]
     select_cache_path = CACHE_DIR / f"cache_select_{etf_name}_{_cache_key(select_key)}.joblib"
 
     # Step 1 + 2: Cheap screening + Stability selection (cached).
     def _compute_selection():
+        if skip_step12:
+            print("Skipping Step 1 and 2 filters (screening and CSS)...")
+            t_sel_start = time.perf_counter()
+            _, p_vals, rhos = run_screening(X_sel_train, y_sel_train, fdr_level=fdr_level)
+            n_feats = X_sel_train.shape[1]
+            screen_mask = np.ones(n_feats, dtype=bool)
+            stability_selected_idx = np.arange(n_feats)
+            stability_scores = np.ones(n_feats, dtype=np.float32)
+            t_screen = time.perf_counter() - t_sel_start
+
+            print("Pruning VIF (collinearity gate)...")
+            t_vif_start = time.perf_counter()
+            vif_pruned_idx = run_vif_pruning(X_sel_train, stability_selected_idx, FEATURES, threshold=vif_threshold)
+            t_vif = time.perf_counter() - t_vif_start
+            print(f"VIF dropped {len(stability_selected_idx) - len(vif_pruned_idx)} collinear. Kept {len(vif_pruned_idx)} features.")
+
+            print("Pruning condition number (structural gate)...")
+            t_cond_start = time.perf_counter()
+            cond_pruned_idx = run_cond_pruning(X_sel_train, vif_pruned_idx, FEATURES, cond_cap=100.0)
+            t_cond = time.perf_counter() - t_cond_start
+            print(f"Condition pruning dropped {len(vif_pruned_idx) - len(cond_pruned_idx)} features. Kept {len(cond_pruned_idx)} features.")
+
+            return {
+                "screen_mask": screen_mask,
+                "p_vals": p_vals,
+                "rhos": rhos,
+                "stability_selected_idx": np.asarray(cond_pruned_idx),
+                "stability_scores": stability_scores,
+                "time_screen": t_screen,
+                "time_stability": t_vif + t_cond,
+            }
         t_sel_start = time.perf_counter()
         print("Screening features...")
         screen_mask, p_vals, rhos = run_screening(X_sel_train, y_sel_train, fdr_level=fdr_level)
@@ -1582,7 +1615,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 3.0, 10.0)
                 trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
             elif model_type == "ridge":
-                trial_params["ridge_alpha"] = trial.suggest_float("ridge_alpha", 1e-3, 10000.0, log=True)
+                trial_params["ridge_alpha"] = trial.suggest_float("ridge_alpha", 1e-3, 100.0, log=True)
 
             try:
                 res = evaluate_params(trial_params)
@@ -1701,7 +1734,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 3.0, 10.0)
             trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
         elif model_type == "ridge":
-            trial_params["ridge_alpha"] = trial.suggest_float("ridge_alpha", 1e-3, 10000.0, log=True)
+            trial_params["ridge_alpha"] = trial.suggest_float("ridge_alpha", 1e-3, 100.0, log=True)
 
         try:
             res = evaluate_params(trial_params)
@@ -2295,6 +2328,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "deflated_val_outer_tail_ic": deflated_val_outer_tail,
         "side": side,
         "target": TARGET,
+        "skip_step12": skip_step12,
     }
     joblib.dump(scaler_meta, MODELS_DIR / f"scaler_{tag}.joblib")
     
@@ -2330,6 +2364,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "etf": etf_name,
         "side": side,
         "tag": tag,
+        "skip_step12": skip_step12,
         "n_samples_working": len(y_working),
         "n_samples_lockbox": 0,
         "selected_features": bagged_feature_names,
@@ -2443,6 +2478,8 @@ if __name__ == "__main__":
                     help="Disable --both; requires --side to be set.")
     ap.add_argument("--no-cache", action="store_true",
                     help="Disable disk caches (selection, LOYO folds, pilot metrics).")
+    ap.add_argument("--skip-step12", action="store_true", default=False,
+                    help="Skip Step 1 (Spearman correlation screening) and Step 2 (CSS/VIF/Condition) filters.")
     ap.add_argument("--optuna-jobs", type=int, default=OPTUNA_N_JOBS,
                     help=f"Parallel Optuna workers (default {OPTUNA_N_JOBS}).")
     ap.add_argument("--bootstrap-jobs", type=int, default=BOOTSTRAP_N_JOBS,

@@ -817,16 +817,22 @@ def _process_tag(tag: str, r: dict):
         r["lockbox_mono_swallowed"] = bool(ci_mono[0] <= cv_mono <= ci_mono[1])
 
         # Compute pruned features list
+        skip_step12 = scaler_meta.get("skip_step12", False)
         features_all = scaler_meta.get("features", [])
         if features_all:
-            passed_step1 = get_step1_passed_features(df, features_all, etf)
-            stopped_by_step1 = [f for f in features_all if f not in passed_step1]
-            stopped_by_step2 = [f for f in passed_step1 if f not in selected_features]
+            if skip_step12:
+                stopped_by_step1 = []
+                stopped_by_step2 = [f for f in features_all if f not in selected_features]
+            else:
+                passed_step1 = get_step1_passed_features(df, features_all, etf)
+                stopped_by_step1 = [f for f in features_all if f not in passed_step1]
+                stopped_by_step2 = [f for f in passed_step1 if f not in selected_features]
             r["features_stopped_by_step1"] = stopped_by_step1
             r["features_stopped_by_step2"] = stopped_by_step2
         else:
             r["features_stopped_by_step1"] = []
             r["features_stopped_by_step2"] = []
+        r["skip_step12"] = skip_step12
 
         # Persist results JSON + scaler metadata.
         with open(DATA_DIR / f"results_{tag}.json", "w") as f_json:
@@ -839,6 +845,7 @@ def _process_tag(tag: str, r: dict):
         scaler_meta["mono_gen_gap"] = r["mono_generalization_gap"]
         scaler_meta["deflated_val_ic"] = deflated_val_ic
         scaler_meta["deflated_val_tail_ic"] = r.get("deflated_val_tail_ic", np.nan)
+        scaler_meta["skip_step12"] = skip_step12
         joblib.dump(scaler_meta, scaler_path)
 
         extra_stats = {

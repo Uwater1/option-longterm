@@ -56,6 +56,7 @@ python -m daytrade.deploy                                # Mixed-mode deploy (au
 python -m daytrade.gating_only                           # Gate-only diagnostic backtest
 python -m daytrade.methods.download_futures_data         # Download index futures 5m data
 python -m daytrade.methods.report                        # Generate execution placement evaluation report
+python3 day-model/train_model.py -e 300 --trials 100 --skip-step12  # Train with Step 1 & 2 filters skipped
 ```
 
 ## Project Structure

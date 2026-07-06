@@ -50,11 +50,12 @@ python3 day-model/train_model.py -e 300 --no-both --side long   --trials 100
 python3 day-model/train_model.py -e 300 --no-both --side short  --trials 100
 ```
 
-### train_model.py Performance Options
+### train_model.py Performance & Experiment Options
 
 ```bash
 python day-model/train_model.py -e 300 -t 200             # cache ON, n_jobs=cpu_count
 python day-model/train_model.py -e 300 --no-cache          # force recompute
+python day-model/train_model.py -e 300 --skip-step12       # skip Step 1 (screening) and Step 2 (CSS/VIF/Condition) filters
 python day-model/train_model.py -e 300 --optuna-jobs 8     # cap Optuna workers
 python day-model/train_model.py -e 300 --optuna-jobs 1     # sequential (100% deterministic)
 python day-model/train_model.py -e 300 --bootstrap-jobs 8  # cap stability-bootstrap workers
