@@ -87,10 +87,11 @@ VAL_BLOCKS = VAL_BLOCKS_INNER + VAL_BLOCKS_OUTER
 PILOT_N_TRIALS = 50
 PILOT_SEED = 42
 STABILITY_B = 100      
-STABILITY_PI = 0.60   
+STABILITY_PI = 0.55   
 STABILITY_Q = 35      
-SCREEN_FDR = 0.95     
-ACTIVE_FEATURE_ESS_DIVISOR = 9.0  
+SCREEN_FDR = 0.99     
+ACTIVE_FEATURE_ESS_DIVISOR = 8.0  # Kish Effective Sample Size (ESS) divisor to set maximum active features (cap = ESS / divisor) to regularize complexity
+CSS_CORR_THRESHOLD = 0.80         # Correlation threshold for cluster merging in CSS (|r| >= threshold)
 
 # Side-Specific Objective configuration.
 # - "single" (legacy): Tail IC two-sided (top10% U bot10%), weights V1..V4 = [0.40, 0.40, 0.15, 0.05]
@@ -514,7 +515,7 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen
         dist = (dist + dist.T) / 2.0
         np.fill_diagonal(dist, 0.0)
         linkage_matrix = linkage(squareform(dist), method="complete")
-        cluster_labels = fcluster(linkage_matrix, t=0.25, criterion="distance") # t=0.25 means |r| >= 0.75
+        cluster_labels = fcluster(linkage_matrix, t=1.0 - CSS_CORR_THRESHOLD, criterion="distance")
     else:
         cluster_labels = np.ones(n_screened, dtype=int)
 
