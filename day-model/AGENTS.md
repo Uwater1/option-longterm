@@ -131,13 +131,23 @@ Upgraded model training stability, tail performance, overfit diagnostics, and de
    - Uses 15% threshold for `long` and `short` sides in `side_tail_ic` and `side_tail_mask`.
    - Long/short validation weights set to `[0.35, 0.50, 0.15, 0.00]`.
 
-3. **Yearly Tail IC Constraint**:
-   - Cross-validation fold Tail IC made side-aware.
-   - Added `M2 (Yearly Tail IC Mean) > 0` hard constraint to main objective.
+3. **Two-Sided CV Folds & Side consistency constraints**:
+   - Standard CV fold metrics `m1..m6` and standard kill-switches are forced to stay two-sided (`side="single"`).
+   - If `side != "single"`, two new side-specific consistency constraints are appended:
+     - `side_m2 > 0` (side-specific Yearly Tail IC Mean > 0)
+     - `side_m3 >= 50%` (side-specific Hit Rate >= 50%)
+   - Prevents side-specific fold-level sign flips while keeping overfit guardrails intact.
 
-4. **Dynamic Ridge Fallback**:
-   - Forces Ridge-only model search/fitting if selected features condition number is severe ($\kappa > 10^5$) or if ETF is `500ETF`/`50ETF`.
-   - Ridge bypasses active feature constraints.
+4. **Decoupled Ridge Fallback & Dynamic VIF**:
+   - Decoupled `force_ridge` from hardcoded ETF blacklist. Forced purely by condition number (`kappa > 1e5`), freeing `500ETF` to explore sparse solvers (`skglm_mcp` / `skglm_huber_l1`).
+   - Dynamic VIF thresholding: `5.0` for highly ill-conditioned `50ETF`, default `10.0` for other ETFs.
+   - Raised `ridge_alpha` search upper bound to `10000.0`.
+
+5. **Monthly Blocked Validation Bootstrap Regularization**:
+   - Perform $B=100$ monthly blocked bootstrap resamples on the inner validation set.
+   - Subtract standard deviation of bootstrapped tail ICs from raw validation Tail IC:
+     $$V_{tail\_ic\_adj} = val\_tail\_ic - 1.0 \times \sigma_{boot\_tail\_ic}$$
+   - Penalizes unstable validation scores and steers Optuna to robust configurations.
 
 5. **Model Confidence Set (MCS) & Bayesian True Discovery**:
    - Hansen's MCS (sequential t-test, alpha=10%) identifies statistically indistinguishable trials.
