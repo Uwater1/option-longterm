@@ -59,7 +59,7 @@ Partition the entire dataset chronologically:
 - **OOS Lockbox**: `date >= 2024-03-01` (approx 556 rows). Completely untouched during training, evaluated one-shot at the end.
 
 **Step 1 — Cheap screening on selection train set.**
-Compute robust marginal association per feature (Spearman rank correlation) between each of the candidate features (formerly 238, pruned to 185 by default after deprecating 53 zero-stability features in `day-model/deprecate_features.py`) and the target, utilizing only the selection train subset. Apply BH-FDR correction across the tests (FDR = 0.15). If fewer than 50 features pass, fallback to the top 50 features by p-value.
+Compute robust marginal association per feature (Spearman rank correlation) between each of the candidate features (formerly 317, pruned to 210 by default after deprecating 107 zero-stability features in `day-model/deprecate_features.py`) and the target, utilizing only the selection train subset. Apply BH-FDR correction across the tests (FDR = 0.15). If fewer than 50 features pass, fallback to the top 50 features by p-value.
 
 > **Mistake (Previous Attempt)**: Clustering slightly correlated features ($|r| \ge 0.3$) and dropping them based on univariate ranking discarded complementary multivariate features, causing model collapse to $\le 2$ active weights. We incorrectly tried to rely on ElasticNet grouping effect without pre-clustering. Grouping into complete correlation clusters *after* screening but *before* stability voting resolves this without discarding joint predictive power.
 

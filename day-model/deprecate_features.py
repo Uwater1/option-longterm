@@ -66,13 +66,73 @@ DEPRECATED_EARLY_EXTRA = [
     "vwap_reversion_strength",
     "volatility_regime_intraday",
     "momentum_divergence",
+    # Mined Features v1 that are never stable or active across all 5 ETFs
+    "limit_up_proximity_early",
+    "morning_hhi_persistence",
+    "early_bar_hhi_volume",
+    "morning_mean_reversion_score",
+    "brooks_high_low_2_early",
+    "price_action_thrust_ratio",
+    "doji_cluster_intensity",
+    "shaved_bars_ratio",
+    "climax_reversal_followthrough",
+    "early_wavetrend_osc",
+    "early_cvd_slope",
+    "early_volume_imbalance_ratio",
+    "volume_concentration_slope",
+    "liquidity_density_early",
+    "rbreaker_buy_break_dist_early",
+    "rbreaker_sell_break_dist_early",
 ]
 
 # Yesterday extra features that are never stable or active across all 5 ETFs
 DEPRECATED_YESTERDAY_EXTRA = [
     "yesterday_opening_gap_reversal",
     "yesterday_spike_exhaustion_ratio",
+    "yesterday_intraday_close_position",
+]
+
+# Base/Standard features (from build_features.py) that are never stable or active across all 5 ETFs
+DEPRECATED_BASE_FEATURES = [
+    "bar_ret_3",
+    "bar_ret_4",
+    "bar_ret_5",
+    "bar_vol_1",
+    "bar_vol_2",
+    "bar_vol_3",
+    "bar_rng_1",
+    "bar_rng_4",
+    "bar_body_rng_3",
+    "bar_body_rng_4",
+    "bar_body_rng_5",
+    "bar_vwap_dev_4",
+    "bar_vwap_dev_5",
+    "bb_pctb",
+    "volume_sma_ratio_long",
+    "yesterday_limit_down_touch",
+    "retail_turnover_acceleration",
+    "iv_term_structure",
+    "iv_acceleration_1d",
+    "option_volume_pc_ratio",
+    "northbound_net_accel",
+    "northbound_momentum_5d",
+    "demark_setup_count_day",
+    "wavetrend_cross_day",
+    "stoch_rsi_divergence",
+    "turtle_channel_proximity_day",
+    "chande_momentum_osc_day",
+    "elder_ray_power_spread",
+    "yesterday_volume_ratio",
+    "sma_distance_5d",
+    "yearly_high_distance",
+    "measured_move_proximity",
+    "yesterday_early_volume_ratio",
+    "yesterday_first_bar_return",
+    "yesterday_early_skew",
+    "yesterday_early_kurtosis",
+    "yesterday_day_late_mom",
+    "yesterday_midday_drawdown",
 ]
 
 # Combined list of deprecated features
-DEPRECATED_FEATURES = DEPRECATED_EARLY_EXTRA + DEPRECATED_YESTERDAY_EXTRA
+DEPRECATED_FEATURES = DEPRECATED_EARLY_EXTRA + DEPRECATED_YESTERDAY_EXTRA + DEPRECATED_BASE_FEATURES
