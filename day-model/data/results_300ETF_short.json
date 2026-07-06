@@ -3,7 +3,7 @@
   "side": "short",
   "tag": "300ETF_short",
   "n_samples_working": 2166,
-  "n_samples_lockbox": 0,
+  "n_samples_lockbox": 556,
   "selected_features": [
     "capital_net_ratio",
     "vix_iv_spread",
@@ -360,8 +360,8 @@
   "plateau_val": 1.4089124792543433,
   "raw_best_trial": 35,
   "raw_best_val": 1.5473157533210637,
-  "lockbox_overall_ic": NaN,
-  "lockbox_tail_ic": NaN,
+  "lockbox_overall_ic": 0.10651162339659445,
+  "lockbox_tail_ic": 0.0789849292640947,
   "diagnostics": {
     "timings": {
       "data_loading": 0.04811040009371936,
@@ -405,5 +405,19 @@
       "effective_sample_size_pct": 0.43833580968122404,
       "gini_coefficient": 0.45745252626674815
     }
-  }
+  },
+  "lockbox_tail_ic_def": "short",
+  "lockbox_monotonicity": 0.8545454545454545,
+  "ic_generalization_gap": -0.05596941998216233,
+  "mono_generalization_gap": -0.5575757575757576,
+  "lockbox_ic_ci": [
+    0.01015610142567222,
+    0.19808690271183552
+  ],
+  "lockbox_mono_ci": [
+    0.07878787878787878,
+    0.8909090909090909
+  ],
+  "lockbox_ic_swallowed": true,
+  "lockbox_mono_swallowed": true
 }
