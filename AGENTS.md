@@ -57,6 +57,7 @@ python -m daytrade.gating_only                           # Gate-only diagnostic 
 python -m daytrade.methods.download_futures_data         # Download index futures 5m data
 python -m daytrade.methods.report                        # Generate execution placement evaluation report
 python day-model/sweep/meta_optuna.py -e all --trials 200 --bootstrap-jobs 4  # Meta-Optuna: tune 5 pipeline constants
+python3 day-model/train_model.py -e 300 --trials 100 --skip-step12  # Train with Step 1 & 2 filters skipped
 ```
 
 ## Project Structure
