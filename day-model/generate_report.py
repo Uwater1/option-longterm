@@ -158,8 +158,8 @@ def _spearman_rows(y_b: np.ndarray, p_b: np.ndarray) -> np.ndarray:
         return np.zeros(m, dtype=np.float64)
     yr = _rank_rows(y_b.astype(np.float64, copy=False))
     pr = _rank_rows(p_b.astype(np.float64, copy=False))
-    yr -= yr.mean(axis=1, keepdims=True)
-    pr -= pr.mean(axis=1, keepdims=True)
+    yr = yr - yr.mean(axis=1, keepdims=True)
+    pr = pr - pr.mean(axis=1, keepdims=True)
     denom = np.sqrt((yr * yr).sum(axis=1) * (pr * pr).sum(axis=1))
     out = np.zeros(m, dtype=np.float64)
     nz = denom > 1e-12
@@ -642,6 +642,8 @@ def _load_etf_features(etf: str):
 def _process_tag(tag: str, r: dict):
     """Worker: process ONE tag (load features, predict, compute metrics,
     emit 15-panel figure). Returns updated results dict + diagnostics filename."""
+    import warnings
+    warnings.filterwarnings("ignore")
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as _plt

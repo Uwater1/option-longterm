@@ -459,6 +459,8 @@ def _stability_one_bootstrap(b: int, X_screened: np.ndarray, y_working: np.ndarr
     Independent RNG per worker so joblib Parallel reproduces the original
     sequential `np.random.default_rng(42)` stream by re-seeding from a base.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     rng = np.random.default_rng(rng_seed + b)
     sub_idx = rng.choice(n_total, size=subsample_size, replace=False)
     X_sub = X_screened[sub_idx]
@@ -567,6 +569,8 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen
 # Yearly Blocked CV Engine
 # ============================================================
 def _loyo_one_fold(fold, model_type, params, k_weight):
+    import warnings
+    warnings.filterwarnings("ignore")
     if len(fold) == 5:
         test_idx, X_tr_scaled, X_te_scaled, y_tr, y_te = fold
     else:

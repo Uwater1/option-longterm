@@ -9,21 +9,21 @@ This report summarizes the performance and features of the remade `day-model` re
 
 | Tag | ETF | Side | Selected | Active | Model Type | Lockbox IC | Lockbox Tail IC | Tail IC Def |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 300ETF | `single` | 30 | 29 | `ridge` | +0.0603 | +0.0710 | single |
-| 300ETF_long | 300ETF | `long` | 30 | 30 | `ridge` | +0.0657 | -0.1401 | long |
-| 300ETF_short | 300ETF | `short` | 14 | 13 | `skglm_huber_l1` | +0.0309 | +0.1205 | short |
-| 500ETF | 500ETF | `single` | 27 | 27 | `ridge` | +0.1453 | +0.0757 | single |
-| 500ETF_long | 500ETF | `long` | 27 | 27 | `skglm_mcp` | +0.1270 | -0.0783 | long |
-| 500ETF_short | 500ETF | `short` | 27 | 27 | `skglm_mcp` | +0.1338 | +0.1662 | short |
-| 588000ETF | 588000ETF | `single` | 31 | 31 | `ridge` | +0.0129 | +0.1087 | single |
-| 588000ETF_long | 588000ETF | `long` | 31 | 30 | `skglm_huber_l1` | +0.0581 | +0.0337 | long |
-| 588000ETF_short | 588000ETF | `short` | 31 | 31 | `ridge` | +0.0114 | -0.0175 | short |
-| 159915ETF | 159915ETF | `single` | 32 | 32 | `ridge` | +0.1255 | +0.2011 | single |
-| 159915ETF_long | 159915ETF | `long` | 32 | 32 | `ridge` | +0.1314 | +0.0265 | long |
-| 159915ETF_short | 159915ETF | `short` | 31 | 21 | `skglm_huber_l1` | +0.1579 | +0.0903 | short |
-| 50ETF | 50ETF | `single` | 30 | 30 | `ridge` | +0.0863 | +0.1590 | single |
-| 50ETF_long | 50ETF | `long` | 30 | 30 | `ridge` | +0.0880 | -0.0565 | long |
-| 50ETF_short | 50ETF | `short` | 30 | 30 | `ridge` | +0.0917 | -0.0588 | short |
+| 300ETF | 300ETF | `single` | 30 | 30 | `ridge` | +0.0809 | +0.0447 | single |
+| 300ETF_long | 300ETF | `long` | 30 | 30 | `ridge` | +0.1010 | -0.2036 | long |
+| 300ETF_short | 300ETF | `short` | 30 | 25 | `skglm_huber_l1` | +0.0548 | +0.1664 | short |
+| 500ETF | 500ETF | `single` | 23 | 23 | `ridge` | +0.1219 | +0.0554 | single |
+| 500ETF_long | 500ETF | `long` | 23 | 23 | `ridge` | +0.1071 | -0.0603 | long |
+| 500ETF_short | 500ETF | `short` | 23 | 23 | `skglm_mcp` | +0.1353 | +0.0798 | short |
+| 588000ETF | 588000ETF | `single` | 31 | 31 | `ridge` | +0.0140 | +0.1193 | single |
+| 588000ETF_long | 588000ETF | `long` | 31 | 31 | `ridge` | +0.0342 | -0.0583 | long |
+| 588000ETF_short | 588000ETF | `short` | 31 | 31 | `ridge` | +0.0431 | +0.1250 | short |
+| 159915ETF | 159915ETF | `single` | 32 | 32 | `ridge` | +0.1330 | +0.2529 | single |
+| 159915ETF_long | 159915ETF | `long` | 32 | 32 | `skglm_huber_l1` | +0.1275 | +0.0589 | long |
+| 159915ETF_short | 159915ETF | `short` | 32 | 32 | `ridge` | +0.1309 | -0.0777 | short |
+| 50ETF | 50ETF | `single` | 30 | 30 | `ridge` | +0.0875 | +0.1618 | single |
+| 50ETF_long | 50ETF | `long` | 30 | 30 | `ridge` | +0.1033 | -0.1993 | long |
+| 50ETF_short | 50ETF | `short` | 30 | 30 | `ridge` | +0.0838 | -0.0379 | short |
 
 ## Detailed Trial Metrics & Optimization Objectives
 
@@ -31,21 +31,21 @@ CV fold metrics M1..M6 are two-sided for all sides (per side-aware spec). V1..V4
 
 | Tag | Side | Yearly Tail IC IR | Yearly Tail IC Mean | Hit Rate | Decile Monotonicity | Top-Bottom Spread |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | `single` | 0.7158 | +0.1138 | 90.0% | 0.3612 | +25.8150% |
-| 300ETF_long | `long` | 1.3491 | +0.1725 | 90.0% | 0.5139 | +37.7613% |
-| 300ETF_short | `short` | 2.4223 | +0.2296 | 100.0% | 0.4994 | +44.9121% |
-| 500ETF | `single` | 1.5035 | +0.2064 | 90.0% | 0.4121 | +47.2283% |
-| 500ETF_long | `long` | 2.3058 | +0.2747 | 100.0% | 0.3976 | +85.9577% |
-| 500ETF_short | `short` | 2.1003 | +0.2729 | 100.0% | 0.3818 | +86.5734% |
-| 588000ETF | `single` | 1.4022 | +0.2711 | 100.0% | 0.5273 | +27.4248% |
-| 588000ETF_long | `long` | 1.2632 | +0.2422 | 75.0% | 0.5970 | +67.3856% |
-| 588000ETF_short | `short` | 1.4048 | +0.2757 | 100.0% | 0.5000 | +27.9430% |
-| 159915ETF | `single` | 2.2098 | +0.2553 | 100.0% | 0.5976 | +76.4948% |
-| 159915ETF_long | `long` | 1.1184 | +0.2296 | 90.0% | 0.5430 | +97.2681% |
-| 159915ETF_short | `short` | 1.6533 | +0.2663 | 90.0% | 0.5842 | +87.9828% |
-| 50ETF | `single` | 0.5018 | +0.0555 | 60.0% | 0.2824 | +9.8592% |
-| 50ETF_long | `long` | 1.4516 | +0.1557 | 90.0% | 0.5479 | +29.3516% |
-| 50ETF_short | `short` | 2.0266 | +0.1733 | 90.0% | 0.4461 | +30.8632% |
+| 300ETF | `single` | 1.5139 | +0.1634 | 100.0% | 0.4776 | +36.2925% |
+| 300ETF_long | `long` | 1.3650 | +0.1825 | 90.0% | 0.4861 | +45.6420% |
+| 300ETF_short | `short` | 2.7552 | +0.2145 | 100.0% | 0.5248 | +43.7090% |
+| 500ETF | `single` | 1.4219 | +0.2273 | 90.0% | 0.4739 | +56.7257% |
+| 500ETF_long | `long` | 0.6955 | +0.1293 | 80.0% | 0.3842 | +40.4174% |
+| 500ETF_short | `short` | 2.3455 | +0.2861 | 100.0% | 0.3867 | +82.1071% |
+| 588000ETF | `single` | 1.3385 | +0.2768 | 100.0% | 0.4364 | +27.9430% |
+| 588000ETF_long | `long` | 2.2232 | +0.5038 | 100.0% | 0.7000 | +129.0527% |
+| 588000ETF_short | `short` | 3.2595 | +0.5605 | 100.0% | 0.6182 | +134.4806% |
+| 159915ETF | `single` | 1.6721 | +0.2688 | 90.0% | 0.5430 | +95.9337% |
+| 159915ETF_long | `long` | 1.2716 | +0.2467 | 90.0% | 0.6412 | +94.4720% |
+| 159915ETF_short | `short` | 2.7369 | +0.2805 | 100.0% | 0.6036 | +73.7318% |
+| 50ETF | `single` | 0.5786 | +0.0746 | 90.0% | 0.3139 | +13.0098% |
+| 50ETF_long | `long` | 3.5698 | +0.1687 | 100.0% | 0.2642 | +29.1707% |
+| 50ETF_short | `short` | 1.1380 | +0.1215 | 90.0% | 0.4788 | +31.1000% |
 
 ## Model Quality & Generalization Diagnostics
 
@@ -53,121 +53,121 @@ CV fold metrics M1..M6 are two-sided for all sides (per side-aware spec). V1..V4
 
 | Tag | Side | Raw X Cond | Reg kappa | Collinear Pairs (>=0.85) | Gini | Tail ESS | Tail ESS % |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | `single` | 8.45 | 1.00 | 0 | 0.4809 | 486.1 | 22.4% |
-| 300ETF_long | `long` | 8.45 | 1.00 | 0 | 0.4671 | 1330.3 | 61.4% |
-| 300ETF_short | `short` | 3.24 | 10.38 | 0 | 0.4275 | 1487.9 | 68.7% |
-| 500ETF | `single` | 220.92 | 1.00 | 0 | 0.4665 | 1542.5 | 71.2% |
-| 500ETF_long | `long` | 220.92 | 48176.78 [SEVERE] | 0 | 0.4642 | 2065.0 | 95.3% |
-| 500ETF_short | `short` | 220.92 | 45537.29 [SEVERE] | 0 | 0.4697 | 2116.8 | 97.7% |
-| 588000ETF | `single` | 7.45 | 1.97 | 0 | 0.3616 | 284.8 | 38.6% |
-| 588000ETF_long | `long` | 7.45 | 55.28 [MODERATE] | 0 | 0.3455 | 707.7 | 95.9% |
-| 588000ETF_short | `short` | 7.45 | 49.75 [MODERATE] | 0 | 0.3667 | 278.3 | 37.7% |
-| 159915ETF | `single` | 7.58 | 1.00 | 0 | 0.4237 | 2037.0 | 94.0% |
-| 159915ETF_long | `long` | 7.58 | 1.38 | 0 | 0.4459 | 2094.3 | 96.7% |
-| 159915ETF_short | `short` | 7.53 | 55.11 [MODERATE] | 0 | 0.5706 | 1052.4 | 48.6% |
-| 50ETF | `single` | 5198557.00 | 143.42 [SEVERE] | 0 | 0.4779 | 604.3 | 27.9% |
-| 50ETF_long | `long` | 5198557.00 | 1.00 | 0 | 0.4286 | 2075.9 | 95.8% |
-| 50ETF_short | `short` | 5198557.00 | 1.00 | 0 | 0.4630 | 2098.5 | 96.9% |
+| 300ETF | `single` | 8.45 | 1.00 | 0 | 0.4564 | 1224.9 | 56.6% |
+| 300ETF_long | `long` | 8.45 | 3.14 | 0 | 0.5112 | 1439.3 | 66.5% |
+| 300ETF_short | `short` | 8.45 | 70.08 [MODERATE] | 0 | 0.5024 | 1348.4 | 62.3% |
+| 500ETF | `single` | 199.34 | 1.00 | 0 | 0.4656 | 1563.7 | 72.2% |
+| 500ETF_long | `long` | 199.34 | 1.01 | 0 | 0.3478 | 579.4 | 26.7% |
+| 500ETF_short | `short` | 199.34 | 25557.22 [SEVERE] | 0 | 0.4522 | 2131.8 | 98.4% |
+| 588000ETF | `single` | 7.45 | 33.14 [MODERATE] | 0 | 0.3600 | 300.6 | 40.7% |
+| 588000ETF_long | `long` | 7.45 | 1.02 | 0 | 0.3624 | 277.5 | 37.6% |
+| 588000ETF_short | `short` | 7.45 | 1.01 | 0 | 0.3912 | 347.4 | 47.1% |
+| 159915ETF | `single` | 7.58 | 1.01 | 0 | 0.4675 | 1472.5 | 68.0% |
+| 159915ETF_long | `long` | 7.58 | 57.49 [MODERATE] | 0 | 0.4771 | 1402.6 | 64.8% |
+| 159915ETF_short | `short` | 7.58 | 1.00 | 0 | 0.4137 | 2122.9 | 98.0% |
+| 50ETF | `single` | 5198557.00 | 1.66 | 0 | 0.4779 | 903.5 | 41.7% |
+| 50ETF_long | `long` | 5198557.00 | 1.00 | 0 | 0.5011 | 1363.7 | 63.0% |
+| 50ETF_short | `short` | 5198557.00 | 1.23 | 0 | 0.4885 | 2038.8 | 94.1% |
 
 ### Generalization Gap (CV vs Selection Val vs OOS)
 
 | Tag | Side | CV IC | Deflated CV IC | Sel Val IC | Deflated Val IC | OOS IC | IC Gen Gap | CV Mono | OOS Mono | Mono Gen Gap |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | `single` | +0.0860 | +0.0013 | +0.0926 | +0.0264 | +0.0603 | -0.0339 | +0.3612 | +0.8182 | -0.4570 |
-| 300ETF_long | `long` | +0.1135 | +0.0427 | +0.0987 | +0.0377 | +0.0657 | -0.0280 | +0.5139 | +0.8182 | -0.3042 |
-| 300ETF_short | `short` | +0.1303 | +0.0413 | +0.0848 | +0.0249 | +0.0309 | -0.0059 | +0.4994 | +0.2606 | +0.2388 [DEGRADED] |
-| 500ETF | `single` | +0.1259 | +0.0562 | +0.1986 | +0.0877 | +0.1453 | -0.0576 | +0.4121 | +0.8061 | -0.3939 |
-| 500ETF_long | `long` | +0.1139 | +0.0373 | +0.1577 | +0.0710 | +0.1270 | -0.0560 | +0.3976 | +0.8424 | -0.4448 |
-| 500ETF_short | `short` | +0.1177 | +0.0322 | +0.1600 | +0.0525 | +0.1338 | -0.0813 | +0.3818 | +0.7212 | -0.3394 |
-| 588000ETF | `single` | +0.1772 | +0.0297 | -0.0192 | -0.1911 | +0.0129 | -0.2040 | +0.5273 | +0.0303 | +0.4970 [DEGRADED] |
-| 588000ETF_long | `long` | +0.1449 | +0.0124 | -0.2137 | -0.3548 | +0.0581 | -0.4129 | +0.5970 | +0.4788 | +0.1182 |
-| 588000ETF_short | `short` | +0.1675 | +0.0401 | -0.0161 | -0.2141 | +0.0114 | -0.2256 | +0.5000 | +0.0424 | +0.4576 [DEGRADED] |
-| 159915ETF | `single` | +0.1912 | +0.0761 | +0.1504 | +0.0479 | +0.1255 | -0.0776 | +0.5976 | +0.6727 | -0.0752 |
-| 159915ETF_long | `long` | +0.1735 | +0.0662 | +0.1204 | +0.0357 | +0.1314 | -0.0957 | +0.5430 | +0.8303 | -0.2873 |
-| 159915ETF_short | `short` | +0.1761 | +0.0736 | +0.1314 | +0.0366 | +0.1579 | -0.1213 | +0.5842 | +0.8909 | -0.3067 |
-| 50ETF | `single` | +0.0416 | +0.0077 | +0.1765 | +0.1431 | +0.0863 | +0.0567 [OVERFIT] | +0.2824 | +0.6121 | -0.3297 |
-| 50ETF_long | `long` | +0.1024 | +0.0627 | +0.0901 | +0.0324 | +0.0880 | -0.0556 | +0.5479 | +0.6606 | -0.1127 |
-| 50ETF_short | `short` | +0.1032 | +0.0658 | +0.1117 | +0.0596 | +0.0917 | -0.0321 | +0.4461 | +0.5758 | -0.1297 |
+| 300ETF | `single` | +0.1142 | +0.0292 | +0.0984 | +0.0312 | +0.0809 | -0.0497 | +0.4776 | +0.7818 | -0.3042 |
+| 300ETF_long | `long` | +0.1274 | +0.0291 | +0.0592 | -0.0080 | +0.1010 | -0.1091 | +0.4861 | +0.7212 | -0.2352 |
+| 300ETF_short | `short` | +0.1328 | +0.0297 | +0.0726 | +0.0049 | +0.0548 | -0.0498 | +0.5248 | +0.5879 | -0.0630 |
+| 500ETF | `single` | +0.1225 | +0.0370 | +0.1767 | +0.0609 | +0.1219 | -0.0610 | +0.4739 | +0.8545 | -0.3806 |
+| 500ETF_long | `long` | +0.1157 | +0.0459 | +0.1444 | +0.0464 | +0.1071 | -0.0608 | +0.3842 | +0.6121 | -0.2279 |
+| 500ETF_short | `short` | +0.1297 | +0.0500 | +0.1231 | +0.0372 | +0.1353 | -0.0982 | +0.3867 | +0.6606 | -0.2739 |
+| 588000ETF | `single` | +0.1639 | -0.0185 | -0.0206 | -0.1939 | +0.0140 | -0.2079 | +0.4364 | -0.0545 | +0.4909 [DEGRADED] |
+| 588000ETF_long | `long` | +0.2401 | +0.0806 | +0.0008 | -0.2255 | +0.0342 | -0.2597 | +0.7000 | +0.4182 | +0.2818 [DEGRADED] |
+| 588000ETF_short | `short` | +0.2271 | +0.0530 | +0.0049 | -0.2079 | +0.0431 | -0.2510 | +0.6182 | +0.4182 | +0.2000 |
+| 159915ETF | `single` | +0.1809 | +0.0655 | +0.1334 | +0.0211 | +0.1330 | -0.1119 | +0.5430 | +0.9273 | -0.3842 |
+| 159915ETF_long | `long` | +0.1703 | +0.0662 | +0.0961 | +0.0149 | +0.1275 | -0.1126 | +0.6412 | +0.6364 | +0.0048 |
+| 159915ETF_short | `short` | +0.1901 | +0.0660 | +0.1514 | +0.0520 | +0.1309 | -0.0790 | +0.6036 | +0.7455 | -0.1418 |
+| 50ETF | `single` | +0.0516 | +0.0199 | +0.1682 | +0.1355 | +0.0875 | +0.0479 | +0.3139 | +0.5515 | -0.2376 |
+| 50ETF_long | `long` | +0.0775 | +0.0419 | +0.1010 | +0.0435 | +0.1033 | -0.0597 | +0.2642 | +0.4667 | -0.2024 |
+| 50ETF_short | `short` | +0.0835 | +0.0512 | +0.1376 | +0.1037 | +0.0838 | +0.0198 | +0.4788 | +0.6000 | -0.1212 |
 
 ### Overfitting Diagnostics (PBO & Lockbox Bootstrap CIs)
 
 | Tag | Side | PBO | Perf Deg | OOS IC 95% CI | CV IC Target | IC Sig? | OOS Mono 95% CI | CV Mono | Mono Sig? |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | `single` | 40.0% | -0.5950 | [-0.0324, +0.1509] | +0.0264 | **Noise** | [-0.0303, +0.8788] | +0.3612 | **Noise** |
-| 300ETF_long | `long` | 33.3% | -0.3933 | [-0.0265, +0.1521] | +0.0377 | **Noise** | [-0.0061, +0.9152] | +0.5139 | **Noise** |
-| 300ETF_short | `short` | 60.0% | -0.0019 | [-0.0469, +0.1209] | +0.0249 | **Noise** | [-0.2488, +0.7697] | +0.4994 | **Noise** |
-| 500ETF | `single` | 80.0% | -1.6041 | [+0.0658, +0.2246] | +0.0877 | **Noise** | [+0.3452, +0.9033] | +0.4121 | **Noise** |
-| 500ETF_long | `long` | 80.0% | -1.4994 | [+0.0436, +0.2027] | +0.0710 | **Noise** | [+0.2848, +0.9030] | +0.3976 | **Noise** |
-| 500ETF_short | `short` | 60.0% | -1.5290 | [+0.0506, +0.2077] | +0.0525 | **Noise** | [+0.2967, +0.8909] | +0.3818 | **Noise** |
-| 588000ETF | `single` | 20.0% | -0.6683 | [-0.0641, +0.0879] | -0.1911 | **Signal** | [-0.5033, +0.4303] | +0.5273 | **Signal** |
-| 588000ETF_long | `long` | 46.7% | -0.2625 | [-0.0370, +0.1552] | -0.3548 | **Signal** | [-0.1394, +0.6848] | +0.5970 | **Noise** |
-| 588000ETF_short | `short` | 20.0% | -0.7054 | [-0.0662, +0.0857] | -0.2141 | **Signal** | [-0.5515, +0.3942] | +0.5000 | **Signal** |
-| 159915ETF | `single` | 53.3% | -1.5584 | [+0.0389, +0.2086] | +0.0479 | **Noise** | [+0.1394, +0.8670] | +0.5976 | **Noise** |
-| 159915ETF_long | `long` | 33.3% | -1.6732 | [+0.0326, +0.2137] | +0.0357 | **Noise** | [+0.0909, +0.8667] | +0.5430 | **Noise** |
-| 159915ETF_short | `short` | 26.7% | -1.6680 | [+0.0624, +0.2379] | +0.0366 | **Signal** | [+0.2242, +0.9152] | +0.5842 | **Noise** |
-| 50ETF | `single` | 0.0% | -0.8177 | [+0.0033, +0.1827] | +0.1431 | **Noise** | [-0.0306, +0.7458] | +0.2824 | **Noise** |
-| 50ETF_long | `long` | 13.3% | -0.7391 | [+0.0123, +0.1708] | +0.0324 | **Noise** | [+0.1027, +0.8061] | +0.5479 | **Noise** |
-| 50ETF_short | `short` | 20.0% | -0.7190 | [+0.0195, +0.1763] | +0.0596 | **Noise** | [+0.1152, +0.7579] | +0.4461 | **Noise** |
+| 300ETF | `single` | 40.0% | -0.0131 | N/A | +0.0312 | **N/A** | N/A | +0.4776 | **N/A** |
+| 300ETF_long | `long` | 53.3% | -0.0474 | N/A | -0.0080 | **N/A** | N/A | +0.4861 | **N/A** |
+| 300ETF_short | `short` | 53.3% | +0.0786 | N/A | +0.0049 | **N/A** | N/A | +0.5248 | **N/A** |
+| 500ETF | `single` | 40.0% | -1.6244 | N/A | +0.0609 | **N/A** | N/A | +0.4739 | **N/A** |
+| 500ETF_long | `long` | 40.0% | -1.5856 | N/A | +0.0464 | **N/A** | N/A | +0.3842 | **N/A** |
+| 500ETF_short | `short` | 60.0% | -1.6629 | N/A | +0.0372 | **N/A** | N/A | +0.3867 | **N/A** |
+| 588000ETF | `single` | 20.0% | -0.6836 | N/A | -0.1939 | **N/A** | N/A | +0.4364 | **N/A** |
+| 588000ETF_long | `long` | 40.0% | -0.6728 | N/A | -0.2255 | **N/A** | N/A | +0.7000 | **N/A** |
+| 588000ETF_short | `short` | 66.7% | -0.6357 | N/A | -0.2079 | **N/A** | N/A | +0.6182 | **N/A** |
+| 159915ETF | `single` | 33.3% | -1.7045 | N/A | +0.0211 | **N/A** | N/A | +0.5430 | **N/A** |
+| 159915ETF_long | `long` | 33.3% | -1.6654 | N/A | +0.0149 | **N/A** | N/A | +0.6412 | **N/A** |
+| 159915ETF_short | `short` | 66.7% | -1.7068 | N/A | +0.0520 | **N/A** | N/A | +0.6036 | **N/A** |
+| 50ETF | `single` | 6.7% | -0.7740 | N/A | +0.1355 | **N/A** | N/A | +0.3139 | **N/A** |
+| 50ETF_long | `long` | 0.0% | -0.7107 | N/A | +0.0435 | **N/A** | N/A | +0.2642 | **N/A** |
+| 50ETF_short | `short` | 0.0% | -0.8264 | N/A | +0.1037 | **N/A** | N/A | +0.4788 | **N/A** |
 
 ### Feature Selection Metrics & Fallbacks
 
 | Tag | Side | Screen In | BH Pass | Screen FB? | Stability In | Stability Pass | Stability FB? | Kept |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | `single` | 264 | 8 | YES [WARNING] | 50 | 47 | NO | **30** |
-| 300ETF_long | `long` | 264 | 8 | YES [WARNING] | 50 | 47 | NO | **30** |
-| 300ETF_short | `short` | 264 | 8 | YES [WARNING] | 50 | 47 | NO | **30** |
-| 500ETF | `single` | 264 | 23 | YES [WARNING] | 50 | 49 | NO | **27** |
-| 500ETF_long | `long` | 264 | 23 | YES [WARNING] | 50 | 49 | NO | **27** |
-| 500ETF_short | `short` | 264 | 23 | YES [WARNING] | 50 | 49 | NO | **27** |
+| 300ETF | `single` | 264 | 14 | YES [WARNING] | 50 | 47 | NO | **30** |
+| 300ETF_long | `long` | 264 | 14 | YES [WARNING] | 50 | 47 | NO | **30** |
+| 300ETF_short | `short` | 264 | 14 | YES [WARNING] | 50 | 47 | NO | **30** |
+| 500ETF | `single` | 264 | 44 | NO | 44 | 43 | NO | **23** |
+| 500ETF_long | `long` | 264 | 44 | NO | 44 | 43 | NO | **23** |
+| 500ETF_short | `short` | 264 | 44 | NO | 44 | 43 | NO | **23** |
 | 588000ETF | `single` | 264 | 3 | YES [WARNING] | 50 | 50 | NO | **31** |
 | 588000ETF_long | `long` | 264 | 3 | YES [WARNING] | 50 | 50 | NO | **31** |
 | 588000ETF_short | `short` | 264 | 3 | YES [WARNING] | 50 | 50 | NO | **31** |
-| 159915ETF | `single` | 264 | 20 | YES [WARNING] | 50 | 49 | NO | **32** |
-| 159915ETF_long | `long` | 264 | 20 | YES [WARNING] | 50 | 49 | NO | **32** |
-| 159915ETF_short | `short` | 264 | 20 | YES [WARNING] | 50 | 49 | NO | **32** |
-| 50ETF | `single` | 264 | 0 | YES [WARNING] | 50 | 49 | NO | **30** |
-| 50ETF_long | `long` | 264 | 0 | YES [WARNING] | 50 | 49 | NO | **30** |
-| 50ETF_short | `short` | 264 | 0 | YES [WARNING] | 50 | 49 | NO | **30** |
+| 159915ETF | `single` | 264 | 30 | YES [WARNING] | 50 | 49 | NO | **32** |
+| 159915ETF_long | `long` | 264 | 30 | YES [WARNING] | 50 | 49 | NO | **32** |
+| 159915ETF_short | `short` | 264 | 30 | YES [WARNING] | 50 | 49 | NO | **32** |
+| 50ETF | `single` | 264 | 1 | YES [WARNING] | 50 | 49 | NO | **30** |
+| 50ETF_long | `long` | 264 | 1 | YES [WARNING] | 50 | 49 | NO | **30** |
+| 50ETF_short | `short` | 264 | 1 | YES [WARNING] | 50 | 49 | NO | **30** |
 
 ### Optuna Main Study & Pruning Reasons
 
 | Tag | Side | Total | Completed | Pruned/Failed | M4 | M3 | M5 | M6 | ESS | Floor | Gini |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | `single` | 100 | 87 | 13 | 4 | 13 | 12 | 0 | 0 | 13 | 0 |
-| 300ETF_long | `long` | 100 | 69 | 31 | 1 | 10 | 8 | 0 | 0 | 10 | 0 |
-| 300ETF_short | `short` | 100 | 57 | 43 | 4 | 13 | 11 | 0 | 0 | 15 | 0 |
-| 500ETF | `single` | 100 | 92 | 8 | 1 | 7 | 7 | 0 | 0 | 8 | 0 |
-| 500ETF_long | `long` | 100 | 87 | 13 | 3 | 7 | 7 | 0 | 0 | 8 | 0 |
-| 500ETF_short | `short` | 100 | 87 | 13 | 1 | 12 | 12 | 0 | 0 | 13 | 0 |
-| 588000ETF | `single` | 100 | 86 | 14 | 8 | 9 | 10 | 11 | 3 | 10 | 0 |
-| 588000ETF_long | `long` | 100 | 92 | 8 | 7 | 7 | 8 | 8 | 0 | 8 | 0 |
-| 588000ETF_short | `short` | 100 | 75 | 25 | 6 | 6 | 7 | 7 | 2 | 7 | 0 |
-| 159915ETF | `single` | 100 | 88 | 12 | 5 | 8 | 11 | 5 | 0 | 12 | 0 |
-| 159915ETF_long | `long` | 100 | 53 | 47 | 6 | 10 | 10 | 2 | 0 | 11 | 0 |
-| 159915ETF_short | `short` | 100 | 86 | 14 | 6 | 9 | 8 | 6 | 0 | 12 | 0 |
-| 50ETF | `single` | 100 | 79 | 21 | 0 | 1 | 21 | 0 | 0 | 0 | 0 |
-| 50ETF_long | `long` | 100 | 80 | 20 | 0 | 0 | 6 | 0 | 0 | 0 | 0 |
-| 50ETF_short | `short` | 100 | 45 | 55 | 0 | 0 | 4 | 0 | 0 | 0 | 0 |
+| 300ETF | `single` | 100 | 86 | 14 | 1 | 14 | 12 | 0 | 0 | 14 | 0 |
+| 300ETF_long | `long` | 100 | 74 | 26 | 8 | 15 | 14 | 0 | 0 | 15 | 0 |
+| 300ETF_short | `short` | 100 | 52 | 48 | 2 | 20 | 18 | 0 | 0 | 23 | 0 |
+| 500ETF | `single` | 100 | 82 | 18 | 2 | 11 | 11 | 0 | 0 | 18 | 0 |
+| 500ETF_long | `long` | 100 | 84 | 16 | 1 | 7 | 7 | 0 | 0 | 8 | 0 |
+| 500ETF_short | `short` | 100 | 68 | 32 | 1 | 9 | 9 | 0 | 0 | 16 | 0 |
+| 588000ETF | `single` | 100 | 84 | 16 | 15 | 15 | 15 | 15 | 1 | 15 | 0 |
+| 588000ETF_long | `long` | 100 | 88 | 12 | 7 | 7 | 8 | 8 | 4 | 8 | 0 |
+| 588000ETF_short | `short` | 100 | 52 | 48 | 9 | 9 | 10 | 10 | 5 | 10 | 0 |
+| 159915ETF | `single` | 100 | 85 | 15 | 2 | 11 | 12 | 2 | 0 | 15 | 0 |
+| 159915ETF_long | `long` | 100 | 55 | 45 | 6 | 9 | 9 | 1 | 0 | 10 | 0 |
+| 159915ETF_short | `short` | 100 | 86 | 14 | 9 | 10 | 11 | 9 | 0 | 12 | 0 |
+| 50ETF | `single` | 100 | 84 | 16 | 0 | 1 | 16 | 0 | 0 | 0 | 0 |
+| 50ETF_long | `long` | 100 | 61 | 39 | 0 | 0 | 8 | 0 | 0 | 0 | 0 |
+| 50ETF_short | `short` | 100 | 30 | 70 | 0 | 0 | 7 | 0 | 0 | 0 | 0 |
 
 ### Hyperparameter Plateau Selection
 
 | Tag | Side | Plateau Trial | Plateau Objective | Raw Best Trial | Raw Best Objective |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | `single` | 39 | +2.1857 | 62 | +2.8066 |
-| 300ETF_long | `long` | 18 | +1.0050 | 76 | +2.0060 |
-| 300ETF_short | `short` | 50 | +0.3438 | 75 | +1.5034 |
-| 500ETF | `single` | 69 | +1.5007 | 92 | +2.4725 |
-| 500ETF_long | `long` | 41 | +1.4958 | 65 | +2.1440 |
-| 500ETF_short | `short` | 88 | +0.5629 | 84 | +0.7919 |
-| 588000ETF | `single` | 87 | +1.1628 | 73 | +1.1990 |
-| 588000ETF_long | `long` | 67 | +1.1958 | 72 | +1.5546 |
-| 588000ETF_short | `short` | 72 | +1.0560 | 88 | +2.2451 |
-| 159915ETF | `single` | 36 | +1.8403 | 69 | +2.5355 |
-| 159915ETF_long | `long` | 15 | -0.5852 | 91 | +0.8840 |
-| 159915ETF_short | `short` | 82 | +1.6998 | 16 | +2.7433 |
-| 50ETF | `single` | 67 | +0.4008 | 96 | +1.0808 |
-| 50ETF_long | `long` | 94 | +0.4186 | 87 | +1.5012 |
-| 50ETF_short | `short` | 62 | -3.2660 | 11 | -1.4480 |
+| 300ETF | `single` | 75 | +3.7073 | 34 | +4.9991 |
+| 300ETF_long | `long` | 19 | -0.0525 | 79 | +1.8773 |
+| 300ETF_short | `short` | 92 | +1.0582 | 34 | +2.4883 |
+| 500ETF | `single` | 50 | +5.8457 | 58 | +6.3351 |
+| 500ETF_long | `long` | 51 | +2.1911 | 65 | +5.1935 |
+| 500ETF_short | `short` | 99 | +1.3880 | 24 | +1.7447 |
+| 588000ETF | `single` | 71 | +1.5288 | 35 | +1.5610 |
+| 588000ETF_long | `long` | 45 | +3.7856 | 52 | +4.6899 |
+| 588000ETF_short | `short` | 76 | +2.7650 | 81 | +4.5935 |
+| 159915ETF | `single` | 39 | +0.6810 | 91 | +2.0255 |
+| 159915ETF_long | `long` | 31 | +0.0709 | 24 | +0.8978 |
+| 159915ETF_short | `short` | 32 | +1.5472 | 99 | +3.0661 |
+| 50ETF | `single` | 82 | +0.4498 | 99 | +0.9954 |
+| 50ETF_long | `long` | 86 | -0.0159 | 41 | +0.6607 |
+| 50ETF_short | `short` | 62 | -2.3621 | 66 | -1.9608 |
 
 ## Per-Tag Diagnostics (15-Panel Figure per Side)
 
@@ -176,8 +176,8 @@ coefficients, OOS decile spread, all-data decile spread, side-tail return hist, 
 
 ### 300ETF (300ETF, side=`single`)
 - **Selected features**: 30
-- **Active features**: 29
-- **Active**: `yesterday_early_trend`, `yesterday_am_return`, `yesterday_afternoon_reversal`, `yesterday_northbound_net_ratio`, `short_sell_cover_spread`, `bar_vwap_dev_2`, `yesterday_day_kurtosis`, `northbound_volume_share`, `volume_slope`, `total_path_length`, `max_down_ret`, `margin_balance`, `short_repayment_quantity`, `short_balance_quantity`, `sma100_dist`, `vix_iv_ratio`, `vix`, `capital_large_order_ratio`, `capital_net_value`, `vix_skew_proxy`, `iv_diff_1d`, `yesterday_afternoon_momentum`, `yesterday_cvd_close`, `bar_body_rng_0`, `first_30min_return`, `max_up_ret`, `num_up_bars`, `bar_body_rng_1`, `outside_bar_reversal_day`
+- **Active features**: 30
+- **Active**: `yesterday_early_trend`, `yesterday_am_return`, `yesterday_afternoon_reversal`, `yesterday_northbound_net_ratio`, `short_sell_cover_spread`, `bar_vwap_dev_2`, `yesterday_day_kurtosis`, `northbound_volume_share`, `volume_slope`, `total_path_length`, `max_down_ret`, `margin_balance`, `short_repayment_quantity`, `short_balance_quantity`, `sma100_dist`, `vix_iv_ratio`, `vix`, `capital_large_order_ratio`, `capital_net_value`, `vix_skew_proxy`, `iv_diff_1d`, `yesterday_afternoon_momentum`, `yesterday_day_close_pos`, `yesterday_cvd_close`, `bar_body_rng_0`, `first_30min_return`, `max_up_ret`, `num_up_bars`, `bar_body_rng_1`, `outside_bar_reversal_day`
 
 ![Diagnostics 300ETF](plots/diagnostics_300ETF_single.png)
 
@@ -191,33 +191,33 @@ coefficients, OOS decile spread, all-data decile spread, side-tail return hist, 
 
 
 ### 300ETF_short (300ETF, side=`short`)
-- **Selected features**: 14
-- **Active features**: 13
-- **Active**: `yesterday_early_trend`, `yesterday_am_return`, `yesterday_northbound_net_ratio`, `short_sell_cover_spread`, `volume_slope`, `sma100_dist`, `vix_iv_ratio`, `iv_diff_1d`, `yesterday_afternoon_momentum`, `yesterday_day_close_pos`, `yesterday_cvd_close`, `bar_body_rng_0`, `max_up_ret`
+- **Selected features**: 30
+- **Active features**: 25
+- **Active**: `yesterday_early_trend`, `yesterday_am_return`, `yesterday_afternoon_reversal`, `yesterday_northbound_net_ratio`, `short_sell_cover_spread`, `yesterday_day_kurtosis`, `northbound_volume_share`, `volume_slope`, `max_down_ret`, `margin_balance`, `short_repayment_quantity`, `short_balance_quantity`, `sma100_dist`, `vix_iv_ratio`, `vix`, `capital_large_order_ratio`, `vix_skew_proxy`, `iv_diff_1d`, `yesterday_afternoon_momentum`, `yesterday_day_close_pos`, `yesterday_cvd_close`, `bar_body_rng_0`, `first_30min_return`, `max_up_ret`, `outside_bar_reversal_day`
 
 ![Diagnostics 300ETF_short](plots/diagnostics_300ETF_short.png)
 
 
 ### 500ETF (500ETF, side=`single`)
-- **Selected features**: 27
-- **Active features**: 27
-- **Active**: `capital_sell_value`, `total_path_length`, `max_down_ret`, `iv_vol_ratio`, `vol60`, `vol_gk10`, `vol5`, `yesterday_illiquidity_amihud`, `bar_ret_2`, `bar_body_rng_2`, `bar_vwap_dev_3`, `yesterday_day_kurtosis`, `yesterday_afternoon_reversal`, `yesterday_afternoon_momentum`, `sma100_dist`, `bar_ret_1`, `bar_body_rng_1`, `bar_body_rng_0`, `max_up_ret`, `num_up_bars`, `body_to_range_ratio`, `yesterday_early_trend`, `iv`, `yesterday_day_pm_am_vol_ratio`, `northbound_sell`, `short_repayment_quantity`, `margin_balance`
+- **Selected features**: 23
+- **Active features**: 23
+- **Active**: `yesterday_afternoon_reversal`, `yesterday_afternoon_momentum`, `sma100_dist`, `bar_ret_1`, `bar_body_rng_1`, `bar_body_rng_0`, `max_up_ret`, `num_up_bars`, `yesterday_first_30min_return`, `vix`, `yesterday_day_pm_am_vol_ratio`, `margin_balance`, `capital_sell_value`, `total_path_length`, `max_down_ret`, `iv_vol_ratio`, `vol_gk10`, `vol5`, `yesterday_illiquidity_amihud`, `bar_ret_2`, `bar_body_rng_2`, `bar_vwap_dev_3`, `yesterday_day_kurtosis`
 
 ![Diagnostics 500ETF](plots/diagnostics_500ETF_single.png)
 
 
 ### 500ETF_long (500ETF, side=`long`)
-- **Selected features**: 27
-- **Active features**: 27
-- **Active**: `capital_sell_value`, `total_path_length`, `max_down_ret`, `iv_vol_ratio`, `vol60`, `vol_gk10`, `vol5`, `yesterday_illiquidity_amihud`, `bar_ret_2`, `bar_body_rng_2`, `bar_vwap_dev_3`, `yesterday_day_kurtosis`, `yesterday_afternoon_reversal`, `yesterday_afternoon_momentum`, `sma100_dist`, `bar_ret_1`, `bar_body_rng_1`, `bar_body_rng_0`, `max_up_ret`, `num_up_bars`, `body_to_range_ratio`, `yesterday_early_trend`, `iv`, `yesterday_day_pm_am_vol_ratio`, `northbound_sell`, `short_repayment_quantity`, `margin_balance`
+- **Selected features**: 23
+- **Active features**: 23
+- **Active**: `yesterday_afternoon_reversal`, `yesterday_afternoon_momentum`, `sma100_dist`, `bar_ret_1`, `bar_body_rng_1`, `bar_body_rng_0`, `max_up_ret`, `num_up_bars`, `yesterday_first_30min_return`, `vix`, `yesterday_day_pm_am_vol_ratio`, `margin_balance`, `capital_sell_value`, `total_path_length`, `max_down_ret`, `iv_vol_ratio`, `vol_gk10`, `vol5`, `yesterday_illiquidity_amihud`, `bar_ret_2`, `bar_body_rng_2`, `bar_vwap_dev_3`, `yesterday_day_kurtosis`
 
 ![Diagnostics 500ETF_long](plots/diagnostics_500ETF_long.png)
 
 
 ### 500ETF_short (500ETF, side=`short`)
-- **Selected features**: 27
-- **Active features**: 27
-- **Active**: `capital_sell_value`, `total_path_length`, `max_down_ret`, `iv_vol_ratio`, `vol60`, `vol_gk10`, `vol5`, `yesterday_illiquidity_amihud`, `bar_ret_2`, `bar_body_rng_2`, `bar_vwap_dev_3`, `yesterday_day_kurtosis`, `yesterday_afternoon_reversal`, `yesterday_afternoon_momentum`, `sma100_dist`, `bar_ret_1`, `bar_body_rng_1`, `bar_body_rng_0`, `max_up_ret`, `num_up_bars`, `body_to_range_ratio`, `yesterday_early_trend`, `iv`, `yesterday_day_pm_am_vol_ratio`, `northbound_sell`, `short_repayment_quantity`, `margin_balance`
+- **Selected features**: 23
+- **Active features**: 23
+- **Active**: `yesterday_afternoon_reversal`, `yesterday_afternoon_momentum`, `sma100_dist`, `bar_ret_1`, `bar_body_rng_1`, `bar_body_rng_0`, `max_up_ret`, `num_up_bars`, `yesterday_first_30min_return`, `vix`, `yesterday_day_pm_am_vol_ratio`, `margin_balance`, `capital_sell_value`, `total_path_length`, `max_down_ret`, `iv_vol_ratio`, `vol_gk10`, `vol5`, `yesterday_illiquidity_amihud`, `bar_ret_2`, `bar_body_rng_2`, `bar_vwap_dev_3`, `yesterday_day_kurtosis`
 
 ![Diagnostics 500ETF_short](plots/diagnostics_500ETF_short.png)
 
@@ -232,8 +232,8 @@ coefficients, OOS decile spread, all-data decile spread, side-tail return hist, 
 
 ### 588000ETF_long (588000ETF, side=`long`)
 - **Selected features**: 31
-- **Active features**: 30
-- **Active**: `max_up_ret`, `bar_body_rng_0`, `max_down_ret`, `early_skew`, `early_trend`, `bar_body_rng_2`, `bar_vwap_dev_3`, `yesterday_day_skew`, `yesterday_day_kurtosis`, `bar_vol_5`, `volume_percentile_20d`, `roc60`, `growth_momentum_ratio`, `yesterday_day_pm_am_vol_ratio`, `tech_value_rotation`, `early_kurtosis`, `bar_body_rng_1`, `cvd_divergence_day`, `vix_diff_1d`, `option_oi_growth`, `margin_net_buy`, `margin_buy_repayment_spread`, `capital_net_value`, `capital_net_accel`, `vol_ratio_10_60`, `bar_rng_2`, `yesterday_early_range`, `vix_iv_ratio`, `consecutive_inside_bars_3d`, `outside_bar_reversal_day`
+- **Active features**: 31
+- **Active**: `max_up_ret`, `bar_body_rng_0`, `max_down_ret`, `early_skew`, `early_trend`, `num_up_bars`, `bar_body_rng_2`, `bar_vwap_dev_3`, `yesterday_day_skew`, `yesterday_day_kurtosis`, `bar_vol_5`, `volume_percentile_20d`, `roc60`, `growth_momentum_ratio`, `yesterday_day_pm_am_vol_ratio`, `tech_value_rotation`, `early_kurtosis`, `bar_body_rng_1`, `cvd_divergence_day`, `vix_diff_1d`, `option_oi_growth`, `margin_net_buy`, `margin_buy_repayment_spread`, `capital_net_value`, `capital_net_accel`, `vol_ratio_10_60`, `bar_rng_2`, `yesterday_early_range`, `vix_iv_ratio`, `consecutive_inside_bars_3d`, `outside_bar_reversal_day`
 
 ![Diagnostics 588000ETF_long](plots/diagnostics_588000ETF_long.png)
 
@@ -263,9 +263,9 @@ coefficients, OOS decile spread, all-data decile spread, side-tail return hist, 
 
 
 ### 159915ETF_short (159915ETF, side=`short`)
-- **Selected features**: 31
-- **Active features**: 21
-- **Active**: `vol_gk10`, `bar_rng_3`, `capital_sell_volume`, `keltner_squeeze_width`, `yesterday_early_vwap_dev`, `gap_pct`, `bar_vol_5`, `volume_slope`, `yesterday_afternoon_momentum`, `yesterday_day_vwap_dev`, `northbound_net`, `vix_iv_spread`, `early_kurtosis`, `num_up_bars`, `bar_body_rng_0`, `max_down_ret`, `margin_buy_repayment_spread`, `yesterday_gap_pct`, `sma100_dist`, `roc20`, `aroon_osc`
+- **Selected features**: 32
+- **Active features**: 32
+- **Active**: `vol_gk10`, `total_path_length`, `bar_rng_3`, `capital_sell_volume`, `keltner_squeeze_width`, `yesterday_early_vwap_dev`, `yesterday_am_return`, `gap_pct`, `bar_vol_5`, `volume_slope`, `yesterday_afternoon_momentum`, `yesterday_day_vwap_dev`, `northbound_net`, `vix_iv_spread`, `northbound_volume_share`, `early_kurtosis`, `bar_vwap_dev_2`, `first_30min_return`, `num_up_bars`, `bar_body_rng_0`, `max_down_ret`, `margin_net_buy`, `margin_buy_repayment_spread`, `capital_net_value`, `capital_net_accel`, `yesterday_gap_pct`, `sma100_dist`, `roc20`, `cci14`, `aroon_osc`, `macd_hist`, `yesterday_day_kurtosis`
 
 ![Diagnostics 159915ETF_short](plots/diagnostics_159915ETF_short.png)
 
