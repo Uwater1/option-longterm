@@ -95,8 +95,8 @@ ACTIVE_FEATURE_ESS_DIVISOR = 8.0
 
 # Side-Specific Objective configuration.
 # - "single" (legacy): Tail IC two-sided (top10% U bot10%), weights V1..V4 = [0.40, 0.40, 0.15, 0.05]
-# - "long": Tail IC = pred >= P90(pred) only; drop V4 (Top-Bottom Spread), renormalize.
-# - "short": Tail IC = pred <= P10(pred) only; drop V4, renormalize.
+# - "long": Tail IC = pred >= P85(pred) only; drop V4 (Top-Bottom Spread), renormalize.
+# - "short": Tail IC = pred <= P15(pred) only; drop V4, renormalize.
 # Note: CV fold metrics (M1..M6 in calculate_yearly_metrics) stay two-sided for all sides;
 # only the validation objective (V2) and the lockbox Tail IC are side-aware.
 SIDE_CONFIG = {
@@ -179,7 +179,7 @@ ETF_CLI_MAP = {
     "588000": "588000ETF", "159915": "159915ETF",
     "300ETF": "300ETF", "50ETF": "50ETF", "500ETF": "500ETF",
     "588000ETF": "588000ETF", "159915ETF": "159915ETF",
-    "all": ["300ETF", "500ETF", "159915ETF"],
+    "all": ["300ETF", "50ETF", "500ETF", "588000ETF", "159915ETF"],
 }
 
 # Metric Weights (w_i from Step 4.1)
@@ -2341,10 +2341,10 @@ if __name__ == "__main__":
     ap.add_argument("-t", "--trials", type=int, default=100, help="Optuna trials count")
     ap.add_argument("--side", default=None, choices=["single", "long", "short"],
                     help="Train ONE specific side: single (legacy two-sided Tail IC), "
-                         "long (top-only Tail IC, pred >= P90), short (bot-only, pred <= P10). "
-                         "If omitted (default), trains BOTH long and short via the --both path.")
+                         "long (top-only Tail IC, pred >= P85), short (bot-only, pred <= P15). "
+                         "If omitted (default), trains all three sides (single, long, short) via the --both path.")
     ap.add_argument("--both", action="store_true", default=True,
-                    help="Train BOTH long and short sides for each ETF (DEFAULT). "
+                    help="Train all three sides (single, long, short) for each ETF (DEFAULT). "
                          "Use --no-both to disable and require --side.")
     ap.add_argument("--no-both", dest="both", action="store_false",
                     help="Disable --both; requires --side to be set.")
@@ -2380,12 +2380,12 @@ if __name__ == "__main__":
     else:
         etfs = [ETF_CLI_MAP.get(etf_arg, etf_arg)]
 
-    # Side resolution: --both (default) trains both long and short for each ETF.
+    # Side resolution: --both (default) trains all three sides (single, long, short) for each ETF.
     # --no-both requires --side to be specified explicitly.
     if args.both:
         if args.side is not None:
             print(f"[WARNING] Both --both and --side={args.side} set. --both takes precedence; --side ignored.")
-        sides = ["long", "short"]
+        sides = ["single", "long", "short"]
     else:
         if args.side is None:
             print("[ERROR] --no-both requires --side to be set explicitly (one of: single|long|short).")

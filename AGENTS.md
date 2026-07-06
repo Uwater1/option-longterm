@@ -224,10 +224,10 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 ## Day-Model Side-Specific Objective (July 2026)
 - Feature pipeline (screening → CSS → VIF → CPCV) **unchanged**. Only validation objective and lockbox Tail IC are side-aware.
 - Sides: `single` (legacy two-sided), `long` (`pred >= P90(pred)`), `short` (`pred <= P10(pred)`).
-- `--both` flag is **default** in `train_model.py`: trains both `long` and `short` per ETF in one invocation. Use `--no-both --side {single|long|short}` to train one side only.
+- `--both` flag is **default** in `train_model.py`: trains all three sides (`single`, `long`, and `short`) per ETF in one invocation. Use `--no-both --side {single|long|short}` to train one side only.
 - Weights: `single` `[0.40, 0.40, 0.15, 0.05]`; `long`/`short` `[0.45, 0.45, 0.10, 0.00]` (V4 dropped, renormalized).
 - CV fold M1..M6 metrics and kill-switches stay two-sided for all sides.
 - Tag becomes `{ETF}_{side}` for long/short (e.g., `300ETF_long`); models/scalers/results live side-by-side with `single`.
 - Pilot cache key is side-scoped via hash: `"v10"` for `single` (preserves legacy cache byte-identical), `"v11_side", side` prefix for long/short.
 - `generate_report.py` emits ONE 15-panel diagnostics figure per ETF per side: `diagnostics_{etf}_{side}.png`. Lockbox Tail IC is side-aware.
-- Run: `python3 day-model/train_model.py -e all --trials 100` (default trains both sides).
+- Run: `python3 day-model/train_model.py -e all --trials 100` (default trains all 5 ETFs and all 3 models/sides each).
