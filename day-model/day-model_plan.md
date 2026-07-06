@@ -58,29 +58,28 @@ Partition the entire dataset chronologically:
     - Block 6: `2023-07-01` to `2023-10-01`
 - **OOS Lockbox**: `date >= 2024-03-01` (approx 556 rows). Completely untouched during training, evaluated one-shot at the end.
 
-**Step 1 — Cheap screening on selection train set.**
-Compute robust marginal association per feature (Spearman rank correlation) between each of the candidate features (formerly 317, pruned to 210 by default after deprecating 107 zero-stability features in `day-model/deprecate_features.py`) and the target, utilizing only the selection train subset. Apply BH-FDR correction across the tests (FDR = 0.15). If fewer than 50 features pass, fallback to the top 50 features by p-value.
+> [!NOTE]
+> **Pipeline Change (Univariate Screening Removed)**:
+> Univariate Spearman rank screening with BH-FDR correction (formerly Step 1) has been completely removed from the pipeline and is skipped by default. Dropping features based purely on marginal linear correlation deletes variables that have weak individual correlation but strong joint/multivariate predictive power when combined, causing feature starvation and model collapse. The pipeline now feeds all candidate features directly to Cluster Stability Selection.
 
-> **Mistake (Previous Attempt)**: Clustering slightly correlated features ($|r| \ge 0.3$) and dropping them based on univariate ranking discarded complementary multivariate features, causing model collapse to $\le 2$ active weights. We incorrectly tried to rely on ElasticNet grouping effect without pre-clustering. Grouping into complete correlation clusters *after* screening but *before* stability voting resolves this without discarding joint predictive power.
-
-**Step 2 — Cluster Stability Selection (CSS) + VIF Pruning on selection train set.**
-Perform Complete Linkage hierarchical clustering on Step 1 survivors using correlation distance (threshold $t = 0.25$, i.e. $|r| \ge 0.75$). Run repeated subsampling ($B=100$, subsample size $\lfloor N/2 \rfloor$) and fit ElasticNet paths (l1_ratio = 0.5) on selection train. Aggregate selection votes at the *cluster level* (i.e. did any member of the cluster get selected in the subsample?). Keep clusters selected in $\ge 0.60$ fraction of subsamples (fallback to top 5 if count < 3). For each kept cluster, select the single representative feature with the highest individual stability score (tie-broken by Spearman correlation absolute values). 
+**Step 1 — Cluster Stability Selection (CSS) + VIF Pruning on selection train set.**
+Perform Complete Linkage hierarchical clustering on all active candidate features (formerly 317, pruned to 210 by default after deprecating 107 zero-stability features in `day-model/deprecate_features.py`) using correlation distance (threshold $t = 0.25$, i.e. $|r| \ge 0.75$). Run repeated subsampling ($B=100$, subsample size $\lfloor N/2 \rfloor$) and fit ElasticNet paths (l1_ratio = 0.5) on selection train. Aggregate selection votes at the *cluster level* (i.e. did any member of the cluster get selected in the subsample?). Keep clusters selected in $\ge 0.60$ fraction of subsamples (fallback to top 5 if count < 3). For each kept cluster, select the single representative feature with the highest individual stability score (tie-broken by Spearman correlation absolute values). 
 
 After selecting representatives, perform **iterative VIF pruning** using standard OLS on the representatives. In each step, compute Variance Inflation Factors (VIFs) for all remaining features, identifying the highest VIF. If it exceeds $10.0$, drop the feature and repeat, continuing until all remaining selected features have VIF $\le 10.0$. This eliminates multivariate collinearity among three or more variables that pairwise clustering ignores.
 
 > **Mistake (Previous Attempt)**: Standard (loss-agnostic, individual-feature) stability selection failed under correlation by vote-splitting, which led to severe collinearity in selected sets (condition numbers up to 6.4M for 50ETF, 3.7M for 500ETF). Pairwise clustering alone resolved most issues but left multivariate collinearity intact for 50ETF and 500ETF. Integrating VIF pruning post-CSS completely eliminates joint collinearity.
 
-**Step 3 — Loss Weighting via Input Scaling.**
+**Step 2 — Loss Weighting via Input Scaling.**
 For coefficient fits, use sample weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to upweight tail days. Implement weights by scaling inputs $X$ and targets $y$ by $\sqrt{w}$. During Optuna tuning, Kish ESS is calculated on the selection train subset to apply active feature caps and soft ESS penalties. For the final refit, sample weights and Kish ESS are evaluated on the full working set.
 
 > **Mistake (Previous Attempt)**: Pushing tail-weighting parameters (exponent $k$) without constraints collapsed the Effective Sample Size (ESS) to 16.6% on 159915ETF, training the model on effectively very few outlier days. Enforcing a hard ESS floor $\ge 20\%$ during optimization completely fixes this.
 
-**Step 4 — Optuna over hyperparameters only, evaluated on selection validation blocks.**
+**Step 3 — Optuna over hyperparameters only, evaluated on selection validation blocks.**
 Chronological splits partition the working set into a `selection train` block (before `2024-03-01` excluding the validation blocks and their embargos) and held-out `selection validation` blocks (tuned on the 4 inner validation blocks, evaluated one-shot on the 2 outer validation blocks).
 Combinatorial Purged Cross-Validation (CPCV) splits (6 groups, 2 test groups, yielding 15 folds) are constructed strictly within the `selection train` subset, applying a 10-day embargo at test boundaries. Optuna tunes model type selection (`skglm_huber_l1` vs `skglm_mcp`), their respective regularization parameters (alphas, gamma, delta), and the loss weight exponent $k$.
 Both model families enforce a mandatory $10\%$ L2 Ridge regularization component (`skglm_huber_l1` uses `L1_plus_L2` with `l1_ratio = 0.9` and `skglm_mcp` uses custom `MCP_plus_L2` with `mu = 0.1 * alpha` from `penalties.py`) to guarantee minimum eigenvalues and compress condition numbers.
 
-### Step 4.1 — Define Metric Weights & Optimization Objective
+### Step 3.1 — Define Metric Weights & Optimization Objective
 
 $$ \text{Objective} = \sum_{i=1}^{4} w_i \cdot \widetilde{V}_i $$
 
@@ -117,10 +116,10 @@ Before computing the weighted objective, apply **Kill Switches / Hard Constraint
 **Continuous Soft Constraints**:
 * **ESS Floor**: The hard discontinuous $ESS \ge 20\%$ floor on the selection training subset is converted to a continuous soft penalty in the objective function: $ess\_penalty = -10.0 \times (0.20 - ess\_pct)$ when $ess\_pct < 0.20$ (and $0$ otherwise). This allows Optuna's TPE sampler to navigate the optimization landscape smoothly.
 
-**Step 5 — Freeze feature set.**
+**Step 4 — Freeze feature set.**
 Stability-selected cluster representatives are frozen before Optuna tuning begins.
 
-**Step 6 — One-shot evaluation on the lockbox.**
+**Step 5 — One-shot evaluation on the lockbox.**
 * **Refit**: `train_model.py` refits the final model on the full working set (Selection Train + Selection Validation, i.e., all rows before `2024-03-01`) using the best parameters, and saves the final models and scaler/feature metadata. Calculates the **Raw Design Matrix Condition Number**, the **Raw Normal Equations Condition Number**, and the **Regularized Normal Equations Condition Number** ($\kappa(X^TX + N \lambda_{L2} I)$) to show the exact numerical stability of the estimator under regularized normal equations.
 * **Evaluation**: The actual one-shot OOS predictions on the lockbox (2024-03-01 to the last day), computation of lockbox metrics (overall IC, tail-decile IC, decile monotonicity), and update of the results JSON are performed by the companion report-generator script `generate_report.py`.
 
@@ -230,20 +229,20 @@ Upgraded model training stability, tail performance, overfit diagnostics, and de
 
 ## 8. Feature-Selection Pipeline Constants & Fine-Tuning (July 2026)
 
-The feature-selection pipeline (Steps 1–2) is governed by 6 constants in `train_model.py` (lines 89–94). These control the funnel from ~210 candidate features down to the final selected set fed into Optuna. Their current values were set heuristically; this section documents a systematic sensitivity-analysis protocol to calibrate them.
+The feature-selection pipeline (formerly Steps 1–2, now Step 1 since screening is bypassed) is governed by 4 active constants (and 2 bypassed constants) in `train_model.py` (lines 89–94). These control the funnel from ~210 candidate features down to the final selected set fed into Optuna. Their current values were set heuristically; this section documents a systematic sensitivity-analysis protocol to calibrate them.
 
 ### 8.1 Constants & Their Pipeline Roles
 
 | Constant | Current | Pipeline Stage | Role |
 |---|---|---|---|
-| `SCREEN_FDR` | 0.50 | Step 1 (Screening) | BH-FDR level for univariate Spearman screening. Controls the initial funnel from ~210 features to the CSS input. |
-| `SCREEN_FALLBACK_K` | 50 | Step 1 (Screening) | Top-K fallback when BH-FDR passes < 40 features. Safety net for low-signal ETFs. |
-| `STABILITY_B` | 80 | Step 2 (CSS) | Number of bootstrap subsamples for cluster stability selection. More = more stable probabilities but slower. |
-| `STABILITY_PI` | 0.80 | Step 2 (CSS) | Minimum cluster selection probability threshold. Higher = more conservative, fewer features. |
-| `STABILITY_Q` | 35 | Step 2 (CSS) | Maximum average active clusters used to restrict the alpha regularization path. Caps model complexity pre-Optuna. |
-| `ACTIVE_FEATURE_ESS_DIVISOR` | 8.0 | Step 4 (Optuna) | Kill-switch denominator: $active\_k \le \max(3, \lfloor ESS / d \rfloor)$. Prevents parameter bloat relative to effective sample size. |
+| `SCREEN_FDR` | 0.50 | Step 1 (Screening) | **(Bypassed / Deprecated)** BH-FDR level for univariate Spearman screening. Bypassed by default as univariate screening deletes joint predictive features. |
+| `SCREEN_FALLBACK_K` | 50 | Step 1 (Screening) | **(Bypassed / Deprecated)** Top-K fallback when BH-FDR passes < 40 features. Bypassed by default. |
+| `STABILITY_B` | 80 | Step 1 (CSS) | Number of bootstrap subsamples for cluster stability selection. More = more stable probabilities but slower. |
+| `STABILITY_PI` | 0.80 | Step 1 (CSS) | Minimum cluster selection probability threshold. Higher = more conservative, fewer features. |
+| `STABILITY_Q` | 35 | Step 1 (CSS) | Maximum average active clusters used to restrict the alpha regularization path. Caps model complexity pre-Optuna. |
+| `ACTIVE_FEATURE_ESS_DIVISOR` | 8.0 | Step 3 (Optuna) | Kill-switch denominator: $active\_k \le \max(3, \lfloor ESS / d \rfloor)$. Prevents parameter bloat relative to effective sample size. |
 
-> **Discrepancy note**: Step 1 in Section 4 specifies FDR = 0.15 (loosened to 0.25 for 588000ETF). The code currently uses `SCREEN_FDR = 0.50` by default with a hardcoded `0.25` override for 588000ETF. The sweep protocol will reveal whether 0.50 is actually optimal or whether the plan's 0.15 is preferable.
+> **Discrepancy note**: Screening (formerly Step 1) specifies FDR = 0.15 (loosened to 0.25 for 588000ETF) but is now bypassed by default because univariate filtering deletes features with joint predictive power. The sweep protocol can verify that bypassing this step is superior to applying any screening threshold.
 
 ### 8.2 Sweep Protocol
 
@@ -269,11 +268,11 @@ python day-model/sweep_constants.py -e 300 --constant STABILITY_B --stability
 
 | Constant | Sweep Range | Decision Rule |
 |---|---|---|
-| `SCREEN_FDR` | `[0.15, 0.25, 0.35, 0.50, 0.65, 0.80]` | Maximize `lockbox_tail_ic`. If 0.25 is optimal for all ETFs, remove the 588000ETF hardcoded override. |
+| `SCREEN_FDR` | `[0.15, 0.25, 0.35, 0.50, 0.65, 0.80]` | Bypassed. Verify if any screening threshold outperforms the default bypassed mode. |
 | `STABILITY_B` | `[40, 60, 80, 120]` | Pick the smallest B where Jaccard similarity across 3 seeds exceeds 0.85. |
 | `STABILITY_PI` | `[0.60, 0.70, 0.75, 0.80, 0.85, 0.90]` | Maximize `lockbox_tail_ic` while keeping condition number < 100. |
 | `STABILITY_Q` | `[15, 25, 35, 50, 70]` | Pick Q where Tail IC plateaus (elbow method). |
-| `SCREEN_FALLBACK_K` | `[30, 40, 50, 60, 80]` | Diagnostic: only tune if fallback triggers for >= 2 ETFs. Otherwise keep at 50. |
+| `SCREEN_FALLBACK_K` | `[30, 40, 50, 60, 80]` | Bypassed. |
 | `ACTIVE_FEATURE_ESS_DIVISOR` | `[4.0, 6.0, 8.0, 10.0, 12.0, 16.0]` | Pick divisor where kill-switch prunes < 5% of Optuna trials (guardrail, not primary filter). |
 
 ### 8.4 Execution Order

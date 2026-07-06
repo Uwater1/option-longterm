@@ -365,6 +365,8 @@ def benjamini_hochberg(p_values: np.ndarray, fdr_level: float = 0.20) -> np.ndar
 
 def run_screening(X_working: np.ndarray, y_working: np.ndarray, fdr_level: float = SCREEN_FDR):
     # Step 1: Cheap screening (vectorized Spearman).
+    # NOTE: Bypassed by default. Univariate screening is not working because dropping features with 
+    # low marginal correlation deletes key joint predictive features, causing feature starvation and model collapse.
     # Spearman(X_j, y) == Pearson(rank(X_j), rank(y)). Rank each column once,
     # then correlations are a single matmul.
     n, p = X_working.shape
@@ -1072,7 +1074,7 @@ def find_plateau_trial(study, r=0.25, min_neighbors=8, min_valid_neighbors=6):
 def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
               use_cache: bool = True, optuna_n_jobs: int = OPTUNA_N_JOBS,
               bootstrap_n_jobs: int = BOOTSTRAP_N_JOBS, loyo_n_jobs: int = 1,
-              skip_step1: bool = False, skip_step2: bool = False):
+              skip_step1: bool = True, skip_step2: bool = False):
     print(f"\n" + "=" * 80)
     print(f"Train {etf_name} (Side: {side})")
     print(f"Cache: {use_cache} | Jobs: Optuna={optuna_n_jobs}, Bootstrap={bootstrap_n_jobs}, LOYO={loyo_n_jobs}")
@@ -1216,9 +1218,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     def _compute_selection():
         t_sel_start = time.perf_counter()
         
-        # Step 1: Cheap screening
+        # Step 1: Cheap screening (Bypassed / Not Working)
         if skip_step1:
-            print("Skipping Step 1 filter (screening)...")
+            print("Skipping Step 1 filter (screening) [Disabled: Univariate screening deletes joint predictive features]...")
             # Calculate screening stats purely for diagnostics
             _, p_vals, rhos = run_screening(X_sel_train, y_sel_train, fdr_level=fdr_level)
             n_feats = X_sel_train.shape[1]
@@ -2470,7 +2472,7 @@ if __name__ == "__main__":
     ap.add_argument("--no-cache", action="store_true",
                     help="Disable disk caches (selection, LOYO folds, pilot metrics).")
     ap.add_argument("--skip-step", nargs="+", choices=["1", "2", "12"], default=[],
-                    help="Skip feature selection steps: 1 (screening), 2 (CSS), or 12 (both).")
+                    help="Skip feature selection steps: 1 (screening, skipped by default), 2 (CSS), or 12 (both).")
     ap.add_argument("--optuna-jobs", type=int, default=OPTUNA_N_JOBS,
                     help=f"Parallel Optuna workers (default {OPTUNA_N_JOBS}).")
     ap.add_argument("--bootstrap-jobs", type=int, default=BOOTSTRAP_N_JOBS,
@@ -2483,7 +2485,7 @@ if __name__ == "__main__":
                          "Pass 'none' to disable.")
     args = ap.parse_args()
 
-    skip_step1 = False
+    skip_step1 = True # Bypassed by default because univariate screening deletes joint predictive features.
     skip_step2 = False
     if args.skip_step:
         for s in args.skip_step:
