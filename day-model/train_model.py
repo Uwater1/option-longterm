@@ -446,6 +446,35 @@ def run_vif_pruning(X_working: np.ndarray, selected_idx: np.ndarray, feature_nam
     return np.array(current_idx)
 
 
+def run_cond_pruning(X_working: np.ndarray, selected_idx: np.ndarray, feature_names: list, cond_cap: float = 100.0) -> np.ndarray:
+    """Iteratively remove the feature with the largest absolute loading on the smallest singular vector
+    of the standardized design matrix, until the condition number is below `cond_cap`.
+    """
+    if len(selected_idx) <= 1:
+        return selected_idx
+
+    current_idx = list(selected_idx)
+    while len(current_idx) > 1:
+        X_sub = X_working[:, current_idx]
+        X_scaled = (X_sub - X_sub.mean(axis=0)) / (X_sub.std(axis=0) + 1e-10)
+
+        _, s, Vt = np.linalg.svd(X_scaled, full_matrices=False)
+        s_min = s.min()
+        cond = float(s.max() / s_min) if s_min > 1e-10 else float("inf")
+
+        if cond > cond_cap:
+            v_smallest = Vt[-1, :]
+            max_idx = np.argmax(np.abs(v_smallest))
+            f_name = feature_names[current_idx[max_idx]]
+            print(f"    Drop '{f_name}' (loading: {v_smallest[max_idx]:.4f}, cond: {cond:.2f} > {cond_cap}) due to multi-feature collinearity")
+            current_idx.pop(max_idx)
+        else:
+            break
+
+    return np.array(current_idx)
+
+
+
 def _stability_one_bootstrap(b: int, X_screened: np.ndarray, y_working: np.ndarray,
                              alphas: np.ndarray, n_total: int, subsample_size: int,
                              rng_seed: int):
@@ -1172,7 +1201,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # length changes, or any of the deterministic knobs below change.
     # See AGENTS.md "Cache invalidation" for manual-clear guidance.
     select_key = [
-        "v12_vif", etf_name, len(FEATURES), int(parquet_mtime),
+        "v13_vif_cond", etf_name, len(FEATURES), int(parquet_mtime),
         int(X_sel_train.shape[0]), int(X_sel_train.shape[1]),
     STABILITY_B, STABILITY_PI, fdr_level,
         tuple(VAL_BLOCKS), TARGET, vif_threshold,
@@ -1201,14 +1230,20 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         t_vif = time.perf_counter() - t_vif_start
         print(f"VIF dropped {len(stability_selected_idx) - len(vif_pruned_idx)} collinear. Kept {len(vif_pruned_idx)} features.")
 
+        print("Pruning condition number...")
+        t_cond_start = time.perf_counter()
+        cond_pruned_idx = run_cond_pruning(X_sel_train, vif_pruned_idx, FEATURES, cond_cap=100.0)
+        t_cond = time.perf_counter() - t_cond_start
+        print(f"Condition pruning dropped {len(vif_pruned_idx) - len(cond_pruned_idx)} features. Kept {len(cond_pruned_idx)} features.")
+
         return {
             "screen_mask": screen_mask,
             "p_vals": p_vals,
             "rhos": rhos,
-            "stability_selected_idx": np.asarray(vif_pruned_idx),
+            "stability_selected_idx": np.asarray(cond_pruned_idx),
             "stability_scores": np.asarray(stability_scores),
             "time_screen": t_screen,
-            "time_stability": t_stab + t_vif,
+            "time_stability": t_stab + t_vif + t_cond,
         }
 
     t_select_block_start = time.perf_counter()
@@ -1290,9 +1325,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     print("\n  [DIAGNOSTICS] Feature Quality:")
     print(f"    Condition Number: {condition_number:.2f}")
-    force_ridge = (condition_number > 1e5)
-    if force_ridge:
-        print(f"    [WARNING] Severe condition number. Forcing Ridge-only fallback model search to ensure numerical stability.")
+    force_ridge = False
+    if condition_number > 1e5:
+        print(f"    [WARNING] Severe condition number (cond > 1e5). Optuna trials will automatically constrain/prune ill-conditioned fits.")
     if condition_number > 100:
         print(f"    [WARNING] Severe collinearity (cond > 100)!")
     elif condition_number > 30:
@@ -1434,6 +1469,29 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         coef_norm = float(np.linalg.norm(model_temp.coef_))
         active_k = int(np.sum(np.abs(model_temp.coef_) > 1e-5))
 
+        # Compute reg_kappa of Gram matrix (X^TX + reg_coef I)
+        K_sel_vars = X_weighted_temp.shape[1]
+        if K_sel_vars > 1:
+            s_vars = np.linalg.svd(X_weighted_temp, compute_uv=False)
+            s_max_sq = float(s_vars.max() ** 2)
+            s_min_sq = float(s_vars.min() ** 2)
+            
+            N_samples = X_weighted_temp.shape[0]
+            if model_type == "ridge":
+                reg_coef = float(params.get("ridge_alpha", 1.0))
+            elif model_type == "skglm_huber_l1":
+                reg_coef = float(N_samples * 0.1 * params.get("skglm_huber_l1_alpha", 1e-5))
+            elif model_type == "skglm_mcp":
+                reg_coef = float(N_samples * 0.1 * params.get("skglm_mcp_alpha", 1e-5))
+            else:
+                reg_coef = 0.0
+                
+            s_sq_max = s_max_sq + reg_coef
+            s_sq_min = s_min_sq + reg_coef
+            reg_kappa = float(np.sqrt(s_sq_max / s_sq_min)) if s_sq_min > 1e-10 else float("inf")
+        else:
+            reg_kappa = 1.0
+
         # Compute Kish ESS
         sum_w = w_temp.sum()
         sum_w2 = (w_temp ** 2).sum()
@@ -1481,7 +1539,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
         val_metrics = [val_ic, val_tail_ic_adj, val_mono, val_spread]
 
-        return raw_metrics, val_metrics, model_temp, scaler_init, cv_is_ics, cv_oos_ics, side_y_tail_ics
+        return raw_metrics, val_metrics, model_temp, scaler_init, cv_is_ics, cv_oos_ics, side_y_tail_ics, reg_kappa
 
     # ── Pilot calibration cache ───────────────────────────────────────
     # Pilot val_metrics (V2 Tail IC) are side-aware for `long`/`short`,
@@ -1490,12 +1548,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # the side tag is prepended to the cache key ONLY when side != "single".
     # Selection and LOYO caches remain on "v10" (side-independent).
     pilot_key = [
-        "v12", etf_name, len(FEATURES), int(parquet_mtime),
+        "v13", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
-        tuple(VAL_BLOCKS), TARGET, PILOT_N_TRIALS, PILOT_SEED, force_ridge
+        tuple(VAL_BLOCKS), TARGET, PILOT_N_TRIALS, PILOT_SEED
     ]
     if side != "single":
-        pilot_key = ["v12_side", side] + pilot_key
+        pilot_key = ["v13_side", side] + pilot_key
     pilot_cache_path = CACHE_DIR / f"cache_pilot_{etf_name}_{_cache_key(pilot_key)}.joblib"
 
     def _compute_pilot():
@@ -1512,10 +1570,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         )
 
         def pilot_objective(trial):
-            if force_ridge:
-                model_type = trial.suggest_categorical("model_type", ["ridge"])
-            else:
-                model_type = trial.suggest_categorical("model_type", ["skglm_huber_l1", "skglm_mcp", "ridge"])
+            model_type = trial.suggest_categorical("model_type", ["skglm_huber_l1", "skglm_mcp", "ridge"])
             k_weight = trial.suggest_float("k_weight", 0.0, 1.5)
 
             trial_params = {"model_type": model_type, "k_weight": k_weight}
@@ -1532,11 +1587,17 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             try:
                 res = evaluate_params(trial_params)
                 raw_metrics, val_metrics = res[0], res[1]
+                reg_kappa = res[7]
+                if reg_kappa > 10000.0:
+                    raise optuna.TrialPruned(f"Regularized condition number {reg_kappa:.2f} > 10000.0")
                 trial.set_user_attr("raw_metrics", raw_metrics)
                 trial.set_user_attr("val_metrics", val_metrics)
                 trial.set_user_attr("params", trial_params)
+                trial.set_user_attr("reg_kappa", reg_kappa)
                 # Objective in pilot: simple sum of Val Overall IC and Val Tail IC on the selection validation block
                 return val_metrics[0] + val_metrics[1]
+            except optuna.TrialPruned as e:
+                raise e
             except Exception as e:
                 import traceback
                 print(f"Pilot trial failed: {e}")
@@ -1611,7 +1672,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     main_storage = JournalStorage(JournalFileBackend(str(main_db_path)))
     
     def constraints_func(trial):
-        return trial.user_attrs.get("constraints", [1e9] * 9)
+        return trial.user_attrs.get("constraints", [1e9] * 10)
 
     sampler = optuna.samplers.TPESampler(
         seed=PILOT_SEED + 1,
@@ -1628,10 +1689,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     best_raw_metrics = None
 
     def main_objective(trial):
-        if force_ridge:
-            model_type = trial.suggest_categorical("model_type", ["ridge"])
-        else:
-            model_type = trial.suggest_categorical("model_type", ["skglm_huber_l1", "skglm_mcp", "ridge"])
+        model_type = trial.suggest_categorical("model_type", ["skglm_huber_l1", "skglm_mcp", "ridge"])
         k_weight = trial.suggest_float("k_weight", 0.0, 1.5)
 
         trial_params = {"model_type": model_type, "k_weight": k_weight}
@@ -1649,6 +1707,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             res = evaluate_params(trial_params)
             raw_metrics, val_metrics, _model_obj, _scaler_obj, cv_is_ics, cv_oos_ics = res[0], res[1], res[2], res[3], res[4], res[5]
             side_y_tail_ics = res[6]
+            reg_kappa = res[7]
 
             # Extract metrics for kill switches (CV folds)
             m1, m2, m3, m4, m5, m6, m7, m8 = raw_metrics
@@ -1699,6 +1758,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                     0.0,
                     0.0 - side_m2 if side != "single" else 0.0,
                     0.50 - side_m3 if side != "single" else 0.0,
+                    reg_kappa - 10000.0
                 ]
             else:
                 constraints = [
@@ -1711,6 +1771,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                     float(min_active_features - active_k),
                     0.0 - side_m2 if side != "single" else 0.0,
                     0.50 - side_m3 if side != "single" else 0.0,
+                    reg_kappa - 10000.0
                 ]
 
             pruning_reasons = []
@@ -1733,12 +1794,15 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                     pruning_reasons.append(f"Side-specific Yearly Tail IC Mean ({side_m2:.4f} <= 0)")
                 if constraints[8] > 0:
                     pruning_reasons.append(f"Side-specific Hit Rate ({side_m3:.2%} < 50%)")
+            if constraints[9] > 0:
+                pruning_reasons.append(f"Regularized condition number ({reg_kappa:.2f}) exceeds threshold (10000.0)")
 
             trial.set_user_attr("constraints", constraints)
             trial.set_user_attr("pruned_reasons", pruning_reasons)
             trial.set_user_attr("gini", gini)
             trial.set_user_attr("cv_is_ics", cv_is_ics.tolist())
             trial.set_user_attr("cv_oos_ics", cv_oos_ics.tolist())
+            trial.set_user_attr("reg_kappa", reg_kappa)
 
             # Soft ESS constraint penalty
             ess_penalty = 0.0
@@ -1789,7 +1853,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
         except Exception as e:
             trial.set_user_attr("pruned_reasons", [f"Exception: {str(e)}"])
-            trial.set_user_attr("constraints", [1e9] * 9)
+            trial.set_user_attr("constraints", [1e9] * 10)
             return -1e9
 
     def run_main_trial(worker_seed):
@@ -1827,6 +1891,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "exceeds ESS-based cap": 0,
         "active feature floor": 0,
         "Gini coefficient": 0,
+        "Regularized condition number": 0,
     }
     exception_reasons = []
     
@@ -2159,6 +2224,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     else:
         gini = 0.0
 
+    n_samples_working = X_working_final_bagged.shape[0]
+
     # L2 regularized condition number computation
     l2_lambda = 0.0
     if model_type == "skglm_huber_l1":
@@ -2168,9 +2235,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     elif model_type == "elasticnet":
         l2_lambda = best_params["en_alpha"] * (1.0 - best_params["en_l1_ratio"])
     elif model_type == "ridge":
-        l2_lambda = best_params["ridge_alpha"]
-
-    n_samples_working = X_working_final_bagged.shape[0]
+        l2_lambda = best_params["ridge_alpha"] / n_samples_working
     X_scaled_tmp = (X_working_final_bagged - X_working_final_bagged.mean(axis=0)) / (X_working_final_bagged.std(axis=0) + 1e-10)
     _, s, _ = np.linalg.svd(X_scaled_tmp, full_matrices=False)
     s_min = s.min()
