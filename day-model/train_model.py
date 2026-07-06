@@ -89,7 +89,7 @@ PILOT_SEED = 42
 STABILITY_B = 100      
 STABILITY_PI = 0.55   
 STABILITY_Q = 35      
-SCREEN_FDR = 0.99     
+SCREEN_FDR = 0.99   # Not used anymore  
 ACTIVE_FEATURE_ESS_DIVISOR = 8.0  # Kish Effective Sample Size (ESS) divisor to set maximum active features (cap = ESS / divisor) to regularize complexity
 CSS_CORR_THRESHOLD = 0.80         # Correlation threshold for cluster merging in CSS (|r| >= threshold)
 
