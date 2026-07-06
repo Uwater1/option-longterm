@@ -56,6 +56,7 @@ python -m daytrade.deploy                                # Mixed-mode deploy (au
 python -m daytrade.gating_only                           # Gate-only diagnostic backtest
 python -m daytrade.methods.download_futures_data         # Download index futures 5m data
 python -m daytrade.methods.report                        # Generate execution placement evaluation report
+python day-model/sweep/meta_optuna.py -e all --trials 200 --bootstrap-jobs 4  # Meta-Optuna: tune 5 pipeline constants
 ```
 
 ## Project Structure
@@ -98,7 +99,11 @@ day-model/                     # Day-Model 10:00-14:35 return predictor
 ├── train_model.py             # Optuna-tuned linear model training & feature selection (first principles)
 ├── gating_model.py            # Big-move gating classifier
 ├── evaluate_gating.py         # Compile gating winner table + WF PR-AUC grid report
-└── generate_report.py         # Report markdown generator
+├── generate_report.py         # Report markdown generator
+└── sweep/                     # Pipeline constant tuning
+    ├── meta_optuna.py         # Optuna study over all 5 pipeline constants + model hyperparams
+    ├── sweep_constants.py     # Single-constant grid sweep (legacy)
+    └── meta_*_results.csv     # Per-ETF sweep result CSVs
 daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 ├── AGENTS.md                  # Strategy details, parameters, guide
 ├── REPORT.md                  # Calibration and performance report

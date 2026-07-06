@@ -86,12 +86,11 @@ VAL_BLOCKS_OUTER = [
 VAL_BLOCKS = VAL_BLOCKS_INNER + VAL_BLOCKS_OUTER
 PILOT_N_TRIALS = 50
 PILOT_SEED = 42
-STABILITY_B = 100
-STABILITY_PI = 0.60
-STABILITY_Q = 35
-SCREEN_FDR = 0.6
-SCREEN_FALLBACK_K = 50 # Double Research this 
-ACTIVE_FEATURE_ESS_DIVISOR = 8.0
+STABILITY_B = 50      # Meta-Optuna grand median (was 80)
+STABILITY_PI = 0.75   # Meta-Optuna grand median (was 0.80)
+STABILITY_Q = 18      # Meta-Optuna grand median (was 35)
+SCREEN_FDR = 0.50     # Meta-Optuna grand median (was 0.55)
+ACTIVE_FEATURE_ESS_DIVISOR = 9.0  # Meta-Optuna grand median (was 8.0)
 
 # Side-Specific Objective configuration.
 # - "single" (legacy): Tail IC two-sided (top10% U bot10%), weights V1..V4 = [0.40, 0.40, 0.15, 0.05]
@@ -399,10 +398,6 @@ def run_screening(X_working: np.ndarray, y_working: np.ndarray, fdr_level: float
     p_vals = np.nan_to_num(p_vals, nan=1.0, posinf=1.0, neginf=1.0)
 
     screen_mask = benjamini_hochberg(p_vals, fdr_level=fdr_level)
-    if screen_mask.sum() < 40:
-        top_indices = np.argsort(p_vals)[:SCREEN_FALLBACK_K]
-        screen_mask = np.zeros(len(p_vals), dtype=bool)
-        screen_mask[top_indices] = True
 
     return screen_mask, p_vals, rhos
 
@@ -532,12 +527,6 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen
     cluster_stability_scores = np.max(cluster_sel_probs[:, valid_alphas_idx], axis=1)
 
     stable_clusters_keep = cluster_stability_scores >= pi
-    if stable_clusters_keep.sum() < 3:
-        full_cluster_stability_scores = np.max(cluster_sel_probs, axis=1)
-        top_clusters = np.argsort(full_cluster_stability_scores)[-5:]
-        stable_clusters_keep = np.zeros_like(stable_clusters_keep, dtype=bool)
-        stable_clusters_keep[top_clusters] = True
-        cluster_stability_scores = full_cluster_stability_scores
 
     # For each cluster, compute individual feature stability scores for ranking representatives
     individual_sel_probs = np.mean(selection_matrix, axis=2)
@@ -659,10 +648,7 @@ def calculate_yearly_metrics(year_groups, y_true: np.ndarray, y_pred: np.ndarray
     m4 = float(y_ics.mean())                      # Overall Rank IC
     m5 = float(y_monos.mean())                    # Decile Monotonicity
     m6 = float(y_spreads.mean())                  # Top-Bottom Spread
-    if ess > 0.0:
-        m7 = -float(k_features) / (ess / ACTIVE_FEATURE_ESS_DIVISOR)    # Tie sparsity penalty to ESS directly
-    else:
-        m7 = -np.log(1.0 + k_features)            # Feature Parsimony (fallback)
+    m7 = -float(k_features) / (ess / ACTIVE_FEATURE_ESS_DIVISOR) if ess > 0.0 else -float(k_features)  # Sparsity penalty tied to ESS
     m8 = -coef_norm                               # Coefficient Bloat (penalized)
 
     raw_metrics = [m1, m2, m3, m4, m5, m6, m7, m8]
@@ -1188,7 +1174,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     select_key = [
         "v12_vif", etf_name, len(FEATURES), int(parquet_mtime),
         int(X_sel_train.shape[0]), int(X_sel_train.shape[1]),
-        STABILITY_B, STABILITY_PI, fdr_level, SCREEN_FALLBACK_K,
+    STABILITY_B, STABILITY_PI, fdr_level,
         tuple(VAL_BLOCKS), TARGET, vif_threshold,
     ]
     select_cache_path = CACHE_DIR / f"cache_select_{etf_name}_{_cache_key(select_key)}.joblib"
@@ -1239,14 +1225,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     rhos = sel["rhos"]
     bh_mask = benjamini_hochberg(p_vals, fdr_level=SCREEN_FDR)
     bh_pass_count = bh_mask.sum()
-    fallback_triggered = (bh_pass_count < 40)
 
     print("\n  [DIAGNOSTICS] Feature Screening:")
     print(f"    Input: {len(FEATURES)} | FDR pass: {bh_pass_count}")
-    if fallback_triggered:
-        print(f"    [WARNING] Fallback: kept top {screen_mask.sum()} by p-value.")
-    else:
-        print(f"    Kept {screen_mask.sum()} features.")
+    print(f"    Kept {screen_mask.sum()} features.")
 
     abs_rhos = np.abs(rhos)
     print(f"    Spearman |rho|: Min={abs_rhos.min():.4f}, Med={np.median(abs_rhos):.4f}, Max={abs_rhos.max():.4f}")
@@ -1264,14 +1246,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     screened_idx = np.where(screen_mask)[0]
     scores_on_screened = stability_scores[screened_idx]
     pass_pi_count = np.sum(scores_on_screened >= STABILITY_PI)
-    stab_fallback_triggered = (pass_pi_count < 3)
 
     print("\n  [DIAGNOSTICS] Stability Selection:")
     print(f"    Input: {len(screened_idx)} | Stable count: {pass_pi_count}")
-    if stab_fallback_triggered:
-        print(f"    [WARNING] Fallback: kept top {len(stability_selected_idx)} by score.")
-    else:
-        print(f"    Kept {len(stability_selected_idx)} features.")
+    print(f"    Kept {len(stability_selected_idx)} features.")
 
     if len(scores_on_screened) > 0:
         pcts = np.percentile(scores_on_screened, [25, 50, 75, 90, 95])
@@ -2149,11 +2127,6 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         
     bagged_mask = inclusion_freqs > 0.50
     bagged_selected_idx_in_sel = np.where(bagged_mask)[0]
-    
-    # Check if empty, fallback to top 3
-    if len(bagged_selected_idx_in_sel) == 0:
-        print("  [WARNING] No features had >50% inclusion frequency! Keeping top 3 features by frequency.")
-        bagged_selected_idx_in_sel = np.argsort(inclusion_freqs)[-3:]
         
     bagged_selected_idx = stability_selected_idx[bagged_selected_idx_in_sel]
     bagged_feature_names = [selected_feature_names[i] for i in bagged_selected_idx_in_sel]
@@ -2329,11 +2302,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             "screening": {
                 "total_features": len(FEATURES),
                 "bh_pass_count": int(bh_pass_count),
-                "fallback_triggered": bool(fallback_triggered),
                 "keep_count": int(screen_mask.sum()),
             },
             "stability": {
-                "fallback_triggered": bool(stab_fallback_triggered),
                 "pass_pi_count": int(pass_pi_count),
                 "keep_count": int(len(stability_selected_idx)),
             },

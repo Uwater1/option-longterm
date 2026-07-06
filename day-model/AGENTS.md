@@ -65,6 +65,21 @@ Speedups: fp32 arrays, vectorized Spearman screen, parallel stability bootstrap 
 
 * **CPCV parallelism**: `--loyo-jobs -1` (auto = `cpu_count // optuna-jobs`). Cap to prevent core oversubscription.
 
+### Pipeline Constants Sweep (`day-model/sweep/`)
+
+Tune the 5 feature-selection pipeline constants via Optuna instead of grid search:
+
+```bash
+# Meta-Optuna: all 5 constants + model hyperparams in one TPE study (~200 trials, < 2 min)
+python day-model/sweep/meta_optuna.py -e all --side single --trials 200 --bootstrap-jobs 4
+
+# Single-constant grid sweep (legacy)
+python day-model/sweep/sweep_constants.py -e 300 --constant SCREEN_FDR --values 0.15,0.25,0.50,0.80
+python day-model/sweep/sweep_constants.py -e 300 --constant STABILITY_B --values 40,60,80,120
+```
+
+Output CSVs and Optuna logs go to `day-model/sweep/`. See `day-model/day-model_plan.md` Section 8 for decision rules.
+
 ## Cache invalidation
 
 `train_model.py` writes three caches per ETF in `day-model/data/`:
@@ -80,7 +95,7 @@ Speedups: fp32 arrays, vectorized Spearman screen, parallel stability bootstrap 
 * `len(FEATURES)`
 * `features_{etf}.parquet` mtime
 * Selection Train shape
-* `STABILITY_B`, `STABILITY_PI`, `SCREEN_FDR`, `SCREEN_FALLBACK_K`
+* `STABILITY_B`, `STABILITY_PI`, `SCREEN_FDR`
 * `SELECTION_VAL_DATE`
 * `TARGET` column
 * Selected-feature indices
@@ -104,13 +119,13 @@ Remove-Item day-model\data\cache_*.joblib
 
 1. **Lockbox Split (Step 0)**: Hold out days $\ge 2024-03-01$ (OOS data untouched during training).
 2. **Selection Validation Split (Step 0.5)**: 6 non-contiguous 3-month blocks (~370 days) for validation. 4 Inner blocks for Optuna tuning; 2 Outer blocks for generalization check. 10-day embargo at boundaries.
-3. **BH-FDR Screening (Step 1)**: Spearman rank correlation on selection train. Keep features with FDR = 0.15. Fallback to top 50 by p-value.
-4. **CSS + VIF Pruning (Step 2)**: Complete Linkage hierarchical clustering (threshold $t=0.25$, $|r| \ge 0.75$). Subsampling ($B=100$) ElasticNet path votes aggregated at cluster level. Keep clusters selected in $\ge 60\%$ subsamples. Pick representative with highest individual score. Apply iterative VIF pruning (VIF threshold 10.0) on representatives.
+3. **BH-FDR Screening (Step 1)**: Spearman rank correlation on selection train. Keep features with FDR = 0.50. No fallback — pure BH-FDR.
+4. **CSS + VIF Pruning (Step 2)**: Complete Linkage hierarchical clustering (threshold $t=0.25$, $|r| \ge 0.75$). Subsampling ($B=50$) ElasticNet path votes aggregated at cluster level. Keep clusters selected in $\ge 75\%$ subsamples with max $Q=18$ active clusters. Pick representative with highest individual score. Apply iterative VIF pruning (VIF threshold 10.0) on representatives.
 5. **Loss Weighting (Step 3)**: Power weights $w(y_i) = |y_i|^k$. Scale inputs by $\sqrt{w}$.
 6. **CPCV with Embargo (Step 4)**: 6 groups, 2 test groups (15 folds), 10-day embargo at test boundaries. Run on selection train.
 7. **Pilot Normalization (Step 4.1)**: Run 50 pilot trials to compute median and MAD for validation z-scores.
 8. **Objective Function**: Maximize weighted sum of normalized validation metrics + ESS soft penalty under 20%.
-9. **Signed Constraints & TPESampler**: Hard constraints (Overall IC > 0, Hit Rate $\ge 60\%$, Monotonicity > 0.25, Spread > 0, Active features $\le ESS / 8$, Gini concentration $\le 0.85$ soft limit). Violation prunes trial.
+9. **Signed Constraints & TPESampler**: Hard constraints (Overall IC > 0, Hit Rate $\ge 60\%$, Monotonicity > 0.25, Spread > 0, Active features $\le ESS / 9$, Gini concentration $\le 0.85$ soft limit). Violation prunes trial.
 10. **One-Shot Evaluation & Plots (Step 6)**: Refit on working set using best parameters. Save final model and scaler. Evaluate OOS lockbox via `generate_report.py` (side-aware Tail IC). Plot 15 diagnostic panels. Run block bootstrap (B=1000, block size 10) for 95% CIs.
 11. **L2 Regularization**: Mandatory 10% L2 regularization (`skglm_huber_l1` uses `l1_ratio = 0.9`, `skglm_mcp` uses `mu = 0.1 * alpha`) to stabilize design matrix condition number.
 12. **Deflation & Overfit Diagnostics**: Compute running Deflated Objective. Compute PBO and Performance Degradation using CSCV.
@@ -143,16 +158,24 @@ Upgraded model training stability, tail performance, overfit diagnostics, and de
    - Dynamic VIF thresholding: `5.0` for highly ill-conditioned `50ETF`, default `10.0` for other ETFs.
    - Raised `ridge_alpha` search upper bound to `10000.0`.
 
-5. **Monthly Blocked Validation Bootstrap Regularization**:
+5. **No-Fallback Pipeline (July 2026)**:
+   - Removed all safety-net fallbacks from the feature-selection pipeline:
+     - `SCREEN_FALLBACK_K` (top-K by p-value when BH-FDR < 40) → removed. Pure BH-FDR.
+     - CSS cluster force-top5 (when < 3 clusters pass pi) → removed. Pure pi threshold.
+     - Bagging top-3 (when no features > 50% inclusion) → removed. Pure > 50% bagging.
+   - Constants tuned via meta-Optuna (`day-model/sweep/meta_optuna.py`): 5 pipeline constants + model hyperparams in single TPE study.
+   - **Tuned constants**: `STABILITY_B=50`, `STABILITY_PI=0.75`, `STABILITY_Q=18`, `SCREEN_FDR=0.50`, `ACTIVE_FEATURE_ESS_DIVISOR=9.0`.
+
+6. **Monthly Blocked Validation Bootstrap Regularization**:
    - Perform $B=100$ monthly blocked bootstrap resamples on the inner validation set.
    - Subtract standard deviation of bootstrapped tail ICs from raw validation Tail IC:
      $$V_{tail\_ic\_adj} = val\_tail\_ic - 1.0 \times \sigma_{boot\_tail\_ic}$$
    - Penalizes unstable validation scores and steers Optuna to robust configurations.
 
-5. **Model Confidence Set (MCS) & Bayesian True Discovery**:
+7. **Model Confidence Set (MCS) & Bayesian True Discovery**:
    - Hansen's MCS (sequential t-test, alpha=10%) identifies statistically indistinguishable trials.
    - Empirical Bayes posterior probability of true discovery $P(\theta_{OOS} > 0 | data)$ logs discovery confidence.
 
-6. **Quarterly Rolling Refit decay check**:
+7. **Quarterly Rolling Refit decay check**:
    - Runs `run_quarterly_rolling_refit_test` post-lockbox.
    - Compares Static vs Rolling Model performance on quarterly windows (QuantBench method).
