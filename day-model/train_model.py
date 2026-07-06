@@ -89,7 +89,7 @@ PILOT_SEED = 42
 STABILITY_B = 100      
 STABILITY_PI = 0.60   
 STABILITY_Q = 35      
-SCREEN_FDR = 0.85     
+SCREEN_FDR = 0.95     
 ACTIVE_FEATURE_ESS_DIVISOR = 9.0  
 
 # Side-Specific Objective configuration.
