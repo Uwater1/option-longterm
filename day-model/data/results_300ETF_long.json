@@ -3,7 +3,7 @@
   "side": "long",
   "tag": "300ETF_long",
   "n_samples_working": 2166,
-  "n_samples_lockbox": 0,
+  "n_samples_lockbox": 556,
   "selected_features": [
     "yesterday_early_trend",
     "yesterday_am_return",
@@ -357,15 +357,15 @@
   "selection_val_outer_tail_ic": -0.1456140350877193,
   "selection_val_outer_monotonicity": 0.3090909090909091,
   "selection_val_outer_spread": 0.08889990200837836,
-  "deflated_cv_ic": 0.029099709460007922,
-  "deflated_val_ic": -0.008032288727893244,
-  "deflated_val_tail_ic": -0.27906584374874543,
-  "deflated_val_outer_ic": -0.04853600597834138,
-  "deflated_val_outer_tail_ic": -0.45255777303120387,
-  "deflated_objective": -3.4204091057808723,
+  "deflated_cv_ic": 0.042348196498266905,
+  "deflated_val_ic": -0.0075507509945201,
+  "deflated_val_tail_ic": -0.25357263425670495,
+  "deflated_val_outer_ic": -0.048054468244968236,
+  "deflated_val_outer_tail_ic": -0.4270645635391634,
+  "deflated_objective": -3.3830316316633438,
   "pbo": 0.5333333333333333,
-  "performance_degradation": -0.047395025735194656,
-  "mcs_size": 8,
+  "performance_degradation": 0.022331659601941292,
+  "mcs_size": 6,
   "bayesian_prob_true_discovery": 1.0,
   "quarterly_rolling_test": {
     "quarterly_runs": [
@@ -447,22 +447,22 @@
   },
   "plateau_trial": 19,
   "plateau_val": -0.052529779834936674,
-  "raw_best_trial": 79,
-  "raw_best_val": 1.877324564932057,
-  "lockbox_overall_ic": NaN,
-  "lockbox_tail_ic": NaN,
+  "raw_best_trial": 56,
+  "raw_best_val": 1.8886229892068616,
+  "lockbox_overall_ic": 0.101037090959716,
+  "lockbox_tail_ic": -0.20362392229784934,
   "diagnostics": {
     "timings": {
-      "data_loading": 0.052694099955260754,
-      "feature_selection": 0.0008474999340251088,
-      "loyo_folds": 0.014521499979309738,
-      "pilot_study": 0.000750300008803606,
-      "main_study": 4.18992050003726,
-      "final_refit": 0.04727360000833869
+      "data_loading": 0.05298759997822344,
+      "feature_selection": 0.00048509996850043535,
+      "loyo_folds": 0.014585500000976026,
+      "pilot_study": 0.0007281999569386244,
+      "main_study": 3.307052699965425,
+      "final_refit": 0.04840440000407398
     },
     "screening": {
       "total_features": 264,
-      "bh_pass_count": 14,
+      "bh_pass_count": 30,
       "fallback_triggered": true,
       "keep_count": 50
     },
@@ -473,17 +473,17 @@
     },
     "optuna_main": {
       "total_trials": 100,
-      "completed_count": 74,
-      "pruned_count": 26,
+      "completed_count": 82,
+      "pruned_count": 18,
       "failed_count": 0,
       "pruning_reasons": {
-        "M4 (Overall IC <= 0)": 8,
-        "M2 (Yearly Tail IC Mean <= 0)": 13,
-        "M3 (Hit Rate < 60%)": 15,
-        "M5 (Monotonicity <= 0.25)": 14,
+        "M4 (Overall IC <= 0)": 3,
+        "M2 (Yearly Tail IC Mean <= 0)": 11,
+        "M3 (Hit Rate < 60%)": 12,
+        "M5 (Monotonicity <= 0.25)": 11,
         "M6 (Top-Bottom Spread <= 0)": 0,
         "exceeds ESS-based cap": 0,
-        "active feature floor": 15,
+        "active feature floor": 12,
         "Gini coefficient": 0
       }
     },
@@ -496,5 +496,19 @@
       "effective_sample_size_pct": 0.6645126835901431,
       "gini_coefficient": 0.5112374803975965
     }
-  }
+  },
+  "lockbox_tail_ic_def": "long",
+  "lockbox_monotonicity": 0.7212121212121212,
+  "ic_generalization_gap": -0.1085878419542361,
+  "mono_generalization_gap": -0.23515151515151517,
+  "lockbox_ic_ci": [
+    0.004996264680154909,
+    0.2065958695417245
+  ],
+  "lockbox_mono_ci": [
+    0.09090909090909091,
+    0.8909090909090909
+  ],
+  "lockbox_ic_swallowed": false,
+  "lockbox_mono_swallowed": true
 }
