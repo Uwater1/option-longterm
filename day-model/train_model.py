@@ -1123,6 +1123,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     y_sel_val_inner = y_scaled[sel_val_inner_idx].astype(np.float32)
     dates_sel_val_inner = df["date"].iloc[sel_val_inner_idx].reset_index(drop=True)
 
+    # Precompute month groups for inner validation blocked bootstrap
+    ym_groups = dates_sel_val_inner.dt.to_period("M")
+    unique_ym = np.unique(ym_groups)
+    val_inner_month_indices = [np.where(ym_groups == ym)[0] for ym in unique_ym]
+
+
     sel_val_outer_mask = np.zeros(len(df), dtype=bool)
     for start_val, end_val in VAL_BLOCKS_OUTER:
         block_mask = (df["date"] >= pd.Timestamp(start_val)) & (df["date"] < pd.Timestamp(end_val))
@@ -1168,15 +1174,18 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # Loosen FDR for 588000ETF to prevent feature starvation
     fdr_level = 0.25 if etf_name == "588000ETF" else SCREEN_FDR
 
+    # Dynamic VIF thresholding: tighter (5.0) for 50ETF to kill severe collinearity, 10.0 default for others
+    vif_threshold = 5.0 if etf_name == "50ETF" else 10.0
+
     # ── Cache key parts ───────────────────────────────────────────────
     # Auto-invalidate when: feature parquet regen (mtime), FEATURES list
     # length changes, or any of the deterministic knobs below change.
     # See AGENTS.md "Cache invalidation" for manual-clear guidance.
     select_key = [
-        "v10", etf_name, len(FEATURES), int(parquet_mtime),
+        "v12_vif", etf_name, len(FEATURES), int(parquet_mtime),
         int(X_sel_train.shape[0]), int(X_sel_train.shape[1]),
         STABILITY_B, STABILITY_PI, fdr_level, SCREEN_FALLBACK_K,
-        tuple(VAL_BLOCKS), TARGET,
+        tuple(VAL_BLOCKS), TARGET, vif_threshold,
     ]
     select_cache_path = CACHE_DIR / f"cache_select_{etf_name}_{_cache_key(select_key)}.joblib"
 
@@ -1198,7 +1207,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
         print("Pruning VIF...")
         t_vif_start = time.perf_counter()
-        vif_pruned_idx = run_vif_pruning(X_sel_train, stability_selected_idx, FEATURES, threshold=10.0)
+        vif_pruned_idx = run_vif_pruning(X_sel_train, stability_selected_idx, FEATURES, threshold=vif_threshold)
         t_vif = time.perf_counter() - t_vif_start
         print(f"VIF dropped {len(stability_selected_idx) - len(vif_pruned_idx)} collinear. Kept {len(vif_pruned_idx)} features.")
 
@@ -1299,9 +1308,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     print("\n  [DIAGNOSTICS] Feature Quality:")
     print(f"    Condition Number: {condition_number:.2f}")
-    force_ridge = (condition_number > 1e5) or (etf_name in ["500ETF", "50ETF"])
+    force_ridge = (condition_number > 1e5)
     if force_ridge:
-        print(f"    [WARNING] Severe condition number or target ETF. Forcing Ridge-only fallback model search to ensure numerical stability.")
+        print(f"    [WARNING] Severe condition number. Forcing Ridge-only fallback model search to ensure numerical stability.")
     if condition_number > 100:
         print(f"    [WARNING] Severe collinearity (cond > 100)!")
     elif condition_number > 30:
@@ -1448,9 +1457,17 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         sum_w2 = (w_temp ** 2).sum()
         ess = float((sum_w ** 2) / sum_w2) if sum_w2 > 1e-10 else float(len(w_temp))
 
-        # Calculate raw yearly metrics (with ESS-scaled parsimony) on CV folds
+        # Calculate raw yearly metrics (with ESS-scaled parsimony) on CV folds.
+        # Enforce two-sided Tail IC definition (side="single") for standard M1..M6 & kill-switches.
         raw_metrics, _, _ = calculate_yearly_metrics(
-            year_groups, y_sel_train, oof_preds, active_k, coef_norm, ess=ess, side=side)
+            year_groups, y_sel_train, oof_preds, active_k, coef_norm, ess=ess, side="single")
+
+        # Retrieve side-specific fold metrics to enforce fold sign-consistency constraints
+        if side != "single":
+            _, _, side_y_tail_ics = calculate_yearly_metrics(
+                year_groups, y_sel_train, oof_preds, active_k, coef_norm, ess=ess, side=side)
+        else:
+            side_y_tail_ics = None
 
         # Predict on inner selection validation block and compute validation metrics
         val_preds = model_temp.predict(X_sel_val_inner_scaled_base)
@@ -1460,12 +1477,29 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         # two-sided for legacy single. CV fold M1..M6 stay two-sided.
         val_tail_ic = side_tail_ic(y_sel_val_inner, val_preds, side)
 
+        # Bootstrapped Tail IC calculation for inner validation set (when side != "single")
+        if side != "single":
+            boot_tail_ics = []
+            n_months = len(val_inner_month_indices)
+            rng_boot = np.random.default_rng(PILOT_SEED)
+            for _ in range(100):
+                boot_months = rng_boot.choice(n_months, size=n_months, replace=True)
+                boot_idx = np.concatenate([val_inner_month_indices[m] for m in boot_months])
+                boot_tail_ics.append(side_tail_ic(y_sel_val_inner[boot_idx], val_preds[boot_idx], side))
+            
+            boot_tail_ics = np.array(boot_tail_ics)
+            val_tail_ic_std = float(boot_tail_ics.std())
+            # Soft penalty: subtract 1.0 * std from raw val_tail_ic
+            val_tail_ic_adj = val_tail_ic - 1.0 * val_tail_ic_std
+        else:
+            val_tail_ic_adj = val_tail_ic
+
         val_mono = compute_decile_monotonicity(y_sel_val_inner, val_preds)
         val_spread = compute_top_bottom_spread(y_sel_val_inner, val_preds)
 
-        val_metrics = [val_ic, val_tail_ic, val_mono, val_spread]
+        val_metrics = [val_ic, val_tail_ic_adj, val_mono, val_spread]
 
-        return raw_metrics, val_metrics, model_temp, scaler_init, cv_is_ics, cv_oos_ics
+        return raw_metrics, val_metrics, model_temp, scaler_init, cv_is_ics, cv_oos_ics, side_y_tail_ics
 
     # ── Pilot calibration cache ───────────────────────────────────────
     # Pilot val_metrics (V2 Tail IC) are side-aware for `long`/`short`,
@@ -1474,12 +1508,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # the side tag is prepended to the cache key ONLY when side != "single".
     # Selection and LOYO caches remain on "v10" (side-independent).
     pilot_key = [
-        "v10", etf_name, len(FEATURES), int(parquet_mtime),
+        "v12", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         tuple(VAL_BLOCKS), TARGET, PILOT_N_TRIALS, PILOT_SEED, force_ridge
     ]
     if side != "single":
-        pilot_key = ["v11_side", side] + pilot_key
+        pilot_key = ["v12_side", side] + pilot_key
     pilot_cache_path = CACHE_DIR / f"cache_pilot_{etf_name}_{_cache_key(pilot_key)}.joblib"
 
     def _compute_pilot():
@@ -1511,7 +1545,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 3.0, 10.0)
                 trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
             elif model_type == "ridge":
-                trial_params["ridge_alpha"] = trial.suggest_float("ridge_alpha", 1e-3, 100.0, log=True)
+                trial_params["ridge_alpha"] = trial.suggest_float("ridge_alpha", 1e-3, 10000.0, log=True)
 
             try:
                 res = evaluate_params(trial_params)
@@ -1595,7 +1629,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     main_storage = JournalStorage(JournalFileBackend(str(main_db_path)))
     
     def constraints_func(trial):
-        return trial.user_attrs.get("constraints", [1e9] * 7)
+        return trial.user_attrs.get("constraints", [1e9] * 9)
 
     sampler = optuna.samplers.TPESampler(
         seed=PILOT_SEED + 1,
@@ -1627,10 +1661,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 3.0, 10.0)
             trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
         elif model_type == "ridge":
-            trial_params["ridge_alpha"] = trial.suggest_float("ridge_alpha", 1e-3, 100.0, log=True)
+            trial_params["ridge_alpha"] = trial.suggest_float("ridge_alpha", 1e-3, 10000.0, log=True)
 
         try:
-            raw_metrics, val_metrics, _model_obj, _scaler_obj, cv_is_ics, cv_oos_ics = evaluate_params(trial_params)
+            res = evaluate_params(trial_params)
+            raw_metrics, val_metrics, _model_obj, _scaler_obj, cv_is_ics, cv_oos_ics = res[0], res[1], res[2], res[3], res[4], res[5]
+            side_y_tail_ics = res[6]
 
             # Extract metrics for kill switches (CV folds)
             m1, m2, m3, m4, m5, m6, m7, m8 = raw_metrics
@@ -1659,28 +1695,40 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             else:
                 gini = 0.0
 
+            # Calculate side-specific metrics for constraints if side != "single"
+            if side != "single" and side_y_tail_ics is not None:
+                side_m2 = float(side_y_tail_ics.mean())
+                side_m3 = float((side_y_tail_ics > 0).mean())
+            else:
+                side_m2 = 0.0
+                side_m3 = 0.0
+
             # Hard Constraints / Kill Switches (on CV folds to ensure training stability):
             # Refactored to signed margins for TPESampler constraints_func
             if model_type == "ridge":
                 # Ridge is non-sparse, bypass active feature floor/cap constraints
                 constraints = [
                     0.0 - m4,
-                    0.0 - m2,  # Yearly Tail IC Mean > 0
-                    0.60 - m3,
+                    0.0 - m2,  # Two-sided Yearly Tail IC Mean > 0
+                    0.60 - m3, # Two-sided Hit Rate >= 60%
                     0.25 - m5,
                     0.0 - m6,
                     0.0,
                     0.0,
+                    0.0 - side_m2 if side != "single" else 0.0,
+                    0.50 - side_m3 if side != "single" else 0.0,
                 ]
             else:
                 constraints = [
                     0.0 - m4,
-                    0.0 - m2,  # Yearly Tail IC Mean > 0
-                    0.60 - m3,
+                    0.0 - m2,  # Two-sided Yearly Tail IC Mean > 0
+                    0.60 - m3, # Two-sided Hit Rate >= 60%
                     0.25 - m5,
                     0.0 - m6,
                     float(active_k - max_active_features),
                     float(min_active_features - active_k),
+                    0.0 - side_m2 if side != "single" else 0.0,
+                    0.50 - side_m3 if side != "single" else 0.0,
                 ]
 
             pruning_reasons = []
@@ -1698,6 +1746,11 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 pruning_reasons.append(f"Active features count ({active_k}) exceeds ESS-based cap ({max_active_features})")
             if constraints[6] > 0:
                 pruning_reasons.append(f"Active features count ({active_k}) is less than active feature floor ({min_active_features})")
+            if side != "single":
+                if constraints[7] > 0:
+                    pruning_reasons.append(f"Side-specific Yearly Tail IC Mean ({side_m2:.4f} <= 0)")
+                if constraints[8] > 0:
+                    pruning_reasons.append(f"Side-specific Hit Rate ({side_m3:.2%} < 50%)")
 
             trial.set_user_attr("constraints", constraints)
             trial.set_user_attr("pruned_reasons", pruning_reasons)
@@ -1754,7 +1807,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
         except Exception as e:
             trial.set_user_attr("pruned_reasons", [f"Exception: {str(e)}"])
-            trial.set_user_attr("constraints", [1e9] * 7)
+            trial.set_user_attr("constraints", [1e9] * 9)
             return -1e9
 
     def run_main_trial(worker_seed):
