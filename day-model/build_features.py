@@ -50,11 +50,15 @@ from features_extra import (
     empty_early_extras,
     compute_daylevel_extras,
 )
+from deprecate_features import (
+    INCLUDE_DEPRECATED,
+    DEPRECATED_BASE_FEATURES,
+)
 
 warnings.filterwarnings("ignore")
 
 # Feature lists
-EARLY_FEATURES = [
+BASE_EARLY_FEATURES = [
     # Existing (11)
     "gap_pct", "first_30min_return", "early_realized_vol", "early_range",
     "early_trend", "early_momentum",
@@ -73,9 +77,9 @@ EARLY_FEATURES = [
     # New shape/trend indicators (7)
     "num_up_bars", "max_up_ret", "max_down_ret", "cl_pos_in_range",
     "body_to_range_ratio", "total_path_length", "volume_slope"
-] + EARLY_EXTRA
+]
 
-DAY_FEATURES = [
+BASE_DAY_FEATURES = [
     # Existing (7)
     "macd_hist", "sma20_dist", "sma50_dist",
     "atr14_norm", "roc10", "bb_pctb", "vol20",
@@ -113,9 +117,9 @@ DAY_FEATURES = [
     "wavetrend_cross_day", "keltner_squeeze_width", "stoch_rsi_divergence", "yesterday_wavetrend_osc",
     "yesterday_stoch_rsi_cross", "cvd_divergence_day", "yesterday_illiquidity_amihud", "turtle_channel_proximity_day",
     "chande_momentum_osc_day", "coppock_curve_day", "elder_ray_power_spread"
-] + DAY_EXTRA
+]
 
-YESTERDAY_FEATURES = [
+BASE_YESTERDAY_FEATURES = [
     "yesterday_pm_return", "yesterday_am_return",
     "yesterday_gap_pct", "yesterday_first_30min_return", "yesterday_early_realized_vol",
     "yesterday_early_range", "yesterday_early_volume_ratio", "yesterday_early_trend",
@@ -127,7 +131,25 @@ YESTERDAY_FEATURES = [
     # --- Mined Features v1 Yesterday (6) ---
     "yesterday_afternoon_reversal", "yesterday_lunch_gap", "yesterday_pm_am_vol_ratio",
     "yesterday_afternoon_momentum", "yesterday_midday_drawdown", "yesterday_cvd_close"
-] + YESTERDAY_EXTRA
+]
+
+EARLY_FEATURES = (
+    BASE_EARLY_FEATURES
+    if INCLUDE_DEPRECATED
+    else [f for f in BASE_EARLY_FEATURES if f not in DEPRECATED_BASE_FEATURES]
+) + EARLY_EXTRA
+
+DAY_FEATURES = (
+    BASE_DAY_FEATURES
+    if INCLUDE_DEPRECATED
+    else [f for f in BASE_DAY_FEATURES if f not in DEPRECATED_BASE_FEATURES]
+) + DAY_EXTRA
+
+YESTERDAY_FEATURES = (
+    BASE_YESTERDAY_FEATURES
+    if INCLUDE_DEPRECATED
+    else [f for f in BASE_YESTERDAY_FEATURES if f not in DEPRECATED_BASE_FEATURES]
+) + YESTERDAY_EXTRA
 
 FEATURES = EARLY_FEATURES + DAY_FEATURES + YESTERDAY_FEATURES
 

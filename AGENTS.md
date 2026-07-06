@@ -93,7 +93,7 @@ day-model/                     # Day-Model 10:00-14:35 return predictor
 ├── REPORT.md                  # Comprehensive return prediction report
 ├── AGENTS.md                  # Feature expansion and workflow guide
 ├── day-model_plan.md          # First-principles modeling & selection plan
-├── build_features.py          # Early-bar + day-level feature engineering (238 features, local caching)
+├── build_features.py          # Early-bar + day-level feature engineering (210 features by default, local caching)
 ├── features_extra.py          # 115 Numba njit extra features (early-bar, day-level, yesterday-mirror)
 ├── train_model.py             # Optuna-tuned linear model training & feature selection (first principles)
 ├── gating_model.py            # Big-move gating classifier
@@ -125,7 +125,7 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 ### Day-Model Features & Caching
 - **Index Signals**: Technical indicators use daily/intraday Index data (`000016.XSHG`, `000300.XSHG`, `000905.XSHG`, `000688.XSHG`, `399006.XSHE`) to prevent look-ahead bias. Execution uses ETF prices.
 - **Local Cache**: Ricequant data (Margin, Capital Flow, Northbound Quota, VIX) cached in `data/*.parquet`.
-- **185 Features**: 88 early-bar intraday, 74 day-level, 23 prior-day features (shifted 1 day). 53 deprecated features moved to deprecate_features.py (backward compatible).
+- **210 Features**: 317 candidate features, pruned to 210 by default after moving 107 zero-stability features to deprecate_features.py.
 - **Volume Normalization**: Early-morning volume normalized by rolling 20-day daily volume shifted by 1 day (`yesterday_rolling_20d_daily_volume / 48`).
 - **Multicollinearity & Complexity Control**: Controls multivariate collinearity via iterative VIF pruning (threshold <= 10.0) on stable representatives. Overfitting is prevented via a dynamic active feature cap tied to Effective Sample Size (active_features <= ESS / 8.0) and a hard active feature floor (active_features >= 5) evaluated as signed constraints via Optuna's `constraints_func` for TPESampler. Gini weight concentration constraint is softened into the objective as a $k$-normalized soft penalty. Data leakage and search-budget overfitting are eliminated by:
   - Tightening univariate screening (BH-FDR = 0.15, loosened to 0.25 for 588000ETF to prevent feature starvation).
@@ -218,7 +218,7 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 - Added 30 early-bar intraday features using Numba njit (features_extra.py).
 - Added daily options indicators (Volume P/C, Open Interest growth, Term Structure, Corridor Width) in compute_daylevel_indicators (build_features.py).
 - Added technical indicators (TD setup, BB width, inside/outside bars, WaveTrend, Keltner squeeze, Stochastic RSI, sentiment rotations) to daily indicators.
-- Total active day-model features expanded from 185 to 264. Verification completed on all 5 ETFs.
+- Total active day-model features pruned from 264 to 210. Verification completed on all 5 ETFs.
 - Re-trained linear Optuna-tuned prediction models successfully (saved in day-model/models/).
 
 ## Day-Model Side-Specific Objective (July 2026)
