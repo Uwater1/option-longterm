@@ -212,14 +212,15 @@ Upgraded model training stability, tail performance, overfit diagnostics, and de
    - Modified `side_tail_ic` and `side_tail_mask` to use 15% threshold for `long` and `short` sides (top 15% / bottom 15% only) instead of 10% (P90/P10). Softens small-sample noise.
    - Set weights for `long`/`short` validation objective `[V1, V2, V3, V4]` to `[0.35, 0.50, 0.15, 0.00]` (renormalized V4 drop).
 
-3. **Yearly Tail IC Constraint**:
-   - Passed `side` to `calculate_yearly_metrics` to make cross-validation fold Tail IC side-aware.
-   - Added `M2 (Yearly Tail IC Mean) > 0` hard constraint to main objective (7 total constraints). Prunes configurations with negative tail performance.
+3. **Two-Sided CV Folds & Side Consistency Constraints**:
+   - Enforces standard two-sided CV fold metrics `m1..m6` and standard kill-switches.
+   - If `side != "single"`, appends two side-specific consistency constraints: `side_m2 > 0` (side-specific Yearly Tail IC Mean > 0) and `side_m3 >= 50%` (side-specific Hit Rate >= 50%) to prevent fold-level tail sign-flips.
+   - Enforces active feature ESS-based cap and floor, weight concentration, and regularized condition number prune at 10000.0 (10 total constraints).
 
-4. **Dynamic Ridge Fallback**:
-   - Added `"ridge"` model type support to `_build_model`.
-   - Automatically forces Ridge-only model search/fitting if selected features condition number is severe ($\kappa > 10^5$) or if ETF is `500ETF`/`50ETF` (to bypass severe collinearity/sparsity instability).
-   - Ridge bypasses the sparse active feature floor & cap constraints. L2 regularizer matches `ridge_alpha`.
+4. **Unified Continuous Manifold & Soft Collinearity Penalty**:
+   - Replaced discrete categorical model selection (`skglm_huber_l1`, `skglm_mcp`, `ridge`) with a unified `GeneralizedLinearEstimator` using Huber datafit and `MCP_plus_L2(alpha*rho, gamma, alpha*(1-rho))` penalty.
+   - Continuous manifold spans from Ridge-like ($\rho < 0.05$, which bypasses sparse active feature floor/cap constraints) to sparse Lasso/MCP regimes.
+   - Added a graduated soft condition number penalty `cond_penalty = -0.1 * max(0, log(reg_kappa) - log(1000.0))` to steer Optuna away from ill-conditioned parameters before hitting the hard prune threshold.
 
 5. **Model Confidence Set (MCS) & Bayesian True Discovery**:
    - Hansen's MCS (sequential paired t-test, alpha=10%) identifies statistically indistinguishable trials from the best.
