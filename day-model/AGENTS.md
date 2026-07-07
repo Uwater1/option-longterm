@@ -21,6 +21,9 @@ python3 day-model/train_model.py -e all --trials 100
 
 # 3. Generate summary REPORT.md and plots
 python3 day-model/generate_report.py
+
+# 4. Run out-of-sample backtest simulator
+python3 day-model/backtest_simulator.py --etf all 
 ```
 
 ### Side-Specific Objective (`--both` default | `--side single|long|short`)

@@ -57,6 +57,7 @@ python -m daytrade.gating_only                           # Gate-only diagnostic 
 python -m daytrade.methods.download_futures_data         # Download index futures 5m data
 python -m daytrade.methods.report                        # Generate execution placement evaluation report
 python3 day-model/train_model.py -e 300 --trials 100 --skip-step 2  # Train with Step 2 filter skipped (Step 1 skipped by default)
+python3 day-model/backtest_simulator.py --etf all --long-thr 70 --short-thr 70 # Run lightweight look-ahead free OOS backtest
 ```
 
 ## Project Structure

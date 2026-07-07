@@ -58,6 +58,7 @@ python -m daytrade.methods.download_futures_data         # Download index future
 python -m daytrade.methods.report                        # Generate execution placement evaluation report
 python day-model/sweep/meta_optuna.py -e all --trials 200 --bootstrap-jobs 4  # Meta-Optuna: tune 5 pipeline constants
 python3 day-model/train_model.py -e 300 --trials 100 --skip-step 2  # Train with Step 2 filter skipped (Step 1 skipped by default)
+python3 day-model/backtest_simulator.py --etf all --long-thr 70 --short-thr 70 # Run lightweight look-ahead free OOS backtest
 ```
 
 ## Project Structure
