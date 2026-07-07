@@ -1,0 +1,467 @@
+"""
+Lightweight look-ahead free trading simulator inside day-model.
+Indicators are calculated using the index (features_{ETF}.parquet),
+and trades are executed on the actual ETF 5m bars.
+Strictly out-of-sample (OOS) evaluation (date >= 2024-03-01).
+"""
+
+import argparse
+import sys
+import os
+import bisect
+from pathlib import Path
+import warnings
+
+import numpy as np
+import pandas as pd
+import joblib
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+# Suppress sklearn/joblib warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+# Add parent path to import custom penalties if needed
+ROOT_DIR = Path(__file__).resolve().parent.parent
+sys.path.append(str(ROOT_DIR))
+try:
+    from penalties import MCP_plus_L2
+except ImportError:
+    pass
+
+# Constants
+LOCKBOX_DATE = "2024-03-01"
+DEFAULT_COST_BPS = 15.0
+
+# Files and columns mapping
+ETF_5M_FILE = {
+    "50ETF": "50ETF_5m.parquet",
+    "300ETF": "510300_5m.parquet",
+    "500ETF": "500ETF_5m.parquet",
+    "588000ETF": "588000ETF_5m.parquet",
+    "159915ETF": "159915ETF_5m.parquet",
+}
+
+# Single source of truth for decision and exit bars (from day-model/build_features.py)
+EXIT_BAR = 42  # 14:35 close
+DECISION_BAR = {
+    "50ETF": 5,      # 10:00 close of bar 5, entry at open of bar 6
+    "300ETF": 5,
+    "500ETF": 5,
+    "588000ETF": 5,
+    "159915ETF": 5,
+}
+
+MODELS_DIR = ROOT_DIR / "day-model" / "models"
+FEATURES_DIR = ROOT_DIR / "day-model" / "data"
+ETF_5M_DIR = ROOT_DIR / "data"
+PLOTS_DIR = ROOT_DIR / "day-model" / "plots"
+
+PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def expanding_pct_rank(series: pd.Series, min_periods: int = 60) -> pd.Series:
+    """Walk-forward percentile rank of each value relative to prior history.
+    At time t, ranks series[t] against series[0 .. t-1].
+    Output is in [0, 1].
+    """
+    vals = series.values
+    n = len(vals)
+    out = np.full(n, np.nan, dtype=float)
+    sorted_buf = []
+    for i in range(n):
+        v = vals[i]
+        if np.isnan(v):
+            continue
+        if len(sorted_buf) >= min_periods:
+            out[i] = bisect.bisect_left(sorted_buf, v) / len(sorted_buf)
+        bisect.insort(sorted_buf, float(v))
+    return pd.Series(out, index=series.index)
+
+
+def load_predictions(etf: str) -> tuple[pd.Series, pd.Series]:
+    """Compute predictions for long and short sides using model & scaler.
+    Long predictions are positive-oriented (high = strong long conviction).
+    Short predictions are negated so they are positive-oriented (high = strong short conviction).
+    """
+    # Load features
+    feat_path = FEATURES_DIR / f"features_{etf}.parquet"
+    if not feat_path.exists():
+        raise FileNotFoundError(f"Feature parquet not found: {feat_path}")
+    df = pd.read_parquet(feat_path)
+
+    # 1. Long side
+    long_model_path = MODELS_DIR / f"linear_{etf}_long.joblib"
+    long_scaler_path = MODELS_DIR / f"scaler_{etf}_long.joblib"
+    
+    if not (long_model_path.exists() and long_scaler_path.exists()):
+        raise FileNotFoundError(f"Long model/scaler not found for {etf}")
+        
+    long_model = joblib.load(long_model_path)
+    long_scaler_meta = joblib.load(long_scaler_path)
+    long_sel_feats = long_scaler_meta["selected_features"]
+    
+    X_long = df[long_sel_feats].copy()
+    X_long = X_long.fillna(X_long.median().fillna(0.0))
+    X_long_scaled = long_scaler_meta["scaler"].transform(X_long.values)
+    long_pred = X_long_scaled @ long_model.coef_ + long_model.intercept_
+    long_scores = pd.Series(long_pred, index=df.index)
+
+    # 2. Short side
+    short_model_path = MODELS_DIR / f"linear_{etf}_short.joblib"
+    short_scaler_path = MODELS_DIR / f"scaler_{etf}_short.joblib"
+    
+    if not (short_model_path.exists() and short_scaler_path.exists()):
+        raise FileNotFoundError(f"Short model/scaler not found for {etf}")
+        
+    short_model = joblib.load(short_model_path)
+    short_scaler_meta = joblib.load(short_scaler_path)
+    short_sel_feats = short_scaler_meta["selected_features"]
+    
+    X_short = df[short_sel_feats].copy()
+    X_short = X_short.fillna(X_short.median().fillna(0.0))
+    X_short_scaled = short_scaler_meta["scaler"].transform(X_short.values)
+    short_pred = X_short_scaled @ short_model.coef_ + short_model.intercept_
+    # Negate short predictions so high score = strong short conviction
+    short_scores = -pd.Series(short_pred, index=df.index)
+
+    return long_scores, short_scores
+
+
+def simulate_etf_trades(
+    etf: str,
+    signals: pd.DataFrame,
+    stop_type: str | None,
+    stop_val: float | None,
+    cost_bps: float,
+) -> pd.DataFrame:
+    """Run trade simulation on the actual 5-minute ETF bars."""
+    # Load 5m ETF data
+    path_5m = ETF_5M_DIR / ETF_5M_FILE[etf]
+    if not path_5m.exists():
+        print(f"  [WARNING] ETF 5m file not found: {path_5m}")
+        return pd.DataFrame()
+        
+    df_5m = pd.read_parquet(path_5m)
+    df_5m["datetime"] = pd.to_datetime(df_5m["datetime"])
+    df_5m = df_5m.set_index("datetime").sort_index()
+
+    # Precompute daily ATR14 (look-ahead free)
+    daily_tr = df_5m.groupby(df_5m.index.date).agg(
+        high=("high", "max"),
+        low=("low", "min")
+    )
+    daily_tr["tr"] = daily_tr["high"] - daily_tr["low"]
+    daily_tr["atr14"] = daily_tr["tr"].rolling(window=14, min_periods=1).mean()
+    daily_tr["atr14_prev"] = daily_tr["atr14"].shift(1)
+    atr_map = daily_tr["atr14_prev"].to_dict()
+
+    # Group 5m data by date for quick access
+    df_5m["date"] = df_5m.index.date
+    grouped_5m = {d: g for d, g in df_5m.groupby("date")}
+
+    decision_bar = DECISION_BAR[etf]
+    entry_idx = decision_bar + 1
+
+    trades = []
+    
+    for date, row in signals.iterrows():
+        date_d = date.date()
+        direction = int(row["direction"])
+        if direction == 0:
+            continue
+            
+        if date_d not in grouped_5m:
+            continue
+            
+        day_bars = grouped_5m[date_d].reset_index(drop=True)
+        L = len(day_bars)
+        if L <= EXIT_BAR or entry_idx >= L:
+            continue
+            
+        entry_price = float(day_bars.iloc[entry_idx]["open"])
+        if entry_price <= 0:
+            continue
+            
+        # Determine exit price & exit type
+        exit_price = float(day_bars.iloc[EXIT_BAR]["close"])
+        exit_type = "target"
+        stop_level = np.nan
+        
+        # Check Stop Loss
+        if stop_type == "pct" and stop_val is not None:
+            if direction > 0:
+                stop_level = entry_price * (1.0 - stop_val)
+            else:
+                stop_level = entry_price * (1.0 + stop_val)
+        elif stop_type == "atr" and stop_val is not None:
+            atr = atr_map.get(date_d, np.nan)
+            if not np.isnan(atr):
+                if direction > 0:
+                    stop_level = entry_price - stop_val * atr
+                else:
+                    stop_level = entry_price + stop_val * atr
+        elif stop_type == "struct":
+            morning_bars = day_bars.iloc[:entry_idx]
+            struct_low = float(morning_bars["low"].min())
+            struct_high = float(morning_bars["high"].max())
+            if direction > 0:
+                stop_level = min(struct_low, entry_price * 0.999)
+            else:
+                stop_level = max(struct_high, entry_price * 1.001)
+        elif stop_type == "struct_atr" and stop_val is not None:
+            morning_bars = day_bars.iloc[:entry_idx]
+            struct_low = float(morning_bars["low"].min())
+            struct_high = float(morning_bars["high"].max())
+            atr = atr_map.get(date_d, np.nan)
+            if not np.isnan(atr):
+                if direction > 0:
+                    stop_level = struct_low - stop_val * atr
+                else:
+                    stop_level = struct_high + stop_val * atr
+
+        # Scan for stop-loss hit from entry to exit
+        if not np.isnan(stop_level):
+            trade_bars = day_bars.iloc[entry_idx : EXIT_BAR + 1]
+            for _, bar in trade_bars.iterrows():
+                hi = float(bar["high"])
+                lo = float(bar["low"])
+                if direction > 0 and lo <= stop_level:
+                    exit_price = stop_level
+                    exit_type = "stop"
+                    break
+                elif direction < 0 and hi >= stop_level:
+                    exit_price = stop_level
+                    exit_type = "stop"
+                    break
+
+        # Calculate returns
+        gross = direction * (exit_price / entry_price - 1.0)
+        net = gross - cost_bps / 1e4
+
+        trades.append({
+            "date": date,
+            "direction": direction,
+            "side": "long" if direction > 0 else "short",
+            "entry_price": entry_price,
+            "exit_price": exit_price,
+            "exit_type": exit_type,
+            "stop_level": stop_level,
+            "gross_ret": gross,
+            "net_ret": net,
+            "long_rank": row["long_rank"],
+            "short_rank": row["short_rank"],
+        })
+
+    if not trades:
+        return pd.DataFrame()
+        
+    return pd.DataFrame(trades).set_index("date").sort_index()
+
+
+def summarize_trades(trades: pd.DataFrame, etf_name: str) -> dict:
+    """Compute backtest metrics from a trades DataFrame."""
+    if trades.empty:
+        return {
+            "n_trades": 0, "n_long": 0, "n_short": 0, "win_rate": 0.0,
+            "mean_net_ret": 0.0, "total_net_ret": 0.0, "sharpe": 0.0,
+            "max_dd": 0.0, "n_stopped": 0,
+        }
+        
+    rets = trades["net_ret"].values
+    n = len(rets)
+    n_long = int((trades["direction"] > 0).sum())
+    n_short = int((trades["direction"] < 0).sum())
+    n_stopped = int((trades["exit_type"] == "stop").sum())
+    
+    win_rate = float((rets > 0).mean()) if n > 0 else 0.0
+    mean_ret = float(np.mean(rets)) if n > 0 else 0.0
+    total_ret = float(np.sum(rets)) if n > 0 else 0.0
+    
+    # Sharpe ratio
+    std_ret = np.std(rets, ddof=1) if n > 1 else 0.0
+    sharpe = float(mean_ret / std_ret * np.sqrt(252)) if std_ret > 1e-8 else 0.0
+    
+    # Drawdown
+    cum_ret = np.cumsum(rets)
+    cum_peak = np.maximum.accumulate(cum_ret)
+    dd = cum_peak - cum_ret
+    max_dd = float(np.max(dd)) if len(dd) > 0 else 0.0
+
+    return {
+        "n_trades": n,
+        "n_long": n_long,
+        "n_short": n_short,
+        "win_rate": win_rate,
+        "mean_net_ret": mean_ret,
+        "total_net_ret": total_ret,
+        "sharpe": sharpe,
+        "max_dd": max_dd,
+        "n_stopped": n_stopped,
+    }
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-e", "--etf", default="all", help="ETF name: 300ETF|50ETF|500ETF|588000ETF|159915ETF|all")
+    ap.add_argument("--long-thr", type=float, default=90.0, help="Long rank threshold (percentile: 0 to 100)")
+    ap.add_argument("--short-thr", type=float, default=90.0, help="Short rank threshold (percentile: 0 to 100)")
+    ap.add_argument("--cost-bps", type=float, default=DEFAULT_COST_BPS, help="Transaction cost in bps")
+    ap.add_argument("--min-periods", type=int, default=60, help="Expanding rank warmup period")
+    ap.add_argument("--stop-type", choices=["pct", "atr", "struct", "struct_atr"], default=None, help="Stop loss type")
+    ap.add_argument("--stop-val", type=float, default=None, help="Stop loss parameter value (pct like 0.005 or ATR multiplier like 1.0)")
+    args = ap.parse_args()
+
+    etfs = ["50ETF", "300ETF", "500ETF", "588000ETF", "159915ETF"]
+    if args.etf != "all":
+        # Handle formats like "300", "300ETF"
+        target_etf = args.etf if args.etf.endswith("ETF") else f"{args.etf}ETF"
+        if target_etf not in etfs:
+            print(f"[ERROR] Unknown ETF: {args.etf}")
+            sys.exit(1)
+        etfs = [target_etf]
+
+    print("=" * 80)
+    print(f"DAY-MODEL WALK-FORWARD OOS SIMULATOR")
+    print(f"OOS Period : {LOCKBOX_DATE} onwards")
+    print(f"Thresholds : Long={args.long_thr}%, Short={args.short_thr}%")
+    print(f"Stops      : Type={args.stop_type}, Val={args.stop_val}")
+    print(f"Cost       : {args.cost_bps} bps")
+    print("=" * 80)
+
+    all_trades = {}
+    combined_df_list = []
+
+    for etf in etfs:
+        try:
+            # 1. Predictions
+            long_scores, short_scores = load_predictions(etf)
+            
+            # 2. Expanding Percentile Ranks (walk-forward, look-ahead free)
+            long_rank = expanding_pct_rank(long_scores, min_periods=args.min_periods)
+            short_rank = expanding_pct_rank(short_scores, min_periods=args.min_periods)
+            
+            # Align indices
+            common_idx = long_rank.index.intersection(short_rank.index)
+            long_rank = long_rank.loc[common_idx]
+            short_rank = short_rank.loc[common_idx]
+            
+            # Generate signals
+            long_fires = long_rank >= (args.long_thr / 100.0)
+            short_fires = short_rank >= (args.short_thr / 100.0)
+            
+            long_margin = long_rank / max(args.long_thr / 100.0, 1e-12)
+            short_margin = short_rank / max(args.short_thr / 100.0, 1e-12)
+            both_fire = long_fires & short_fires
+            
+            direction = pd.Series(0, index=common_idx, dtype=int)
+            direction[long_fires & ~both_fire] = 1
+            direction[short_fires & ~both_fire] = -1
+            # Conflict resolution: higher margin wins
+            direction[both_fire & (long_margin >= short_margin)] = 1
+            direction[both_fire & (long_margin < short_margin)] = -1
+            
+            signals = pd.DataFrame({
+                "direction": direction,
+                "long_rank": long_rank,
+                "short_rank": short_rank
+            })
+            
+            # Filter strictly for OOS period
+            signals_oos = signals[signals.index >= pd.Timestamp(LOCKBOX_DATE)]
+            
+            # 3. Simulate execution on ETF 5m
+            trades = simulate_etf_trades(
+                etf, signals_oos, args.stop_type, args.stop_val, args.cost_bps
+            )
+            
+            if not trades.empty:
+                all_trades[etf] = trades
+                # Save details for combined portfolio
+                # Add etf column
+                t_df = trades[["net_ret"]].copy()
+                t_df.columns = [f"{etf}_net"]
+                combined_df_list.append(t_df)
+                
+                # Print single ETF summary
+                metrics = summarize_trades(trades, etf)
+                print(f"[{etf}] OOS Summary:")
+                print(f"  Trades  : {metrics['n_trades']} (Long: {metrics['n_long']}, Short: {metrics['n_short']})")
+                print(f"  Win Rate: {metrics['win_rate']:.1%} | Avg Net Return: {metrics['mean_net_ret']*1e4:.1f} bps")
+                print(f"  P&L     : {metrics['total_net_ret']*1e4:+.0f} bps | Sharpe: {metrics['sharpe']:.2f} | MaxDD: {metrics['max_dd']*1e4:.0f} bps")
+                if args.stop_type:
+                    print(f"  Stopped : {metrics['n_stopped']} times ({metrics['n_stopped'] / metrics['n_trades']:.1%})")
+                
+                # Yearly OOS breakdown
+                print("  Yearly Breakdown:")
+                for year, g in trades.groupby(trades.index.year):
+                    y_metrics = summarize_trades(g, etf)
+                    print(f"    {year}: n={y_metrics['n_trades']:>3}, wr={y_metrics['win_rate']:.1%}, pnl={y_metrics['total_net_ret']*1e4:+.0f}bps, sharpe={y_metrics['sharpe']:.2f}")
+                print("-" * 50)
+            else:
+                print(f"[{etf}] No OOS trades triggered.")
+                print("-" * 50)
+                
+        except Exception as e:
+            print(f"[ERROR] Failed simulating {etf}: {e}")
+            import traceback
+            traceback.print_exc()
+
+    # 4. Combined Portfolio Simulation (Equal capital distribution on active trades)
+    if len(combined_df_list) > 1:
+        # Merge all returns side by side
+        merged = pd.concat(combined_df_list, axis=1).fillna(0.0)
+        # Average return for days when there is at least one trade
+        # Capital is equally split among all ETFs traded on that day
+        # To compute this correctly: daily portfolio return is mean of daily returns across all 5 ETFs.
+        # (If an ETF is not trading, its return is 0 on that day).
+        portfolio_rets = merged.mean(axis=1)
+        
+        # Build a synthetic trade frame to use summarize_trades helper
+        port_trades = pd.DataFrame({
+            "direction": np.ones(len(portfolio_rets)),  # dummy direction
+            "exit_type": ["target"] * len(portfolio_rets),
+            "net_ret": portfolio_rets.values
+        }, index=portfolio_rets.index)
+        
+        metrics = summarize_trades(port_trades, "Portfolio")
+        
+        # Calculate active days count
+        active_days = (merged != 0).any(axis=1).sum()
+        
+        print("\n" + "=" * 80)
+        print("COMBINED EQUAL-WEIGHT PORTFOLIO SUMMARY (OOS ONLY)")
+        print("=" * 80)
+        print(f"  Active Days     : {active_days} days")
+        print(f"  Avg Net Return  : {metrics['mean_net_ret']*1e4:.1f} bps")
+        print(f"  Cumulative P&L  : {metrics['total_net_ret']*1e4:+.0f} bps")
+        print(f"  Annual Sharpe   : {metrics['sharpe']:.2f}")
+        print(f"  Max Drawdown    : {metrics['max_dd']*1e4:.0f} bps")
+        
+        print("  Yearly Breakdown:")
+        for year, g in port_trades.groupby(port_trades.index.year):
+            y_metrics = summarize_trades(g, "Portfolio")
+            print(f"    {year}: n_days={len(g)}, pnl={y_metrics['total_net_ret']*1e4:+.0f}bps, sharpe={y_metrics['sharpe']:.2f}")
+        print("=" * 80)
+
+        # Plot cumulative performance
+        plt.figure(figsize=(10, 6))
+        for col in merged.columns:
+            plt.plot(np.cumsum(merged[col]) * 100, label=col.replace("_net", ""), alpha=0.5)
+        plt.plot(np.cumsum(portfolio_rets) * 100, label="COMBINED PORTFOLIO", color="black", linewidth=2.5)
+        plt.title(f"Out-of-Sample Walk-Forward Cumulative Net P&L (from {LOCKBOX_DATE})")
+        plt.xlabel("Date")
+        plt.ylabel("Net Return (%)")
+        plt.grid(True, linestyle="--", alpha=0.6)
+        plt.legend()
+        
+        plot_path = PLOTS_DIR / "backtest_simulator_oos.png"
+        plt.savefig(plot_path, dpi=150, bbox_inches="tight")
+        print(f"Saved performance chart to: {plot_path}")
+        plt.close()
+
+
+if __name__ == "__main__":
+    main()
