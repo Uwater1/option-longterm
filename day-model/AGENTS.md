@@ -74,8 +74,7 @@ Tune the 5 feature-selection pipeline constants via Optuna instead of grid searc
 # Meta-Optuna: all 5 constants + model hyperparams in one TPE study (~200 trials, < 2 min)
 python day-model/sweep/meta_optuna.py -e all --side single --trials 200 --bootstrap-jobs 4
 
-# Single-constant grid sweep (legacy)
-python day-model/sweep/sweep_constants.py -e 300 --constant SCREEN_FDR --values 0.15,0.25,0.50,0.80
+# Single-constant grid sweep (diagnostic/sanity check only)
 python day-model/sweep/sweep_constants.py -e 300 --constant STABILITY_B --values 40,60,80,120
 ```
 
@@ -96,7 +95,7 @@ Output CSVs and Optuna logs go to `day-model/sweep/`. See `day-model/day-model_p
 * `len(FEATURES)`
 * `features_{etf}.parquet` mtime
 * Selection Train shape
-* `STABILITY_B`, `STABILITY_PI`, `SCREEN_FDR`
+* `STABILITY_B`, `STABILITY_PI`
 * `SELECTION_VAL_DATE`
 * `TARGET` column
 * Selected-feature indices
@@ -167,7 +166,7 @@ Upgraded model training stability, tail performance, overfit diagnostics, and de
      - CSS cluster force-top5 (when < 3 clusters pass pi) → removed. Pure pi threshold.
      - Bagging top-3 (when no features > 50% inclusion) → removed. Pure > 50% bagging.
    - Constants tuned via meta-Optuna (`day-model/sweep/meta_optuna.py`): 5 pipeline constants + model hyperparams in single TPE study.
-   - **Tuned constants**: `STABILITY_B=50`, `STABILITY_PI=0.75`, `STABILITY_Q=18`, `SCREEN_FDR=0.50`, `ACTIVE_FEATURE_ESS_DIVISOR=9.0`.
+   - **Tuned constants**: `STABILITY_B=100`, `STABILITY_PI=0.55`, `STABILITY_Q=35`, `ACTIVE_FEATURE_ESS_DIVISOR=8.0`. (SCREEN_FDR removed — BH screening bypassed at fdr=0.99.)
 
 6. **Monthly Blocked Validation Bootstrap Regularization**:
    - Perform $B=100$ monthly blocked bootstrap resamples on the inner validation set.

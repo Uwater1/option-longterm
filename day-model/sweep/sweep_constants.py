@@ -2,16 +2,20 @@
 Sweep feature-selection pipeline constants and measure their impact on
 lockbox IC, Tail IC, feature counts, and selection stability.
 
+NOTE: SCREEN_FDR has been removed — BH screening is bypassed (fdr=0.99)
+in train_model.py because univariate screening deletes joint predictive
+features.  Only the remaining 4 constants are sweepable here.
+
 Usage
 -----
     # Sweep one constant
-    python day-model/sweep_constants.py -e 300 --side single --constant SCREEN_FDR --values 0.15,0.25,0.50,0.80
+    python day-model/sweep/sweep_constants.py -e 300 --side single --constant STABILITY_B --values 40,60,80,120
 
     # STABILITY_B sweep (also measures Jaccard stability across 3 seeds)
-    python day-model/sweep_constants.py -e 300 --side single --constant STABILITY_B --values 40,60,80,120
+    python day-model/sweep/sweep_constants.py -e 300 --side single --constant STABILITY_B --values 40,60,80,120 --stability
 
     # Quick Optuna trials (default 20)
-    python day-model/sweep_constants.py -e 300 --side single --constant STABILITY_PI --values 0.60,0.75,0.80,0.90 --trials 30
+    python day-model/sweep/sweep_constants.py -e 300 --side single --constant STABILITY_PI --values 0.60,0.75,0.80,0.90 --trials 30
 
 Output: CSV file with one row per sweep value.
 """
@@ -56,7 +60,6 @@ SWEEPABLE = {
     "STABILITY_B":               int,
     "STABILITY_PI":              float,
     "STABILITY_Q":               int,
-    "SCREEN_FDR":                float,
     "ACTIVE_FEATURE_ESS_DIVISOR": float,
 }
 
@@ -64,7 +67,6 @@ DEFAULT_RANGES = {
     "STABILITY_B":               [40, 60, 80, 120],
     "STABILITY_PI":              [0.60, 0.70, 0.75, 0.80, 0.85, 0.90],
     "STABILITY_Q":               [15, 25, 35, 50, 70],
-    "SCREEN_FDR":                [0.15, 0.25, 0.35, 0.50, 0.65, 0.80],
     "ACTIVE_FEATURE_ESS_DIVISOR": [4.0, 6.0, 8.0, 10.0, 12.0, 16.0],
 }
 

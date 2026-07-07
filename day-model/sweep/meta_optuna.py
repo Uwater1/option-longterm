@@ -1,15 +1,19 @@
 """
-Meta-Optuna: Treat the 6 feature-selection pipeline constants as Optuna
+Meta-Optuna: Treat the 5 feature-selection pipeline constants as Optuna
 hyperparameters and let TPE intelligently explore the combined space.
 
-Instead of a grid sweep (6 x 4-6 values = 1000+ full pipeline runs),
-this runs ONE Optuna study (~100 trials) over all 6 pipeline constants
+Instead of a grid sweep (5 x 4-6 values = 1000+ full pipeline runs),
+this runs ONE Optuna study (~200 trials) over all 5 pipeline constants
 + model hyperparameters simultaneously.
+
+NOTE: SCREEN_FDR has been removed — BH screening is bypassed (fdr=0.99)
+in train_model.py.  The remaining 5 tunable constants are:
+STABILITY_B, STABILITY_PI, STABILITY_Q, ESS_DIVISOR, and CSS_CORR_THRESHOLD.
 
 Usage
 -----
-    python day-model/meta_optuna.py -e 300 --side single --trials 100
-    python day-model/meta_optuna.py -e 300 --side long --trials 100 --jobs 4
+    python day-model/sweep/meta_optuna.py -e all --trials 200 --jobs 5
+    python day-model/sweep/meta_optuna.py -e 300 --side long --trials 200 --jobs 4
 
 Output: day-model/sweep/meta_{etf}_{side}_results.csv + best config printout.
 """
@@ -127,12 +131,13 @@ def load_and_split(etf_name: str):
 
 _selection_cache = {}
 
-def run_selection_cached(X_st, y_st, screen_fdr,
+def run_selection_cached(X_st, y_st,
                          stability_b, stability_pi, stability_q,
                          etf_name, bootstrap_jobs=1):
-    """Run screen → CSS → VIF. Results cached in memory by constants tuple."""
+    """Run screen → CSS → VIF. Results cached in memory by constants tuple.
+    SCREEN_FDR is fixed at 0.99 (bypass) — not a tunable constant."""
     vif_threshold = 5.0 if etf_name == "50ETF" else 10.0
-    cache_key = (etf_name, X_st.shape, round(screen_fdr, 4),
+    cache_key = (etf_name, X_st.shape,
                  stability_b, round(stability_pi, 2), stability_q, vif_threshold)
 
     if cache_key in _selection_cache:
@@ -143,8 +148,8 @@ def run_selection_cached(X_st, y_st, screen_fdr,
     tm.STABILITY_Q = stability_q
 
     try:
-        # Step 1: Screening
-        screen_mask, p_vals, rhos = tm.run_screening(X_st, y_st, fdr_level=screen_fdr)
+        # Step 1: Screening (bypassed — fdr=0.99 lets all features through)
+        screen_mask, p_vals, rhos = tm.run_screening(X_st, y_st, fdr_level=0.99)
         n_screened = int(screen_mask.sum())
 
         if n_screened < 3:
@@ -317,8 +322,7 @@ def make_objective(data, side, bootstrap_jobs):
     etf_name = data["etf_name"]
 
     def objective(trial):
-        # ── Pipeline constants (round-3 widened ranges) ──
-        screen_fdr = trial.suggest_float("screen_fdr", 0.35, 0.75)
+        # ── Pipeline constants (SCREEN_FDR removed — bypassed at 0.99) ──
         stability_b = trial.suggest_int("stability_b", 15, 80)
         stability_pi = trial.suggest_float("stability_pi", 0.65, 0.95)
         stability_q = trial.suggest_int("stability_q", 5, 30)
@@ -339,7 +343,6 @@ def make_objective(data, side, bootstrap_jobs):
         # ── Feature selection (cached) ──
         sel = run_selection_cached(
             data["X_st"], data["y_st"],
-            screen_fdr,
             stability_b, stability_pi, stability_q,
             etf_name, bootstrap_jobs=bootstrap_jobs,
         )
@@ -377,17 +380,6 @@ def make_objective(data, side, bootstrap_jobs):
 # ─────────────────────────────────────────────────────────────────────────────
 # Main
 # ─────────────────────────────────────────────────────────────────────────────
-
-def main():
-    ap = argparse.ArgumentParser(description="Meta-Optuna: pipeline constants as hyperparameters.")
-    ap.add_argument("-e", "--etf", default="all",
-                    help="ETF: 300|50|500|588000|159915|all (default: all)")
-    ap.add_argument("--side", default="single", choices=["single", "long", "short"])
-    ap.add_argument("--trials", type=int, default=200, help="Number of Optuna trials per ETF")
-    ap.add_argument("--jobs", type=int, default=1, help="Parallel Optuna workers")
-    ap.add_argument("--bootstrap-jobs", type=int, default=1, help="CSS bootstrap workers")
-    ap.add_argument("--seed", type=int, default=42)
-    args = ap.parse_args()
 
 def run_etf_study(etf_name, side, n_trials, bootstrap_jobs, seed, jobs=1):
     """Run one meta-Optuna study for a single ETF."""
@@ -448,7 +440,7 @@ def run_etf_study(etf_name, side, n_trials, bootstrap_jobs, seed, jobs=1):
 
     # Pipeline constants
     print("\n  Pipeline Constants:")
-    for name in ["screen_fdr", "stability_b",
+    for name in ["stability_b",
                  "stability_pi", "stability_q", "ess_divisor"]:
         print(f"    {name:25s} = {best.params[name]}")
 
@@ -481,8 +473,8 @@ def run_etf_study(etf_name, side, n_trials, bootstrap_jobs, seed, jobs=1):
     print("COMPARISON: Best vs Current Defaults")
     print(f"{'='*70}")
     defaults = {
-        "screen_fdr": 0.55, "stability_b": 40,
-        "stability_pi": 0.80, "stability_q": 16, "ess_divisor": 8.0,
+        "stability_b": 100,
+        "stability_pi": 0.55, "stability_q": 35, "ess_divisor": 8.0,
     }
     print(f"  {'Constant':25s} {'Current':>10s} {'Best':>10s} {'Change':>10s}")
     print(f"  {'-'*55}")
@@ -539,9 +531,10 @@ def main():
     else:
         etfs = [tm.ETF_CLI_MAP.get(args.etf, args.etf)]
 
-    print(f"Meta-Optuna Round 2: {len(etfs)} ETFs x {args.trials} trials")
+    print(f"Meta-Optuna: {len(etfs)} ETFs x {args.trials} trials")
     print(f"Side: {args.side} | Bootstrap jobs: {args.bootstrap_jobs}")
-    print(f"Round-3 widened ranges: FDR[0.35-0.75] B[15-80] PI[0.65-0.95] Q[5-30] ESS_DIV[4-16]")
+    print(f"Ranges: B[15-80] PI[0.65-0.95] Q[5-30] ESS_DIV[4-16]")
+    print(f"(SCREEN_FDR removed — BH screening bypassed at 0.99)")
 
     all_best = {}
     for etf in etfs:
@@ -560,13 +553,13 @@ def main():
         print(f"\n{'='*70}")
         print("CROSS-ETF SUMMARY: Optimal Pipeline Constants")
         print(f"{'='*70}")
-        consts = ["screen_fdr", "stability_b",
+        consts = ["stability_b",
                   "stability_pi", "stability_q", "ess_divisor"]
         header = f"  {'Constant':25s}" + "".join(f" {e:>12s}" for e in all_best.keys())
         print(header)
         print(f"  {'-'*len(header)}")
-        defaults = {"screen_fdr": 0.55, "stability_b": 40,
-                    "stability_pi": 0.80, "stability_q": 16, "ess_divisor": 8.0}
+        defaults = {"stability_b": 100,
+                    "stability_pi": 0.55, "stability_q": 35, "ess_divisor": 8.0}
         for c in consts:
             vals = [all_best[e].get(c, float('nan')) for e in all_best.keys()]
             row = f"  {c:25s}" + "".join(f" {v:>12}" for v in vals)
