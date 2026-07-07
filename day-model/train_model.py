@@ -89,7 +89,6 @@ PILOT_SEED = 42
 STABILITY_B = 100      
 STABILITY_PI = 0.55   
 STABILITY_Q = 35      
-SCREEN_FDR = 0.99   # Not used anymore  
 ACTIVE_FEATURE_ESS_DIVISOR = 8.0  # Kish Effective Sample Size (ESS) divisor to set maximum active features (cap = ESS / divisor) to regularize complexity
 CSS_CORR_THRESHOLD = 0.80         # Correlation threshold for cluster merging in CSS (|r| >= threshold)
 
@@ -363,7 +362,7 @@ def benjamini_hochberg(p_values: np.ndarray, fdr_level: float = 0.20) -> np.ndar
     return p_values <= cutoff
 
 
-def run_screening(X_working: np.ndarray, y_working: np.ndarray, fdr_level: float = SCREEN_FDR):
+def run_screening(X_working: np.ndarray, y_working: np.ndarray, fdr_level: float = 0.99):
     # Step 1: Cheap screening (vectorized Spearman).
     # NOTE: Bypassed by default. Univariate screening is not working because dropping features with 
     # low marginal correlation deletes key joint predictive features, causing feature starvation and model collapse.
@@ -1196,7 +1195,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     timings["data_loading"] = time.perf_counter() - t_start
 
     # Loosen FDR for 588000ETF to prevent feature starvation
-    fdr_level = 0.25 if etf_name == "588000ETF" else SCREEN_FDR
+    fdr_level = 0.25 if etf_name == "588000ETF" else 0.99
 
     # Dynamic VIF thresholding: tighter (5.0) for 50ETF to kill severe collinearity, 10.0 default for others
     vif_threshold = 5.0 if etf_name == "50ETF" else 10.0
@@ -1282,7 +1281,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # ── Feature Screening (Step 1) Diagnostics ──
     p_vals = sel["p_vals"]
     rhos = sel["rhos"]
-    bh_mask = benjamini_hochberg(p_vals, fdr_level=SCREEN_FDR)
+    bh_mask = benjamini_hochberg(p_vals, fdr_level=0.99)
     bh_pass_count = bh_mask.sum()
 
     print("\n  [DIAGNOSTICS] Feature Screening:")
