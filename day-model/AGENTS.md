@@ -74,7 +74,8 @@ Tune the 5 feature-selection pipeline constants via Optuna instead of grid searc
 # Meta-Optuna: all 5 constants + model hyperparams in one TPE study (~200 trials, < 2 min)
 python day-model/sweep/meta_optuna.py -e all --side single --trials 200 --bootstrap-jobs 4
 
-# Single-constant grid sweep (diagnostic/sanity check only)
+# Single-constant grid sweep (legacy)
+python day-model/sweep/sweep_constants.py -e 300 --constant SCREEN_FDR --values 0.15,0.25,0.50,0.80
 python day-model/sweep/sweep_constants.py -e 300 --constant STABILITY_B --values 40,60,80,120
 ```
 
@@ -95,7 +96,7 @@ Output CSVs and Optuna logs go to `day-model/sweep/`. See `day-model/day-model_p
 * `len(FEATURES)`
 * `features_{etf}.parquet` mtime
 * Selection Train shape
-* `STABILITY_B`, `STABILITY_PI`
+* `STABILITY_B`, `STABILITY_PI`, `SCREEN_FDR`
 * `SELECTION_VAL_DATE`
 * `TARGET` column
 * Selected-feature indices
@@ -127,7 +128,7 @@ Remove-Item day-model\data\cache_*.joblib
 8. **Objective Function**: Maximize weighted sum of normalized validation metrics + ESS soft penalty under 20%.
 9. **Signed Constraints & TPESampler**: Hard constraints (Overall IC > 0, Hit Rate $\ge 60\%$, Monotonicity > 0.25, Spread > 0, Active features $\le ESS / 9$, Gini concentration $\le 0.85$ soft limit). Violation prunes trial.
 10. **One-Shot Evaluation & Plots (Step 5)**: Refit on working set using best parameters. Save final model and scaler. Evaluate OOS lockbox via `generate_report.py` (side-aware Tail IC). Plot 15 diagnostic panels. Run block bootstrap (B=1000, block size 10) for 95% CIs.
-11. **L2 Regularization**: Mandatory 10% L2 regularization (`skglm_huber_l1` uses `l1_ratio = 0.9`, `skglm_mcp` uses `mu = 0.1 * alpha`) to stabilize design matrix condition number.
+11. **Unified L1/L2 Regularization Manifold**: Unified `GeneralizedLinearEstimator` using Huber datafit and `MCP_plus_L2(alpha*rho, gamma, alpha*(1-rho))` penalty. Regularization is continuously tuned via total budget (`unified_alpha`) and sparse-vs-ridge mix (`unified_rho`).
 12. **Deflation & Overfit Diagnostics**: Compute running Deflated Objective. Compute PBO and Performance Degradation using CSCV.
 13. **Model Quality**: Calculate condition numbers, ESS, and Gini coefficient.
 14. **Plateau Parameter Selection**: Select trial residing in the most stable hyperparameter plateau (radius $r=0.25$) using deflated objective.
@@ -153,12 +154,12 @@ Upgraded model training stability, tail performance, overfit diagnostics, and de
      - `side_m3 >= 50%` (side-specific Hit Rate >= 50%)
    - Prevents side-specific fold-level sign flips while keeping overfit guardrails intact.
 
-4. **Decoupled Ridge Fallback & Live Conditioning Constraint**:
-   - Removed static pre-decision `force_ridge` based on raw X condition number. Sampler is free to explore sparse solvers (`skglm_mcp` / `skglm_huber_l1`) and Ridge.
+4. **Decoupled Ridge Fallback, Unified Manifold & Live Conditioning**:
+   - Removed legacy categorical models and static pre-decision `force_ridge`. The optimizer operates on a continuous unified manifold (`MCP_plus_L2` penalty) spanning Ridge ($\rho \to 0$) to aggressive non-convex MCP ($\rho \to 1$, small $\gamma$).
    - Live per-trial regularized condition number check: rejects/prunes trial if regularized Gram matrix condition number (`reg_kappa`) exceeds `10000.0`.
    - Added SVD-based condition number check post-VIF (`run_cond_pruning`) to iteratively drop the feature with the largest loading on the smallest singular vector until raw cond < 100.0, catching multi-feature near-collinearity.
    - Dynamic VIF thresholding: `5.0` for highly ill-conditioned `50ETF`, default `10.0` for other ETFs.
-   - Raised `ridge_alpha` search upper bound to `10000.0`.
+   - Added graduated soft penalty on the condition number `cond_penalty = -0.1 * max(0, log(reg_kappa) - log(1000.0))` to guide TPE sampler toward well-conditioned parameter spaces before hitting the hard prune cliff.
 
 5. **No-Fallback Pipeline (July 2026)**:
    - Removed all safety-net fallbacks from the feature-selection pipeline:
@@ -166,7 +167,7 @@ Upgraded model training stability, tail performance, overfit diagnostics, and de
      - CSS cluster force-top5 (when < 3 clusters pass pi) → removed. Pure pi threshold.
      - Bagging top-3 (when no features > 50% inclusion) → removed. Pure > 50% bagging.
    - Constants tuned via meta-Optuna (`day-model/sweep/meta_optuna.py`): 5 pipeline constants + model hyperparams in single TPE study.
-   - **Tuned constants**: `STABILITY_B=100`, `STABILITY_PI=0.55`, `STABILITY_Q=35`, `ACTIVE_FEATURE_ESS_DIVISOR=8.0`. (SCREEN_FDR removed — BH screening bypassed at fdr=0.99.)
+   - **Tuned constants**: reference day-model/train_model.py
 
 6. **Monthly Blocked Validation Bootstrap Regularization**:
    - Perform $B=100$ monthly blocked bootstrap resamples on the inner validation set.

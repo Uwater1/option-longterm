@@ -55,9 +55,12 @@ def main():
     for symbol, cfg in INDICES.items():
         name = cfg["name"]
         print(f"=== Process {name} ({symbol}) ===")
-        inst_info = rq.instruments(symbol)
-        listed_date = pd.Timestamp(inst_info.listed_date)
-        start_date = max(pd.Timestamp("2015-01-05"), listed_date)
+        if symbol == "000688.XSHG":
+            start_date = pd.Timestamp("2019-12-31")
+        else:
+            inst_info = rq.instruments(symbol)
+            listed_date = pd.Timestamp(inst_info.listed_date)
+            start_date = max(pd.Timestamp("2015-01-05"), listed_date)
         
         # 1. Download 1d data
         path_1d = os.path.join(DATA_DIR, cfg["file_1d"])

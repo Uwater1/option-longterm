@@ -51,7 +51,7 @@ from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.spatial.distance import squareform
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import Lasso, ElasticNet, HuberRegressor, enet_path
+from sklearn.linear_model import enet_path
 import optuna
 from optuna.storages import JournalStorage
 from optuna.storages.journal import JournalFileBackend
@@ -61,7 +61,7 @@ from joblib import Parallel, delayed
 # skglm imports
 from skglm import GeneralizedLinearEstimator
 from skglm.datafits import Huber as SkglmHuber
-from skglm.penalties import L1 as SkglmL1, MCPenalty
+# skglm imports
 from skglm.solvers import AndersonCD
 
 warnings.filterwarnings("ignore")
@@ -203,32 +203,17 @@ from penalties import MCP_plus_L2
 
 def _build_model(model_type: str, params: dict):
     solver = AndersonCD(max_epochs=2000, tol=1e-3)
-    if model_type == "skglm_huber_l1":
-        # Use ElasticNet (L1 + L2) with l1_ratio = 0.9 for L2 regularization
-        from skglm.penalties import L1_plus_L2
-        return GeneralizedLinearEstimator(
-            datafit=SkglmHuber(delta=params.get("skglm_huber_delta", 1.35)),
-            penalty=L1_plus_L2(alpha=params["skglm_huber_l1_alpha"], l1_ratio=0.9),
-            solver=solver,
-        )
-    elif model_type == "skglm_mcp":
-        # Use custom MCP_plus_L2 penalty with mu = 0.1 * alpha for L2 regularization
-        return GeneralizedLinearEstimator(
-            datafit=SkglmHuber(delta=params.get("skglm_mcp_delta", 1.35)),
-            penalty=MCP_plus_L2(alpha=params["skglm_mcp_alpha"],
-                               gamma=params.get("skglm_mcp_gamma", 3.0),
-                               mu=0.1 * params["skglm_mcp_alpha"]),
-            solver=solver,
-        )
-    elif model_type == "lasso":
-        return Lasso(alpha=params.get("lasso_alpha", 0.01), random_state=42, max_iter=2000)
-    elif model_type == "elasticnet":
-        return ElasticNet(alpha=params.get("en_alpha", 0.01), l1_ratio=params.get("en_l1_ratio", 0.5), random_state=42, max_iter=2000)
-    elif model_type == "ridge":
-        from sklearn.linear_model import Ridge
-        return Ridge(alpha=params.get("ridge_alpha", 1.0), random_state=42, max_iter=2000)
-    else:
-        raise ValueError(f"Unknown model_type: {model_type}")
+    if model_type != "unified":
+        raise ValueError(f"Unknown model_type: {model_type}, expected 'unified'")
+    alpha = params["unified_alpha"]
+    rho = params["unified_rho"]
+    gamma = params["unified_gamma"]
+    delta = params["huber_delta"]
+    return GeneralizedLinearEstimator(
+        datafit=SkglmHuber(delta=delta),
+        penalty=MCP_plus_L2(alpha=alpha * rho, gamma=gamma, mu=alpha * (1.0 - rho)),
+        solver=solver,
+    )
 
 
 # ============================================================
@@ -936,39 +921,31 @@ def run_quarterly_rolling_refit_test(df: pd.DataFrame, bagged_selected_idx: np.n
 
 def extract_normalized_params(trial):
     params = trial.params
-    model_type = params.get("model_type")
-    
     vec = []
     # k_weight range [0.0, 1.5]
     vec.append(params.get("k_weight", 0.0) / 1.5)
     
-    if model_type == "skglm_huber_l1":
-        # alpha log-scaled range [1e-5, 10.0]
-        alpha = params.get("skglm_huber_l1_alpha", 1e-5)
-        log_alpha = np.log(max(1e-6, alpha))
-        norm_log_alpha = (log_alpha - np.log(1e-5)) / (np.log(10.0) - np.log(1e-5))
-        vec.append(norm_log_alpha)
-        
-        # delta range [0.5, 5.0]
-        delta = params.get("skglm_huber_delta", 0.5)
-        vec.append((delta - 0.5) / 4.5)
-        
-    elif model_type == "skglm_mcp":
-        # alpha log-scaled range [1e-5, 10.0]
-        alpha = params.get("skglm_mcp_alpha", 1e-5)
-        log_alpha = np.log(max(1e-6, alpha))
-        norm_log_alpha = (log_alpha - np.log(1e-5)) / (np.log(10.0) - np.log(1e-5))
-        vec.append(norm_log_alpha)
-        
-        # gamma range [3.0, 10.0]
-        gamma = params.get("skglm_mcp_gamma", 3.0)
-        vec.append((gamma - 3.0) / 7.0)
-        
-        # delta range [0.5, 5.0]
-        delta = params.get("skglm_mcp_delta", 0.5)
-        vec.append((delta - 0.5) / 4.5)
-        
-    return np.array(vec), model_type
+    # unified_alpha log-scaled range [1e-5, 10.0]
+    alpha = params.get("unified_alpha", 1e-5)
+    log_alpha = np.log(max(1e-6, alpha))
+    norm_log_alpha = (log_alpha - np.log(1e-5)) / (np.log(10.0) - np.log(1e-5))
+    vec.append(norm_log_alpha)
+    
+    # unified_rho range [0.0, 1.0]
+    rho = params.get("unified_rho", 0.0)
+    vec.append(rho)
+    
+    # unified_gamma log-scaled range [1.5, 1e4]
+    gamma = params.get("unified_gamma", 1.5)
+    log_gamma = np.log(max(1.0, gamma))
+    norm_log_gamma = (log_gamma - np.log(1.5)) / (np.log(1e4) - np.log(1.5))
+    vec.append(norm_log_gamma)
+    
+    # huber_delta range [0.5, 5.0]
+    delta = params.get("huber_delta", 0.5)
+    vec.append((delta - 0.5) / 4.5)
+    
+    return np.array(vec), "unified"
 
 
 def find_plateau_trial(study, r=0.25, min_neighbors=8, min_valid_neighbors=6):
@@ -1460,21 +1437,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         k_weight = trial_params["k_weight"]
 
         # Build specific parameters dict
-        params = {}
-        if model_type == "skglm_huber_l1":
-            params["skglm_huber_l1_alpha"] = trial_params["skglm_huber_l1_alpha"]
-            params["skglm_huber_delta"] = trial_params["skglm_huber_delta"]
-        elif model_type == "skglm_mcp":
-            params["skglm_mcp_alpha"] = trial_params["skglm_mcp_alpha"]
-            params["skglm_mcp_gamma"] = trial_params["skglm_mcp_gamma"]
-            params["skglm_mcp_delta"] = trial_params["skglm_mcp_delta"]
-        elif model_type == "lasso":
-            params["lasso_alpha"] = trial_params["lasso_alpha"]
-        elif model_type == "elasticnet":
-            params["en_alpha"] = trial_params["en_alpha"]
-            params["en_l1_ratio"] = trial_params["en_l1_ratio"]
-        elif model_type == "ridge":
-            params["ridge_alpha"] = trial_params["ridge_alpha"]
+        params = {
+            "unified_alpha": trial_params["unified_alpha"],
+            "unified_rho": trial_params["unified_rho"],
+            "unified_gamma": trial_params["unified_gamma"],
+            "huber_delta": trial_params["huber_delta"],
+        }
 
         # LOYO CV predictions
         oof_preds, cv_is_ics, cv_oos_ics = run_loyo_cv(loyo_folds, model_type, params, k_weight,
@@ -1500,14 +1468,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             s_min_sq = float(s_vars.min() ** 2)
             
             N_samples = X_weighted_temp.shape[0]
-            if model_type == "ridge":
-                reg_coef = float(params.get("ridge_alpha", 1.0))
-            elif model_type == "skglm_huber_l1":
-                reg_coef = float(N_samples * 0.1 * params.get("skglm_huber_l1_alpha", 1e-5))
-            elif model_type == "skglm_mcp":
-                reg_coef = float(N_samples * 0.1 * params.get("skglm_mcp_alpha", 1e-5))
-            else:
-                reg_coef = 0.0
+            mu = float(params["unified_alpha"] * (1.0 - params["unified_rho"]))
+            reg_coef = float(N_samples * mu)
                 
             s_sq_max = s_max_sq + reg_coef
             s_sq_min = s_min_sq + reg_coef
@@ -1571,12 +1533,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # the side tag is prepended to the cache key ONLY when side != "single".
     # Selection and LOYO caches remain on "v10" (side-independent).
     pilot_key = [
-        "v13", etf_name, len(FEATURES), int(parquet_mtime),
+        "v14_unified", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         tuple(VAL_BLOCKS), TARGET, PILOT_N_TRIALS, PILOT_SEED
     ]
     if side != "single":
-        pilot_key = ["v13_side", side] + pilot_key
+        pilot_key = ["v14_unified_side", side] + pilot_key
     pilot_cache_path = CACHE_DIR / f"cache_pilot_{etf_name}_{_cache_key(pilot_key)}.joblib"
 
     def _compute_pilot():
@@ -1593,19 +1555,20 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         )
 
         def pilot_objective(trial):
-            model_type = trial.suggest_categorical("model_type", ["skglm_huber_l1", "skglm_mcp", "ridge"])
             k_weight = trial.suggest_float("k_weight", 0.0, 1.5)
+            unified_alpha = trial.suggest_float("unified_alpha", 1e-5, 10.0, log=True)
+            unified_rho = trial.suggest_float("unified_rho", 0.0, 1.0)
+            unified_gamma = trial.suggest_float("unified_gamma", 1.5, 1e4, log=True)
+            huber_delta = trial.suggest_float("huber_delta", 0.5, 5.0)
 
-            trial_params = {"model_type": model_type, "k_weight": k_weight}
-            if model_type == "skglm_huber_l1":
-                trial_params["skglm_huber_l1_alpha"] = trial.suggest_float("skglm_huber_l1_alpha", 1e-5, 10.0, log=True)
-                trial_params["skglm_huber_delta"] = trial.suggest_float("skglm_huber_delta", 0.5, 5.0)
-            elif model_type == "skglm_mcp":
-                trial_params["skglm_mcp_alpha"] = trial.suggest_float("skglm_mcp_alpha", 1e-5, 10.0, log=True)
-                trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 3.0, 10.0)
-                trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
-            elif model_type == "ridge":
-                trial_params["ridge_alpha"] = trial.suggest_float("ridge_alpha", 1e-3, 100.0, log=True)
+            trial_params = {
+                "model_type": "unified",
+                "k_weight": k_weight,
+                "unified_alpha": unified_alpha,
+                "unified_rho": unified_rho,
+                "unified_gamma": unified_gamma,
+                "huber_delta": huber_delta,
+            }
 
             try:
                 res = evaluate_params(trial_params)
@@ -1712,19 +1675,20 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     best_raw_metrics = None
 
     def main_objective(trial):
-        model_type = trial.suggest_categorical("model_type", ["skglm_huber_l1", "skglm_mcp", "ridge"])
         k_weight = trial.suggest_float("k_weight", 0.0, 1.5)
+        unified_alpha = trial.suggest_float("unified_alpha", 1e-5, 10.0, log=True)
+        unified_rho = trial.suggest_float("unified_rho", 0.0, 1.0)
+        unified_gamma = trial.suggest_float("unified_gamma", 1.5, 1e4, log=True)
+        huber_delta = trial.suggest_float("huber_delta", 0.5, 5.0)
 
-        trial_params = {"model_type": model_type, "k_weight": k_weight}
-        if model_type == "skglm_huber_l1":
-            trial_params["skglm_huber_l1_alpha"] = trial.suggest_float("skglm_huber_l1_alpha", 1e-5, 10.0, log=True)
-            trial_params["skglm_huber_delta"] = trial.suggest_float("skglm_huber_delta", 0.5, 5.0)
-        elif model_type == "skglm_mcp":
-            trial_params["skglm_mcp_alpha"] = trial.suggest_float("skglm_mcp_alpha", 1e-5, 10.0, log=True)
-            trial_params["skglm_mcp_gamma"] = trial.suggest_float("skglm_mcp_gamma", 3.0, 10.0)
-            trial_params["skglm_mcp_delta"] = trial.suggest_float("skglm_mcp_delta", 0.5, 5.0)
-        elif model_type == "ridge":
-            trial_params["ridge_alpha"] = trial.suggest_float("ridge_alpha", 1e-3, 100.0, log=True)
+        trial_params = {
+            "model_type": "unified",
+            "k_weight": k_weight,
+            "unified_alpha": unified_alpha,
+            "unified_rho": unified_rho,
+            "unified_gamma": unified_gamma,
+            "huber_delta": huber_delta,
+        }
 
         try:
             res = evaluate_params(trial_params)
@@ -1769,8 +1733,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
             # Hard Constraints / Kill Switches (on CV folds to ensure training stability):
             # Refactored to signed margins for TPESampler constraints_func
-            if model_type == "ridge":
-                # Ridge is non-sparse, bypass active feature floor/cap constraints
+            if trial_params["unified_rho"] < 0.05:
+                # Ridge-like is non-sparse, bypass active feature floor/cap constraints
                 constraints = [
                     0.0 - m4,
                     0.0 - m2,  # Two-sided Yearly Tail IC Mean > 0
@@ -1849,12 +1813,18 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             #   single -> [0.40, 0.40, 0.15, 0.05]
             #   long/short -> [0.45, 0.45, 0.10, 0.00] (V4 dropped per user spec)
             _w = SIDE_CONFIG.get(side, SIDE_CONFIG["single"])["weights"]
+            # Soft condition number penalty
+            cond_penalty = 0.0
+            SAFE_KAPPA = 1000.0
+            if reg_kappa > SAFE_KAPPA:
+                cond_penalty = -0.1 * max(0.0, np.log(reg_kappa) - np.log(SAFE_KAPPA))
+
             objective_val = (
                 _w[0] * norm_val_metrics[0] +  # Val Overall IC (V1)
                 _w[1] * norm_val_metrics[1] +  # Val Tail IC  (V2, side-aware)
                 _w[2] * norm_val_metrics[2] +  # Val Monotonicity (V3)
                 _w[3] * norm_val_metrics[3]    # Val Top-Bottom Spread (V4, 0 for long/short)
-            ) + ess_penalty + gini_penalty
+            ) + ess_penalty + gini_penalty + cond_penalty
 
             trial.set_user_attr("raw_metrics", raw_metrics)
             trial.set_user_attr("val_metrics", val_metrics)
@@ -2025,7 +1995,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             best_trial = None
 
     if best_trial is not None:
-        best_params = best_trial.params
+        best_params = dict(best_trial.params)
         best_raw_m = best_trial.user_attrs.get("raw_metrics")
         best_val_m = best_trial.user_attrs.get("val_metrics")
     else:
@@ -2046,7 +2016,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         if valid_trials:
             valid_trials.sort(key=lambda t: t.user_attrs.get("deflated_objective", t.value) if t.value is not None else -1e10, reverse=True)
             best_trial = valid_trials[0]
-            best_params = best_trial.params
+            best_params = dict(best_trial.params)
             best_raw_m = best_trial.user_attrs.get("raw_metrics")
             best_val_m = best_trial.user_attrs.get("val_metrics")
         else:
@@ -2059,11 +2029,14 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             )
             if pilot_valid_sorted:
                 best_rec = pilot_valid_sorted[0]
-                best_params = best_rec["params"]
+                best_params = dict(best_rec["params"])
                 best_raw_m = best_rec["raw_metrics"]
                 best_val_m = best_rec["val_metrics"]
             else:
                 raise RuntimeError("Both main and pilot studies failed to produce any valid trial results.")
+
+    if best_params is not None:
+        best_params["model_type"] = "unified"
 
     if best_val_m is None:
         best_val_m = [np.nan, np.nan, np.nan, np.nan]
@@ -2120,16 +2093,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     model_type = best_params["model_type"]
     k_weight = best_params["k_weight"]
     
-    params = {}
-    if model_type == "skglm_huber_l1":
-        params["skglm_huber_l1_alpha"] = best_params["skglm_huber_l1_alpha"]
-        params["skglm_huber_delta"] = best_params["skglm_huber_delta"]
-    elif model_type == "skglm_mcp":
-        params["skglm_mcp_alpha"] = best_params["skglm_mcp_alpha"]
-        params["skglm_mcp_gamma"] = best_params["skglm_mcp_gamma"]
-        params["skglm_mcp_delta"] = best_params["skglm_mcp_delta"]
-    elif model_type == "ridge":
-        params["ridge_alpha"] = best_params["ridge_alpha"]
+    params = {
+        "unified_alpha": best_params["unified_alpha"],
+        "unified_rho": best_params["unified_rho"],
+        "unified_gamma": best_params["unified_gamma"],
+        "huber_delta": best_params["huber_delta"],
+    }
 
     # Fit model on selection train set using best params to evaluate outer validation set generalization
     w_best_tr = compute_sample_weights(y_sel_train, k_weight).astype(np.float32)
@@ -2250,15 +2219,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     n_samples_working = X_working_final_bagged.shape[0]
 
     # L2 regularized condition number computation
-    l2_lambda = 0.0
-    if model_type == "skglm_huber_l1":
-        l2_lambda = best_params["skglm_huber_l1_alpha"] * 0.1
-    elif model_type == "skglm_mcp":
-        l2_lambda = best_params["skglm_mcp_alpha"] * 0.1
-    elif model_type == "elasticnet":
-        l2_lambda = best_params["en_alpha"] * (1.0 - best_params["en_l1_ratio"])
-    elif model_type == "ridge":
-        l2_lambda = best_params["ridge_alpha"] / n_samples_working
+    l2_lambda = float(best_params["unified_alpha"] * (1.0 - best_params["unified_rho"]))
     X_scaled_tmp = (X_working_final_bagged - X_working_final_bagged.mean(axis=0)) / (X_working_final_bagged.std(axis=0) + 1e-10)
     _, s, _ = np.linalg.svd(X_scaled_tmp, full_matrices=False)
     s_min = s.min()

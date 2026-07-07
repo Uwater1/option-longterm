@@ -76,8 +76,12 @@ For coefficient fits, use sample weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned 
 
 **Step 3 — Optuna over hyperparameters only, evaluated on selection validation blocks.**
 Chronological splits partition the working set into a `selection train` block (before `2024-03-01` excluding the validation blocks and their embargos) and held-out `selection validation` blocks (tuned on the 4 inner validation blocks, evaluated one-shot on the 2 outer validation blocks).
-Combinatorial Purged Cross-Validation (CPCV) splits (6 groups, 2 test groups, yielding 15 folds) are constructed strictly within the `selection train` subset, applying a 10-day embargo at test boundaries. Optuna tunes model type selection (`skglm_huber_l1` vs `skglm_mcp`), their respective regularization parameters (alphas, gamma, delta), and the loss weight exponent $k$.
-Both model families enforce a mandatory $10\%$ L2 Ridge regularization component (`skglm_huber_l1` uses `L1_plus_L2` with `l1_ratio = 0.9` and `skglm_mcp` uses custom `MCP_plus_L2` with `mu = 0.1 * alpha` from `penalties.py`) to guarantee minimum eigenvalues and compress condition numbers.
+Combinatorial Purged Cross-Validation (CPCV) splits (6 groups, 2 test groups, yielding 15 folds) are constructed strictly within the `selection train` subset, applying a 10-day embargo at test boundaries. Optuna tunes a single unified model space (`GeneralizedLinearEstimator` with Huber datafit and `MCP_plus_L2` penalty) over continuous parameters: total regularization budget (`unified_alpha`), sparse-vs-ridge penalty ratio (`unified_rho`), MCP threshold parameter (`unified_gamma`), Huber delta (`huber_delta`), and the loss weight exponent $k$.
+The penalty is parameterized as `MCP_plus_L2(alpha=alpha * rho, gamma=gamma, mu=alpha * (1 - rho))`, creating a continuous manifold spanning Ridge ($\rho \to 0$), ElasticNet/Lasso-like ($\rho \to 1$, large $\gamma$), and non-convex MCP ($\rho \to 1$, small $\gamma$).
+
+To smoothly guide the optimizer, we apply a soft collinearity penalty directly to the objective:
+$$\text{cond\_penalty} = -0.1 \times \max\left(0, \ln(\kappa) - \ln(1000.0)\right)$$
+which starts penalizing when regularized condition number exceeds $1000.0$ and applies gradient pressure before reaching the hard prune threshold of $10000.0$.
 
 ### Step 3.1 — Define Metric Weights & Optimization Objective
 
