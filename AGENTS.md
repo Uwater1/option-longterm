@@ -137,7 +137,7 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
   - Tightening univariate screening (BH-FDR = 0.15, loosened to 0.25 for 588000ETF to prevent feature starvation).
   - Nesting feature selection and CPCV folds strictly inside a chronological selection train split (excluding the validation blocks and a 10-day embargo).
   - Splitting the 6 validation blocks into 4 **Inner Validation** blocks (Optuna tuned) and 2 **Outer Validation** blocks (held-out holdout sanity check).
-  - Restricting concavity parameter `gamma` bounds for `skglm_mcp` to `[3.0, 10.0]` to guarantee non-convex sparse selection and prevent near-ridge regime.
+  - Tuning parameter `gamma` bounds for `MCP_plus_L2` in range `[1.5, 10000.0]` to allow smooth transition from aggressive non-convex thresholding to convex L1 shapes.
   - Selecting winning trial using running **Deflated Objective** (Lopez de Prado overfit adjustment) and robust parameter plateau search (requiring at least 8 total neighbors and 6 valid neighbors, gated dynamically at 15% and 10% of completed type counts to prevent isolated trials from scoring as plateaus; falls back to raw best trial if criteria not met).
   - Parallel Optuna worker samplers initialized with unique seeds (`PILOT_SEED + i` for pilot, `PILOT_SEED + 1 + i` for main study) to eliminate parallel race duplicate trials.
 
@@ -237,3 +237,8 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 - Pilot cache key is side-scoped via hash: `"v10"` for `single` (preserves legacy cache byte-identical), `"v11_side", side` prefix for long/short.
 - `generate_report.py` emits ONE 15-panel diagnostics figure per ETF per side: `diagnostics_{etf}_{side}.png`. Lockbox Tail IC is side-aware.
 - Run: `python3 day-model/train_model.py -e all --trials 100` (default trains all 5 ETFs and all 3 models/sides each).
+
+## STAR 50 Index Proxy Fallback (July 2026)
+- Modified index downloader to fetch `000688.XSHG` daily price history starting from its base date `2019-12-31`.
+- Added fallback proxy logic to `build_features.py` to use index 5m data when ETF 5m data is missing.
+- Expands the `588000ETF` dataset from 1294 to 1371 samples and starts training history on `2020-10-23` (after 60 days warmup) instead of `2021-02-09`.

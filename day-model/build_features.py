@@ -1177,8 +1177,9 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
     for date, day_idx_df in df_idx_5m.groupby("date", sort=True):
         date_ts = pd.Timestamp(date)
         if date not in etf_5m_by_date:
-            continue
-        day_etf_df = etf_5m_by_date[date]
+            day_etf_df = day_idx_df
+        else:
+            day_etf_df = etf_5m_by_date[date]
         
         prev_close = prev_close_map.get(date_ts, np.nan)
         
