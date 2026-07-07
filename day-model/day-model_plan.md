@@ -12,6 +12,21 @@ Plan to reformulate and optimize the Optuna objective function for `day-model` b
 * **Underlying**: Log return from 10:00 to 14:35 across all 5 ETFs.
 * **Simplification**: Unified exit and entry timings across all assets, replacing complex, legacy per-ETF customized bars.
 
+### 1.1 Unified Model Training Manifold
+
+To prevent search space fragmentation and the "hard fall to Ridge" cliff, the day-model replaces disjoint categorical options (`skglm_huber_l1`, `skglm_mcp`, `ridge`) with a single continuous manifold estimator:
+* **Estimator**: `GeneralizedLinearEstimator` (composition of datafit, penalty, and solver).
+* **Datafit**: Huber loss (`SkglmHuber(delta)`) for y-outlier robustness.
+* **Penalty**: `MCP_plus_L2(alpha, gamma, mu)` with L1 and L2 components parameterized continuously:
+  * $\text{alpha} = \alpha_{\text{total}} \times \rho$ (L1 sparsity weight)
+  * $\text{mu} = \alpha_{\text{total}} \times (1 - \rho)$ (L2 ridge regularization weight)
+  * $\text{gamma} = \gamma$ (MCP threshold parameter)
+* **Manifold knobs**:
+  * `unified_alpha`: Overall regularization budget ($10^{-5}$ to $10.0$).
+  * `unified_rho`: Sparse-vs-ridge mix ($0.0$ to $1.0$). $\rho = 0.0$ collapses to pure Ridge; $\rho \to 1.0$, large $\gamma$ behaves like L1/ElasticNet; $\rho \to 1.0$, small $\gamma$ enables aggressive non-convex MCP selection.
+  * `unified_gamma`: Concavity parameter ($1.5$ to $10000.0$).
+  * `huber_delta`: Huber robustness parameter ($0.5$ to $5.0$).
+
 ---
 
 ## 2. Relevant Research
@@ -39,6 +54,7 @@ Plan to reformulate and optimize the Optuna objective function for `day-model` b
 3. **BH-FDR at the univariate screening stage is a dimensionality reducer, not a final answer.** It gets you from 230 → maybe 40–70 candidates cheaply, using the full n. It should never be your only selection step because it ignores joint/collinear structure (two correlated features can both pass, and MCP later has to figure out which one actually matters).
 4. **Group/Cluster-level stability selection solves the vote-splitting of collinear proxies where plain stability selection fails.** Under high correlation, plain stability selection dilutes voting probabilities across proxies, leading to either zero selections or random picks. Grouping features into correlation clusters first ($|r| \ge 0.75$), voting at the cluster level, and then selecting the most stable representative is the correct geometry.
 5. **Triple-dipping risk:** BH-screening + stability selection + Optuna tuning + tail-focus, all run on the same 2200 rows, will silently leak information into your "final" model unless you enforce strict sample separation between stages. This is the single most likely way your holdout ends up not meaning anything.
+6. **Continuous model training manifolds outperform discrete categorical selections.** Suggesting model type as a categorical parameter (e.g. Ridge vs. MCP) in Optuna breaks search space continuity and gradients. Parameterizing a single Huber estimator with the continuous L1/L2 formulation of `MCP_plus_L2` spans all configurations smoothly, allowing Optuna to optimize hyperparameters efficiently.
 
 ---
 
