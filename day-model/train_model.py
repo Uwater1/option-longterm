@@ -1270,7 +1270,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # Loosen FDR for 588000ETF to prevent feature starvation
     fdr_level = 0.25 if etf_name == "588000ETF" else 0.99
 
-    vif_threshold = VIF_THRESHOLD
+    vif_threshold = 5.0 if etf_name in ["50ETF", "159915ETF"] else VIF_THRESHOLD
 
     # ── Cache key parts ───────────────────────────────────────────────
     # Auto-invalidate when: feature parquet regen (mtime), FEATURES list
@@ -1529,6 +1529,14 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     X_sel_val_inner_scaled_base = _to_f32(scaler_init.transform(X_sel_val_inner_final))
     X_sel_val_outer_scaled_base = _to_f32(scaler_init.transform(X_sel_val_outer_final))
 
+    # Calculate baseline condition number of unweighted design matrix
+    if X_sel_train_scaled_base.shape[1] > 1:
+        s_base = np.linalg.svd(X_sel_train_scaled_base, compute_uv=False)
+        raw_base_cond = float(s_base.max() / s_base.min()) if s_base.min() > 1e-10 else 1.0
+    else:
+        raw_base_cond = 1.0
+    print(f"  [DIAGNOSTICS] Selection Train Baseline Condition Number: {raw_base_cond:.4f}")
+
     # Define Optuna objective helper
     pilot_metrics = []
 
@@ -1574,8 +1582,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             s_sq_max = s_max_sq + reg_coef
             s_sq_min = s_min_sq + reg_coef
             reg_kappa = float(np.sqrt(s_sq_max / s_sq_min)) if s_sq_min > 1e-10 else float("inf")
+            raw_X_cond = float(s_vars.max() / s_vars.min()) if s_vars.min() > 1e-10 else float("inf")
         else:
             reg_kappa = 1.0
+            raw_X_cond = 1.0
 
         # Compute Kish ESS
         sum_w = w_temp.sum()
@@ -1624,7 +1634,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
         val_metrics = [val_ic, val_tail_ic_adj, val_mono, val_spread]
 
-        return raw_metrics, val_metrics, model_temp, scaler_init, cv_is_ics, cv_oos_ics, side_y_tail_ics, reg_kappa
+        return raw_metrics, val_metrics, model_temp, scaler_init, cv_is_ics, cv_oos_ics, side_y_tail_ics, reg_kappa, raw_X_cond
 
     # ── Pilot calibration cache ───────────────────────────────────────
     # Pilot val_metrics (V2 Tail IC) are side-aware for `long`/`short`,
@@ -1633,12 +1643,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # the side tag is prepended to the cache key ONLY when side != "single".
     # Selection and LOYO caches remain on "v10" (side-independent).
     pilot_key = [
-        "v14_unified", etf_name, len(FEATURES), int(parquet_mtime),
+        "v16_unified", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         tuple(VAL_BLOCKS), TARGET, PILOT_N_TRIALS, PILOT_SEED
     ]
     if side != "single":
-        pilot_key = ["v14_unified_side", side] + pilot_key
+        pilot_key = ["v16_unified_side", side] + pilot_key
     pilot_cache_path = CACHE_DIR / f"cache_pilot_{etf_name}_{_cache_key(pilot_key)}.joblib"
 
     def _compute_pilot():
@@ -1657,7 +1667,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         def pilot_objective(trial):
             k_weight = trial.suggest_float("k_weight", 0.0, 1.5)
             unified_alpha = trial.suggest_float("unified_alpha", 1e-5, 10.0, log=True)
-            unified_rho = trial.suggest_float("unified_rho", 0.0, 1.0)
+            max_rho = 1.0
+            if raw_base_cond > 15.0:
+                max_rho = float(np.clip(1.0 - 0.005 * (raw_base_cond - 15.0), 0.5, 0.95))
+            unified_rho = trial.suggest_float("unified_rho", 0.0, max_rho)
             unified_gamma = trial.suggest_float("unified_gamma", 1.5, 1e4, log=True)
             huber_delta = trial.suggest_float("huber_delta", 0.5, 5.0)
 
@@ -1674,8 +1687,11 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 res = evaluate_params(trial_params)
                 raw_metrics, val_metrics = res[0], res[1]
                 reg_kappa = res[7]
-                if reg_kappa > 10000.0:
-                    raise optuna.TrialPruned(f"Regularized condition number {reg_kappa:.2f} > 10000.0")
+                raw_X_cond = res[8]
+                SAFE_KAPPA = 40.0 * raw_X_cond
+                HARD_KAPPA = 10.0 * SAFE_KAPPA
+                if reg_kappa > HARD_KAPPA:
+                    raise optuna.TrialPruned(f"Regularized condition number {reg_kappa:.2f} > HARD_KAPPA ({HARD_KAPPA:.2f})")
                 trial.set_user_attr("raw_metrics", raw_metrics)
                 trial.set_user_attr("val_metrics", val_metrics)
                 trial.set_user_attr("params", trial_params)
@@ -1777,7 +1793,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     def main_objective(trial):
         k_weight = trial.suggest_float("k_weight", 0.0, 1.5)
         unified_alpha = trial.suggest_float("unified_alpha", 1e-5, 10.0, log=True)
-        unified_rho = trial.suggest_float("unified_rho", 0.0, 1.0)
+        max_rho = 1.0
+        if raw_base_cond > 15.0:
+            max_rho = float(np.clip(1.0 - 0.005 * (raw_base_cond - 15.0), 0.5, 0.95))
+        unified_rho = trial.suggest_float("unified_rho", 0.0, max_rho)
         unified_gamma = trial.suggest_float("unified_gamma", 1.5, 1e4, log=True)
         huber_delta = trial.suggest_float("huber_delta", 0.5, 5.0)
 
@@ -1795,6 +1814,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             raw_metrics, val_metrics, _model_obj, _scaler_obj, cv_is_ics, cv_oos_ics = res[0], res[1], res[2], res[3], res[4], res[5]
             side_y_tail_ics = res[6]
             reg_kappa = res[7]
+            raw_X_cond = res[8]
+            SAFE_KAPPA = 40.0 * raw_X_cond
+            HARD_KAPPA = 10.0 * SAFE_KAPPA
 
             # Extract metrics for kill switches (CV folds)
             m1, m2, m3, m4, m5, m6, m7, m8 = raw_metrics
@@ -1845,7 +1867,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                     0.0,
                     0.0 - side_m2 if side != "single" else 0.0,
                     0.50 - side_m3 if side != "single" else 0.0,
-                    reg_kappa - 10000.0
+                    reg_kappa - HARD_KAPPA
                 ]
             else:
                 constraints = [
@@ -1858,7 +1880,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                     float(min_active_features - active_k),
                     0.0 - side_m2 if side != "single" else 0.0,
                     0.50 - side_m3 if side != "single" else 0.0,
-                    reg_kappa - 10000.0
+                    reg_kappa - HARD_KAPPA
                 ]
 
             pruning_reasons = []
@@ -1882,7 +1904,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 if constraints[8] > 0:
                     pruning_reasons.append(f"Side-specific Hit Rate ({side_m3:.2%} < 50%)")
             if constraints[9] > 0:
-                pruning_reasons.append(f"Regularized condition number ({reg_kappa:.2f}) exceeds threshold (10000.0)")
+                pruning_reasons.append(f"Regularized condition number ({reg_kappa:.2f}) exceeds threshold ({HARD_KAPPA:.2f})")
 
             trial.set_user_attr("constraints", constraints)
             trial.set_user_attr("pruned_reasons", pruning_reasons)
@@ -1915,7 +1937,6 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             _w = SIDE_CONFIG.get(side, SIDE_CONFIG["single"])["weights"]
             # Soft condition number penalty
             cond_penalty = 0.0
-            SAFE_KAPPA = 1000.0
             if reg_kappa > SAFE_KAPPA:
                 cond_penalty = -0.1 * max(0.0, np.log(reg_kappa) - np.log(SAFE_KAPPA))
 
