@@ -31,30 +31,11 @@ python3 day-model/backtest_simulator.py --etf all
 Trains 8 quarterly rolling models (2024Q1-Q4 + 2025Q1-Q4) per ETF, each using a 6-year rolling window with relative validation blocks.
 
 ```bash
-# Train all 8 rolling quarters, all ETFs (default 6-year window)
-python3 day-model/train_rolling.py -e all
+# Train rolling models (supports -e, -q, -j, --trials, --window-years, --skip-existing)
+python3 day-model/train_rolling.py -e all -j 4 --skip-existing --trials 100 --window-years 6
 
-# Resume: skip already-trained models
-python3 day-model/train_rolling.py -e all --skip-existing
-
-# Train single quarter
-python3 day-model/train_rolling.py -e 300 -q 2024Q1
-
-# Custom window size
-python3 day-model/train_rolling.py -e all --window-years 4
-
-# Fewer trials for quick testing
-python3 day-model/train_rolling.py -e all --trials 50
-
-# Train 4 quarters in parallel (reduces per-model CPU)
-python3 day-model/train_rolling.py -e all -j 4
-```
-
-Alternatively, use `train_model.py` directly with rolling flags:
-```bash
-python3 day-model/train_model.py -e all --rolling --window-years 6    # All 8 quarters
-python3 day-model/train_model.py -e 300 --rolling-quarter 2024Q1       # Single quarter
-python3 day-model/train_model.py -e 300 --lockbox 2024-06-01           # Custom lockbox
+# Alternatively, train rolling directly via train_model.py
+python3 day-model/train_model.py -e all --rolling --window-years 6
 ```
 
 Generate comprehensive rolling strategy report (IC + P&L + Sharpe + warnings):
@@ -130,18 +111,8 @@ Speedups: fp32 arrays, vectorized Spearman screen, parallel stability bootstrap 
 
 ### Pipeline Constants Sweep (`day-model/sweep/`)
 
-Tune the 5 feature-selection pipeline constants via Optuna instead of grid search:
-
-```bash
-# Meta-Optuna: all 5 constants + model hyperparams in one TPE study (~200 trials, < 2 min)
-python day-model/sweep/meta_optuna.py -e all --side single --trials 200 --bootstrap-jobs 4
-
-# Single-constant grid sweep (legacy)
-python day-model/sweep/sweep_constants.py -e 300 --constant SCREEN_FDR --values 0.15,0.25,0.50,0.80
-python day-model/sweep/sweep_constants.py -e 300 --constant STABILITY_B --values 40,60,80,120
-```
-
-Output CSVs and Optuna logs go to `day-model/sweep/`. See `day-model/day-model_plan.md` Section 8 for decision rules.
+> [!NOTE]
+> The parameter sweep module (`day-model/sweep/`) is legacy and no longer used.
 
 ## Cache invalidation
 
@@ -149,9 +120,9 @@ Output CSVs and Optuna logs go to `day-model/sweep/`. See `day-model/day-model_p
 
 | File | Contents |
 |---|---|
-| `cache_select_{etf}_{hash}.joblib` | `screen_mask`, `p_vals`, `rhos`, `stability_selected_idx`, `stability_scores` (version `v10` key; side-independent) |
+| `cache_select_{etf}_{hash}.joblib` | `screen_mask`, `p_vals`, `rhos`, `stability_selected_idx`, `stability_scores` (version `v15_vif_cond` key; side-independent) |
 | `cache_loyo_{etf}_{hash}.joblib` | CPCV folds `(test_idx, X_tr_scaled, X_te_scaled, y_tr)` (version `v10` key; side-independent) |
-| `cache_pilot_{etf}_{hash}.joblib` | Pilot records `[{params, raw_metrics, val_metrics}]` (version `v11_side` key for long/short; side-scoped) |
+| `cache_pilot_{etf}_{hash}.joblib` | Pilot records `[{params, raw_metrics, val_metrics}]` (version `v14_unified` key for single, `v14_unified_side` key for long/short; side-scoped) |
 
 **Auto-invalidated** when these change:
 * ETF name
@@ -163,7 +134,7 @@ Output CSVs and Optuna logs go to `day-model/sweep/`. See `day-model/day-model_p
 * `TARGET` column
 * Selected-feature indices
 * `PILOT_N_TRIALS`, `PILOT_SEED`
-* `--side` (only for `long`/`short` via `"v11_side"`)
+* `--side` (only for `long`/`short` via `"v14_unified_side"`)
 
 **Manual clear required when**:
 * Editing `FEATURES` list in `build_features.py` without regenerating parquet.
@@ -183,7 +154,7 @@ Remove-Item day-model\data\cache_*.joblib
 1. **Lockbox Split (Step 0)**: Hold out days $\ge 2024-03-01$ (OOS data untouched during training).
 2. **Selection Validation Split (Step 0.5)**: 6 non-contiguous 3-month blocks (~370 days) for validation. 4 Inner blocks for Optuna tuning; 2 Outer blocks for generalization check. 10-day embargo at boundaries.
 3. **BH-FDR Screening (Step 1 - Bypassed)**: Bypassed by default. Univariate screening is not working because dropping features with low marginal linear correlation discards key joint predictive power, causing feature starvation and model collapse.
-4. **CSS + VIF Pruning (Step 1)**: Complete Linkage hierarchical clustering (threshold $t=0.25$, $|r| \ge 0.75$) on all candidate features. Subsampling ($B=50$) ElasticNet path votes aggregated at cluster level. Keep clusters selected in $\ge 75\%$ subsamples with max $Q=18$ active clusters. Pick representative with highest individual score. Apply iterative VIF pruning (VIF threshold 10.0) on representatives.
+4. **CSS + VIF + Condition Pruning (Step 2)**: Complete Linkage hierarchical clustering (threshold $t=0.20$, $|r| \ge 0.80$) on all candidate features. Subsampling ($B=200$) ElasticNet path votes aggregated at cluster level. Keep clusters selected in $\ge 55\%$ subsamples with max $Q=35$ active clusters. Pick representative with highest individual stability score, tie-breaking by absolute Spearman correlation. Apply iterative VIF pruning (VIF threshold 10.0, dynamically adjusted to 5.0 for 50ETF) and SVD-based condition number pruning post-VIF (iteratively drops the feature with the largest loading on the smallest singular vector until condition number < 100.0).
 5. **Loss Weighting (Step 2)**: Power weights $w(y_i) = |y_i|^k$. Scale inputs by $\sqrt{w}$.
 6. **CPCV with Embargo (Step 3)**: 6 groups, 2 test groups (15 folds), 10-day embargo at test boundaries. Run on selection train.
 7. **Pilot Normalization (Step 3.1)**: Run 50 pilot trials to compute median and MAD for validation z-scores.
@@ -216,18 +187,20 @@ Upgraded model training stability, tail performance, overfit diagnostics, and de
      - `side_m3 >= 50%` (side-specific Hit Rate >= 50%)
    - Prevents side-specific fold-level sign flips while keeping overfit guardrails intact.
 
-4. **Decoupled Ridge Fallback, Unified Manifold & Live Conditioning**:
+4. **Decoupled Ridge Fallback, Unified Manifold & Live Conditioning (July 2026)**:
    - Removed legacy categorical models and static pre-decision `force_ridge`. The optimizer operates on a continuous unified manifold (`MCP_plus_L2` penalty) spanning Ridge ($\rho \to 0$) to aggressive non-convex MCP ($\rho \to 1$, small $\gamma$).
-   - Live per-trial regularized condition number check: rejects/prunes trial if regularized Gram matrix condition number (`reg_kappa`) exceeds `10000.0`.
+   - Live per-trial regularized condition number check: rejects/prunes trial if regularized Gram matrix condition number (`reg_kappa`) exceeds `HARD_KAPPA` (defined as `10.0 * SAFE_KAPPA`).
    - Added SVD-based condition number check post-VIF (`run_cond_pruning`) to iteratively drop the feature with the largest loading on the smallest singular vector until raw cond < 100.0, catching multi-feature near-collinearity.
-   - Dynamic VIF thresholding: `5.0` for highly ill-conditioned `50ETF`, default `10.0` for other ETFs.
-   - Added graduated soft penalty on the condition number `cond_penalty = -0.1 * max(0, log(reg_kappa) - log(1000.0))` to guide TPE sampler toward well-conditioned parameter spaces before hitting the hard prune cliff.
+   - Dynamic VIF thresholding: tightened to `5.0` for highly ill-conditioned `50ETF` and `159915ETF`, default `10.0` for other ETFs.
+   - Added graduated soft penalty on the condition number `cond_penalty = -0.1 * max(0, log(reg_kappa) - log(SAFE_KAPPA))` to guide TPE sampler toward well-conditioned parameter spaces before hitting the hard prune cliff.
+   - **Relative Condition Number Guardrails**: Rather than one-size-fits-all values, thresholds are scaled to the trial's raw active condition number: `SAFE_KAPPA = 40.0 * raw_X_cond` and `HARD_KAPPA = 10.0 * SAFE_KAPPA`.
+   - **Dynamic Ridge Floor / rho Cap**: When baseline design matrix condition number (`raw_base_cond`) exceeds 15.0, `unified_rho` is capped at `max_rho = clip(1.0 - 0.005 * (raw_base_cond - 15.0), 0.5, 0.95)`, forcing a minimum amount of L2 ridge regularization to stabilize the ill-conditioned features.
 
 5. **No-Fallback Pipeline & Screening Fallback (July 2026)**:
    - Removed most legacy safety-net fallbacks from feature-selection pipeline:
      - CSS cluster force-top5 (when < 3 clusters pass pi) → removed. Pure pi threshold.
      - Bagging top-3 (when no features > 50% inclusion) → removed. Pure > 50% bagging.
-   - **Step 1 Screening MIN_FEATURE Fallback**: Added `MIN_FEATURE = 15`. If Step 1 cheap screening selects fewer than `MIN_FEATURE` features, select top `MIN_FEATURE` features with lowest p-values.
+   - **Step 2 Stability Selection MIN_FEATURE Fallback**: Added `MIN_FEATURE = 15`. If Step 2 Stability Selection selects fewer than `MIN_FEATURE` clusters, select top `MIN_FEATURE` clusters sorted by stability score and maximum absolute correlation.
    - Constants tuned via meta-Optuna (`day-model/sweep/meta_optuna.py`): 5 pipeline constants + model hyperparams in single TPE study.
    - **Tuned constants**: reference day-model/train_model.py
 

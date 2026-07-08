@@ -9,21 +9,21 @@ This report summarizes the performance and features of the remade `day-model` re
 
 | Tag | ETF | Side | Selected | Active | Model Type | Lockbox IC | Lockbox Tail IC | Tail IC Def |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | 300ETF | `single` | 17 | 17 | `unified` | +0.0776 | +0.1021 | single |
-| 300ETF_long | 300ETF | `long` | 17 | 17 | `unified` | +0.0802 | +0.0915 | long |
-| 300ETF_short | 300ETF | `short` | 17 | 17 | `unified` | +0.0805 | -0.0459 | short |
-| 500ETF | 500ETF | `single` | 11 | 10 | `unified` | +0.1073 | +0.0499 | single |
-| 500ETF_long | 500ETF | `long` | 15 | 15 | `unified` | +0.1056 | -0.0518 | long |
-| 500ETF_short | 500ETF | `short` | 15 | 14 | `unified` | +0.0994 | +0.1148 | short |
-| 588000ETF | 588000ETF | `single` | 27 | 27 | `unified` | -0.0017 | +0.0880 | single |
-| 588000ETF_long | 588000ETF | `long` | 27 | 25 | `unified` | +0.0060 | +0.2014 | long |
-| 588000ETF_short | 588000ETF | `short` | 27 | 27 | `unified` | +0.0251 | +0.0641 | short |
-| 159915ETF | 159915ETF | `single` | 20 | 18 | `unified` | +0.1529 | +0.1551 | single |
-| 159915ETF_long | 159915ETF | `long` | 22 | 22 | `unified` | +0.1377 | +0.0841 | long |
-| 159915ETF_short | 159915ETF | `short` | 22 | 22 | `unified` | +0.1381 | +0.1867 | short |
-| 50ETF | 50ETF | `single` | 17 | 17 | `unified` | +0.1009 | +0.2299 | single |
-| 50ETF_long | 50ETF | `long` | 17 | 14 | `unified` | +0.0958 | +0.1051 | long |
-| 50ETF_short | 50ETF | `short` | 17 | 17 | `unified` | +0.0859 | +0.0045 | short |
+| 300ETF | 300ETF | `single` | 17 | 17 | `unified` | +0.0799 | +0.1375 | single |
+| 300ETF_long | 300ETF | `long` | 17 | 17 | `unified` | +0.0776 | +0.0917 | long |
+| 300ETF_short | 300ETF | `short` | 17 | 17 | `unified` | +0.0787 | -0.0390 | short |
+| 500ETF | 500ETF | `single` | 15 | 15 | `unified` | +0.0980 | +0.0182 | single |
+| 500ETF_long | 500ETF | `long` | 14 | 13 | `unified` | +0.1092 | -0.0807 | long |
+| 500ETF_short | 500ETF | `short` | 15 | 15 | `unified` | +0.1025 | -0.0844 | short |
+| 588000ETF | 588000ETF | `single` | 27 | 26 | `unified` | -0.0062 | +0.0754 | single |
+| 588000ETF_long | 588000ETF | `long` | 27 | 26 | `unified` | +0.0096 | +0.2533 | long |
+| 588000ETF_short | 588000ETF | `short` | 20 | 16 | `unified` | +0.0759 | +0.0123 | short |
+| 159915ETF | 159915ETF | `single` | 7 | 6 | `unified` | +0.1048 | +0.0624 | single |
+| 159915ETF_long | 159915ETF | `long` | 22 | 22 | `unified` | +0.1254 | +0.1592 | long |
+| 159915ETF_short | 159915ETF | `short` | 22 | 22 | `unified` | +0.1420 | +0.1742 | short |
+| 50ETF | 50ETF | `single` | 17 | 17 | `unified` | +0.1000 | +0.2285 | single |
+| 50ETF_long | 50ETF | `long` | 17 | 17 | `unified` | +0.0975 | +0.0894 | long |
+| 50ETF_short | 50ETF | `short` | 17 | 17 | `unified` | +0.0781 | -0.0332 | short |
 
 ## Detailed Trial Metrics & Optimization Objectives
 
@@ -31,21 +31,21 @@ CV fold metrics M1..M6 are two-sided for all sides (per side-aware spec). V1..V4
 
 | Tag | Side | Yearly Tail IC IR | Yearly Tail IC Mean | Hit Rate | Decile Monotonicity | Top-Bottom Spread |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | `single` | 2.6552 | +0.3193 | 100.0% | 0.5927 | +71.6756% |
-| 300ETF_long | `long` | 2.5942 | +0.3191 | 100.0% | 0.6012 | +73.7093% |
-| 300ETF_short | `short` | 2.5210 | +0.3207 | 100.0% | 0.6012 | +73.6685% |
-| 500ETF | `single` | 1.3208 | +0.2058 | 90.0% | 0.4473 | +74.7890% |
-| 500ETF_long | `long` | 1.3519 | +0.1974 | 80.0% | 0.5382 | +82.3124% |
-| 500ETF_short | `short` | 1.6062 | +0.2148 | 90.0% | 0.4836 | +76.1321% |
-| 588000ETF | `single` | 0.5340 | +0.2103 | 60.0% | 0.3018 | +43.6028% |
-| 588000ETF_long | `long` | 1.2275 | +0.3334 | 80.0% | 0.4230 | +55.5672% |
-| 588000ETF_short | `short` | 2.8806 | +0.5817 | 100.0% | 0.6776 | +164.1674% |
-| 159915ETF | `single` | 1.7115 | +0.3033 | 90.0% | 0.5273 | +109.8874% |
-| 159915ETF_long | `long` | 1.4127 | +0.3126 | 90.0% | 0.5855 | +114.4998% |
-| 159915ETF_short | `short` | 0.7935 | +0.2638 | 90.0% | 0.5370 | +85.4289% |
-| 50ETF | `single` | 0.8065 | +0.1651 | 70.0% | 0.5115 | +55.0622% |
-| 50ETF_long | `long` | 0.6997 | +0.1512 | 60.0% | 0.4642 | +37.5311% |
-| 50ETF_short | `short` | 0.9624 | +0.2047 | 80.0% | 0.4642 | +46.6019% |
+| 300ETF | `single` | 2.7499 | +0.3234 | 100.0% | 0.6048 | +72.4521% |
+| 300ETF_long | `long` | 2.3172 | +0.3042 | 100.0% | 0.5818 | +80.8882% |
+| 300ETF_short | `short` | 2.7600 | +0.3206 | 100.0% | 0.6242 | +71.4275% |
+| 500ETF | `single` | 1.2114 | +0.1899 | 90.0% | 0.5115 | +69.7833% |
+| 500ETF_long | `long` | 1.2806 | +0.1956 | 90.0% | 0.4982 | +74.0346% |
+| 500ETF_short | `short` | 1.5159 | +0.2203 | 90.0% | 0.5200 | +80.9946% |
+| 588000ETF | `single` | 0.5351 | +0.1994 | 60.0% | 0.3212 | +46.1892% |
+| 588000ETF_long | `long` | 2.8867 | +0.4100 | 100.0% | 0.6315 | +114.5555% |
+| 588000ETF_short | `short` | 4.0232 | +0.4069 | 100.0% | 0.6776 | +99.9656% |
+| 159915ETF | `single` | 1.1013 | +0.2394 | 80.0% | 0.5188 | +80.7595% |
+| 159915ETF_long | `long` | 1.5177 | +0.2957 | 90.0% | 0.5588 | +108.4210% |
+| 159915ETF_short | `short` | 0.8978 | +0.2672 | 90.0% | 0.5588 | +96.5223% |
+| 50ETF | `single` | 0.8303 | +0.1712 | 70.0% | 0.5564 | +55.1903% |
+| 50ETF_long | `long` | 0.7391 | +0.1686 | 70.0% | 0.5236 | +57.8446% |
+| 50ETF_short | `short` | 0.8765 | +0.1877 | 80.0% | 0.4630 | +55.5873% |
 
 ## Model Quality & Generalization Diagnostics
 
@@ -53,61 +53,61 @@ CV fold metrics M1..M6 are two-sided for all sides (per side-aware spec). V1..V4
 
 | Tag | Side | Raw X Cond | Reg kappa | Collinear Pairs (>=0.85) | Gini | Tail ESS | Tail ESS % |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | `single` | 3.08 | 9.45 | 0 | 0.4888 | 611.5 | 28.2% |
-| 300ETF_long | `long` | 3.08 | 9.46 | 0 | 0.4918 | 650.5 | 30.0% |
-| 300ETF_short | `short` | 3.08 | 9.46 | 0 | 0.4771 | 712.4 | 32.9% |
-| 500ETF | `single` | 2.41 | 3.90 | 0 | 0.4032 | 1228.0 | 56.7% |
-| 500ETF_long | `long` | 3.52 | 2.81 | 0 | 0.3233 | 907.9 | 41.9% |
-| 500ETF_short | `short` | 3.52 | 11.12 | 0 | 0.3822 | 1115.3 | 51.5% |
-| 588000ETF | `single` | 3.85 | 14.80 | 0 | 0.3715 | 409.0 | 50.2% |
-| 588000ETF_long | `long` | 3.85 | 13.88 | 0 | 0.4246 | 344.4 | 42.3% |
-| 588000ETF_short | `short` | 3.85 | 13.03 | 0 | 0.3228 | 690.7 | 84.9% |
-| 159915ETF | `single` | 23.25 | 10.15 | 0 | 0.5019 | 931.5 | 43.0% |
-| 159915ETF_long | `long` | 26.40 | 7.00 | 0 | 0.3004 | 1098.8 | 50.7% |
-| 159915ETF_short | `short` | 26.40 | 697.06 [SEVERE] | 0 | 0.3254 | 1257.3 | 58.0% |
-| 50ETF | `single` | 3.13 | 9.82 | 0 | 0.3894 | 648.5 | 29.9% |
-| 50ETF_long | `long` | 3.13 | 8.35 | 0 | 0.5014 | 548.0 | 25.3% |
-| 50ETF_short | `short` | 3.13 | 5.16 | 0 | 0.3194 | 1929.9 | 89.1% |
+| 300ETF | `single` | 3.08 | 9.45 | 0 | 0.5234 | 513.8 | 23.7% |
+| 300ETF_long | `long` | 3.08 | 9.45 | 0 | 0.3164 | 1273.4 | 58.8% |
+| 300ETF_short | `short` | 3.08 | 9.46 | 0 | 0.5145 | 513.5 | 23.7% |
+| 500ETF | `single` | 3.52 | 6.49 | 0 | 0.2762 | 908.0 | 41.9% |
+| 500ETF_long | `long` | 3.52 | 3.07 | 0 | 0.3573 | 1289.2 | 59.5% |
+| 500ETF_short | `short` | 3.52 | 12.41 | 0 | 0.3627 | 1745.0 | 80.6% |
+| 588000ETF | `single` | 3.85 | 14.77 | 0 | 0.3967 | 311.0 | 38.2% |
+| 588000ETF_long | `long` | 3.85 | 13.78 | 0 | 0.3848 | 312.9 | 38.4% |
+| 588000ETF_short | `short` | 3.53 | 10.56 | 0 | 0.4616 | 552.0 | 67.8% |
+| 159915ETF | `single` | 1.30 | 1.69 | 0 | 0.4373 | 901.2 | 41.6% |
+| 159915ETF_long | `long` | 26.40 | 32.76 [MODERATE] | 0 | 0.3353 | 529.2 | 24.4% |
+| 159915ETF_short | `short` | 26.40 | 373.78 [SEVERE] | 0 | 0.3274 | 1846.0 | 85.2% |
+| 50ETF | `single` | 3.13 | 9.82 | 0 | 0.3753 | 694.1 | 32.0% |
+| 50ETF_long | `long` | 3.13 | 9.82 | 0 | 0.3442 | 813.5 | 37.6% |
+| 50ETF_short | `short` | 3.13 | 8.83 | 0 | 0.3174 | 2048.7 | 94.6% |
 
 ### Generalization Gap (CV vs Selection Val vs OOS)
 
 | Tag | Side | CV IC | Deflated CV IC | Sel Val IC | Deflated Val IC | OOS IC | IC Gen Gap | CV Mono | OOS Mono | Mono Gen Gap |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | `single` | +0.1709 | +0.0724 | +0.1408 | +0.0529 | +0.0776 | -0.0246 | +0.5927 | +0.9030 | -0.3103 |
-| 300ETF_long | `long` | +0.1708 | +0.1055 | +0.1438 | +0.0872 | +0.0802 | +0.0070 | +0.6012 | +0.8545 | -0.2533 |
-| 300ETF_short | `short` | +0.1717 | +0.0917 | +0.1426 | +0.0801 | +0.0805 | -0.0005 | +0.6012 | +0.7818 | -0.1806 |
-| 500ETF | `single` | +0.1319 | +0.0207 | +0.1907 | +0.0405 | +0.1073 | -0.0668 | +0.4473 | +0.6000 | -0.1527 |
-| 500ETF_long | `long` | +0.1482 | +0.0384 | +0.1941 | +0.0401 | +0.1056 | -0.0656 | +0.5382 | +0.7333 | -0.1952 |
-| 500ETF_short | `short` | +0.1241 | +0.0197 | +0.1585 | +0.0170 | +0.0994 | -0.0825 | +0.4836 | +0.7818 | -0.2982 |
-| 588000ETF | `single` | +0.1215 | -0.0421 | +0.0443 | -0.0991 | -0.0017 | -0.0974 | +0.3018 | +0.3455 | -0.0436 |
-| 588000ETF_long | `long` | +0.1700 | -0.0170 | -0.0231 | -0.1800 | +0.0060 | -0.1860 | +0.4230 | +0.4667 | -0.0436 |
-| 588000ETF_short | `short` | +0.2968 | +0.0890 | -0.0423 | -0.1524 | +0.0251 | -0.1775 | +0.6776 | +0.5879 | +0.0897 |
-| 159915ETF | `single` | +0.1702 | +0.0249 | +0.1882 | +0.0057 | +0.1529 | -0.1472 | +0.5273 | +0.8788 | -0.3515 |
-| 159915ETF_long | `long` | +0.1892 | +0.1058 | +0.1355 | +0.0463 | +0.1377 | -0.0914 | +0.5855 | +0.9030 | -0.3176 |
-| 159915ETF_short | `short` | +0.1717 | +0.0719 | +0.1351 | +0.0387 | +0.1381 | -0.0994 | +0.5370 | +0.7333 | -0.1964 |
-| 50ETF | `single` | +0.1057 | +0.0563 | +0.1360 | +0.0734 | +0.1009 | -0.0275 | +0.5115 | +0.7091 | -0.1976 |
-| 50ETF_long | `long` | +0.0908 | +0.0310 | +0.1437 | +0.0669 | +0.0958 | -0.0289 | +0.4642 | +0.9030 | -0.4388 |
-| 50ETF_short | `short` | +0.1059 | +0.0307 | +0.1230 | +0.0231 | +0.0859 | -0.0628 | +0.4642 | +0.6364 | -0.1721 |
+| 300ETF | `single` | +0.1698 | +0.0756 | +0.1446 | +0.0675 | +0.0799 | -0.0123 | +0.6048 | +0.9758 | -0.3709 |
+| 300ETF_long | `long` | +0.1689 | +0.0839 | +0.1316 | +0.0624 | +0.0776 | -0.0152 | +0.5818 | +0.5879 | -0.0061 |
+| 300ETF_short | `short` | +0.1700 | +0.1045 | +0.1435 | +0.0826 | +0.0787 | +0.0039 | +0.6242 | +0.9394 | -0.3152 |
+| 500ETF | `single` | +0.1316 | +0.0123 | +0.1688 | +0.0033 | +0.0980 | -0.0947 | +0.5115 | +0.6727 | -0.1612 |
+| 500ETF_long | `long` | +0.1400 | +0.0590 | +0.2009 | +0.0888 | +0.1092 | -0.0203 | +0.4982 | +0.7576 | -0.2594 |
+| 500ETF_short | `short` | +0.1273 | +0.0606 | +0.1463 | +0.0642 | +0.1025 | -0.0383 | +0.5200 | +0.6848 | -0.1648 |
+| 588000ETF | `single` | +0.1293 | -0.0293 | +0.0650 | -0.0885 | -0.0062 | -0.0823 | +0.3212 | +0.2970 | +0.0242 |
+| 588000ETF_long | `long` | +0.2767 | +0.0721 | -0.0430 | -0.1679 | +0.0096 | -0.1776 | +0.6315 | +0.3455 | +0.2861 [DEGRADED] |
+| 588000ETF_short | `short` | +0.2296 | -0.0205 | -0.0090 | -0.1287 | +0.0759 | -0.2045 | +0.6776 | +0.8788 | -0.2012 |
+| 159915ETF | `single` | +0.1474 | +0.0038 | +0.1969 | +0.0427 | +0.1048 | -0.0621 | +0.5188 | +0.8424 | -0.3236 |
+| 159915ETF_long | `long` | +0.1763 | +0.0739 | +0.1129 | +0.0155 | +0.1254 | -0.1098 | +0.5588 | +0.7697 | -0.2109 |
+| 159915ETF_short | `short` | +0.1766 | +0.0558 | +0.1389 | +0.0152 | +0.1420 | -0.1267 | +0.5588 | +0.7333 | -0.1745 |
+| 50ETF | `single` | +0.1052 | +0.0547 | +0.1334 | +0.0679 | +0.1000 | -0.0321 | +0.5564 | +0.7091 | -0.1527 |
+| 50ETF_long | `long` | +0.1038 | +0.0430 | +0.1294 | +0.0499 | +0.0975 | -0.0476 | +0.5236 | +0.6242 | -0.1006 |
+| 50ETF_short | `short` | +0.1120 | +0.0312 | +0.1192 | +0.0231 | +0.0781 | -0.0550 | +0.4630 | +0.5273 | -0.0642 |
 
 ### Overfitting Diagnostics (PBO & Lockbox Bootstrap CIs)
 
 | Tag | Side | PBO | Perf Deg | OOS IC 95% CI | CV IC Target | IC Sig? | OOS Mono 95% CI | CV Mono | Mono Sig? |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | `single` | 40.0% | -1.6284 | [+0.0022, +0.1654] | +0.0529 | **Noise** | [-0.0667, +0.8667] | +0.5927 | **Noise** |
-| 300ETF_long | `long` | 40.0% | -1.6212 | [+0.0055, +0.1672] | +0.0872 | **Noise** | [-0.0185, +0.8667] | +0.6012 | **Noise** |
-| 300ETF_short | `short` | 53.3% | -1.6275 | [+0.0060, +0.1679] | +0.0801 | **Noise** | [+0.0300, +0.8670] | +0.6012 | **Noise** |
-| 500ETF | `single` | 33.3% | -1.6644 | [+0.0206, +0.1916] | +0.0405 | **Noise** | [+0.1758, +0.8788] | +0.4473 | **Noise** |
-| 500ETF_long | `long` | 53.3% | -1.5789 | [+0.0092, +0.1938] | +0.0401 | **Noise** | [+0.0664, +0.8545] | +0.5382 | **Noise** |
-| 500ETF_short | `short` | 20.0% | -1.5871 | [+0.0141, +0.1888] | +0.0170 | **Noise** | [+0.1148, +0.8424] | +0.4836 | **Noise** |
-| 588000ETF | `single` | 20.0% | -2.5399 | [-0.0803, +0.0965] | -0.0991 | **Signal** | [-0.3458, +0.6727] | +0.3018 | **Noise** |
-| 588000ETF_long | `long` | 26.7% | -3.3557 | [-0.0704, +0.1026] | -0.1800 | **Signal** | [-0.3212, +0.6485] | +0.4230 | **Noise** |
-| 588000ETF_short | `short` | 40.0% | -3.3405 | [-0.0501, +0.1217] | -0.1524 | **Signal** | [-0.2003, +0.7333] | +0.6776 | **Noise** |
-| 159915ETF | `single` | 6.7% | -1.5113 | [+0.0563, +0.2316] | +0.0057 | **Signal** | [+0.2361, +0.9152] | +0.5273 | **Noise** |
-| 159915ETF_long | `long` | 6.7% | -1.5709 | [+0.0392, +0.2149] | +0.0463 | **Noise** | [+0.1876, +0.9030] | +0.5855 | **Noise** |
-| 159915ETF_short | `short` | 13.3% | -1.4003 | [+0.0364, +0.2137] | +0.0387 | **Noise** | [+0.1145, +0.8909] | +0.5370 | **Noise** |
-| 50ETF | `single` | 53.3% | -1.3690 | [+0.0229, +0.1931] | +0.0734 | **Noise** | [+0.0788, +0.8545] | +0.5115 | **Noise** |
-| 50ETF_long | `long` | 46.7% | -1.3871 | [+0.0217, +0.1854] | +0.0669 | **Noise** | [+0.1515, +0.8788] | +0.4642 | **Noise** |
-| 50ETF_short | `short` | 40.0% | -1.2818 | [+0.0121, +0.1739] | +0.0231 | **Noise** | [+0.0788, +0.8303] | +0.4642 | **Noise** |
+| 300ETF | `single` | 40.0% | -1.6212 | [+0.0041, +0.1677] | +0.0675 | **Noise** | [-0.0545, +0.8788] | +0.6048 | **Noise** |
+| 300ETF_long | `long` | 53.3% | -1.6220 | [-0.0018, +0.1719] | +0.0624 | **Noise** | [+0.0303, +0.8548] | +0.5818 | **Noise** |
+| 300ETF_short | `short` | 53.3% | -1.7001 | [+0.0027, +0.1659] | +0.0826 | **Noise** | [-0.0303, +0.8788] | +0.6242 | **Noise** |
+| 500ETF | `single` | 6.7% | -1.5758 | [+0.0096, +0.1840] | +0.0033 | **Signal** | [+0.0421, +0.8303] | +0.5115 | **Noise** |
+| 500ETF_long | `long` | 26.7% | -1.5955 | [+0.0181, +0.1968] | +0.0888 | **Noise** | [+0.1391, +0.8909] | +0.4982 | **Noise** |
+| 500ETF_short | `short` | 20.0% | -1.6481 | [+0.0140, +0.1882] | +0.0642 | **Noise** | [+0.0545, +0.8185] | +0.5200 | **Noise** |
+| 588000ETF | `single` | 20.0% | -2.6795 | [-0.0836, +0.0894] | -0.0885 | **Signal** | [-0.3458, +0.6367] | +0.3212 | **Noise** |
+| 588000ETF_long | `long` | 33.3% | -2.6603 | [-0.0664, +0.1066] | -0.1679 | **Signal** | [-0.2848, +0.6727] | +0.6315 | **Noise** |
+| 588000ETF_short | `short` | 46.7% | -2.1918 | [-0.0183, +0.1839] | -0.1287 | **Signal** | [+0.1027, +0.9152] | +0.6776 | **Noise** |
+| 159915ETF | `single` | 0.0% | -1.5954 | [+0.0108, +0.1973] | +0.0427 | **Noise** | [+0.1512, +0.8427] | +0.5188 | **Noise** |
+| 159915ETF_long | `long` | 6.7% | -1.6166 | [+0.0270, +0.2030] | +0.0155 | **Signal** | [-0.0427, +0.8303] | +0.5588 | **Noise** |
+| 159915ETF_short | `short` | 0.0% | -1.4200 | [+0.0413, +0.2166] | +0.0152 | **Signal** | [+0.1152, +0.8667] | +0.5588 | **Noise** |
+| 50ETF | `single` | 53.3% | -1.3297 | [+0.0227, +0.1910] | +0.0679 | **Noise** | [+0.1148, +0.8548] | +0.5564 | **Noise** |
+| 50ETF_long | `long` | 33.3% | -1.2900 | [+0.0217, +0.1871] | +0.0499 | **Noise** | [+0.1273, +0.8670] | +0.5236 | **Noise** |
+| 50ETF_short | `short` | 53.3% | -1.3022 | [+0.0026, +0.1683] | +0.0231 | **Noise** | [+0.0785, +0.7455] | +0.4630 | **Noise** |
 
 ### Feature Selection Metrics & Fallbacks
 
@@ -133,41 +133,41 @@ CV fold metrics M1..M6 are two-sided for all sides (per side-aware spec). V1..V4
 
 | Tag | Side | Total | Completed | Pruned/Failed | M4 | M3 | M5 | M6 | ESS | Floor | Gini |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | `single` | 100 | 85 | 15 | 0 | 7 | 8 | 1 | 0 | 15 | 0 |
-| 300ETF_long | `long` | 100 | 96 | 4 | 0 | 3 | 3 | 1 | 0 | 4 | 0 |
-| 300ETF_short | `short` | 100 | 79 | 21 | 0 | 5 | 5 | 1 | 0 | 7 | 0 |
-| 500ETF | `single` | 100 | 68 | 32 | 2 | 18 | 22 | 0 | 0 | 30 | 0 |
-| 500ETF_long | `long` | 100 | 67 | 33 | 2 | 18 | 19 | 0 | 0 | 22 | 0 |
-| 500ETF_short | `short` | 100 | 46 | 54 | 12 | 18 | 19 | 0 | 0 | 28 | 0 |
-| 588000ETF | `single` | 100 | 94 | 6 | 5 | 6 | 5 | 5 | 0 | 6 | 0 |
-| 588000ETF_long | `long` | 100 | 65 | 35 | 4 | 6 | 5 | 5 | 0 | 5 | 0 |
-| 588000ETF_short | `short` | 100 | 33 | 67 | 5 | 6 | 10 | 9 | 0 | 11 | 0 |
-| 159915ETF | `single` | 100 | 70 | 30 | 7 | 20 | 22 | 6 | 0 | 29 | 0 |
-| 159915ETF_long | `long` | 100 | 40 | 60 | 2 | 4 | 4 | 1 | 0 | 11 | 0 |
-| 159915ETF_short | `short` | 100 | 90 | 10 | 2 | 8 | 8 | 1 | 0 | 9 | 0 |
-| 50ETF | `single` | 100 | 95 | 5 | 1 | 5 | 5 | 1 | 0 | 5 | 0 |
-| 50ETF_long | `long` | 100 | 91 | 9 | 1 | 7 | 7 | 1 | 0 | 9 | 0 |
-| 50ETF_short | `short` | 100 | 26 | 74 | 1 | 13 | 15 | 1 | 0 | 21 | 0 |
+| 300ETF | `single` | 100 | 89 | 11 | 0 | 7 | 7 | 1 | 0 | 11 | 0 |
+| 300ETF_long | `long` | 100 | 91 | 9 | 0 | 5 | 6 | 1 | 0 | 8 | 0 |
+| 300ETF_short | `short` | 100 | 78 | 22 | 0 | 3 | 3 | 1 | 0 | 4 | 0 |
+| 500ETF | `single` | 100 | 66 | 34 | 18 | 24 | 25 | 0 | 0 | 34 | 0 |
+| 500ETF_long | `long` | 100 | 60 | 40 | 2 | 8 | 11 | 0 | 0 | 20 | 0 |
+| 500ETF_short | `short` | 100 | 77 | 23 | 2 | 7 | 7 | 0 | 0 | 9 | 0 |
+| 588000ETF | `single` | 100 | 89 | 11 | 4 | 4 | 11 | 4 | 0 | 6 | 0 |
+| 588000ETF_long | `long` | 100 | 45 | 55 | 7 | 8 | 8 | 8 | 0 | 10 | 0 |
+| 588000ETF_short | `short` | 100 | 14 | 86 | 11 | 12 | 12 | 13 | 0 | 15 | 0 |
+| 159915ETF | `single` | 100 | 66 | 34 | 15 | 21 | 21 | 14 | 0 | 34 | 0 |
+| 159915ETF_long | `long` | 100 | 29 | 71 | 1 | 9 | 9 | 0 | 0 | 11 | 0 |
+| 159915ETF_short | `short` | 100 | 84 | 16 | 6 | 13 | 13 | 1 | 0 | 14 | 0 |
+| 50ETF | `single` | 100 | 94 | 6 | 1 | 5 | 6 | 1 | 0 | 5 | 0 |
+| 50ETF_long | `long` | 100 | 90 | 10 | 1 | 8 | 8 | 1 | 0 | 10 | 0 |
+| 50ETF_short | `short` | 100 | 29 | 71 | 1 | 15 | 15 | 1 | 0 | 17 | 0 |
 
 ### Hyperparameter Plateau Selection
 
 | Tag | Side | Plateau Trial | Plateau Objective | Raw Best Trial | Raw Best Objective |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| 300ETF | `single` | 95 | +0.7841 | 74 | +1.0767 |
-| 300ETF_long | `long` | 78 | +1.1040 | 93 | +1.4933 |
-| 300ETF_short | `short` | 18 | +1.0059 | 18 | +1.0059 |
-| 500ETF | `single` | 65 | +2.4622 | 75 | +3.9219 |
-| 500ETF_long | `long` | 36 | +0.4776 | 29 | +1.3598 |
-| 500ETF_short | `short` | 43 | +0.3596 | 24 | +1.0399 |
-| 588000ETF | `single` | 99 | +1.0292 | 76 | +1.0684 |
-| 588000ETF_long | `long` | 81 | +0.6320 | 77 | +2.2732 |
-| 588000ETF_short | `short` | 55 | -0.0832 | 85 | +0.9106 |
-| 159915ETF | `single` | 27 | +0.5104 | 66 | +3.0129 |
-| 159915ETF_long | `long` | 78 | +0.7653 | 55 | +1.7134 |
-| 159915ETF_short | `short` | 61 | +1.5712 | 28 | +3.0605 |
-| 50ETF | `single` | 1 | +1.1719 | 92 | +1.1740 |
-| 50ETF_long | `long` | 58 | +1.3412 | 89 | +2.3968 |
-| 50ETF_short | `short` | 34 | -1.4862 | 64 | -0.9038 |
+| 300ETF | `single` | 64 | +1.4391 | 26 | +1.5432 |
+| 300ETF_long | `long` | 79 | +0.3050 | 39 | +0.7384 |
+| 300ETF_short | `short` | 74 | +4.9441 | 58 | +5.0596 |
+| 500ETF | `single` | 32 | +0.4324 | 66 | +2.9819 |
+| 500ETF_long | `long` | 76 | +1.2921 | 92 | +2.5817 |
+| 500ETF_short | `short` | 16 | +0.3652 | 71 | +0.3683 |
+| 588000ETF | `single` | 76 | +2.1934 | 85 | +2.3113 |
+| 588000ETF_long | `long` | 2 | -1.9523 | 26 | +1.6368 |
+| 588000ETF_short | `short` | 25 | +1.1865 | 25 | +1.1865 |
+| 159915ETF | `single` | 78 | +1.7553 | 36 | +1.9649 |
+| 159915ETF_long | `long` | 87 | +1.6233 | 87 | +1.6233 |
+| 159915ETF_short | `short` | 57 | +0.7208 | 89 | +1.5712 |
+| 50ETF | `single` | 90 | +0.6375 | 96 | +1.3266 |
+| 50ETF_long | `long` | 35 | +0.6030 | 88 | +1.2586 |
+| 50ETF_short | `short` | 0 | -2.2554 | 37 | -0.6255 |
 
 ## Per-Tag Diagnostics (15-Panel Figure per Side)
 
@@ -223,22 +223,6 @@ coefficients, OOS decile spread, all-data decile spread, side-tail return hist, 
 
 
 ### 500ETF (500ETF, side=`single`)
-- **Selected features**: 11
-- **Active features**: 10
-- **Active**: `margin_buy_repayment_spread`, `gap_pct`, `sma100_dist`, `yesterday_gap`, `bar_ret_0`, `max_up_ret`, `yesterday_afternoon_momentum`, `yesterday_lunch_gap`, `yesterday_early_trend`, `macd_hist`
-- **Stopped by Step 1 (FDR Screening)** (0 features):
-  None
-- **Stopped by Step 2 (Stability & VIF Pruning)** (202 features):
-  <details>
-  <summary>Show 202 features</summary>
-  
-  `first_30min_return`, `early_realized_vol`, `early_range`, `early_trend`, `early_momentum`, `first_bar_return`, `first_bar_volume`, `early_vwap_dev`, `early_kurtosis`, `bar_ret_1`, `bar_ret_2`, `bar_vol_0`, `bar_vol_4`, `bar_vol_5`, `bar_rng_0`, `bar_rng_2`, `bar_rng_3`, `bar_rng_5`, `bar_body_rng_0`, `bar_body_rng_1`, `bar_body_rng_2`, `bar_vwap_dev_0`, `bar_vwap_dev_1`, `bar_vwap_dev_2`, `bar_vwap_dev_3`, `num_up_bars`, `max_down_ret`, `cl_pos_in_range`, `body_to_range_ratio`, `total_path_length`, `volume_slope`, `spike_exhaustion_ratio`, `first_bar_sentiment`, `or_fill_ratio`, `close_vs_open_range`, `inside_bar_failure_bull`, `consecutive_higher_highs`, `early_bearish_engulfing_count`, `volume_surge_max`, `volume_concentration`, `volume_trend_intraday`, `volume_acceleration`, `volume_surge_direction`, `pullback_ratio`, `rally_ratio`, `range_expansion_ratio`, `pullback_depth_ratio`, `pullback_depth_max`, `rally_strength_max`, `vwap_slope_intraday`, `volume_weighted_price_position`, `net_volume_flow`, `early_body_momentum`, `late_bar_momentum`, `trend_strength_intraday`, `high_low_sequence_momentum`, `intraday_slope`, `intraday_autocorr`, `opening_momentum_score`, `opening_direction_stability`, `early_trend_hhi`, `session_high_proximity`, `session_low_proximity`, `close_above_open_count`, `open_to_current_return`, `upper_wick_dominance`, `rsi_opening`, `stoch_opening`, `momentum_strength_intraday`, `opening_auction_imbalance`, `intraday_close_position`, `limit_down_proximity_early`, `morning_trend_extrapolated`, `demark_setup_reversal_early`, `failed_breakout_reversal_early`, `early_wavetrend_cross`, `atr_expansion_flag_early`, `volatility_breakout_squeeze`, `early_bid_ask_spread_proxy`, `early_vwap_acceleration`, `early_order_flow_imbalance`, `rbreaker_sell_setup_proximity_early`, `rbreaker_buy_setup_proximity_early`, `skypark_gap_reversal_early`, `turtle_breakout_strength_early`, `sma20_dist`, `sma50_dist`, `atr14_norm`, `roc10`, `vol20`, `sma10_dist`, `sma200_dist`, `ema12_dist`, `rsi5`, `rsi21`, `roc5`, `roc20`, `roc60`, `cci14`, `willr14`, `stoch_k`, `stoch_d`, `mfi14`, `aroon_osc`, `vol5`, `vol10`, `vol60`, `vol_ratio_5_20`, `vol_ratio_10_60`, `bb_width`, `vol_pk20`, `vol_gk10`, `vol_gk20`, `volume_sma_ratio`, `margin_balance`, `buy_on_margin_value`, `margin_repayment`, `short_balance`, `short_balance_quantity`, `short_sell_quantity`, `short_repayment_quantity`, `total_balance`, `margin_net_buy`, `margin_short_ratio`, `capital_buy_volume`, `capital_buy_value`, `capital_sell_volume`, `capital_sell_value`, `capital_net_value`, `capital_net_ratio`, `northbound_buy`, `northbound_sell`, `northbound_net`, `iv`, `iv_vol_ratio`, `vix`, `vix_vol_ratio`, `vix_iv_spread`, `vix_iv_ratio`, `iv_diff_1d`, `vix_diff_1d`, `tech_value_rotation`, `yesterday_limit_up_touch`, `limit_up_proximity_day`, `limit_down_proximity_day`, `growth_momentum_ratio`, `high_beta_vol_ratio`, `vix_skew_proxy`, `vix_rolling_percentile_60d`, `iv_corridor_width`, `yesterday_vix_early_drift`, `vix_realized_spread`, `option_oi_growth`, `iv_envelope_deviation`, `margin_lever_ratio`, `capital_net_accel`, `northbound_volume_share`, `yesterday_northbound_net_ratio`, `short_sell_cover_spread`, `margin_extreme_rank_252d`, `capital_large_order_ratio`, `consecutive_inside_bars_3d`, `outside_bar_reversal_day`, `wavetrend_osc_day`, `keltner_squeeze_width`, `yesterday_wavetrend_osc`, `yesterday_stoch_rsi_cross`, `cvd_divergence_day`, `yesterday_illiquidity_amihud`, `coppock_curve_day`, `yesterday_range_ratio`, `yesterday_body_ratio`, `yesterday_volume_ratio`, `yesterday_return`, `yesterday_close_position`, `sma_distance_5d`, `sma_distance_60d`, `volatility_percentile_20d`, `volume_percentile_20d`, `yearly_high_distance`, `yearly_low_distance`, `twenty_gap_bars_regime`, `measured_move_proximity`, `yesterday_pm_return`, `yesterday_am_return`, `yesterday_gap_pct`, `yesterday_first_30min_return`, `yesterday_early_realized_vol`, `yesterday_early_range`, `yesterday_early_momentum`, `yesterday_first_bar_volume`, `yesterday_early_vwap_dev`, `yesterday_day_range`, `yesterday_day_realized_vol`, `yesterday_day_close_pos`, `yesterday_day_pm_am_vol_ratio`, `yesterday_day_vwap_dev`, `yesterday_day_skew`, `yesterday_day_kurtosis`, `yesterday_afternoon_reversal`, `yesterday_pm_am_vol_ratio`, `yesterday_cvd_close`
-  </details>
-
-![Diagnostics 500ETF](plots/diagnostics_500ETF_single.png)
-
-
-### 500ETF_long (500ETF, side=`long`)
 - **Selected features**: 15
 - **Active features**: 15
 - **Active**: `bar_vol_5`, `bar_rng_0`, `margin_buy_repayment_spread`, `gap_pct`, `cvd_divergence_day`, `sma100_dist`, `yesterday_gap`, `bar_ret_0`, `max_up_ret`, `outside_bar_reversal_day`, `yesterday_afternoon_momentum`, `early_skew`, `yesterday_lunch_gap`, `yesterday_early_trend`, `macd_hist`
@@ -251,13 +235,29 @@ coefficients, OOS decile spread, all-data decile spread, side-tail return hist, 
   `first_30min_return`, `early_realized_vol`, `early_range`, `early_trend`, `early_momentum`, `first_bar_return`, `first_bar_volume`, `early_vwap_dev`, `early_kurtosis`, `bar_ret_1`, `bar_ret_2`, `bar_vol_0`, `bar_vol_4`, `bar_rng_2`, `bar_rng_3`, `bar_rng_5`, `bar_body_rng_0`, `bar_body_rng_1`, `bar_body_rng_2`, `bar_vwap_dev_0`, `bar_vwap_dev_1`, `bar_vwap_dev_2`, `bar_vwap_dev_3`, `num_up_bars`, `max_down_ret`, `cl_pos_in_range`, `body_to_range_ratio`, `total_path_length`, `volume_slope`, `spike_exhaustion_ratio`, `first_bar_sentiment`, `or_fill_ratio`, `close_vs_open_range`, `inside_bar_failure_bull`, `consecutive_higher_highs`, `early_bearish_engulfing_count`, `volume_surge_max`, `volume_concentration`, `volume_trend_intraday`, `volume_acceleration`, `volume_surge_direction`, `pullback_ratio`, `rally_ratio`, `range_expansion_ratio`, `pullback_depth_ratio`, `pullback_depth_max`, `rally_strength_max`, `vwap_slope_intraday`, `volume_weighted_price_position`, `net_volume_flow`, `early_body_momentum`, `late_bar_momentum`, `trend_strength_intraday`, `high_low_sequence_momentum`, `intraday_slope`, `intraday_autocorr`, `opening_momentum_score`, `opening_direction_stability`, `early_trend_hhi`, `session_high_proximity`, `session_low_proximity`, `close_above_open_count`, `open_to_current_return`, `upper_wick_dominance`, `rsi_opening`, `stoch_opening`, `momentum_strength_intraday`, `opening_auction_imbalance`, `intraday_close_position`, `limit_down_proximity_early`, `morning_trend_extrapolated`, `demark_setup_reversal_early`, `failed_breakout_reversal_early`, `early_wavetrend_cross`, `atr_expansion_flag_early`, `volatility_breakout_squeeze`, `early_bid_ask_spread_proxy`, `early_vwap_acceleration`, `early_order_flow_imbalance`, `rbreaker_sell_setup_proximity_early`, `rbreaker_buy_setup_proximity_early`, `skypark_gap_reversal_early`, `turtle_breakout_strength_early`, `sma20_dist`, `sma50_dist`, `atr14_norm`, `roc10`, `vol20`, `sma10_dist`, `sma200_dist`, `ema12_dist`, `rsi5`, `rsi21`, `roc5`, `roc20`, `roc60`, `cci14`, `willr14`, `stoch_k`, `stoch_d`, `mfi14`, `aroon_osc`, `vol5`, `vol10`, `vol60`, `vol_ratio_5_20`, `vol_ratio_10_60`, `bb_width`, `vol_pk20`, `vol_gk10`, `vol_gk20`, `volume_sma_ratio`, `margin_balance`, `buy_on_margin_value`, `margin_repayment`, `short_balance`, `short_balance_quantity`, `short_sell_quantity`, `short_repayment_quantity`, `total_balance`, `margin_net_buy`, `margin_short_ratio`, `capital_buy_volume`, `capital_buy_value`, `capital_sell_volume`, `capital_sell_value`, `capital_net_value`, `capital_net_ratio`, `northbound_buy`, `northbound_sell`, `northbound_net`, `iv`, `iv_vol_ratio`, `vix`, `vix_vol_ratio`, `vix_iv_spread`, `vix_iv_ratio`, `iv_diff_1d`, `vix_diff_1d`, `tech_value_rotation`, `yesterday_limit_up_touch`, `limit_up_proximity_day`, `limit_down_proximity_day`, `growth_momentum_ratio`, `high_beta_vol_ratio`, `vix_skew_proxy`, `vix_rolling_percentile_60d`, `iv_corridor_width`, `yesterday_vix_early_drift`, `vix_realized_spread`, `option_oi_growth`, `iv_envelope_deviation`, `margin_lever_ratio`, `capital_net_accel`, `northbound_volume_share`, `yesterday_northbound_net_ratio`, `short_sell_cover_spread`, `margin_extreme_rank_252d`, `capital_large_order_ratio`, `consecutive_inside_bars_3d`, `wavetrend_osc_day`, `keltner_squeeze_width`, `yesterday_wavetrend_osc`, `yesterday_stoch_rsi_cross`, `yesterday_illiquidity_amihud`, `coppock_curve_day`, `yesterday_range_ratio`, `yesterday_body_ratio`, `yesterday_volume_ratio`, `yesterday_return`, `yesterday_close_position`, `sma_distance_5d`, `sma_distance_60d`, `volatility_percentile_20d`, `volume_percentile_20d`, `yearly_high_distance`, `yearly_low_distance`, `twenty_gap_bars_regime`, `measured_move_proximity`, `yesterday_pm_return`, `yesterday_am_return`, `yesterday_gap_pct`, `yesterday_first_30min_return`, `yesterday_early_realized_vol`, `yesterday_early_range`, `yesterday_early_momentum`, `yesterday_first_bar_volume`, `yesterday_early_vwap_dev`, `yesterday_day_range`, `yesterday_day_realized_vol`, `yesterday_day_close_pos`, `yesterday_day_pm_am_vol_ratio`, `yesterday_day_vwap_dev`, `yesterday_day_skew`, `yesterday_day_kurtosis`, `yesterday_afternoon_reversal`, `yesterday_pm_am_vol_ratio`, `yesterday_cvd_close`
   </details>
 
+![Diagnostics 500ETF](plots/diagnostics_500ETF_single.png)
+
+
+### 500ETF_long (500ETF, side=`long`)
+- **Selected features**: 14
+- **Active features**: 13
+- **Active**: `bar_vol_5`, `bar_rng_0`, `margin_buy_repayment_spread`, `gap_pct`, `sma100_dist`, `yesterday_gap`, `bar_ret_0`, `max_up_ret`, `yesterday_afternoon_momentum`, `early_skew`, `yesterday_lunch_gap`, `yesterday_early_trend`, `macd_hist`
+- **Stopped by Step 1 (FDR Screening)** (0 features):
+  None
+- **Stopped by Step 2 (Stability & VIF Pruning)** (199 features):
+  <details>
+  <summary>Show 199 features</summary>
+  
+  `first_30min_return`, `early_realized_vol`, `early_range`, `early_trend`, `early_momentum`, `first_bar_return`, `first_bar_volume`, `early_vwap_dev`, `early_kurtosis`, `bar_ret_1`, `bar_ret_2`, `bar_vol_0`, `bar_vol_4`, `bar_rng_2`, `bar_rng_3`, `bar_rng_5`, `bar_body_rng_0`, `bar_body_rng_1`, `bar_body_rng_2`, `bar_vwap_dev_0`, `bar_vwap_dev_1`, `bar_vwap_dev_2`, `bar_vwap_dev_3`, `num_up_bars`, `max_down_ret`, `cl_pos_in_range`, `body_to_range_ratio`, `total_path_length`, `volume_slope`, `spike_exhaustion_ratio`, `first_bar_sentiment`, `or_fill_ratio`, `close_vs_open_range`, `inside_bar_failure_bull`, `consecutive_higher_highs`, `early_bearish_engulfing_count`, `volume_surge_max`, `volume_concentration`, `volume_trend_intraday`, `volume_acceleration`, `volume_surge_direction`, `pullback_ratio`, `rally_ratio`, `range_expansion_ratio`, `pullback_depth_ratio`, `pullback_depth_max`, `rally_strength_max`, `vwap_slope_intraday`, `volume_weighted_price_position`, `net_volume_flow`, `early_body_momentum`, `late_bar_momentum`, `trend_strength_intraday`, `high_low_sequence_momentum`, `intraday_slope`, `intraday_autocorr`, `opening_momentum_score`, `opening_direction_stability`, `early_trend_hhi`, `session_high_proximity`, `session_low_proximity`, `close_above_open_count`, `open_to_current_return`, `upper_wick_dominance`, `rsi_opening`, `stoch_opening`, `momentum_strength_intraday`, `opening_auction_imbalance`, `intraday_close_position`, `limit_down_proximity_early`, `morning_trend_extrapolated`, `demark_setup_reversal_early`, `failed_breakout_reversal_early`, `early_wavetrend_cross`, `atr_expansion_flag_early`, `volatility_breakout_squeeze`, `early_bid_ask_spread_proxy`, `early_vwap_acceleration`, `early_order_flow_imbalance`, `rbreaker_sell_setup_proximity_early`, `rbreaker_buy_setup_proximity_early`, `skypark_gap_reversal_early`, `turtle_breakout_strength_early`, `sma20_dist`, `sma50_dist`, `atr14_norm`, `roc10`, `vol20`, `sma10_dist`, `sma200_dist`, `ema12_dist`, `rsi5`, `rsi21`, `roc5`, `roc20`, `roc60`, `cci14`, `willr14`, `stoch_k`, `stoch_d`, `mfi14`, `aroon_osc`, `vol5`, `vol10`, `vol60`, `vol_ratio_5_20`, `vol_ratio_10_60`, `bb_width`, `vol_pk20`, `vol_gk10`, `vol_gk20`, `volume_sma_ratio`, `margin_balance`, `buy_on_margin_value`, `margin_repayment`, `short_balance`, `short_balance_quantity`, `short_sell_quantity`, `short_repayment_quantity`, `total_balance`, `margin_net_buy`, `margin_short_ratio`, `capital_buy_volume`, `capital_buy_value`, `capital_sell_volume`, `capital_sell_value`, `capital_net_value`, `capital_net_ratio`, `northbound_buy`, `northbound_sell`, `northbound_net`, `iv`, `iv_vol_ratio`, `vix`, `vix_vol_ratio`, `vix_iv_spread`, `vix_iv_ratio`, `iv_diff_1d`, `vix_diff_1d`, `tech_value_rotation`, `yesterday_limit_up_touch`, `limit_up_proximity_day`, `limit_down_proximity_day`, `growth_momentum_ratio`, `high_beta_vol_ratio`, `vix_skew_proxy`, `vix_rolling_percentile_60d`, `iv_corridor_width`, `yesterday_vix_early_drift`, `vix_realized_spread`, `option_oi_growth`, `iv_envelope_deviation`, `margin_lever_ratio`, `capital_net_accel`, `northbound_volume_share`, `yesterday_northbound_net_ratio`, `short_sell_cover_spread`, `margin_extreme_rank_252d`, `capital_large_order_ratio`, `consecutive_inside_bars_3d`, `outside_bar_reversal_day`, `wavetrend_osc_day`, `keltner_squeeze_width`, `yesterday_wavetrend_osc`, `yesterday_stoch_rsi_cross`, `yesterday_illiquidity_amihud`, `coppock_curve_day`, `yesterday_range_ratio`, `yesterday_body_ratio`, `yesterday_volume_ratio`, `yesterday_return`, `yesterday_close_position`, `sma_distance_5d`, `sma_distance_60d`, `volatility_percentile_20d`, `volume_percentile_20d`, `yearly_high_distance`, `yearly_low_distance`, `twenty_gap_bars_regime`, `measured_move_proximity`, `yesterday_pm_return`, `yesterday_am_return`, `yesterday_gap_pct`, `yesterday_first_30min_return`, `yesterday_early_realized_vol`, `yesterday_early_range`, `yesterday_early_momentum`, `yesterday_first_bar_volume`, `yesterday_early_vwap_dev`, `yesterday_day_range`, `yesterday_day_realized_vol`, `yesterday_day_close_pos`, `yesterday_day_pm_am_vol_ratio`, `yesterday_day_vwap_dev`, `yesterday_day_skew`, `yesterday_day_kurtosis`, `yesterday_afternoon_reversal`, `yesterday_pm_am_vol_ratio`, `yesterday_cvd_close`
+  </details>
+
 ![Diagnostics 500ETF_long](plots/diagnostics_500ETF_long.png)
 
 
 ### 500ETF_short (500ETF, side=`short`)
 - **Selected features**: 15
-- **Active features**: 14
-- **Active**: `bar_vol_5`, `bar_rng_0`, `margin_buy_repayment_spread`, `gap_pct`, `sma100_dist`, `yesterday_gap`, `bar_ret_0`, `max_up_ret`, `outside_bar_reversal_day`, `yesterday_afternoon_momentum`, `early_skew`, `yesterday_lunch_gap`, `yesterday_early_trend`, `macd_hist`
+- **Active features**: 15
+- **Active**: `bar_vol_5`, `bar_rng_0`, `margin_buy_repayment_spread`, `gap_pct`, `cvd_divergence_day`, `sma100_dist`, `yesterday_gap`, `bar_ret_0`, `max_up_ret`, `outside_bar_reversal_day`, `yesterday_afternoon_momentum`, `early_skew`, `yesterday_lunch_gap`, `yesterday_early_trend`, `macd_hist`
 - **Stopped by Step 1 (FDR Screening)** (0 features):
   None
 - **Stopped by Step 2 (Stability & VIF Pruning)** (198 features):
@@ -272,8 +272,8 @@ coefficients, OOS decile spread, all-data decile spread, side-tail return hist, 
 
 ### 588000ETF (588000ETF, side=`single`)
 - **Selected features**: 27
-- **Active features**: 27
-- **Active**: `vol_ratio_5_20`, `vol_ratio_10_60`, `volatility_percentile_20d`, `yesterday_day_skew`, `yesterday_day_kurtosis`, `tech_value_rotation`, `consecutive_inside_bars_3d`, `yesterday_gap`, `capital_net_ratio`, `roc5`, `yesterday_stoch_rsi_cross`, `yesterday_day_pm_am_vol_ratio`, `yesterday_body_ratio`, `early_kurtosis`, `vix`, `vix_diff_1d`, `bar_rng_3`, `bar_rng_2`, `vol60`, `first_30min_return`, `first_bar_return`, `early_skew`, `bar_body_rng_1`, `bar_vwap_dev_2`, `outside_bar_reversal_day`, `sma100_dist`, `volume_percentile_20d`
+- **Active features**: 26
+- **Active**: `vol_ratio_5_20`, `vol_ratio_10_60`, `volatility_percentile_20d`, `yesterday_day_skew`, `yesterday_day_kurtosis`, `tech_value_rotation`, `consecutive_inside_bars_3d`, `yesterday_gap`, `capital_net_ratio`, `roc5`, `yesterday_stoch_rsi_cross`, `yesterday_day_pm_am_vol_ratio`, `yesterday_body_ratio`, `early_kurtosis`, `vix`, `vix_diff_1d`, `bar_rng_3`, `bar_rng_2`, `vol60`, `first_bar_return`, `early_skew`, `bar_body_rng_1`, `bar_vwap_dev_2`, `outside_bar_reversal_day`, `sma100_dist`, `volume_percentile_20d`
 - **Stopped by Step 1 (FDR Screening)** (0 features):
   None
 - **Stopped by Step 2 (Stability & VIF Pruning)** (186 features):
@@ -288,8 +288,8 @@ coefficients, OOS decile spread, all-data decile spread, side-tail return hist, 
 
 ### 588000ETF_long (588000ETF, side=`long`)
 - **Selected features**: 27
-- **Active features**: 25
-- **Active**: `vol_ratio_5_20`, `vol_ratio_10_60`, `volatility_percentile_20d`, `yesterday_day_skew`, `tech_value_rotation`, `consecutive_inside_bars_3d`, `yesterday_gap`, `capital_net_ratio`, `roc5`, `yesterday_stoch_rsi_cross`, `yesterday_day_pm_am_vol_ratio`, `yesterday_body_ratio`, `early_kurtosis`, `vix`, `vix_diff_1d`, `bar_rng_3`, `bar_rng_2`, `vol60`, `first_bar_return`, `early_skew`, `bar_body_rng_1`, `bar_vwap_dev_2`, `outside_bar_reversal_day`, `sma100_dist`, `volume_percentile_20d`
+- **Active features**: 26
+- **Active**: `vol_ratio_5_20`, `vol_ratio_10_60`, `volatility_percentile_20d`, `yesterday_day_skew`, `tech_value_rotation`, `consecutive_inside_bars_3d`, `yesterday_gap`, `capital_net_ratio`, `roc5`, `yesterday_stoch_rsi_cross`, `yesterday_day_pm_am_vol_ratio`, `yesterday_body_ratio`, `early_kurtosis`, `vix`, `vix_diff_1d`, `bar_rng_3`, `bar_rng_2`, `vol60`, `first_30min_return`, `first_bar_return`, `early_skew`, `bar_body_rng_1`, `bar_vwap_dev_2`, `outside_bar_reversal_day`, `sma100_dist`, `volume_percentile_20d`
 - **Stopped by Step 1 (FDR Screening)** (0 features):
   None
 - **Stopped by Step 2 (Stability & VIF Pruning)** (186 features):
@@ -303,32 +303,32 @@ coefficients, OOS decile spread, all-data decile spread, side-tail return hist, 
 
 
 ### 588000ETF_short (588000ETF, side=`short`)
-- **Selected features**: 27
-- **Active features**: 27
-- **Active**: `vol_ratio_5_20`, `vol_ratio_10_60`, `volatility_percentile_20d`, `yesterday_day_skew`, `yesterday_day_kurtosis`, `tech_value_rotation`, `consecutive_inside_bars_3d`, `yesterday_gap`, `capital_net_ratio`, `roc5`, `yesterday_stoch_rsi_cross`, `yesterday_day_pm_am_vol_ratio`, `yesterday_body_ratio`, `early_kurtosis`, `vix`, `vix_diff_1d`, `bar_rng_3`, `bar_rng_2`, `vol60`, `first_30min_return`, `first_bar_return`, `early_skew`, `bar_body_rng_1`, `bar_vwap_dev_2`, `outside_bar_reversal_day`, `sma100_dist`, `volume_percentile_20d`
-- **Stopped by Step 1 (FDR Screening)** (0 features):
-  None
-- **Stopped by Step 2 (Stability & VIF Pruning)** (186 features):
-  <details>
-  <summary>Show 186 features</summary>
-  
-  `gap_pct`, `early_realized_vol`, `early_range`, `early_trend`, `early_momentum`, `first_bar_volume`, `early_vwap_dev`, `bar_ret_0`, `bar_ret_1`, `bar_ret_2`, `bar_vol_0`, `bar_vol_4`, `bar_vol_5`, `bar_rng_0`, `bar_rng_5`, `bar_body_rng_0`, `bar_body_rng_2`, `bar_vwap_dev_0`, `bar_vwap_dev_1`, `bar_vwap_dev_3`, `num_up_bars`, `max_up_ret`, `max_down_ret`, `cl_pos_in_range`, `body_to_range_ratio`, `total_path_length`, `volume_slope`, `spike_exhaustion_ratio`, `first_bar_sentiment`, `or_fill_ratio`, `close_vs_open_range`, `inside_bar_failure_bull`, `consecutive_higher_highs`, `early_bearish_engulfing_count`, `volume_surge_max`, `volume_concentration`, `volume_trend_intraday`, `volume_acceleration`, `volume_surge_direction`, `pullback_ratio`, `rally_ratio`, `range_expansion_ratio`, `pullback_depth_ratio`, `pullback_depth_max`, `rally_strength_max`, `vwap_slope_intraday`, `volume_weighted_price_position`, `net_volume_flow`, `early_body_momentum`, `late_bar_momentum`, `trend_strength_intraday`, `high_low_sequence_momentum`, `intraday_slope`, `intraday_autocorr`, `opening_momentum_score`, `opening_direction_stability`, `early_trend_hhi`, `session_high_proximity`, `session_low_proximity`, `close_above_open_count`, `open_to_current_return`, `upper_wick_dominance`, `rsi_opening`, `stoch_opening`, `momentum_strength_intraday`, `opening_auction_imbalance`, `intraday_close_position`, `limit_down_proximity_early`, `morning_trend_extrapolated`, `demark_setup_reversal_early`, `failed_breakout_reversal_early`, `early_wavetrend_cross`, `atr_expansion_flag_early`, `volatility_breakout_squeeze`, `early_bid_ask_spread_proxy`, `early_vwap_acceleration`, `early_order_flow_imbalance`, `rbreaker_sell_setup_proximity_early`, `rbreaker_buy_setup_proximity_early`, `skypark_gap_reversal_early`, `turtle_breakout_strength_early`, `macd_hist`, `sma20_dist`, `sma50_dist`, `atr14_norm`, `roc10`, `vol20`, `sma10_dist`, `sma200_dist`, `ema12_dist`, `rsi5`, `rsi21`, `roc20`, `roc60`, `cci14`, `willr14`, `stoch_k`, `stoch_d`, `mfi14`, `aroon_osc`, `vol5`, `vol10`, `bb_width`, `vol_pk20`, `vol_gk10`, `vol_gk20`, `volume_sma_ratio`, `margin_balance`, `buy_on_margin_value`, `margin_repayment`, `short_balance`, `short_balance_quantity`, `short_sell_quantity`, `short_repayment_quantity`, `total_balance`, `margin_net_buy`, `margin_short_ratio`, `capital_buy_volume`, `capital_buy_value`, `capital_sell_volume`, `capital_sell_value`, `capital_net_value`, `northbound_buy`, `northbound_sell`, `northbound_net`, `iv`, `iv_vol_ratio`, `vix_vol_ratio`, `vix_iv_spread`, `vix_iv_ratio`, `iv_diff_1d`, `yesterday_limit_up_touch`, `limit_up_proximity_day`, `limit_down_proximity_day`, `growth_momentum_ratio`, `high_beta_vol_ratio`, `vix_skew_proxy`, `vix_rolling_percentile_60d`, `iv_corridor_width`, `yesterday_vix_early_drift`, `vix_realized_spread`, `option_oi_growth`, `iv_envelope_deviation`, `margin_lever_ratio`, `capital_net_accel`, `northbound_volume_share`, `yesterday_northbound_net_ratio`, `margin_buy_repayment_spread`, `short_sell_cover_spread`, `margin_extreme_rank_252d`, `capital_large_order_ratio`, `wavetrend_osc_day`, `keltner_squeeze_width`, `yesterday_wavetrend_osc`, `cvd_divergence_day`, `yesterday_illiquidity_amihud`, `coppock_curve_day`, `yesterday_range_ratio`, `yesterday_volume_ratio`, `yesterday_return`, `yesterday_close_position`, `sma_distance_5d`, `sma_distance_60d`, `yearly_high_distance`, `yearly_low_distance`, `twenty_gap_bars_regime`, `measured_move_proximity`, `yesterday_pm_return`, `yesterday_am_return`, `yesterday_gap_pct`, `yesterday_first_30min_return`, `yesterday_early_realized_vol`, `yesterday_early_range`, `yesterday_early_trend`, `yesterday_early_momentum`, `yesterday_first_bar_volume`, `yesterday_early_vwap_dev`, `yesterday_day_range`, `yesterday_day_realized_vol`, `yesterday_day_close_pos`, `yesterday_day_vwap_dev`, `yesterday_afternoon_reversal`, `yesterday_lunch_gap`, `yesterday_pm_am_vol_ratio`, `yesterday_afternoon_momentum`, `yesterday_cvd_close`
-  </details>
-
-![Diagnostics 588000ETF_short](plots/diagnostics_588000ETF_short.png)
-
-
-### 159915ETF (159915ETF, side=`single`)
 - **Selected features**: 20
-- **Active features**: 18
-- **Active**: `bar_ret_0`, `max_up_ret`, `margin_buy_repayment_spread`, `capital_net_ratio`, `yesterday_lunch_gap`, `yesterday_early_realized_vol`, `yesterday_early_trend`, `yesterday_gap_pct`, `northbound_net`, `bar_vol_5`, `early_kurtosis`, `yesterday_illiquidity_amihud`, `margin_extreme_rank_252d`, `sma100_dist`, `coppock_curve_day`, `consecutive_inside_bars_3d`, `yesterday_afternoon_momentum`, `gap_pct`
+- **Active features**: 16
+- **Active**: `vol_ratio_5_20`, `volatility_percentile_20d`, `yesterday_gap`, `capital_net_ratio`, `roc5`, `yesterday_stoch_rsi_cross`, `yesterday_body_ratio`, `vix_diff_1d`, `bar_rng_3`, `vol60`, `first_30min_return`, `first_bar_return`, `bar_vwap_dev_2`, `outside_bar_reversal_day`, `sma100_dist`, `volume_percentile_20d`
 - **Stopped by Step 1 (FDR Screening)** (0 features):
   None
 - **Stopped by Step 2 (Stability & VIF Pruning)** (193 features):
   <details>
   <summary>Show 193 features</summary>
   
-  `first_30min_return`, `early_realized_vol`, `early_range`, `early_trend`, `early_momentum`, `first_bar_return`, `first_bar_volume`, `early_vwap_dev`, `early_skew`, `bar_ret_1`, `bar_ret_2`, `bar_vol_0`, `bar_vol_4`, `bar_rng_0`, `bar_rng_2`, `bar_rng_3`, `bar_rng_5`, `bar_body_rng_0`, `bar_body_rng_1`, `bar_body_rng_2`, `bar_vwap_dev_0`, `bar_vwap_dev_1`, `bar_vwap_dev_2`, `bar_vwap_dev_3`, `num_up_bars`, `max_down_ret`, `cl_pos_in_range`, `body_to_range_ratio`, `total_path_length`, `volume_slope`, `spike_exhaustion_ratio`, `first_bar_sentiment`, `or_fill_ratio`, `close_vs_open_range`, `inside_bar_failure_bull`, `consecutive_higher_highs`, `early_bearish_engulfing_count`, `volume_surge_max`, `volume_concentration`, `volume_trend_intraday`, `volume_acceleration`, `volume_surge_direction`, `pullback_ratio`, `rally_ratio`, `range_expansion_ratio`, `pullback_depth_ratio`, `pullback_depth_max`, `rally_strength_max`, `vwap_slope_intraday`, `volume_weighted_price_position`, `net_volume_flow`, `early_body_momentum`, `late_bar_momentum`, `trend_strength_intraday`, `high_low_sequence_momentum`, `intraday_slope`, `intraday_autocorr`, `opening_momentum_score`, `opening_direction_stability`, `early_trend_hhi`, `session_high_proximity`, `session_low_proximity`, `close_above_open_count`, `open_to_current_return`, `upper_wick_dominance`, `rsi_opening`, `stoch_opening`, `momentum_strength_intraday`, `opening_auction_imbalance`, `intraday_close_position`, `limit_down_proximity_early`, `morning_trend_extrapolated`, `demark_setup_reversal_early`, `failed_breakout_reversal_early`, `early_wavetrend_cross`, `atr_expansion_flag_early`, `volatility_breakout_squeeze`, `early_bid_ask_spread_proxy`, `early_vwap_acceleration`, `early_order_flow_imbalance`, `rbreaker_sell_setup_proximity_early`, `rbreaker_buy_setup_proximity_early`, `skypark_gap_reversal_early`, `turtle_breakout_strength_early`, `macd_hist`, `sma20_dist`, `sma50_dist`, `atr14_norm`, `roc10`, `vol20`, `sma10_dist`, `sma200_dist`, `ema12_dist`, `rsi5`, `rsi21`, `roc5`, `roc20`, `roc60`, `cci14`, `willr14`, `stoch_k`, `stoch_d`, `mfi14`, `aroon_osc`, `vol5`, `vol10`, `vol60`, `vol_ratio_5_20`, `vol_ratio_10_60`, `bb_width`, `vol_pk20`, `vol_gk10`, `vol_gk20`, `volume_sma_ratio`, `margin_balance`, `buy_on_margin_value`, `margin_repayment`, `short_balance`, `short_balance_quantity`, `short_sell_quantity`, `short_repayment_quantity`, `total_balance`, `margin_net_buy`, `margin_short_ratio`, `capital_buy_volume`, `capital_buy_value`, `capital_sell_volume`, `capital_sell_value`, `capital_net_value`, `northbound_buy`, `northbound_sell`, `iv`, `iv_vol_ratio`, `vix`, `vix_vol_ratio`, `vix_iv_spread`, `vix_iv_ratio`, `iv_diff_1d`, `vix_diff_1d`, `yesterday_limit_up_touch`, `limit_up_proximity_day`, `limit_down_proximity_day`, `growth_momentum_ratio`, `high_beta_vol_ratio`, `vix_skew_proxy`, `vix_rolling_percentile_60d`, `iv_corridor_width`, `yesterday_vix_early_drift`, `vix_realized_spread`, `option_oi_growth`, `iv_envelope_deviation`, `margin_lever_ratio`, `capital_net_accel`, `northbound_volume_share`, `yesterday_northbound_net_ratio`, `short_sell_cover_spread`, `capital_large_order_ratio`, `outside_bar_reversal_day`, `wavetrend_osc_day`, `keltner_squeeze_width`, `yesterday_wavetrend_osc`, `yesterday_stoch_rsi_cross`, `cvd_divergence_day`, `yesterday_range_ratio`, `yesterday_body_ratio`, `yesterday_volume_ratio`, `yesterday_return`, `yesterday_gap`, `yesterday_close_position`, `sma_distance_5d`, `sma_distance_60d`, `volatility_percentile_20d`, `volume_percentile_20d`, `yearly_high_distance`, `yearly_low_distance`, `twenty_gap_bars_regime`, `measured_move_proximity`, `yesterday_pm_return`, `yesterday_am_return`, `yesterday_first_30min_return`, `yesterday_early_range`, `yesterday_early_momentum`, `yesterday_first_bar_volume`, `yesterday_early_vwap_dev`, `yesterday_day_realized_vol`, `yesterday_day_close_pos`, `yesterday_day_pm_am_vol_ratio`, `yesterday_day_vwap_dev`, `yesterday_day_skew`, `yesterday_day_kurtosis`, `yesterday_afternoon_reversal`, `yesterday_pm_am_vol_ratio`, `yesterday_cvd_close`
+  `gap_pct`, `early_realized_vol`, `early_range`, `early_trend`, `early_momentum`, `first_bar_volume`, `early_vwap_dev`, `early_skew`, `early_kurtosis`, `bar_ret_0`, `bar_ret_1`, `bar_ret_2`, `bar_vol_0`, `bar_vol_4`, `bar_vol_5`, `bar_rng_0`, `bar_rng_2`, `bar_rng_5`, `bar_body_rng_0`, `bar_body_rng_1`, `bar_body_rng_2`, `bar_vwap_dev_0`, `bar_vwap_dev_1`, `bar_vwap_dev_3`, `num_up_bars`, `max_up_ret`, `max_down_ret`, `cl_pos_in_range`, `body_to_range_ratio`, `total_path_length`, `volume_slope`, `spike_exhaustion_ratio`, `first_bar_sentiment`, `or_fill_ratio`, `close_vs_open_range`, `inside_bar_failure_bull`, `consecutive_higher_highs`, `early_bearish_engulfing_count`, `volume_surge_max`, `volume_concentration`, `volume_trend_intraday`, `volume_acceleration`, `volume_surge_direction`, `pullback_ratio`, `rally_ratio`, `range_expansion_ratio`, `pullback_depth_ratio`, `pullback_depth_max`, `rally_strength_max`, `vwap_slope_intraday`, `volume_weighted_price_position`, `net_volume_flow`, `early_body_momentum`, `late_bar_momentum`, `trend_strength_intraday`, `high_low_sequence_momentum`, `intraday_slope`, `intraday_autocorr`, `opening_momentum_score`, `opening_direction_stability`, `early_trend_hhi`, `session_high_proximity`, `session_low_proximity`, `close_above_open_count`, `open_to_current_return`, `upper_wick_dominance`, `rsi_opening`, `stoch_opening`, `momentum_strength_intraday`, `opening_auction_imbalance`, `intraday_close_position`, `limit_down_proximity_early`, `morning_trend_extrapolated`, `demark_setup_reversal_early`, `failed_breakout_reversal_early`, `early_wavetrend_cross`, `atr_expansion_flag_early`, `volatility_breakout_squeeze`, `early_bid_ask_spread_proxy`, `early_vwap_acceleration`, `early_order_flow_imbalance`, `rbreaker_sell_setup_proximity_early`, `rbreaker_buy_setup_proximity_early`, `skypark_gap_reversal_early`, `turtle_breakout_strength_early`, `macd_hist`, `sma20_dist`, `sma50_dist`, `atr14_norm`, `roc10`, `vol20`, `sma10_dist`, `sma200_dist`, `ema12_dist`, `rsi5`, `rsi21`, `roc20`, `roc60`, `cci14`, `willr14`, `stoch_k`, `stoch_d`, `mfi14`, `aroon_osc`, `vol5`, `vol10`, `bb_width`, `vol_pk20`, `vol_gk10`, `vol_gk20`, `volume_sma_ratio`, `margin_balance`, `buy_on_margin_value`, `margin_repayment`, `short_balance`, `short_balance_quantity`, `short_sell_quantity`, `short_repayment_quantity`, `total_balance`, `margin_net_buy`, `margin_short_ratio`, `capital_buy_volume`, `capital_buy_value`, `capital_sell_volume`, `capital_sell_value`, `capital_net_value`, `northbound_buy`, `northbound_sell`, `northbound_net`, `iv`, `iv_vol_ratio`, `vix`, `vix_vol_ratio`, `vix_iv_spread`, `vix_iv_ratio`, `iv_diff_1d`, `tech_value_rotation`, `yesterday_limit_up_touch`, `limit_up_proximity_day`, `limit_down_proximity_day`, `growth_momentum_ratio`, `high_beta_vol_ratio`, `vix_skew_proxy`, `vix_rolling_percentile_60d`, `iv_corridor_width`, `yesterday_vix_early_drift`, `vix_realized_spread`, `option_oi_growth`, `iv_envelope_deviation`, `margin_lever_ratio`, `capital_net_accel`, `northbound_volume_share`, `yesterday_northbound_net_ratio`, `margin_buy_repayment_spread`, `short_sell_cover_spread`, `margin_extreme_rank_252d`, `capital_large_order_ratio`, `wavetrend_osc_day`, `keltner_squeeze_width`, `yesterday_wavetrend_osc`, `cvd_divergence_day`, `yesterday_illiquidity_amihud`, `coppock_curve_day`, `yesterday_range_ratio`, `yesterday_volume_ratio`, `yesterday_return`, `yesterday_close_position`, `sma_distance_5d`, `sma_distance_60d`, `yearly_high_distance`, `yearly_low_distance`, `twenty_gap_bars_regime`, `measured_move_proximity`, `yesterday_pm_return`, `yesterday_am_return`, `yesterday_gap_pct`, `yesterday_first_30min_return`, `yesterday_early_realized_vol`, `yesterday_early_range`, `yesterday_early_trend`, `yesterday_early_momentum`, `yesterday_first_bar_volume`, `yesterday_early_vwap_dev`, `yesterday_day_range`, `yesterday_day_realized_vol`, `yesterday_day_close_pos`, `yesterday_day_vwap_dev`, `yesterday_day_skew`, `yesterday_afternoon_reversal`, `yesterday_lunch_gap`, `yesterday_pm_am_vol_ratio`, `yesterday_afternoon_momentum`, `yesterday_cvd_close`
+  </details>
+
+![Diagnostics 588000ETF_short](plots/diagnostics_588000ETF_short.png)
+
+
+### 159915ETF (159915ETF, side=`single`)
+- **Selected features**: 7
+- **Active features**: 6
+- **Active**: `bar_ret_0`, `yesterday_lunch_gap`, `yesterday_early_trend`, `sma100_dist`, `yesterday_afternoon_momentum`, `gap_pct`
+- **Stopped by Step 1 (FDR Screening)** (0 features):
+  None
+- **Stopped by Step 2 (Stability & VIF Pruning)** (206 features):
+  <details>
+  <summary>Show 206 features</summary>
+  
+  `first_30min_return`, `early_realized_vol`, `early_range`, `early_trend`, `early_momentum`, `first_bar_return`, `first_bar_volume`, `early_vwap_dev`, `early_skew`, `early_kurtosis`, `bar_ret_1`, `bar_ret_2`, `bar_vol_0`, `bar_vol_4`, `bar_vol_5`, `bar_rng_0`, `bar_rng_2`, `bar_rng_3`, `bar_rng_5`, `bar_body_rng_0`, `bar_body_rng_1`, `bar_body_rng_2`, `bar_vwap_dev_0`, `bar_vwap_dev_1`, `bar_vwap_dev_2`, `bar_vwap_dev_3`, `num_up_bars`, `max_up_ret`, `max_down_ret`, `cl_pos_in_range`, `body_to_range_ratio`, `total_path_length`, `volume_slope`, `spike_exhaustion_ratio`, `first_bar_sentiment`, `or_fill_ratio`, `close_vs_open_range`, `inside_bar_failure_bull`, `consecutive_higher_highs`, `early_bearish_engulfing_count`, `volume_surge_max`, `volume_concentration`, `volume_trend_intraday`, `volume_acceleration`, `volume_surge_direction`, `pullback_ratio`, `rally_ratio`, `range_expansion_ratio`, `pullback_depth_ratio`, `pullback_depth_max`, `rally_strength_max`, `vwap_slope_intraday`, `volume_weighted_price_position`, `net_volume_flow`, `early_body_momentum`, `late_bar_momentum`, `trend_strength_intraday`, `high_low_sequence_momentum`, `intraday_slope`, `intraday_autocorr`, `opening_momentum_score`, `opening_direction_stability`, `early_trend_hhi`, `session_high_proximity`, `session_low_proximity`, `close_above_open_count`, `open_to_current_return`, `upper_wick_dominance`, `rsi_opening`, `stoch_opening`, `momentum_strength_intraday`, `opening_auction_imbalance`, `intraday_close_position`, `limit_down_proximity_early`, `morning_trend_extrapolated`, `demark_setup_reversal_early`, `failed_breakout_reversal_early`, `early_wavetrend_cross`, `atr_expansion_flag_early`, `volatility_breakout_squeeze`, `early_bid_ask_spread_proxy`, `early_vwap_acceleration`, `early_order_flow_imbalance`, `rbreaker_sell_setup_proximity_early`, `rbreaker_buy_setup_proximity_early`, `skypark_gap_reversal_early`, `turtle_breakout_strength_early`, `macd_hist`, `sma20_dist`, `sma50_dist`, `atr14_norm`, `roc10`, `vol20`, `sma10_dist`, `sma200_dist`, `ema12_dist`, `rsi5`, `rsi21`, `roc5`, `roc20`, `roc60`, `cci14`, `willr14`, `stoch_k`, `stoch_d`, `mfi14`, `aroon_osc`, `vol5`, `vol10`, `vol60`, `vol_ratio_5_20`, `vol_ratio_10_60`, `bb_width`, `vol_pk20`, `vol_gk10`, `vol_gk20`, `volume_sma_ratio`, `margin_balance`, `buy_on_margin_value`, `margin_repayment`, `short_balance`, `short_balance_quantity`, `short_sell_quantity`, `short_repayment_quantity`, `total_balance`, `margin_net_buy`, `margin_short_ratio`, `capital_buy_volume`, `capital_buy_value`, `capital_sell_volume`, `capital_sell_value`, `capital_net_value`, `capital_net_ratio`, `northbound_buy`, `northbound_sell`, `northbound_net`, `iv`, `iv_vol_ratio`, `vix`, `vix_vol_ratio`, `vix_iv_spread`, `vix_iv_ratio`, `iv_diff_1d`, `vix_diff_1d`, `tech_value_rotation`, `yesterday_limit_up_touch`, `limit_up_proximity_day`, `limit_down_proximity_day`, `growth_momentum_ratio`, `high_beta_vol_ratio`, `vix_skew_proxy`, `vix_rolling_percentile_60d`, `iv_corridor_width`, `yesterday_vix_early_drift`, `vix_realized_spread`, `option_oi_growth`, `iv_envelope_deviation`, `margin_lever_ratio`, `capital_net_accel`, `northbound_volume_share`, `yesterday_northbound_net_ratio`, `margin_buy_repayment_spread`, `short_sell_cover_spread`, `margin_extreme_rank_252d`, `capital_large_order_ratio`, `consecutive_inside_bars_3d`, `outside_bar_reversal_day`, `wavetrend_osc_day`, `keltner_squeeze_width`, `yesterday_wavetrend_osc`, `yesterday_stoch_rsi_cross`, `cvd_divergence_day`, `yesterday_illiquidity_amihud`, `coppock_curve_day`, `yesterday_range_ratio`, `yesterday_body_ratio`, `yesterday_volume_ratio`, `yesterday_return`, `yesterday_gap`, `yesterday_close_position`, `sma_distance_5d`, `sma_distance_60d`, `volatility_percentile_20d`, `volume_percentile_20d`, `yearly_high_distance`, `yearly_low_distance`, `twenty_gap_bars_regime`, `measured_move_proximity`, `yesterday_pm_return`, `yesterday_am_return`, `yesterday_first_30min_return`, `yesterday_early_realized_vol`, `yesterday_early_range`, `yesterday_early_momentum`, `yesterday_first_bar_volume`, `yesterday_early_vwap_dev`, `yesterday_day_range`, `yesterday_day_realized_vol`, `yesterday_day_close_pos`, `yesterday_day_pm_am_vol_ratio`, `yesterday_day_vwap_dev`, `yesterday_day_skew`, `yesterday_day_kurtosis`, `yesterday_afternoon_reversal`, `yesterday_pm_am_vol_ratio`, `yesterday_cvd_close`
   </details>
 
 ![Diagnostics 159915ETF](plots/diagnostics_159915ETF_single.png)
@@ -384,8 +384,8 @@ coefficients, OOS decile spread, all-data decile spread, side-tail return hist, 
 
 ### 50ETF_long (50ETF, side=`long`)
 - **Selected features**: 17
-- **Active features**: 14
-- **Active**: `volume_slope`, `margin_repayment`, `yesterday_early_range`, `bar_rng_3`, `bar_rng_5`, `margin_net_buy`, `sma100_dist`, `iv_corridor_width`, `yesterday_early_trend`, `yesterday_body_ratio`, `bar_ret_0`, `gap_pct`, `yesterday_lunch_gap`, `vix_diff_1d`
+- **Active features**: 17
+- **Active**: `early_vwap_dev`, `capital_buy_value`, `volume_slope`, `margin_repayment`, `yesterday_early_range`, `bar_rng_3`, `bar_rng_5`, `margin_net_buy`, `sma100_dist`, `iv_corridor_width`, `yesterday_early_trend`, `yesterday_gap`, `yesterday_body_ratio`, `bar_ret_0`, `gap_pct`, `yesterday_lunch_gap`, `vix_diff_1d`
 - **Stopped by Step 1 (FDR Screening)** (0 features):
   None
 - **Stopped by Step 2 (Stability & VIF Pruning)** (196 features):
