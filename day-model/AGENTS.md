@@ -164,11 +164,11 @@ Upgraded model training stability, tail performance, overfit diagnostics, and de
    - Dynamic VIF thresholding: `5.0` for highly ill-conditioned `50ETF`, default `10.0` for other ETFs.
    - Added graduated soft penalty on the condition number `cond_penalty = -0.1 * max(0, log(reg_kappa) - log(1000.0))` to guide TPE sampler toward well-conditioned parameter spaces before hitting the hard prune cliff.
 
-5. **No-Fallback Pipeline (July 2026)**:
-   - Removed all safety-net fallbacks from the feature-selection pipeline:
-     - `SCREEN_FALLBACK_K` (top-K by p-value when BH-FDR < 40) → removed. Pure BH-FDR.
+5. **No-Fallback Pipeline & Screening Fallback (July 2026)**:
+   - Removed most legacy safety-net fallbacks from feature-selection pipeline:
      - CSS cluster force-top5 (when < 3 clusters pass pi) → removed. Pure pi threshold.
      - Bagging top-3 (when no features > 50% inclusion) → removed. Pure > 50% bagging.
+   - **Step 1 Screening MIN_FEATURE Fallback**: Added `MIN_FEATURE = 15`. If Step 1 cheap screening selects fewer than `MIN_FEATURE` features, select top `MIN_FEATURE` features with lowest p-values.
    - Constants tuned via meta-Optuna (`day-model/sweep/meta_optuna.py`): 5 pipeline constants + model hyperparams in single TPE study.
    - **Tuned constants**: reference day-model/train_model.py
 
