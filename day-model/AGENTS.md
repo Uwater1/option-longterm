@@ -26,6 +26,59 @@ python3 day-model/generate_report.py
 python3 day-model/backtest_simulator.py --etf all 
 ```
 
+### Rolling Model Training (Quarterly Retraining)
+
+Trains 8 quarterly rolling models (2024Q1-Q4 + 2025Q1-Q4) per ETF, each using a 6-year rolling window with relative validation blocks. Produces `ROLLING_REPORT.md` with IC decay tables and model health warnings.
+
+```bash
+# Train all 8 rolling quarters, all ETFs (default 6-year window)
+python3 day-model/train_rolling.py -e all
+
+# Train single quarter
+python3 day-model/train_rolling.py -e 300 -q 2024Q1
+
+# Custom window size
+python3 day-model/train_rolling.py -e all --window-years 4
+
+# Fewer trials for quick testing
+python3 day-model/train_rolling.py -e all --trials 50
+
+# Regenerate report from existing results (skip training)
+python3 day-model/train_rolling.py -e all --report-only
+```
+
+Alternatively, use `train_model.py` directly with rolling flags:
+```bash
+python3 day-model/train_model.py -e all --rolling --window-years 6    # All 8 quarters
+python3 day-model/train_model.py -e 300 --rolling-quarter 2024Q1       # Single quarter
+python3 day-model/train_model.py -e 300 --lockbox 2024-06-01           # Custom lockbox
+```
+
+Generate rolling report with diagnostic plots:
+```bash
+python3 day-model/generate_report.py --rolling            # Full rolling report
+python3 day-model/generate_report.py --rolling -q 2024Q1  # Single quarter
+```
+
+Run backtest with rolling models (auto-selects per date):
+```bash
+python3 day-model/backtest_simulator.py --etf all --rolling
+```
+
+**Rolling Artifact Layout**:
+```
+day-model/
+  models/rolling/linear_{tag}_r{YYYYMM}.joblib
+  data/rolling/results_{tag}_r{YYYYMM}.json
+  plots/rolling/{YYYY}Q{Q}/diagnostics_{tag}_r{YYYYMM}.png
+  ROLLING_REPORT.md
+```
+
+**Warning System** (pre-lockbox validation metrics only):
+- **OK**: Outer validation IC >= 0 and no significant decay.
+- **WARNING**: Outer IC < 0 OR outer Tail IC < 0 (single metric negative).
+- **ALERT**: Both outer IC and Tail IC negative, OR IC decay > 50% vs previous quarter.
+
 ### Side-Specific Objective (`--both` default | `--side single|long|short`)
 
 Feature pipeline (screening → CSS → VIF → CPCV) unchanged. Only validation objective (V2) and lockbox Tail IC side-aware:
