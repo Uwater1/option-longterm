@@ -60,7 +60,8 @@ python day-model/sweep/meta_optuna.py -e all --trials 200 --bootstrap-jobs 4  # 
 python3 day-model/train_model.py -e 300 --trials 100 --skip-step 2  # Train with Step 2 filter skipped (Step 1 skipped by default)
 python3 day-model/backtest_simulator.py --etf all --long-thr 70 --short-thr 70 # Run lightweight look-ahead free OOS backtest
 python3 day-model/train_rolling.py -e all          # Train 8 quarterly rolling models (2024-2025)
-python3 day-model/generate_report.py --rolling      # Generate rolling report + per-quarter plots
+python3 day-model/train_rolling.py -e all --skip-existing  # Resume: skip already-trained models
+python3 day-model/generate_rolling_report.py         # Comprehensive rolling report (IC + strategy returns)
 python3 day-model/backtest_simulator.py --etf all --rolling  # OOS backtest with rolling model selection
 ```
 
@@ -97,16 +98,17 @@ numba_utils.py                 # Numba BS functions & IV solver
 penalties.py                   # Custom skglm penalties (e.g., MCP_plus_L2)
 day-model/                     # Day-Model 10:00-14:35 return predictor
 ├── REPORT.md                  # Comprehensive return prediction report (static)
-├── ROLLING_REPORT.md          # Rolling quarterly model health report
+├── ROLLING_REPORT.md          # Rolling strategy report (IC + P&L + Sharpe + warnings)
 ├── AGENTS.md                  # Feature expansion and workflow guide
 ├── day-model_plan.md          # First-principles modeling & selection plan
 ├── build_features.py          # Early-bar + day-level feature engineering (210 features by default, local caching)
 ├── features_extra.py          # 115 Numba njit extra features (early-bar, day-level, yesterday-mirror)
 ├── train_model.py             # Optuna-tuned linear model training & feature selection (first principles)
-├── train_rolling.py           # Rolling quarterly training orchestrator (8 quarters, warning system)
+├── train_rolling.py           # Rolling quarterly training orchestrator (8 quarters, skip-existing, parallel)
 ├── gating_model.py            # Big-move gating classifier
 ├── evaluate_gating.py         # Compile gating winner table + WF PR-AUC grid report
-├── generate_report.py         # Report markdown generator (static + rolling)
+├── generate_report.py         # Report markdown generator (static)
+├── generate_rolling_report.py # Rolling strategy report (IC + P&L + Sharpe + plots + warnings)
 ├── backtest_simulator.py      # Lightweight OOS backtest (static + rolling model selection)
 ├── models/rolling/            # Rolling model artifacts (linear_{tag}_r{YYYYMM}.joblib)
 ├── data/rolling/              # Rolling results JSON

@@ -2617,7 +2617,7 @@ if __name__ == "__main__":
         rq = args.rolling_quarter.upper()
         y = int(rq[:4])
         q = int(rq[5])
-        m = (q - 1) * 3 + 1
+        m = q * 3  # Q1=Mar, Q2=Jun, Q3=Sep, Q4=Dec
         lockbox_dates = [f"{y}-{m:02d}-01"]
         is_rolling = True
     elif args.lockbox:

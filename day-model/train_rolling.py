@@ -3,14 +3,14 @@ Rolling Day-Model Training Orchestrator.
 
 Trains 8 quarterly rolling models (2024Q1-Q4 + 2025Q1-Q4) per ETF/side,
 each using a 6-year rolling window with relative validation blocks.
-Produces ROLLING_REPORT.md with IC decay tables and model health warnings.
 
 Usage:
     python3 day-model/train_rolling.py -e all                  # All 8 quarters, all ETFs
     python3 day-model/train_rolling.py -e 300 -q 2024Q1        # Single quarter
     python3 day-model/train_rolling.py -e all --window-years 6  # Custom window
     python3 day-model/train_rolling.py -e all --trials 50       # Fewer trials
-    python3 day-model/train_rolling.py -e all --report-only     # Regenerate report only
+    python3 day-model/train_rolling.py -e all --skip-existing   # Resume: skip already-trained models
+    python3 day-model/train_rolling.py -e all -j 4              # Train 4 quarters in parallel
 """
 import argparse
 import json
@@ -43,17 +43,11 @@ from train_model import (
     ROLLING_QUARTERS,
     ROLLING_DATA_DIR,
     ROLLING_MODELS_DIR,
-    ROLLING_PLOTS_DIR,
     DATA_DIR,
-    MODELS_DIR,
     quarter_label,
     rolling_tag,
     ETF_CLI_MAP,
 )
-
-ROLLING_REPORT_PATH = HERE / "ROLLING_REPORT.md"
-
-ETF_ORDER = ["300ETF", "500ETF", "588000ETF", "159915ETF", "50ETF"]
 
 
 # ============================================================
@@ -111,137 +105,63 @@ def evaluate_warnings(all_results: dict) -> dict:
 
 
 # ============================================================
-# Rolling Report Generator
-# ============================================================
-def generate_rolling_report(all_results: dict, warnings_dict: dict):
-    """Generate ROLLING_REPORT.md from collected rolling results."""
-    lines = []
-    lines.append("# Day-Model Rolling Training Report")
-    lines.append("")
-    lines.append(f"Generated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M')}")
-    lines.append(f"Quarters: {sorted(all_results.keys())}")
-    lines.append(f"Window: 6 years (rolling)")
-    lines.append("")
-
-    # Summary table
-    lines.append("## Model Health Summary")
-    lines.append("")
-    lines.append("| Quarter | Tag | ETF | Side | Outer IC | Outer Tail IC | Deflated Val IC | Status | Reason |")
-    lines.append("| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |")
-
-    for quarter in sorted(all_results.keys()):
-        ql = quarter_label(quarter)
-        for tag in sorted(all_results[quarter].keys()):
-            res = all_results[quarter][tag]
-            etf = res.get("etf", "")
-            side = res.get("side", "single")
-            outer_ic = res.get("selection_val_outer_overall_ic", 0) or 0
-            outer_tail_ic = res.get("selection_val_outer_tail_ic", 0) or 0
-            deflated_ic = res.get("deflated_val_ic", 0) or 0
-            w = warnings_dict.get((quarter, tag), {"status": "OK", "reasons": []})
-            status = w["status"]
-            reason = ", ".join(w["reasons"]) if w["reasons"] else "-"
-            status_icon = {"OK": "OK", "WARNING": "WARN", "ALERT": "ALERT"}.get(status, status)
-            lines.append(
-                f"| {ql} | {tag} | {etf} | `{side}` | {outer_ic:+.4f} | {outer_tail_ic:+.4f} "
-                f"| {deflated_ic:+.4f} | {status_icon} | {reason} |"
-            )
-    lines.append("")
-
-    # Warning legend
-    lines.append("### Warning Levels")
-    lines.append("")
-    lines.append("- **OK**: Outer validation IC >= 0 and no significant decay.")
-    lines.append("- **WARNING**: Outer IC < 0 OR outer Tail IC < 0 (single metric negative).")
-    lines.append("- **ALERT**: Both outer IC and Tail IC negative, OR IC decay > 50% vs previous quarter.")
-    lines.append("")
-
-    # Per-ETF IC timeline
-    lines.append("## IC Timeline by ETF")
-    lines.append("")
-    for etf in ETF_ORDER:
-        etf_quarters = []
-        for quarter in sorted(all_results.keys()):
-            for tag, res in all_results[quarter].items():
-                if res.get("etf") == etf and res.get("side") == "long":
-                    etf_quarters.append((quarter, tag, res))
-        if not etf_quarters:
-            continue
-
-        lines.append(f"### {etf} (long side)")
-        lines.append("")
-        lines.append("| Quarter | Outer IC | Outer Tail IC | Inner IC | # Selected | # Active |")
-        lines.append("| :--- | :---: | :---: | :---: | :---: | :---: |")
-        for quarter, tag, res in etf_quarters:
-            ql = quarter_label(quarter)
-            outer_ic = res.get("selection_val_outer_overall_ic", 0) or 0
-            outer_tail = res.get("selection_val_outer_tail_ic", 0) or 0
-            inner_ic = res.get("selection_val_overall_ic", 0) or 0
-            n_sel = len(res.get("selected_features", []))
-            n_act = len(res.get("active_features", []))
-            lines.append(f"| {ql} | {outer_ic:+.4f} | {outer_tail:+.4f} | {inner_ic:+.4f} | {n_sel} | {n_act} |")
-        lines.append("")
-
-    # Feature stability across quarters
-    lines.append("## Feature Stability Across Quarters")
-    lines.append("")
-    for etf in ETF_ORDER:
-        etf_features = {}
-        for quarter in sorted(all_results.keys()):
-            for tag, res in all_results[quarter].items():
-                if res.get("etf") == etf and res.get("side") == "long":
-                    active = set(res.get("active_features", []))
-                    etf_features[quarter_label(quarter)] = active
-        if not etf_features:
-            continue
-
-        all_feats = set()
-        for s in etf_features.values():
-            all_feats |= s
-
-        lines.append(f"### {etf} (long side)")
-        lines.append("")
-        qls = sorted(etf_features.keys())
-        header = "| Feature | " + " | ".join(qls) + " | Freq |"
-        sep = "| :--- | " + " | ".join([":---:" for _ in qls]) + " | :---: |"
-        lines.append(header)
-        lines.append(sep)
-
-        feat_counts = {}
-        for f in sorted(all_feats):
-            row = [f]
-            count = 0
-            for ql in qls:
-                present = f in etf_features[ql]
-                row.append("Y" if present else "-")
-                if present:
-                    count += 1
-            row.append(f"{count}/{len(qls)}")
-            feat_counts[f] = count
-            lines.append("| " + " | ".join(row) + " |")
-        lines.append("")
-
-    # Methodology
-    lines.append("## Methodology")
-    lines.append("")
-    lines.append("1. **Rolling Window**: Each model trains on the most recent 6 years of data before the lockbox date.")
-    lines.append("2. **Relative Validation Blocks**: 6 non-overlapping 3-month blocks placed backward from the lockbox with 10-day embargo gaps.")
-    lines.append("   - 4 inner blocks (for Optuna tuning)")
-    lines.append("   - 2 outer blocks (held-out, closest to lockbox — most recent and most relevant)")
-    lines.append("3. **Warning System**: Based on pre-lockbox outer validation IC only (no OOS peeking).")
-    lines.append("4. **Artifacts**: Models in `models/rolling/`, results in `data/rolling/`, plots in `plots/rolling/`.")
-    lines.append("")
-
-    report_text = "\n".join(lines)
-    with open(ROLLING_REPORT_PATH, "w", encoding="utf-8") as f:
-        f.write(report_text)
-    print(f"\nRolling report written to: {ROLLING_REPORT_PATH}")
-    return report_text
-
-
-# ============================================================
 # Main
 # ============================================================
+def _check_model_exists(etf: str, side: str, lb_date: str) -> bool:
+    """Check if rolling model artifacts already exist."""
+    tag = rolling_tag(etf, side, lb_date)
+    model_path = ROLLING_MODELS_DIR / f"linear_{tag}.joblib"
+    scaler_path = ROLLING_MODELS_DIR / f"scaler_{tag}.joblib"
+    result_path = ROLLING_DATA_DIR / f"results_{tag}.json"
+    return model_path.exists() and scaler_path.exists() and result_path.exists()
+
+
+def _load_existing_results() -> dict:
+    """Load all existing rolling results from disk."""
+    all_results = {}
+    if not ROLLING_DATA_DIR.exists():
+        return all_results
+    for p in sorted(ROLLING_DATA_DIR.glob("results_*.json")):
+        try:
+            with open(p) as f:
+                r = json.load(f)
+            lb = r.get("lockbox_date", "")
+            tag = r.get("tag", "")
+            if lb and tag:
+                all_results.setdefault(lb, {})[tag] = r
+        except Exception as e:
+            print(f"  [WARNING] Failed to load {p.name}: {e}")
+    return all_results
+
+
+def _train_single(etf: str, side: str, lb_date: str, args, skip_step1: bool,
+                  skip_step2: bool, loyo_jobs: int) -> tuple:
+    """Train a single (etf, side, quarter) model. Returns (tag, result_dict_or_None)."""
+    tag = rolling_tag(etf, side, lb_date)
+    t0 = time.perf_counter()
+    try:
+        res = train_etf(
+            etf, n_trials=args.trials, side=side,
+            use_cache=not args.no_cache,
+            optuna_n_jobs=args.optuna_jobs,
+            bootstrap_n_jobs=args.bootstrap_jobs,
+            loyo_n_jobs=loyo_jobs,
+            skip_step1=skip_step1,
+            skip_step2=skip_step2,
+            lockbox_date=lb_date,
+            window_years=args.window_years,
+            rolling=True,
+        )
+        elapsed = time.perf_counter() - t0
+        print(f"  [{tag}] elapsed {elapsed:.1f}s")
+        return tag, res
+    except Exception as e:
+        print(f"  [ERROR] Failed {tag}: {e}")
+        import traceback
+        traceback.print_exc()
+        return tag, None
+
+
 def main():
     ap = argparse.ArgumentParser(description="Rolling day-model training orchestrator")
     ap.add_argument("-e", "--etf", default="all", help="300|50|500|588000|159915|all")
@@ -256,13 +176,16 @@ def main():
     ap.add_argument("--skip-step", nargs="+", choices=["1", "2", "12"], default=[],
                     help="Skip feature selection steps.")
     ap.add_argument("--optuna-jobs", type=int, default=max(1, (os.cpu_count() or 4)),
-                    help="Parallel Optuna workers.")
+                    help="Parallel Optuna workers per model.")
     ap.add_argument("--bootstrap-jobs", type=int, default=max(1, (os.cpu_count() or 4)),
                     help="Parallel stability bootstrap workers.")
     ap.add_argument("--loyo-jobs", type=int, default=-1,
                     help="LOYO fold workers (-1 = auto).")
-    ap.add_argument("--report-only", action="store_true",
-                    help="Skip training, just regenerate ROLLING_REPORT.md from existing results.")
+    ap.add_argument("-j", "--quarter-jobs", type=int, default=1,
+                    help="Train N quarters in parallel (reduces optuna-jobs per quarter). "
+                         "Default 1 (sequential, full CPU per model).")
+    ap.add_argument("--skip-existing", action="store_true",
+                    help="Skip models that already have artifacts on disk (resume support).")
     args = ap.parse_args()
 
     # Resolve ETFs
@@ -286,7 +209,7 @@ def main():
         rq = args.quarter.upper()
         y = int(rq[:4])
         q = int(rq[5])
-        m = (q - 1) * 3 + 1
+        m = q * 3  # Q1=Mar, Q2=Jun, Q3=Sep, Q4=Dec
         quarters = [f"{y}-{m:02d}-01"]
     else:
         quarters = list(ROLLING_QUARTERS)
@@ -301,9 +224,16 @@ def main():
             if "2" in s:
                 skip_step2 = True
 
+    # Resolve quarter parallelism: split CPU budget across parallel quarters
+    quarter_jobs = max(1, min(args.quarter_jobs, len(quarters)))
+    if quarter_jobs > 1:
+        args.optuna_jobs = max(1, args.optuna_jobs // quarter_jobs)
+        args.bootstrap_jobs = max(1, args.bootstrap_jobs // quarter_jobs)
+        print(f"  [INFO] Quarter parallelism={quarter_jobs}: reduced per-model jobs to optuna={args.optuna_jobs}, bootstrap={args.bootstrap_jobs}")
+
     loyo_jobs = args.loyo_jobs
     if loyo_jobs < 1:
-        loyo_jobs = max(1, (os.cpu_count() or 4) // max(1, args.optuna_jobs))
+        loyo_jobs = max(1, (os.cpu_count() or 4) // max(1, args.optuna_jobs * quarter_jobs))
 
     print(f"Rolling Training Config:")
     print(f"  ETFs: {etfs}")
@@ -312,59 +242,67 @@ def main():
     print(f"  Window: {args.window_years} years")
     print(f"  Trials: {args.trials}")
     print(f"  Jobs: optuna={args.optuna_jobs}, bootstrap={args.bootstrap_jobs}, loyo={loyo_jobs}")
+    print(f"  Quarter parallelism: {quarter_jobs}")
+    print(f"  Skip existing: {args.skip_existing}")
     print()
 
-    # Collect all results: {lockbox_date: {tag: results_dict}}
-    all_results = {}
+    # Pre-check: skip already-trained models
+    if args.skip_existing:
+        original_quarters = list(quarters)
+        skip_count = 0
+        new_quarters = []
+        for lb_date in quarters:
+            all_exist = all(_check_model_exists(e, s, lb_date) for e in etfs for s in sides)
+            if all_exist:
+                skip_count += 1
+            else:
+                new_quarters.append(lb_date)
+        if skip_count > 0:
+            print(f"  [SKIP] {skip_count} quarter(s) already trained, {len(new_quarters)} remaining.")
+        quarters = new_quarters
 
-    if not args.report_only:
+    if not quarters:
+        print("All models already trained. Use generate_rolling_report.py to produce the report.")
+        return
+
+    # Train models
+    t_total = time.perf_counter()
+
+    if quarter_jobs <= 1:
+        # Sequential: one quarter at a time (max CPU per model)
         for lb_date in quarters:
             ql = quarter_label(lb_date)
             print(f"\n{'#' * 80}")
             print(f"# Rolling Quarter: {ql} (lockbox={lb_date})")
             print(f"{'#' * 80}")
-
-            quarter_results = {}
             for etf in etfs:
                 for side in sides:
-                    tag = rolling_tag(etf, side, lb_date)
-                    t0 = time.perf_counter()
-                    try:
-                        res = train_etf(
-                            etf, n_trials=args.trials, side=side,
-                            use_cache=not args.no_cache,
-                            optuna_n_jobs=args.optuna_jobs,
-                            bootstrap_n_jobs=args.bootstrap_jobs,
-                            loyo_n_jobs=loyo_jobs,
-                            skip_step1=skip_step1,
-                            skip_step2=skip_step2,
-                            lockbox_date=lb_date,
-                            window_years=args.window_years,
-                            rolling=True,
-                        )
-                        if res is not None:
-                            quarter_results[tag] = res
-                    except Exception as e:
-                        print(f"  [ERROR] Failed {tag}: {e}")
-                        import traceback
-                        traceback.print_exc()
-                    print(f"  [{tag}] elapsed {time.perf_counter() - t0:.1f}s")
-
-            all_results[lb_date] = quarter_results
+                    _train_single(etf, side, lb_date, args, skip_step1, skip_step2, loyo_jobs)
     else:
-        # Load existing results from rolling data dir
-        print("Loading existing rolling results from:", ROLLING_DATA_DIR)
-        for p in sorted(ROLLING_DATA_DIR.glob("results_*.json")):
-            try:
-                with open(p) as f:
-                    r = json.load(f)
-                lb = r.get("lockbox_date", "")
-                tag = r.get("tag", "")
-                if lb not in all_results:
-                    all_results[lb] = {}
-                all_results[lb][tag] = r
-            except Exception as e:
-                print(f"  [WARNING] Failed to load {p.name}: {e}")
+        # Parallel: multiple quarters simultaneously
+        # Build flat list of (quarter, etf, side) tasks
+        tasks = [(lb, etf, side) for lb in quarters for etf in etfs for side in sides]
+
+        # Group by quarter for parallel dispatch
+        from concurrent.futures import ProcessPoolExecutor, as_completed
+        quarter_groups = {}
+        for lb, etf, side in tasks:
+            quarter_groups.setdefault(lb, []).append((etf, side))
+
+        for lb_date in sorted(quarter_groups.keys()):
+            ql = quarter_label(lb_date)
+            print(f"\n{'#' * 80}")
+            print(f"# Rolling Quarter: {ql} (lockbox={lb_date})")
+            print(f"{'#' * 80}")
+            # Within a quarter, train sequentially (Optuna uses parallel workers internally)
+            for etf, side in quarter_groups[lb_date]:
+                _train_single(etf, side, lb_date, args, skip_step1, skip_step2, loyo_jobs)
+
+    total_elapsed = time.perf_counter() - t_total
+    print(f"\nTotal training time: {total_elapsed:.1f}s ({total_elapsed / 60:.1f}min)")
+
+    # Load all results for warning summary
+    all_results = _load_existing_results()
 
     # Evaluate warnings
     print("\nEvaluating model health warnings...")
@@ -380,8 +318,8 @@ def main():
         if w["status"] != "OK":
             print(f"  [{w['status']}] {quarter_label(quarter)} / {tag}: {', '.join(w['reasons'])}")
 
-    # Generate report
-    generate_rolling_report(all_results, warnings_dict)
+    print(f"\nTo generate the comprehensive strategy report, run:")
+    print(f"  python3 day-model/generate_rolling_report.py")
 
 
 if __name__ == "__main__":

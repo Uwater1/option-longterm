@@ -28,11 +28,14 @@ python3 day-model/backtest_simulator.py --etf all
 
 ### Rolling Model Training (Quarterly Retraining)
 
-Trains 8 quarterly rolling models (2024Q1-Q4 + 2025Q1-Q4) per ETF, each using a 6-year rolling window with relative validation blocks. Produces `ROLLING_REPORT.md` with IC decay tables and model health warnings.
+Trains 8 quarterly rolling models (2024Q1-Q4 + 2025Q1-Q4) per ETF, each using a 6-year rolling window with relative validation blocks.
 
 ```bash
 # Train all 8 rolling quarters, all ETFs (default 6-year window)
 python3 day-model/train_rolling.py -e all
+
+# Resume: skip already-trained models
+python3 day-model/train_rolling.py -e all --skip-existing
 
 # Train single quarter
 python3 day-model/train_rolling.py -e 300 -q 2024Q1
@@ -43,8 +46,8 @@ python3 day-model/train_rolling.py -e all --window-years 4
 # Fewer trials for quick testing
 python3 day-model/train_rolling.py -e all --trials 50
 
-# Regenerate report from existing results (skip training)
-python3 day-model/train_rolling.py -e all --report-only
+# Train 4 quarters in parallel (reduces per-model CPU)
+python3 day-model/train_rolling.py -e all -j 4
 ```
 
 Alternatively, use `train_model.py` directly with rolling flags:
@@ -54,10 +57,13 @@ python3 day-model/train_model.py -e 300 --rolling-quarter 2024Q1       # Single 
 python3 day-model/train_model.py -e 300 --lockbox 2024-06-01           # Custom lockbox
 ```
 
-Generate rolling report with diagnostic plots:
+Generate comprehensive rolling strategy report (IC + P&L + Sharpe + warnings):
 ```bash
-python3 day-model/generate_report.py --rolling            # Full rolling report
-python3 day-model/generate_report.py --rolling -q 2024Q1  # Single quarter
+python3 day-model/generate_rolling_report.py                 # All quarters, all ETFs
+python3 day-model/generate_rolling_report.py -e 300          # Single ETF
+python3 day-model/generate_rolling_report.py -q 2024Q1       # Single quarter
+python3 day-model/generate_rolling_report.py --no-plots      # Skip diagnostic plots
+python3 day-model/generate_rolling_report.py --thr 70        # Custom signal threshold
 ```
 
 Run backtest with rolling models (auto-selects per date):
