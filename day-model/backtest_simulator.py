@@ -58,6 +58,8 @@ MODELS_DIR = ROOT_DIR / "day-model" / "models"
 FEATURES_DIR = ROOT_DIR / "day-model" / "data"
 ETF_5M_DIR = ROOT_DIR / "data"
 PLOTS_DIR = ROOT_DIR / "day-model" / "plots"
+ROLLING_MODELS_DIR = MODELS_DIR / "rolling"
+ROLLING_DATA_DIR = ROOT_DIR / "day-model" / "data" / "rolling"
 
 PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -127,6 +129,107 @@ def load_predictions(etf: str) -> tuple[pd.Series, pd.Series]:
     # Negate short predictions so high score = strong short conviction
     short_scores = -pd.Series(short_pred, index=df.index)
 
+    return long_scores, short_scores
+
+
+def load_predictions_rolling(etf: str, max_age_months: int = 6) -> tuple[pd.Series, pd.Series]:
+    """Load rolling model predictions, auto-selecting the best model per date.
+
+    For each OOS date, uses the most recent rolling model whose lockbox is
+    within `max_age_months` months and whose lockbox <= that date.
+    Falls back to static model for dates not covered by any rolling model.
+    """
+    feat_path = FEATURES_DIR / f"features_{etf}.parquet"
+    if not feat_path.exists():
+        raise FileNotFoundError(f"Feature parquet not found: {feat_path}")
+    df = pd.read_parquet(feat_path)
+    if "date" not in df.columns:
+        df = df.reset_index()
+    df["date"] = pd.to_datetime(df["date"])
+    df = df.sort_values("date").reset_index(drop=True)
+
+    # Discover rolling models for this ETF
+    rolling_models = []  # list of (lockbox_date, long_model, long_scaler, short_model, short_scaler)
+    if ROLLING_MODELS_DIR.exists():
+        for model_path in sorted(ROLLING_MODELS_DIR.glob(f"linear_{etf}_long_r*.joblib")):
+            tag = model_path.stem.replace("linear_", "")
+            scaler_path = ROLLING_MODELS_DIR / f"scaler_{tag}.joblib"
+            short_model_path = ROLLING_MODELS_DIR / f"linear_{etf}_short_r{tag.split('_r')[-1]}.joblib"
+            short_scaler_path = ROLLING_MODELS_DIR / f"scaler_{etf}_short_r{tag.split('_r')[-1]}.joblib"
+
+            if not (scaler_path.exists() and short_model_path.exists() and short_scaler_path.exists()):
+                continue
+
+            # Parse lockbox date from tag suffix: rYYYYMM
+            r_suffix = tag.split("_r")[-1]
+            lb_date = pd.Timestamp(f"{r_suffix[:4]}-{r_suffix[4:]}-01")
+
+            long_model = joblib.load(model_path)
+            long_scaler_meta = joblib.load(scaler_path)
+            short_model = joblib.load(short_model_path)
+            short_scaler_meta = joblib.load(short_scaler_path)
+
+            rolling_models.append({
+                "lockbox": lb_date,
+                "long_model": long_model, "long_scaler": long_scaler_meta,
+                "short_model": short_model, "short_scaler": short_scaler_meta,
+            })
+
+    if not rolling_models:
+        print(f"  [WARNING] No rolling models found for {etf}, falling back to static.")
+        return load_predictions(etf)
+
+    # Sort by lockbox date descending (most recent first)
+    rolling_models.sort(key=lambda m: m["lockbox"], reverse=True)
+
+    # Compute predictions for each model and stitch together
+    long_scores = pd.Series(dtype=float)
+    short_scores = pd.Series(dtype=float)
+    remaining_mask = pd.Series(True, index=df.index)
+
+    max_age = pd.DateOffset(months=max_age_months)
+
+    for m in rolling_models:
+        lb = m["lockbox"]
+        # This model covers dates in [lb, lb + max_age)
+        applicable_mask = remaining_mask & (df["date"] >= lb) & (df["date"] < lb + max_age)
+        if not applicable_mask.any():
+            continue
+
+        # Long predictions
+        long_sel = m["long_scaler"]["selected_features"]
+        X_long = df.loc[applicable_mask, long_sel].copy()
+        X_long = X_long.fillna(X_long.median().fillna(0.0))
+        X_long_scaled = m["long_scaler"]["scaler"].transform(X_long.values)
+        long_pred = X_long_scaled @ m["long_model"].coef_ + m["long_model"].intercept_
+        long_s = pd.Series(long_pred, index=df.index[applicable_mask])
+
+        # Short predictions
+        short_sel = m["short_scaler"]["selected_features"]
+        X_short = df.loc[applicable_mask, short_sel].copy()
+        X_short = X_short.fillna(X_short.median().fillna(0.0))
+        X_short_scaled = m["short_scaler"]["scaler"].transform(X_short.values)
+        short_pred = X_short_scaled @ m["short_model"].coef_ + m["short_model"].intercept_
+        short_s = -pd.Series(short_pred, index=df.index[applicable_mask])
+
+        long_scores = pd.concat([long_scores, long_s])
+        short_scores = pd.concat([short_scores, short_s])
+        remaining_mask[applicable_mask] = False
+
+    # Fill remaining dates with static model (if any)
+    if remaining_mask.any():
+        static_long_path = MODELS_DIR / f"linear_{etf}_long.joblib"
+        static_short_path = MODELS_DIR / f"linear_{etf}_short.joblib"
+        if static_long_path.exists() and static_short_path.exists():
+            print(f"  [INFO] {remaining_mask.sum()} dates not covered by rolling, using static model.")
+            static_long, static_short = load_predictions(etf)
+            static_long = static_long[static_long.index.isin(df.index[remaining_mask])]
+            static_short = static_short[static_short.index.isin(df.index[remaining_mask])]
+            long_scores = pd.concat([long_scores, static_long])
+            short_scores = pd.concat([short_scores, static_short])
+
+    long_scores = long_scores.sort_index()
+    short_scores = short_scores.sort_index()
     return long_scores, short_scores
 
 
@@ -312,6 +415,10 @@ def main():
     ap.add_argument("--min-periods", type=int, default=60, help="Expanding rank warmup period")
     ap.add_argument("--stop-type", choices=["pct", "atr", "struct", "struct_atr"], default=None, help="Stop loss type")
     ap.add_argument("--stop-val", type=float, default=None, help="Stop loss parameter value (pct like 0.005 or ATR multiplier like 1.0)")
+    ap.add_argument("--rolling", action="store_true",
+                    help="Use rolling models for predictions (auto-select per date, fall back to static).")
+    ap.add_argument("--max-age-months", type=int, default=6,
+                    help="Max age in months for rolling model coverage (default 6).")
     args = ap.parse_args()
 
     etfs = ["50ETF", "300ETF", "500ETF", "588000ETF", "159915ETF"]
@@ -326,6 +433,7 @@ def main():
     print("=" * 80)
     print(f"DAY-MODEL WALK-FORWARD OOS SIMULATOR")
     print(f"OOS Period : {LOCKBOX_DATE} onwards")
+    print(f"Models     : {'ROLLING (auto-select per date)' if args.rolling else 'STATIC'}")
     print(f"Thresholds : Long={args.long_thr}%, Short={args.short_thr}%")
     print(f"Stops      : Type={args.stop_type}, Val={args.stop_val}")
     print(f"Cost       : {args.cost_bps} bps")
@@ -337,7 +445,10 @@ def main():
     for etf in etfs:
         try:
             # 1. Predictions
-            long_scores, short_scores = load_predictions(etf)
+            if args.rolling:
+                long_scores, short_scores = load_predictions_rolling(etf, max_age_months=args.max_age_months)
+            else:
+                long_scores, short_scores = load_predictions(etf)
             
             # 2. Expanding Percentile Ranks (walk-forward, look-ahead free)
             long_rank = expanding_pct_rank(long_scores, min_periods=args.min_periods)

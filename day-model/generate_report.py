@@ -29,6 +29,10 @@ DATA_DIR = HERE / "data"
 MODELS_DIR = HERE / "models"
 PLOTS_DIR = HERE / "plots"
 REPORT_PATH = HERE / "REPORT.md"
+ROLLING_DATA_DIR = DATA_DIR / "rolling"
+ROLLING_MODELS_DIR = MODELS_DIR / "rolling"
+ROLLING_PLOTS_DIR = PLOTS_DIR / "rolling"
+ROLLING_REPORT_PATH = HERE / "ROLLING_REPORT.md"
 
 ETF_ORDER = ["300ETF", "500ETF", "588000ETF", "159915ETF"]
 TARGET = "trade_return"
@@ -1206,5 +1210,194 @@ def _write_report(results_dict):
         f.write("\n".join(lines))
 
 
+# ============================================================
+# Rolling Report
+# ============================================================
+def _quarter_label(lockbox_date: str) -> str:
+    dt = pd.Timestamp(lockbox_date)
+    q = (dt.month - 1) // 3 + 1
+    return f"{dt.year}Q{q}"
+
+
+def _load_rolling_results() -> dict:
+    """Load all rolling results from ROLLING_DATA_DIR, grouped by lockbox_date."""
+    out = {}
+    if not ROLLING_DATA_DIR.exists():
+        return out
+    for p in sorted(ROLLING_DATA_DIR.glob("results_*.json")):
+        try:
+            with open(p) as f:
+                r = json.load(f)
+            lb = r.get("lockbox_date", "")
+            if lb not in out:
+                out[lb] = {}
+            out[lb][r.get("tag", "")] = r
+        except Exception as e:
+            print(f"  [WARNING] Failed to load {p.name}: {e}")
+    return out
+
+
+def _process_rolling_tag(tag: str, r: dict, quarter_dir: Path):
+    """Process ONE rolling tag: load model, predict on OOS window, compute metrics, plot."""
+    import joblib as _jlib
+    from scipy.stats import spearmanr as _sr
+
+    etf = r["etf"]
+    side = r.get("side", "single")
+    lb_date = r.get("lockbox_date", LOCKBOX_DATE)
+    model_path = ROLLING_MODELS_DIR / f"linear_{tag}.joblib"
+    scaler_path = ROLLING_MODELS_DIR / f"scaler_{tag}.joblib"
+
+    if not (model_path.exists() and scaler_path.exists()):
+        return tag, None, f"missing model/scaler files"
+
+    cached = _load_etf_features(etf)
+    if cached is None:
+        return tag, None, "missing features parquet"
+
+    df, _ = cached
+    try:
+        model = _jlib.load(model_path)
+        scaler_meta = _jlib.load(scaler_path)
+        selected_features = scaler_meta["selected_features"]
+        scaler = scaler_meta["scaler"]
+        target_col = scaler_meta.get("target", TARGET)
+
+        y = df[target_col].values.astype(np.float32)
+        y_scaled = (y * 100.0).astype(np.float32)
+        X_df = df[selected_features].ffill()
+        col_med = X_df.median().fillna(0.0)
+        X_df = X_df.fillna(col_med)
+        X = X_df.values.astype(np.float32)
+
+        X_scaled = scaler.transform(X)
+        preds = model.predict(X_scaled).astype(np.float32)
+
+        # OOS window: lockbox to lockbox + 3 months (or end of data)
+        lb_ts = pd.Timestamp(lb_date)
+        oos_end = lb_ts + pd.DateOffset(months=3)
+        oos_mask = (df["date"] >= lb_ts) & (df["date"] < oos_end)
+        all_post_lb = df["date"] >= lb_ts
+
+        dates_all = df["date"].values
+        y_oos = y_scaled[oos_mask]
+        pred_oos = preds[oos_mask]
+        dates_oos = df["date"][oos_mask].values
+        y_post = y_scaled[all_post_lb]
+        pred_post = preds[all_post_lb]
+
+        # OOS metrics
+        oos_ic = float(_sr(pred_oos, y_oos)[0]) if len(y_oos) >= 5 else 0.0
+        if np.isnan(oos_ic):
+            oos_ic = 0.0
+        oos_tail_ic = side_tail_ic(y_oos, pred_oos, side)
+        oos_mono = compute_decile_monotonicity(y_oos, pred_oos)
+
+        r["oos_ic"] = oos_ic
+        r["oos_tail_ic"] = oos_tail_ic
+        r["oos_mono"] = oos_mono
+        r["n_oos_samples"] = int(len(y_oos))
+
+        # Persist updated results
+        with open(ROLLING_DATA_DIR / f"results_{tag}.json", "w") as f_json:
+            json.dump(r, f_json, indent=2, default=str)
+
+        # Render diagnostic plot for this quarter
+        quarter_dir.mkdir(parents=True, exist_ok=True)
+        ql = _quarter_label(lb_date)
+        extra_stats = {
+            "IC": float(oos_ic),
+            f"TailIC[{side}]": float(oos_tail_ic),
+            "Mono": float(oos_mono),
+        }
+
+        fig, axes = plt.subplots(5, 3, figsize=(22, 25))
+        axes_flat = axes.flatten()
+        stat_txt = " | ".join(f"{k}={v:+.4f}" if isinstance(v, float) else f"{k}={v}"
+                              for k, v in extra_stats.items())
+        fig.suptitle(f"Rolling {ql} — {etf} (side={side})  |  {stat_txt}", fontsize=14, y=0.995)
+
+        _render_coefs(axes_flat[0], model, selected_features)
+        _render_decile_oos(axes_flat[1], y_oos, pred_oos)
+        _render_decile_all(axes_flat[2], y_post, pred_post)
+        _render_tail_hist(axes_flat[3], y_oos, pred_oos, side)
+        _render_tail_scatter(axes_flat[4], y_oos, pred_oos, side)
+        _render_yearly_overall_ic(axes_flat[5], dates_oos, y_oos, pred_oos)
+        _render_yearly_tail_ic(axes_flat[6], dates_oos, y_oos, pred_oos, side)
+        _render_yearly_hit_rate(axes_flat[7], dates_oos, y_oos, pred_oos, side)
+        _render_tail_vs_rest(axes_flat[8], y_oos, pred_oos, side)
+        _render_rolling_tail_ic(axes_flat[9], dates_oos, y_oos, pred_oos, side)
+        _render_rolling_overall_ic(axes_flat[10], dates_oos, y_oos, pred_oos)
+        _render_pred_dist(axes_flat[11], pred_post, side)
+        _render_tail_equity(axes_flat[12], dates_oos, y_oos, pred_oos, side)
+        _render_quantile_decay(axes_flat[13], y_post, pred_post)
+        _render_precision_at_k(axes_flat[14], y_oos, pred_oos, side)
+
+        fig.tight_layout(rect=(0, 0, 1, 0.985))
+        fname = f"diagnostics_{tag}.png"
+        fig.savefig(quarter_dir / fname, dpi=110)
+        plt.close(fig)
+
+        return tag, fname, f"IC={oos_ic:+.4f} TailIC={oos_tail_ic:+.4f}"
+    except Exception as ex:
+        import traceback
+        return tag, None, f"FAILED: {ex}\n{traceback.format_exc()}"
+
+
+def main_rolling(quarter_filter: str = None):
+    """Generate rolling report with per-quarter diagnostic plots."""
+    print("Generating rolling day-model report...")
+    all_results = _load_rolling_results()
+    if not all_results:
+        print("  [ERROR] No rolling results found in", ROLLING_DATA_DIR)
+        print("  Run `python3 day-model/train_rolling.py -e all` first.")
+        return
+
+    ROLLING_PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Filter quarters if requested
+    if quarter_filter:
+        rq = quarter_filter.upper()
+        y = int(rq[:4])
+        q = int(rq[5])
+        m = (q - 1) * 3 + 1
+        target_date = f"{y}-{m:02d}-01"
+        all_results = {k: v for k, v in all_results.items() if k == target_date}
+
+    # Process each quarter
+    for lb_date in sorted(all_results.keys()):
+        ql = _quarter_label(lb_date)
+        quarter_dir = ROLLING_PLOTS_DIR / ql
+        quarter_dir.mkdir(parents=True, exist_ok=True)
+        print(f"\nProcessing {ql} ({lb_date}): {len(all_results[lb_date])} models")
+
+        for tag, r in sorted(all_results[lb_date].items()):
+            tag_out, fname, msg = _process_rolling_tag(tag, r, quarter_dir)
+            print(f"  {tag_out}: {msg}")
+
+    # Generate summary report using train_rolling's warning system + report generator
+    try:
+        sys.path.insert(0, str(HERE))
+        from train_rolling import evaluate_warnings, generate_rolling_report
+        warnings_dict = evaluate_warnings(all_results)
+        generate_rolling_report(all_results, warnings_dict)
+    except ImportError as e:
+        print(f"  [WARNING] Could not import train_rolling for warning system: {e}")
+        print("  Report generation incomplete.")
+
+    print("\nRolling report generation complete.")
+
+
 if __name__ == "__main__":
-    main()
+    import argparse
+    ap = argparse.ArgumentParser(description="Generate day-model reports")
+    ap.add_argument("--rolling", action="store_true",
+                    help="Generate rolling report instead of static report")
+    ap.add_argument("-q", "--quarter", default=None,
+                    help="Filter to single quarter (e.g. 2024Q1)")
+    args = ap.parse_args()
+
+    if args.rolling or args.quarter:
+        main_rolling(quarter_filter=args.quarter)
+    else:
+        main()

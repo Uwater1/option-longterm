@@ -94,6 +94,58 @@ ACTIVE_FEATURE_ESS_DIVISOR = 8.0  # Kish Effective Sample Size (ESS) divisor to 
 CSS_CORR_THRESHOLD = 0.80         # Correlation threshold for cluster merging in CSS (|r| >= threshold)
 VIF_THRESHOLD = 10.0              # Variance Inflation Factor (VIF) threshold to drop collinear features (5.0 for 50ETF)
 
+
+def compute_val_blocks(lockbox_date: str, window_years: int = 0):
+    """Compute 4 inner + 2 outer 3-month validation blocks relative to lockbox.
+
+    Blocks are placed backward from the lockbox with 10-day embargo gaps.
+    Outer blocks are the most recent (closest to lockbox), inner blocks are older.
+    When window_years=0, uses all available history (train_start = 2015-01-01).
+
+    Returns (inner_blocks, outer_blocks) each as list of (start, end) date strings.
+    """
+    lb = pd.Timestamp(lockbox_date)
+    if window_years > 0:
+        train_start = lb - pd.DateOffset(years=window_years)
+    else:
+        train_start = pd.Timestamp("2015-01-01")
+
+    blocks = []
+    cursor = lb - pd.Timedelta(days=10)  # embargo before lockbox
+    for _ in range(6):
+        end = cursor
+        start = end - pd.DateOffset(months=3)
+        if start < train_start:
+            start = train_start
+        blocks.append((start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")))
+        cursor = start - pd.Timedelta(days=10)  # embargo gap between blocks
+    blocks.reverse()  # chronological order
+    inner = blocks[:4]
+    outer = blocks[4:]
+    return inner, outer
+
+
+# Rolling quarter schedule (8 quarters: 2024 Q1-Q4 + 2025 Q1-Q4)
+ROLLING_QUARTERS = [
+    "2024-03-01", "2024-06-01", "2024-09-01", "2024-12-01",
+    "2025-03-01", "2025-06-01", "2025-09-01", "2025-12-01",
+]
+
+
+def quarter_label(lockbox_date: str) -> str:
+    """Convert lockbox date to short quarter label, e.g. '2024-03-01' -> '2024Q1'."""
+    dt = pd.Timestamp(lockbox_date)
+    q = (dt.month - 1) // 3 + 1
+    return f"{dt.year}Q{q}"
+
+
+def rolling_tag(etf_name: str, side: str, lockbox_date: str) -> str:
+    """Build rolling model tag: e.g. '300ETF_long_r202403'."""
+    dt = pd.Timestamp(lockbox_date)
+    suffix = f"r{dt.year}{dt.month:02d}"
+    base = etf_name if side == "single" else f"{etf_name}_{side}"
+    return f"{base}_{suffix}"
+
 # Side-Specific Objective configuration.
 # - "single" (legacy): Tail IC two-sided (top10% U bot10%), weights V1..V4 = [0.40, 0.40, 0.15, 0.05]
 # - "long": Tail IC = pred >= P85(pred) only; drop V4 (Top-Bottom Spread), renormalize.
@@ -118,9 +170,15 @@ DATA_DIR = HERE / "data"
 MODELS_DIR = HERE / "models"
 PLOTS_DIR = HERE / "plots"
 CACHE_DIR = HERE / "data"  # cache_* files live next to feature parquets
+ROLLING_MODELS_DIR = MODELS_DIR / "rolling"
+ROLLING_DATA_DIR = DATA_DIR / "rolling"
+ROLLING_PLOTS_DIR = PLOTS_DIR / "rolling"
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
+ROLLING_MODELS_DIR.mkdir(parents=True, exist_ok=True)
+ROLLING_DATA_DIR.mkdir(parents=True, exist_ok=True)
+ROLLING_PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ============================================================
@@ -830,15 +888,15 @@ def compute_pbo_cscv(is_matrix, oos_matrix):
 
 def run_quarterly_rolling_refit_test(df: pd.DataFrame, bagged_selected_idx: np.ndarray,
                                      model_type: str, params: dict, k_weight: float,
-                                     side: str = "single") -> dict:
+                                     side: str = "single", lockbox_date: str = LOCKBOX_DATE) -> dict:
     """Measures IC decay per quarter post-lockbox using a static model
     vs a quarterly rolling refit model (QuantBench method).
     """
     # Restrict features
     features_bagged = [FEATURES[i] for i in bagged_selected_idx]
     
-    # Lockbox starts at pd.Timestamp(LOCKBOX_DATE)
-    lockbox_start = pd.Timestamp(LOCKBOX_DATE)
+    # Lockbox starts at the given lockbox_date (or default)
+    lockbox_start = pd.Timestamp(lockbox_date)
     end_date = df["date"].max()
     
     # We generate quarterly boundaries starting from LOCKBOX_DATE
@@ -1067,9 +1125,12 @@ def find_plateau_trial(study, r=0.25, min_neighbors=8, min_valid_neighbors=6):
 def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
               use_cache: bool = True, optuna_n_jobs: int = OPTUNA_N_JOBS,
               bootstrap_n_jobs: int = BOOTSTRAP_N_JOBS, loyo_n_jobs: int = 1,
-              skip_step1: bool = True, skip_step2: bool = False):
+              skip_step1: bool = True, skip_step2: bool = False,
+              lockbox_date: str = LOCKBOX_DATE, window_years: int = 0,
+              rolling: bool = False):
     print(f"\n" + "=" * 80)
     print(f"Train {etf_name} (Side: {side})")
+    print(f"Lockbox: {lockbox_date} | Window: {window_years if window_years > 0 else 'all'} years | Rolling: {rolling}")
     print(f"Cache: {use_cache} | Jobs: Optuna={optuna_n_jobs}, Bootstrap={bootstrap_n_jobs}, LOYO={loyo_n_jobs}")
     print(f"=" * 80)
 
@@ -1090,6 +1151,22 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     df = df.sort_values("date").reset_index(drop=True)
     df["date"] = pd.to_datetime(df["date"])
 
+    # Rolling window: restrict to last `window_years` years before lockbox
+    if window_years > 0:
+        window_start = pd.Timestamp(lockbox_date) - pd.DateOffset(years=window_years)
+        df = df[df["date"] >= window_start].reset_index(drop=True)
+        print(f"  Windowed data: {len(df)} rows from {df['date'].min().date()} to {df['date'].max().date()}")
+
+    # Compute validation blocks relative to lockbox (or use static defaults)
+    if rolling or lockbox_date != LOCKBOX_DATE:
+        val_inner, val_outer = compute_val_blocks(lockbox_date, window_years)
+        val_blocks_all = val_inner + val_outer
+        print(f"  Val blocks (relative): Inner={val_inner}, Outer={val_outer}")
+    else:
+        val_inner = VAL_BLOCKS_INNER
+        val_outer = VAL_BLOCKS_OUTER
+        val_blocks_all = VAL_BLOCKS
+
     # Handle NaNs in features
     # Robust fill: ffill then per-column median, then 0 for columns entirely NaN
     # (defensive against stale feature lists / partially-populated parquets).
@@ -1104,6 +1181,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     print(f"Loaded {N} rows, {X.shape[1]} features.")
 
     tag = etf_name if side == "single" else f"{etf_name}_{side}"
+    if rolling:
+        tag = rolling_tag(etf_name, side, lockbox_date)
     pilot_db_path = DATA_DIR / f"optuna_pilot_{tag}.log"
     main_db_path = DATA_DIR / f"optuna_main_{tag}.log"
 
@@ -1111,7 +1190,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     y_scaled = (y * np.float32(100.0)).astype(np.float32)
 
     # Step 0: Lockout split by date (ignoring OOS lockbox data to keep it untouched during training)
-    working_mask = df["date"] < LOCKBOX_DATE
+    working_mask = df["date"] < lockbox_date
     working_idx = np.where(working_mask)[0]
 
     X_working = _to_f32(X[working_idx])
@@ -1120,7 +1199,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # Nest feature selection & validation to eliminate leakage bias
     sel_val_mask = np.zeros(len(df), dtype=bool)
-    for start_val, end_val in VAL_BLOCKS:
+    for start_val, end_val in val_blocks_all:
         block_mask = (df["date"] >= pd.Timestamp(start_val)) & (df["date"] < pd.Timestamp(end_val))
         sel_val_mask |= block_mask
         
@@ -1131,7 +1210,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # Split validation blocks into inner (for tuning) and outer (held-out for evaluation)
     sel_val_inner_mask = np.zeros(len(df), dtype=bool)
-    for start_val, end_val in VAL_BLOCKS_INNER:
+    for start_val, end_val in val_inner:
         block_mask = (df["date"] >= pd.Timestamp(start_val)) & (df["date"] < pd.Timestamp(end_val))
         sel_val_inner_mask |= block_mask
         
@@ -1147,7 +1226,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
 
     sel_val_outer_mask = np.zeros(len(df), dtype=bool)
-    for start_val, end_val in VAL_BLOCKS_OUTER:
+    for start_val, end_val in val_outer:
         block_mask = (df["date"] >= pd.Timestamp(start_val)) & (df["date"] < pd.Timestamp(end_val))
         sel_val_outer_mask |= block_mask
         
@@ -1157,14 +1236,14 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     dates_sel_val_outer = df["date"].iloc[sel_val_outer_idx].reset_index(drop=True)
 
     # Initial selection train mask, excluding validation blocks
-    sel_train_mask = (df["date"] < LOCKBOX_DATE) & (~sel_val_mask)
+    sel_train_mask = (df["date"] < lockbox_date) & (~sel_val_mask)
     
     # Apply 10-day embargo at validation boundaries to prevent leakage from train to validation
     gap_days = 10
     sel_train_dates = df["date"][sel_train_mask]
     keep_train = np.ones(len(sel_train_dates), dtype=bool)
     
-    for start_val, end_val in VAL_BLOCKS:
+    for start_val, end_val in val_blocks_all:
         embargo_start = pd.Timestamp(start_val) - pd.Timedelta(days=gap_days)
         embargo_end = pd.Timestamp(end_val) + pd.Timedelta(days=gap_days)
         in_embargo = (sel_train_dates >= embargo_start) & (sel_train_dates <= embargo_end)
@@ -1201,7 +1280,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "v15_vif_cond", etf_name, len(FEATURES), int(parquet_mtime),
         int(X_sel_train.shape[0]), int(X_sel_train.shape[1]),
         STABILITY_B, STABILITY_PI, MIN_FEATURE, fdr_level,
-        tuple(VAL_BLOCKS), TARGET, vif_threshold,
+        tuple(val_blocks_all), TARGET, vif_threshold,
         skip_step1, skip_step2,
     ]
     select_cache_path = CACHE_DIR / f"cache_select_{etf_name}_{_cache_key(select_key)}.joblib"
@@ -1367,7 +1446,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     loyo_key = [
         "v10", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
-        tuple(VAL_BLOCKS), TARGET,
+        tuple(val_blocks_all), TARGET,
     ]
     loyo_cache_path = CACHE_DIR / f"cache_loyo_{etf_name}_{_cache_key(loyo_key)}.joblib"
 
@@ -2272,8 +2351,13 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     
     # Save the models/scalers/results to files
     tag = etf_name if side == "single" else f"{etf_name}_{side}"
-    
-    joblib.dump(final_model, MODELS_DIR / f"linear_{tag}.joblib")
+    if rolling:
+        tag = rolling_tag(etf_name, side, lockbox_date)
+
+    model_dir = ROLLING_MODELS_DIR if rolling else MODELS_DIR
+    data_dir = ROLLING_DATA_DIR if rolling else DATA_DIR
+
+    joblib.dump(final_model, model_dir / f"linear_{tag}.joblib")
     
     # Save scaler and feature metadata (compatible with deploy.py loader)
     scaler_meta = {
@@ -2303,7 +2387,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "skip_step1": skip_step1,
         "skip_step2": skip_step2,
     }
-    joblib.dump(scaler_meta, MODELS_DIR / f"scaler_{tag}.joblib")
+    joblib.dump(scaler_meta, model_dir / f"scaler_{tag}.joblib")
     
     active_idx = np.where(np.abs(final_model.coef_) > 1e-5)[0]
     active_feature_names = [bagged_feature_names[i] for i in active_idx]
@@ -2327,7 +2411,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # ── Quarterly Rolling Refit Test (QuantBench decay check) ──
     try:
-        quarterly_test_res = run_quarterly_rolling_refit_test(df, bagged_selected_idx, model_type, params, k_weight, side)
+        quarterly_test_res = run_quarterly_rolling_refit_test(df, bagged_selected_idx, model_type, params, k_weight, side, lockbox_date=lockbox_date)
     except Exception as e:
         print(f"  [WARNING] Quarterly rolling refit test failed: {e}")
         quarterly_test_res = {}
@@ -2341,6 +2425,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "skip_step2": skip_step2,
         "n_samples_working": len(y_working),
         "n_samples_lockbox": 0,
+        "lockbox_date": lockbox_date,
+        "window_years": window_years,
+        "rolling": rolling,
         "selected_features": bagged_feature_names,
         "active_features": active_feature_names,
         "stability_scores": dict(zip(FEATURES, stability_scores.tolist())),
@@ -2401,7 +2488,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             }
         }
     }
-    with open(DATA_DIR / f"results_{tag}.json", "w") as f:
+    with open(data_dir / f"results_{tag}.json", "w") as f:
         json.dump(results, f, indent=2, default=str)
         
     # Clean up Optuna log files to save space and keep workspace clean
@@ -2465,6 +2552,15 @@ if __name__ == "__main__":
     ap.add_argument("--log", default=str(HERE / "train_model_log.txt"),
                     help="Path to output log file (default: day-model/train_model_log.txt). "
                          "Pass 'none' to disable.")
+    # Rolling window arguments
+    ap.add_argument("--lockbox", default=None, type=str,
+                    help="Override lockbox date (YYYY-MM-DD). Default: 2024-03-01 (static).")
+    ap.add_argument("--window-years", type=int, default=0,
+                    help="Training window in years (0 = all history, default). Use 6 for rolling.")
+    ap.add_argument("--rolling", action="store_true",
+                    help="Train all 8 quarterly rolling models (2024Q1-Q4 + 2025Q1-Q4).")
+    ap.add_argument("--rolling-quarter", default=None, type=str,
+                    help="Train single rolling quarter (e.g. 2024Q1, 2025Q3).")
     args = ap.parse_args()
 
     skip_step1 = True # Bypassed by default because univariate screening deletes joint predictive features.
@@ -2510,22 +2606,53 @@ if __name__ == "__main__":
     print(f"ETFs: {etfs} | Sides: {sides} | Trials: {args.trials}")
     print(f"Cache: {'OFF' if args.no_cache else 'ON'} | jobs: optuna={args.optuna_jobs}, bootstrap={args.bootstrap_jobs}, loyo={loyo_jobs_arg}")
 
-    for etf in etfs:
-        for side in sides:
-            t0 = time.perf_counter()
-            try:
-                train_etf(etf, n_trials=args.trials, side=side,
-                          use_cache=not args.no_cache,
-                          optuna_n_jobs=args.optuna_jobs,
-                          bootstrap_n_jobs=args.bootstrap_jobs,
-                          loyo_n_jobs=loyo_jobs_arg,
-                          skip_step1=skip_step1,
-                          skip_step2=skip_step2)
-            except Exception as e:
-                print(f"  [ERROR] Failed to train {etf} ({side}): {e}")
-                import traceback
-                traceback.print_exc()
-            print(f"[{etf}/{side}] elapsed {time.perf_counter() - t0:.1f}s")
+    # Resolve rolling schedule
+    lockbox_dates = [None]  # default: single static run
+    is_rolling = False
+    if args.rolling:
+        lockbox_dates = ROLLING_QUARTERS
+        is_rolling = True
+    elif args.rolling_quarter:
+        # Parse e.g. "2024Q1" -> "2024-03-01"
+        rq = args.rolling_quarter.upper()
+        y = int(rq[:4])
+        q = int(rq[5])
+        m = (q - 1) * 3 + 1
+        lockbox_dates = [f"{y}-{m:02d}-01"]
+        is_rolling = True
+    elif args.lockbox:
+        lockbox_dates = [args.lockbox]
+        is_rolling = True  # custom lockbox uses relative val blocks
+
+    window_yrs = args.window_years if is_rolling else args.window_years
+
+    for lb_date in lockbox_dates:
+        effective_lockbox = lb_date if lb_date else LOCKBOX_DATE
+        effective_rolling = is_rolling and lb_date is not None
+        if effective_rolling:
+            print(f"\n{'#' * 80}")
+            print(f"# Rolling quarter: {quarter_label(effective_lockbox)} (lockbox={effective_lockbox})")
+            print(f"{'#' * 80}")
+
+        for etf in etfs:
+            for side in sides:
+                t0 = time.perf_counter()
+                try:
+                    train_etf(etf, n_trials=args.trials, side=side,
+                              use_cache=not args.no_cache,
+                              optuna_n_jobs=args.optuna_jobs,
+                              bootstrap_n_jobs=args.bootstrap_jobs,
+                              loyo_n_jobs=loyo_jobs_arg,
+                              skip_step1=skip_step1,
+                              skip_step2=skip_step2,
+                              lockbox_date=effective_lockbox,
+                              window_years=window_yrs,
+                              rolling=effective_rolling)
+                except Exception as e:
+                    print(f"  [ERROR] Failed to train {etf} ({side}): {e}")
+                    import traceback
+                    traceback.print_exc()
+                print(f"[{etf}/{side}] elapsed {time.perf_counter() - t0:.1f}s")
 
     # Close log file handles
     if isinstance(sys.stdout, _TeeWriter):
