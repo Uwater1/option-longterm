@@ -86,11 +86,13 @@ VAL_BLOCKS_OUTER = [
 VAL_BLOCKS = VAL_BLOCKS_INNER + VAL_BLOCKS_OUTER
 PILOT_N_TRIALS = 50
 PILOT_SEED = 42
-STABILITY_B = 100      
+STABILITY_B = 200      
 STABILITY_PI = 0.55   
 STABILITY_Q = 35      
+MIN_FEATURE = 15      # Minimum features to keep in Step 2 screening
 ACTIVE_FEATURE_ESS_DIVISOR = 8.0  # Kish Effective Sample Size (ESS) divisor to set maximum active features (cap = ESS / divisor) to regularize complexity
 CSS_CORR_THRESHOLD = 0.80         # Correlation threshold for cluster merging in CSS (|r| >= threshold)
+VIF_THRESHOLD = 10.0              # Variance Inflation Factor (VIF) threshold to drop collinear features (5.0 for 50ETF)
 
 # Side-Specific Objective configuration.
 # - "single" (legacy): Tail IC two-sided (top10% U bot10%), weights V1..V4 = [0.40, 0.40, 0.15, 0.05]
@@ -483,7 +485,7 @@ def _stability_one_bootstrap(b: int, X_screened: np.ndarray, y_working: np.ndarr
 
 def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen_mask: np.ndarray, rhos: np.ndarray,
                              B: int = STABILITY_B, pi: float = STABILITY_PI,
-                             n_jobs: int = BOOTSTRAP_N_JOBS):
+                             n_jobs: int = BOOTSTRAP_N_JOBS, min_feature: int = MIN_FEATURE):
     # Step 2: Cluster Stability Selection (CSS)
     screened_features_idx = np.where(screen_mask)[0]
     X_screened = X_working[:, screened_features_idx]
@@ -544,6 +546,21 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen
     cluster_stability_scores = np.max(cluster_sel_probs[:, valid_alphas_idx], axis=1)
 
     stable_clusters_keep = cluster_stability_scores >= pi
+    fallback_used = False
+    if stable_clusters_keep.sum() < min_feature:
+        fallback_used = True
+        keep_n = min(min_feature, num_clusters)
+        sorted_clusters = sorted(
+            range(1, num_clusters + 1),
+            key=lambda g: (
+                cluster_stability_scores[g - 1],
+                max(abs(rhos[screened_features_idx[idx]]) for idx in cluster_to_features[g])
+            ),
+            reverse=True
+        )
+        clusters_to_keep = set(sorted_clusters[:keep_n])
+    else:
+        clusters_to_keep = {g for g in range(1, num_clusters + 1) if stable_clusters_keep[g - 1]}
 
     # For each cluster, compute individual feature stability scores for ranking representatives
     individual_sel_probs = np.mean(selection_matrix, axis=2)
@@ -559,7 +576,7 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen
             # Store individual stability score by default
             all_stability_scores[orig_i] = individual_stability_scores[local_i]
             
-        if stable_clusters_keep[g - 1]:
+        if g in clusters_to_keep:
             # Select representative: highest individual stability score, tie-break by absolute Spearman correlation rho
             best_local_feat = max(feature_indices, key=lambda idx: (individual_stability_scores[idx], abs(rhos[screened_features_idx[idx]])))
             best_orig_i = screened_features_idx[best_local_feat]
@@ -568,7 +585,7 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen
             all_stability_scores[best_orig_i] = cluster_stability_scores[g - 1]
 
     stability_selected_idx = np.array(stability_selected_idx)
-    return stability_selected_idx, all_stability_scores
+    return stability_selected_idx, all_stability_scores, fallback_used
 
 
 # ============================================================
@@ -1174,17 +1191,16 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # Loosen FDR for 588000ETF to prevent feature starvation
     fdr_level = 0.25 if etf_name == "588000ETF" else 0.99
 
-    # Dynamic VIF thresholding: tighter (5.0) for 50ETF to kill severe collinearity, 10.0 default for others
-    vif_threshold = 5.0 if etf_name == "50ETF" else 10.0
+    vif_threshold = VIF_THRESHOLD
 
     # ── Cache key parts ───────────────────────────────────────────────
     # Auto-invalidate when: feature parquet regen (mtime), FEATURES list
     # length changes, or any of the deterministic knobs below change.
     # See AGENTS.md "Cache invalidation" for manual-clear guidance.
     select_key = [
-        "v13_vif_cond", etf_name, len(FEATURES), int(parquet_mtime),
+        "v15_vif_cond", etf_name, len(FEATURES), int(parquet_mtime),
         int(X_sel_train.shape[0]), int(X_sel_train.shape[1]),
-        STABILITY_B, STABILITY_PI, fdr_level,
+        STABILITY_B, STABILITY_PI, MIN_FEATURE, fdr_level,
         tuple(VAL_BLOCKS), TARGET, vif_threshold,
         skip_step1, skip_step2,
     ]
@@ -1210,6 +1226,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         
         # Step 2: Stability Selection
         t_stab_start = time.perf_counter()
+        stability_fallback_triggered = False
         if skip_step2:
             print("Skipping Step 2 filter (CSS)...")
             screened_features_idx = np.where(screen_mask)[0]
@@ -1218,11 +1235,13 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             t_stab = 0.0
         else:
             print("Running stability selection...")
-            stability_selected_idx, stability_scores = run_stability_selection(
+            stability_selected_idx, stability_scores, stability_fallback_triggered = run_stability_selection(
                 X_sel_train, y_sel_train, screen_mask, rhos,
                 B=STABILITY_B, pi=STABILITY_PI, n_jobs=bootstrap_n_jobs,
             )
             t_stab = time.perf_counter() - t_stab_start
+            if stability_fallback_triggered:
+                print(f"  [WARNING] Step 2 Stability Selection fell back to selecting top {MIN_FEATURE} clusters.")
 
         print("Pruning VIF (collinearity gate)...")
         t_vif_start = time.perf_counter()
@@ -1244,6 +1263,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             "stability_scores": np.asarray(stability_scores),
             "time_screen": t_screen,
             "time_stability": t_stab + t_vif + t_cond,
+            "stability_fallback_triggered": stability_fallback_triggered,
         }
 
     t_select_block_start = time.perf_counter()
@@ -1254,6 +1274,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     screen_mask = sel["screen_mask"]
     stability_selected_idx = sel["stability_selected_idx"]
     stability_scores = sel["stability_scores"]
+    stability_fallback_triggered = sel.get("stability_fallback_triggered", False)
 
     # ── Feature Screening (Step 1) Diagnostics ──
     p_vals = sel["p_vals"]
@@ -2360,6 +2381,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             "stability": {
                 "pass_pi_count": int(pass_pi_count),
                 "keep_count": int(len(stability_selected_idx)),
+                "fallback_triggered": bool(stability_fallback_triggered),
             },
             "optuna_main": {
                 "total_trials": int(total_trials),
