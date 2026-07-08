@@ -1345,47 +1345,13 @@ def _process_rolling_tag(tag: str, r: dict, quarter_dir: Path):
 
 
 def main_rolling(quarter_filter: str = None):
-    """Generate rolling report with per-quarter diagnostic plots."""
-    print("Generating rolling day-model report...")
-    all_results = _load_rolling_results()
-    if not all_results:
-        print("  [ERROR] No rolling results found in", ROLLING_DATA_DIR)
-        print("  Run `python3 day-model/train_rolling.py -e all` first.")
-        return
-
-    ROLLING_PLOTS_DIR.mkdir(parents=True, exist_ok=True)
-
-    # Filter quarters if requested
+    """Generate rolling report — delegates to generate_rolling_report.py."""
+    print("Rolling report generation has moved to generate_rolling_report.py")
+    print("Run: python3 day-model/generate_rolling_report.py")
     if quarter_filter:
-        rq = quarter_filter.upper()
-        y = int(rq[:4])
-        q = int(rq[5])
-        m = (q - 1) * 3 + 1
-        target_date = f"{y}-{m:02d}-01"
-        all_results = {k: v for k, v in all_results.items() if k == target_date}
-
-    # Process each quarter
-    for lb_date in sorted(all_results.keys()):
-        ql = _quarter_label(lb_date)
-        quarter_dir = ROLLING_PLOTS_DIR / ql
-        quarter_dir.mkdir(parents=True, exist_ok=True)
-        print(f"\nProcessing {ql} ({lb_date}): {len(all_results[lb_date])} models")
-
-        for tag, r in sorted(all_results[lb_date].items()):
-            tag_out, fname, msg = _process_rolling_tag(tag, r, quarter_dir)
-            print(f"  {tag_out}: {msg}")
-
-    # Generate summary report using train_rolling's warning system + report generator
-    try:
-        sys.path.insert(0, str(HERE))
-        from train_rolling import evaluate_warnings, generate_rolling_report
-        warnings_dict = evaluate_warnings(all_results)
-        generate_rolling_report(all_results, warnings_dict)
-    except ImportError as e:
-        print(f"  [WARNING] Could not import train_rolling for warning system: {e}")
-        print("  Report generation incomplete.")
-
-    print("\nRolling report generation complete.")
+        print(f"  (with -q {quarter_filter})")
+    print("")
+    print("The --rolling flag is deprecated. Use generate_rolling_report.py directly.")
 
 
 if __name__ == "__main__":
