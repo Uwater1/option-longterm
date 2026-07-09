@@ -1270,7 +1270,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # Loosen FDR for 588000ETF to prevent feature starvation
     fdr_level = 0.25 if etf_name == "588000ETF" else 0.99
 
-    vif_threshold = 5.0 if etf_name in ["50ETF", "159915ETF"] else VIF_THRESHOLD
+    vif_threshold = max((VIF_THRESHOLD / 2), 4) if etf_name in ["50ETF", "159915ETF"] else VIF_THRESHOLD
 
     # ── Cache key parts ───────────────────────────────────────────────
     # Auto-invalidate when: feature parquet regen (mtime), FEATURES list
