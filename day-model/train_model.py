@@ -2433,10 +2433,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     ess_pct = ess / len(w_final)
     
     abs_coefs = np.abs(final_model.coef_)
+    m = len(abs_coefs)
     sum_abs = abs_coefs.sum()
     if sum_abs > 1e-10:
         sorted_c = np.sort(abs_coefs)
-        m = len(sorted_c)
         index = np.arange(1, m + 1)
         gini = float((2.0 * (index * sorted_c).sum()) / (m * sum_abs) - (m + 1) / m)
     else:
@@ -2719,6 +2719,8 @@ if __name__ == "__main__":
     # Set up tee logging: mirror stdout/stderr to log file
     if args.log and args.log.lower() != "none":
         log_path = Path(args.log)
+        if args.early and log_path == HERE / "train_model_log.txt":
+            log_path = HERE / "train_model_log_early.txt"
         # Truncate at start of run
         log_path.write_text("", encoding="utf-8")
         sys.stdout = _TeeWriter(log_path, sys.stdout)
