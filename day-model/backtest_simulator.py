@@ -83,22 +83,23 @@ def expanding_pct_rank(series: pd.Series, min_periods: int = 60) -> pd.Series:
     return pd.Series(out, index=series.index)
 
 
-def load_predictions(etf: str, target_transform: str = "gauss") -> tuple[pd.Series, pd.Series]:
+def load_predictions(etf: str, target_transform: str = "gauss", early: bool = False) -> tuple[pd.Series, pd.Series]:
     """Load static model predictions for both long and short sides."""
     # Load features
-    feat_path = FEATURES_DIR / f"features_{etf}.parquet"
+    feat_path = FEATURES_DIR / (f"features_{etf}_early.parquet" if early else f"features_{etf}.parquet")
     if not feat_path.exists():
         raise FileNotFoundError(f"Feature parquet not found: {feat_path}")
     df = pd.read_parquet(feat_path)
 
     suffix = f"_{target_transform}" if target_transform != "none" else ""
+    early_suffix = "_early" if early else ""
 
     # 1. Long side
-    long_model_path = MODELS_DIR / f"linear_{etf}_long{suffix}.joblib"
-    long_scaler_path = MODELS_DIR / f"scaler_{etf}_long{suffix}.joblib"
+    long_model_path = MODELS_DIR / f"linear_{etf}_long{suffix}{early_suffix}.joblib"
+    long_scaler_path = MODELS_DIR / f"scaler_{etf}_long{suffix}{early_suffix}.joblib"
     
     if not (long_model_path.exists() and long_scaler_path.exists()):
-        raise FileNotFoundError(f"Long model/scaler not found for {etf} (transform: {target_transform})")
+        raise FileNotFoundError(f"Long model/scaler not found for {etf} (transform: {target_transform}, early: {early})")
         
     long_model = joblib.load(long_model_path)
     long_scaler_meta = joblib.load(long_scaler_path)
@@ -111,11 +112,11 @@ def load_predictions(etf: str, target_transform: str = "gauss") -> tuple[pd.Seri
     long_scores = pd.Series(long_pred, index=df.index)
 
     # 2. Short side
-    short_model_path = MODELS_DIR / f"linear_{etf}_short{suffix}.joblib"
-    short_scaler_path = MODELS_DIR / f"scaler_{etf}_short{suffix}.joblib"
+    short_model_path = MODELS_DIR / f"linear_{etf}_short{suffix}{early_suffix}.joblib"
+    short_scaler_path = MODELS_DIR / f"scaler_{etf}_short{suffix}{early_suffix}.joblib"
     
     if not (short_model_path.exists() and short_scaler_path.exists()):
-        raise FileNotFoundError(f"Short model/scaler not found for {etf} (transform: {target_transform})")
+        raise FileNotFoundError(f"Short model/scaler not found for {etf} (transform: {target_transform}, early: {early})")
         
     short_model = joblib.load(short_model_path)
     short_scaler_meta = joblib.load(short_scaler_path)
@@ -131,9 +132,9 @@ def load_predictions(etf: str, target_transform: str = "gauss") -> tuple[pd.Seri
     return long_scores, short_scores
 
 
-def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform: str = "gauss") -> tuple[pd.Series, pd.Series]:
+def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform: str = "gauss", early: bool = False) -> tuple[pd.Series, pd.Series]:
     """Load rolling model predictions, auto-selecting the best model per date."""
-    feat_path = FEATURES_DIR / f"features_{etf}.parquet"
+    feat_path = FEATURES_DIR / (f"features_{etf}_early.parquet" if early else f"features_{etf}.parquet")
     if not feat_path.exists():
         raise FileNotFoundError(f"Feature parquet not found: {feat_path}")
     df = pd.read_parquet(feat_path)
@@ -143,11 +144,12 @@ def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform
     df = df.sort_values("date").reset_index(drop=True)
 
     suffix = f"_{target_transform}" if target_transform != "none" else ""
+    early_suffix = "_early" if early else ""
 
     # Discover rolling models for this ETF
     rolling_models = []  # list of (lockbox_date, long_model, long_scaler, short_model, short_scaler)
     if ROLLING_MODELS_DIR.exists():
-        glob_pattern = f"linear_{etf}_long_r*{suffix}.joblib"
+        glob_pattern = f"linear_{etf}_long_r*{suffix}{early_suffix}.joblib"
         for model_path in sorted(ROLLING_MODELS_DIR.glob(glob_pattern)):
             tag = model_path.stem.replace("linear_", "")
             scaler_path = ROLLING_MODELS_DIR / f"scaler_{tag}.joblib"
@@ -155,15 +157,21 @@ def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform
             parts = tag.split("_r")
             base_etf_long = parts[0]
             r_suffix = parts[1]
+            if early and r_suffix.endswith("_early"):
+                r_suffix = r_suffix[:-6]
+                if r_suffix.endswith(suffix):
+                    r_suffix = r_suffix[:-len(suffix)]
+            elif r_suffix.endswith(suffix):
+                r_suffix = r_suffix[:-len(suffix)]
             
             base_etf_short = base_etf_long.replace("_long", "_short")
-            short_model_path = ROLLING_MODELS_DIR / f"linear_{base_etf_short}_r{r_suffix}.joblib"
-            short_scaler_path = ROLLING_MODELS_DIR / f"scaler_{base_etf_short}_r{r_suffix}.joblib"
+            short_model_path = ROLLING_MODELS_DIR / f"linear_{base_etf_short}_r{r_suffix}{early_suffix}.joblib"
+            short_scaler_path = ROLLING_MODELS_DIR / f"scaler_{base_etf_short}_r{r_suffix}{early_suffix}.joblib"
 
             if not (scaler_path.exists() and short_model_path.exists() and short_scaler_path.exists()):
                 continue
 
-            # Parse lockbox date from tag suffix: rYYYYMM
+            # Parse lockbox date from tag suffix: YYYYMM
             lb_date = pd.Timestamp(f"{r_suffix[:4]}-{r_suffix[4:6]}-01")
 
             long_model = joblib.load(model_path)
@@ -179,7 +187,7 @@ def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform
 
     if not rolling_models:
         print(f"  [WARNING] No rolling models found for {etf} (transform: {target_transform}), falling back to static.")
-        return load_predictions(etf, target_transform=target_transform)
+        return load_predictions(etf, target_transform=target_transform, early=early)
 
     # Sort by lockbox date descending (most recent first)
     rolling_models.sort(key=lambda m: m["lockbox"], reverse=True)
@@ -423,7 +431,13 @@ def main():
                     help="Max age in months for rolling model coverage (default 6).")
     ap.add_argument("--target-transform", default="none", choices=["none", "rank", "gauss"],
                     help="Target transform to load: none|rank|gauss")
+    ap.add_argument("--early", action="store_true",
+                    help="Use early-window models & features (10:00 to 13:05)")
     args = ap.parse_args()
+
+    global EXIT_BAR
+    if args.early:
+        EXIT_BAR = 24
 
     etfs = ["50ETF", "300ETF", "500ETF", "588000ETF", "159915ETF"]
     if args.etf != "all":
@@ -437,10 +451,11 @@ def main():
     print("=" * 80)
     print(f"DAY-MODEL WALK-FORWARD OOS SIMULATOR")
     print(f"OOS Period : {LOCKBOX_DATE} onwards")
-    print(f"Models     : {'ROLLING (auto-select per date)' if args.rolling else 'STATIC'}")
+    print(f"Models     : {'ROLLING (auto-select per date)' if args.rolling else 'STATIC'} (Early: {args.early})")
     print(f"Thresholds : Long={args.long_thr}%, Short={args.short_thr}%")
     print(f"Stops      : Type={args.stop_type}, Val={args.stop_val}")
     print(f"Cost       : {args.cost_bps} bps")
+    print(f"Exit Bar   : {EXIT_BAR}")
     print("=" * 80)
 
     all_trades = {}
@@ -451,10 +466,10 @@ def main():
             # 1. Predictions
             if args.rolling:
                 long_scores, short_scores = load_predictions_rolling(
-                    etf, max_age_months=args.max_age_months, target_transform=args.target_transform
+                    etf, max_age_months=args.max_age_months, target_transform=args.target_transform, early=args.early
                 )
             else:
-                long_scores, short_scores = load_predictions(etf, target_transform=args.target_transform)
+                long_scores, short_scores = load_predictions(etf, target_transform=args.target_transform, early=args.early)
             
             # 2. Expanding Percentile Ranks (walk-forward, look-ahead free)
             long_rank = expanding_pct_rank(long_scores, min_periods=args.min_periods)

@@ -1112,7 +1112,7 @@ def compute_trade_return(day_5m: pd.DataFrame, decision_bar: int, exit_bar: int 
 # ============================================================
 # Pipeline per ETF
 # ============================================================
-def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
+def build_features_for_etf(etf_name: str, save: bool = True, early: bool = False) -> pd.DataFrame:
     cfg = ETF_CONFIG[etf_name]
     idx_cfg = INDEX_CONFIG[etf_name]
     
@@ -1167,9 +1167,10 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
     if pd.isna(fallback_daily_vol) or fallback_daily_vol <= 0:
         fallback_daily_vol = 1000000.0
 
+    exit_bar = 24 if early else EXIT_BAR
     decision_bar = DECISION_BAR[etf_name]
     print(f"  decision_bar={decision_bar} (features use bars [0..{decision_bar}], "
-          f"entry at open of bar {decision_bar + 1}, exit at close of bar {EXIT_BAR})")
+          f"entry at open of bar {decision_bar + 1}, exit at close of bar {exit_bar})")
 
     etf_5m_by_date = {d: g for d, g in df_etf_5m.groupby("date")}
 
@@ -1221,7 +1222,7 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
         
         # Target/diagnostics calculated on ETF 5m data
         early["pm_return"] = compute_pm_return(day_etf_df)                              # diagnostic only
-        early["trade_return"] = compute_trade_return(day_etf_df, decision_bar, EXIT_BAR)  # target
+        early["trade_return"] = compute_trade_return(day_etf_df, decision_bar, exit_bar)  # target
         
         # AM return of ETF (diagnostic)
         am_etf = day_etf_df.reset_index(drop=True).iloc[:BAR_LUNCH]
@@ -1288,7 +1289,8 @@ def build_features_for_etf(etf_name: str, save: bool = True) -> pd.DataFrame:
           f"Sharpe={feat['pm_return'].mean()/feat['pm_return'].std()*np.sqrt(252):.2f}")
 
     if save:
-        out_path = OUT_DIR / f"features_{etf_name}.parquet"
+        fname = f"features_{etf_name}_early.parquet" if early else f"features_{etf_name}.parquet"
+        out_path = OUT_DIR / fname
         feat.to_parquet(out_path)
         print(f"  saved → {out_path}")
 
@@ -1301,6 +1303,8 @@ def main():
                     help="ETF code: 300/50/500/588000/159915 or 'all'")
     ap.add_argument("--include-deprecated", action="store_true",
                     help="Include deprecated features for backward compatibility")
+    ap.add_argument("--early", action="store_true",
+                    help="Predict early window (exiting at close of 13:00~13:05 bar, i.e., bar 24)")
     args = ap.parse_args()
 
     etf_arg = args.etf
@@ -1309,14 +1313,15 @@ def main():
     else:
         etfs = [ETF_CLI_MAP.get(etf_arg, etf_arg)]
 
+    exit_bar = 24 if args.early else EXIT_BAR
     print(f"Building day-model features for: {etfs}")
     print(f"  early window: per-ETF decision_bar (see DECISION_BAR dict in build_features.py)")
-    print(f"  exit bar: {EXIT_BAR} (14:35 close)")
+    print(f"  exit bar: {exit_bar} ({'13:05' if args.early else '14:35'} close)")
     print(f"  warmup dropped: {WARMUP_DAYS} days")
 
     summary = []
     for etf in etfs:
-        feat = build_features_for_etf(etf)
+        feat = build_features_for_etf(etf, early=args.early)
         if not feat.empty:
             summary.append({
                 "ETF": etf,
