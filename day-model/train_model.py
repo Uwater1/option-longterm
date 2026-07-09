@@ -86,13 +86,13 @@ VAL_BLOCKS_OUTER = [
 VAL_BLOCKS = VAL_BLOCKS_INNER + VAL_BLOCKS_OUTER
 PILOT_N_TRIALS = 50
 PILOT_SEED = 42
-STABILITY_B = 200      
-STABILITY_PI = 0.55   
+STABILITY_B = 400      
+STABILITY_PI = 0.5   
 STABILITY_Q = 35      
 MIN_FEATURE = 15      # Minimum features to keep in Step 2 screening
 ACTIVE_FEATURE_ESS_DIVISOR = 8.0  # Kish Effective Sample Size (ESS) divisor to set maximum active features (cap = ESS / divisor) to regularize complexity
-CSS_CORR_THRESHOLD = 0.80         # Correlation threshold for cluster merging in CSS (|r| >= threshold)
-VIF_THRESHOLD = 10.0              # Variance Inflation Factor (VIF) threshold to drop collinear features (5.0 for 50ETF)
+CSS_CORR_THRESHOLD = 0.90         # Correlation threshold for cluster merging in CSS (|r| >= threshold)
+VIF_THRESHOLD = 12.0              # Variance Inflation Factor (VIF) threshold to drop collinear features (5.0 for 50ETF)
 
 
 def compute_val_blocks(lockbox_date: str, window_years: int = 0):
@@ -569,7 +569,7 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen
     alphas = _to_f32(alphas)
 
     n_total = X_working.shape[0]
-    subsample_size = n_total // 2
+    subsample_size = n_total // 2 # 50% of the dataset, maybe space for further optimization?
 
     # Parallelize the B bootstrap fits across cores.
     base_seed = 42
@@ -636,7 +636,12 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen
             
         if g in clusters_to_keep:
             # Select representative: highest individual stability score, tie-break by absolute Spearman correlation rho
-            best_local_feat = max(feature_indices, key=lambda idx: (individual_stability_scores[idx], abs(rhos[screened_features_idx[idx]])))
+            best_local_feat = max(feature_indices, key=lambda idx: (
+                individual_stability_scores[idx] * (abs(rhos[screened_features_idx[idx]]) + 0.5),
+                individual_stability_scores[idx]  # Tie-break by individual stability score
+            ))
+            
+            #Old one: best_local_feat = max(feature_indices, key=lambda idx: (individual_stability_scores[idx], abs(rhos[screened_features_idx[idx]])))
             best_orig_i = screened_features_idx[best_local_feat]
             stability_selected_idx.append(best_orig_i)
             # Store cluster stability score for the representative
@@ -1270,7 +1275,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # Loosen FDR for 588000ETF to prevent feature starvation
     fdr_level = 0.25 if etf_name == "588000ETF" else 0.99
 
-    vif_threshold = max((VIF_THRESHOLD / 2), 4) if etf_name in ["50ETF", "159915ETF"] else VIF_THRESHOLD
+    vif_threshold = 5.0 if etf_name in ["50ETF", "159915ETF"] else VIF_THRESHOLD
 
     # ── Cache key parts ───────────────────────────────────────────────
     # Auto-invalidate when: feature parquet regen (mtime), FEATURES list
@@ -2046,6 +2051,17 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         print("    Exceptions:")
         for exc in exception_reasons:
             print(f"      - {exc}")
+
+    # Warn if fewer than 30% of trials completed — search space is structurally infeasible
+    MIN_PASS_RATE = 0.30
+    pass_rate = completed_count / total_trials if total_trials > 0 else 0.0
+    if pass_rate < MIN_PASS_RATE:
+        print(
+            f"\n  [WARNING] Low completion rate: {completed_count}/{total_trials} "
+            f"({pass_rate:.0%} < {MIN_PASS_RATE:.0%})\n"
+            f"    The search space is structurally infeasible for this ETF/side. Model is unreliable.\n"
+            f"    Consider: skipping this side or relaxing CSS/kill-switch thresholds."
+        )
 
     # Track optimization path / progression
     sorted_trials = sorted(study.trials, key=lambda t: t.number)
