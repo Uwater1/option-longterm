@@ -151,6 +151,8 @@ def _train_single(etf: str, side: str, lb_date: str, args, skip_step1: bool,
             lockbox_date=lb_date,
             window_years=args.window_years,
             rolling=True,
+            target_transform=args.target_transform,
+            post_hoc_calibrate=args.post_hoc_calibrate,
         )
         elapsed = time.perf_counter() - t0
         print(f"  [{tag}] elapsed {elapsed:.1f}s")
@@ -186,6 +188,10 @@ def main():
                          "Default 1 (sequential, full CPU per model).")
     ap.add_argument("--skip-existing", action="store_true",
                     help="Skip models that already have artifacts on disk (resume support).")
+    ap.add_argument("--target-transform", default="none", choices=["none", "rank", "gauss"],
+                    help="Target transform: none|rank|gauss")
+    ap.add_argument("--post-hoc-calibrate", action="store_true", default=False,
+                    help="Enable post-hoc Spearman IC calibration of active coefficients")
     args = ap.parse_args()
 
     # Resolve ETFs
