@@ -12,7 +12,16 @@ Plan to reformulate and optimize the Optuna objective function for `day-model` b
 * **Underlying**: Log return from 10:00 to 14:35 across all 5 ETFs.
 * **Simplification**: Unified exit and entry timings across all assets, replacing complex, legacy per-ETF customized bars.
 
-### 1.1 Unified Model Training Manifold
+### 1.2 Early Target (10:00 ~ 13:05) Window Evaluation (July 2026)
+An early afternoon target (exiting at `13:05`, close of bar `24`) was tested under the hypothesis that morning sessions are cleaner and less prone to afternoon regime shifts. 
+**Verdict: ABORTED.**
+Diagnostics showed that:
+1. Volatility is compressed by 22% to 28% across all ETFs, significantly dropping the signal-to-noise ratio and making fixed transaction costs (15 bps) a heavy barrier.
+2. Feature Spearman IC dropped by 23% to 50% across all ETFs, indicating that day-level macro factors require the full trading day to resolve and show persistent trends.
+3. Exiting at `13:05` forces exits on noisy lunch reopening prints (high spread and gap volatility).
+Conclusion: Stick to the full-day exit (`14:35`).
+
+### 1.3 Unified Model Training Manifold
 
 To prevent search space fragmentation and the "hard fall to Ridge" cliff, the day-model replaces disjoint categorical options (`skglm_huber_l1`, `skglm_mcp`, `ridge`) with a single continuous manifold estimator:
 * **Estimator**: `GeneralizedLinearEstimator` (composition of datafit, penalty, and solver).

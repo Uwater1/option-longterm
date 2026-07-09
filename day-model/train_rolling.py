@@ -143,7 +143,7 @@ def _train_single(etf: str, side: str, lb_date: str, args, skip_step1: bool,
                   skip_step2: bool, loyo_jobs: int) -> tuple:
     """Train a single (etf, side, quarter) model. Returns (tag, result_dict_or_None)."""
     tag = rolling_tag(etf, side, lb_date)
-    if getattr(args, "early", False):
+    if getattr(args, "earlyNoGood", False):
         tag += "_early"
     t0 = time.perf_counter()
     try:
@@ -160,7 +160,7 @@ def _train_single(etf: str, side: str, lb_date: str, args, skip_step1: bool,
             rolling=True,
             target_transform=args.target_transform,
             post_hoc_calibrate=args.post_hoc_calibrate,
-            early=getattr(args, "early", False),
+            early=getattr(args, "earlyNoGood", False),
         )
         elapsed = time.perf_counter() - t0
         print(f"  [{tag}] elapsed {elapsed:.1f}s")
@@ -200,8 +200,8 @@ def main():
                     help="Target transform: none|rank|gauss")
     ap.add_argument("--post-hoc-calibrate", action="store_true", default=False,
                     help="Enable post-hoc Spearman IC calibration of active coefficients")
-    ap.add_argument("--early", action="store_true",
-                    help="Predict early window (10:00 to 13:05, exiting at close of 13:00~13:05 bar)")
+    ap.add_argument("--earlyNoGood", action="store_true",
+                    help="Predict early window (10:00 to 13:05, exiting at close of 13:00~13:05 bar) [ABORTED - DO NOT RUN]")
     args = ap.parse_args()
 
     # Resolve ETFs
@@ -268,7 +268,7 @@ def main():
         skip_count = 0
         new_quarters = []
         for lb_date in quarters:
-            all_exist = all(_check_model_exists(e, s, lb_date, early=args.early) for e in etfs for s in sides)
+            all_exist = all(_check_model_exists(e, s, lb_date, early=args.earlyNoGood) for e in etfs for s in sides)
             if all_exist:
                 skip_count += 1
             else:
@@ -318,7 +318,7 @@ def main():
     print(f"\nTotal training time: {total_elapsed:.1f}s ({total_elapsed / 60:.1f}min)")
 
     # Load all results for warning summary
-    all_results = _load_existing_results(early=args.early)
+    all_results = _load_existing_results(early=args.earlyNoGood)
 
     # Evaluate warnings
     print("\nEvaluating model health warnings...")

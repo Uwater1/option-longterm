@@ -396,11 +396,15 @@ def render_quarter_diagnostics(tag: str, r: dict, quarter_dir: Path, early: bool
         _render_precision_at_k(ax[14], y_oos, pred_oos, side)
 
         fig.tight_layout(rect=(0, 0, 1, 0.985))
-        quarter_dir.mkdir(parents=True, exist_ok=True)
-        fname = f"diagnostics_{tag}.png"
-        fig.savefig(quarter_dir / fname, dpi=110)
+        if early:
+            out_dir = quarter_dir / "early"
+        else:
+            out_dir = quarter_dir
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fname = f"diagnostics_{tag.replace('ETF', '')}.png"
+        fig.savefig(out_dir / fname, dpi=110)
         plt.close(fig)
-        return fname
+        return f"early/{fname}" if early else fname
     except Exception as ex:
         print(f"  [WARN] Plot failed for {tag}: {ex}")
         return None
