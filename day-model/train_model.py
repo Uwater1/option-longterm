@@ -87,7 +87,7 @@ VAL_BLOCKS = VAL_BLOCKS_INNER + VAL_BLOCKS_OUTER
 PILOT_N_TRIALS = 50
 PILOT_SEED = 42
 STABILITY_B = 400      
-STABILITY_PI = 0.55   
+STABILITY_PI = 0.50   
 STABILITY_Q = 35      
 MIN_FEATURE = 15      # Minimum features to keep in Step 2 screening
 ACTIVE_FEATURE_ESS_DIVISOR = 8.0  # Kish Effective Sample Size (ESS) divisor to set maximum active features (cap = ESS / divisor) to regularize complexity
@@ -637,7 +637,7 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen
         if g in clusters_to_keep:
             # Select representative: highest individual stability score, tie-break by absolute Spearman correlation rho
             best_local_feat = max(feature_indices, key=lambda idx: (
-                individual_stability_scores[idx] * (abs(rhos[screened_features_idx[idx]]) + 0.5),
+                individual_stability_scores[idx] * (abs(rhos[screened_features_idx[idx]]) + 0.5), # Rho dominates, but is + 0.5 good? log?
                 individual_stability_scores[idx]  # Tie-break by individual stability score
             ))
             
