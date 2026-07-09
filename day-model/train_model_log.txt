@@ -9,13 +9,7 @@ Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
 ================================================================================
 Loaded 2722 rows, 214 features.
 Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=128)
-Skipping Step 1 filter (screening) [Disabled: Univariate screening deletes joint predictive features]...
-Running stability selection...
-Pruning VIF (collinearity gate)...
-VIF dropped 0 collinear. Kept 22 features.
-Pruning condition number (structural gate)...
-Condition pruning dropped 0 features. Kept 22 features.
-  Cache saved: cache_select_300ETF_ce5aef25706b4d26.joblib
+  Cache hit: cache_select_300ETF_6542ed805f212e17.joblib
 
   [DIAGNOSTICS] Feature Screening:
     Input: 214 | FDR pass: 77
@@ -36,20 +30,17 @@ Condition pruning dropped 0 features. Kept 22 features.
       - yesterday_day_vwap_dev: rho=-0.0550, p=2.24e-02
 
   [DIAGNOSTICS] Stability Selection:
-    Input: 214 | Stable count: 26
-    Kept 22 features.
+    Input: 214 | Stable count: 18
+    Kept 16 features.
     Score percentiles: 25%=0.00, 50%=0.10, 75%=0.23, 90%=0.52, 95%=0.69
     Selected features & scores:
       - early_vwap_dev: score=0.57
       - outside_bar_reversal_day: score=0.56
       - yesterday_lunch_gap: score=0.99
-      - margin_net_buy: score=0.52
       - gap_pct: score=0.95
       - vix_iv_spread: score=0.75
       - iv_diff_1d: score=0.68
-      - option_oi_growth: score=0.53
       - yesterday_gap: score=0.72
-      - short_sell_cover_spread: score=0.52
       - bar_ret_0: score=0.89
       - max_up_ret: score=0.69
       - yesterday_day_close_pos: score=0.61
@@ -59,60 +50,55 @@ Condition pruning dropped 0 features. Kept 22 features.
       - yesterday_body_ratio: score=0.70
       - cvd_divergence_day: score=0.60
       - sma100_dist: score=0.94
-      - roc10: score=0.53
-      - yesterday_day_kurtosis: score=0.51
-      - bar_rng_5: score=0.53
-Stability kept 22 features.
+Stability kept 16 features.
 
   [DIAGNOSTICS] Feature Quality:
-    Condition Number: 3.80
+    Condition Number: 3.05
     Matrix is stable.
     No collinear pairs.
-  Cache saved: cache_loyo_300ETF_8d80703cd5bee26d.joblib
+  Cache hit: cache_loyo_300ETF_b2f09a8daa1ca7dc.joblib
 
   [DIAGNOSTICS] LOYO CV Folds:
     Folds: 15
-      Fold 1: Years [2015, 2016, 2017] | Train (1139, 22) | Test (573, 22)
-      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 22) | Test (573, 22)
-      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 22) | Test (572, 22)
-      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 22) | Test (573, 22)
-      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 22) | Test (573, 22)
-      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 22) | Test (574, 22)
-      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 22) | Test (573, 22)
-      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 22) | Test (574, 22)
-      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 22) | Test (574, 22)
-      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 22) | Test (573, 22)
-      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 22) | Test (574, 22)
-      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 22) | Test (574, 22)
-      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 22) | Test (573, 22)
-      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 22) | Test (573, 22)
-      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 22) | Test (574, 22)
-  [DIAGNOSTICS] Selection Train Baseline Condition Number: 3.7953
-
-Running Optuna Pilot Study (50 trials) for normalization calibration...
-  Cache saved: cache_pilot_300ETF_cf57e366d5635630.joblib
+      Fold 1: Years [2015, 2016, 2017] | Train (1139, 16) | Test (573, 16)
+      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 16) | Test (573, 16)
+      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 16) | Test (572, 16)
+      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 16) | Test (573, 16)
+      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 16) | Test (573, 16)
+      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 16) | Test (574, 16)
+      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 16) | Test (573, 16)
+      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 16) | Test (574, 16)
+      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 16) | Test (574, 16)
+      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 16) | Test (573, 16)
+      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 16) | Test (574, 16)
+      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 16) | Test (574, 16)
+      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 16) | Test (573, 16)
+      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 16) | Test (573, 16)
+      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 16) | Test (574, 16)
+  [DIAGNOSTICS] Selection Train Baseline Condition Number: 3.0543
+  Cache hit: cache_pilot_300ETF_b58af83c9eb634e9.joblib
 
   [DIAGNOSTICS] Optuna Pilot Summary:
     Trials: 50
     Raw CV metrics:
-      M1 (Tail IC IR)     : Min=-0.2684, Med=1.9408, Max=2.8431
-      M2 (Tail IC Mean)   : Min=-0.0445, Med=0.2889, Max=0.3111
+      M1 (Tail IC IR)     : Min=-0.2684, Med=1.5754, Max=2.3585
+      M2 (Tail IC Mean)   : Min=-0.0445, Med=0.2761, Max=0.3239
       M3 (Hit Rate)       : Min=0.2000, Med=1.0000, Max=1.0000
-      M4 (Overall IC)     : Min=-0.0075, Med=0.1650, Max=0.1724
-      M5 (Monotonicity)   : Min=0.0333, Med=0.5873, Max=0.6448
-      M6 (Top-Bot Spread) : Min=-0.0631, Med=0.7085, Max=0.8458
-      M7 (Parsimony)      : Min=-0.4770, Med=-0.2702, Max=-0.0000
-      M8 (Coef Bloat)     : Min=-1.1674, Med=-0.7125, Max=-0.0000
+      M4 (Overall IC)     : Min=-0.0075, Med=0.1500, Max=0.1753
+      M5 (Monotonicity)   : Min=0.0333, Med=0.5424, Max=0.6230
+      M6 (Top-Bot Spread) : Min=-0.0631, Med=0.6962, Max=0.8885
+      M7 (Parsimony)      : Min=-0.3396, Med=-0.0800, Max=-0.0000
+      M8 (Coef Bloat)     : Min=-0.8765, Med=-0.3598, Max=-0.0000
     Validation metrics:
-      Val IC              : Min=0.0000, Med=0.1159, Max=0.1280, MAD=0.0025
-      Val Tail IC         : Min=0.0000, Med=0.2522, Max=0.3989, MAD=0.0379
-      Val Monotonicity    : Min=-0.0424, Med=0.6303, Max=0.8182, MAD=0.0909
-      Val Top-Bot Spread  : Min=-0.0943, Med=0.6006, Max=0.8276, MAD=0.0645
+      Val IC              : Min=0.0000, Med=0.1184, Max=0.1430, MAD=0.0181
+      Val Tail IC         : Min=0.0000, Med=0.1363, Max=0.4230, MAD=0.1280
+      Val Monotonicity    : Min=-0.0424, Med=0.6242, Max=0.8788, MAD=0.1939
+      Val Top-Bot Spread  : Min=-0.0943, Med=0.4991, Max=0.9916, MAD=0.1820
 Calibrated constants:
-  Val1: Med=0.115925, MAD=0.002473
-  Val2: Med=0.252225, MAD=0.037940
-  Val3: Med=0.630303, MAD=0.090909
-  Val4: Med=0.600586, MAD=0.064502
+  Val1: Med=0.118429, MAD=0.018109
+  Val2: Med=0.136290, MAD=0.128040
+  Val3: Med=0.624242, MAD=0.193939
+  Val4: Med=0.499119, MAD=0.182035
 
 Running main Optuna Study (100 trials)...
 
@@ -130,71 +116,69 @@ Running main Optuna Study (100 trials)...
       - Regularized condition number: 0
 
   [DIAGNOSTICS] Objective Progression:
-    Trial   0: Best=-2.2428 | params={'k_weight': 0.17258184958466843, 'unified_alpha': 0.0451231319213065, 'unified_rho': 0.13339096418598828, 'unified_gamma': 12.476248311536951, 'huber_delta': 1.972125751150129}
-    Trial   1: Best=-0.4450 | params={'k_weight': 1.252263222998474, 'unified_alpha': 4.253795683489069e-05, 'unified_rho': 0.7446404816795178, 'unified_gamma': 35.86027023078568, 'huber_delta': 2.1168987701363235}
-    Trial   2: Best=+0.0714 | params={'k_weight': 1.4835172702134, 'unified_alpha': 0.019827518376799098, 'unified_rho': 0.28144730195506285, 'unified_gamma': 2.962371401177323, 'huber_delta': 2.500112731873114}
-    Trial   6: Best=+1.9806 | params={'k_weight': 1.234665511064688, 'unified_alpha': 1.4345242342057838e-05, 'unified_rho': 0.21077063993129397, 'unified_gamma': 347.4398816847049, 'huber_delta': 0.9422800940160463}
+    Trial   0: Best=+0.4051 | params={'k_weight': 1.252263222998474, 'unified_alpha': 4.253795683489069e-05, 'unified_rho': 0.7446404816795178, 'unified_gamma': 35.86027023078568, 'huber_delta': 2.1168987701363235}
+    Trial   3: Best=+0.5539 | params={'k_weight': 1.4835172702134, 'unified_alpha': 0.019827518376799098, 'unified_rho': 0.28144730195506285, 'unified_gamma': 2.962371401177323, 'huber_delta': 2.500112731873114}
+    Trial  21: Best=+0.7198 | params={'k_weight': 1.2367042138699227, 'unified_alpha': 0.00012248936831990408, 'unified_rho': 0.8773267682070526, 'unified_gamma': 121.99158381094936, 'huber_delta': 4.842168949502053}
+    Trial  32: Best=+0.8782 | params={'k_weight': 1.4905008642054796, 'unified_alpha': 0.0029226761938391885, 'unified_rho': 0.9681868559311559, 'unified_gamma': 2.377034771087149, 'huber_delta': 4.460485920616372}
+    Trial  33: Best=+0.9361 | params={'k_weight': 1.4986082978858923, 'unified_alpha': 0.0034896010033979388, 'unified_rho': 0.04023642837005856, 'unified_gamma': 1.7276144614115954, 'huber_delta': 4.738285551077798}
 
   [DIAGNOSTICS] Overfitting (CSCV PBO):
-    PBO: 33.3%
-    IS -> OOS Slope: -1.4113
+    PBO: 66.7%
+    IS -> OOS Slope: -1.6098
 
   [DIAGNOSTICS] Plateau Search (r=0.25, default_min_n=8, default_min_val_n=6):
-    Trial   6 (val=+1.9806, deflated=-9.4777): neighbors=3 (valid=3, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  83 (val=+0.6025, deflated=-10.9327): neighbors=2 (valid=2, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  86 (val=+0.6313, deflated=-11.4159): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  93 (val=+0.9420, deflated=-10.9006): neighbors=1 (valid=1, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  99 (val=+0.7337, deflated=-11.2084): neighbors=1 (valid=1, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
-  Stable trial: 75 (val=+0.4200, deflated=-12.6679, plateau=-13.0890) vs best 6 (val=+1.9806, deflated=-9.4777)
+    Trial  81 (val=+0.8712, deflated=-1.4888): neighbors=23 (valid=23, req=15/10), valid_ratio=1.00, neighbor_mean=-1.5905, plateau=-1.6414
+    Trial  87 (val=+0.8841, deflated=-1.4527): neighbors=23 (valid=23, req=15/10), valid_ratio=1.00, neighbor_mean=-1.5921, plateau=-1.6618
+    Trial  91 (val=+0.8965, deflated=-1.4975): neighbors=23 (valid=23, req=15/10), valid_ratio=1.00, neighbor_mean=-1.5902, plateau=-1.6365
+    Trial  97 (val=+0.8811, deflated=-1.4932): neighbors=24 (valid=24, req=15/10), valid_ratio=1.00, neighbor_mean=-1.5908, plateau=-1.6396
+    Trial  99 (val=+0.8869, deflated=-1.3671): neighbors=24 (valid=24, req=15/10), valid_ratio=1.00, neighbor_mean=-1.5961, plateau=-1.7105
+  Stable trial: 88 (val=+0.8858, deflated=-1.5852, plateau=-1.5869) vs best 99 (val=+0.8869, deflated=-1.3671)
 
   [DIAGNOSTICS] Model Confidence Set (MCS) & Bayesian Discovery:
-    MCS size: 14 / 100 trials (alpha=10%)
+    MCS size: 27 / 100 trials (alpha=10%)
     Bayesian prob of true discovery: 100.00%
 
 Best params:
-  k_weight: 1.4148611655853036
-  unified_alpha: 5.753461687507429e-05
-  unified_rho: 0.12142713052458198
-  unified_gamma: 102.9585364346674
-  huber_delta: 4.769298520192196
+  k_weight: 1.4278569259539797
+  unified_alpha: 0.00045345633517570157
+  unified_rho: 0.25082674162195856
+  unified_gamma: 9800.673947458896
+  huber_delta: 4.509344799750307
   model_type: unified
 Best trial raw metrics (CV):
-  M1 (Tail IC IR):  2.0126
-  M2 (Tail IC Mean):0.2977
+  M1 (Tail IC IR):  2.1536
+  M2 (Tail IC Mean):0.3251
   M3 (Hit Rate):    1.0000
-  M4 (Overall IC):  0.1626
-  Deflated CV IC:   0.0799
-  M5 (Mono):        0.5988
-  M6 (Spread):      0.6432
-  M7 (Parsimony):   -0.4201
-  M8 (Coef Bloat):  -1.1057
+  M4 (Overall IC):  0.1771
+  Deflated CV IC:   0.0893
+  M5 (Mono):        0.5976
+  M6 (Spread):      0.8289
+  M7 (Parsimony):   -0.3117
+  M8 (Coef Bloat):  -0.9497
 Best trial Selection Val INNER metrics (Tuned):
-  Val IC:           0.1164
-  Deflated Val IC:  0.0560
-  Val Tail IC:      0.2818
-  Deflated Val Tail:0.1208
-  Val Mono:         0.6364
-  Val Spread:       0.6330
+  Val IC:           0.1444
+  Deflated Val IC:  0.0719
+  Val Tail IC:      0.1878
+  Deflated Val Tail:0.0628
+  Val Mono:         0.7333
+  Val Spread:       0.7401
 Best trial Selection Val OUTER metrics (Holdout Sanity Check):
-  Outer Val IC:     0.0633
-  Defl Outer Val IC:0.0029
-  Outer Tail IC:    0.0383
-  Defl Outer Tail:  -0.1227
-  Outer Mono:       0.1152
-  Outer Spread:     0.1104
+  Outer Val IC:     0.0370
+  Defl Outer Val IC:-0.0355
+  Outer Tail IC:    -0.0122
+  Defl Outer Tail:  -0.1372
+  Outer Mono:       0.1030
+  Outer Spread:     -0.1248
 
 Running Soloff et al. Bootstrap Bagging Feature Selection (B=100) on selection-train...
   Per-feature bootstrap inclusion frequency:
     - early_vwap_dev: 100.00%
-    - outside_bar_reversal_day: 100.00%
+    - outside_bar_reversal_day: 99.00%
     - yesterday_lunch_gap: 100.00%
-    - margin_net_buy: 100.00%
     - gap_pct: 100.00%
     - vix_iv_spread: 100.00%
     - iv_diff_1d: 100.00%
-    - option_oi_growth: 100.00%
     - yesterday_gap: 100.00%
-    - short_sell_cover_spread: 100.00%
     - bar_ret_0: 100.00%
     - max_up_ret: 100.00%
     - yesterday_day_close_pos: 100.00%
@@ -202,43 +186,40 @@ Running Soloff et al. Bootstrap Bagging Feature Selection (B=100) on selection-t
     - yesterday_early_trend: 100.00%
     - yesterday_am_return: 100.00%
     - yesterday_body_ratio: 100.00%
-    - cvd_divergence_day: 100.00%
+    - cvd_divergence_day: 99.00%
     - sma100_dist: 100.00%
-    - roc10: 100.00%
-    - yesterday_day_kurtosis: 100.00%
-    - bar_rng_5: 100.00%
-  Bagged selection kept 22 features: ['early_vwap_dev', 'outside_bar_reversal_day', 'yesterday_lunch_gap', 'margin_net_buy', 'gap_pct', 'vix_iv_spread', 'iv_diff_1d', 'option_oi_growth', 'yesterday_gap', 'short_sell_cover_spread', 'bar_ret_0', 'max_up_ret', 'yesterday_day_close_pos', 'yesterday_cvd_close', 'yesterday_early_trend', 'yesterday_am_return', 'yesterday_body_ratio', 'cvd_divergence_day', 'sma100_dist', 'roc10', 'yesterday_day_kurtosis', 'bar_rng_5']
+  Bagged selection kept 16 features: ['early_vwap_dev', 'outside_bar_reversal_day', 'yesterday_lunch_gap', 'gap_pct', 'vix_iv_spread', 'iv_diff_1d', 'yesterday_gap', 'bar_ret_0', 'max_up_ret', 'yesterday_day_close_pos', 'yesterday_cvd_close', 'yesterday_early_trend', 'yesterday_am_return', 'yesterday_body_ratio', 'cvd_divergence_day', 'sma100_dist']
 
   [DIAGNOSTICS] Final Model:
-    ESS: 547.4 / 2166 (25.3%)
+    ESS: 536.7 / 2166 (24.8%)
     ESS healthy.
-    Gini: 0.4669 (cap=0.6000)
-    Raw Cond: 3.72
-    Reg Cond (kappa): 13.85
+    Gini: 0.5072 (cap=0.6000)
+    Raw Cond: 3.02
+    Reg Cond (kappa): 9.13
 
   [DIAGNOSTICS] Time Profiling:
-    data_loading      :   0.2s
-    feature_selection :   3.3s
-    loyo_folds        :   0.1s
-    pilot_study       :   8.3s
-    main_study        :   4.4s
-    final_refit       :   0.2s
-    Total             :  16.5s
+    data_loading      :   0.1s
+    feature_selection :   0.0s
+    loyo_folds        :   0.0s
+    pilot_study       :   0.0s
+    main_study        :  11.2s
+    final_refit       :   0.1s
+    Total             :  11.4s
 
   [DIAGNOSTICS] Quarterly Rolling Refit Test (Lockbox decay):
     Quarter                | Static IC | Static Tail | Roll IC  | Roll Tail
     -----------------------|-----------|-------------|----------|----------
-    2024-03 to 2024-06     |   +0.1143 |     +0.2937 |  +0.1143 |   +0.2937
-    2024-06 to 2024-09     |   -0.0526 |     -0.0210 |  -0.0488 |   -0.0210
-    2024-09 to 2024-12     |   +0.1890 |     +0.6727 |  +0.1911 |   +0.7455
-    2024-12 to 2025-03     |   +0.2094 |     +0.4424 |  +0.2021 |   +0.5636
-    2025-03 to 2025-06     |   +0.0808 |     +0.4895 |  +0.0846 |   +0.3986
-    2025-06 to 2025-09     |   +0.0812 |     +0.2937 |  +0.0462 |   -0.0769
-    2025-09 to 2025-12     |   +0.1230 |     -0.1636 |  +0.1604 |   -0.1515
-    2025-12 to 2026-03     |   +0.1129 |     -0.1394 |  +0.0723 |   -0.0667
-    2026-03 to 2026-06     |   +0.0307 |     +0.8112 |  +0.0426 |   +0.7203
-    2026-06 to 2026-06     |   -0.1978 |     -0.1030 |  -0.1154 |   -0.0424
-[300ETF/single] elapsed 21.2s
+    2024-03 to 2024-06     |   +0.1184 |     +0.1608 |  +0.1184 |   +0.1608
+    2024-06 to 2024-09     |   -0.1122 |     -0.1818 |  -0.1106 |   -0.1818
+    2024-09 to 2024-12     |   +0.2201 |     +0.8667 |  +0.2219 |   +0.7697
+    2024-12 to 2025-03     |   +0.1743 |     +0.7333 |  +0.2131 |   +0.6121
+    2025-03 to 2025-06     |   +0.0964 |     +0.3986 |  +0.0616 |   +0.4825
+    2025-06 to 2025-09     |   +0.0288 |     +0.1329 |  +0.0178 |   +0.0280
+    2025-09 to 2025-12     |   +0.1175 |     -0.5273 |  +0.1368 |   -0.2970
+    2025-12 to 2026-03     |   +0.0325 |     -0.3091 |  +0.0185 |   -0.3697
+    2026-03 to 2026-06     |   +0.0798 |     +0.5105 |  +0.0743 |   +0.4056
+    2026-06 to 2026-06     |   -0.2088 |     -0.1636 |  -0.0879 |   +0.0182
+[300ETF/single] elapsed 16.0s
 
 ================================================================================
 Train 300ETF (Side: long)
@@ -247,7 +228,7 @@ Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
 ================================================================================
 Loaded 2722 rows, 214 features.
 Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=128)
-  Cache hit: cache_select_300ETF_ce5aef25706b4d26.joblib
+  Cache hit: cache_select_300ETF_6542ed805f212e17.joblib
 
   [DIAGNOSTICS] Feature Screening:
     Input: 214 | FDR pass: 77
@@ -268,20 +249,17 @@ Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=1
       - yesterday_day_vwap_dev: rho=-0.0550, p=2.24e-02
 
   [DIAGNOSTICS] Stability Selection:
-    Input: 214 | Stable count: 26
-    Kept 22 features.
+    Input: 214 | Stable count: 18
+    Kept 16 features.
     Score percentiles: 25%=0.00, 50%=0.10, 75%=0.23, 90%=0.52, 95%=0.69
     Selected features & scores:
       - early_vwap_dev: score=0.57
       - outside_bar_reversal_day: score=0.56
       - yesterday_lunch_gap: score=0.99
-      - margin_net_buy: score=0.52
       - gap_pct: score=0.95
       - vix_iv_spread: score=0.75
       - iv_diff_1d: score=0.68
-      - option_oi_growth: score=0.53
       - yesterday_gap: score=0.72
-      - short_sell_cover_spread: score=0.52
       - bar_ret_0: score=0.89
       - max_up_ret: score=0.69
       - yesterday_day_close_pos: score=0.61
@@ -291,406 +269,140 @@ Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=1
       - yesterday_body_ratio: score=0.70
       - cvd_divergence_day: score=0.60
       - sma100_dist: score=0.94
-      - roc10: score=0.53
-      - yesterday_day_kurtosis: score=0.51
-      - bar_rng_5: score=0.53
-Stability kept 22 features.
+Stability kept 16 features.
 
   [DIAGNOSTICS] Feature Quality:
-    Condition Number: 3.80
+    Condition Number: 3.05
     Matrix is stable.
     No collinear pairs.
-  Cache hit: cache_loyo_300ETF_8d80703cd5bee26d.joblib
+  Cache hit: cache_loyo_300ETF_b2f09a8daa1ca7dc.joblib
 
   [DIAGNOSTICS] LOYO CV Folds:
     Folds: 15
-      Fold 1: Years [2015, 2016, 2017] | Train (1139, 22) | Test (573, 22)
-      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 22) | Test (573, 22)
-      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 22) | Test (572, 22)
-      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 22) | Test (573, 22)
-      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 22) | Test (573, 22)
-      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 22) | Test (574, 22)
-      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 22) | Test (573, 22)
-      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 22) | Test (574, 22)
-      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 22) | Test (574, 22)
-      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 22) | Test (573, 22)
-      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 22) | Test (574, 22)
-      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 22) | Test (574, 22)
-      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 22) | Test (573, 22)
-      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 22) | Test (573, 22)
-      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 22) | Test (574, 22)
-  [DIAGNOSTICS] Selection Train Baseline Condition Number: 3.7953
-
-Running Optuna Pilot Study (50 trials) for normalization calibration...
-  Cache saved: cache_pilot_300ETF_60edbafe1321b71f.joblib
+      Fold 1: Years [2015, 2016, 2017] | Train (1139, 16) | Test (573, 16)
+      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 16) | Test (573, 16)
+      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 16) | Test (572, 16)
+      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 16) | Test (573, 16)
+      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 16) | Test (573, 16)
+      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 16) | Test (574, 16)
+      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 16) | Test (573, 16)
+      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 16) | Test (574, 16)
+      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 16) | Test (574, 16)
+      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 16) | Test (573, 16)
+      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 16) | Test (574, 16)
+      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 16) | Test (574, 16)
+      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 16) | Test (573, 16)
+      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 16) | Test (573, 16)
+      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 16) | Test (574, 16)
+  [DIAGNOSTICS] Selection Train Baseline Condition Number: 3.0543
+  Cache hit: cache_pilot_300ETF_6d9143a2f7d868c8.joblib
 
   [DIAGNOSTICS] Optuna Pilot Summary:
     Trials: 50
     Raw CV metrics:
-      M1 (Tail IC IR)     : Min=-0.2684, Med=1.9780, Max=2.8708
-      M2 (Tail IC Mean)   : Min=-0.0445, Med=0.2868, Max=0.3131
+      M1 (Tail IC IR)     : Min=-0.2684, Med=1.5288, Max=2.3585
+      M2 (Tail IC Mean)   : Min=-0.0445, Med=0.2737, Max=0.3239
       M3 (Hit Rate)       : Min=0.2000, Med=1.0000, Max=1.0000
-      M4 (Overall IC)     : Min=-0.0075, Med=0.1669, Max=0.1732
-      M5 (Monotonicity)   : Min=0.0333, Med=0.5836, Max=0.6448
-      M6 (Top-Bot Spread) : Min=-0.0631, Med=0.7177, Max=0.8458
-      M7 (Parsimony)      : Min=-0.4751, Med=-0.2183, Max=-0.0000
-      M8 (Coef Bloat)     : Min=-1.1609, Med=-0.6582, Max=-0.0000
+      M4 (Overall IC)     : Min=-0.0075, Med=0.1610, Max=0.1753
+      M5 (Monotonicity)   : Min=0.0333, Med=0.5594, Max=0.6497
+      M6 (Top-Bot Spread) : Min=-0.0631, Med=0.7430, Max=0.8885
+      M7 (Parsimony)      : Min=-0.3396, Med=-0.0875, Max=-0.0000
+      M8 (Coef Bloat)     : Min=-0.8765, Med=-0.2360, Max=-0.0000
     Validation metrics:
-      Val IC              : Min=0.0000, Med=0.1162, Max=0.1280, MAD=0.0019
-      Val Tail IC         : Min=-0.1216, Med=0.0157, Max=0.1395, MAD=0.0357
-      Val Monotonicity    : Min=-0.0424, Med=0.6606, Max=0.8182, MAD=0.0727
-      Val Top-Bot Spread  : Min=-0.0943, Med=0.5960, Max=0.7947, MAD=0.0448
+      Val IC              : Min=0.0000, Med=0.1164, Max=0.1430, MAD=0.0137
+      Val Tail IC         : Min=-0.3012, Med=-0.0763, Max=0.1927, MAD=0.0763
+      Val Monotonicity    : Min=-0.0424, Med=0.6606, Max=0.8788, MAD=0.1030
+      Val Top-Bot Spread  : Min=-0.0943, Med=0.4826, Max=0.7231, MAD=0.1026
 Calibrated constants:
-  Val1: Med=0.116209, MAD=0.001905
-  Val2: Med=0.015743, MAD=0.035727
-  Val3: Med=0.660606, MAD=0.072727
-  Val4: Med=0.595982, MAD=0.044833
+  Val1: Med=0.116440, MAD=0.013743
+  Val2: Med=-0.076347, MAD=0.076347
+  Val3: Med=0.660606, MAD=0.103030
+  Val4: Med=0.482551, MAD=0.102636
 
 Running main Optuna Study (100 trials)...
 
   [DIAGNOSTICS] Main Study Summary:
-    Trials: 100 | OK: 92 | Pruned/Failed: 8
+    Trials: 100 | OK: 91 | Pruned/Failed: 9
     Pruning counts:
       - M4 (Overall IC <= 0): 1
-      - M2 (Yearly Tail IC Mean <= 0): 6
-      - M3 (Hit Rate < 60%): 6
-      - M5 (Monotonicity <= 0.25): 6
+      - M2 (Yearly Tail IC Mean <= 0): 8
+      - M3 (Hit Rate < 60%): 8
+      - M5 (Monotonicity <= 0.25): 8
       - M6 (Top-Bottom Spread <= 0): 1
       - exceeds ESS-based cap: 0
-      - active feature floor: 8
+      - active feature floor: 9
       - Gini coefficient: 0
       - Regularized condition number: 0
     Exceptions:
       - Side-specific Yearly Tail IC Mean (-0.0006 <= 0)
       - Side-specific Hit Rate (0.00% < 50%)
-      - Side-specific Hit Rate (40.00% < 50%)
 
   [DIAGNOSTICS] Objective Progression:
-    Trial   0: Best=-0.6123 | params={'k_weight': 0.17258184958466843, 'unified_alpha': 0.0451231319213065, 'unified_rho': 0.13339096418598828, 'unified_gamma': 12.476248311536951, 'huber_delta': 1.972125751150129}
-    Trial   1: Best=-0.3160 | params={'k_weight': 1.252263222998474, 'unified_alpha': 4.253795683489069e-05, 'unified_rho': 0.7446404816795178, 'unified_gamma': 35.86027023078568, 'huber_delta': 2.1168987701363235}
-    Trial   2: Best=-0.2570 | params={'k_weight': 1.4835172702134, 'unified_alpha': 0.019827518376799098, 'unified_rho': 0.28144730195506285, 'unified_gamma': 2.962371401177323, 'huber_delta': 2.500112731873114}
-    Trial   7: Best=+1.0366 | params={'k_weight': 1.0135971232553285, 'unified_alpha': 1.85469752839378e-05, 'unified_rho': 0.3433036725425923, 'unified_gamma': 435.2751988055667, 'huber_delta': 1.7789584943313028}
-    Trial   8: Best=+3.1514 | params={'k_weight': 1.234665511064688, 'unified_alpha': 1.4345242342057838e-05, 'unified_rho': 0.21077063993129397, 'unified_gamma': 347.4398816847049, 'huber_delta': 0.9422800940160463}
-    Trial  66: Best=+3.4185 | params={'k_weight': 1.2310733573483748, 'unified_alpha': 0.007902166056099497, 'unified_rho': 0.29058029860772305, 'unified_gamma': 20.415089015994457, 'huber_delta': 1.0215989176521534}
-    Trial  68: Best=+3.4246 | params={'k_weight': 1.2280611507668513, 'unified_alpha': 0.005167933355308008, 'unified_rho': 0.29095956655311345, 'unified_gamma': 17.49193669057101, 'huber_delta': 1.0185546607254055}
-    Trial  70: Best=+3.4361 | params={'k_weight': 1.2194500507411936, 'unified_alpha': 0.007716833663464921, 'unified_rho': 0.28827274951877735, 'unified_gamma': 1.7987545668413543, 'huber_delta': 1.0508589592698085}
-    Trial  82: Best=+5.2459 | params={'k_weight': 1.4268701164492326, 'unified_alpha': 0.04228097299910765, 'unified_rho': 0.2975531228527612, 'unified_gamma': 2.54951964676728, 'huber_delta': 0.6812884968211556}
+    Trial   0: Best=+0.1353 | params={'k_weight': 0.17258184958466843, 'unified_alpha': 0.0451231319213065, 'unified_rho': 0.13339096418598828, 'unified_gamma': 12.476248311536951, 'huber_delta': 1.972125751150129}
+    Trial   6: Best=+0.5068 | params={'k_weight': 0.45144668378387187, 'unified_alpha': 0.0003036483963037555, 'unified_rho': 0.9263351350591756, 'unified_gamma': 3850.360914752656, 'huber_delta': 3.5747454198874413}
+    Trial  55: Best=+0.5724 | params={'k_weight': 0.5125510687204379, 'unified_alpha': 0.0062412827337064965, 'unified_rho': 0.5097086357849416, 'unified_gamma': 3.3437510404383426, 'huber_delta': 3.5779671050654036}
+    Trial  58: Best=+0.6010 | params={'k_weight': 0.5244055167498177, 'unified_alpha': 0.000628027402501135, 'unified_rho': 0.5198638858130937, 'unified_gamma': 3.104287011964561, 'huber_delta': 3.5874480226421497}
+    Trial  63: Best=+0.6123 | params={'k_weight': 0.49854267000805697, 'unified_alpha': 0.0004810288083789393, 'unified_rho': 0.4367621225267596, 'unified_gamma': 26.804914910920818, 'huber_delta': 3.609104966201583}
+    Trial  66: Best=+0.6172 | params={'k_weight': 0.5123491504495505, 'unified_alpha': 0.012194579763400482, 'unified_rho': 0.43215351673602337, 'unified_gamma': 5.31674125154687, 'huber_delta': 3.585847530278629}
+    Trial  79: Best=+0.6471 | params={'k_weight': 0.738951840204638, 'unified_alpha': 0.08964376048080587, 'unified_rho': 0.1660785330109107, 'unified_gamma': 2.467527504105839, 'huber_delta': 3.1471379689145045}
 
   [DIAGNOSTICS] Overfitting (CSCV PBO):
-    PBO: 60.0%
-    IS -> OOS Slope: -1.4342
+    PBO: 73.3%
+    IS -> OOS Slope: -1.5948
 
   [DIAGNOSTICS] Plateau Search (r=0.25, default_min_n=8, default_min_val_n=6):
-    Trial   2 (val=-0.2570, deflated=-0.2570): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial   3 (val=-1.1958, deflated=-1.1958): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  68 (val=+3.4246, deflated=-10.5452): neighbors=12 (valid=12, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  70 (val=+3.4361, deflated=-10.2841): neighbors=21 (valid=21, req=15/10), valid_ratio=1.00, neighbor_mean=-11.9249, plateau=-12.7453
-    Trial  82 (val=+5.2459, deflated=-8.3386): neighbors=22 (valid=21, req=15/10), valid_ratio=0.95, neighbor_mean=-12.9252, plateau=-15.2640
-  Stable trial: 87 (val=+2.4736, deflated=-11.0748, plateau=-11.6551) vs best 2 (val=-0.2570, deflated=-0.2570)
+    Trial   2 (val=-0.2756, deflated=-0.2756): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial   6 (val=+0.5068, deflated=+0.0095): neighbors=1 (valid=1, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  11 (val=+0.3816, deflated=-0.2293): neighbors=20 (valid=20, req=15/10), valid_ratio=1.00, neighbor_mean=-2.0061, plateau=-2.8945
+    Trial  15 (val=-0.1693, deflated=-0.2135): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  20 (val=+0.2830, deflated=-0.2292): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+  Stable trial: 56 (val=+0.4703, deflated=-1.6904, plateau=-1.7070) vs best 6 (val=+0.5068, deflated=+0.0095)
 
   [DIAGNOSTICS] Model Confidence Set (MCS) & Bayesian Discovery:
-    MCS size: 6 / 100 trials (alpha=10%)
+    MCS size: 30 / 100 trials (alpha=10%)
     Bayesian prob of true discovery: 100.00%
 
 Best params:
-  k_weight: 1.2041207880206326
-  unified_alpha: 0.003928865134856834
-  unified_rho: 0.2752481301433084
-  unified_gamma: 4.459928227334332
-  huber_delta: 0.666597922459701
+  k_weight: 0.4735404491195155
+  unified_alpha: 0.0004575109336367736
+  unified_rho: 0.5319830112403302
+  unified_gamma: 3.9017552639747377
+  huber_delta: 3.497572006118687
   model_type: unified
 Best trial raw metrics (CV):
-  M1 (Tail IC IR):  2.3305
-  M2 (Tail IC Mean):0.3068
+  M1 (Tail IC IR):  2.1325
+  M2 (Tail IC Mean):0.3062
   M3 (Hit Rate):    1.0000
-  M4 (Overall IC):  0.1694
-  Deflated CV IC:   0.0826
-  M5 (Mono):        0.5842
-  M6 (Spread):      0.7603
-  M7 (Parsimony):   -0.3063
-  M8 (Coef Bloat):  -0.6725
+  M4 (Overall IC):  0.1719
+  Deflated CV IC:   0.0733
+  M5 (Mono):        0.6048
+  M6 (Spread):      0.8362
+  M7 (Parsimony):   -0.0935
+  M8 (Coef Bloat):  -0.5062
 Best trial Selection Val INNER metrics (Tuned):
-  Val IC:           0.1261
-  Deflated Val IC:  0.0583
-  Val Tail IC:      0.0573
-  Deflated Val Tail:-0.0906
-  Val Mono:         0.6970
-  Val Spread:       0.5883
+  Val IC:           0.1341
+  Deflated Val IC:  0.0559
+  Val Tail IC:      -0.1001
+  Deflated Val Tail:-0.2721
+  Val Mono:         0.7818
+  Val Spread:       0.4924
 Best trial Selection Val OUTER metrics (Holdout Sanity Check):
-  Outer Val IC:     0.0691
-  Defl Outer Val IC:0.0013
-  Outer Tail IC:    -0.1421
-  Defl Outer Tail:  -0.2900
-  Outer Mono:       0.0424
-  Outer Spread:     -0.0376
-
-Running Soloff et al. Bootstrap Bagging Feature Selection (B=100) on selection-train...
-  Per-feature bootstrap inclusion frequency:
-    - early_vwap_dev: 99.00%
-    - outside_bar_reversal_day: 98.00%
-    - yesterday_lunch_gap: 100.00%
-    - margin_net_buy: 99.00%
-    - gap_pct: 100.00%
-    - vix_iv_spread: 98.00%
-    - iv_diff_1d: 97.00%
-    - option_oi_growth: 97.00%
-    - yesterday_gap: 98.00%
-    - short_sell_cover_spread: 98.00%
-    - bar_ret_0: 100.00%
-    - max_up_ret: 99.00%
-    - yesterday_day_close_pos: 98.00%
-    - yesterday_cvd_close: 100.00%
-    - yesterday_early_trend: 97.00%
-    - yesterday_am_return: 99.00%
-    - yesterday_body_ratio: 100.00%
-    - cvd_divergence_day: 98.00%
-    - sma100_dist: 100.00%
-    - roc10: 99.00%
-    - yesterday_day_kurtosis: 98.00%
-    - bar_rng_5: 99.00%
-  Bagged selection kept 22 features: ['early_vwap_dev', 'outside_bar_reversal_day', 'yesterday_lunch_gap', 'margin_net_buy', 'gap_pct', 'vix_iv_spread', 'iv_diff_1d', 'option_oi_growth', 'yesterday_gap', 'short_sell_cover_spread', 'bar_ret_0', 'max_up_ret', 'yesterday_day_close_pos', 'yesterday_cvd_close', 'yesterday_early_trend', 'yesterday_am_return', 'yesterday_body_ratio', 'cvd_divergence_day', 'sma100_dist', 'roc10', 'yesterday_day_kurtosis', 'bar_rng_5']
-
-  [DIAGNOSTICS] Final Model:
-    ESS: 746.4 / 2166 (34.5%)
-    ESS healthy.
-    Gini: 0.3718 (cap=0.6000)
-    Raw Cond: 3.72
-    Reg Cond (kappa): 13.67
-
-  [DIAGNOSTICS] Time Profiling:
-    data_loading      :   0.0s
-    feature_selection :   0.0s
-    loyo_folds        :   0.0s
-    pilot_study       :   1.2s
-    main_study        :   4.3s
-    final_refit       :   0.3s
-    Total             :   5.9s
-
-  [DIAGNOSTICS] Quarterly Rolling Refit Test (Lockbox decay):
-    Quarter                | Static IC | Static Tail | Roll IC  | Roll Tail
-    -----------------------|-----------|-------------|----------|----------
-    2024-03 to 2024-06     |   +0.0952 |     +0.1167 |  +0.0952 |   +0.1167
-    2024-06 to 2024-09     |   -0.2003 |     -0.1833 |  -0.2023 |   -0.1833
-    2024-09 to 2024-12     |   +0.1576 |     +0.2381 |  +0.1390 |   +0.3810
-    2024-12 to 2025-03     |   +0.2358 |     +0.2381 |  +0.2260 |   -0.1190
-    2025-03 to 2025-06     |   +0.0670 |     +0.3500 |  +0.1000 |   +0.5333
-    2025-06 to 2025-09     |   +0.1400 |     +0.1000 |  +0.1325 |   -0.4000
-    2025-09 to 2025-12     |   +0.1441 |     -0.0476 |  +0.1335 |   +0.2857
-    2025-12 to 2026-03     |   +0.1128 |     -0.6190 |  +0.0783 |   -0.1905
-    2026-03 to 2026-06     |   +0.0240 |     +0.5833 |  +0.0054 |   +0.6333
-    2026-06 to 2026-06     |   -0.2033 |     +0.5000 |  -0.0824 |   +0.1000
-[300ETF/long] elapsed 6.2s
-
-================================================================================
-Train 300ETF (Side: short)
-Lockbox: 2024-03-01 | Window: all years | Rolling: False
-Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
-================================================================================
-Loaded 2722 rows, 214 features.
-Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=128)
-  Cache hit: cache_select_300ETF_ce5aef25706b4d26.joblib
-
-  [DIAGNOSTICS] Feature Screening:
-    Input: 214 | FDR pass: 77
-    Kept 214 features.
-    Spearman |rho|: Min=0.0000, Med=0.0114, Max=0.0950
-    p-value: Min=7.67e-05, Med=0.6359, Max=1.0000
-    Top 5 positive correlations:
-      - vix_iv_spread: rho=+0.0950, p=7.67e-05
-      - first_bar_return: rho=+0.0934, p=1.00e-04
-      - bar_ret_0: rho=+0.0934, p=1.00e-04
-      - bar_body_rng_0: rho=+0.0931, p=1.06e-04
-      - vix_iv_ratio: rho=+0.0923, p=1.23e-04
-    Top 5 negative correlations:
-      - yesterday_afternoon_momentum: rho=-0.0777, p=1.24e-03
-      - yesterday_afternoon_reversal: rho=-0.0655, p=6.51e-03
-      - capital_large_order_ratio: rho=-0.0610, p=1.13e-02
-      - capital_net_ratio: rho=-0.0605, p=1.20e-02
-      - yesterday_day_vwap_dev: rho=-0.0550, p=2.24e-02
-
-  [DIAGNOSTICS] Stability Selection:
-    Input: 214 | Stable count: 26
-    Kept 22 features.
-    Score percentiles: 25%=0.00, 50%=0.10, 75%=0.23, 90%=0.52, 95%=0.69
-    Selected features & scores:
-      - early_vwap_dev: score=0.57
-      - outside_bar_reversal_day: score=0.56
-      - yesterday_lunch_gap: score=0.99
-      - margin_net_buy: score=0.52
-      - gap_pct: score=0.95
-      - vix_iv_spread: score=0.75
-      - iv_diff_1d: score=0.68
-      - option_oi_growth: score=0.53
-      - yesterday_gap: score=0.72
-      - short_sell_cover_spread: score=0.52
-      - bar_ret_0: score=0.89
-      - max_up_ret: score=0.69
-      - yesterday_day_close_pos: score=0.61
-      - yesterday_cvd_close: score=0.74
-      - yesterday_early_trend: score=0.77
-      - yesterday_am_return: score=0.65
-      - yesterday_body_ratio: score=0.70
-      - cvd_divergence_day: score=0.60
-      - sma100_dist: score=0.94
-      - roc10: score=0.53
-      - yesterday_day_kurtosis: score=0.51
-      - bar_rng_5: score=0.53
-Stability kept 22 features.
-
-  [DIAGNOSTICS] Feature Quality:
-    Condition Number: 3.80
-    Matrix is stable.
-    No collinear pairs.
-  Cache hit: cache_loyo_300ETF_8d80703cd5bee26d.joblib
-
-  [DIAGNOSTICS] LOYO CV Folds:
-    Folds: 15
-      Fold 1: Years [2015, 2016, 2017] | Train (1139, 22) | Test (573, 22)
-      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 22) | Test (573, 22)
-      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 22) | Test (572, 22)
-      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 22) | Test (573, 22)
-      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 22) | Test (573, 22)
-      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 22) | Test (574, 22)
-      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 22) | Test (573, 22)
-      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 22) | Test (574, 22)
-      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 22) | Test (574, 22)
-      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 22) | Test (573, 22)
-      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 22) | Test (574, 22)
-      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 22) | Test (574, 22)
-      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 22) | Test (573, 22)
-      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 22) | Test (573, 22)
-      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 22) | Test (574, 22)
-  [DIAGNOSTICS] Selection Train Baseline Condition Number: 3.7953
-
-Running Optuna Pilot Study (50 trials) for normalization calibration...
-  Cache saved: cache_pilot_300ETF_804f4193e145ce56.joblib
-
-  [DIAGNOSTICS] Optuna Pilot Summary:
-    Trials: 50
-    Raw CV metrics:
-      M1 (Tail IC IR)     : Min=-0.2684, Med=1.8284, Max=2.8431
-      M2 (Tail IC Mean)   : Min=-0.0445, Med=0.2781, Max=0.3106
-      M3 (Hit Rate)       : Min=0.2000, Med=1.0000, Max=1.0000
-      M4 (Overall IC)     : Min=-0.0075, Med=0.1626, Max=0.1711
-      M5 (Monotonicity)   : Min=0.0333, Med=0.5533, Max=0.6448
-      M6 (Top-Bot Spread) : Min=-0.0631, Med=0.6974, Max=0.8458
-      M7 (Parsimony)      : Min=-0.4755, Med=-0.1385, Max=-0.0000
-      M8 (Coef Bloat)     : Min=-1.1595, Med=-0.5145, Max=-0.0000
-    Validation metrics:
-      Val IC              : Min=0.0000, Med=0.1145, Max=0.1280, MAD=0.0035
-      Val Tail IC         : Min=-0.3867, Med=-0.0795, Max=0.0786, MAD=0.0795
-      Val Monotonicity    : Min=-0.0424, Med=0.6182, Max=0.8788, MAD=0.1333
-      Val Top-Bot Spread  : Min=-0.0943, Med=0.5623, Max=0.7839, MAD=0.1069
-Calibrated constants:
-  Val1: Med=0.114478, MAD=0.003486
-  Val2: Med=-0.079544, MAD=0.079544
-  Val3: Med=0.618182, MAD=0.133333
-  Val4: Med=0.562309, MAD=0.106917
-
-Running main Optuna Study (100 trials)...
-
-  [DIAGNOSTICS] Main Study Summary:
-    Trials: 100 | OK: 78 | Pruned/Failed: 22
-    Pruning counts:
-      - M4 (Overall IC <= 0): 0
-      - M2 (Yearly Tail IC Mean <= 0): 5
-      - M3 (Hit Rate < 60%): 5
-      - M5 (Monotonicity <= 0.25): 6
-      - M6 (Top-Bottom Spread <= 0): 1
-      - exceeds ESS-based cap: 0
-      - active feature floor: 6
-      - Gini coefficient: 0
-      - Regularized condition number: 0
-    Exceptions:
-      - Side-specific Hit Rate (0.00% < 50%)
-      - Side-specific Yearly Tail IC Mean (-0.0150 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0072 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0213 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0306 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0105 <= 0)
-      - Side-specific Hit Rate (40.00% < 50%)
-      - Side-specific Yearly Tail IC Mean (-0.0073 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0007 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0034 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0037 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0058 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0244 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0246 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0087 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0076 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0133 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0002 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0000 <= 0)
-
-  [DIAGNOSTICS] Objective Progression:
-    Trial   0: Best=-1.3481 | params={'k_weight': 0.17258184958466843, 'unified_alpha': 0.0451231319213065, 'unified_rho': 0.13339096418598828, 'unified_gamma': 12.476248311536951, 'huber_delta': 1.972125751150129}
-    Trial   1: Best=-0.7037 | params={'k_weight': 1.252263222998474, 'unified_alpha': 4.253795683489069e-05, 'unified_rho': 0.7446404816795178, 'unified_gamma': 35.86027023078568, 'huber_delta': 2.1168987701363235}
-    Trial   2: Best=+0.4836 | params={'k_weight': 1.4835172702134, 'unified_alpha': 0.019827518376799098, 'unified_rho': 0.28144730195506285, 'unified_gamma': 2.962371401177323, 'huber_delta': 2.500112731873114}
-    Trial   9: Best=+0.4875 | params={'k_weight': 1.234665511064688, 'unified_alpha': 1.4345242342057838e-05, 'unified_rho': 0.21077063993129397, 'unified_gamma': 347.4398816847049, 'huber_delta': 0.9422800940160463}
-    Trial  16: Best=+0.5753 | params={'k_weight': 1.3860526733616378, 'unified_alpha': 8.855711978905983e-05, 'unified_rho': 0.8669150768157973, 'unified_gamma': 3.1470215787374998, 'huber_delta': 3.0810815777193246}
-    Trial  34: Best=+1.3524 | params={'k_weight': 1.4823278508865074, 'unified_alpha': 1.0913931981102524e-05, 'unified_rho': 0.9996758784195614, 'unified_gamma': 1.9291737693627968, 'huber_delta': 4.662692309763081}
-    Trial  79: Best=+1.4414 | params={'k_weight': 1.4889517703488646, 'unified_alpha': 5.790615235183783e-05, 'unified_rho': 0.6181476290921937, 'unified_gamma': 4.749419012967642, 'huber_delta': 4.734194470490145}
-
-  [DIAGNOSTICS] Overfitting (CSCV PBO):
-    PBO: 33.3%
-    IS -> OOS Slope: -1.4153
-
-  [DIAGNOSTICS] Plateau Search (r=0.25, default_min_n=8, default_min_val_n=6):
-    Trial   3 (val=-0.1751, deflated=-0.1751): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  34 (val=+1.3524, deflated=-4.9176): neighbors=4 (valid=4, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  79 (val=+1.4414, deflated=-5.2542): neighbors=12 (valid=11, req=15/10), valid_ratio=0.92, neighbor_mean=N/A, plateau=Excluded
-    Trial  84 (val=+0.8756, deflated=-5.2814): neighbors=20 (valid=18, req=15/10), valid_ratio=0.90, neighbor_mean=-6.4695, plateau=-7.1636
-    Trial  99 (val=+0.7539, deflated=-5.0837): neighbors=5 (valid=5, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
-  Stable trial: 40 (val=+0.8799, deflated=-6.3836, plateau=-6.4788) vs best 3 (val=-0.1751, deflated=-0.1751)
-
-  [DIAGNOSTICS] Model Confidence Set (MCS) & Bayesian Discovery:
-    MCS size: 12 / 100 trials (alpha=10%)
-    Bayesian prob of true discovery: 100.00%
-
-Best params:
-  k_weight: 1.494917958418177
-  unified_alpha: 0.00011356624576956956
-  unified_rho: 0.8071545049741412
-  unified_gamma: 3980.8148764137895
-  huber_delta: 4.445027913824148
-  model_type: unified
-Best trial raw metrics (CV):
-  M1 (Tail IC IR):  2.0547
-  M2 (Tail IC Mean):0.2975
-  M3 (Hit Rate):    1.0000
-  M4 (Overall IC):  0.1612
-  Deflated CV IC:   0.0844
-  M5 (Mono):        0.5370
-  M6 (Spread):      0.6278
-  M7 (Parsimony):   -0.4753
-  M8 (Coef Bloat):  -1.1464
-Best trial Selection Val INNER metrics (Tuned):
-  Val IC:           0.1175
-  Deflated Val IC:  0.0578
-  Val Tail IC:      0.0009
-  Deflated Val Tail:-0.1848
-  Val Mono:         0.6848
-  Val Spread:       0.6330
-Best trial Selection Val OUTER metrics (Holdout Sanity Check):
-  Outer Val IC:     0.0674
-  Defl Outer Val IC:0.0077
-  Outer Tail IC:    -0.0702
-  Defl Outer Tail:  -0.2558
-  Outer Mono:       0.0182
-  Outer Spread:     0.1104
+  Outer Val IC:     0.0269
+  Defl Outer Val IC:-0.0513
+  Outer Tail IC:    -0.2912
+  Defl Outer Tail:  -0.4632
+  Outer Mono:       -0.0303
+  Outer Spread:     -0.0015
 
 Running Soloff et al. Bootstrap Bagging Feature Selection (B=100) on selection-train...
   Per-feature bootstrap inclusion frequency:
     - early_vwap_dev: 100.00%
-    - outside_bar_reversal_day: 100.00%
+    - outside_bar_reversal_day: 99.00%
     - yesterday_lunch_gap: 100.00%
-    - margin_net_buy: 100.00%
     - gap_pct: 100.00%
     - vix_iv_spread: 100.00%
     - iv_diff_1d: 100.00%
-    - option_oi_growth: 100.00%
     - yesterday_gap: 100.00%
-    - short_sell_cover_spread: 100.00%
     - bar_ret_0: 100.00%
     - max_up_ret: 100.00%
     - yesterday_day_close_pos: 100.00%
@@ -700,41 +412,273 @@ Running Soloff et al. Bootstrap Bagging Feature Selection (B=100) on selection-t
     - yesterday_body_ratio: 100.00%
     - cvd_divergence_day: 100.00%
     - sma100_dist: 100.00%
-    - roc10: 100.00%
-    - yesterday_day_kurtosis: 100.00%
-    - bar_rng_5: 100.00%
-  Bagged selection kept 22 features: ['early_vwap_dev', 'outside_bar_reversal_day', 'yesterday_lunch_gap', 'margin_net_buy', 'gap_pct', 'vix_iv_spread', 'iv_diff_1d', 'option_oi_growth', 'yesterday_gap', 'short_sell_cover_spread', 'bar_ret_0', 'max_up_ret', 'yesterday_day_close_pos', 'yesterday_cvd_close', 'yesterday_early_trend', 'yesterday_am_return', 'yesterday_body_ratio', 'cvd_divergence_day', 'sma100_dist', 'roc10', 'yesterday_day_kurtosis', 'bar_rng_5']
+  Bagged selection kept 16 features: ['early_vwap_dev', 'outside_bar_reversal_day', 'yesterday_lunch_gap', 'gap_pct', 'vix_iv_spread', 'iv_diff_1d', 'yesterday_gap', 'bar_ret_0', 'max_up_ret', 'yesterday_day_close_pos', 'yesterday_cvd_close', 'yesterday_early_trend', 'yesterday_am_return', 'yesterday_body_ratio', 'cvd_divergence_day', 'sma100_dist']
 
   [DIAGNOSTICS] Final Model:
-    ESS: 484.4 / 2166 (22.4%)
+    ESS: 1730.4 / 2166 (79.9%)
     ESS healthy.
-    Gini: 0.4733 (cap=0.6000)
-    Raw Cond: 3.72
-    Reg Cond (kappa): 13.85
+    Gini: 0.2980 (cap=0.6000)
+    Raw Cond: 3.02
+    Reg Cond (kappa): 9.14
 
   [DIAGNOSTICS] Time Profiling:
     data_loading      :   0.0s
     feature_selection :   0.0s
     loyo_folds        :   0.0s
-    pilot_study       :   3.3s
-    main_study        :   4.4s
-    final_refit       :   0.2s
-    Total             :   8.0s
+    pilot_study       :   0.0s
+    main_study        :   4.2s
+    final_refit       :   0.1s
+    Total             :   4.4s
 
   [DIAGNOSTICS] Quarterly Rolling Refit Test (Lockbox decay):
     Quarter                | Static IC | Static Tail | Roll IC  | Roll Tail
     -----------------------|-----------|-------------|----------|----------
-    2024-03 to 2024-06     |   +0.1220 |     +0.3333 |  +0.1220 |   +0.3333
-    2024-06 to 2024-09     |   -0.0272 |     +0.3500 |  -0.0280 |   +0.2667
-    2024-09 to 2024-12     |   +0.1908 |     +0.6429 |  +0.1927 |   +0.6429
-    2024-12 to 2025-03     |   +0.2084 |     +0.2381 |  +0.2098 |   +0.7619
-    2025-03 to 2025-06     |   +0.0726 |     +0.4500 |  +0.0807 |   +0.2333
-    2025-06 to 2025-09     |   +0.0822 |     -0.0667 |  +0.0380 |   -0.2667
-    2025-09 to 2025-12     |   +0.1144 |     -0.5714 |  +0.1549 |   -0.6905
-    2025-12 to 2026-03     |   +0.1062 |     -0.1905 |  +0.0717 |   +0.1190
-    2026-03 to 2026-06     |   +0.0248 |     +0.8333 |  +0.0430 |   +0.4833
-    2026-06 to 2026-06     |   -0.2143 |     +0.7000 |  -0.1154 |   +0.2000
-[300ETF/short] elapsed 8.2s
+    2024-03 to 2024-06     |   +0.0586 |     +0.0667 |  +0.0586 |   +0.0667
+    2024-06 to 2024-09     |   -0.2557 |     -0.1667 |  -0.2553 |   -0.0833
+    2024-09 to 2024-12     |   +0.1499 |     +0.1667 |  +0.1496 |   +0.1667
+    2024-12 to 2025-03     |   +0.2170 |     +0.1667 |  +0.2187 |   -0.0476
+    2025-03 to 2025-06     |   +0.1965 |     +0.1833 |  +0.1657 |   -0.0667
+    2025-06 to 2025-09     |   +0.1044 |     -0.4167 |  +0.1041 |   -0.5333
+    2025-09 to 2025-12     |   +0.1990 |     -0.4524 |  +0.2139 |   +0.1429
+    2025-12 to 2026-03     |   +0.0449 |     -0.8095 |  +0.0239 |   -0.6667
+    2026-03 to 2026-06     |   +0.0798 |     +0.3333 |  +0.0285 |   +0.3500
+    2026-06 to 2026-06     |   -0.2582 |     +1.0000 |  -0.0659 |   +0.4000
+[300ETF/long] elapsed 4.7s
+
+================================================================================
+Train 300ETF (Side: short)
+Lockbox: 2024-03-01 | Window: all years | Rolling: False
+Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
+================================================================================
+Loaded 2722 rows, 214 features.
+Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=128)
+  Cache hit: cache_select_300ETF_6542ed805f212e17.joblib
+
+  [DIAGNOSTICS] Feature Screening:
+    Input: 214 | FDR pass: 77
+    Kept 214 features.
+    Spearman |rho|: Min=0.0000, Med=0.0114, Max=0.0950
+    p-value: Min=7.67e-05, Med=0.6359, Max=1.0000
+    Top 5 positive correlations:
+      - vix_iv_spread: rho=+0.0950, p=7.67e-05
+      - first_bar_return: rho=+0.0934, p=1.00e-04
+      - bar_ret_0: rho=+0.0934, p=1.00e-04
+      - bar_body_rng_0: rho=+0.0931, p=1.06e-04
+      - vix_iv_ratio: rho=+0.0923, p=1.23e-04
+    Top 5 negative correlations:
+      - yesterday_afternoon_momentum: rho=-0.0777, p=1.24e-03
+      - yesterday_afternoon_reversal: rho=-0.0655, p=6.51e-03
+      - capital_large_order_ratio: rho=-0.0610, p=1.13e-02
+      - capital_net_ratio: rho=-0.0605, p=1.20e-02
+      - yesterday_day_vwap_dev: rho=-0.0550, p=2.24e-02
+
+  [DIAGNOSTICS] Stability Selection:
+    Input: 214 | Stable count: 18
+    Kept 16 features.
+    Score percentiles: 25%=0.00, 50%=0.10, 75%=0.23, 90%=0.52, 95%=0.69
+    Selected features & scores:
+      - early_vwap_dev: score=0.57
+      - outside_bar_reversal_day: score=0.56
+      - yesterday_lunch_gap: score=0.99
+      - gap_pct: score=0.95
+      - vix_iv_spread: score=0.75
+      - iv_diff_1d: score=0.68
+      - yesterday_gap: score=0.72
+      - bar_ret_0: score=0.89
+      - max_up_ret: score=0.69
+      - yesterday_day_close_pos: score=0.61
+      - yesterday_cvd_close: score=0.74
+      - yesterday_early_trend: score=0.77
+      - yesterday_am_return: score=0.65
+      - yesterday_body_ratio: score=0.70
+      - cvd_divergence_day: score=0.60
+      - sma100_dist: score=0.94
+Stability kept 16 features.
+
+  [DIAGNOSTICS] Feature Quality:
+    Condition Number: 3.05
+    Matrix is stable.
+    No collinear pairs.
+  Cache hit: cache_loyo_300ETF_b2f09a8daa1ca7dc.joblib
+
+  [DIAGNOSTICS] LOYO CV Folds:
+    Folds: 15
+      Fold 1: Years [2015, 2016, 2017] | Train (1139, 16) | Test (573, 16)
+      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 16) | Test (573, 16)
+      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 16) | Test (572, 16)
+      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 16) | Test (573, 16)
+      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 16) | Test (573, 16)
+      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 16) | Test (574, 16)
+      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 16) | Test (573, 16)
+      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 16) | Test (574, 16)
+      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 16) | Test (574, 16)
+      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 16) | Test (573, 16)
+      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 16) | Test (574, 16)
+      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 16) | Test (574, 16)
+      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 16) | Test (573, 16)
+      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 16) | Test (573, 16)
+      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 16) | Test (574, 16)
+  [DIAGNOSTICS] Selection Train Baseline Condition Number: 3.0543
+  Cache hit: cache_pilot_300ETF_268eec249e0acdd7.joblib
+
+  [DIAGNOSTICS] Optuna Pilot Summary:
+    Trials: 50
+    Raw CV metrics:
+      M1 (Tail IC IR)     : Min=-0.2684, Med=0.4901, Max=2.3585
+      M2 (Tail IC Mean)   : Min=-0.0445, Med=0.0804, Max=0.3239
+      M3 (Hit Rate)       : Min=0.2000, Med=0.5500, Max=1.0000
+      M4 (Overall IC)     : Min=-0.0075, Med=0.0403, Max=0.1753
+      M5 (Monotonicity)   : Min=0.0333, Med=0.1715, Max=0.6230
+      M6 (Top-Bot Spread) : Min=-0.0631, Med=0.1493, Max=0.8885
+      M7 (Parsimony)      : Min=-0.3396, Med=-0.0024, Max=-0.0000
+      M8 (Coef Bloat)     : Min=-0.8765, Med=-0.0014, Max=-0.0000
+    Validation metrics:
+      Val IC              : Min=0.0000, Med=0.0481, Max=0.1430, MAD=0.0481
+      Val Tail IC         : Min=-0.5525, Med=0.0000, Max=0.1297, MAD=0.0601
+      Val Monotonicity    : Min=-0.0424, Med=0.2697, Max=0.8788, MAD=0.3121
+      Val Top-Bot Spread  : Min=-0.0943, Med=0.1663, Max=0.8541, MAD=0.2605
+Calibrated constants:
+  Val1: Med=0.048139, MAD=0.048139
+  Val2: Med=0.000000, MAD=0.060135
+  Val3: Med=0.269697, MAD=0.312121
+  Val4: Med=0.166266, MAD=0.260520
+
+Running main Optuna Study (100 trials)...
+
+  [DIAGNOSTICS] Main Study Summary:
+    Trials: 100 | OK: 74 | Pruned/Failed: 26
+    Pruning counts:
+      - M4 (Overall IC <= 0): 2
+      - M2 (Yearly Tail IC Mean <= 0): 10
+      - M3 (Hit Rate < 60%): 15
+      - M5 (Monotonicity <= 0.25): 14
+      - M6 (Top-Bottom Spread <= 0): 2
+      - exceeds ESS-based cap: 0
+      - active feature floor: 20
+      - Gini coefficient: 0
+      - Regularized condition number: 0
+    Exceptions:
+      - Side-specific Yearly Tail IC Mean (-0.0327 <= 0)
+      - Side-specific Hit Rate (40.00% < 50%)
+      - Side-specific Hit Rate (0.00% < 50%)
+      - Side-specific Yearly Tail IC Mean (-0.0038 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0267 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0528 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0507 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0278 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0029 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.1100 <= 0)
+      - Side-specific Hit Rate (30.00% < 50%)
+      - Side-specific Yearly Tail IC Mean (-0.0346 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0347 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.1426 <= 0)
+      - Side-specific Hit Rate (20.00% < 50%)
+
+  [DIAGNOSTICS] Objective Progression:
+    Trial   0: Best=-1.4809 | params={'k_weight': 0.17258184958466843, 'unified_alpha': 0.0451231319213065, 'unified_rho': 0.13339096418598828, 'unified_gamma': 12.476248311536951, 'huber_delta': 1.972125751150129}
+    Trial   3: Best=-0.7900 | params={'k_weight': 1.175748526208626, 'unified_alpha': 0.06441725825501599, 'unified_rho': 0.24904309151574888, 'unified_gamma': 1188.2400441757075, 'huber_delta': 1.9088462103425592}
+    Trial  19: Best=-0.5896 | params={'k_weight': 0.050632065634812484, 'unified_alpha': 0.008602903428863091, 'unified_rho': 0.8460850972808829, 'unified_gamma': 56.13774483442881, 'huber_delta': 3.3413691817884414}
+    Trial  21: Best=-0.3304 | params={'k_weight': 0.2314313671969137, 'unified_alpha': 6.341578374585632e-05, 'unified_rho': 0.36268546617688757, 'unified_gamma': 592.8456313569452, 'huber_delta': 1.3750252580024045}
+    Trial  28: Best=+1.6273 | params={'k_weight': 0.16010730338296608, 'unified_alpha': 0.1276602820664572, 'unified_rho': 0.5349626173910872, 'unified_gamma': 38.710514975489204, 'huber_delta': 2.356765896768957}
+
+  [DIAGNOSTICS] Overfitting (CSCV PBO):
+    PBO: 53.3%
+    IS -> OOS Slope: -1.5435
+
+  [DIAGNOSTICS] Plateau Search (r=0.25, default_min_n=8, default_min_val_n=6):
+    Trial   0 (val=-1.4809, deflated=-1.4809): neighbors=9 (valid=9, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  18 (val=-1.4491, deflated=-1.4624): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  19 (val=-0.5896, deflated=-1.1149): neighbors=1 (valid=1, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  21 (val=-0.3304, deflated=-0.8093): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  28 (val=+1.6273, deflated=-0.3573): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+  No plateau candidate met neighbor requirements. Falling back to raw best trial: 28 (val=+1.6273, deflated=-0.3573)
+
+  [DIAGNOSTICS] Model Confidence Set (MCS) & Bayesian Discovery:
+    MCS size: 32 / 100 trials (alpha=10%)
+    Bayesian prob of true discovery: 100.00%
+
+Best params:
+  k_weight: 0.16010730338296608
+  unified_alpha: 0.1276602820664572
+  unified_rho: 0.5349626173910872
+  unified_gamma: 38.710514975489204
+  huber_delta: 2.356765896768957
+  model_type: unified
+Best trial raw metrics (CV):
+  M1 (Tail IC IR):  0.7249
+  M2 (Tail IC Mean):0.1653
+  M3 (Hit Rate):    0.6000
+  M4 (Overall IC):  0.1045
+  Deflated CV IC:   -0.0173
+  M5 (Mono):        0.4897
+  M6 (Spread):      0.4720
+  M7 (Parsimony):   -0.0387
+  M8 (Coef Bloat):  -0.0756
+Best trial Selection Val INNER metrics (Tuned):
+  Val IC:           0.0801
+  Deflated Val IC:  -0.0186
+  Val Tail IC:      0.1585
+  Deflated Val Tail:-0.1327
+  Val Mono:         0.4303
+  Val Spread:       0.7078
+Best trial Selection Val OUTER metrics (Holdout Sanity Check):
+  Outer Val IC:     0.0995
+  Defl Outer Val IC:0.0008
+  Outer Tail IC:    -0.0667
+  Defl Outer Tail:  -0.3579
+  Outer Mono:       0.2727
+  Outer Spread:     0.3444
+
+Running Soloff et al. Bootstrap Bagging Feature Selection (B=100) on selection-train...
+  Per-feature bootstrap inclusion frequency:
+    - early_vwap_dev: 4.00%
+    - outside_bar_reversal_day: 11.00%
+    - yesterday_lunch_gap: 75.00%
+    - gap_pct: 60.00%
+    - vix_iv_spread: 44.00%
+    - iv_diff_1d: 44.00%
+    - yesterday_gap: 32.00%
+    - bar_ret_0: 83.00%
+    - max_up_ret: 53.00%
+    - yesterday_day_close_pos: 15.00%
+    - yesterday_cvd_close: 28.00%
+    - yesterday_early_trend: 20.00%
+    - yesterday_am_return: 58.00%
+    - yesterday_body_ratio: 4.00%
+    - cvd_divergence_day: 23.00%
+    - sma100_dist: 82.00%
+  Bagged selection kept 6 features: ['yesterday_lunch_gap', 'gap_pct', 'bar_ret_0', 'max_up_ret', 'yesterday_am_return', 'sma100_dist']
+
+  [DIAGNOSTICS] Final Model:
+    ESS: 2079.6 / 2166 (96.0%)
+    ESS healthy.
+    Gini: 0.6985 (cap=0.7333)
+    Raw Cond: 2.18
+    Reg Cond (kappa): 4.25
+
+  [DIAGNOSTICS] Time Profiling:
+    data_loading      :   0.1s
+    feature_selection :   0.0s
+    loyo_folds        :   0.0s
+    pilot_study       :   0.0s
+    main_study        :   4.2s
+    final_refit       :   0.1s
+    Total             :   4.3s
+
+  [DIAGNOSTICS] Quarterly Rolling Refit Test (Lockbox decay):
+    Quarter                | Static IC | Static Tail | Roll IC  | Roll Tail
+    -----------------------|-----------|-------------|----------|----------
+    2024-03 to 2024-06     |   +0.1430 |     +0.2000 |  +0.1430 |   +0.2000
+    2024-06 to 2024-09     |   -0.2802 |     +0.1333 |  -0.2689 |   +0.0667
+    2024-09 to 2024-12     |   +0.1994 |     +0.3333 |  +0.2072 |   +0.3571
+    2024-12 to 2025-03     |   +0.0810 |     +0.2381 |  +0.0827 |   -0.2143
+    2025-03 to 2025-06     |   -0.0517 |     +0.8954 |  -0.0382 |   +0.9121
+    2025-06 to 2025-09     |   +0.1424 |     +0.2000 |  +0.1245 |   -0.0167
+    2025-09 to 2025-12     |   -0.0431 |     -0.4762 |  -0.0245 |   -0.1190
+    2025-12 to 2026-03     |   -0.1440 |     +0.0714 |  -0.1599 |   -0.0952
+    2026-03 to 2026-06     |   -0.1101 |     +0.1167 |  -0.1180 |   -0.0500
+    2026-06 to 2026-06     |   -0.0385 |     +0.1000 |  +0.0000 |   +0.1000
+[300ETF/short] elapsed 4.6s
 
 ================================================================================
 Train 50ETF (Side: single)
@@ -743,7 +687,7 @@ Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
 ================================================================================
   [ERROR] Failed to train 50ETF (single): "['bar_vwap_dev_5'] not in index"
 Traceback (most recent call last):
-  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2667, in <module>
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2678, in <module>
     train_etf(etf, n_trials=args.trials, side=side,
     ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
               use_cache=not args.no_cache,
@@ -774,7 +718,7 @@ Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
 ================================================================================
   [ERROR] Failed to train 50ETF (long): "['bar_vwap_dev_5'] not in index"
 Traceback (most recent call last):
-  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2667, in <module>
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2678, in <module>
     train_etf(etf, n_trials=args.trials, side=side,
     ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
               use_cache=not args.no_cache,
@@ -805,7 +749,7 @@ Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
 ================================================================================
   [ERROR] Failed to train 50ETF (short): "['bar_vwap_dev_5'] not in index"
 Traceback (most recent call last):
-  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2667, in <module>
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2678, in <module>
     train_etf(etf, n_trials=args.trials, side=side,
     ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
               use_cache=not args.no_cache,
@@ -836,14 +780,7 @@ Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
 ================================================================================
 Loaded 2722 rows, 214 features.
 Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=128)
-Skipping Step 1 filter (screening) [Disabled: Univariate screening deletes joint predictive features]...
-Running stability selection...
-Pruning VIF (collinearity gate)...
-VIF dropped 0 collinear. Kept 17 features.
-Pruning condition number (structural gate)...
-    Drop 'yesterday_illiquidity_amihud' (loading: -1.0000, cond: 139.35 > 100.0) due to multi-feature collinearity
-Condition pruning dropped 1 features. Kept 16 features.
-  Cache saved: cache_select_500ETF_0bec0128a9e74806.joblib
+  Cache hit: cache_select_500ETF_6bbcd128c653ea24.joblib
 
   [DIAGNOSTICS] Feature Screening:
     Input: 214 | FDR pass: 117
@@ -864,12 +801,10 @@ Condition pruning dropped 1 features. Kept 16 features.
       - vix_vol_ratio: rho=-0.0553, p=2.16e-02
 
   [DIAGNOSTICS] Stability Selection:
-    Input: 214 | Stable count: 20
-    Kept 16 features.
-    Score percentiles: 25%=0.00, 50%=0.09, 75%=0.27, 90%=0.47, 95%=0.67
+    Input: 214 | Stable count: 16
+    Kept 14 features.
+    Score percentiles: 25%=0.00, 50%=0.09, 75%=0.27, 90%=0.44, 95%=0.67
     Selected features & scores:
-      - yesterday_day_pm_am_vol_ratio: score=0.51
-      - capital_buy_volume: score=0.52
       - bar_rng_0: score=0.67
       - margin_buy_repayment_spread: score=0.72
       - gap_pct: score=0.91
@@ -884,177 +819,180 @@ Condition pruning dropped 1 features. Kept 16 features.
       - early_skew: score=0.82
       - yesterday_lunch_gap: score=0.85
       - yesterday_early_trend: score=0.88
-Stability kept 16 features.
+Stability kept 14 features.
 
   [DIAGNOSTICS] Feature Quality:
-    Condition Number: 4.62
+    Condition Number: 4.48
     Matrix is stable.
     No collinear pairs.
-  Cache saved: cache_loyo_500ETF_b5a7ad3c7b0ef2f8.joblib
+  Cache hit: cache_loyo_500ETF_fe2a876ed181bc1c.joblib
 
   [DIAGNOSTICS] LOYO CV Folds:
     Folds: 15
-      Fold 1: Years [2015, 2016, 2017] | Train (1139, 16) | Test (573, 16)
-      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 16) | Test (573, 16)
-      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 16) | Test (572, 16)
-      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 16) | Test (573, 16)
-      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 16) | Test (573, 16)
-      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 16) | Test (574, 16)
-      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 16) | Test (573, 16)
-      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 16) | Test (574, 16)
-      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 16) | Test (574, 16)
-      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 16) | Test (573, 16)
-      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 16) | Test (574, 16)
-      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 16) | Test (574, 16)
-      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 16) | Test (573, 16)
-      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 16) | Test (573, 16)
-      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 16) | Test (574, 16)
-  [DIAGNOSTICS] Selection Train Baseline Condition Number: 4.6156
-
-Running Optuna Pilot Study (50 trials) for normalization calibration...
-  Cache saved: cache_pilot_500ETF_9682b39cb466ebef.joblib
+      Fold 1: Years [2015, 2016, 2017] | Train (1139, 14) | Test (573, 14)
+      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 14) | Test (573, 14)
+      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 14) | Test (572, 14)
+      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 14) | Test (573, 14)
+      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 14) | Test (573, 14)
+      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 14) | Test (574, 14)
+      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 14) | Test (573, 14)
+      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 14) | Test (574, 14)
+      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 14) | Test (574, 14)
+      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 14) | Test (573, 14)
+      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 14) | Test (574, 14)
+      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 14) | Test (574, 14)
+      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 14) | Test (573, 14)
+      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 14) | Test (573, 14)
+      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 14) | Test (574, 14)
+  [DIAGNOSTICS] Selection Train Baseline Condition Number: 4.4821
+  Cache hit: cache_pilot_500ETF_d6bc62aa6b7dd001.joblib
 
   [DIAGNOSTICS] Optuna Pilot Summary:
     Trials: 50
     Raw CV metrics:
-      M1 (Tail IC IR)     : Min=0.0067, Med=1.6976, Max=2.5422
-      M2 (Tail IC Mean)   : Min=0.0006, Med=0.2400, Max=0.2680
-      M3 (Hit Rate)       : Min=0.2000, Med=0.9500, Max=1.0000
-      M4 (Overall IC)     : Min=-0.0052, Med=0.1400, Max=0.1645
-      M5 (Monotonicity)   : Min=-0.0358, Med=0.5230, Max=0.6000
-      M6 (Top-Bot Spread) : Min=0.0722, Med=0.9359, Max=1.0806
-      M7 (Parsimony)      : Min=-0.3587, Med=-0.1026, Max=-0.0000
-      M8 (Coef Bloat)     : Min=-1.1642, Med=-0.6835, Max=-0.0000
+      M1 (Tail IC IR)     : Min=0.0067, Med=1.5365, Max=1.8809
+      M2 (Tail IC Mean)   : Min=0.0006, Med=0.2106, Max=0.2432
+      M3 (Hit Rate)       : Min=0.2000, Med=0.9000, Max=1.0000
+      M4 (Overall IC)     : Min=-0.0052, Med=0.1179, Max=0.1364
+      M5 (Monotonicity)   : Min=-0.0358, Med=0.4394, Max=0.5527
+      M6 (Top-Bot Spread) : Min=0.0722, Med=0.7736, Max=0.9473
+      M7 (Parsimony)      : Min=-0.3103, Med=-0.0532, Max=-0.0000
+      M8 (Coef Bloat)     : Min=-1.1732, Med=-0.4102, Max=-0.0000
     Validation metrics:
-      Val IC              : Min=0.0000, Med=0.1275, Max=0.1780, MAD=0.0180
-      Val Tail IC         : Min=0.0000, Med=0.2186, Max=0.3076, MAD=0.0226
-      Val Monotonicity    : Min=0.0000, Med=0.5152, Max=0.7091, MAD=0.0788
-      Val Top-Bot Spread  : Min=-0.1566, Med=0.2204, Max=0.5476, MAD=0.0787
+      Val IC              : Min=0.0000, Med=0.1455, Max=0.1662, MAD=0.0085
+      Val Tail IC         : Min=0.0000, Med=0.1590, Max=0.3909, MAD=0.0422
+      Val Monotonicity    : Min=0.0000, Med=0.5394, Max=0.7212, MAD=0.1091
+      Val Top-Bot Spread  : Min=-0.1566, Med=0.1350, Max=0.6190, MAD=0.0429
 Calibrated constants:
-  Val1: Med=0.127521, MAD=0.018000
-  Val2: Med=0.218574, MAD=0.022579
-  Val3: Med=0.515152, MAD=0.078788
-  Val4: Med=0.220439, MAD=0.078673
+  Val1: Med=0.145471, MAD=0.008485
+  Val2: Med=0.159032, MAD=0.042228
+  Val3: Med=0.539394, MAD=0.109091
+  Val4: Med=0.134984, MAD=0.042877
 
 Running main Optuna Study (100 trials)...
 
   [DIAGNOSTICS] Main Study Summary:
-    Trials: 100 | OK: 79 | Pruned/Failed: 21
+    Trials: 100 | OK: 71 | Pruned/Failed: 29
     Pruning counts:
       - M4 (Overall IC <= 0): 3
-      - M2 (Yearly Tail IC Mean <= 0): 2
-      - M3 (Hit Rate < 60%): 15
-      - M5 (Monotonicity <= 0.25): 17
+      - M2 (Yearly Tail IC Mean <= 0): 3
+      - M3 (Hit Rate < 60%): 17
+      - M5 (Monotonicity <= 0.25): 19
       - M6 (Top-Bottom Spread <= 0): 0
       - exceeds ESS-based cap: 0
-      - active feature floor: 21
+      - active feature floor: 29
       - Gini coefficient: 0
       - Regularized condition number: 0
 
   [DIAGNOSTICS] Objective Progression:
-    Trial   0: Best=+0.6629 | params={'k_weight': 0.17258184958466843, 'unified_alpha': 0.0451231319213065, 'unified_rho': 0.13339096418598828, 'unified_gamma': 12.476248311536951, 'huber_delta': 1.972125751150129}
-    Trial  10: Best=+0.7966 | params={'k_weight': 0.6302744507111608, 'unified_alpha': 0.001511600342996414, 'unified_rho': 0.18487668776145172, 'unified_gamma': 143.8656504427553, 'huber_delta': 0.5387245340394617}
-    Trial  25: Best=+2.5277 | params={'k_weight': 0.16010730338296608, 'unified_alpha': 0.1276602820664572, 'unified_rho': 0.5349626173910872, 'unified_gamma': 38.710514975489204, 'huber_delta': 2.356765896768957}
-    Trial  83: Best=+3.9849 | params={'k_weight': 0.6107911387316427, 'unified_alpha': 0.284919225018568, 'unified_rho': 0.11630222471487019, 'unified_gamma': 412.05524388159813, 'huber_delta': 0.7222375355085529}
+    Trial   0: Best=+0.1784 | params={'k_weight': 0.17258184958466843, 'unified_alpha': 0.0451231319213065, 'unified_rho': 0.13339096418598828, 'unified_gamma': 12.476248311536951, 'huber_delta': 1.972125751150129}
+    Trial   3: Best=+0.4623 | params={'k_weight': 1.175748526208626, 'unified_alpha': 0.06441725825501599, 'unified_rho': 0.24904309151574888, 'unified_gamma': 1188.2400441757075, 'huber_delta': 1.9088462103425592}
+    Trial   9: Best=+0.8266 | params={'k_weight': 0.6302744507111608, 'unified_alpha': 0.001511600342996414, 'unified_rho': 0.18487668776145172, 'unified_gamma': 143.8656504427553, 'huber_delta': 0.5387245340394617}
+    Trial  28: Best=+2.0031 | params={'k_weight': 0.7163038572458261, 'unified_alpha': 8.172745508168639, 'unified_rho': 0.007673496930136442, 'unified_gamma': 9911.153586983899, 'huber_delta': 0.537841041035128}
+    Trial  29: Best=+2.8618 | params={'k_weight': 0.7488533433862142, 'unified_alpha': 2.039119608860232, 'unified_rho': 0.028403793193624793, 'unified_gamma': 270.22794604234565, 'huber_delta': 0.659087469539843}
+    Trial  49: Best=+2.9696 | params={'k_weight': 0.9354822477056686, 'unified_alpha': 0.22286727786041602, 'unified_rho': 0.12916065994967024, 'unified_gamma': 3898.280646238744, 'huber_delta': 1.4508089100945651}
+    Trial  58: Best=+3.4810 | params={'k_weight': 0.6627214394255558, 'unified_alpha': 0.3667854794675794, 'unified_rho': 0.1626640854297028, 'unified_gamma': 2187.097887094085, 'huber_delta': 1.6657180743710314}
+    Trial  66: Best=+3.9158 | params={'k_weight': 1.1266041847262747, 'unified_alpha': 0.5470132573445701, 'unified_rho': 0.21237937126946463, 'unified_gamma': 2523.978225904453, 'huber_delta': 2.5508201764650558}
+    Trial  76: Best=+3.9575 | params={'k_weight': 1.3568220325713183, 'unified_alpha': 1.0635390847063315, 'unified_rho': 0.08107179070996613, 'unified_gamma': 2951.9140859333247, 'huber_delta': 2.6879920210667754}
+    Trial  93: Best=+4.0545 | params={'k_weight': 1.22172933879044, 'unified_alpha': 0.8992541028958629, 'unified_rho': 0.08045349620843749, 'unified_gamma': 1802.798395843319, 'huber_delta': 1.747611538254427}
+    Trial  94: Best=+4.4839 | params={'k_weight': 1.4539837271595255, 'unified_alpha': 1.7620311026058049, 'unified_rho': 0.09341925010246147, 'unified_gamma': 1781.4609033763759, 'huber_delta': 3.3458431541146103}
 
   [DIAGNOSTICS] Overfitting (CSCV PBO):
-    PBO: 20.0%
-    IS -> OOS Slope: -1.8861
+    PBO: 0.0%
+    IS -> OOS Slope: -1.5862
 
   [DIAGNOSTICS] Plateau Search (r=0.25, default_min_n=8, default_min_val_n=6):
-    Trial   0 (val=+0.6629, deflated=-0.1317): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial   6 (val=-0.7445, deflated=-0.7445): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  17 (val=+0.6201, deflated=-0.6625): neighbors=1 (valid=1, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  19 (val=+0.2033, deflated=-0.6324): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  20 (val=+0.6647, deflated=-0.2788): neighbors=2 (valid=2, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
-  No plateau candidate met neighbor requirements. Falling back to raw best trial: 0 (val=+0.6629, deflated=-0.1317)
+    Trial   3 (val=+0.4623, deflated=+0.2553): neighbors=17 (valid=12, req=15/10), valid_ratio=0.71, neighbor_mean=-6.0811, plateau=-9.5435
+    Trial   6 (val=-0.2595, deflated=-0.5757): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial   8 (val=-0.0351, deflated=-0.0351): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  18 (val=+0.1918, deflated=-0.1234): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  49 (val=+2.9696, deflated=-3.6043): neighbors=21 (valid=17, req=15/10), valid_ratio=0.81, neighbor_mean=-5.3203, plateau=-6.3688
+  Stable trial: 46 (val=+2.7314, deflated=-3.8285, plateau=-5.5559) vs best 3 (val=+0.4623, deflated=+0.2553)
 
   [DIAGNOSTICS] Model Confidence Set (MCS) & Bayesian Discovery:
-    MCS size: 1 / 100 trials (alpha=10%)
+    MCS size: 6 / 100 trials (alpha=10%)
     Bayesian prob of true discovery: 100.00%
 
 Best params:
-  k_weight: 0.17258184958466843
-  unified_alpha: 0.0451231319213065
-  unified_rho: 0.13339096418598828
-  unified_gamma: 12.476248311536951
-  huber_delta: 1.972125751150129
+  k_weight: 0.9609783829806864
+  unified_alpha: 0.22121474200282235
+  unified_rho: 0.14357342537481949
+  unified_gamma: 1146.4969748969722
+  huber_delta: 1.3305983606937146
   model_type: unified
 Best trial raw metrics (CV):
-  M1 (Tail IC IR):  2.1995
-  M2 (Tail IC Mean):0.2474
+  M1 (Tail IC IR):  2.0780
+  M2 (Tail IC Mean):0.2550
   M3 (Hit Rate):    1.0000
-  M4 (Overall IC):  0.1495
-  Deflated CV IC:   0.0414
-  M5 (Mono):        0.5079
-  M6 (Spread):      0.9515
-  M7 (Parsimony):   -0.0782
-  M8 (Coef Bloat):  -0.4915
+  M4 (Overall IC):  0.1416
+  Deflated CV IC:   0.0346
+  M5 (Mono):        0.4970
+  M6 (Spread):      0.8005
+  M7 (Parsimony):   -0.1230
+  M8 (Coef Bloat):  -0.3348
 Best trial Selection Val INNER metrics (Tuned):
-  Val IC:           0.1375
-  Deflated Val IC:  0.0220
-  Val Tail IC:      0.2363
-  Deflated Val Tail:0.0344
-  Val Mono:         0.6364
-  Val Spread:       0.0572
+  Val IC:           0.1724
+  Deflated Val IC:  0.0259
+  Val Tail IC:      0.2668
+  Deflated Val Tail:0.0321
+  Val Mono:         0.6970
+  Val Spread:       0.3262
 Best trial Selection Val OUTER metrics (Holdout Sanity Check):
-  Outer Val IC:     0.1778
-  Defl Outer Val IC:0.0623
-  Outer Tail IC:    0.3470
-  Defl Outer Tail:  0.1450
-  Outer Mono:       0.4424
-  Outer Spread:     0.4404
+  Outer Val IC:     0.2649
+  Defl Outer Val IC:0.1184
+  Outer Tail IC:    0.5774
+  Defl Outer Tail:  0.3427
+  Outer Mono:       0.5152
+  Outer Spread:     0.5320
 
 Running Soloff et al. Bootstrap Bagging Feature Selection (B=100) on selection-train...
   Per-feature bootstrap inclusion frequency:
-    - yesterday_day_pm_am_vol_ratio: 96.00%
-    - capital_buy_volume: 90.00%
-    - bar_rng_0: 100.00%
-    - margin_buy_repayment_spread: 95.00%
-    - gap_pct: 99.00%
-    - cvd_divergence_day: 91.00%
-    - sma100_dist: 97.00%
-    - yesterday_gap: 100.00%
-    - bar_ret_0: 86.00%
+    - bar_rng_0: 69.00%
+    - margin_buy_repayment_spread: 81.00%
+    - gap_pct: 88.00%
+    - cvd_divergence_day: 53.00%
+    - sma100_dist: 88.00%
+    - yesterday_gap: 91.00%
+    - bar_ret_0: 94.00%
     - max_up_ret: 100.00%
-    - outside_bar_reversal_day: 95.00%
-    - yesterday_afternoon_momentum: 100.00%
-    - bar_vwap_dev_2: 80.00%
-    - early_skew: 100.00%
-    - yesterday_lunch_gap: 97.00%
-    - yesterday_early_trend: 99.00%
-  Bagged selection kept 16 features: ['yesterday_day_pm_am_vol_ratio', 'capital_buy_volume', 'bar_rng_0', 'margin_buy_repayment_spread', 'gap_pct', 'cvd_divergence_day', 'sma100_dist', 'yesterday_gap', 'bar_ret_0', 'max_up_ret', 'outside_bar_reversal_day', 'yesterday_afternoon_momentum', 'bar_vwap_dev_2', 'early_skew', 'yesterday_lunch_gap', 'yesterday_early_trend']
+    - outside_bar_reversal_day: 47.00%
+    - yesterday_afternoon_momentum: 95.00%
+    - bar_vwap_dev_2: 76.00%
+    - early_skew: 87.00%
+    - yesterday_lunch_gap: 81.00%
+    - yesterday_early_trend: 84.00%
+  Bagged selection kept 13 features: ['bar_rng_0', 'margin_buy_repayment_spread', 'gap_pct', 'cvd_divergence_day', 'sma100_dist', 'yesterday_gap', 'bar_ret_0', 'max_up_ret', 'yesterday_afternoon_momentum', 'bar_vwap_dev_2', 'early_skew', 'yesterday_lunch_gap', 'yesterday_early_trend']
 
   [DIAGNOSTICS] Final Model:
-    ESS: 2065.6 / 2166 (95.4%)
+    ESS: 1001.6 / 2166 (46.2%)
     ESS healthy.
-    Gini: 0.3766 (cap=0.6000)
-    Raw Cond: 4.48
-    Reg Cond (kappa): 15.24
+    Gini: 0.3871 (cap=0.6308)
+    Raw Cond: 4.36
+    Reg Cond (kappa): 7.86
 
   [DIAGNOSTICS] Time Profiling:
     data_loading      :   0.0s
-    feature_selection :   2.2s
-    loyo_folds        :   0.1s
-    pilot_study       :   1.3s
-    main_study        :   3.4s
+    feature_selection :   0.0s
+    loyo_folds        :   0.0s
+    pilot_study       :   0.0s
+    main_study        :   4.3s
     final_refit       :   0.1s
-    Total             :   7.1s
+    Total             :   4.5s
 
   [DIAGNOSTICS] Quarterly Rolling Refit Test (Lockbox decay):
     Quarter                | Static IC | Static Tail | Roll IC  | Roll Tail
     -----------------------|-----------|-------------|----------|----------
-    2024-03 to 2024-06     |   +0.2822 |     +0.3706 |  +0.2822 |   +0.3706
-    2024-06 to 2024-09     |   +0.0810 |     -0.1818 |  +0.0799 |   -0.2517
-    2024-09 to 2024-12     |   +0.0761 |     +0.1030 |  +0.0828 |   +0.2606
-    2024-12 to 2025-03     |   +0.2252 |     +0.5636 |  +0.2253 |   +0.5273
-    2025-03 to 2025-06     |   +0.1234 |     +0.4685 |  +0.0618 |   +0.3287
-    2025-06 to 2025-09     |   +0.1955 |     -0.0699 |  +0.1413 |   -0.0140
-    2025-09 to 2025-12     |   +0.1722 |     -0.2121 |  +0.1649 |   -0.2000
-    2025-12 to 2026-03     |   -0.0896 |     -0.3697 |  -0.0820 |   -0.4424
-    2026-03 to 2026-06     |   +0.0895 |     -0.2308 |  +0.0920 |   -0.2098
-    2026-06 to 2026-06     |   +0.0934 |     +0.2121 |  +0.1264 |   +0.1515
-[500ETF/single] elapsed 7.3s
+    2024-03 to 2024-06     |   +0.2571 |     +0.6573 |  +0.2571 |   +0.6573
+    2024-06 to 2024-09     |   +0.0347 |     -0.3846 |  +0.0476 |   -0.4196
+    2024-09 to 2024-12     |   +0.1227 |     +0.3212 |  +0.1381 |   +0.3212
+    2024-12 to 2025-03     |   +0.2891 |     +0.3576 |  +0.2926 |   +0.3939
+    2025-03 to 2025-06     |   -0.0078 |     -0.0979 |  -0.0930 |   -0.2308
+    2025-06 to 2025-09     |   +0.1784 |     +0.2867 |  +0.1313 |   +0.3916
+    2025-09 to 2025-12     |   +0.2421 |     +0.2121 |  +0.2434 |   +0.0667
+    2025-12 to 2026-03     |   -0.0485 |     -0.3212 |  -0.0691 |   -0.3212
+    2026-03 to 2026-06     |   +0.0908 |     -0.1259 |  +0.1260 |   -0.0839
+    2026-06 to 2026-06     |   -0.0330 |     -0.1152 |  -0.0110 |   -0.1152
+[500ETF/single] elapsed 4.7s
 
 ================================================================================
 Train 500ETF (Side: long)
@@ -1063,7 +1001,7 @@ Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
 ================================================================================
 Loaded 2722 rows, 214 features.
 Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=128)
-  Cache hit: cache_select_500ETF_0bec0128a9e74806.joblib
+  Cache hit: cache_select_500ETF_6bbcd128c653ea24.joblib
 
   [DIAGNOSTICS] Feature Screening:
     Input: 214 | FDR pass: 117
@@ -1084,12 +1022,10 @@ Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=1
       - vix_vol_ratio: rho=-0.0553, p=2.16e-02
 
   [DIAGNOSTICS] Stability Selection:
-    Input: 214 | Stable count: 20
-    Kept 16 features.
-    Score percentiles: 25%=0.00, 50%=0.09, 75%=0.27, 90%=0.47, 95%=0.67
+    Input: 214 | Stable count: 16
+    Kept 14 features.
+    Score percentiles: 25%=0.00, 50%=0.09, 75%=0.27, 90%=0.44, 95%=0.67
     Selected features & scores:
-      - yesterday_day_pm_am_vol_ratio: score=0.51
-      - capital_buy_volume: score=0.52
       - bar_rng_0: score=0.67
       - margin_buy_repayment_spread: score=0.72
       - gap_pct: score=0.91
@@ -1104,191 +1040,195 @@ Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=1
       - early_skew: score=0.82
       - yesterday_lunch_gap: score=0.85
       - yesterday_early_trend: score=0.88
-Stability kept 16 features.
+Stability kept 14 features.
 
   [DIAGNOSTICS] Feature Quality:
-    Condition Number: 4.62
+    Condition Number: 4.48
     Matrix is stable.
     No collinear pairs.
-  Cache hit: cache_loyo_500ETF_b5a7ad3c7b0ef2f8.joblib
+  Cache hit: cache_loyo_500ETF_fe2a876ed181bc1c.joblib
 
   [DIAGNOSTICS] LOYO CV Folds:
     Folds: 15
-      Fold 1: Years [2015, 2016, 2017] | Train (1139, 16) | Test (573, 16)
-      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 16) | Test (573, 16)
-      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 16) | Test (572, 16)
-      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 16) | Test (573, 16)
-      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 16) | Test (573, 16)
-      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 16) | Test (574, 16)
-      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 16) | Test (573, 16)
-      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 16) | Test (574, 16)
-      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 16) | Test (574, 16)
-      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 16) | Test (573, 16)
-      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 16) | Test (574, 16)
-      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 16) | Test (574, 16)
-      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 16) | Test (573, 16)
-      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 16) | Test (573, 16)
-      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 16) | Test (574, 16)
-  [DIAGNOSTICS] Selection Train Baseline Condition Number: 4.6156
-
-Running Optuna Pilot Study (50 trials) for normalization calibration...
-  Cache saved: cache_pilot_500ETF_7f3ff4b06e6a4d13.joblib
+      Fold 1: Years [2015, 2016, 2017] | Train (1139, 14) | Test (573, 14)
+      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 14) | Test (573, 14)
+      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 14) | Test (572, 14)
+      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 14) | Test (573, 14)
+      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 14) | Test (573, 14)
+      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 14) | Test (574, 14)
+      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 14) | Test (573, 14)
+      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 14) | Test (574, 14)
+      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 14) | Test (574, 14)
+      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 14) | Test (573, 14)
+      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 14) | Test (574, 14)
+      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 14) | Test (574, 14)
+      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 14) | Test (573, 14)
+      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 14) | Test (573, 14)
+      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 14) | Test (574, 14)
+  [DIAGNOSTICS] Selection Train Baseline Condition Number: 4.4821
+  Cache hit: cache_pilot_500ETF_dfdd6989674a1a0c.joblib
 
   [DIAGNOSTICS] Optuna Pilot Summary:
     Trials: 50
     Raw CV metrics:
-      M1 (Tail IC IR)     : Min=0.0067, Med=1.6640, Max=2.5021
-      M2 (Tail IC Mean)   : Min=0.0006, Med=0.2406, Max=0.2571
+      M1 (Tail IC IR)     : Min=-0.0479, Med=1.5531, Max=1.8809
+      M2 (Tail IC Mean)   : Min=-0.0062, Med=0.2115, Max=0.2432
       M3 (Hit Rate)       : Min=0.2000, Med=0.9000, Max=1.0000
-      M4 (Overall IC)     : Min=-0.0052, Med=0.1372, Max=0.1495
-      M5 (Monotonicity)   : Min=-0.0358, Med=0.5103, Max=0.6158
-      M6 (Top-Bot Spread) : Min=0.0722, Med=0.8933, Max=1.0482
-      M7 (Parsimony)      : Min=-0.3587, Med=-0.1438, Max=-0.0000
-      M8 (Coef Bloat)     : Min=-1.1642, Med=-0.8428, Max=-0.0000
+      M4 (Overall IC)     : Min=-0.0052, Med=0.1137, Max=0.1381
+      M5 (Monotonicity)   : Min=-0.0406, Med=0.4588, Max=0.5527
+      M6 (Top-Bot Spread) : Min=0.0171, Med=0.7456, Max=0.9008
+      M7 (Parsimony)      : Min=-0.3119, Med=-0.1143, Max=-0.0000
+      M8 (Coef Bloat)     : Min=-1.1732, Med=-0.8669, Max=-0.0000
     Validation metrics:
-      Val IC              : Min=0.0000, Med=0.1095, Max=0.1883, MAD=0.0164
-      Val Tail IC         : Min=-0.3085, Med=-0.0398, Max=0.1137, MAD=0.0398
-      Val Monotonicity    : Min=0.0000, Med=0.5152, Max=0.6606, MAD=0.0667
-      Val Top-Bot Spread  : Min=-0.1566, Med=0.2048, Max=0.5252, MAD=0.0690
+      Val IC              : Min=0.0000, Med=0.1361, Max=0.1788, MAD=0.0073
+      Val Tail IC         : Min=-0.2312, Med=-0.0306, Max=0.0851, MAD=0.0404
+      Val Monotonicity    : Min=0.0000, Med=0.5758, Max=0.7212, MAD=0.0424
+      Val Top-Bot Spread  : Min=-0.1566, Med=0.1509, Max=0.5476, MAD=0.0361
 Calibrated constants:
-  Val1: Med=0.109520, MAD=0.016360
-  Val2: Med=-0.039781, MAD=0.039781
-  Val3: Med=0.515152, MAD=0.066667
-  Val4: Med=0.204759, MAD=0.069040
+  Val1: Med=0.136140, MAD=0.007309
+  Val2: Med=-0.030610, MAD=0.040409
+  Val3: Med=0.575758, MAD=0.042424
+  Val4: Med=0.150922, MAD=0.036107
 
 Running main Optuna Study (100 trials)...
 
   [DIAGNOSTICS] Main Study Summary:
-    Trials: 100 | OK: 67 | Pruned/Failed: 33
+    Trials: 100 | OK: 58 | Pruned/Failed: 42
     Pruning counts:
       - M4 (Overall IC <= 0): 2
       - M2 (Yearly Tail IC Mean <= 0): 0
-      - M3 (Hit Rate < 60%): 6
-      - M5 (Monotonicity <= 0.25): 8
+      - M3 (Hit Rate < 60%): 16
+      - M5 (Monotonicity <= 0.25): 19
       - M6 (Top-Bottom Spread <= 0): 0
       - exceeds ESS-based cap: 0
-      - active feature floor: 12
+      - active feature floor: 23
       - Gini coefficient: 0
       - Regularized condition number: 0
     Exceptions:
-      - Side-specific Yearly Tail IC Mean (-0.0342 <= 0)
-      - Side-specific Hit Rate (40.00% < 50%)
+      - Side-specific Yearly Tail IC Mean (-0.0061 <= 0)
       - Side-specific Hit Rate (10.00% < 50%)
-      - Side-specific Yearly Tail IC Mean (-0.0206 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0058 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0054 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0072 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0407 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0033 <= 0)
+      - Side-specific Hit Rate (40.00% < 50%)
+      - Side-specific Yearly Tail IC Mean (-0.0123 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0048 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0043 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0046 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0138 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0242 <= 0)
       - Side-specific Hit Rate (30.00% < 50%)
-      - Side-specific Yearly Tail IC Mean (-0.0079 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0916 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0107 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0565 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0139 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0218 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0035 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0087 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0361 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0092 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0026 <= 0)
 
   [DIAGNOSTICS] Objective Progression:
-    Trial   1: Best=+0.2204 | params={'k_weight': 1.252263222998474, 'unified_alpha': 4.253795683489069e-05, 'unified_rho': 0.7446404816795178, 'unified_gamma': 35.86027023078568, 'huber_delta': 2.1168987701363235}
-    Trial   2: Best=+1.2450 | params={'k_weight': 1.4835172702134, 'unified_alpha': 0.019827518376799098, 'unified_rho': 0.28144730195506285, 'unified_gamma': 2.962371401177323, 'huber_delta': 2.500112731873114}
-    Trial  63: Best=+1.7531 | params={'k_weight': 1.0999153113363582, 'unified_alpha': 4.413596969074656e-05, 'unified_rho': 0.09319007130685505, 'unified_gamma': 23.997833536419417, 'huber_delta': 1.9614031752638654}
-    Trial  88: Best=+1.9811 | params={'k_weight': 1.0481491810812649, 'unified_alpha': 0.05085005870416096, 'unified_rho': 0.2073933424025698, 'unified_gamma': 6949.9353772650575, 'huber_delta': 0.6093581435584317}
-    Trial  92: Best=+2.6089 | params={'k_weight': 1.0547977790858425, 'unified_alpha': 0.05462627605290452, 'unified_rho': 0.22807466409809857, 'unified_gamma': 1163.614587182783, 'huber_delta': 1.1645512796909911}
+    Trial   0: Best=-0.3687 | params={'k_weight': 0.17258184958466843, 'unified_alpha': 0.0451231319213065, 'unified_rho': 0.13339096418598828, 'unified_gamma': 12.476248311536951, 'huber_delta': 1.972125751150129}
+    Trial   2: Best=+0.6445 | params={'k_weight': 1.175748526208626, 'unified_alpha': 0.06441725825501599, 'unified_rho': 0.24904309151574888, 'unified_gamma': 1188.2400441757075, 'huber_delta': 1.9088462103425592}
+    Trial  34: Best=+1.5191 | params={'k_weight': 1.0952114129772643, 'unified_alpha': 0.05891776077657141, 'unified_rho': 0.00749452417866267, 'unified_gamma': 590.3491452006115, 'huber_delta': 0.979733317690967}
+    Trial  35: Best=+3.4512 | params={'k_weight': 0.8577692172494933, 'unified_alpha': 0.12308525820161788, 'unified_rho': 0.02641465364336748, 'unified_gamma': 992.2448575424086, 'huber_delta': 1.0444123117321222}
+    Trial  37: Best=+3.5710 | params={'k_weight': 0.8762205408455097, 'unified_alpha': 0.1214404967305922, 'unified_rho': 0.02351326746058932, 'unified_gamma': 9672.39109783609, 'huber_delta': 0.8936046225559968}
+    Trial  39: Best=+4.2771 | params={'k_weight': 0.8850632848875227, 'unified_alpha': 0.24775654102576955, 'unified_rho': 0.033095110407356604, 'unified_gamma': 1.6112078321990353, 'huber_delta': 0.6091015575338012}
 
   [DIAGNOSTICS] Overfitting (CSCV PBO):
     PBO: 6.7%
-    IS -> OOS Slope: -1.7319
+    IS -> OOS Slope: -1.6308
 
   [DIAGNOSTICS] Plateau Search (r=0.25, default_min_n=8, default_min_val_n=6):
-    Trial   1 (val=+0.2204, deflated=-0.5345): neighbors=3 (valid=3, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
-    Trial   2 (val=+1.2450, deflated=+0.4431): neighbors=2 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial   7 (val=+0.3877, deflated=-0.3452): neighbors=15 (valid=15, req=15/10), valid_ratio=1.00, neighbor_mean=-2.8196, plateau=-4.0568
-    Trial  88 (val=+1.9811, deflated=-0.9624): neighbors=1 (valid=1, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  92 (val=+2.6089, deflated=-0.3686): neighbors=5 (valid=1, req=15/10), valid_ratio=0.20, neighbor_mean=N/A, plateau=Excluded
-  Stable trial: 45 (val=+0.4305, deflated=-2.4429, plateau=-2.4429) vs best 2 (val=+1.2450, deflated=+0.4431)
+    Trial   0 (val=-0.3687, deflated=-0.3687): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial   2 (val=+0.6445, deflated=-0.3311): neighbors=7 (valid=7, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
+    Trial   7 (val=-0.8423, deflated=-1.3773): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  11 (val=-0.7120, deflated=-1.0647): neighbors=2 (valid=2, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  39 (val=+4.2771, deflated=-1.3505): neighbors=1 (valid=1, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
+  Stable trial: 45 (val=+1.6673, deflated=-4.1888, plateau=-5.0948) vs best 2 (val=+0.6445, deflated=-0.3311)
 
   [DIAGNOSTICS] Model Confidence Set (MCS) & Bayesian Discovery:
-    MCS size: 6 / 100 trials (alpha=10%)
+    MCS size: 2 / 100 trials (alpha=10%)
     Bayesian prob of true discovery: 100.00%
 
 Best params:
-  k_weight: 0.7719006476279384
-  unified_alpha: 0.00017716132742715896
-  unified_rho: 0.11421820020447089
-  unified_gamma: 17.458538701523693
-  huber_delta: 2.270209207024037
+  k_weight: 0.9963782071951084
+  unified_alpha: 0.2852545635990525
+  unified_rho: 0.14145452361330868
+  unified_gamma: 1788.3967952739054
+  huber_delta: 1.4711718289089408
   model_type: unified
 Best trial raw metrics (CV):
-  M1 (Tail IC IR):  1.7715
-  M2 (Tail IC Mean):0.2409
+  M1 (Tail IC IR):  1.9643
+  M2 (Tail IC Mean):0.2461
   M3 (Hit Rate):    1.0000
-  M4 (Overall IC):  0.1386
-  Deflated CV IC:   0.0618
-  M5 (Mono):        0.5152
-  M6 (Spread):      1.0617
-  M7 (Parsimony):   -0.1290
-  M8 (Coef Bloat):  -0.8642
+  M4 (Overall IC):  0.1398
+  Deflated CV IC:   0.0333
+  M5 (Mono):        0.5309
+  M6 (Spread):      0.7473
+  M7 (Parsimony):   -0.1291
+  M8 (Coef Bloat):  -0.2935
 Best trial Selection Val INNER metrics (Tuned):
-  Val IC:           0.1251
-  Deflated Val IC:  0.0423
-  Val Tail IC:      -0.0406
-  Deflated Val Tail:-0.2535
-  Val Mono:         0.5636
-  Val Spread:       0.2964
+  Val IC:           0.1723
+  Deflated Val IC:  0.0378
+  Val Tail IC:      -0.0183
+  Deflated Val Tail:-0.2351
+  Val Mono:         0.5152
+  Val Spread:       0.3671
 Best trial Selection Val OUTER metrics (Holdout Sanity Check):
-  Outer Val IC:     0.1727
-  Defl Outer Val IC:0.0900
-  Outer Tail IC:    0.0158
-  Defl Outer Tail:  -0.1971
-  Outer Mono:       0.5879
-  Outer Spread:     0.4905
+  Outer Val IC:     0.2718
+  Defl Outer Val IC:0.1374
+  Outer Tail IC:    0.4105
+  Defl Outer Tail:  0.1938
+  Outer Mono:       0.5152
+  Outer Spread:     0.5557
 
 Running Soloff et al. Bootstrap Bagging Feature Selection (B=100) on selection-train...
   Per-feature bootstrap inclusion frequency:
-    - yesterday_day_pm_am_vol_ratio: 100.00%
-    - capital_buy_volume: 100.00%
-    - bar_rng_0: 100.00%
-    - margin_buy_repayment_spread: 100.00%
-    - gap_pct: 100.00%
-    - cvd_divergence_day: 100.00%
-    - sma100_dist: 100.00%
-    - yesterday_gap: 100.00%
-    - bar_ret_0: 100.00%
+    - bar_rng_0: 61.00%
+    - margin_buy_repayment_spread: 74.00%
+    - gap_pct: 80.00%
+    - cvd_divergence_day: 44.00%
+    - sma100_dist: 85.00%
+    - yesterday_gap: 89.00%
+    - bar_ret_0: 94.00%
     - max_up_ret: 100.00%
-    - outside_bar_reversal_day: 100.00%
-    - yesterday_afternoon_momentum: 100.00%
-    - bar_vwap_dev_2: 100.00%
-    - early_skew: 100.00%
-    - yesterday_lunch_gap: 100.00%
-    - yesterday_early_trend: 100.00%
-  Bagged selection kept 16 features: ['yesterday_day_pm_am_vol_ratio', 'capital_buy_volume', 'bar_rng_0', 'margin_buy_repayment_spread', 'gap_pct', 'cvd_divergence_day', 'sma100_dist', 'yesterday_gap', 'bar_ret_0', 'max_up_ret', 'outside_bar_reversal_day', 'yesterday_afternoon_momentum', 'bar_vwap_dev_2', 'early_skew', 'yesterday_lunch_gap', 'yesterday_early_trend']
+    - outside_bar_reversal_day: 38.00%
+    - yesterday_afternoon_momentum: 93.00%
+    - bar_vwap_dev_2: 71.00%
+    - early_skew: 77.00%
+    - yesterday_lunch_gap: 77.00%
+    - yesterday_early_trend: 76.00%
+  Bagged selection kept 12 features: ['bar_rng_0', 'margin_buy_repayment_spread', 'gap_pct', 'sma100_dist', 'yesterday_gap', 'bar_ret_0', 'max_up_ret', 'yesterday_afternoon_momentum', 'bar_vwap_dev_2', 'early_skew', 'yesterday_lunch_gap', 'yesterday_early_trend']
 
   [DIAGNOSTICS] Final Model:
-    ESS: 1270.0 / 2166 (58.6%)
+    ESS: 954.7 / 2166 (44.1%)
     ESS healthy.
-    Gini: 0.3827 (cap=0.6000)
-    Raw Cond: 4.48
-    Reg Cond (kappa): 20.03
+    Gini: 0.3781 (cap=0.6333)
+    Raw Cond: 4.36
+    Reg Cond (kappa): 6.80
 
   [DIAGNOSTICS] Time Profiling:
-    data_loading      :   0.0s
+    data_loading      :   0.1s
     feature_selection :   0.0s
     loyo_folds        :   0.0s
-    pilot_study       :   2.2s
+    pilot_study       :   0.0s
     main_study        :   4.2s
-    final_refit       :   0.2s
-    Total             :   6.7s
+    final_refit       :   0.1s
+    Total             :   4.4s
 
   [DIAGNOSTICS] Quarterly Rolling Refit Test (Lockbox decay):
     Quarter                | Static IC | Static Tail | Roll IC  | Roll Tail
     -----------------------|-----------|-------------|----------|----------
-    2024-03 to 2024-06     |   +0.2919 |     -0.1000 |  +0.2919 |   -0.1000
-    2024-06 to 2024-09     |   +0.1197 |     -0.0167 |  +0.1312 |   -0.1500
-    2024-09 to 2024-12     |   +0.0598 |     +0.0714 |  +0.0650 |   +0.0476
-    2024-12 to 2025-03     |   +0.1706 |     +0.3333 |  +0.1606 |   +0.2381
-    2025-03 to 2025-06     |   +0.1263 |     +0.4833 |  +0.1149 |   +0.4167
-    2025-06 to 2025-09     |   +0.1732 |     -0.4333 |  +0.1327 |   -0.3667
-    2025-09 to 2025-12     |   +0.1330 |     -0.5952 |  +0.1323 |   -0.6190
-    2025-12 to 2026-03     |   -0.0882 |     -0.3810 |  -0.0925 |   -0.3810
-    2026-03 to 2026-06     |   +0.0843 |     +0.2000 |  +0.0892 |   +0.2000
-    2026-06 to 2026-06     |   +0.0934 |     -0.1000 |  +0.1593 |   +0.3000
-[500ETF/long] elapsed 6.9s
+    2024-03 to 2024-06     |   +0.2411 |     +0.0500 |  +0.2411 |   +0.0500
+    2024-06 to 2024-09     |   +0.0248 |     -0.2333 |  +0.0261 |   -0.2333
+    2024-09 to 2024-12     |   +0.1424 |     -0.1190 |  +0.1602 |   -0.0476
+    2024-12 to 2025-03     |   +0.3004 |     -0.6429 |  +0.2963 |   -0.4762
+    2025-03 to 2025-06     |   -0.0306 |     -0.0667 |  -0.1316 |   +0.0667
+    2025-06 to 2025-09     |   +0.1714 |     +0.2000 |  +0.1154 |   +0.3333
+    2025-09 to 2025-12     |   +0.2502 |     -0.1190 |  +0.2390 |   -0.0238
+    2025-12 to 2026-03     |   -0.0529 |     -0.2143 |  -0.0788 |   -0.2143
+    2026-03 to 2026-06     |   +0.0937 |     +0.0000 |  +0.1213 |   -0.2000
+    2026-06 to 2026-06     |   -0.0714 |     -0.2000 |  -0.0495 |   -0.2000
+[500ETF/long] elapsed 4.7s
 
 ================================================================================
 Train 500ETF (Side: short)
@@ -1297,7 +1237,7 @@ Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
 ================================================================================
 Loaded 2722 rows, 214 features.
 Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=128)
-  Cache hit: cache_select_500ETF_0bec0128a9e74806.joblib
+  Cache hit: cache_select_500ETF_6bbcd128c653ea24.joblib
 
   [DIAGNOSTICS] Feature Screening:
     Input: 214 | FDR pass: 117
@@ -1318,12 +1258,10 @@ Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=1
       - vix_vol_ratio: rho=-0.0553, p=2.16e-02
 
   [DIAGNOSTICS] Stability Selection:
-    Input: 214 | Stable count: 20
-    Kept 16 features.
-    Score percentiles: 25%=0.00, 50%=0.09, 75%=0.27, 90%=0.47, 95%=0.67
+    Input: 214 | Stable count: 16
+    Kept 14 features.
+    Score percentiles: 25%=0.00, 50%=0.09, 75%=0.27, 90%=0.44, 95%=0.67
     Selected features & scores:
-      - yesterday_day_pm_am_vol_ratio: score=0.51
-      - capital_buy_volume: score=0.52
       - bar_rng_0: score=0.67
       - margin_buy_repayment_spread: score=0.72
       - gap_pct: score=0.91
@@ -1338,209 +1276,195 @@ Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=1
       - early_skew: score=0.82
       - yesterday_lunch_gap: score=0.85
       - yesterday_early_trend: score=0.88
-Stability kept 16 features.
+Stability kept 14 features.
 
   [DIAGNOSTICS] Feature Quality:
-    Condition Number: 4.62
+    Condition Number: 4.48
     Matrix is stable.
     No collinear pairs.
-  Cache hit: cache_loyo_500ETF_b5a7ad3c7b0ef2f8.joblib
+  Cache hit: cache_loyo_500ETF_fe2a876ed181bc1c.joblib
 
   [DIAGNOSTICS] LOYO CV Folds:
     Folds: 15
-      Fold 1: Years [2015, 2016, 2017] | Train (1139, 16) | Test (573, 16)
-      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 16) | Test (573, 16)
-      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 16) | Test (572, 16)
-      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 16) | Test (573, 16)
-      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 16) | Test (573, 16)
-      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 16) | Test (574, 16)
-      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 16) | Test (573, 16)
-      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 16) | Test (574, 16)
-      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 16) | Test (574, 16)
-      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 16) | Test (573, 16)
-      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 16) | Test (574, 16)
-      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 16) | Test (574, 16)
-      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 16) | Test (573, 16)
-      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 16) | Test (573, 16)
-      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 16) | Test (574, 16)
-  [DIAGNOSTICS] Selection Train Baseline Condition Number: 4.6156
-
-Running Optuna Pilot Study (50 trials) for normalization calibration...
-  Cache saved: cache_pilot_500ETF_1db8802e514493f4.joblib
+      Fold 1: Years [2015, 2016, 2017] | Train (1139, 14) | Test (573, 14)
+      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 14) | Test (573, 14)
+      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 14) | Test (572, 14)
+      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 14) | Test (573, 14)
+      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 14) | Test (573, 14)
+      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 14) | Test (574, 14)
+      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 14) | Test (573, 14)
+      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 14) | Test (574, 14)
+      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 14) | Test (574, 14)
+      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 14) | Test (573, 14)
+      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 14) | Test (574, 14)
+      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 14) | Test (574, 14)
+      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 14) | Test (573, 14)
+      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 14) | Test (573, 14)
+      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 14) | Test (574, 14)
+  [DIAGNOSTICS] Selection Train Baseline Condition Number: 4.4821
+  Cache hit: cache_pilot_500ETF_eaab401ffdb45519.joblib
 
   [DIAGNOSTICS] Optuna Pilot Summary:
     Trials: 50
     Raw CV metrics:
-      M1 (Tail IC IR)     : Min=0.0067, Med=1.6363, Max=2.3433
-      M2 (Tail IC Mean)   : Min=0.0006, Med=0.2433, Max=0.2571
-      M3 (Hit Rate)       : Min=0.2000, Med=1.0000, Max=1.0000
-      M4 (Overall IC)     : Min=-0.0052, Med=0.1426, Max=0.1560
-      M5 (Monotonicity)   : Min=-0.0358, Med=0.5255, Max=0.5964
-      M6 (Top-Bot Spread) : Min=0.0722, Med=0.9725, Max=1.0482
-      M7 (Parsimony)      : Min=-0.3587, Med=-0.1157, Max=-0.0000
-      M8 (Coef Bloat)     : Min=-1.1642, Med=-0.7423, Max=-0.0000
+      M1 (Tail IC IR)     : Min=0.0067, Med=0.4030, Max=1.8809
+      M2 (Tail IC Mean)   : Min=0.0006, Med=0.0506, Max=0.2432
+      M3 (Hit Rate)       : Min=0.2000, Med=0.5000, Max=1.0000
+      M4 (Overall IC)     : Min=-0.0052, Med=0.0321, Max=0.1364
+      M5 (Monotonicity)   : Min=-0.0358, Med=0.1676, Max=0.5527
+      M6 (Top-Bot Spread) : Min=0.0722, Med=0.2564, Max=0.9473
+      M7 (Parsimony)      : Min=-0.3103, Med=0.0000, Max=-0.0000
+      M8 (Coef Bloat)     : Min=-1.1732, Med=0.0000, Max=-0.0000
     Validation metrics:
-      Val IC              : Min=0.0000, Med=0.1326, Max=0.1606, MAD=0.0112
-      Val Tail IC         : Min=-0.2620, Med=-0.0168, Max=0.1300, MAD=0.0548
-      Val Monotonicity    : Min=0.0000, Med=0.5333, Max=0.7091, MAD=0.0909
-      Val Top-Bot Spread  : Min=-0.1566, Med=0.2604, Max=0.3695, MAD=0.0495
+      Val IC              : Min=0.0000, Med=0.0000, Max=0.1902, MAD=1.0000
+      Val Tail IC         : Min=-0.6360, Med=0.0000, Max=0.0000, MAD=1.0000
+      Val Monotonicity    : Min=0.0000, Med=0.2848, Max=0.7212, MAD=0.2727
+      Val Top-Bot Spread  : Min=-0.1566, Med=0.0000, Max=0.6017, MAD=0.1566
 Calibrated constants:
-  Val1: Med=0.132633, MAD=0.011192
-  Val2: Med=-0.016786, MAD=0.054802
-  Val3: Med=0.533333, MAD=0.090909
-  Val4: Med=0.260402, MAD=0.049470
+  Val1: Med=0.000000, MAD=1.000000
+  Val2: Med=0.000000, MAD=1.000000
+  Val3: Med=0.284848, MAD=0.272727
+  Val4: Med=0.000000, MAD=0.156590
 
 Running main Optuna Study (100 trials)...
 
   [DIAGNOSTICS] Main Study Summary:
-    Trials: 100 | OK: 55 | Pruned/Failed: 45
+    Trials: 100 | OK: 69 | Pruned/Failed: 31
     Pruning counts:
-      - M4 (Overall IC <= 0): 7
-      - M2 (Yearly Tail IC Mean <= 0): 1
-      - M3 (Hit Rate < 60%): 13
-      - M5 (Monotonicity <= 0.25): 16
+      - M4 (Overall IC <= 0): 2
+      - M2 (Yearly Tail IC Mean <= 0): 0
+      - M3 (Hit Rate < 60%): 7
+      - M5 (Monotonicity <= 0.25): 8
       - M6 (Top-Bottom Spread <= 0): 0
       - exceeds ESS-based cap: 0
-      - active feature floor: 23
+      - active feature floor: 13
       - Gini coefficient: 0
       - Regularized condition number: 0
     Exceptions:
-      - Side-specific Yearly Tail IC Mean (-0.0045 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0571 <= 0)
-      - Side-specific Hit Rate (40.00% < 50%)
+      - Side-specific Yearly Tail IC Mean (-0.0219 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0202 <= 0)
       - Side-specific Hit Rate (0.00% < 50%)
-      - Side-specific Yearly Tail IC Mean (-0.0218 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0330 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0399 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0377 <= 0)
+      - Side-specific Hit Rate (40.00% < 50%)
+      - Side-specific Yearly Tail IC Mean (-0.0600 <= 0)
       - Side-specific Hit Rate (30.00% < 50%)
-      - Side-specific Yearly Tail IC Mean (-0.0121 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0026 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0564 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0300 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0037 <= 0)
       - Side-specific Yearly Tail IC Mean (-0.0687 <= 0)
       - Side-specific Hit Rate (20.00% < 50%)
-      - Side-specific Yearly Tail IC Mean (-0.0220 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0097 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0028 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0397 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0386 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0299 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0289 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0036 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0253 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0154 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0018 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0619 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0895 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0724 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0559 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0197 <= 0)
       - Side-specific Yearly Tail IC Mean (-0.0073 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0050 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0146 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0344 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0044 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0208 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0579 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0265 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0201 <= 0)
 
   [DIAGNOSTICS] Objective Progression:
-    Trial   0: Best=-1.9157 | params={'k_weight': 0.17258184958466843, 'unified_alpha': 0.0451231319213065, 'unified_rho': 0.13339096418598828, 'unified_gamma': 12.476248311536951, 'huber_delta': 1.972125751150129}
-    Trial   2: Best=-0.6871 | params={'k_weight': 1.175748526208626, 'unified_alpha': 0.06441725825501599, 'unified_rho': 0.24904309151574888, 'unified_gamma': 1188.2400441757075, 'huber_delta': 1.9088462103425592}
-    Trial  10: Best=+1.1797 | params={'k_weight': 0.6302744507111608, 'unified_alpha': 0.001511600342996414, 'unified_rho': 0.18487668776145172, 'unified_gamma': 143.8656504427553, 'huber_delta': 0.5387245340394617}
-    Trial  89: Best=+1.3077 | params={'k_weight': 1.0580460510297738, 'unified_alpha': 0.01833382859634967, 'unified_rho': 0.5042422814509325, 'unified_gamma': 6949.9353772650575, 'huber_delta': 1.1344604789091088}
+    Trial   0: Best=-0.0381 | params={'k_weight': 0.17258184958466843, 'unified_alpha': 0.0451231319213065, 'unified_rho': 0.13339096418598828, 'unified_gamma': 12.476248311536951, 'huber_delta': 1.972125751150129}
+    Trial   6: Best=+0.0027 | params={'k_weight': 0.45144668378387187, 'unified_alpha': 0.0003036483963037555, 'unified_rho': 0.9263351350591756, 'unified_gamma': 3850.360914752656, 'huber_delta': 3.5747454198874413}
+    Trial  12: Best=+0.0462 | params={'k_weight': 0.1310244643532626, 'unified_alpha': 0.00024146967484786692, 'unified_rho': 0.41106107063891273, 'unified_gamma': 23.147065288429395, 'huber_delta': 3.0468015084267748}
+    Trial  42: Best=+0.0631 | params={'k_weight': 0.33649636589663434, 'unified_alpha': 0.0012410778544076205, 'unified_rho': 0.41463771741722477, 'unified_gamma': 1170.1258230105525, 'huber_delta': 4.3405733839846015}
+    Trial  78: Best=+0.0763 | params={'k_weight': 1.133747579649937, 'unified_alpha': 0.033569059098758916, 'unified_rho': 0.5908572293579939, 'unified_gamma': 9.035883008411377, 'huber_delta': 3.930844835189184}
+    Trial  99: Best=+0.0790 | params={'k_weight': 1.3530267636576048, 'unified_alpha': 0.1859405407229757, 'unified_rho': 0.3058130724083491, 'unified_gamma': 99.32651528019134, 'huber_delta': 3.0225601265482016}
 
   [DIAGNOSTICS] Overfitting (CSCV PBO):
-    PBO: 26.7%
-    IS -> OOS Slope: -1.9265
+    PBO: 20.0%
+    IS -> OOS Slope: -1.7387
 
   [DIAGNOSTICS] Plateau Search (r=0.25, default_min_n=8, default_min_val_n=6):
-    Trial   2 (val=-0.6871, deflated=-0.6871): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial   5 (val=-0.9419, deflated=-0.9419): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  10 (val=+1.1797, deflated=-2.0714): neighbors=1 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  17 (val=+0.6741, deflated=-2.0694): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  89 (val=+1.3077, deflated=-1.9160): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-  No plateau candidate met neighbor requirements. Falling back to raw best trial: 2 (val=-0.6871, deflated=-0.6871)
+    Trial  42 (val=+0.0631, deflated=-0.0517): neighbors=9 (valid=9, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  78 (val=+0.0763, deflated=-0.0316): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  79 (val=+0.0612, deflated=-0.0476): neighbors=18 (valid=12, req=15/10), valid_ratio=0.67, neighbor_mean=-0.1212, plateau=-0.4914
+    Trial  80 (val=+0.0709, deflated=-0.0376): neighbors=21 (valid=15, req=15/10), valid_ratio=0.71, neighbor_mean=-0.1218, plateau=-0.4495
+    Trial  99 (val=+0.0790, deflated=-0.0308): neighbors=1 (valid=1, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
+  Stable trial: 82 (val=+0.0450, deflated=-0.0626, plateau=-0.2095) vs best 99 (val=+0.0790, deflated=-0.0308)
 
   [DIAGNOSTICS] Model Confidence Set (MCS) & Bayesian Discovery:
     MCS size: 5 / 100 trials (alpha=10%)
     Bayesian prob of true discovery: 100.00%
 
 Best params:
-  k_weight: 1.175748526208626
-  unified_alpha: 0.06441725825501599
-  unified_rho: 0.24904309151574888
-  unified_gamma: 1188.2400441757075
-  huber_delta: 1.9088462103425592
+  k_weight: 0.1661641343139681
+  unified_alpha: 0.03615601817977846
+  unified_rho: 0.5745319620824103
+  unified_gamma: 10.661441181795976
+  huber_delta: 2.8794190335862937
   model_type: unified
 Best trial raw metrics (CV):
-  M1 (Tail IC IR):  2.0227
-  M2 (Tail IC Mean):0.2466
-  M3 (Hit Rate):    1.0000
-  M4 (Overall IC):  0.1475
-  Deflated CV IC:   0.0455
-  M5 (Mono):        0.5309
-  M6 (Spread):      0.9486
-  M7 (Parsimony):   -0.2088
-  M8 (Coef Bloat):  -0.7536
+  M1 (Tail IC IR):  1.6435
+  M2 (Tail IC Mean):0.2434
+  M3 (Hit Rate):    0.9000
+  M4 (Overall IC):  0.1245
+  Deflated CV IC:   0.0554
+  M5 (Mono):        0.4364
+  M6 (Spread):      0.8239
+  M7 (Parsimony):   -0.0536
+  M8 (Coef Bloat):  -0.5325
 Best trial Selection Val INNER metrics (Tuned):
-  Val IC:           0.1477
-  Deflated Val IC:  0.0402
-  Val Tail IC:      -0.1406
-  Deflated Val Tail:-0.3639
-  Val Mono:         0.5152
-  Val Spread:       0.3453
+  Val IC:           0.1518
+  Deflated Val IC:  0.0586
+  Val Tail IC:      -0.3629
+  Deflated Val Tail:-0.6827
+  Val Mono:         0.6000
+  Val Spread:       0.1052
 Best trial Selection Val OUTER metrics (Holdout Sanity Check):
-  Outer Val IC:     0.1865
-  Defl Outer Val IC:0.0790
-  Outer Tail IC:    0.2316
-  Defl Outer Tail:  0.0082
-  Outer Mono:       0.6364
-  Outer Spread:     0.4730
+  Outer Val IC:     0.2152
+  Defl Outer Val IC:0.1220
+  Outer Tail IC:    0.2123
+  Defl Outer Tail:  -0.1075
+  Outer Mono:       0.4303
+  Outer Spread:     0.6679
 
 Running Soloff et al. Bootstrap Bagging Feature Selection (B=100) on selection-train...
   Per-feature bootstrap inclusion frequency:
-    - yesterday_day_pm_am_vol_ratio: 93.00%
-    - capital_buy_volume: 84.00%
     - bar_rng_0: 96.00%
-    - margin_buy_repayment_spread: 96.00%
-    - gap_pct: 96.00%
-    - cvd_divergence_day: 79.00%
+    - margin_buy_repayment_spread: 88.00%
+    - gap_pct: 95.00%
+    - cvd_divergence_day: 71.00%
     - sma100_dist: 92.00%
-    - yesterday_gap: 96.00%
-    - bar_ret_0: 91.00%
+    - yesterday_gap: 100.00%
+    - bar_ret_0: 45.00%
     - max_up_ret: 100.00%
-    - outside_bar_reversal_day: 83.00%
+    - outside_bar_reversal_day: 77.00%
     - yesterday_afternoon_momentum: 100.00%
-    - bar_vwap_dev_2: 77.00%
+    - bar_vwap_dev_2: 59.00%
     - early_skew: 98.00%
-    - yesterday_lunch_gap: 100.00%
-    - yesterday_early_trend: 97.00%
-  Bagged selection kept 16 features: ['yesterday_day_pm_am_vol_ratio', 'capital_buy_volume', 'bar_rng_0', 'margin_buy_repayment_spread', 'gap_pct', 'cvd_divergence_day', 'sma100_dist', 'yesterday_gap', 'bar_ret_0', 'max_up_ret', 'outside_bar_reversal_day', 'yesterday_afternoon_momentum', 'bar_vwap_dev_2', 'early_skew', 'yesterday_lunch_gap', 'yesterday_early_trend']
+    - yesterday_lunch_gap: 91.00%
+    - yesterday_early_trend: 96.00%
+  Bagged selection kept 13 features: ['bar_rng_0', 'margin_buy_repayment_spread', 'gap_pct', 'cvd_divergence_day', 'sma100_dist', 'yesterday_gap', 'max_up_ret', 'outside_bar_reversal_day', 'yesterday_afternoon_momentum', 'bar_vwap_dev_2', 'early_skew', 'yesterday_lunch_gap', 'yesterday_early_trend']
 
   [DIAGNOSTICS] Final Model:
-    ESS: 737.6 / 2166 (34.1%)
+    ESS: 2070.6 / 2166 (95.6%)
     ESS healthy.
-    Gini: 0.3560 (cap=0.6250)
-    Raw Cond: 4.48
-    Reg Cond (kappa): 14.44
+    Gini: 0.4788 (cap=0.6615)
+    Raw Cond: 2.50
+    Reg Cond (kappa): 6.00
 
   [DIAGNOSTICS] Time Profiling:
-    data_loading      :   0.0s
+    data_loading      :   0.1s
     feature_selection :   0.0s
     loyo_folds        :   0.0s
-    pilot_study       :   2.3s
-    main_study        :   4.0s
-    final_refit       :   0.2s
-    Total             :   6.5s
+    pilot_study       :   0.0s
+    main_study        :   4.5s
+    final_refit       :   0.1s
+    Total             :   4.7s
 
   [DIAGNOSTICS] Quarterly Rolling Refit Test (Lockbox decay):
     Quarter                | Static IC | Static Tail | Roll IC  | Roll Tail
     -----------------------|-----------|-------------|----------|----------
-    2024-03 to 2024-06     |   +0.3356 |     +0.2500 |  +0.3356 |   +0.2500
-    2024-06 to 2024-09     |   +0.1027 |     -0.0500 |  +0.1078 |   -0.5167
-    2024-09 to 2024-12     |   +0.0822 |     +0.5000 |  +0.0905 |   +0.6190
-    2024-12 to 2025-03     |   +0.2015 |     +0.2381 |  +0.2117 |   +0.3571
-    2025-03 to 2025-06     |   +0.1051 |     +0.0500 |  +0.0764 |   -0.1833
-    2025-06 to 2025-09     |   +0.1592 |     -0.3667 |  +0.1361 |   -0.0167
-    2025-09 to 2025-12     |   +0.1579 |     -0.2143 |  +0.1627 |   -0.2143
-    2025-12 to 2026-03     |   -0.0738 |     +0.2381 |  -0.0712 |   +0.2381
-    2026-03 to 2026-06     |   +0.0838 |     -0.3667 |  +0.1052 |   -0.4667
-    2026-06 to 2026-06     |   +0.0824 |     +0.0000 |  +0.0549 |   +0.2000
-[500ETF/short] elapsed 6.7s
+    2024-03 to 2024-06     |   +0.1971 |     -0.1000 |  +0.1971 |   -0.1000
+    2024-06 to 2024-09     |   +0.0480 |     +0.1333 |  +0.0625 |   -0.3167
+    2024-09 to 2024-12     |   +0.0763 |     +0.4286 |  +0.0769 |   +0.4286
+    2024-12 to 2025-03     |   +0.2008 |     +0.7381 |  +0.1893 |   +0.4524
+    2025-03 to 2025-06     |   +0.0580 |     +0.7833 |  +0.0417 |   +0.6667
+    2025-06 to 2025-09     |   +0.1779 |     -0.2500 |  +0.1479 |   -0.4667
+    2025-09 to 2025-12     |   +0.1746 |     +0.4286 |  +0.1834 |   -0.2619
+    2025-12 to 2026-03     |   -0.0673 |     +0.0714 |  -0.0802 |   +0.3333
+    2026-03 to 2026-06     |   +0.0664 |     -0.6000 |  +0.1004 |   -0.4833
+    2026-06 to 2026-06     |   +0.0495 |     -0.3000 |  +0.1923 |   +0.1000
+[500ETF/short] elapsed 5.0s
 
 ================================================================================
 Train 588000ETF (Side: single)
@@ -1549,7 +1473,7 @@ Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
 ================================================================================
   [ERROR] Failed to train 588000ETF (single): "['bar_vwap_dev_5'] not in index"
 Traceback (most recent call last):
-  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2667, in <module>
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2678, in <module>
     train_etf(etf, n_trials=args.trials, side=side,
     ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
               use_cache=not args.no_cache,
@@ -1580,7 +1504,7 @@ Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
 ================================================================================
   [ERROR] Failed to train 588000ETF (long): "['bar_vwap_dev_5'] not in index"
 Traceback (most recent call last):
-  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2667, in <module>
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2678, in <module>
     train_etf(etf, n_trials=args.trials, side=side,
     ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
               use_cache=not args.no_cache,
@@ -1611,7 +1535,7 @@ Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
 ================================================================================
   [ERROR] Failed to train 588000ETF (short): "['bar_vwap_dev_5'] not in index"
 Traceback (most recent call last):
-  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2667, in <module>
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2678, in <module>
     train_etf(etf, n_trials=args.trials, side=side,
     ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
               use_cache=not args.no_cache,
@@ -1642,13 +1566,7 @@ Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
 ================================================================================
 Loaded 2722 rows, 214 features.
 Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=128)
-Skipping Step 1 filter (screening) [Disabled: Univariate screening deletes joint predictive features]...
-Running stability selection...
-Pruning VIF (collinearity gate)...
-VIF dropped 0 collinear. Kept 21 features.
-Pruning condition number (structural gate)...
-Condition pruning dropped 0 features. Kept 21 features.
-  Cache saved: cache_select_159915ETF_e27b7335806a460d.joblib
+  Cache hit: cache_select_159915ETF_88e638d9e2c6713e.joblib
 
   [DIAGNOSTICS] Feature Screening:
     Input: 214 | FDR pass: 128
@@ -1669,8 +1587,8 @@ Condition pruning dropped 0 features. Kept 21 features.
       - yesterday_pm_return: rho=-0.0777, p=1.23e-03
 
   [DIAGNOSTICS] Stability Selection:
-    Input: 214 | Stable count: 24
-    Kept 21 features.
+    Input: 214 | Stable count: 23
+    Kept 20 features.
     Score percentiles: 25%=0.00, 50%=0.10, 75%=0.29, 90%=0.56, 95%=0.74
     Selected features & scores:
       - bar_ret_0: score=0.91
@@ -1691,186 +1609,184 @@ Condition pruning dropped 0 features. Kept 21 features.
       - margin_extreme_rank_252d: score=0.56
       - sma100_dist: score=0.98
       - coppock_curve_day: score=0.67
-      - consecutive_inside_bars_3d: score=0.54
       - yesterday_afternoon_momentum: score=0.96
       - gap_pct: score=0.80
-Stability kept 21 features.
+Stability kept 20 features.
 
   [DIAGNOSTICS] Feature Quality:
-    Condition Number: 23.41
+    Condition Number: 23.40
     Matrix is stable.
     No collinear pairs.
-  Cache saved: cache_loyo_159915ETF_a16997fa23f4ec55.joblib
+  Cache hit: cache_loyo_159915ETF_9638aedd6cae67c3.joblib
 
   [DIAGNOSTICS] LOYO CV Folds:
     Folds: 15
-      Fold 1: Years [2015, 2016, 2017] | Train (1139, 21) | Test (573, 21)
-      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 21) | Test (573, 21)
-      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 21) | Test (572, 21)
-      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 21) | Test (573, 21)
-      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 21) | Test (573, 21)
-      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 21) | Test (574, 21)
-      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 21) | Test (573, 21)
-      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 21) | Test (574, 21)
-      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 21) | Test (574, 21)
-      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 21) | Test (573, 21)
-      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 21) | Test (574, 21)
-      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 21) | Test (574, 21)
-      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 21) | Test (573, 21)
-      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 21) | Test (573, 21)
-      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 21) | Test (574, 21)
-  [DIAGNOSTICS] Selection Train Baseline Condition Number: 4.0073
-
-Running Optuna Pilot Study (50 trials) for normalization calibration...
-  Cache saved: cache_pilot_159915ETF_d26416a9a1d1422f.joblib
+      Fold 1: Years [2015, 2016, 2017] | Train (1139, 20) | Test (573, 20)
+      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 20) | Test (573, 20)
+      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 20) | Test (572, 20)
+      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 20) | Test (573, 20)
+      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 20) | Test (573, 20)
+      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 20) | Test (574, 20)
+      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 20) | Test (573, 20)
+      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 20) | Test (574, 20)
+      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 20) | Test (574, 20)
+      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 20) | Test (573, 20)
+      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 20) | Test (574, 20)
+      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 20) | Test (574, 20)
+      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 20) | Test (573, 20)
+      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 20) | Test (573, 20)
+      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 20) | Test (574, 20)
+  [DIAGNOSTICS] Selection Train Baseline Condition Number: 3.9950
+  Cache hit: cache_pilot_159915ETF_5077406089ba787e.joblib
 
   [DIAGNOSTICS] Optuna Pilot Summary:
     Trials: 50
     Raw CV metrics:
-      M1 (Tail IC IR)     : Min=-0.4279, Med=1.0763, Max=1.7456
-      M2 (Tail IC Mean)   : Min=-0.0483, Med=0.2735, Max=0.2988
+      M1 (Tail IC IR)     : Min=-0.4279, Med=0.9723, Max=1.5102
+      M2 (Tail IC Mean)   : Min=-0.0483, Med=0.2762, Max=0.3097
       M3 (Hit Rate)       : Min=0.1000, Med=0.9000, Max=0.9000
-      M4 (Overall IC)     : Min=-0.0101, Med=0.1736, Max=0.1889
-      M5 (Monotonicity)   : Min=-0.0285, Med=0.5703, Max=0.6412
-      M6 (Top-Bot Spread) : Min=-0.0678, Med=0.9290, Max=1.0976
-      M7 (Parsimony)      : Min=-0.4410, Med=-0.1437, Max=-0.0000
-      M8 (Coef Bloat)     : Min=-1.5915, Med=-0.6951, Max=-0.0000
+      M4 (Overall IC)     : Min=-0.0101, Med=0.1737, Max=0.1886
+      M5 (Monotonicity)   : Min=-0.0285, Med=0.5509, Max=0.6145
+      M6 (Top-Bot Spread) : Min=-0.0678, Med=0.9283, Max=1.1998
+      M7 (Parsimony)      : Min=-0.4200, Med=-0.1258, Max=-0.0000
+      M8 (Coef Bloat)     : Min=-1.6048, Med=-0.6959, Max=-0.0000
     Validation metrics:
-      Val IC              : Min=0.0000, Med=0.1382, Max=0.2487, MAD=0.0316
-      Val Tail IC         : Min=0.0000, Med=0.3421, Max=0.4609, MAD=0.0357
-      Val Monotonicity    : Min=0.0000, Med=0.5697, Max=0.8667, MAD=0.1455
-      Val Top-Bot Spread  : Min=0.0000, Med=0.7898, Max=0.9892, MAD=0.1004
+      Val IC              : Min=0.0000, Med=0.1306, Max=0.2511, MAD=0.0309
+      Val Tail IC         : Min=0.0000, Med=0.3144, Max=0.4130, MAD=0.0460
+      Val Monotonicity    : Min=0.0000, Med=0.6242, Max=0.8303, MAD=0.1212
+      Val Top-Bot Spread  : Min=0.0000, Med=0.7509, Max=1.0292, MAD=0.0733
 Calibrated constants:
-  Val1: Med=0.138250, MAD=0.031601
-  Val2: Med=0.342108, MAD=0.035714
-  Val3: Med=0.569697, MAD=0.145455
-  Val4: Med=0.789807, MAD=0.100357
+  Val1: Med=0.130557, MAD=0.030903
+  Val2: Med=0.314373, MAD=0.045973
+  Val3: Med=0.624242, MAD=0.121212
+  Val4: Med=0.750890, MAD=0.073328
 
 Running main Optuna Study (100 trials)...
 
   [DIAGNOSTICS] Main Study Summary:
-    Trials: 100 | OK: 68 | Pruned/Failed: 32
+    Trials: 100 | OK: 74 | Pruned/Failed: 26
     Pruning counts:
       - M4 (Overall IC <= 0): 10
-      - M2 (Yearly Tail IC Mean <= 0): 16
+      - M2 (Yearly Tail IC Mean <= 0): 14
       - M3 (Hit Rate < 60%): 21
       - M5 (Monotonicity <= 0.25): 20
-      - M6 (Top-Bottom Spread <= 0): 9
+      - M6 (Top-Bottom Spread <= 0): 6
       - exceeds ESS-based cap: 0
-      - active feature floor: 32
+      - active feature floor: 26
       - Gini coefficient: 0
       - Regularized condition number: 0
 
   [DIAGNOSTICS] Objective Progression:
-    Trial   0: Best=+0.1116 | params={'k_weight': 0.17258184958466843, 'unified_alpha': 0.0451231319213065, 'unified_rho': 0.13339096418598828, 'unified_gamma': 12.476248311536951, 'huber_delta': 1.972125751150129}
-    Trial   3: Best=+1.0282 | params={'k_weight': 1.175748526208626, 'unified_alpha': 0.06441725825501599, 'unified_rho': 0.24904309151574888, 'unified_gamma': 1188.2400441757075, 'huber_delta': 1.9088462103425592}
-    Trial  44: Best=+1.1449 | params={'k_weight': 1.2222730459294948, 'unified_alpha': 0.5836500743855978, 'unified_rho': 0.1719499457041685, 'unified_gamma': 794.1371524461135, 'huber_delta': 4.648206048652343}
-    Trial  45: Best=+1.4971 | params={'k_weight': 1.1174831032635646, 'unified_alpha': 1.2715187581099352, 'unified_rho': 0.16178944746555407, 'unified_gamma': 1026.3950441902737, 'huber_delta': 4.298795577076815}
-    Trial  66: Best=+1.8483 | params={'k_weight': 1.3738427203799266, 'unified_alpha': 1.1384028573010607, 'unified_rho': 0.20696635147630726, 'unified_gamma': 9319.203656143138, 'huber_delta': 3.9046861096735386}
+    Trial   0: Best=+0.4991 | params={'k_weight': 0.17258184958466843, 'unified_alpha': 0.0451231319213065, 'unified_rho': 0.13339096418598828, 'unified_gamma': 12.476248311536951, 'huber_delta': 1.972125751150129}
+    Trial   4: Best=+0.9827 | params={'k_weight': 1.175748526208626, 'unified_alpha': 0.06441725825501599, 'unified_rho': 0.24904309151574888, 'unified_gamma': 1188.2400441757075, 'huber_delta': 1.9088462103425592}
+    Trial  27: Best=+1.2170 | params={'k_weight': 0.16010730338296608, 'unified_alpha': 0.1276602820664572, 'unified_rho': 0.5349626173910872, 'unified_gamma': 38.710514975489204, 'huber_delta': 2.356765896768957}
+    Trial  30: Best=+1.3300 | params={'k_weight': 0.8621927475911841, 'unified_alpha': 3.7091091914366676, 'unified_rho': 0.06669840573101998, 'unified_gamma': 4713.73507642851, 'huber_delta': 4.956072109949378}
+    Trial  40: Best=+1.3963 | params={'k_weight': 0.711620049829364, 'unified_alpha': 0.13469103523755763, 'unified_rho': 0.9759214322669743, 'unified_gamma': 2936.2039391761086, 'huber_delta': 4.047006490474233}
+    Trial  42: Best=+1.4886 | params={'k_weight': 0.6824565505284709, 'unified_alpha': 0.1402634118395965, 'unified_rho': 0.9795900410449949, 'unified_gamma': 1443.888707884047, 'huber_delta': 4.143382414721071}
+    Trial  91: Best=+2.6533 | params={'k_weight': 0.23575493546772, 'unified_alpha': 3.765841608575419, 'unified_rho': 0.028436058464773623, 'unified_gamma': 4848.72001168934, 'huber_delta': 3.7999642919540597}
 
   [DIAGNOSTICS] Overfitting (CSCV PBO):
-    PBO: 0.0%
-    IS -> OOS Slope: -1.3389
+    PBO: 6.7%
+    IS -> OOS Slope: -1.5692
 
   [DIAGNOSTICS] Plateau Search (r=0.25, default_min_n=8, default_min_val_n=6):
-    Trial   0 (val=+0.1116, deflated=+0.1116): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial   3 (val=+1.0282, deflated=-2.8426): neighbors=1 (valid=1, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  28 (val=+0.7551, deflated=-3.0544): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  41 (val=+0.5536, deflated=-3.1210): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  45 (val=+1.4971, deflated=-2.7644): neighbors=22 (valid=12, req=15/10), valid_ratio=0.55, neighbor_mean=-3.8297, plateau=-4.8169
-  Stable trial: 84 (val=+1.6982, deflated=-3.5587, plateau=-3.9815) vs best 0 (val=+0.1116, deflated=+0.1116)
+    Trial   8 (val=+0.2716, deflated=+0.0765): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial   9 (val=+0.2001, deflated=+0.2001): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  10 (val=+0.2449, deflated=+0.2263): neighbors=4 (valid=4, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  17 (val=+0.0120, deflated=-0.1688): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  21 (val=+0.2831, deflated=-0.1258): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+  Stable trial: 76 (val=+0.6175, deflated=-4.2320, plateau=-4.2987) vs best 10 (val=+0.2449, deflated=+0.2263)
 
   [DIAGNOSTICS] Model Confidence Set (MCS) & Bayesian Discovery:
-    MCS size: 4 / 100 trials (alpha=10%)
+    MCS size: 15 / 100 trials (alpha=10%)
     Bayesian prob of true discovery: 100.00%
 
 Best params:
-  k_weight: 1.2150821066624236
-  unified_alpha: 0.851347169019189
-  unified_rho: 0.2541322331625141
-  unified_gamma: 509.0221084312048
-  huber_delta: 4.620634245890841
+  k_weight: 0.804897767694289
+  unified_alpha: 1.0507491309131842
+  unified_rho: 0.07700570972630671
+  unified_gamma: 3469.0797071248994
+  huber_delta: 4.7336416409029765
   model_type: unified
 Best trial raw metrics (CV):
-  M1 (Tail IC IR):  1.0018
-  M2 (Tail IC Mean):0.2326
-  M3 (Hit Rate):    0.8000
-  M4 (Overall IC):  0.1402
-  Deflated CV IC:   -0.0043
-  M5 (Mono):        0.5139
-  M6 (Spread):      0.8457
-  M7 (Parsimony):   -0.0830
-  M8 (Coef Bloat):  -0.2091
+  M1 (Tail IC IR):  0.9014
+  M2 (Tail IC Mean):0.2402
+  M3 (Hit Rate):    0.9000
+  M4 (Overall IC):  0.1721
+  Deflated CV IC:   0.0218
+  M5 (Mono):        0.5309
+  M6 (Spread):      0.8537
+  M7 (Parsimony):   -0.1294
+  M8 (Coef Bloat):  -0.2788
 Best trial Selection Val INNER metrics (Tuned):
-  Val IC:           0.1896
-  Deflated Val IC:  0.0399
-  Val Tail IC:      0.4343
-  Deflated Val Tail:0.0886
-  Val Mono:         0.5273
-  Val Spread:       0.9094
+  Val IC:           0.1627
+  Deflated Val IC:  0.0196
+  Val Tail IC:      0.3482
+  Deflated Val Tail:0.0412
+  Val Mono:         0.5394
+  Val Spread:       0.7685
 Best trial Selection Val OUTER metrics (Holdout Sanity Check):
-  Outer Val IC:     0.0461
-  Defl Outer Val IC:-0.1036
-  Outer Tail IC:    0.3026
-  Defl Outer Tail:  -0.0431
-  Outer Mono:       0.2606
-  Outer Spread:     0.5781
+  Outer Val IC:     0.1192
+  Defl Outer Val IC:-0.0239
+  Outer Tail IC:    0.1696
+  Defl Outer Tail:  -0.1374
+  Outer Mono:       0.8061
+  Outer Spread:     0.6316
 
 Running Soloff et al. Bootstrap Bagging Feature Selection (B=100) on selection-train...
   Per-feature bootstrap inclusion frequency:
     - bar_ret_0: 98.00%
-    - max_up_ret: 52.00%
-    - margin_buy_repayment_spread: 0.00%
-    - capital_net_ratio: 25.00%
-    - yesterday_lunch_gap: 71.00%
-    - yesterday_early_realized_vol: 38.00%
-    - yesterday_day_range: 10.00%
-    - yesterday_early_trend: 65.00%
-    - yesterday_gap_pct: 53.00%
-    - northbound_net: 14.00%
-    - bar_vol_5: 13.00%
-    - tech_value_rotation: 7.00%
-    - roc10: 9.00%
-    - early_kurtosis: 14.00%
-    - yesterday_illiquidity_amihud: 43.00%
-    - margin_extreme_rank_252d: 1.00%
-    - sma100_dist: 98.00%
-    - coppock_curve_day: 9.00%
-    - consecutive_inside_bars_3d: 15.00%
-    - yesterday_afternoon_momentum: 83.00%
-    - gap_pct: 46.00%
-  Bagged selection kept 7 features: ['bar_ret_0', 'max_up_ret', 'yesterday_lunch_gap', 'yesterday_early_trend', 'yesterday_gap_pct', 'sma100_dist', 'yesterday_afternoon_momentum']
+    - max_up_ret: 90.00%
+    - margin_buy_repayment_spread: 51.00%
+    - capital_net_ratio: 87.00%
+    - yesterday_lunch_gap: 95.00%
+    - yesterday_early_realized_vol: 69.00%
+    - yesterday_day_range: 51.00%
+    - yesterday_early_trend: 93.00%
+    - yesterday_gap_pct: 83.00%
+    - northbound_net: 72.00%
+    - bar_vol_5: 67.00%
+    - tech_value_rotation: 42.00%
+    - roc10: 37.00%
+    - early_kurtosis: 69.00%
+    - yesterday_illiquidity_amihud: 83.00%
+    - margin_extreme_rank_252d: 43.00%
+    - sma100_dist: 100.00%
+    - coppock_curve_day: 62.00%
+    - yesterday_afternoon_momentum: 99.00%
+    - gap_pct: 83.00%
+  Bagged selection kept 17 features: ['bar_ret_0', 'max_up_ret', 'margin_buy_repayment_spread', 'capital_net_ratio', 'yesterday_lunch_gap', 'yesterday_early_realized_vol', 'yesterday_day_range', 'yesterday_early_trend', 'yesterday_gap_pct', 'northbound_net', 'bar_vol_5', 'early_kurtosis', 'yesterday_illiquidity_amihud', 'sma100_dist', 'coppock_curve_day', 'yesterday_afternoon_momentum', 'gap_pct']
 
   [DIAGNOSTICS] Final Model:
-    ESS: 747.2 / 2166 (34.5%)
+    ESS: 1270.6 / 2166 (58.7%)
     ESS healthy.
-    Gini: 0.4316 (cap=0.6571)
-    Raw Cond: 2.10
-    Reg Cond (kappa): 2.29
+    Gini: 0.4631 (cap=0.6235)
+    Raw Cond: 22.78
+    Reg Cond (kappa): 3.40
 
   [DIAGNOSTICS] Time Profiling:
     data_loading      :   0.0s
-    feature_selection :   2.1s
-    loyo_folds        :   0.1s
-    pilot_study       :   1.2s
-    main_study        :   3.4s
+    feature_selection :   0.0s
+    loyo_folds        :   0.0s
+    pilot_study       :   0.0s
+    main_study        :   4.2s
     final_refit       :   0.1s
-    Total             :   6.9s
+    Total             :   4.4s
 
   [DIAGNOSTICS] Quarterly Rolling Refit Test (Lockbox decay):
     Quarter                | Static IC | Static Tail | Roll IC  | Roll Tail
     -----------------------|-----------|-------------|----------|----------
-    2024-03 to 2024-06     |   +0.2971 |     +0.0979 |  +0.2971 |   +0.0979
-    2024-06 to 2024-09     |   -0.0413 |     -0.0909 |  -0.0296 |   -0.0629
-    2024-09 to 2024-12     |   +0.2275 |     +0.1152 |  +0.2259 |   +0.1152
-    2024-12 to 2025-03     |   +0.4088 |     +0.5273 |  +0.3813 |   +0.5394
-    2025-03 to 2025-06     |   +0.0463 |     +0.0979 |  +0.0566 |   +0.0420
-    2025-06 to 2025-09     |   +0.0938 |     +0.0420 |  +0.1542 |   -0.0559
-    2025-09 to 2025-12     |   +0.0938 |     +0.0061 |  +0.0497 |   -0.1636
-    2025-12 to 2026-03     |   -0.0558 |     -0.0788 |  -0.0782 |   -0.2848
-    2026-03 to 2026-06     |   +0.0304 |     -0.0909 |  -0.0261 |   -0.0140
-    2026-06 to 2026-06     |   +0.2582 |     +0.1636 |  +0.2747 |   +0.2485
-[159915ETF/single] elapsed 7.1s
+    2024-03 to 2024-06     |   +0.3727 |     +0.2937 |  +0.3727 |   +0.2937
+    2024-06 to 2024-09     |   -0.1055 |     -0.1329 |  -0.1023 |   -0.0839
+    2024-09 to 2024-12     |   +0.2446 |     +0.4061 |  +0.2481 |   +0.6485
+    2024-12 to 2025-03     |   +0.3506 |     +0.7455 |  +0.3096 |   +0.7576
+    2025-03 to 2025-06     |   +0.1449 |     +0.2517 |  +0.1554 |   +0.0140
+    2025-06 to 2025-09     |   +0.0481 |     -0.4615 |  +0.0845 |   -0.3706
+    2025-09 to 2025-12     |   +0.1385 |     +0.1636 |  +0.1200 |   +0.0303
+    2025-12 to 2026-03     |   -0.0154 |     -0.4303 |  -0.0415 |   -0.1152
+    2026-03 to 2026-06     |   +0.0738 |     +0.4266 |  +0.0491 |   +0.1888
+    2026-06 to 2026-06     |   +0.2637 |     +0.1636 |  +0.2802 |   +0.1636
+[159915ETF/single] elapsed 4.6s
 
 ================================================================================
 Train 159915ETF (Side: long)
@@ -1879,7 +1795,7 @@ Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
 ================================================================================
 Loaded 2722 rows, 214 features.
 Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=128)
-  Cache hit: cache_select_159915ETF_e27b7335806a460d.joblib
+  Cache hit: cache_select_159915ETF_88e638d9e2c6713e.joblib
 
   [DIAGNOSTICS] Feature Screening:
     Input: 214 | FDR pass: 128
@@ -1900,8 +1816,8 @@ Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=1
       - yesterday_pm_return: rho=-0.0777, p=1.23e-03
 
   [DIAGNOSTICS] Stability Selection:
-    Input: 214 | Stable count: 24
-    Kept 21 features.
+    Input: 214 | Stable count: 23
+    Kept 20 features.
     Score percentiles: 25%=0.00, 50%=0.10, 75%=0.29, 90%=0.56, 95%=0.74
     Selected features & scores:
       - bar_ret_0: score=0.91
@@ -1922,165 +1838,410 @@ Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=1
       - margin_extreme_rank_252d: score=0.56
       - sma100_dist: score=0.98
       - coppock_curve_day: score=0.67
-      - consecutive_inside_bars_3d: score=0.54
       - yesterday_afternoon_momentum: score=0.96
       - gap_pct: score=0.80
-Stability kept 21 features.
+Stability kept 20 features.
 
   [DIAGNOSTICS] Feature Quality:
-    Condition Number: 23.41
+    Condition Number: 23.40
     Matrix is stable.
     No collinear pairs.
-  Cache hit: cache_loyo_159915ETF_a16997fa23f4ec55.joblib
+  Cache hit: cache_loyo_159915ETF_9638aedd6cae67c3.joblib
 
   [DIAGNOSTICS] LOYO CV Folds:
     Folds: 15
-      Fold 1: Years [2015, 2016, 2017] | Train (1139, 21) | Test (573, 21)
-      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 21) | Test (573, 21)
-      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 21) | Test (572, 21)
-      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 21) | Test (573, 21)
-      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 21) | Test (573, 21)
-      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 21) | Test (574, 21)
-      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 21) | Test (573, 21)
-      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 21) | Test (574, 21)
-      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 21) | Test (574, 21)
-      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 21) | Test (573, 21)
-      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 21) | Test (574, 21)
-      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 21) | Test (574, 21)
-      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 21) | Test (573, 21)
-      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 21) | Test (573, 21)
-      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 21) | Test (574, 21)
-  [DIAGNOSTICS] Selection Train Baseline Condition Number: 4.0073
-
-Running Optuna Pilot Study (50 trials) for normalization calibration...
-  Cache saved: cache_pilot_159915ETF_6d2443aba49341cf.joblib
+      Fold 1: Years [2015, 2016, 2017] | Train (1139, 20) | Test (573, 20)
+      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 20) | Test (573, 20)
+      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 20) | Test (572, 20)
+      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 20) | Test (573, 20)
+      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 20) | Test (573, 20)
+      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 20) | Test (574, 20)
+      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 20) | Test (573, 20)
+      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 20) | Test (574, 20)
+      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 20) | Test (574, 20)
+      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 20) | Test (573, 20)
+      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 20) | Test (574, 20)
+      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 20) | Test (574, 20)
+      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 20) | Test (573, 20)
+      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 20) | Test (573, 20)
+      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 20) | Test (574, 20)
+  [DIAGNOSTICS] Selection Train Baseline Condition Number: 3.9950
+  Cache hit: cache_pilot_159915ETF_914e8819c937c7d8.joblib
 
   [DIAGNOSTICS] Optuna Pilot Summary:
     Trials: 50
     Raw CV metrics:
-      M1 (Tail IC IR)     : Min=-0.1835, Med=0.9574, Max=1.3261
-      M2 (Tail IC Mean)   : Min=-0.0213, Med=0.2701, Max=0.2924
-      M3 (Hit Rate)       : Min=0.2000, Med=0.9000, Max=0.9000
-      M4 (Overall IC)     : Min=-0.0023, Med=0.1756, Max=0.1804
-      M5 (Monotonicity)   : Min=0.0455, Med=0.5697, Max=0.6412
-      M6 (Top-Bot Spread) : Min=0.0180, Med=0.8676, Max=1.0172
-      M7 (Parsimony)      : Min=-0.4410, Med=-0.1425, Max=-0.0000
-      M8 (Coef Bloat)     : Min=-1.5915, Med=-0.9073, Max=-0.0000
+      M1 (Tail IC IR)     : Min=-0.4279, Med=1.0301, Max=1.4903
+      M2 (Tail IC Mean)   : Min=-0.0483, Med=0.2646, Max=0.3097
+      M3 (Hit Rate)       : Min=0.1000, Med=0.9000, Max=0.9000
+      M4 (Overall IC)     : Min=-0.0101, Med=0.1718, Max=0.1783
+      M5 (Monotonicity)   : Min=-0.0285, Med=0.5667, Max=0.6073
+      M6 (Top-Bot Spread) : Min=-0.0678, Med=0.8805, Max=1.0978
+      M7 (Parsimony)      : Min=-0.4306, Med=-0.2852, Max=-0.0000
+      M8 (Coef Bloat)     : Min=-1.8459, Med=-1.3104, Max=-0.0000
     Validation metrics:
-      Val IC              : Min=0.0000, Med=0.1149, Max=0.2279, MAD=0.0168
-      Val Tail IC         : Min=-0.1659, Med=0.0111, Max=0.1251, MAD=0.0342
-      Val Monotonicity    : Min=0.0000, Med=0.4606, Max=0.8303, MAD=0.1091
-      Val Top-Bot Spread  : Min=0.0000, Med=0.8285, Max=1.1214, MAD=0.1010
+      Val IC              : Min=0.0000, Med=0.0818, Max=0.2351, MAD=0.0213
+      Val Tail IC         : Min=-0.2923, Med=0.0704, Max=0.3102, MAD=0.1381
+      Val Monotonicity    : Min=0.0000, Med=0.3879, Max=0.7939, MAD=0.2000
+      Val Top-Bot Spread  : Min=0.0000, Med=0.8408, Max=0.9301, MAD=0.0844
 Calibrated constants:
-  Val1: Med=0.114864, MAD=0.016843
-  Val2: Med=0.011150, MAD=0.034210
-  Val3: Med=0.460606, MAD=0.109091
-  Val4: Med=0.828525, MAD=0.100970
+  Val1: Med=0.081750, MAD=0.021285
+  Val2: Med=0.070384, MAD=0.138068
+  Val3: Med=0.387879, MAD=0.200000
+  Val4: Med=0.840834, MAD=0.084439
 
 Running main Optuna Study (100 trials)...
 
   [DIAGNOSTICS] Main Study Summary:
-    Trials: 100 | OK: 20 | Pruned/Failed: 80
+    Trials: 100 | OK: 17 | Pruned/Failed: 83
     Pruning counts:
       - M4 (Overall IC <= 0): 2
       - M2 (Yearly Tail IC Mean <= 0): 2
-      - M3 (Hit Rate < 60%): 11
-      - M5 (Monotonicity <= 0.25): 10
+      - M3 (Hit Rate < 60%): 6
+      - M5 (Monotonicity <= 0.25): 6
       - M6 (Top-Bottom Spread <= 0): 1
       - exceeds ESS-based cap: 0
       - active feature floor: 11
       - Gini coefficient: 0
       - Regularized condition number: 0
     Exceptions:
-      - Side-specific Yearly Tail IC Mean (-0.0952 <= 0)
-      - Side-specific Hit Rate (40.00% < 50%)
-      - Side-specific Yearly Tail IC Mean (-0.0176 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0105 <= 0)
-      - Side-specific Hit Rate (10.00% < 50%)
-      - Side-specific Yearly Tail IC Mean (-0.0214 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.1151 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0949 <= 0)
       - Side-specific Hit Rate (30.00% < 50%)
-      - Side-specific Yearly Tail IC Mean (-0.0643 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0483 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0591 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0566 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0563 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0121 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0362 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0973 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0365 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0676 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0514 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0254 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0570 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0556 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0253 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0638 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0114 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0304 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0205 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0159 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0224 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.1338 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0803 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.1387 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0237 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0349 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0346 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0075 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0444 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0653 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0522 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0639 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0511 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0243 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0065 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0660 <= 0)
-      - Side-specific Hit Rate (20.00% < 50%)
-      - Side-specific Yearly Tail IC Mean (-0.0339 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0204 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0863 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0689 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0588 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0079 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0449 <= 0)
+      - Side-specific Hit Rate (10.00% < 50%)
+      - Side-specific Yearly Tail IC Mean (-0.0171 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0521 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0662 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0571 <= 0)
+      - Side-specific Hit Rate (40.00% < 50%)
+      - Side-specific Yearly Tail IC Mean (-0.0596 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0644 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0422 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0148 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0759 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0020 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0816 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0361 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0350 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0794 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0267 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0222 <= 0)
       - Side-specific Yearly Tail IC Mean (-0.0408 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0265 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0183 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0251 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0165 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0258 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0987 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0162 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0706 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0723 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0516 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0634 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0169 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0529 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.1529 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0201 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0402 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0330 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0840 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0549 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0103 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0098 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0173 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0482 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0154 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0445 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0308 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0505 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0332 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0138 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0652 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0522 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0349 <= 0)
       - Side-specific Yearly Tail IC Mean (-0.0357 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0561 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0799 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0376 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0805 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0163 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.1089 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0631 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.1084 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0432 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0150 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0491 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0635 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0447 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0780 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0309 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0518 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0681 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0387 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0336 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.1104 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0943 <= 0)
+      - Side-specific Hit Rate (20.00% < 50%)
+      - Side-specific Yearly Tail IC Mean (-0.0348 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0253 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0164 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0108 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.1505 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0733 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0317 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0721 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.1167 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0016 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0514 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0398 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0068 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0611 <= 0)
+
+  [WARNING] Low completion rate: 17/100 (17% < 30%)
+    The search space is structurally infeasible for this ETF/side. Model is unreliable.
+    Consider: skipping this side or relaxing CSS/kill-switch thresholds.
 
   [DIAGNOSTICS] Objective Progression:
-    Trial   3: Best=+1.6409 | params={'k_weight': 1.175748526208626, 'unified_alpha': 0.06441725825501599, 'unified_rho': 0.24904309151574888, 'unified_gamma': 1188.2400441757075, 'huber_delta': 1.9088462103425592}
-    Trial  38: Best=+2.0387 | params={'k_weight': 1.020299294317484, 'unified_alpha': 0.19671961061920784, 'unified_rho': 0.01682597682916054, 'unified_gamma': 5.844855723515437, 'huber_delta': 2.423897310177452}
-    Trial  40: Best=+2.3498 | params={'k_weight': 1.1379451640321931, 'unified_alpha': 0.1906939685314542, 'unified_rho': 0.005713840944980397, 'unified_gamma': 9374.771201697813, 'huber_delta': 1.293577835176673}
-    Trial  64: Best=+3.4301 | params={'k_weight': 1.1796006887299462, 'unified_alpha': 0.06442693340241278, 'unified_rho': 0.18388027350092828, 'unified_gamma': 4067.8391021661855, 'huber_delta': 3.6586173737671297}
+    Trial   2: Best=+0.2629 | params={'k_weight': 1.4835172702134, 'unified_alpha': 0.019827518376799098, 'unified_rho': 0.28144730195506285, 'unified_gamma': 2.962371401177323, 'huber_delta': 2.500112731873114}
+    Trial  12: Best=+0.8017 | params={'k_weight': 1.476287775813865, 'unified_alpha': 0.0010010910900983274, 'unified_rho': 0.6737016246691375, 'unified_gamma': 8.454156675684052, 'huber_delta': 2.095009090884606}
+    Trial  33: Best=+0.9079 | params={'k_weight': 1.064195801583226, 'unified_alpha': 0.07246011742302146, 'unified_rho': 0.17873013127153098, 'unified_gamma': 4.991712445206694, 'huber_delta': 2.33227163858899}
 
   [DIAGNOSTICS] Overfitting (CSCV PBO):
-    PBO: 26.7%
-    IS -> OOS Slope: -1.5439
+    PBO: 20.0%
+    IS -> OOS Slope: -1.5759
 
   [DIAGNOSTICS] Plateau Search (r=0.25, default_min_n=8, default_min_val_n=6):
-    Trial   3 (val=+1.6409, deflated=+1.0452): neighbors=9 (valid=2, req=15/10), valid_ratio=0.22, neighbor_mean=N/A, plateau=Excluded
-    Trial  38 (val=+2.0387, deflated=-1.0885): neighbors=1 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  64 (val=+3.4301, deflated=-0.2925): neighbors=10 (valid=1, req=15/10), valid_ratio=0.10, neighbor_mean=N/A, plateau=Excluded
-    Trial  73 (val=+3.2140, deflated=-0.7806): neighbors=7 (valid=2, req=15/10), valid_ratio=0.29, neighbor_mean=N/A, plateau=Excluded
-    Trial  95 (val=+3.0981, deflated=-0.7731): neighbors=6 (valid=5, req=15/10), valid_ratio=0.83, neighbor_mean=N/A, plateau=Excluded
-  No plateau candidate met neighbor requirements. Falling back to raw best trial: 3 (val=+1.6409, deflated=+1.0452)
+    Trial   2 (val=+0.2629, deflated=+0.2629): neighbors=10 (valid=5, req=15/10), valid_ratio=0.50, neighbor_mean=N/A, plateau=Excluded
+    Trial  12 (val=+0.8017, deflated=-0.9603): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  45 (val=+0.8058, deflated=-0.8852): neighbors=8 (valid=1, req=15/10), valid_ratio=0.12, neighbor_mean=N/A, plateau=Excluded
+    Trial  74 (val=+0.6951, deflated=-0.9873): neighbors=9 (valid=4, req=15/10), valid_ratio=0.44, neighbor_mean=N/A, plateau=Excluded
+    Trial  85 (val=+0.7175, deflated=-0.9480): neighbors=3 (valid=1, req=15/10), valid_ratio=0.33, neighbor_mean=N/A, plateau=Excluded
+  No plateau candidate met neighbor requirements. Falling back to raw best trial: 2 (val=+0.2629, deflated=+0.2629)
 
   [DIAGNOSTICS] Model Confidence Set (MCS) & Bayesian Discovery:
-    MCS size: 2 / 100 trials (alpha=10%)
+    MCS size: 1 / 100 trials (alpha=10%)
+    Bayesian prob of true discovery: 100.00%
+
+Best params:
+  k_weight: 1.4835172702134
+  unified_alpha: 0.019827518376799098
+  unified_rho: 0.28144730195506285
+  unified_gamma: 2.962371401177323
+  huber_delta: 2.500112731873114
+  model_type: unified
+Best trial raw metrics (CV):
+  M1 (Tail IC IR):  1.3406
+  M2 (Tail IC Mean):0.3051
+  M3 (Hit Rate):    0.9000
+  M4 (Overall IC):  0.1730
+  Deflated CV IC:   0.0842
+  M5 (Mono):        0.5333
+  M6 (Spread):      1.0978
+  M7 (Parsimony):   -0.4200
+  M8 (Coef Bloat):  -1.4912
+Best trial Selection Val INNER metrics (Tuned):
+  Val IC:           0.0977
+  Deflated Val IC:  -0.0028
+  Val Tail IC:      0.0716
+  Deflated Val Tail:-0.1599
+  Val Mono:         0.3818
+  Val Spread:       0.8394
+Best trial Selection Val OUTER metrics (Holdout Sanity Check):
+  Outer Val IC:     0.1555
+  Defl Outer Val IC:0.0549
+  Outer Tail IC:    0.3140
+  Defl Outer Tail:  0.0825
+  Outer Mono:       0.6364
+  Outer Spread:     0.6079
+
+Running Soloff et al. Bootstrap Bagging Feature Selection (B=100) on selection-train...
+  Per-feature bootstrap inclusion frequency:
+    - bar_ret_0: 100.00%
+    - max_up_ret: 94.00%
+    - margin_buy_repayment_spread: 93.00%
+    - capital_net_ratio: 93.00%
+    - yesterday_lunch_gap: 99.00%
+    - yesterday_early_realized_vol: 99.00%
+    - yesterday_day_range: 97.00%
+    - yesterday_early_trend: 100.00%
+    - yesterday_gap_pct: 100.00%
+    - northbound_net: 95.00%
+    - bar_vol_5: 95.00%
+    - tech_value_rotation: 97.00%
+    - roc10: 99.00%
+    - early_kurtosis: 98.00%
+    - yesterday_illiquidity_amihud: 99.00%
+    - margin_extreme_rank_252d: 98.00%
+    - sma100_dist: 100.00%
+    - coppock_curve_day: 100.00%
+    - yesterday_afternoon_momentum: 95.00%
+    - gap_pct: 96.00%
+  Bagged selection kept 20 features: ['bar_ret_0', 'max_up_ret', 'margin_buy_repayment_spread', 'capital_net_ratio', 'yesterday_lunch_gap', 'yesterday_early_realized_vol', 'yesterday_day_range', 'yesterday_early_trend', 'yesterday_gap_pct', 'northbound_net', 'bar_vol_5', 'tech_value_rotation', 'roc10', 'early_kurtosis', 'yesterday_illiquidity_amihud', 'margin_extreme_rank_252d', 'sma100_dist', 'coppock_curve_day', 'yesterday_afternoon_momentum', 'gap_pct']
+
+  [DIAGNOSTICS] Final Model:
+    ESS: 489.1 / 2166 (22.6%)
+    ESS healthy.
+    Gini: 0.3216 (cap=0.6000)
+    Raw Cond: 24.67
+    Reg Cond (kappa): 146.12
+
+  [DIAGNOSTICS] Time Profiling:
+    data_loading      :   0.0s
+    feature_selection :   0.0s
+    loyo_folds        :   0.0s
+    pilot_study       :   0.0s
+    main_study        :   3.9s
+    final_refit       :   0.2s
+    Total             :   4.2s
+
+  [DIAGNOSTICS] Quarterly Rolling Refit Test (Lockbox decay):
+    Quarter                | Static IC | Static Tail | Roll IC  | Roll Tail
+    -----------------------|-----------|-------------|----------|----------
+    2024-03 to 2024-06     |   +0.3662 |     +0.1500 |  +0.3662 |   +0.1500
+    2024-06 to 2024-09     |   -0.0565 |     -0.7000 |  -0.0623 |   -0.5833
+    2024-09 to 2024-12     |   +0.3014 |     +0.3571 |  +0.3013 |   +0.3810
+    2024-12 to 2025-03     |   +0.3204 |     -0.1429 |  +0.2734 |   +0.0238
+    2025-03 to 2025-06     |   +0.1857 |     +0.2167 |  +0.1700 |   -0.3167
+    2025-06 to 2025-09     |   +0.0567 |     -0.4333 |  +0.0741 |   -0.3000
+    2025-09 to 2025-12     |   -0.0298 |     -0.1905 |  -0.0112 |   -0.3810
+    2025-12 to 2026-03     |   -0.0043 |     -0.6429 |  -0.0217 |   -0.2619
+    2026-03 to 2026-06     |   -0.0661 |     +0.7333 |  -0.0345 |   +0.7167
+    2026-06 to 2026-06     |   +0.6813 |     +0.6000 |  +0.7088 |   +0.7000
+[159915ETF/long] elapsed 4.5s
+
+================================================================================
+Train 159915ETF (Side: short)
+Lockbox: 2024-03-01 | Window: all years | Rolling: False
+Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
+================================================================================
+Loaded 2722 rows, 214 features.
+Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=128)
+  Cache hit: cache_select_159915ETF_88e638d9e2c6713e.joblib
+
+  [DIAGNOSTICS] Feature Screening:
+    Input: 214 | FDR pass: 128
+    Kept 214 features.
+    Spearman |rho|: Min=0.0000, Med=0.0175, Max=0.1392
+    p-value: Min=5.60e-09, Med=0.4679, Max=1.0000
+    Top 5 positive correlations:
+      - bar_ret_0: rho=+0.1392, p=5.60e-09
+      - first_bar_return: rho=+0.1392, p=5.60e-09
+      - bar_body_rng_0: rho=+0.1281, p=8.66e-08
+      - max_up_ret: rho=+0.1219, p=3.55e-07
+      - max_down_ret: rho=+0.0963, p=6.07e-05
+    Top 5 negative correlations:
+      - yesterday_afternoon_reversal: rho=-0.1105, p=4.07e-06
+      - yesterday_afternoon_momentum: rho=-0.1045, p=1.33e-05
+      - capital_large_order_ratio: rho=-0.0783, p=1.14e-03
+      - capital_net_ratio: rho=-0.0778, p=1.22e-03
+      - yesterday_pm_return: rho=-0.0777, p=1.23e-03
+
+  [DIAGNOSTICS] Stability Selection:
+    Input: 214 | Stable count: 23
+    Kept 20 features.
+    Score percentiles: 25%=0.00, 50%=0.10, 75%=0.29, 90%=0.56, 95%=0.74
+    Selected features & scores:
+      - bar_ret_0: score=0.91
+      - max_up_ret: score=0.66
+      - margin_buy_repayment_spread: score=0.59
+      - capital_net_ratio: score=0.61
+      - yesterday_lunch_gap: score=0.88
+      - yesterday_early_realized_vol: score=0.67
+      - yesterday_day_range: score=0.56
+      - yesterday_early_trend: score=0.91
+      - yesterday_gap_pct: score=0.94
+      - northbound_net: score=0.69
+      - bar_vol_5: score=0.79
+      - tech_value_rotation: score=0.61
+      - roc10: score=0.59
+      - early_kurtosis: score=0.84
+      - yesterday_illiquidity_amihud: score=0.72
+      - margin_extreme_rank_252d: score=0.56
+      - sma100_dist: score=0.98
+      - coppock_curve_day: score=0.67
+      - yesterday_afternoon_momentum: score=0.96
+      - gap_pct: score=0.80
+Stability kept 20 features.
+
+  [DIAGNOSTICS] Feature Quality:
+    Condition Number: 23.40
+    Matrix is stable.
+    No collinear pairs.
+  Cache hit: cache_loyo_159915ETF_9638aedd6cae67c3.joblib
+
+  [DIAGNOSTICS] LOYO CV Folds:
+    Folds: 15
+      Fold 1: Years [2015, 2016, 2017] | Train (1139, 20) | Test (573, 20)
+      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 20) | Test (573, 20)
+      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 20) | Test (572, 20)
+      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 20) | Test (573, 20)
+      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 20) | Test (573, 20)
+      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 20) | Test (574, 20)
+      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 20) | Test (573, 20)
+      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 20) | Test (574, 20)
+      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 20) | Test (574, 20)
+      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 20) | Test (573, 20)
+      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 20) | Test (574, 20)
+      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 20) | Test (574, 20)
+      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 20) | Test (573, 20)
+      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 20) | Test (573, 20)
+      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 20) | Test (574, 20)
+  [DIAGNOSTICS] Selection Train Baseline Condition Number: 3.9950
+  Cache hit: cache_pilot_159915ETF_6987e9f54787e176.joblib
+
+  [DIAGNOSTICS] Optuna Pilot Summary:
+    Trials: 50
+    Raw CV metrics:
+      M1 (Tail IC IR)     : Min=-0.4279, Med=1.0369, Max=1.9165
+      M2 (Tail IC Mean)   : Min=-0.0483, Med=0.2782, Max=0.3111
+      M3 (Hit Rate)       : Min=0.1000, Med=0.9000, Max=0.9000
+      M4 (Overall IC)     : Min=-0.0101, Med=0.1731, Max=0.1837
+      M5 (Monotonicity)   : Min=-0.0285, Med=0.5509, Max=0.6182
+      M6 (Top-Bot Spread) : Min=-0.0678, Med=0.8808, Max=1.1045
+      M7 (Parsimony)      : Min=-0.4200, Med=-0.2039, Max=-0.0000
+      M8 (Coef Bloat)     : Min=-1.6048, Med=-1.0338, Max=-0.0000
+    Validation metrics:
+      Val IC              : Min=0.0000, Med=0.1267, Max=0.2518, MAD=0.0111
+      Val Tail IC         : Min=-0.2112, Med=-0.0567, Max=0.0614, MAD=0.0567
+      Val Monotonicity    : Min=0.0000, Med=0.5636, Max=0.8182, MAD=0.1212
+      Val Top-Bot Spread  : Min=0.0000, Med=0.8185, Max=1.0988, MAD=0.0939
+Calibrated constants:
+  Val1: Med=0.126693, MAD=0.011121
+  Val2: Med=-0.056666, MAD=0.056666
+  Val3: Med=0.563636, MAD=0.121212
+  Val4: Med=0.818479, MAD=0.093911
+
+Running main Optuna Study (100 trials)...
+
+  [DIAGNOSTICS] Main Study Summary:
+    Trials: 100 | OK: 72 | Pruned/Failed: 28
+    Pruning counts:
+      - M4 (Overall IC <= 0): 4
+      - M2 (Yearly Tail IC Mean <= 0): 5
+      - M3 (Hit Rate < 60%): 19
+      - M5 (Monotonicity <= 0.25): 18
+      - M6 (Top-Bottom Spread <= 0): 3
+      - exceeds ESS-based cap: 0
+      - active feature floor: 26
+      - Gini coefficient: 0
+      - Regularized condition number: 0
+    Exceptions:
+      - Side-specific Hit Rate (0.00% < 50%)
+      - Side-specific Yearly Tail IC Mean (-0.1360 <= 0)
+      - Side-specific Hit Rate (30.00% < 50%)
+      - Side-specific Yearly Tail IC Mean (-0.0233 <= 0)
+      - Side-specific Hit Rate (40.00% < 50%)
+      - Side-specific Yearly Tail IC Mean (-0.0743 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0723 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.1438 <= 0)
+      - Side-specific Hit Rate (10.00% < 50%)
+      - Side-specific Yearly Tail IC Mean (-0.0344 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0133 <= 0)
+      - Side-specific Yearly Tail IC Mean (-0.0674 <= 0)
+
+  [DIAGNOSTICS] Objective Progression:
+    Trial   0: Best=+1.0167 | params={'k_weight': 0.17258184958466843, 'unified_alpha': 0.0451231319213065, 'unified_rho': 0.13339096418598828, 'unified_gamma': 12.476248311536951, 'huber_delta': 1.972125751150129}
+    Trial  28: Best=+3.8371 | params={'k_weight': 0.05340802742100276, 'unified_alpha': 2.039119608860232, 'unified_rho': 0.028403793193624793, 'unified_gamma': 42.26756119119264, 'huber_delta': 0.6645686522702954}
+
+  [DIAGNOSTICS] Overfitting (CSCV PBO):
+    PBO: 13.3%
+    IS -> OOS Slope: -1.3177
+
+  [DIAGNOSTICS] Plateau Search (r=0.25, default_min_n=8, default_min_val_n=6):
+    Trial   3 (val=+0.6389, deflated=+0.6389): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  14 (val=+0.2638, deflated=-0.3449): neighbors=1 (valid=1, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  18 (val=+0.6525, deflated=-0.0307): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  28 (val=+3.8371, deflated=-0.1215): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
+    Trial  31 (val=+3.0377, deflated=-0.4005): neighbors=2 (valid=1, req=15/10), valid_ratio=0.50, neighbor_mean=N/A, plateau=Excluded
+  No plateau candidate met neighbor requirements. Falling back to raw best trial: 3 (val=+0.6389, deflated=+0.6389)
+
+  [DIAGNOSTICS] Model Confidence Set (MCS) & Bayesian Discovery:
+    MCS size: 4 / 100 trials (alpha=10%)
     Bayesian prob of true discovery: 100.00%
 
 Best params:
@@ -2091,322 +2252,81 @@ Best params:
   huber_delta: 1.9088462103425592
   model_type: unified
 Best trial raw metrics (CV):
-  M1 (Tail IC IR):  1.0766
-  M2 (Tail IC Mean):0.2827
+  M1 (Tail IC IR):  1.0610
+  M2 (Tail IC Mean):0.2766
   M3 (Hit Rate):    0.9000
-  M4 (Overall IC):  0.1785
-  Deflated CV IC:   0.0673
-  M5 (Mono):        0.5782
-  M6 (Spread):      1.0146
-  M7 (Parsimony):   -0.2743
-  M8 (Coef Bloat):  -0.8798
+  M4 (Overall IC):  0.1777
+  Deflated CV IC:   0.0402
+  M5 (Mono):        0.5261
+  M6 (Spread):      0.9972
+  M7 (Parsimony):   -0.2612
+  M8 (Coef Bloat):  -0.8820
 Best trial Selection Val INNER metrics (Tuned):
-  Val IC:           0.1578
-  Deflated Val IC:  0.0422
-  Val Tail IC:      0.0436
-  Deflated Val Tail:-0.2153
-  Val Mono:         0.6606
-  Val Spread:       0.8012
+  Val IC:           0.1580
+  Deflated Val IC:  0.0060
+  Val Tail IC:      -0.1179
+  Deflated Val Tail:-0.3112
+  Val Mono:         0.7212
+  Val Spread:       0.7961
 Best trial Selection Val OUTER metrics (Holdout Sanity Check):
-  Outer Val IC:     0.1519
-  Defl Outer Val IC:0.0363
-  Outer Tail IC:    0.1930
-  Defl Outer Tail:  -0.0659
-  Outer Mono:       0.7818
-  Outer Spread:     0.6224
+  Outer Val IC:     0.1537
+  Defl Outer Val IC:0.0018
+  Outer Tail IC:    -0.1702
+  Defl Outer Tail:  -0.3634
+  Outer Mono:       0.8545
+  Outer Spread:     0.5613
 
 Running Soloff et al. Bootstrap Bagging Feature Selection (B=100) on selection-train...
   Per-feature bootstrap inclusion frequency:
     - bar_ret_0: 99.00%
     - max_up_ret: 90.00%
-    - margin_buy_repayment_spread: 84.00%
+    - margin_buy_repayment_spread: 86.00%
     - capital_net_ratio: 83.00%
     - yesterday_lunch_gap: 98.00%
-    - yesterday_early_realized_vol: 94.00%
-    - yesterday_day_range: 86.00%
+    - yesterday_early_realized_vol: 93.00%
+    - yesterday_day_range: 88.00%
     - yesterday_early_trend: 100.00%
     - yesterday_gap_pct: 98.00%
-    - northbound_net: 80.00%
-    - bar_vol_5: 88.00%
-    - tech_value_rotation: 85.00%
-    - roc10: 88.00%
+    - northbound_net: 78.00%
+    - bar_vol_5: 87.00%
+    - tech_value_rotation: 84.00%
+    - roc10: 89.00%
     - early_kurtosis: 94.00%
     - yesterday_illiquidity_amihud: 93.00%
-    - margin_extreme_rank_252d: 95.00%
+    - margin_extreme_rank_252d: 98.00%
     - sma100_dist: 100.00%
     - coppock_curve_day: 99.00%
-    - consecutive_inside_bars_3d: 69.00%
     - yesterday_afternoon_momentum: 99.00%
     - gap_pct: 94.00%
-  Bagged selection kept 21 features: ['bar_ret_0', 'max_up_ret', 'margin_buy_repayment_spread', 'capital_net_ratio', 'yesterday_lunch_gap', 'yesterday_early_realized_vol', 'yesterday_day_range', 'yesterday_early_trend', 'yesterday_gap_pct', 'northbound_net', 'bar_vol_5', 'tech_value_rotation', 'roc10', 'early_kurtosis', 'yesterday_illiquidity_amihud', 'margin_extreme_rank_252d', 'sma100_dist', 'coppock_curve_day', 'consecutive_inside_bars_3d', 'yesterday_afternoon_momentum', 'gap_pct']
+  Bagged selection kept 20 features: ['bar_ret_0', 'max_up_ret', 'margin_buy_repayment_spread', 'capital_net_ratio', 'yesterday_lunch_gap', 'yesterday_early_realized_vol', 'yesterday_day_range', 'yesterday_early_trend', 'yesterday_gap_pct', 'northbound_net', 'bar_vol_5', 'tech_value_rotation', 'roc10', 'early_kurtosis', 'yesterday_illiquidity_amihud', 'margin_extreme_rank_252d', 'sma100_dist', 'coppock_curve_day', 'yesterday_afternoon_momentum', 'gap_pct']
 
   [DIAGNOSTICS] Final Model:
     ESS: 791.3 / 2166 (36.5%)
     ESS healthy.
-    Gini: 0.3352 (cap=0.6000)
-    Raw Cond: 24.68
-    Reg Cond (kappa): 52.41
-
-  [DIAGNOSTICS] Time Profiling:
-    data_loading      :   0.1s
-    feature_selection :   0.0s
-    loyo_folds        :   0.0s
-    pilot_study       :   1.6s
-    main_study        :   3.3s
-    final_refit       :   0.2s
-    Total             :   5.1s
-
-  [DIAGNOSTICS] Quarterly Rolling Refit Test (Lockbox decay):
-    Quarter                | Static IC | Static Tail | Roll IC  | Roll Tail
-    -----------------------|-----------|-------------|----------|----------
-    2024-03 to 2024-06     |   +0.3396 |     -0.0500 |  +0.3396 |   -0.0500
-    2024-06 to 2024-09     |   -0.0620 |     -0.3500 |  -0.0750 |   -0.3000
-    2024-09 to 2024-12     |   +0.2784 |     -0.2619 |  +0.2811 |   -0.3095
-    2024-12 to 2025-03     |   +0.3159 |     +0.1905 |  +0.2708 |   +0.6667
-    2025-03 to 2025-06     |   +0.1679 |     -0.1667 |  +0.1732 |   -0.0500
-    2025-06 to 2025-09     |   +0.0694 |     -0.7000 |  +0.0722 |   -0.8833
-    2025-09 to 2025-12     |   +0.0616 |     -0.5714 |  +0.0322 |   -0.3333
-    2025-12 to 2026-03     |   -0.0085 |     -0.5952 |  -0.0279 |   +0.1429
-    2026-03 to 2026-06     |   -0.0207 |     +0.4833 |  -0.0039 |   +0.6333
-    2026-06 to 2026-06     |   +0.4341 |     -0.1000 |  +0.4286 |   -0.3000
-[159915ETF/long] elapsed 5.4s
-
-================================================================================
-Train 159915ETF (Side: short)
-Lockbox: 2024-03-01 | Window: all years | Rolling: False
-Cache: True | Jobs: Optuna=24, Bootstrap=24, LOYO=1
-================================================================================
-Loaded 2722 rows, 214 features.
-Split: Working=2166 (Lockbox ignored) | Train=1720 | Val=371 (Inner=243, Outer=128)
-  Cache hit: cache_select_159915ETF_e27b7335806a460d.joblib
-
-  [DIAGNOSTICS] Feature Screening:
-    Input: 214 | FDR pass: 128
-    Kept 214 features.
-    Spearman |rho|: Min=0.0000, Med=0.0175, Max=0.1392
-    p-value: Min=5.60e-09, Med=0.4679, Max=1.0000
-    Top 5 positive correlations:
-      - bar_ret_0: rho=+0.1392, p=5.60e-09
-      - first_bar_return: rho=+0.1392, p=5.60e-09
-      - bar_body_rng_0: rho=+0.1281, p=8.66e-08
-      - max_up_ret: rho=+0.1219, p=3.55e-07
-      - max_down_ret: rho=+0.0963, p=6.07e-05
-    Top 5 negative correlations:
-      - yesterday_afternoon_reversal: rho=-0.1105, p=4.07e-06
-      - yesterday_afternoon_momentum: rho=-0.1045, p=1.33e-05
-      - capital_large_order_ratio: rho=-0.0783, p=1.14e-03
-      - capital_net_ratio: rho=-0.0778, p=1.22e-03
-      - yesterday_pm_return: rho=-0.0777, p=1.23e-03
-
-  [DIAGNOSTICS] Stability Selection:
-    Input: 214 | Stable count: 24
-    Kept 21 features.
-    Score percentiles: 25%=0.00, 50%=0.10, 75%=0.29, 90%=0.56, 95%=0.74
-    Selected features & scores:
-      - bar_ret_0: score=0.91
-      - max_up_ret: score=0.66
-      - margin_buy_repayment_spread: score=0.59
-      - capital_net_ratio: score=0.61
-      - yesterday_lunch_gap: score=0.88
-      - yesterday_early_realized_vol: score=0.67
-      - yesterday_day_range: score=0.56
-      - yesterday_early_trend: score=0.91
-      - yesterday_gap_pct: score=0.94
-      - northbound_net: score=0.69
-      - bar_vol_5: score=0.79
-      - tech_value_rotation: score=0.61
-      - roc10: score=0.59
-      - early_kurtosis: score=0.84
-      - yesterday_illiquidity_amihud: score=0.72
-      - margin_extreme_rank_252d: score=0.56
-      - sma100_dist: score=0.98
-      - coppock_curve_day: score=0.67
-      - consecutive_inside_bars_3d: score=0.54
-      - yesterday_afternoon_momentum: score=0.96
-      - gap_pct: score=0.80
-Stability kept 21 features.
-
-  [DIAGNOSTICS] Feature Quality:
-    Condition Number: 23.41
-    Matrix is stable.
-    No collinear pairs.
-  Cache hit: cache_loyo_159915ETF_a16997fa23f4ec55.joblib
-
-  [DIAGNOSTICS] LOYO CV Folds:
-    Folds: 15
-      Fold 1: Years [2015, 2016, 2017] | Train (1139, 21) | Test (573, 21)
-      Fold 2: Years [2015, 2016, 2017, 2018, 2019] | Train (1129, 21) | Test (573, 21)
-      Fold 3: Years [2015, 2016, 2019, 2020] | Train (1130, 21) | Test (572, 21)
-      Fold 4: Years [2015, 2016, 2020, 2021, 2022] | Train (1128, 21) | Test (573, 21)
-      Fold 5: Years [2015, 2016, 2022, 2023, 2024] | Train (1136, 21) | Test (573, 21)
-      Fold 6: Years [2016, 2017, 2018, 2019] | Train (1130, 21) | Test (574, 21)
-      Fold 7: Years [2016, 2017, 2019, 2020] | Train (1117, 21) | Test (573, 21)
-      Fold 8: Years [2016, 2017, 2020, 2021, 2022] | Train (1115, 21) | Test (574, 21)
-      Fold 9: Years [2016, 2017, 2022, 2023, 2024] | Train (1123, 21) | Test (574, 21)
-      Fold 10: Years [2017, 2018, 2019, 2020] | Train (1133, 21) | Test (573, 21)
-      Fold 11: Years [2017, 2018, 2019, 2020, 2021, 2022] | Train (1117, 21) | Test (574, 21)
-      Fold 12: Years [2017, 2018, 2019, 2022, 2023, 2024] | Train (1125, 21) | Test (574, 21)
-      Fold 13: Years [2019, 2020, 2021, 2022] | Train (1133, 21) | Test (573, 21)
-      Fold 14: Years [2019, 2020, 2022, 2023, 2024] | Train (1126, 21) | Test (573, 21)
-      Fold 15: Years [2020, 2021, 2022, 2023, 2024] | Train (1139, 21) | Test (574, 21)
-  [DIAGNOSTICS] Selection Train Baseline Condition Number: 4.0073
-
-Running Optuna Pilot Study (50 trials) for normalization calibration...
-  Cache saved: cache_pilot_159915ETF_27cc702d544b052e.joblib
-
-  [DIAGNOSTICS] Optuna Pilot Summary:
-    Trials: 50
-    Raw CV metrics:
-      M1 (Tail IC IR)     : Min=-0.4279, Med=1.0310, Max=1.3261
-      M2 (Tail IC Mean)   : Min=-0.0483, Med=0.2727, Max=0.2970
-      M3 (Hit Rate)       : Min=0.1000, Med=0.9000, Max=0.9000
-      M4 (Overall IC)     : Min=-0.0101, Med=0.1724, Max=0.1787
-      M5 (Monotonicity)   : Min=-0.0285, Med=0.5533, Max=0.6412
-      M6 (Top-Bot Spread) : Min=-0.0678, Med=0.9032, Max=1.0484
-      M7 (Parsimony)      : Min=-0.4410, Med=-0.1978, Max=-0.0000
-      M8 (Coef Bloat)     : Min=-1.6899, Med=-1.0471, Max=-0.0000
-    Validation metrics:
-      Val IC              : Min=0.0000, Med=0.1263, Max=0.1884, MAD=0.0136
-      Val Tail IC         : Min=-0.4478, Med=-0.0709, Max=0.0794, MAD=0.0633
-      Val Monotonicity    : Min=0.0000, Med=0.5273, Max=0.7818, MAD=0.1333
-      Val Top-Bot Spread  : Min=0.0000, Med=0.8203, Max=1.0032, MAD=0.0753
-Calibrated constants:
-  Val1: Med=0.126331, MAD=0.013570
-  Val2: Med=-0.070852, MAD=0.063285
-  Val3: Med=0.527273, MAD=0.133333
-  Val4: Med=0.820333, MAD=0.075318
-
-Running main Optuna Study (100 trials)...
-
-  [DIAGNOSTICS] Main Study Summary:
-    Trials: 100 | OK: 81 | Pruned/Failed: 19
-    Pruning counts:
-      - M4 (Overall IC <= 0): 2
-      - M2 (Yearly Tail IC Mean <= 0): 4
-      - M3 (Hit Rate < 60%): 17
-      - M5 (Monotonicity <= 0.25): 16
-      - M6 (Top-Bottom Spread <= 0): 1
-      - exceeds ESS-based cap: 0
-      - active feature floor: 18
-      - Gini coefficient: 0
-      - Regularized condition number: 0
-    Exceptions:
-      - Side-specific Hit Rate (0.00% < 50%)
-      - Side-specific Yearly Tail IC Mean (-0.1360 <= 0)
-      - Side-specific Hit Rate (30.00% < 50%)
-      - Side-specific Yearly Tail IC Mean (-0.0073 <= 0)
-      - Side-specific Yearly Tail IC Mean (-0.0820 <= 0)
-      - Side-specific Hit Rate (10.00% < 50%)
-      - Side-specific Yearly Tail IC Mean (-0.0522 <= 0)
-
-  [DIAGNOSTICS] Objective Progression:
-    Trial   0: Best=+0.9811 | params={'k_weight': 0.17258184958466843, 'unified_alpha': 0.0451231319213065, 'unified_rho': 0.13339096418598828, 'unified_gamma': 12.476248311536951, 'huber_delta': 1.972125751150129}
-    Trial   8: Best=+1.1242 | params={'k_weight': 1.234665511064688, 'unified_alpha': 1.4345242342057838e-05, 'unified_rho': 0.21077063993129397, 'unified_gamma': 347.4398816847049, 'huber_delta': 0.9422800940160463}
-    Trial  28: Best=+1.6169 | params={'k_weight': 0.16010730338296608, 'unified_alpha': 0.1276602820664572, 'unified_rho': 0.5349626173910872, 'unified_gamma': 38.710514975489204, 'huber_delta': 2.356765896768957}
-    Trial  51: Best=+1.9773 | params={'k_weight': 0.8106133358741257, 'unified_alpha': 0.12857077316202217, 'unified_rho': 0.23296589456204286, 'unified_gamma': 903.7270437543413, 'huber_delta': 2.211206086343368}
-    Trial  58: Best=+2.5664 | params={'k_weight': 0.5637045610501905, 'unified_alpha': 0.15517846642771724, 'unified_rho': 0.08081675552835618, 'unified_gamma': 292.1713614835037, 'huber_delta': 2.168877475047232}
-    Trial  97: Best=+2.7269 | params={'k_weight': 0.5698398603702692, 'unified_alpha': 0.6800952563688281, 'unified_rho': 0.1671122875793427, 'unified_gamma': 9.876506556499555, 'huber_delta': 2.0947345709235403}
-
-  [DIAGNOSTICS] Overfitting (CSCV PBO):
-    PBO: 13.3%
-    IS -> OOS Slope: -1.3561
-
-  [DIAGNOSTICS] Plateau Search (r=0.25, default_min_n=8, default_min_val_n=6):
-    Trial   0 (val=+0.9811, deflated=-0.6694): neighbors=1 (valid=1, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  28 (val=+1.6169, deflated=-0.9344): neighbors=0 (valid=0, req=15/10), valid_ratio=0.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  58 (val=+2.5664, deflated=-0.6008): neighbors=1 (valid=1, req=15/10), valid_ratio=1.00, neighbor_mean=N/A, plateau=Excluded
-    Trial  63 (val=+2.5148, deflated=-0.7483): neighbors=7 (valid=6, req=15/10), valid_ratio=0.86, neighbor_mean=N/A, plateau=Excluded
-    Trial  97 (val=+2.7269, deflated=-0.8155): neighbors=8 (valid=5, req=15/10), valid_ratio=0.62, neighbor_mean=N/A, plateau=Excluded
-  Stable trial: 61 (val=+1.1194, deflated=-2.1713, plateau=-2.1713) vs best 58 (val=+2.5664, deflated=-0.6008)
-
-  [DIAGNOSTICS] Model Confidence Set (MCS) & Bayesian Discovery:
-    MCS size: 1 / 100 trials (alpha=10%)
-    Bayesian prob of true discovery: 100.00%
-
-Best params:
-  k_weight: 0.8707382769964893
-  unified_alpha: 0.28089796189883737
-  unified_rho: 0.2742105229192155
-  unified_gamma: 3113.155927127909
-  huber_delta: 2.1971705638653667
-  model_type: unified
-Best trial raw metrics (CV):
-  M1 (Tail IC IR):  1.1649
-  M2 (Tail IC Mean):0.2504
-  M3 (Hit Rate):    0.9000
-  M4 (Overall IC):  0.1564
-  Deflated CV IC:   0.0258
-  M5 (Mono):        0.5236
-  M6 (Spread):      0.9345
-  M7 (Parsimony):   -0.1048
-  M8 (Coef Bloat):  -0.3200
-Best trial Selection Val INNER metrics (Tuned):
-  Val IC:           0.2163
-  Deflated Val IC:  0.0692
-  Val Tail IC:      -0.2590
-  Deflated Val Tail:-0.4523
-  Val Mono:         0.7818
-  Val Spread:       0.7059
-Best trial Selection Val OUTER metrics (Holdout Sanity Check):
-  Outer Val IC:     0.0950
-  Defl Outer Val IC:-0.0520
-  Outer Tail IC:    -0.0667
-  Defl Outer Tail:  -0.2600
-  Outer Mono:       0.3455
-  Outer Spread:     0.7139
-
-Running Soloff et al. Bootstrap Bagging Feature Selection (B=100) on selection-train...
-  Per-feature bootstrap inclusion frequency:
-    - bar_ret_0: 98.00%
-    - max_up_ret: 86.00%
-    - margin_buy_repayment_spread: 29.00%
-    - capital_net_ratio: 57.00%
-    - yesterday_lunch_gap: 83.00%
-    - yesterday_early_realized_vol: 41.00%
-    - yesterday_day_range: 23.00%
-    - yesterday_early_trend: 89.00%
-    - yesterday_gap_pct: 74.00%
-    - northbound_net: 40.00%
-    - bar_vol_5: 43.00%
-    - tech_value_rotation: 19.00%
-    - roc10: 12.00%
-    - early_kurtosis: 61.00%
-    - yesterday_illiquidity_amihud: 56.00%
-    - margin_extreme_rank_252d: 34.00%
-    - sma100_dist: 97.00%
-    - coppock_curve_day: 37.00%
-    - consecutive_inside_bars_3d: 16.00%
-    - yesterday_afternoon_momentum: 99.00%
-    - gap_pct: 63.00%
-  Bagged selection kept 11 features: ['bar_ret_0', 'max_up_ret', 'capital_net_ratio', 'yesterday_lunch_gap', 'yesterday_early_trend', 'yesterday_gap_pct', 'early_kurtosis', 'yesterday_illiquidity_amihud', 'sma100_dist', 'yesterday_afternoon_momentum', 'gap_pct']
-
-  [DIAGNOSTICS] Final Model:
-    ESS: 1178.8 / 2166 (54.4%)
-    ESS healthy.
-    Gini: 0.5149 (cap=0.7091)
-    Raw Cond: 17.10
-    Reg Cond (kappa): 9.44
+    Gini: 0.3227 (cap=0.6000)
+    Raw Cond: 24.67
+    Reg Cond (kappa): 52.40
 
   [DIAGNOSTICS] Time Profiling:
     data_loading      :   0.0s
     feature_selection :   0.0s
     loyo_folds        :   0.0s
-    pilot_study       :   1.6s
-    main_study        :   3.4s
-    final_refit       :   0.1s
-    Total             :   5.1s
+    pilot_study       :   0.0s
+    main_study        :   4.4s
+    final_refit       :   0.2s
+    Total             :   4.6s
 
   [DIAGNOSTICS] Quarterly Rolling Refit Test (Lockbox decay):
     Quarter                | Static IC | Static Tail | Roll IC  | Roll Tail
     -----------------------|-----------|-------------|----------|----------
-    2024-03 to 2024-06     |   +0.3019 |     +0.1500 |  +0.3019 |   +0.1500
-    2024-06 to 2024-09     |   -0.0819 |     +0.4000 |  -0.0770 |   +0.4500
-    2024-09 to 2024-12     |   +0.2163 |     -0.4286 |  +0.2233 |   -0.4286
-    2024-12 to 2025-03     |   +0.3747 |     +0.3810 |  +0.3497 |   +0.4286
-    2025-03 to 2025-06     |   +0.0540 |     +0.1833 |  +0.0584 |   +0.5167
-    2025-06 to 2025-09     |   +0.1619 |     +0.1167 |  +0.1924 |   +0.2667
-    2025-09 to 2025-12     |   +0.1759 |     +0.1190 |  +0.1611 |   -0.4524
-    2025-12 to 2026-03     |   -0.0433 |     +0.4762 |  -0.0517 |   +0.5952
-    2026-03 to 2026-06     |   +0.0623 |     -0.1667 |  +0.0491 |   -0.2500
-    2026-06 to 2026-06     |   +0.2747 |     -0.6000 |  +0.3352 |   -0.6000
-[159915ETF/short] elapsed 5.4s
+    2024-03 to 2024-06     |   +0.3551 |     -0.4500 |  +0.3551 |   -0.4500
+    2024-06 to 2024-09     |   -0.0565 |     +0.0000 |  -0.0630 |   +0.1004
+    2024-09 to 2024-12     |   +0.2697 |     -0.1190 |  +0.2732 |   -0.1190
+    2024-12 to 2025-03     |   +0.3331 |     +0.7619 |  +0.2813 |   +0.7143
+    2025-03 to 2025-06     |   +0.1492 |     +0.6500 |  +0.1608 |   +0.5167
+    2025-06 to 2025-09     |   +0.0884 |     +0.1500 |  +0.0901 |   +0.0667
+    2025-09 to 2025-12     |   +0.0470 |     +0.6429 |  +0.0331 |   +0.1190
+    2025-12 to 2026-03     |   -0.0094 |     +0.0476 |  -0.0218 |   -0.2143
+    2026-03 to 2026-06     |   -0.0259 |     -0.0667 |  -0.0051 |   -0.0500
+    2026-06 to 2026-06     |   +0.4670 |     -0.1000 |  +0.4286 |   -0.6000
+[159915ETF/short] elapsed 4.9s
