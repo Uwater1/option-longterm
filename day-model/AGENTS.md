@@ -217,3 +217,10 @@ Upgraded model training stability, tail performance, overfit diagnostics, and de
 7. **Quarterly Rolling Refit decay check**:
    - Runs `run_quarterly_rolling_refit_test` post-lockbox.
    - Compares Static vs Rolling Model performance on quarterly windows (QuantBench method).
+
+8. **Target Transformation & Post-Hoc Calibration (July 2026)**:
+   - Fix train-eval mismatch between Huber loss and Spearman IC.
+   - Command-line arguments:
+     - `--target-transform`: choices `none` (default), `rank` (Pearson-on-ranks), `gauss` (normal quantile mapping of ranks).
+     - `--post-hoc-calibrate`: optimize active coefficients post-hoc using SciPy Nelder-Mead on Spearman IC.
+   - Saves model and results with `_rank`, `_gauss`, and `_calibrated` suffixes to run A-B tests side-by-side.

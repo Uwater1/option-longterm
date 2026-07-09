@@ -83,23 +83,22 @@ def expanding_pct_rank(series: pd.Series, min_periods: int = 60) -> pd.Series:
     return pd.Series(out, index=series.index)
 
 
-def load_predictions(etf: str) -> tuple[pd.Series, pd.Series]:
-    """Compute predictions for long and short sides using model & scaler.
-    Long predictions are positive-oriented (high = strong long conviction).
-    Short predictions are negated so they are positive-oriented (high = strong short conviction).
-    """
+def load_predictions(etf: str, target_transform: str = "gauss") -> tuple[pd.Series, pd.Series]:
+    """Load static model predictions for both long and short sides."""
     # Load features
     feat_path = FEATURES_DIR / f"features_{etf}.parquet"
     if not feat_path.exists():
         raise FileNotFoundError(f"Feature parquet not found: {feat_path}")
     df = pd.read_parquet(feat_path)
 
+    suffix = f"_{target_transform}" if target_transform != "none" else ""
+
     # 1. Long side
-    long_model_path = MODELS_DIR / f"linear_{etf}_long.joblib"
-    long_scaler_path = MODELS_DIR / f"scaler_{etf}_long.joblib"
+    long_model_path = MODELS_DIR / f"linear_{etf}_long{suffix}.joblib"
+    long_scaler_path = MODELS_DIR / f"scaler_{etf}_long{suffix}.joblib"
     
     if not (long_model_path.exists() and long_scaler_path.exists()):
-        raise FileNotFoundError(f"Long model/scaler not found for {etf}")
+        raise FileNotFoundError(f"Long model/scaler not found for {etf} (transform: {target_transform})")
         
     long_model = joblib.load(long_model_path)
     long_scaler_meta = joblib.load(long_scaler_path)
@@ -112,11 +111,11 @@ def load_predictions(etf: str) -> tuple[pd.Series, pd.Series]:
     long_scores = pd.Series(long_pred, index=df.index)
 
     # 2. Short side
-    short_model_path = MODELS_DIR / f"linear_{etf}_short.joblib"
-    short_scaler_path = MODELS_DIR / f"scaler_{etf}_short.joblib"
+    short_model_path = MODELS_DIR / f"linear_{etf}_short{suffix}.joblib"
+    short_scaler_path = MODELS_DIR / f"scaler_{etf}_short{suffix}.joblib"
     
     if not (short_model_path.exists() and short_scaler_path.exists()):
-        raise FileNotFoundError(f"Short model/scaler not found for {etf}")
+        raise FileNotFoundError(f"Short model/scaler not found for {etf} (transform: {target_transform})")
         
     short_model = joblib.load(short_model_path)
     short_scaler_meta = joblib.load(short_scaler_path)
@@ -132,13 +131,8 @@ def load_predictions(etf: str) -> tuple[pd.Series, pd.Series]:
     return long_scores, short_scores
 
 
-def load_predictions_rolling(etf: str, max_age_months: int = 6) -> tuple[pd.Series, pd.Series]:
-    """Load rolling model predictions, auto-selecting the best model per date.
-
-    For each OOS date, uses the most recent rolling model whose lockbox is
-    within `max_age_months` months and whose lockbox <= that date.
-    Falls back to static model for dates not covered by any rolling model.
-    """
+def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform: str = "gauss") -> tuple[pd.Series, pd.Series]:
+    """Load rolling model predictions, auto-selecting the best model per date."""
     feat_path = FEATURES_DIR / f"features_{etf}.parquet"
     if not feat_path.exists():
         raise FileNotFoundError(f"Feature parquet not found: {feat_path}")
@@ -148,21 +142,29 @@ def load_predictions_rolling(etf: str, max_age_months: int = 6) -> tuple[pd.Seri
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values("date").reset_index(drop=True)
 
+    suffix = f"_{target_transform}" if target_transform != "none" else ""
+
     # Discover rolling models for this ETF
     rolling_models = []  # list of (lockbox_date, long_model, long_scaler, short_model, short_scaler)
     if ROLLING_MODELS_DIR.exists():
-        for model_path in sorted(ROLLING_MODELS_DIR.glob(f"linear_{etf}_long_r*.joblib")):
+        glob_pattern = f"linear_{etf}_long_r*{suffix}.joblib"
+        for model_path in sorted(ROLLING_MODELS_DIR.glob(glob_pattern)):
             tag = model_path.stem.replace("linear_", "")
             scaler_path = ROLLING_MODELS_DIR / f"scaler_{tag}.joblib"
-            short_model_path = ROLLING_MODELS_DIR / f"linear_{etf}_short_r{tag.split('_r')[-1]}.joblib"
-            short_scaler_path = ROLLING_MODELS_DIR / f"scaler_{etf}_short_r{tag.split('_r')[-1]}.joblib"
+            
+            parts = tag.split("_r")
+            base_etf_long = parts[0]
+            r_suffix = parts[1]
+            
+            base_etf_short = base_etf_long.replace("_long", "_short")
+            short_model_path = ROLLING_MODELS_DIR / f"linear_{base_etf_short}_r{r_suffix}.joblib"
+            short_scaler_path = ROLLING_MODELS_DIR / f"scaler_{base_etf_short}_r{r_suffix}.joblib"
 
             if not (scaler_path.exists() and short_model_path.exists() and short_scaler_path.exists()):
                 continue
 
             # Parse lockbox date from tag suffix: rYYYYMM
-            r_suffix = tag.split("_r")[-1]
-            lb_date = pd.Timestamp(f"{r_suffix[:4]}-{r_suffix[4:]}-01")
+            lb_date = pd.Timestamp(f"{r_suffix[:4]}-{r_suffix[4:6]}-01")
 
             long_model = joblib.load(model_path)
             long_scaler_meta = joblib.load(scaler_path)
@@ -176,8 +178,8 @@ def load_predictions_rolling(etf: str, max_age_months: int = 6) -> tuple[pd.Seri
             })
 
     if not rolling_models:
-        print(f"  [WARNING] No rolling models found for {etf}, falling back to static.")
-        return load_predictions(etf)
+        print(f"  [WARNING] No rolling models found for {etf} (transform: {target_transform}), falling back to static.")
+        return load_predictions(etf, target_transform=target_transform)
 
     # Sort by lockbox date descending (most recent first)
     rolling_models.sort(key=lambda m: m["lockbox"], reverse=True)
@@ -218,11 +220,11 @@ def load_predictions_rolling(etf: str, max_age_months: int = 6) -> tuple[pd.Seri
 
     # Fill remaining dates with static model (if any)
     if remaining_mask.any():
-        static_long_path = MODELS_DIR / f"linear_{etf}_long.joblib"
-        static_short_path = MODELS_DIR / f"linear_{etf}_short.joblib"
+        static_long_path = MODELS_DIR / f"linear_{etf}_long{suffix}.joblib"
+        static_short_path = MODELS_DIR / f"linear_{etf}_short{suffix}.joblib"
         if static_long_path.exists() and static_short_path.exists():
             print(f"  [INFO] {remaining_mask.sum()} dates not covered by rolling, using static model.")
-            static_long, static_short = load_predictions(etf)
+            static_long, static_short = load_predictions(etf, target_transform=target_transform)
             static_long = static_long[static_long.index.isin(df.index[remaining_mask])]
             static_short = static_short[static_short.index.isin(df.index[remaining_mask])]
             long_scores = pd.concat([long_scores, static_long])
@@ -419,6 +421,8 @@ def main():
                     help="Use rolling models for predictions (auto-select per date, fall back to static).")
     ap.add_argument("--max-age-months", type=int, default=6,
                     help="Max age in months for rolling model coverage (default 6).")
+    ap.add_argument("--target-transform", default="none", choices=["none", "rank", "gauss"],
+                    help="Target transform to load: none|rank|gauss")
     args = ap.parse_args()
 
     etfs = ["50ETF", "300ETF", "500ETF", "588000ETF", "159915ETF"]
@@ -446,9 +450,11 @@ def main():
         try:
             # 1. Predictions
             if args.rolling:
-                long_scores, short_scores = load_predictions_rolling(etf, max_age_months=args.max_age_months)
+                long_scores, short_scores = load_predictions_rolling(
+                    etf, max_age_months=args.max_age_months, target_transform=args.target_transform
+                )
             else:
-                long_scores, short_scores = load_predictions(etf)
+                long_scores, short_scores = load_predictions(etf, target_transform=args.target_transform)
             
             # 2. Expanding Percentile Ranks (walk-forward, look-ahead free)
             long_rank = expanding_pct_rank(long_scores, min_periods=args.min_periods)
