@@ -87,7 +87,7 @@ VAL_BLOCKS = VAL_BLOCKS_INNER + VAL_BLOCKS_OUTER
 PILOT_N_TRIALS = 50
 PILOT_SEED = 42
 STABILITY_B = 400      
-STABILITY_PI = 0.5   
+STABILITY_PI = 0.55   
 STABILITY_Q = 35      
 MIN_FEATURE = 15      # Minimum features to keep in Step 2 screening
 ACTIVE_FEATURE_ESS_DIVISOR = 8.0  # Kish Effective Sample Size (ESS) divisor to set maximum active features (cap = ESS / divisor) to regularize complexity
