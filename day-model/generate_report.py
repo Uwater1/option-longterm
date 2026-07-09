@@ -659,7 +659,7 @@ def _render_precision_at_k(ax, y_lock, pred_lock, side):
 def render_diagnostics_figure(etf, side, model, selected_features,
                               dates_all, y_all, pred_all,
                               dates_lock, y_lock, pred_lock,
-                              extra_stats=None):
+                              extra_stats=None, early=False):
     """Build ONE figure with 15 subplots (5 rows x 3 cols). Save as
     `diagnostics_{etf}_{side}.png` in PLOTS_DIR. Returns the filename."""
     PLOTS_DIR.mkdir(exist_ok=True)
@@ -691,7 +691,7 @@ def render_diagnostics_figure(etf, side, model, selected_features,
     _render_precision_at_k(axes_flat[14], y_lock, pred_lock, side)
 
     fig.tight_layout(rect=(0, 0, 1, 0.985))
-    fname = f"diagnostics_{etf}_{side}.png"
+    fname = f"diagnostics_{etf}_{side}_early.png" if early else f"diagnostics_{etf}_{side}.png"
     fig.savefig(PLOTS_DIR / fname, dpi=110)
     plt.close(fig)
     return fname
@@ -700,10 +700,13 @@ def render_diagnostics_figure(etf, side, model, selected_features,
 # ============================================================
 # Main
 # ============================================================
-def _load_results_dict():
+def _load_results_dict(early: bool = False):
     """Load all results_*.json keyed by tag."""
     out = {}
-    for p in DATA_DIR.glob("results_*.json"):
+    pattern = "results_*_early.json" if early else "results_*.json"
+    for p in DATA_DIR.glob(pattern):
+        if not early and p.name.endswith("_early.json"):
+            continue
         try:
             with open(p) as f:
                 r = json.load(f)
@@ -725,14 +728,16 @@ def _ordered_tags(results_dict):
     return sorted(results_dict.keys(), key=key)
 
 
-_ETF_FEATURES_CACHE: dict = {}  # ETF name -> (dates_all, y_scaled, X_df) for reuse across sides
+_ETF_FEATURES_CACHE: dict = {}  # (etf, early) -> (dates_all, y_scaled, X_df) for reuse across sides
 
 
-def _load_etf_features(etf: str):
+def _load_etf_features(etf: str, early: bool = False):
     """Load + prep ETF features parquet once, cache for reuse across sides."""
-    if etf in _ETF_FEATURES_CACHE:
-        return _ETF_FEATURES_CACHE[etf]
-    features_path = DATA_DIR / f"features_{etf}.parquet"
+    cache_key = (etf, early)
+    if cache_key in _ETF_FEATURES_CACHE:
+        return _ETF_FEATURES_CACHE[cache_key]
+    fname = f"features_{etf}_early.parquet" if early else f"features_{etf}.parquet"
+    features_path = DATA_DIR / fname
     if not features_path.exists():
         return None
     df = pd.read_parquet(features_path)
@@ -741,11 +746,11 @@ def _load_etf_features(etf: str):
     df = df.sort_values("date").reset_index(drop=True)
     df["date"] = pd.to_datetime(df["date"])
     out = (df, features_path)
-    _ETF_FEATURES_CACHE[etf] = out
+    _ETF_FEATURES_CACHE[cache_key] = out
     return out
 
 
-def _process_tag(tag: str, r: dict):
+def _process_tag(tag: str, r: dict, early: bool = False):
     """Worker: process ONE tag (load features, predict, compute metrics,
     emit 15-panel figure). Returns updated results dict + diagnostics filename."""
     import warnings
@@ -760,7 +765,7 @@ def _process_tag(tag: str, r: dict):
     side = r.get("side", "single")
     model_path = MODELS_DIR / f"linear_{tag}.joblib"
     scaler_path = MODELS_DIR / f"scaler_{tag}.joblib"
-    cached = _load_etf_features(etf)
+    cached = _load_etf_features(etf, early=early)
     if cached is None or not (model_path.exists() and scaler_path.exists()):
         return tag, r, None, "missing files"
 
@@ -873,6 +878,7 @@ def _process_tag(tag: str, r: dict):
             dates_all, y_scaled, preds,
             dates_lock, y_lock, pred_lock,
             extra_stats=extra_stats,
+            early=early,
         )
         r["diagnostics_plot"] = fname
         msg = (f"IC={lockbox_ic:+.4f} TailIC[{side}]={lockbox_tail_ic:+.4f} "
@@ -883,9 +889,10 @@ def _process_tag(tag: str, r: dict):
         return tag, r, None, f"FAILED: {ex}\n{traceback.format_exc()}"
 
 
-def main():
-    print("Generating day-model REPORT.md (side-aware, ONE 15-panel figure per ETF side)...")
-    results_dict = _load_results_dict()
+def main(early: bool = False):
+    rpt_name = "REPORT_early.md" if early else "REPORT.md"
+    print(f"Generating day-model {rpt_name} (side-aware, ONE 15-panel figure per ETF side)...")
+    results_dict = _load_results_dict(early=early)
     if not results_dict:
         print("  [ERROR] No results files found in data directory. Run train_model.py first.")
         return
@@ -900,22 +907,22 @@ def main():
     try:
         from joblib import Parallel, delayed
         results = Parallel(n_jobs=n_jobs, backend="loky", verbose=0)(
-            delayed(_process_tag)(t, results_dict[t]) for t in tags
+            delayed(_process_tag)(t, results_dict[t], early=early) for t in tags
         )
     except Exception as e:
         print(f"  [WARNING] Parallel processing failed ({e}); falling back to sequential.")
-        results = [_process_tag(t, results_dict[t]) for t in tags]
+        results = [_process_tag(t, results_dict[t], early=early) for t in tags]
 
     for tag, r_updated, _fname, msg in results:
         results_dict[tag] = r_updated
         print(f"  [{tag}] {msg}")
 
-    # 2. Second pass: write REPORT.md
-    _write_report(results_dict)
-    print(f"REPORT.md written to {REPORT_PATH}")
+    # 2. Second pass: write report
+    _write_report(results_dict, early=early)
+    print(f"{rpt_name} written.")
 
 
-def _write_report(results_dict):
+def _write_report(results_dict, early: bool = False):
     lines = []
     lines.append("# Day-Model Remake Optimization Report")
     lines.append("> Generated by day-model/generate_report.py")
@@ -1181,7 +1188,7 @@ def _write_report(results_dict):
         else:
             lines.append("  None")
         lines.append("")
-        plot_file = r.get("diagnostics_plot") or f"diagnostics_{etf}_{side}.png"
+        plot_file = r.get("diagnostics_plot") or (f"diagnostics_{etf}_{side}_early.png" if early else f"diagnostics_{etf}_{side}.png")
         if (PLOTS_DIR / plot_file).exists():
             lines.append(f"![Diagnostics {tag}](plots/{plot_file})")
         else:
@@ -1203,10 +1210,14 @@ def _write_report(results_dict):
     lines.append("   - `short`: Tail IC bot-only (`pred <= P15(pred)`). Weights [0.35, 0.50, 0.15, 0.00] (V4 dropped).")
     lines.append("   - CV fold kill-switches (M1..M6: hit rate, monotonicity, spread, ESS, Gini) stay **two-sided** for all sides.")
     lines.append("8. **Deflated Objective + Plateau Selection**: Running Lopez de Prado deflation; final trial chosen via plateau search (r=0.25).")
-    lines.append("9. **15-Panel Diagnostics Figure per Tag**: One combined PNG (`diagnostics_{etf}_{side}.png`) with 15 subplots, saved to `day-model/plots/` and embedded above.")
+    if early:
+        lines.append("9. **15-Panel Diagnostics Figure per Tag**: One combined PNG (`diagnostics_{etf}_{side}_early.png`) with 15 subplots, saved to `day-model/plots/` and embedded above.")
+    else:
+        lines.append("9. **15-Panel Diagnostics Figure per Tag**: One combined PNG (`diagnostics_{etf}_{side}.png`) with 15 subplots, saved to `day-model/plots/` and embedded above.")
     lines.append("")
 
-    with open(REPORT_PATH, "w") as f:
+    report_file = HERE / "REPORT_early.md" if early else REPORT_PATH
+    with open(report_file, "w") as f:
         f.write("\n".join(lines))
 
 
@@ -1361,9 +1372,11 @@ if __name__ == "__main__":
                     help="Generate rolling report instead of static report")
     ap.add_argument("-q", "--quarter", default=None,
                     help="Filter to single quarter (e.g. 2024Q1)")
+    ap.add_argument("--early", action="store_true",
+                    help="Generate early-window report (10:00 to 13:05)")
     args = ap.parse_args()
 
     if args.rolling or args.quarter:
         main_rolling(quarter_filter=args.quarter)
     else:
-        main()
+        main(early=args.early)

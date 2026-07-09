@@ -254,3 +254,9 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 - Modified index downloader to fetch `000688.XSHG` daily price history starting from its base date `2019-12-31`.
 - Added fallback proxy logic to `build_features.py` to use index 5m data when ETF 5m data is missing.
 - Expands the `588000ETF` dataset from 1294 to 1371 samples and starts training history on `2020-10-23` (after 60 days warmup) instead of `2021-02-09`.
+
+## Early Target (10:00 ~ 13:05) Window (July 2026)
+- Exit Bar changed from 42 (14:35 close) to 24 (13:05 close, close of the 13:00~13:05 bar).
+- Pipeline commands support `--early` parameter to execute the early target flow.
+- Early output files suffix everything with `_early` to isolate them (e.g. `features_{ETF}_early.parquet`, `linear_{tag}_early.joblib`, `REPORT_early.md`, `plots/diagnostics_{tag}_early.png`).
+- Run: `python3 day-model/build_features.py -e all --early`, `python3 day-model/train_model.py -e all --trials 100 --early`, `python3 day-model/generate_report.py --early`, `python3 day-model/backtest_simulator.py --etf all --early`.

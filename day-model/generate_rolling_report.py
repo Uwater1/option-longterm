@@ -82,12 +82,15 @@ DEFAULT_SIGNAL_THR = 90.0  # percentile threshold for signal generation
 # ============================================================
 # Data loading
 # ============================================================
-def load_rolling_results() -> dict:
+def load_rolling_results(early: bool = False) -> dict:
     """Load all rolling results JSON grouped by lockbox_date -> {tag: results_dict}."""
     out = {}
     if not ROLLING_DATA_DIR.exists():
         return out
-    for p in sorted(ROLLING_DATA_DIR.glob("results_*.json")):
+    pattern = "results_*_early.json" if early else "results_*.json"
+    for p in sorted(ROLLING_DATA_DIR.glob(pattern)):
+        if not early and p.name.endswith("_early.json"):
+            continue
         try:
             with open(p) as f:
                 r = json.load(f)
@@ -101,11 +104,13 @@ def load_rolling_results() -> dict:
     return out
 
 
-def _load_features(etf: str, _cache={}):
+def _load_features(etf: str, early: bool = False, _cache={}):
     """Load features parquet once per ETF (cached)."""
-    if etf in _cache:
-        return _cache[etf]
-    path = DATA_DIR / f"features_{etf}.parquet"
+    cache_key = (etf, early)
+    if cache_key in _cache:
+        return _cache[cache_key]
+    fname = f"features_{etf}_early.parquet" if early else f"features_{etf}.parquet"
+    path = DATA_DIR / fname
     if not path.exists():
         return None
     df = pd.read_parquet(path)
@@ -113,7 +118,7 @@ def _load_features(etf: str, _cache={}):
         df = df.reset_index()
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values("date").reset_index(drop=True)
-    _cache[etf] = df
+    _cache[cache_key] = df
     return df
 
 
@@ -211,7 +216,7 @@ def simulate_strategy(pred_series: pd.Series, actual_returns: pd.Series,
 # ============================================================
 # Per-model evaluation
 # ============================================================
-def evaluate_model(tag: str, r: dict, signal_thr: float, cost_bps: float) -> dict:
+def evaluate_model(tag: str, r: dict, signal_thr: float, cost_bps: float, early: bool = False) -> dict:
     """Load model, predict OOS, compute IC + strategy metrics. Returns enriched results."""
     etf = r["etf"]
     side = r.get("side", "single")
@@ -223,7 +228,7 @@ def evaluate_model(tag: str, r: dict, signal_thr: float, cost_bps: float) -> dic
     if not (model_path.exists() and scaler_path.exists()):
         return {"error": f"missing model/scaler for {tag}"}
 
-    df = _load_features(etf)
+    df = _load_features(etf, early=early)
     if df is None:
         return {"error": f"missing features for {etf}"}
 
@@ -323,7 +328,7 @@ def evaluate_warnings(all_results: dict) -> dict:
 # ============================================================
 # Diagnostic plots (per-quarter subdirectories)
 # ============================================================
-def render_quarter_diagnostics(tag: str, r: dict, quarter_dir: Path) -> str | None:
+def render_quarter_diagnostics(tag: str, r: dict, quarter_dir: Path, early: bool = False) -> str | None:
     """Render 15-panel diagnostic figure for one rolling model. Returns filename or None."""
     etf = r["etf"]
     side = r.get("side", "single")
@@ -334,7 +339,7 @@ def render_quarter_diagnostics(tag: str, r: dict, quarter_dir: Path) -> str | No
     if not (model_path.exists() and scaler_path.exists()):
         return None
 
-    df = _load_features(etf)
+    df = _load_features(etf, early=early)
     if df is None:
         return None
 
@@ -405,7 +410,7 @@ def render_quarter_diagnostics(tag: str, r: dict, quarter_dir: Path) -> str | No
 # Report generator
 # ============================================================
 def generate_report(all_results: dict, eval_metrics: dict, warnings_dict: dict,
-                    signal_thr: float, cost_bps: float):
+                    signal_thr: float, cost_bps: float, early: bool = False):
     """Generate comprehensive ROLLING_REPORT.md."""
     L = []
     L.append("# Day-Model Rolling Strategy Report")
@@ -415,7 +420,10 @@ def generate_report(all_results: dict, eval_metrics: dict, warnings_dict: dict,
     L.append(f"Window: 6 years (rolling)")
     L.append(f"Signal threshold: {signal_thr}th percentile")
     L.append(f"Transaction cost: {cost_bps} bps")
-    L.append(f"Target: `trade_return` = log(close@14:35 / open@10:05)")
+    if early:
+        L.append(f"Target: `trade_return` = log(close@13:05 / open@10:05) (early target)")
+    else:
+        L.append(f"Target: `trade_return` = log(close@14:35 / open@10:05)")
     L.append("")
 
     # === Strategy Performance Summary ===
@@ -465,7 +473,7 @@ def generate_report(all_results: dict, eval_metrics: dict, warnings_dict: dict,
                 continue
             # Reconstruct daily returns for aggregation
             try:
-                daily_rets = _compute_daily_returns(tag, res, signal_thr, cost_bps, side)
+                daily_rets = _compute_daily_returns(tag, res, signal_thr, cost_bps, side, early=early)
                 for dt, ret in daily_rets.items():
                     port_daily.setdefault(dt, []).append(ret)
             except Exception:
@@ -637,21 +645,22 @@ def generate_report(all_results: dict, eval_metrics: dict, warnings_dict: dict,
     L.append("")
 
     report_text = "\n".join(L)
-    with open(REPORT_PATH, "w", encoding="utf-8") as f:
+    report_file = HERE / "ROLLING_REPORT_early.md" if early else REPORT_PATH
+    with open(report_file, "w", encoding="utf-8") as f:
         f.write(report_text)
-    print(f"\nRolling report written to: {REPORT_PATH}")
+    print(f"\nRolling report written to: {report_file}")
     return report_text
 
 
 def _compute_daily_returns(tag: str, r: dict, signal_thr: float, cost_bps: float,
-                           side: str) -> dict:
+                           side: str, early: bool = False) -> dict:
     """Reconstruct daily returns for portfolio aggregation. Returns {date: return}."""
     etf = r["etf"]
     lb_date = r.get("lockbox_date", "")
     model_path = ROLLING_MODELS_DIR / f"linear_{tag}.joblib"
     scaler_path = ROLLING_MODELS_DIR / f"scaler_{tag}.joblib"
 
-    df = _load_features(etf)
+    df = _load_features(etf, early=early)
     if df is None or not (model_path.exists() and scaler_path.exists()):
         return {}
 
@@ -714,15 +723,17 @@ def main():
     ap.add_argument("--no-plots", action="store_true", help="Skip diagnostic plot generation")
     ap.add_argument("-j", "--jobs", type=int, default=0,
                     help="Parallel workers for plot generation (0 = auto)")
+    ap.add_argument("--early", action="store_true",
+                    help="Generate early-window report (10:00 to 13:05)")
     args = ap.parse_args()
 
     print("=" * 80)
     print("Rolling Day-Model Comprehensive Report Generator")
-    print(f"Signal threshold: {args.thr}th percentile | Cost: {args.cost_bps} bps")
+    print(f"Signal threshold: {args.thr}th percentile | Cost: {args.cost_bps} bps | Early: {args.early}")
     print("=" * 80)
 
     # Load results
-    all_results = load_rolling_results()
+    all_results = load_rolling_results(early=args.early)
     if not all_results:
         print("  [ERROR] No rolling results found in", ROLLING_DATA_DIR)
         print("  Run `python3 day-model/train_rolling.py -e all` first.")
@@ -751,7 +762,7 @@ def main():
         eval_metrics[quarter] = {}
         for tag in sorted(all_results[quarter].keys()):
             res = all_results[quarter][tag]
-            ev = evaluate_model(tag, res, args.thr, args.cost_bps)
+            ev = evaluate_model(tag, res, args.thr, args.cost_bps, early=args.early)
             eval_metrics[quarter][tag] = ev
             if "error" not in ev:
                 nt = ev.get("strat_n_trades", 0)
@@ -777,14 +788,14 @@ def main():
             qdir = ROLLING_PLOTS_DIR / ql
             qdir.mkdir(parents=True, exist_ok=True)
             for tag in sorted(all_results[quarter].keys()):
-                fname = render_quarter_diagnostics(tag, all_results[quarter][tag], qdir)
+                fname = render_quarter_diagnostics(tag, all_results[quarter][tag], qdir, early=args.early)
                 if fname:
                     print(f"  {ql}/{fname}")
     else:
         print("\nSkipping plots (--no-plots).")
 
     # 4. Generate report
-    generate_report(all_results, eval_metrics, warnings_dict, args.thr, args.cost_bps)
+    generate_report(all_results, eval_metrics, warnings_dict, args.thr, args.cost_bps, early=args.early)
 
 
 if __name__ == "__main__":

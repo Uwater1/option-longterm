@@ -1194,9 +1194,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
               skip_step1: bool = True, skip_step2: bool = False,
               lockbox_date: str = LOCKBOX_DATE, window_years: int = 0,
               rolling: bool = False, target_transform: str = "none",
-              post_hoc_calibrate: bool = False):
+              post_hoc_calibrate: bool = False, early: bool = False):
     print(f"\n" + "=" * 80)
-    print(f"Train {etf_name} (Side: {side})")
+    print(f"Train {etf_name} (Side: {side}) | Early: {early}")
     print(f"Lockbox: {lockbox_date} | Window: {window_years if window_years > 0 else 'all'} years | Rolling: {rolling}")
     print(f"Cache: {use_cache} | Jobs: Optuna={optuna_n_jobs}, Bootstrap={bootstrap_n_jobs}, LOYO={loyo_n_jobs}")
     print(f"=" * 80)
@@ -1205,7 +1205,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     t_start = time.perf_counter()
 
     # Load features parquet
-    features_path = DATA_DIR / f"features_{etf_name}.parquet"
+    features_path = DATA_DIR / (f"features_{etf_name}_early.parquet" if early else f"features_{etf_name}.parquet")
     if not features_path.exists():
         print(f"  ERROR: Features file not found: {features_path}")
         return None
@@ -1354,7 +1354,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         int(X_sel_train.shape[0]), int(X_sel_train.shape[1]),
         STABILITY_B, STABILITY_PI, MIN_FEATURE, fdr_level,
         tuple(val_blocks_all), TARGET, vif_threshold,
-        skip_step1, skip_step2, target_transform,
+        skip_step1, skip_step2, target_transform, early,
     ]
     select_cache_path = CACHE_DIR / f"cache_select_{etf_name}_{_cache_key(select_key)}.joblib"
 
@@ -1520,7 +1520,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     loyo_key = [
         "v10", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
-        tuple(val_blocks_all), TARGET,
+        tuple(val_blocks_all), TARGET, early
     ]
     loyo_cache_path = CACHE_DIR / f"cache_loyo_{etf_name}_{_cache_key(loyo_key)}.joblib"
 
@@ -1727,7 +1727,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "v17_unified", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         tuple(VAL_BLOCKS), TARGET, PILOT_N_TRIALS, PILOT_SEED,
-        target_transform, post_hoc_calibrate
+        target_transform, post_hoc_calibrate, early
     ]
     if side != "single":
         pilot_key = ["v17_unified_side", side] + pilot_key
@@ -2479,6 +2479,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     tag = etf_name if side == "single" else f"{etf_name}_{side}"
     if rolling:
         tag = rolling_tag(etf_name, side, lockbox_date)
+    if early:
+        tag += "_early"
     tag_suffix = ""
     if target_transform != "none":
         tag_suffix += f"_{target_transform}"
@@ -2701,6 +2703,8 @@ if __name__ == "__main__":
                     help="Target transform: none|rank|gauss")
     ap.add_argument("--post-hoc-calibrate", action="store_true", default=False,
                     help="Enable post-hoc Spearman IC calibration of active coefficients")
+    ap.add_argument("--early", action="store_true",
+                    help="Predict early window (10:00 to 13:05, exiting at close of 13:00~13:05 bar)")
     args = ap.parse_args()
 
     skip_step1 = True # Bypassed by default because univariate screening deletes joint predictive features.
@@ -2789,7 +2793,8 @@ if __name__ == "__main__":
                               window_years=window_yrs,
                               rolling=effective_rolling,
                               target_transform=args.target_transform,
-                              post_hoc_calibrate=args.post_hoc_calibrate)
+                              post_hoc_calibrate=args.post_hoc_calibrate,
+                              early=args.early)
                 except Exception as e:
                     print(f"  [ERROR] Failed to train {etf} ({side}): {e}")
                     import traceback
