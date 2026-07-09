@@ -324,3 +324,17 @@ Multi-ETF validation (all 5 ETFs x 3 sides, 100 Optuna trials)
 - **Parallelism**: Default `--optuna-jobs 1` for deterministic trial ordering. Use `--optuna-jobs N` for faster wall time when reproducibility is not critical.
 - **588000ETF special case**: Already overrides FDR to 0.25 and has a separate VIF threshold (5.0 vs 10.0). Track separately in all sweeps.
 
+### 8.6 Target Transformation Analysis & Decision (July 2026)
+
+- Tested rank-transformation of target returns:
+  - `none` (default): Minimize Huber loss directly on raw return targets.
+  - `rank`: Minimize Huber loss on uniform-spaced target ranks (Pearson-on-ranks).
+  - `gauss`: Map target ranks to standard normal quantiles to preserve smooth Gaussian tails.
+- **Empirical Results**:
+  - *Validation Folds*: Ranks/Gauss transforms improve historical Tail IC metrics (Inner Val Tail IC / Outer Val Tail IC) by standardizing target variance and forcing the optimizer to focus strictly on ranking order.
+  - *OOS Backtest Simulator*: True OOS portfolio performance (2024-03 onwards) drops significantly under target transformations:
+    - Baseline (`none`): **+1908 bps** P&L, **1.22 Sharpe**.
+    - Rank (`rank`): **+995 bps** P&L, **0.66 Sharpe**.
+    - Gauss (`gauss`): **+122 bps** P&L, **0.09 Sharpe**.
+- **Conclusion**: Discarding target magnitude scale entirely harms model capacity to separate high-conviction outlier days from normal noise. **Raw returns (`none`) remain the default target representation.**
+

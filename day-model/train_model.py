@@ -46,9 +46,10 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from scipy.stats import rankdata
+from scipy.stats import rankdata, norm
 from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.spatial.distance import squareform
+from scipy.optimize import minimize
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import enet_path
@@ -387,6 +388,60 @@ def scale_data_with_weights(X: np.ndarray, y: np.ndarray, w: np.ndarray):
     return X_w, y_w
 
 
+def transform_target(y: np.ndarray, method: str) -> np.ndarray:
+    """Apply target transformation.
+    Methods: 'none', 'rank', 'gauss'
+    """
+    if method == "none":
+        return y
+    elif method == "rank":
+        r = rankdata(y)
+        mean_r = r.mean()
+        std_r = r.std()
+        if std_r > 1e-12:
+            return ((r - mean_r) / std_r).astype(np.float32)
+        return np.zeros_like(y, dtype=np.float32)
+    elif method == "gauss":
+        n = len(y)
+        r = rankdata(y)
+        q = (r - 0.5) / n
+        g = norm.ppf(q)
+        mean_g = g.mean()
+        std_g = g.std()
+        if std_g > 1e-12:
+            return ((g - mean_g) / std_g).astype(np.float32)
+        return np.zeros_like(y, dtype=np.float32)
+    else:
+        raise ValueError(f"Unknown target transform method: {method}")
+
+
+def calibrate_coefficients(coef: np.ndarray, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+    """Post-hoc Spearman IC calibration of active coefficients using Nelder-Mead."""
+    active_mask = np.abs(coef) > 1e-5
+    if not np.any(active_mask):
+        return coef
+    active_idx = np.where(active_mask)[0]
+    n_active = len(active_idx)
+    if n_active == 0:
+        return coef
+    init_s = np.ones(n_active, dtype=np.float64)
+    active_coefs = coef[active_idx]
+    X_active = X[:, active_idx]
+    
+    def obj(s):
+        preds = X_active @ (active_coefs * s)
+        ic = spearman_ic(y, preds)
+        # L2 penalty to keep s close to 1
+        penalty = 0.05 * np.sum((s - 1.0) ** 2)
+        return -ic + penalty
+        
+    res = minimize(obj, x0=init_s, method='Nelder-Mead', bounds=[(0.1, 5.0)] * n_active,
+                   options={'maxiter': 100})
+    calibrated_coef = coef.copy()
+    calibrated_coef[active_idx] = active_coefs * res.x
+    return calibrated_coef
+
+
 # ============================================================
 # Feature Selection Steps
 # ============================================================
@@ -654,7 +709,7 @@ def run_stability_selection(X_working: np.ndarray, y_working: np.ndarray, screen
 # ============================================================
 # Yearly Blocked CV Engine
 # ============================================================
-def _loyo_one_fold(fold, model_type, params, k_weight):
+def _loyo_one_fold(fold, model_type, params, k_weight, target_transform="none", post_hoc_calibrate=False):
     import warnings
     warnings.filterwarnings("ignore")
     if len(fold) == 5:
@@ -664,10 +719,14 @@ def _loyo_one_fold(fold, model_type, params, k_weight):
         y_te = None
         
     w_tr = compute_sample_weights(y_tr, k_weight)
-    X_tr_w, y_tr_w = scale_data_with_weights(X_tr_scaled, y_tr, w_tr)
+    y_tr_trans = transform_target(y_tr, target_transform)
+    X_tr_w, y_tr_w = scale_data_with_weights(X_tr_scaled, y_tr_trans, w_tr)
     model = _build_model(model_type, params)
     model.fit(X_tr_w, y_tr_w)
     
+    if post_hoc_calibrate:
+        model.coef_ = calibrate_coefficients(model.coef_, X_tr_scaled, y_tr)
+        
     test_preds = model.predict(X_te_scaled)
     train_preds = model.predict(X_tr_scaled)
     train_ic = spearman_ic(y_tr, train_preds)
@@ -681,7 +740,8 @@ def _loyo_one_fold(fold, model_type, params, k_weight):
 
 
 def run_loyo_cv(loyo_folds: list, model_type: str, params: dict, k_weight: float,
-                n_samples: int, n_jobs: int = 1):
+                n_samples: int, n_jobs: int = 1, target_transform: str = "none",
+                post_hoc_calibrate: bool = False):
     oof_pred_sum = np.zeros(n_samples, dtype=np.float64)
     oof_pred_cnt = np.zeros(n_samples, dtype=np.float64)
     
@@ -690,7 +750,7 @@ def run_loyo_cv(loyo_folds: list, model_type: str, params: dict, k_weight: float
     
     if n_jobs and n_jobs > 1 and len(loyo_folds) > 1:
         results = Parallel(n_jobs=n_jobs, backend="loky")(
-            delayed(_loyo_one_fold)(f, model_type, params, k_weight)
+            delayed(_loyo_one_fold)(f, model_type, params, k_weight, target_transform, post_hoc_calibrate)
             for f in loyo_folds
         )
         for test_idx, preds, train_ic, test_ic in results:
@@ -700,7 +760,8 @@ def run_loyo_cv(loyo_folds: list, model_type: str, params: dict, k_weight: float
             cv_oos_ics.append(test_ic)
     else:
         for fold in loyo_folds:
-            test_idx, preds, train_ic, test_ic = _loyo_one_fold(fold, model_type, params, k_weight)
+            test_idx, preds, train_ic, test_ic = _loyo_one_fold(
+                fold, model_type, params, k_weight, target_transform, post_hoc_calibrate)
             oof_pred_sum[test_idx] += preds
             oof_pred_cnt[test_idx] += 1
             cv_is_ics.append(train_ic)
@@ -1132,7 +1193,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
               bootstrap_n_jobs: int = BOOTSTRAP_N_JOBS, loyo_n_jobs: int = 1,
               skip_step1: bool = True, skip_step2: bool = False,
               lockbox_date: str = LOCKBOX_DATE, window_years: int = 0,
-              rolling: bool = False):
+              rolling: bool = False, target_transform: str = "none",
+              post_hoc_calibrate: bool = False):
     print(f"\n" + "=" * 80)
     print(f"Train {etf_name} (Side: {side})")
     print(f"Lockbox: {lockbox_date} | Window: {window_years if window_years > 0 else 'all'} years | Rolling: {rolling}")
@@ -1188,6 +1250,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     tag = etf_name if side == "single" else f"{etf_name}_{side}"
     if rolling:
         tag = rolling_tag(etf_name, side, lockbox_date)
+    tag_suffix = ""
+    if target_transform != "none":
+        tag_suffix += f"_{target_transform}"
+    if post_hoc_calibrate:
+        tag_suffix += "_calibrated"
+    tag += tag_suffix
     pilot_db_path = DATA_DIR / f"optuna_pilot_{tag}.log"
     main_db_path = DATA_DIR / f"optuna_main_{tag}.log"
 
@@ -1286,25 +1354,26 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         int(X_sel_train.shape[0]), int(X_sel_train.shape[1]),
         STABILITY_B, STABILITY_PI, MIN_FEATURE, fdr_level,
         tuple(val_blocks_all), TARGET, vif_threshold,
-        skip_step1, skip_step2,
+        skip_step1, skip_step2, target_transform,
     ]
     select_cache_path = CACHE_DIR / f"cache_select_{etf_name}_{_cache_key(select_key)}.joblib"
 
     # Step 1 + 2: Cheap screening + Stability selection (cached).
     def _compute_selection():
         t_sel_start = time.perf_counter()
+        y_sel_train_trans = transform_target(y_sel_train, target_transform)
         
         # Step 1: Cheap screening (Bypassed / Not Working)
         if skip_step1:
             print("Skipping Step 1 filter (screening) [Disabled: Univariate screening deletes joint predictive features]...")
             # Calculate screening stats purely for diagnostics
-            _, p_vals, rhos = run_screening(X_sel_train, y_sel_train, fdr_level=fdr_level)
+            _, p_vals, rhos = run_screening(X_sel_train, y_sel_train_trans, fdr_level=fdr_level)
             n_feats = X_sel_train.shape[1]
             screen_mask = np.ones(n_feats, dtype=bool)
             t_screen = time.perf_counter() - t_sel_start
         else:
             print("Screening features...")
-            screen_mask, p_vals, rhos = run_screening(X_sel_train, y_sel_train, fdr_level=fdr_level)
+            screen_mask, p_vals, rhos = run_screening(X_sel_train, y_sel_train_trans, fdr_level=fdr_level)
             t_screen = time.perf_counter() - t_sel_start
             print(f"Screening kept {screen_mask.sum()} features.")
         
@@ -1320,7 +1389,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         else:
             print("Running stability selection...")
             stability_selected_idx, stability_scores, stability_fallback_triggered = run_stability_selection(
-                X_sel_train, y_sel_train, screen_mask, rhos,
+                X_sel_train, y_sel_train_trans, screen_mask, rhos,
                 B=STABILITY_B, pi=STABILITY_PI, n_jobs=bootstrap_n_jobs,
             )
             t_stab = time.perf_counter() - t_stab_start
@@ -1558,17 +1627,24 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         }
 
         # LOYO CV predictions
-        oof_preds, cv_is_ics, cv_oos_ics = run_loyo_cv(loyo_folds, model_type, params, k_weight,
-                                                      len(y_sel_train), n_jobs=loyo_n_jobs)
+        oof_preds, cv_is_ics, cv_oos_ics = run_loyo_cv(
+            loyo_folds, model_type, params, k_weight, len(y_sel_train),
+            n_jobs=loyo_n_jobs, target_transform=target_transform,
+            post_hoc_calibrate=post_hoc_calibrate
+        )
 
         # Fit model on selection train set to compute coefficient norm.
         w_temp = compute_sample_weights(y_sel_train, k_weight).astype(np.float32)
         sqrt_w = np.sqrt(w_temp)[:, np.newaxis]
+        y_sel_train_trans = transform_target(y_sel_train, target_transform)
         X_weighted_temp = X_sel_train_scaled_base * sqrt_w
-        y_weighted_temp = y_sel_train * sqrt_w[:, 0]
+        y_weighted_temp = y_sel_train_trans * sqrt_w[:, 0]
 
         model_temp = _build_model(model_type, params)
         model_temp.fit(X_weighted_temp, y_weighted_temp)
+        
+        if post_hoc_calibrate:
+            model_temp.coef_ = calibrate_coefficients(model_temp.coef_, X_sel_train_scaled_base, y_sel_train)
 
         coef_norm = float(np.linalg.norm(model_temp.coef_))
         active_k = int(np.sum(np.abs(model_temp.coef_) > 1e-5))
@@ -1648,12 +1724,13 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # the side tag is prepended to the cache key ONLY when side != "single".
     # Selection and LOYO caches remain on "v10" (side-independent).
     pilot_key = [
-        "v16_unified", etf_name, len(FEATURES), int(parquet_mtime),
+        "v17_unified", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
-        tuple(VAL_BLOCKS), TARGET, PILOT_N_TRIALS, PILOT_SEED
+        tuple(VAL_BLOCKS), TARGET, PILOT_N_TRIALS, PILOT_SEED,
+        target_transform, post_hoc_calibrate
     ]
     if side != "single":
-        pilot_key = ["v16_unified_side", side] + pilot_key
+        pilot_key = ["v17_unified_side", side] + pilot_key
     pilot_cache_path = CACHE_DIR / f"cache_pilot_{etf_name}_{_cache_key(pilot_key)}.joblib"
 
     def _compute_pilot():
@@ -2240,11 +2317,15 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # Fit model on selection train set using best params to evaluate outer validation set generalization
     w_best_tr = compute_sample_weights(y_sel_train, k_weight).astype(np.float32)
     sqrt_w_best = np.sqrt(w_best_tr)[:, np.newaxis]
+    y_sel_train_trans = transform_target(y_sel_train, target_transform)
     X_weighted_best_tr = X_sel_train_scaled_base * sqrt_w_best
-    y_weighted_best_tr = y_sel_train * sqrt_w_best[:, 0]
+    y_weighted_best_tr = y_sel_train_trans * sqrt_w_best[:, 0]
     
     best_model_for_val = _build_model(model_type, params)
     best_model_for_val.fit(X_weighted_best_tr, y_weighted_best_tr)
+    
+    if post_hoc_calibrate:
+        best_model_for_val.coef_ = calibrate_coefficients(best_model_for_val.coef_, X_sel_train_scaled_base, y_sel_train)
     
     # Predict on outer validation blocks
     val_preds_outer = best_model_for_val.predict(X_sel_val_outer_scaled_base)
@@ -2306,12 +2387,16 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         
         w_b = compute_sample_weights(y_b, k_weight).astype(np.float32)
         sqrt_w_b = np.sqrt(w_b)[:, np.newaxis]
+        y_b_trans = transform_target(y_b, target_transform)
         X_b_weighted = X_b * sqrt_w_b
-        y_b_weighted = y_b * sqrt_w_b[:, 0]
+        y_b_weighted = y_b_trans * sqrt_w_b[:, 0]
         
         model_b = _build_model(model_type, params)
         model_b.fit(X_b_weighted, y_b_weighted)
         
+        if post_hoc_calibrate:
+            model_b.coef_ = calibrate_coefficients(model_b.coef_, X_b, y_b)
+            
         active_counts += (np.abs(model_b.coef_) > 1e-5).astype(int)
         
     inclusion_freqs = active_counts / B_bag
@@ -2332,10 +2417,14 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     X_working_scaled = scaler_final.fit_transform(X_working_final_bagged)
     
     w_final = compute_sample_weights(y_working, k_weight)
-    X_weighted_final, y_weighted_final = scale_data_with_weights(X_working_scaled, y_working, w_final)
+    y_working_trans = transform_target(y_working, target_transform)
+    X_weighted_final, y_weighted_final = scale_data_with_weights(X_working_scaled, y_working_trans, w_final)
     
     final_model = _build_model(model_type, params)
     final_model.fit(X_weighted_final, y_weighted_final)
+    
+    if post_hoc_calibrate:
+        final_model.coef_ = calibrate_coefficients(final_model.coef_, X_working_scaled, y_working)
 
     # ── Weight Concentration & Effective Sample Size Diagnostics ──
     sum_w = w_final.sum()
@@ -2390,6 +2479,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     tag = etf_name if side == "single" else f"{etf_name}_{side}"
     if rolling:
         tag = rolling_tag(etf_name, side, lockbox_date)
+    tag_suffix = ""
+    if target_transform != "none":
+        tag_suffix += f"_{target_transform}"
+    if post_hoc_calibrate:
+        tag_suffix += "_calibrated"
+    tag += tag_suffix
 
     model_dir = ROLLING_MODELS_DIR if rolling else MODELS_DIR
     data_dir = ROLLING_DATA_DIR if rolling else DATA_DIR
@@ -2423,6 +2518,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "target": TARGET,
         "skip_step1": skip_step1,
         "skip_step2": skip_step2,
+        "target_transform": target_transform,
+        "post_hoc_calibrate": post_hoc_calibrate,
     }
     joblib.dump(scaler_meta, model_dir / f"scaler_{tag}.joblib")
     
@@ -2460,6 +2557,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "tag": tag,
         "skip_step1": skip_step1,
         "skip_step2": skip_step2,
+        "target_transform": target_transform,
+        "post_hoc_calibrate": post_hoc_calibrate,
         "n_samples_working": len(y_working),
         "n_samples_lockbox": 0,
         "lockbox_date": lockbox_date,
@@ -2598,6 +2697,10 @@ if __name__ == "__main__":
                     help="Train all 8 quarterly rolling models (2024Q1-Q4 + 2025Q1-Q4).")
     ap.add_argument("--rolling-quarter", default=None, type=str,
                     help="Train single rolling quarter (e.g. 2024Q1, 2025Q3).")
+    ap.add_argument("--target-transform", default="none", choices=["none", "rank", "gauss"],
+                    help="Target transform: none|rank|gauss")
+    ap.add_argument("--post-hoc-calibrate", action="store_true", default=False,
+                    help="Enable post-hoc Spearman IC calibration of active coefficients")
     args = ap.parse_args()
 
     skip_step1 = True # Bypassed by default because univariate screening deletes joint predictive features.
@@ -2684,7 +2787,9 @@ if __name__ == "__main__":
                               skip_step2=skip_step2,
                               lockbox_date=effective_lockbox,
                               window_years=window_yrs,
-                              rolling=effective_rolling)
+                              rolling=effective_rolling,
+                              target_transform=args.target_transform,
+                              post_hoc_calibrate=args.post_hoc_calibrate)
                 except Exception as e:
                     print(f"  [ERROR] Failed to train {etf} ({side}): {e}")
                     import traceback
