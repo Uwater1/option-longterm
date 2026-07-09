@@ -691,7 +691,12 @@ def render_diagnostics_figure(etf, side, model, selected_features,
     _render_precision_at_k(axes_flat[14], y_lock, pred_lock, side)
 
     fig.tight_layout(rect=(0, 0, 1, 0.985))
-    fname = f"diagnostics_{etf}_{side}_early.png" if early else f"diagnostics_{etf}_{side}.png"
+    etf_clean = etf.replace("ETF", "")
+    if early:
+        (PLOTS_DIR / "early").mkdir(parents=True, exist_ok=True)
+        fname = f"early/diagnostics_{etf_clean}_{side}_early.png"
+    else:
+        fname = f"diagnostics_{etf_clean}_{side}.png"
     fig.savefig(PLOTS_DIR / fname, dpi=110)
     plt.close(fig)
     return fname
@@ -1188,7 +1193,13 @@ def _write_report(results_dict, early: bool = False):
         else:
             lines.append("  None")
         lines.append("")
-        plot_file = r.get("diagnostics_plot") or (f"diagnostics_{etf}_{side}_early.png" if early else f"diagnostics_{etf}_{side}.png")
+        etf_clean = etf.replace("ETF", "")
+        fallback_plot = f"early/diagnostics_{etf_clean}_{side}_early.png" if early else f"diagnostics_{etf_clean}_{side}.png"
+        plot_file = r.get("diagnostics_plot") or fallback_plot
+        if "ETF" in plot_file:
+            plot_file = plot_file.replace("ETF", "")
+        if early and not plot_file.startswith("early/"):
+            plot_file = "early/" + plot_file
         if (PLOTS_DIR / plot_file).exists():
             lines.append(f"![Diagnostics {tag}](plots/{plot_file})")
         else:
@@ -1345,11 +1356,17 @@ def _process_rolling_tag(tag: str, r: dict, quarter_dir: Path):
         _render_precision_at_k(axes_flat[14], y_oos, pred_oos, side)
 
         fig.tight_layout(rect=(0, 0, 1, 0.985))
-        fname = f"diagnostics_{tag}.png"
-        fig.savefig(quarter_dir / fname, dpi=110)
+        early = "_early" in tag
+        if early:
+            out_dir = quarter_dir / "early"
+        else:
+            out_dir = quarter_dir
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fname = f"diagnostics_{tag.replace('ETF', '')}.png"
+        fig.savefig(out_dir / fname, dpi=110)
         plt.close(fig)
 
-        return tag, fname, f"IC={oos_ic:+.4f} TailIC={oos_tail_ic:+.4f}"
+        return tag, f"early/{fname}" if early else fname, f"IC={oos_ic:+.4f} TailIC={oos_tail_ic:+.4f}"
     except Exception as ex:
         import traceback
         return tag, None, f"FAILED: {ex}\n{traceback.format_exc()}"
