@@ -9,44 +9,24 @@ Read [day-model_plan.md](file:///home/hallo/Documents/option-longterm/day-model/
 * **Exit**: 14:35 (close of bar 42)
 * **Underlying**: Log return from 10:00 to 14:35 across all 5 ETFs.
 
-## Workflow
+## Workflow (--early flag indicate Early Target (10:00 ~ 13:05))
 
 ```bash
 # 1. Re-generate parquet feature datasets
-python3 day-model/build_features.py -e all
+python3 day-model/build_features.py -e all (--early)
 
 # 2. Train BOTH long and short side models per ETF (DEFAULT)
-python3 day-model/train_model.py -e all --trials 100
+python3 day-model/train_model.py -e all --trials 100 (--early)
 # Cap trials at 100 to prevent overfit risk.
 
 # 3. Generate summary REPORT.md and plots
-python3 day-model/generate_report.py
+python3 day-model/generate_report.py (--early)
 
 # 4. Run out-of-sample backtest simulator
-python3 day-model/backtest_simulator.py --etf all 
+python3 day-model/backtest_simulator.py --etf all (--early)
 ```
 
-### Early Target (10:00 ~ 13:05) Workflow
-
-For testing the hypothesis that morning return prediction is cleaner/easier, run the pipeline with the `--early` flag:
-
-```bash
-# 1. Re-generate early target feature parquets
-python3 day-model/build_features.py -e all --early
-
-# 2. Train early target models
-python3 day-model/train_model.py -e all --trials 100 --early
-
-# 3. Generate early summary report & plots
-python3 day-model/generate_report.py --early
-
-# 4. Run early target simulator
-python3 day-model/backtest_simulator.py --etf all --early
-```
-
-Outputs will be saved with `_early` suffixes (e.g. `features_{ETF}_early.parquet`, `linear_{tag}_early.joblib`, `REPORT_early.md`, `plots/diagnostics_{tag}_early.png`).
-
-
+(--early : Outputs will be saved with `_early` suffixes ）
 ### Rolling Model Training (Quarterly Retraining)
 
 Trains 8 quarterly rolling models (2024Q1-Q4 + 2025Q1-Q4) per ETF, each using a 6-year rolling window with relative validation blocks.
