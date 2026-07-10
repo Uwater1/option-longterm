@@ -255,3 +255,10 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 - **Trial Correlation Correction**: `dynamic_rho` (average off-diagonal correlation of per-fold CV OOS IC vectors) reduces the overfit penalty via $\sqrt{1-\rho}$. The search-budget term $\sqrt{2\ln N}$ uses **raw trial count** N, NOT the ONC effective-N (which collapses to ~1 for correlated Optuna trials and removes the overfit guard). Effective-N is printed as a diagnostic only.
 - **Target-Transform Variants**: `_rank` and `_gauss` target transforms consistently degrade OOS performance and are filtered from the report. `--target-transform` remains available for research but is not recommended.
 - **Output**: `results_{tag}.json` contains `dsr.probability`, `dsr.sr_benchmark`, `dsr.sr_hat`, `dsr.effective_n_trials`, `dsr.dynamic_rho`. Console prints DSR probability and trial correlation diagnostics.
+
+## CPCV-Bagging Refits, Coef Dispersion & Rolling EWMA Smoothing (July 2026)
+- **CPCV-Bagged Refit & Blending**: Switched from single-shot final model fit to CPCV bagging over all 15 validation folds. Blending parameter `w` is tuned on the Outer Validation held-out set to combine single refit and bagged model.
+- **Coefficient Dispersion & Uncertainty Tracking**: Saves standard deviation of active coefficients across CPCV folds and bootstrap samples ($B=100$) to JSON and joblib scalers. Renders in reports as diagnostic tables.
+- **Cross-Quarter EWMA Smoothing**: `train_rolling.py` applies EWMA smoothing ($[0.5, 0.3, 0.2]$ weight decay for last 3 quarters) to model coefficients and scaler statistics, reducing variance and alignment decay. Passes correct `n_features_in_` to avoid shape checks mismatch in scikit-learn.
+- **Smart Plot/Report Skips**: Both report generators (`generate_report.py`, `generate_rolling_report.py`) skip rendering diagnostic plots if the image file already exists and is newer than the corresponding model/scaler files, speeding up execution from 3 minutes to under 8 seconds.
+- Run full rolling retraining: `python3 day-model/train_rolling.py -e all --trials 200 --blend-cpcv`

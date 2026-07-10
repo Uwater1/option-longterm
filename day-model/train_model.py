@@ -1450,7 +1450,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
               rolling: bool = False, target_transform: str = "none",
               post_hoc_calibrate: bool = False, early: bool = False,
               sharpe_objective: bool = False, embargo_days: int = 10,
-              ratio_type: str = "sharpe", sharpe_weight_override: float = None):
+              ratio_type: str = "sharpe", sharpe_weight_override: float = None,
+              blend_cpcv: bool = False):
     print(f"\n" + "=" * 80)
     print(f"Train {etf_name} (Side: {side}) | Early: {early}")
     print(f"Lockbox: {lockbox_date} | Window: {window_years if window_years > 0 else 'all'} years | Rolling: {rolling}")
@@ -2727,6 +2728,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     n_samples_train = len(y_sel_train)
     B_bag = 100
     active_counts = np.zeros(len(stability_selected_idx))
+    coef_history = np.zeros((B_bag, len(stability_selected_idx)))
+    intercept_history = np.zeros(B_bag)
     rng = np.random.default_rng(PILOT_SEED)
     
     for b in range(B_bag):
@@ -2747,6 +2750,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             model_b.coef_ = calibrate_coefficients(model_b.coef_, X_b, y_b)
             
         active_counts += (np.abs(model_b.coef_) > 1e-5).astype(int)
+        coef_history[b] = model_b.coef_
+        intercept_history[b] = getattr(model_b, "intercept_", 0.0)
         
     inclusion_freqs = active_counts / B_bag
     print("  Per-feature bootstrap inclusion frequency:")
@@ -2759,6 +2764,13 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     bagged_selected_idx = stability_selected_idx[bagged_selected_idx_in_sel]
     bagged_feature_names = [selected_feature_names[i] for i in bagged_selected_idx_in_sel]
     print(f"  Bagged selection kept {len(bagged_feature_names)} features: {bagged_feature_names}")
+    
+    boot_coef_mean = np.mean(coef_history, axis=0)
+    boot_coef_std = np.std(coef_history, axis=0)
+    boot_intercept_mean = np.mean(intercept_history)
+    
+    boot_coef_mean_bagged = boot_coef_mean[bagged_selected_idx_in_sel]
+    boot_coef_std_bagged = boot_coef_std[bagged_selected_idx_in_sel]
 
     # Scale final working features restricted to bagged features
     X_working_final_bagged = X_working[:, bagged_selected_idx]
@@ -2769,11 +2781,103 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     y_working_trans = transform_target(y_working, target_transform)
     X_weighted_final, y_weighted_final = scale_data_with_weights(X_working_scaled, y_working_trans, w_final)
     
+    # ── CPCV Refits on Folds ──
+    print(f"Refitting model on 15 CPCV folds training sets...")
+    fold_coefs = []
+    fold_intercepts = []
+    
+    for i, fold in enumerate(loyo_folds):
+        if len(fold) == 5:
+            _, X_tr_s, _, y_tr, _ = fold
+        else:
+            _, X_tr_s, _, y_tr = fold
+        
+        # Slice X_tr_s to bagged features only
+        X_tr_fold = X_tr_s[:, bagged_selected_idx_in_sel]
+        
+        w_tr = compute_sample_weights(y_tr, k_weight)
+        y_tr_trans = transform_target(y_tr, target_transform)
+        X_tr_w, y_tr_w = scale_data_with_weights(X_tr_fold, y_tr_trans, w_tr)
+        
+        model_fold = _build_model(model_type, params)
+        model_fold.fit(X_tr_w, y_tr_w)
+        if post_hoc_calibrate:
+            model_fold.coef_ = calibrate_coefficients(model_fold.coef_, X_tr_fold, y_tr)
+            
+        fold_coefs.append(model_fold.coef_)
+        fold_intercepts.append(getattr(model_fold, "intercept_", 0.0))
+        
     final_model = _build_model(model_type, params)
     final_model.fit(X_weighted_final, y_weighted_final)
     
     if post_hoc_calibrate:
         final_model.coef_ = calibrate_coefficients(final_model.coef_, X_working_scaled, y_working)
+        
+    # Standardised coefficients averaging (15 folds + 1 full refit = 16 members)
+    all_coefs = np.array(fold_coefs + [final_model.coef_])
+    all_intercepts = np.array(fold_intercepts + [getattr(final_model, "intercept_", 0.0)])
+    
+    avg_coef = np.mean(all_coefs, axis=0)
+    avg_intercept = np.mean(all_intercepts, axis=0)
+    
+    bagged_coef_std = np.std(all_coefs, axis=0)
+    bagged_coef_cv_std = np.std(np.array(fold_coefs), axis=0)
+    
+    # Save the averaged coefficients/intercept back to the final model
+    final_model.coef_ = avg_coef
+    final_model.intercept_ = avg_intercept
+
+    # ── CPCV Blending on Outer Validation ──
+    best_w = None
+    if blend_cpcv:
+        print(f"\nTuning blend weight w (single refit vs CPCV-bagged) on outer validation block...")
+        # Fit single refit on selection train (bagged features only)
+        X_sel_train_bagged = X_sel_train_scaled_base[:, bagged_selected_idx_in_sel]
+        
+        # Compute weights for selection train
+        w_best_tr = compute_sample_weights(y_sel_train, k_weight).astype(np.float32)
+        sqrt_w_best = np.sqrt(w_best_tr)[:, np.newaxis]
+        y_sel_train_trans = transform_target(y_sel_train, target_transform)
+        
+        X_weighted_sel_tr_bagged = X_sel_train_bagged * sqrt_w_best
+        y_weighted_sel_tr_bagged = y_sel_train_trans * sqrt_w_best[:, 0]
+        
+        single_val_model = _build_model(model_type, params)
+        single_val_model.fit(X_weighted_sel_tr_bagged, y_weighted_sel_tr_bagged)
+        if post_hoc_calibrate:
+            single_val_model.coef_ = calibrate_coefficients(single_val_model.coef_, X_sel_train_bagged, y_sel_train)
+            
+        # CPCV-bagged model on selection train (bagged features only)
+        coef_val_bagged = np.mean(fold_coefs + [single_val_model.coef_], axis=0)
+        intercept_val_bagged = np.mean(fold_intercepts + [getattr(single_val_model, "intercept_", 0.0)], axis=0)
+        
+        # Predict on outer validation block
+        X_sel_val_outer_bagged = X_sel_val_outer_scaled_base[:, bagged_selected_idx_in_sel]
+        
+        preds_val_single = X_sel_val_outer_bagged @ single_val_model.coef_ + getattr(single_val_model, "intercept_", 0.0)
+        preds_val_bagged = X_sel_val_outer_bagged @ coef_val_bagged + intercept_val_bagged
+        
+        best_w = 0.0
+        best_metric = -1e10
+        
+        _v5_fn_outer = compute_val_tail_sortino if ratio_type == "sortino" else compute_val_tail_sharpe
+        
+        # Sweep w in [0.0, 1.0]
+        for w_candidate in np.linspace(0.0, 1.0, 11):
+            preds_blended = w_candidate * preds_val_single + (1.0 - w_candidate) * preds_val_bagged
+            # Evaluate using ratio_type tail metric
+            metric_val = _v5_fn_outer(y_sel_val_outer, preds_blended, side)
+            print(f"  w = {w_candidate:.1f}: metric = {metric_val:.4f}")
+            if metric_val > best_metric:
+                best_metric = metric_val
+                best_w = w_candidate
+                
+        print(f"Optimal blend weight w_single = {best_w:.1f} (metric = {best_metric:.4f})")
+        # Final blended coefficients/intercept
+        avg_coef = best_w * final_model.coef_ + (1.0 - best_w) * avg_coef
+        avg_intercept = best_w * getattr(final_model, "intercept_", 0.0) + (1.0 - best_w) * avg_intercept
+        final_model.coef_ = avg_coef
+        final_model.intercept_ = avg_intercept
 
     # ── Weight Concentration & Effective Sample Size Diagnostics ──
     sum_w = w_final.sum()
@@ -2843,6 +2947,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         tag_suffix += f"_sw{sharpe_weight_override:.2f}"
     if embargo_days != 10:
         tag_suffix += f"_emb{embargo_days}"
+    if blend_cpcv:
+        tag_suffix += "_blended"
     tag += tag_suffix
 
     model_dir = ROLLING_MODELS_DIR if rolling else MODELS_DIR
@@ -2888,6 +2994,13 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "ratio_type": ratio_type,
         "sharpe_weight_override": sharpe_weight_override,
         "embargo_days": embargo_days,
+        "blend_cpcv": blend_cpcv,
+        "blend_weight_single": best_w,
+        "bagged_coef_mean": dict(zip(bagged_feature_names, avg_coef.tolist())),
+        "bagged_coef_std": dict(zip(bagged_feature_names, bagged_coef_std.tolist())),
+        "bagged_coef_cv_std": dict(zip(bagged_feature_names, bagged_coef_cv_std.tolist())),
+        "bootstrap_coef_mean": dict(zip(bagged_feature_names, boot_coef_mean_bagged.tolist())),
+        "bootstrap_coef_std": dict(zip(bagged_feature_names, boot_coef_std_bagged.tolist())),
     }
     joblib.dump(scaler_meta, model_dir / f"scaler_{tag}.joblib")
     
@@ -2969,6 +3082,13 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "raw_best_val": float(raw_best_t.value) if raw_best_t is not None else None,
         "lockbox_overall_ic": np.nan,
         "lockbox_tail_ic": np.nan,
+        "blend_cpcv": blend_cpcv,
+        "blend_weight_single": best_w,
+        "bagged_coef_mean": dict(zip(bagged_feature_names, avg_coef.tolist())),
+        "bagged_coef_std": dict(zip(bagged_feature_names, bagged_coef_std.tolist())),
+        "bagged_coef_cv_std": dict(zip(bagged_feature_names, bagged_coef_cv_std.tolist())),
+        "bootstrap_coef_mean": dict(zip(bagged_feature_names, boot_coef_mean_bagged.tolist())),
+        "bootstrap_coef_std": dict(zip(bagged_feature_names, boot_coef_std_bagged.tolist())),
         "diagnostics": {
             "timings": timings,
             "screening": {
@@ -3076,6 +3196,8 @@ if __name__ == "__main__":
                     help="Target transform: none|rank|gauss")
     ap.add_argument("--post-hoc-calibrate", action="store_true", default=False,
                     help="Enable post-hoc Spearman IC calibration of active coefficients")
+    ap.add_argument("--blend-cpcv", action="store_true", default=False,
+                    help="Enable outer validation blend of single refit and CPCV-bagged model")
     ap.add_argument("--early", action="store_true",
                     help="Predict early window (10:00 to 13:05, exiting at close of 13:00~13:05 bar)")
     ap.add_argument("--sharpe-objective", action="store_true", dest="sharpe_objective", default=False,
@@ -3181,7 +3303,8 @@ if __name__ == "__main__":
                               sharpe_objective=args.sharpe_objective,
                               embargo_days=args.embargo_days,
                               ratio_type=args.ratio_type,
-                              sharpe_weight_override=args.sharpe_weight_override)
+                              sharpe_weight_override=args.sharpe_weight_override,
+                              blend_cpcv=args.blend_cpcv)
                 except Exception as e:
                     print(f"  [ERROR] Failed to train {etf} ({side}): {e}")
                     import traceback

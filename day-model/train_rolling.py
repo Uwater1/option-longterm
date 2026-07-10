@@ -109,7 +109,9 @@ def evaluate_warnings(all_results: dict) -> dict:
 # ============================================================
 def _check_model_exists(etf: str, side: str, lb_date: str, early: bool = False,
                         target_transform: str = "none", post_hoc_calibrate: bool = False,
-                        sharpe_objective: bool = False) -> bool:
+                        sharpe_objective: bool = False, ratio_type: str = "sharpe",
+                        sharpe_weight_override: float = None, embargo_days: int = 10,
+                        blend_cpcv: bool = False) -> bool:
     """Check if rolling model artifacts already exist."""
     tag = rolling_tag(etf, side, lb_date)
     if early:
@@ -121,6 +123,14 @@ def _check_model_exists(etf: str, side: str, lb_date: str, early: bool = False,
         tag_suffix += "_calibrated"
     if sharpe_objective:
         tag_suffix += "_sharpe"
+    if ratio_type != "sharpe":
+        tag_suffix += f"_{ratio_type}"
+    if sharpe_weight_override is not None:
+        tag_suffix += f"_sw{sharpe_weight_override:.2f}"
+    if embargo_days != 10:
+        tag_suffix += f"_emb{embargo_days}"
+    if blend_cpcv:
+        tag_suffix += "_blended"
     tag += tag_suffix
     model_path = ROLLING_MODELS_DIR / f"linear_{tag}.joblib"
     scaler_path = ROLLING_MODELS_DIR / f"scaler_{tag}.joblib"
@@ -172,6 +182,8 @@ def _train_single(etf: str, side: str, lb_date: str, args, skip_step1: bool,
             post_hoc_calibrate=args.post_hoc_calibrate,
             early=getattr(args, "earlyNoGood", False),
             sharpe_objective=getattr(args, "sharpe_objective", False),
+            blend_cpcv=getattr(args, "blend_cpcv", False),
+            ratio_type=getattr(args, "ratio_type", "sortino"),
         )
         elapsed = time.perf_counter() - t0
         print(f"  [{tag}] elapsed {elapsed:.1f}s")
@@ -181,6 +193,140 @@ def _train_single(etf: str, side: str, lb_date: str, args, skip_step1: bool,
         import traceback
         traceback.print_exc()
         return tag, None
+
+
+def smooth_rolling_models(etfs, sides, target_transform="none", early=False, sharpe_objective=False, ratio_type="sortino", blend_cpcv=False):
+    """Smoothes/blends rolling model coefficients sequentially over the last 2-3 quarters."""
+    print(f"\nRunning Cross-Quarter Rolling Model Smoothing...")
+    import joblib
+    from sklearn.preprocessing import StandardScaler
+    
+    suffix = f"_{target_transform}" if target_transform != "none" else ""
+    if sharpe_objective:
+        suffix += "_sharpe"
+    if ratio_type != "sharpe":
+        suffix += f"_{ratio_type}"
+    if blend_cpcv:
+        suffix += "_blended"
+    early_suffix = "_early" if early else ""
+    
+    # Sort the quarterly dates
+    sorted_quarters = list(ROLLING_QUARTERS)
+    
+    for etf in etfs:
+        for side in sides:
+            for t_idx in range(len(sorted_quarters)):
+                curr_date = sorted_quarters[t_idx]
+                tag_t = rolling_tag(etf, side, curr_date) + early_suffix + suffix
+                
+                model_path_t = ROLLING_MODELS_DIR / f"linear_{tag_t}.joblib"
+                scaler_path_t = ROLLING_MODELS_DIR / f"scaler_{tag_t}.joblib"
+                if not (model_path_t.exists() and scaler_path_t.exists()):
+                    continue
+                
+                prior_dates = []
+                if t_idx - 1 >= 0:
+                    prior_dates.append(sorted_quarters[t_idx - 1])
+                if t_idx - 2 >= 0:
+                    prior_dates.append(sorted_quarters[t_idx - 2])
+                
+                valid_priors = []
+                for p_date in prior_dates:
+                    tag_p = rolling_tag(etf, side, p_date) + early_suffix + suffix
+                    m_p_path = ROLLING_MODELS_DIR / f"linear_{tag_p}.joblib"
+                    s_p_path = ROLLING_MODELS_DIR / f"scaler_{tag_p}.joblib"
+                    if m_p_path.exists() and s_p_path.exists():
+                        valid_priors.append((tag_p, m_p_path, s_p_path))
+                
+                if not valid_priors:
+                    print(f"  [{tag_t}] No prior rolling models found. Skipping smoothing.")
+                    continue
+                
+                print(f"  [{tag_t}] Smoothing with {len(valid_priors)} prior models...")
+                model_t = joblib.load(model_path_t)
+                scaler_meta_t = joblib.load(scaler_path_t)
+                
+                feats_t = scaler_meta_t["selected_features"]
+                coef_t = model_t.coef_
+                intercept_t = getattr(model_t, "intercept_", 0.0)
+                scaler_t = scaler_meta_t["scaler"]
+                
+                feats_map_t = dict(zip(feats_t, coef_t))
+                means_map_t = dict(zip(feats_t, scaler_t.mean_))
+                vars_map_t = dict(zip(feats_t, scaler_t.var_))
+                
+                if len(valid_priors) == 2:
+                    weights = [0.5, 0.3, 0.2]
+                else:
+                    weights = [0.6, 0.4]
+                
+                priors_data = []
+                for tag_p, m_p_path, s_p_path in valid_priors:
+                    m_p = joblib.load(m_p_path)
+                    s_p = joblib.load(s_p_path)
+                    priors_data.append((m_p, s_p))
+                
+                union_feats = set(feats_t)
+                for m_p, s_p in priors_data:
+                    union_feats.update(s_p["selected_features"])
+                union_feats = sorted(list(union_feats))
+                
+                smoothed_coefs = []
+                smoothed_means = []
+                smoothed_vars = []
+                
+                intercepts = [intercept_t]
+                for m_p, s_p in priors_data:
+                    intercepts.append(getattr(m_p, "intercept_", 0.0))
+                smoothed_intercept = sum(w * intercept for w, intercept in zip(weights, intercepts))
+                
+                for f in union_feats:
+                    vals_coef = []
+                    vals_coef.append(feats_map_t.get(f, 0.0))
+                    for m_p, s_p in priors_data:
+                        feats_p = s_p["selected_features"]
+                        coef_p = m_p.coef_
+                        feats_map_p = dict(zip(feats_p, coef_p))
+                        vals_coef.append(feats_map_p.get(f, 0.0))
+                    
+                    smoothed_c = sum(w * c for w, c in zip(weights, vals_coef))
+                    smoothed_coefs.append(smoothed_c)
+                    
+                    if f in feats_map_t:
+                        f_mean = means_map_t[f]
+                        f_var = vars_map_t[f]
+                    else:
+                        found = False
+                        for m_p, s_p in priors_data:
+                            if f in s_p["selected_features"]:
+                                feats_map_p = dict(zip(s_p["selected_features"], s_p["scaler"].mean_))
+                                vars_map_p = dict(zip(s_p["selected_features"], s_p["scaler"].var_))
+                                f_mean = feats_map_p[f]
+                                f_var = vars_map_p[f]
+                                found = True
+                                break
+                        if not found:
+                            f_mean = 0.0
+                            f_var = 1.0
+                    
+                    smoothed_means.append(f_mean)
+                    smoothed_vars.append(f_var)
+                
+                new_scaler = StandardScaler()
+                new_scaler.mean_ = np.array(smoothed_means, dtype=np.float64)
+                new_scaler.var_ = np.array(smoothed_vars, dtype=np.float64)
+                new_scaler.scale_ = np.sqrt(new_scaler.var_ + 1e-10)
+                new_scaler.n_samples_seen_ = scaler_t.n_samples_seen_
+                
+                model_t.coef_ = np.array(smoothed_coefs, dtype=np.float64)
+                model_t.intercept_ = float(smoothed_intercept)
+                model_t.n_features_in_ = len(union_feats)
+                
+                scaler_meta_t["scaler"] = new_scaler
+                scaler_meta_t["selected_features"] = union_feats
+                
+                joblib.dump(model_t, model_path_t)
+                joblib.dump(scaler_meta_t, scaler_path_t)
 
 
 def main():
@@ -215,6 +361,14 @@ def main():
                     help="Predict early window (10:00 to 13:05, exiting at close of 13:00~13:05 bar) [ABORTED - DO NOT RUN]")
     ap.add_argument("--sharpe-objective", action="store_true", dest="sharpe_objective", default=False,
                     help="Optimizes Optuna hyperparameters using validation set tail-Sharpe objective instead of Tail IC. Set to False by default, use --sharpe-objective to enable.")
+    ap.add_argument("--blend-cpcv", action="store_true", default=False,
+                    help="Enable outer validation blend of single refit and CPCV-bagged model")
+    ap.add_argument("--smooth-quarters", action="store_true", dest="smooth_quarters", default=True,
+                    help="Enable cross-quarter EWMA smoothing of model coefficients (default True)")
+    ap.add_argument("--no-smooth-quarters", action="store_false", dest="smooth_quarters",
+                    help="Disable cross-quarter EWMA smoothing of model coefficients")
+    ap.add_argument("--ratio-type", default="sortino", choices=["sharpe", "sortino"],
+                    help="V5 ratio type: sharpe or sortino (default sortino)")
     args = ap.parse_args()
 
     # Resolve ETFs
@@ -281,7 +435,14 @@ def main():
         skip_count = 0
         new_quarters = []
         for lb_date in quarters:
-            all_exist = all(_check_model_exists(e, s, lb_date, early=args.earlyNoGood, target_transform=args.target_transform, post_hoc_calibrate=args.post_hoc_calibrate, sharpe_objective=args.sharpe_objective) for e in etfs for s in sides)
+            all_exist = all(_check_model_exists(
+                e, s, lb_date, early=args.earlyNoGood,
+                target_transform=args.target_transform,
+                post_hoc_calibrate=args.post_hoc_calibrate,
+                sharpe_objective=args.sharpe_objective,
+                ratio_type=getattr(args, "ratio_type", "sortino"),
+                blend_cpcv=getattr(args, "blend_cpcv", False)
+            ) for e in etfs for s in sides)
             if all_exist:
                 skip_count += 1
             else:
@@ -329,6 +490,16 @@ def main():
 
     total_elapsed = time.perf_counter() - t_total
     print(f"\nTotal training time: {total_elapsed:.1f}s ({total_elapsed / 60:.1f}min)")
+
+    if getattr(args, "smooth_quarters", True):
+        smooth_rolling_models(
+            etfs, sides,
+            target_transform=args.target_transform,
+            early=args.earlyNoGood,
+            sharpe_objective=args.sharpe_objective,
+            ratio_type=getattr(args, "ratio_type", "sortino"),
+            blend_cpcv=getattr(args, "blend_cpcv", False)
+        )
 
     # Load all results for warning summary
     all_results = _load_existing_results(early=args.earlyNoGood)

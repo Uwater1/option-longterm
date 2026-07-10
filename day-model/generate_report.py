@@ -786,6 +786,20 @@ def _process_tag(tag: str, r: dict, early: bool = False):
     side = r.get("side", "single")
     model_path = MODELS_DIR / f"linear_{tag}.joblib"
     scaler_path = MODELS_DIR / f"scaler_{tag}.joblib"
+    
+    etf_clean = etf.replace("ETF", "")
+    if early:
+        fname = f"early/diagnostics_{etf_clean}_{side}_early.png"
+    else:
+        fname = f"diagnostics_{etf_clean}_{side}.png"
+    out_path = PLOTS_DIR / fname
+    
+    if out_path.exists() and model_path.exists() and scaler_path.exists() and \
+       out_path.stat().st_mtime > model_path.stat().st_mtime and \
+       out_path.stat().st_mtime > scaler_path.stat().st_mtime:
+        msg = f"skipped (up-to-date) -> plots/{fname}"
+        return tag, r, fname, msg
+
     cached = _load_etf_features(etf, early=early)
     if cached is None or not (model_path.exists() and scaler_path.exists()):
         return tag, r, None, "missing files"
@@ -1185,6 +1199,26 @@ def _write_report(results_dict, early: bool = False):
         lines.append(f"- **Selected features**: {len(r['selected_features'])}")
         lines.append(f"- **Active features**: {len(active_feats)}")
         lines.append(f"- **Active**: " + ", ".join([f"`{f}`" for f in active_feats]))
+        
+        # Add bagged coefficients uncertainty/dispersion table
+        if "bagged_coef_mean" in r:
+            lines.append("- **Ensemble Coefficient Dispersion / Uncertainty Diagnostics**:")
+            lines.append("  | Active Feature | Coefficient (Mean) | CPCV CV Std (Uncertainty) | Bootstrap Std (Uncertainty) |")
+            lines.append("  | :--- | :---: | :---: | :---: |")
+            
+            coef_mean = r["bagged_coef_mean"]
+            coef_cv_std = r.get("bagged_coef_cv_std", {})
+            boot_std = r.get("bootstrap_coef_std", {})
+            
+            for f in sorted(active_feats):
+                mean_val = coef_mean.get(f, 0.0)
+                cv_std_val = coef_cv_std.get(f, 0.0)
+                boot_std_val = boot_std.get(f, 0.0)
+                lines.append(f"  | `{f}` | {mean_val:+.4f} | {cv_std_val:.4f} | {boot_std_val:.4f} |")
+            lines.append("")
+        
+        if r.get("blend_weight_single") is not None:
+            lines.append(f"- **Optimal Outer Val Blend Weight (Single Refit)**: `{r['blend_weight_single']:.1f}` (CPCV-Bagged Weight: `{1.0 - r['blend_weight_single']:.1f}`)")
         
         stopped_1 = r.get("features_stopped_by_step1", [])
         stopped_2 = r.get("features_stopped_by_step2", [])

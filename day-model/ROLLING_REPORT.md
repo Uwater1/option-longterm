@@ -1,6 +1,6 @@
 # Day-Model Rolling Strategy Report
 
-Generated: 2026-07-08 13:10
+Generated: 2026-07-10 05:26
 Quarters: ['2024-03-01', '2024-06-01', '2024-09-01', '2024-12-01', '2025-03-01', '2025-06-01', '2025-09-01', '2025-12-01']
 Window: 6 years (rolling)
 Signal threshold: 90.0th percentile
@@ -16,7 +16,8 @@ Each model is evaluated on its 3-month OOS deployment window using within-window
 | 2024Q1 | 159915ETF | `long` | 7 | 71.4% | +42849bps | +8.55 | 8425bps | +6121.3bps |
 | 2024Q1 | 159915ETF | `single` | 13 | 84.6% | +87322bps | +10.88 | 16301bps | +6717.1bps |
 | 2024Q1 | 159915ETF | `short` | 6 | 100.0% | +46895bps | +17.13 | 0bps | +7815.8bps |
-| 2024Q1 | 300ETF | `long` | 7 | 71.4% | +3078bps | +0.99 | 18896bps | +439.7bps |
+| 2024Q1 | 300ETF | `long` | 7 | 71.4% | +3672bps | +1.18 | 16362bps | +524.6bps |
+| 2024Q1 | 300ETF | `long` | 7 | 71.4% | +3672bps | +1.18 | 16362bps | +524.6bps |
 | 2024Q1 | 300ETF | `single` | 13 | 53.8% | -2298bps | -0.48 | 10794bps | -176.8bps |
 | 2024Q1 | 300ETF | `short` | 6 | 66.7% | +9959bps | +6.05 | 7628bps | +1659.8bps |
 | 2024Q1 | 500ETF | `long` | 7 | 71.4% | +17625bps | +4.33 | 9886bps | +2517.8bps |
@@ -32,6 +33,7 @@ Each model is evaluated on its 3-month OOS deployment window using within-window
 | 2024Q2 | 159915ETF | `single` | 13 | 53.8% | +30777bps | +3.52 | 29052bps | +2367.5bps |
 | 2024Q2 | 159915ETF | `short` | 6 | 66.7% | +26808bps | +8.92 | 7839bps | +4468.0bps |
 | 2024Q2 | 300ETF | `long` | 7 | 28.6% | -23164bps | -11.06 | 22700bps | -3309.1bps |
+| 2024Q2 | 300ETF | `long` | 7 | 14.3% | -32110bps | -16.35 | 31473bps | -4587.1bps |
 | 2024Q2 | 300ETF | `single` | 13 | 23.1% | -20530bps | -4.54 | 27733bps | -1579.2bps |
 | 2024Q2 | 300ETF | `short` | 6 | 16.7% | +1288bps | +0.54 | 6215bps | +214.6bps |
 | 2024Q2 | 500ETF | `long` | 7 | 28.6% | -37679bps | -9.95 | 41708bps | -5382.7bps |
@@ -140,18 +142,18 @@ Aggregated daily returns across all ETFs/sides, equal-weighted on active signal 
 
 | Metric | Value |
 | :--- | :---: |
-| Active Days | 307 |
-| Win Rate | 56.0% |
-| Total Return | +424098 bps |
-| Sharpe | +2.19 |
+| Active Days | 308 |
+| Win Rate | 55.8% |
+| Total Return | +417675 bps |
+| Sharpe | +2.16 |
 | Max Drawdown | 97023 bps |
-| Mean Daily Ret | +1381.43 bps |
+| Mean Daily Ret | +1356.09 bps |
 
 #### Yearly Breakdown
 
 | Year | Days | WinRate | P&L | Sharpe |
 | :--- | :---: | :---: | :---: | :---: |
-| 2024 | 135 | 60.7% | +352314bps | +3.65 |
+| 2024 | 136 | 60.3% | +345890bps | +3.57 |
 | 2025 | 151 | 55.6% | +137528bps | +1.62 |
 | 2026 | 21 | 28.6% | -65743bps | -8.32 |
 
@@ -162,7 +164,8 @@ Aggregated daily returns across all ETFs/sides, equal-weighted on active signal 
 | 2024Q1 | 159915ETF | `long` | 61 | +0.3925 | +0.6333 | +0.6485 |
 | 2024Q1 | 159915ETF | `single` | 61 | +0.3807 | +0.7483 | +0.5515 |
 | 2024Q1 | 159915ETF | `short` | 61 | +0.3857 | -0.1333 | +0.6727 |
-| 2024Q1 | 300ETF | `long` | 61 | +0.2202 | +0.3667 | +0.5515 |
+| 2024Q1 | 300ETF | `long` | 61 | +0.1759 | +0.8500 | +0.5152 |
+| 2024Q1 | 300ETF | `long` | 61 | +0.1759 | +0.8500 | +0.5152 |
 | 2024Q1 | 300ETF | `single` | 61 | +0.1863 | +0.2517 | +0.4667 |
 | 2024Q1 | 300ETF | `short` | 61 | +0.1963 | +0.4167 | +0.4303 |
 | 2024Q1 | 500ETF | `long` | 61 | +0.1990 | +0.1167 | +0.4788 |
@@ -171,13 +174,14 @@ Aggregated daily returns across all ETFs/sides, equal-weighted on active signal 
 | 2024Q1 | 50ETF | `long` | 61 | +0.1088 | +0.0333 | +0.1515 |
 | 2024Q1 | 50ETF | `single` | 61 | +0.1084 | +0.5524 | +0.0788 |
 | 2024Q1 | 50ETF | `short` | 61 | +0.1515 | +0.8667 | +0.4303 |
-| 2024Q1 | 588000ETF | `long` | 61 | +0.1615 | +0.7833 | +0.4182 |
+| 2024Q1 | 588000ETF | `long` | 61 | +0.1633 | +0.7833 | +0.4182 |
 | 2024Q1 | 588000ETF | `single` | 61 | +0.1502 | +0.7483 | +0.3697 |
-| 2024Q1 | 588000ETF | `short` | 61 | +0.1386 | +0.0333 | +0.4667 |
+| 2024Q1 | 588000ETF | `short` | 61 | +0.1389 | +0.0333 | +0.4667 |
 | 2024Q2 | 159915ETF | `long` | 64 | -0.0215 | +0.0833 | +0.1273 |
 | 2024Q2 | 159915ETF | `single` | 64 | -0.0450 | -0.0699 | +0.0182 |
 | 2024Q2 | 159915ETF | `short` | 64 | -0.1347 | +0.1833 | -0.2364 |
 | 2024Q2 | 300ETF | `long` | 64 | -0.2269 | -0.1833 | -0.3697 |
+| 2024Q2 | 300ETF | `long` | 64 | -0.2066 | -0.5000 | -0.2848 |
 | 2024Q2 | 300ETF | `single` | 64 | -0.2349 | -0.4126 | -0.5030 |
 | 2024Q2 | 300ETF | `short` | 64 | -0.2371 | -0.3000 | -0.5515 |
 | 2024Q2 | 500ETF | `long` | 64 | -0.1935 | +0.1333 | -0.3697 |
@@ -287,7 +291,8 @@ Aggregated daily returns across all ETFs/sides, equal-weighted on active signal 
 | 2024Q1 | 159915ETF_long_r202403 | +0.0438 | -0.1446 | +0.0399 | WARNING | outer_tail_IC=-0.1446<0 |
 | 2024Q1 | 159915ETF_r202403 | +0.0581 | +0.0695 | +0.0252 | OK | - |
 | 2024Q1 | 159915ETF_short_r202403 | +0.0570 | -0.2475 | +0.0649 | WARNING | outer_tail_IC=-0.2475<0 |
-| 2024Q1 | 300ETF_long_r202403 | -0.0392 | -0.1716 | +0.0222 | ALERT | outer_IC=-0.0392<0, outer_tail_IC=-0.1716<0 |
+| 2024Q1 | 300ETF_long_r202403 | -0.0186 | +0.1152 | +0.0560 | WARNING | outer_IC=-0.0186<0 |
+| 2024Q1 | 300ETF_long_r202403_sortino | -0.0186 | +0.1152 | +0.0560 | WARNING | outer_IC=-0.0186<0 |
 | 2024Q1 | 300ETF_r202403 | -0.0018 | +0.1350 | +0.0151 | WARNING | outer_IC=-0.0018<0 |
 | 2024Q1 | 300ETF_short_r202403 | -0.0583 | -0.0711 | +0.0065 | ALERT | outer_IC=-0.0583<0, outer_tail_IC=-0.0711<0 |
 | 2024Q1 | 500ETF_long_r202403 | +0.1226 | +0.0882 | +0.0544 | OK | - |
@@ -303,6 +308,7 @@ Aggregated daily returns across all ETFs/sides, equal-weighted on active signal 
 | 2024Q2 | 159915ETF_r202406 | +0.1966 | +0.2435 | +0.0255 | OK | - |
 | 2024Q2 | 159915ETF_short_r202406 | +0.1744 | -0.2157 | +0.0383 | WARNING | outer_tail_IC=-0.2157<0 |
 | 2024Q2 | 300ETF_long_r202406 | +0.0535 | +0.1950 | -0.0100 | OK | - |
+| 2024Q2 | 300ETF_long_r202406_sortino | +0.0575 | +0.4283 | +0.0070 | OK | - |
 | 2024Q2 | 300ETF_r202406 | +0.0358 | +0.3409 | -0.0273 | OK | - |
 | 2024Q2 | 300ETF_short_r202406 | +0.0466 | -0.1063 | -0.0172 | WARNING | outer_tail_IC=-0.1063<0 |
 | 2024Q2 | 500ETF_long_r202406 | +0.2057 | -0.0691 | +0.0007 | WARNING | outer_tail_IC=-0.0691<0 |
@@ -417,8 +423,10 @@ Aggregated daily returns across all ETFs/sides, equal-weighted on active signal 
 
 | Quarter | IC | Tail IC | Trades | P&L | Sharpe | WR |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| 2024Q1 | +0.2202 | +0.3667 | 7 | +3078bps | +0.99 | 71% |
+| 2024Q1 | +0.1759 | +0.8500 | 7 | +3672bps | +1.18 | 71% |
+| 2024Q1 | +0.1759 | +0.8500 | 7 | +3672bps | +1.18 | 71% |
 | 2024Q2 | -0.2269 | -0.1833 | 7 | -23164bps | -11.06 | 29% |
+| 2024Q2 | -0.2066 | -0.5000 | 7 | -32110bps | -16.35 | 14% |
 | 2024Q3 | +0.2298 | +0.1429 | 6 | +36517bps | +3.74 | 50% |
 | 2024Q4 | +0.0958 | +0.2143 | 6 | -1483bps | -0.75 | 50% |
 | 2025Q1 | +0.2226 | +0.1500 | 7 | +13735bps | +7.02 | 57% |
@@ -469,7 +477,7 @@ Aggregated daily returns across all ETFs/sides, equal-weighted on active signal 
 
 | Quarter | IC | Tail IC | Trades | P&L | Sharpe | WR |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| 2024Q1 | +0.1615 | +0.7833 | 7 | +23043bps | +7.67 | 71% |
+| 2024Q1 | +0.1633 | +0.7833 | 7 | +23043bps | +7.67 | 71% |
 | 2024Q2 | +0.1461 | +0.0667 | 7 | +39895bps | +6.44 | 57% |
 | 2024Q3 | +0.0921 | -0.2515 | 6 | +45477bps | +12.38 | 67% |
 | 2024Q4 | +0.1845 | -0.7143 | 6 | -15055bps | -3.32 | 50% |
@@ -482,7 +490,7 @@ Aggregated daily returns across all ETFs/sides, equal-weighted on active signal 
 
 | Quarter | IC | Tail IC | Trades | P&L | Sharpe | WR |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| 2024Q1 | +0.1386 | +0.0333 | 6 | +15720bps | +8.34 | 67% |
+| 2024Q1 | +0.1389 | +0.0333 | 6 | +15720bps | +8.34 | 67% |
 | 2024Q2 | +0.1128 | +0.3264 | 6 | +26691bps | +7.01 | 83% |
 | 2024Q3 | +0.1887 | -0.4286 | 5 | -18263bps | -3.22 | 20% |
 | 2024Q4 | +0.2241 | -0.3571 | 5 | +21097bps | +4.71 | 60% |
@@ -551,42 +559,43 @@ Aggregated daily returns across all ETFs/sides, equal-weighted on active signal 
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | bar_body_rng_2 | - | - | - | Y | Y | Y | Y | Y | 5/8 |
 | bar_ret_0 | - | - | - | - | - | - | Y | - | 1/8 |
-| bar_rng_0 | - | - | - | - | Y | - | Y | Y | 3/8 |
-| bar_rng_3 | Y | - | - | - | Y | - | - | - | 2/8 |
-| bar_rng_5 | Y | Y | - | - | - | - | - | - | 2/8 |
-| bar_vol_4 | Y | - | - | Y | - | - | - | - | 2/8 |
+| bar_rng_0 | +0.050 (0.025) | +0.133 (0.046) | - | - | Y | - | Y | Y | 5/8 |
+| bar_rng_3 | +0.061 (0.034) | +0.064 (0.063) | - | - | Y | - | - | - | 3/8 |
+| bar_rng_5 | -0.077 (0.021) | -0.097 (0.024) | - | - | - | - | - | - | 2/8 |
+| bar_vol_4 | - | +0.061 (0.052) | - | Y | - | - | - | - | 2/8 |
 | bar_vol_5 | - | - | - | - | - | - | Y | Y | 2/8 |
-| bar_vwap_dev_1 | Y | - | - | - | - | - | - | - | 1/8 |
-| capital_large_order_ratio | - | - | - | - | Y | Y | Y | Y | 4/8 |
+| bar_vwap_dev_1 | +0.048 (0.042) | +0.086 (0.058) | - | - | - | - | - | - | 2/8 |
+| capital_large_order_ratio | - | -0.076 (0.036) | - | - | Y | Y | Y | Y | 5/8 |
 | capital_net_ratio | - | - | - | Y | - | - | - | - | 1/8 |
-| capital_net_value | Y | - | - | - | - | - | - | - | 1/8 |
+| capital_net_value | -0.046 (0.025) | - | - | - | - | - | - | - | 1/8 |
 | consecutive_inside_bars_3d | - | - | - | - | - | - | Y | Y | 2/8 |
-| early_kurtosis | Y | - | - | - | Y | Y | - | - | 3/8 |
-| early_vwap_dev | Y | - | - | - | - | - | - | - | 1/8 |
-| first_bar_return | Y | Y | Y | Y | Y | Y | - | Y | 7/8 |
-| gap_pct | Y | Y | - | Y | Y | Y | Y | Y | 7/8 |
-| growth_momentum_ratio | Y | - | - | - | - | - | - | - | 1/8 |
-| iv_diff_1d | Y | Y | Y | Y | Y | Y | Y | Y | 8/8 |
-| margin_net_buy | Y | - | - | - | Y | Y | Y | - | 4/8 |
-| max_up_ret | Y | Y | Y | - | - | - | - | - | 3/8 |
-| measured_move_proximity | Y | - | - | - | - | - | - | - | 1/8 |
-| option_oi_growth | Y | - | - | Y | Y | Y | Y | Y | 6/8 |
-| outside_bar_reversal_day | Y | - | - | - | - | - | - | - | 1/8 |
-| short_sell_cover_spread | Y | - | - | - | - | - | - | - | 1/8 |
-| sma100_dist | - | - | - | Y | Y | Y | Y | Y | 5/8 |
-| vix_iv_spread | - | Y | - | Y | - | Y | - | Y | 4/8 |
+| early_kurtosis | -0.064 (0.027) | -0.135 (0.041) | - | - | Y | Y | - | - | 4/8 |
+| early_vwap_dev | -0.054 (0.020) | - | - | - | - | - | - | - | 1/8 |
+| first_bar_return | +0.105 (0.042) | +0.185 (0.077) | Y | Y | Y | Y | - | Y | 7/8 |
+| gap_pct | +0.107 (0.016) | +0.152 (0.055) | - | Y | Y | Y | Y | Y | 7/8 |
+| growth_momentum_ratio | +0.064 (0.017) | +0.057 (0.016) | - | - | - | - | - | - | 2/8 |
+| iv_diff_1d | -0.044 (0.029) | -0.057 (0.034) | Y | Y | Y | Y | Y | Y | 8/8 |
+| margin_net_buy | +0.050 (0.031) | +0.067 (0.046) | - | - | Y | Y | Y | - | 5/8 |
+| max_up_ret | +0.081 (0.042) | +0.066 (0.051) | Y | - | - | - | - | - | 3/8 |
+| measured_move_proximity | +0.040 (0.030) | +0.082 (0.053) | - | - | - | - | - | - | 2/8 |
+| option_oi_growth | +0.063 (0.025) | +0.094 (0.063) | - | Y | Y | Y | Y | Y | 7/8 |
+| outside_bar_reversal_day | +0.041 (0.018) | +0.057 (0.043) | - | - | - | - | - | - | 2/8 |
+| short_sell_cover_spread | +0.034 (0.030) | - | - | - | - | - | - | - | 1/8 |
+| sma100_dist | - | -0.101 (0.032) | - | Y | Y | Y | Y | Y | 6/8 |
+| vix_iv_spread | +0.068 (0.033) | +0.122 (0.066) | - | Y | - | Y | - | Y | 5/8 |
 | volume_slope | - | - | - | - | Y | - | - | Y | 2/8 |
 | yearly_low_distance | - | - | - | - | - | Y | - | Y | 2/8 |
-| yesterday_afternoon_momentum | - | - | - | - | - | - | Y | - | 1/8 |
-| yesterday_body_ratio | Y | - | - | Y | Y | - | - | Y | 4/8 |
+| yesterday_afternoon_momentum | -0.007 (0.030) | -0.036 (0.034) | - | - | - | - | Y | - | 3/8 |
+| yesterday_body_ratio | -0.062 (0.023) | -0.036 (0.043) | - | Y | Y | - | - | Y | 5/8 |
 | yesterday_cvd_close | - | - | - | Y | Y | - | - | - | 2/8 |
 | yesterday_day_pm_am_vol_ratio | - | - | - | - | Y | Y | Y | - | 3/8 |
-| yesterday_day_vwap_dev | Y | Y | - | Y | Y | - | - | - | 4/8 |
+| yesterday_day_vwap_dev | -0.111 (0.044) | -0.128 (0.060) | - | Y | Y | - | - | - | 4/8 |
 | yesterday_early_momentum | - | - | - | - | Y | Y | Y | Y | 4/8 |
-| yesterday_early_range | - | Y | - | Y | Y | - | - | Y | 4/8 |
-| yesterday_early_vwap_dev | - | - | - | Y | - | - | - | - | 1/8 |
-| yesterday_gap | Y | - | - | Y | Y | Y | Y | Y | 6/8 |
-| yesterday_northbound_net_ratio | Y | Y | - | Y | - | - | - | - | 3/8 |
+| yesterday_early_range | - | -0.112 (0.039) | - | Y | Y | - | - | Y | 4/8 |
+| yesterday_early_vwap_dev | +0.025 (0.020) | - | - | Y | - | - | - | - | 2/8 |
+| yesterday_gap | +0.050 (0.040) | +0.092 (0.068) | - | Y | Y | Y | Y | Y | 7/8 |
+| yesterday_northbound_net_ratio | +0.102 (0.026) | +0.144 (0.057) | - | Y | - | - | - | - | 3/8 |
+| yesterday_stoch_rsi_cross | +0.048 (0.022) | - | - | - | - | - | - | - | 1/8 |
 
 ### 300ETF (short)
 
