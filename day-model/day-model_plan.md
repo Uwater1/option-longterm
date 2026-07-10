@@ -341,6 +341,7 @@ Multi-ETF validation (all 5 ETFs x 3 sides, 100 Optuna trials)
     - *Why it failed*: By standardizing target ranks to standard normal quantiles, it standardizes variance and spreads scores uniformly. This flattens the prediction landscape and destroys the selectivity of the rolling percentile entry threshold (which expects highly positive/negative outliers). Consequently, it trades almost every day without selectivity (365 active days vs 347 baseline), over-trading noise and destroying returns (+121.7 bps, 0.0870 Sharpe).
 - **Objective Function Optimization**:
   - `Val Tail Sharpe` (V5): Annualized Sharpe ratio of winsorized active tail returns. Block-bootstrapped over validation blocks with standard error soft penalty.
+  - `V5 Ratio Type` (`--ratio-type`, default `sortino`): risk-adjustment basis inside V5. `sortino` uses **downside deviation** (only sub-target returns penalized); `sharpe` uses total std. `sortino` is the recommended default (best OOS Tail IC).
   - `Win Rate Constraint` (M9): Enforced daily tail win rate after 15 bps transaction cost must be $\ge 45\%$ across all cross-validation folds.
 - **Audited Empirical Results (Static OOS Backtest 2024-03 onwards)**:
   - **Baseline (None - Raw returns)**: Cumulative P&L `+1908.5 bps`, Annual Sharpe `1.2204`, MaxDD `949.5 bps`.
