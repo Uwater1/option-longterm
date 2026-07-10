@@ -264,7 +264,20 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 ## Day-Model Tail-Sharpe Optimization & Win Rate Kill-Switch (July 2026)
 - **Validation Tail Sharpe Objective**: Optimizes Optuna hyperparameters using validation set tail-Sharpe (winsorized 1-99% clip on active days, annualized by $\sqrt{244}$) instead of Tail IC. It uses month-block bootstrap resamples to penalize standard error. Default weights: `single` `[0.10, 0.35, 0.10, 0.05, 0.40]`; `long`/`short` `[0.10, 0.40, 0.10, 0.00, 0.40]`.
 - **CV Fold Win Rate Kill-Switch**: Adds a hard constraint that the CV fold average tail win rate after 15 bps cost must be $\ge 45\%$. Add side-specific win rate constraint for `long` and `short` sides.
-- **CLI Defaults**: Bumps `PILOT_N_TRIALS = 100` for stability. Default `--target-transform` is set to `"none"`. Default `--sharpe-objective` is set to `False` (Validation Tail IC remains the standard default).
-- **Audited OOS Comparison**: P&L delta 95% CI is `[-754.9, +663.6] bps` and Sharpe delta 95% CI is `[-0.542, +0.536]`. The difference in portfolio performance is statistically indistinguishable from zero, representing variance reallocation across assets rather than structural skill uplift.
+- **CLI Defaults**: `PILOT_N_TRIALS = 200` for stability. Default `--target-transform` is set to `"none"`. Default `--sharpe-objective` is set to `False` (Validation Tail IC remains the standard default).
+- **Performance**: No significant uplift. OOS P&L delta 95% CI `[-755, +664] bps`, Sharpe delta CI `[-0.54, +0.54]` — statistically indistinguishable from zero. Default (Tail IC + raw returns) remains recommended; `--sharpe-objective` is experimental only.
 - Run: `python3 day-model/train_model.py -e all --trials 100 --sharpe-objective` to enable the Sharpe-objective model training.
 - Backtest: `python3 day-model/backtest_simulator.py --etf all` (loads the standard raw-return baseline by default). Use `--sharpe-objective` to load Sharpe-objective models.
+
+## Sortino Ratio as Default V5 Objective (July 2026)
+- **Sortino Ratio**: $S(\tau) = \frac{E[R]-\tau}{\sqrt{E[\min(R-\tau,0)^2]}} \times \sqrt{244}$. Uses downside deviation (only negative returns count as risk), so upside volatility is not penalized. (Note: the previous label "Kappa Ratio" was incorrect — Kaplan & Knowles Kappa₂ uses $\sqrt{E[(R-\tau)^+{}^2]}$ in the numerator, not $E[R]-\tau$.)
+- **Sweep Results** (aggregate across 5 ETF × 3 sides): Default weight 0.40 is the best sortino variant — OutTIC +23% over Sharpe baseline (0.1085 vs 0.0882), IC generalization gap tightened 34% (-0.040 vs -0.060). Lower sortino weights (0.20, 0.30) dilute the tail benefit. Sharpe weight overrides (`_sw*`) and `--sharpe-objective` both underperform sortino on OutTIC.
+- **Default**: `--ratio-type sortino` (was `sharpe`). Use `--ratio-type sharpe` to revert to total-volatility ratio.
+- **Report cleanup**: `_sharpe`, `_sw*`, `_sortino_sw*`, `_emb*` suffix variants are filtered from `generate_report.py` (underperform parent configs). Only baseline + sortino appear in REPORT.md.
+
+## Deflated Sharpe Ratio — PSR/DSR Overfit Correction (July 2026)
+- **Probabilistic Sharpe Ratio (PSR)**: López de Prado & Bailey (2014) formula with skewness and excess-kurtosis terms: $\Phi\!\left(\frac{(\hat{SR} - SR_0)\sqrt{T-1}}{\sqrt{1 - S\cdot\hat{SR} + \frac{K+2}{4}\hat{SR}^2}}\right)$. Replaces the ad-hoc Gaussian-only correction.
+- **Deflated Sharpe Ratio (DSR)**: Sets $SR_0 = E[\max_N(SR)]$ via Gumbel approximation.
+- **Trial Correlation Correction**: `dynamic_rho` (average off-diagonal correlation of per-fold CV OOS IC vectors) reduces the overfit penalty via $\sqrt{1-\rho}$. The search-budget term $\sqrt{2\ln N}$ uses **raw trial count** N, NOT the ONC effective-N (which collapses to ~1 for correlated Optuna trials and removes the overfit guard). Effective-N is printed as a diagnostic only.
+- **Target-Transform Variants**: `_rank` and `_gauss` target transforms consistently degrade OOS performance and are filtered from the report. `--target-transform` remains available for research but is not recommended.
+- **Output**: `results_{tag}.json` contains `dsr.probability`, `dsr.sr_benchmark`, `dsr.sr_hat`, `dsr.effective_n_trials`, `dsr.dynamic_rho`. Console prints DSR probability and trial correlation diagnostics.

@@ -46,7 +46,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from scipy.stats import rankdata, norm
+from scipy.stats import rankdata, norm, skew, kurtosis
 from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.spatial.distance import squareform
 from scipy.optimize import minimize
@@ -85,7 +85,7 @@ VAL_BLOCKS_OUTER = [
     ("2023-07-01", "2023-10-01"),
 ]
 VAL_BLOCKS = VAL_BLOCKS_INNER + VAL_BLOCKS_OUTER
-PILOT_N_TRIALS = 100
+PILOT_N_TRIALS = 200
 PILOT_SEED = 42
 STABILITY_B = 400      
 STABILITY_PI = 0.50   
@@ -96,10 +96,10 @@ CSS_CORR_THRESHOLD = 0.90         # Correlation threshold for cluster merging in
 VIF_THRESHOLD = 12.0              # Variance Inflation Factor (VIF) threshold to drop collinear features (5.0 for 50ETF)
 
 
-def compute_val_blocks(lockbox_date: str, window_years: int = 0):
+def compute_val_blocks(lockbox_date: str, window_years: int = 0, embargo_days: int = 10):
     """Compute 4 inner + 2 outer 3-month validation blocks relative to lockbox.
 
-    Blocks are placed backward from the lockbox with 10-day embargo gaps.
+    Blocks are placed backward from the lockbox with embargo gaps.
     Outer blocks are the most recent (closest to lockbox), inner blocks are older.
     When window_years=0, uses all available history (train_start = 2015-01-01).
 
@@ -112,14 +112,14 @@ def compute_val_blocks(lockbox_date: str, window_years: int = 0):
         train_start = pd.Timestamp("2015-01-01")
 
     blocks = []
-    cursor = lb - pd.Timedelta(days=10)  # embargo before lockbox
+    cursor = lb - pd.Timedelta(days=embargo_days)  # embargo before lockbox
     for _ in range(6):
         end = cursor
         start = end - pd.DateOffset(months=3)
         if start < train_start:
             start = train_start
         blocks.append((start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")))
-        cursor = start - pd.Timedelta(days=10)  # embargo gap between blocks
+        cursor = start - pd.Timedelta(days=embargo_days)  # embargo gap between blocks
     blocks.reverse()  # chronological order
     inner = blocks[:4]
     outer = blocks[4:]
@@ -383,6 +383,57 @@ def compute_val_tail_sharpe(y_true: np.ndarray, y_pred: np.ndarray, side: str = 
     if std_ret < 1e-8:
         return 0.0
     return float(mean_ret / std_ret * np.sqrt(244.0))
+
+
+def compute_val_tail_sortino(y_true: np.ndarray, y_pred: np.ndarray, side: str = "single", tau: float = 0.0) -> float:
+    """Sortino ratio for tail strategy returns.
+
+    Uses downside deviation (semi-deviation, only returns below tau count as
+    risk) instead of total std, reducing penalty on upside volatility:
+        (mean(R) - tau) / sqrt(E[min(R - tau, 0)^2]) * sqrt(244).
+    Higher values = better downside-risk-adjusted performance.
+    """
+    y_true = np.asarray(y_true, dtype=np.float64)
+    y_pred = np.asarray(y_pred, dtype=np.float64)
+    n = len(y_pred)
+    if n < 10:
+        return 0.0
+
+    direction = np.zeros(n, dtype=np.float64)
+    if side == "single":
+        p90 = np.percentile(y_pred, 90.0)
+        p10 = np.percentile(y_pred, 10.0)
+        direction[y_pred >= p90] = 1.0
+        direction[y_pred <= p10] = -1.0
+    elif side == "long":
+        p85 = np.percentile(y_pred, 85.0)
+        direction[y_pred >= p85] = 1.0
+    elif side == "short":
+        p15 = np.percentile(y_pred, 15.0)
+        direction[y_pred <= p15] = -1.0
+
+    active_mask = direction != 0.0
+    if not np.any(active_mask):
+        return 0.0
+
+    cost = 0.15
+    tail_returns = direction[active_mask] * y_true[active_mask] - cost
+
+    n_active = len(tail_returns)
+    if n_active < 2:
+        return 0.0
+
+    p1 = np.percentile(tail_returns, 1.0)
+    p99 = np.percentile(tail_returns, 99.0)
+    clipped = np.clip(tail_returns, p1, p99)
+
+    mean_ret = np.mean(clipped)
+    downside = clipped - tau
+    downside[downside > 0] = 0.0
+    downside_var = np.mean(downside ** 2)
+    if downside_var < 1e-12:
+        return float(np.sign(mean_ret) * 10.0)
+    return float((mean_ret - tau) / np.sqrt(downside_var) * np.sqrt(244.0))
 
 
 def compute_decile_monotonicity(y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -890,16 +941,120 @@ def calculate_yearly_metrics(year_groups, y_true: np.ndarray, y_pred: np.ndarray
     return raw_metrics, [_y for _y, _ in year_groups], y_tail_ics
 
 
-def compute_deflated_metric(values: list, best_value: float, rho: float = 0.5) -> float:
-    """Expected multiple-comparison overfit correction for choosing the maximum
+def compute_effective_n_onc(trial_vectors: list) -> float:
+    """Effective number of independent trials via correlation-based shrinkage.
 
-    of N correlated trial configurations (Marcos Lopez de Prado).
+    Uses the design-effect correction to convert N correlated Optuna trials
+    into an effective count of independent trials.  Trial vectors are typically
+    per-fold CV OOS ICs (one row per trial, one column per fold).
+
+    Returns max(1.0, n_eff).  Falls back to raw N when vectors are degenerate.
+    """
+    if len(trial_vectors) <= 1:
+        return float(len(trial_vectors))
+    matrix = np.array(trial_vectors, dtype=np.float64)  # (N_trials, M_folds)
+    stds = np.std(matrix, axis=1)
+    valid_mask = stds > 1e-8
+    matrix = matrix[valid_mask]
+    n = matrix.shape[0]
+    if n <= 1:
+        return max(1.0, float(n))
+    corr = np.corrcoef(matrix)
+    np.fill_diagonal(corr, np.nan)
+    avg_abs_corr = float(np.nanmean(np.abs(corr)))
+    if np.isnan(avg_abs_corr):
+        return max(1.0, float(n))
+    avg_abs_corr = min(avg_abs_corr, 0.999)
+    # Design-effect: n_eff = n / (1 + (n-1)*rho_bar)
+    n_eff = n / (1.0 + (n - 1) * avg_abs_corr)
+    return max(1.0, n_eff)
+
+
+def compute_probabilistic_sr(
+    returns: np.ndarray,
+    sr_benchmark: float = 0.0,
+    annualization: float = 1.0,
+) -> float:
+    """Probabilistic Sharpe Ratio (López de Prado & Bailey, 2014).
+
+    P( SR > SR_benchmark | observed returns, non-normal )
+
+    Parameters
+    ----------
+    returns : 1-D array of per-period returns or fold-level metrics.
+    sr_benchmark : Benchmark SR under H0 (set to E[max_SR] for DSR).
+    annualization : sqrt(periods-per-year) factor. 1.0 for already-annualized
+                    or non-return metrics (e.g. fold ICs).
+
+    Returns
+    -------
+    Probability in [0, 1] that the observed SR exceeds the benchmark by skill.
+    """
+    returns = np.asarray(returns, dtype=np.float64)
+    T = len(returns)
+    if T < 3:
+        return 0.5
+    sr_hat = float(np.mean(returns) / (np.std(returns) + 1e-10) * annualization)
+    sk = float(skew(returns, bias=False))
+    kt = float(kurtosis(returns, bias=False))  # excess kurtosis (normal=0)
+    kurt_excess = kt  # scipy kurtosis already returns excess (fisher=True default)
+    numerator = (sr_hat - sr_benchmark) * np.sqrt(T - 1)
+    denominator_sq = 1.0 - sk * sr_hat + ((kurt_excess + 3 - 1) / 4.0) * sr_hat ** 2
+    # Guard: denominator_sq can be negative for extreme skew/SR combinations
+    if denominator_sq < 1e-6:
+        return 1.0 if sr_hat > sr_benchmark else 0.0
+    z = numerator / np.sqrt(denominator_sq)
+    return float(norm.cdf(z))
+
+
+def compute_deflated_sr(
+    returns: np.ndarray,
+    n_trials_raw: int,
+    n_trials_effective: float,
+    trial_values_std: float,
+    annualization: float = 1.0,
+) -> tuple:
+    """Deflated Sharpe Ratio: PSR evaluated at SR0 = E[max SR over N trials].
+
+    Returns
+    -------
+    (dsr_probability, sr_benchmark, sr_hat)
+    """
+    returns = np.asarray(returns, dtype=np.float64)
+    T = len(returns)
+    if T < 2:
+        return 0.5, 0.0, 0.0
+    sr_hat = float(np.mean(returns) / (np.std(returns) + 1e-10) * annualization)
+    # E[max SR] under N independent trials (Gumbel approximation)
+    _EULER = 0.5772156649
+    n_eff = max(1.0, n_trials_effective)
+    if n_eff <= 1:
+        sr0 = 0.0
+    else:
+        sr0 = float(trial_values_std * (
+            (1.0 - _EULER) * norm.ppf(1.0 - 1.0 / n_eff)
+            + _EULER * norm.ppf(1.0 - 1.0 / (n_eff * np.e))
+        ))
+    psr = compute_probabilistic_sr(returns, sr_benchmark=sr0, annualization=annualization)
+    return psr, sr0, sr_hat
+
+
+def compute_deflated_metric(values: list, best_value: float, rho: float = 0.5) -> float:
+    """Multiple-comparison overfit correction for the maximum of N trials.
+
+    Uses E[max of N Gaussians] subtraction with correlation correction.
+    The search-budget term sqrt(2*ln(N)) uses raw trial count N.
+    The correlation term sqrt(1-rho) uses dynamic_rho from per-fold CV OOS ICs.
+
+    NOTE: Do NOT substitute effective_n (ONC shrinkage) for raw N here.
+    The equicorrelation design-effect collapses N_eff to ~1 when trials
+    share features/folds, removing the overfit guard entirely.
     """
     n = len(values)
     if n <= 1:
         return best_value
     std_val = np.std(values)
-    overfit_bias = std_val * np.sqrt(2.0 * np.log(n)) * np.sqrt(1.0 - rho)
+    overfit_bias = std_val * np.sqrt(2.0 * np.log(max(float(n), 1.001))) * np.sqrt(max(1.0 - rho, 0.0))
     return float(best_value - overfit_bias)
 
 
@@ -1294,7 +1449,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
               lockbox_date: str = LOCKBOX_DATE, window_years: int = 0,
               rolling: bool = False, target_transform: str = "none",
               post_hoc_calibrate: bool = False, early: bool = False,
-              sharpe_objective: bool = False):
+              sharpe_objective: bool = False, embargo_days: int = 10,
+              ratio_type: str = "sharpe", sharpe_weight_override: float = None):
     print(f"\n" + "=" * 80)
     print(f"Train {etf_name} (Side: {side}) | Early: {early}")
     print(f"Lockbox: {lockbox_date} | Window: {window_years if window_years > 0 else 'all'} years | Rolling: {rolling}")
@@ -1326,7 +1482,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
     # Compute validation blocks relative to lockbox (or use static defaults)
     if rolling or lockbox_date != LOCKBOX_DATE:
-        val_inner, val_outer = compute_val_blocks(lockbox_date, window_years)
+        val_inner, val_outer = compute_val_blocks(lockbox_date, window_years, embargo_days)
         val_blocks_all = val_inner + val_outer
         print(f"  Val blocks (relative): Inner={val_inner}, Outer={val_outer}")
     else:
@@ -1357,6 +1513,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         tag_suffix += "_calibrated"
     if sharpe_objective:
         tag_suffix += "_sharpe"
+    if ratio_type != "sharpe":
+        tag_suffix += f"_{ratio_type}"
+    if sharpe_weight_override is not None:
+        tag_suffix += f"_sw{sharpe_weight_override:.2f}"
+    if embargo_days != 10:
+        tag_suffix += f"_emb{embargo_days}"
     tag += tag_suffix
     pilot_db_path = DATA_DIR / f"optuna_pilot_{tag}.log"
     main_db_path = DATA_DIR / f"optuna_main_{tag}.log"
@@ -1808,8 +1970,10 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         else:
             val_tail_ic_adj = val_tail_ic
 
-        # V5: Val Tail Sharpe (block-bootstrapped)
-        val_tail_sharpe = compute_val_tail_sharpe(y_sel_val_inner, val_preds, side)
+        # V5: Val Tail Risk-Adjusted Ratio (block-bootstrapped)
+        # ratio_type selects the metric: 'sharpe' (total vol) or 'sortino' (downside vol)
+        _v5_fn = compute_val_tail_sortino if ratio_type == "sortino" else compute_val_tail_sharpe
+        val_tail_sharpe = _v5_fn(y_sel_val_inner, val_preds, side)
         if side != "single":
             boot_tail_sharpes = []
             n_months = len(val_inner_month_indices)
@@ -1817,7 +1981,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             for _ in range(100):
                 boot_months = rng_boot2.choice(n_months, size=n_months, replace=True)
                 boot_idx = np.concatenate([val_inner_month_indices[m] for m in boot_months])
-                boot_tail_sharpes.append(compute_val_tail_sharpe(y_sel_val_inner[boot_idx], val_preds[boot_idx], side))
+                boot_tail_sharpes.append(_v5_fn(y_sel_val_inner[boot_idx], val_preds[boot_idx], side))
             boot_tail_sharpes = np.array(boot_tail_sharpes)
             val_tail_sharpe_std = float(boot_tail_sharpes.std())
             val_tail_sharpe_adj = val_tail_sharpe - 1.0 * val_tail_sharpe_std
@@ -1841,7 +2005,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "v17_unified", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         tuple(VAL_BLOCKS), TARGET, PILOT_N_TRIALS, PILOT_SEED,
-        target_transform, post_hoc_calibrate, early, sharpe_objective
+        target_transform, post_hoc_calibrate, early, sharpe_objective,
+        embargo_days, ratio_type, sharpe_weight_override
     ]
     if side != "single":
         pilot_key = ["v17_unified_side", side] + pilot_key
@@ -2143,6 +2308,15 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             #   single -> [0.10, 0.35, 0.10, 0.05, 0.40]
             #   long/short -> [0.10, 0.40, 0.10, 0.00, 0.40]
             _w = SIDE_CONFIG.get(side, SIDE_CONFIG["single"])["weights"]
+            # Apply V5 weight override (renormalize V1-V4 to sum to 1-w5)
+            if sharpe_weight_override is not None:
+                w5_old = _w[4]
+                w5_new = float(np.clip(sharpe_weight_override, 0.0, 0.95))
+                remaining_old = sum(_w[:4])
+                if remaining_old > 0:
+                    scale = (1.0 - w5_new) / remaining_old
+                    _w = [w * scale for w in _w[:4]] + [w5_new]
+                print(f"  V5 weight override: {w5_old:.2f} -> {w5_new:.2f}, renormalized V1-V4")
             # Soft condition number penalty
             cond_penalty = 0.0
             if reg_kappa > SAFE_KAPPA:
@@ -2159,7 +2333,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             trial.set_user_attr("raw_metrics", raw_metrics)
             trial.set_user_attr("val_metrics", val_metrics)
 
-            # Calculate running deflated objective
+            # Calculate running deflated objective (DSR-aware: dynamic rho, raw N for E[max])
             completed_trials = study.get_trials(states=[optuna.trial.TrialState.COMPLETE])
             completed_values = [t.value for t in completed_trials if t.value is not None and t.value > -1e8]
             completed_values.append(objective_val)
@@ -2167,8 +2341,11 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             if n_comp <= 1:
                 deflated_obj = objective_val
             else:
+                _trial_oos = [t.user_attrs.get("cv_oos_ics") for t in completed_trials
+                              if t.user_attrs.get("cv_oos_ics") is not None]
+                _running_rho = compute_dynamic_rho(_trial_oos) if len(_trial_oos) >= 2 else 0.5
                 std_val = np.std(completed_values)
-                overfit_bias = std_val * np.sqrt(2.0 * np.log(n_comp)) * np.sqrt(1.0 - 0.5)
+                overfit_bias = std_val * np.sqrt(2.0 * np.log(max(float(n_comp), 1.001))) * np.sqrt(max(1.0 - _running_rho, 0.0))
                 deflated_obj = objective_val - overfit_bias
             trial.set_user_attr("deflated_objective", deflated_obj)
 
@@ -2428,9 +2605,32 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             if len(val_m) > 4:
                 trial_val_tail_sharpe_values.append(val_m[4])
 
-    # Compute dynamic rho from completed trials' CV OOS ICs
+    # Compute dynamic rho and effective N from completed trials' CV OOS ICs
     dynamic_rho = compute_dynamic_rho(trial_cv_oos_ics)
-    print(f"\nDynamic rho calculated from CV OOS ICs: {dynamic_rho:.4f}")
+    effective_n_trials = compute_effective_n_onc(trial_cv_oos_ics)
+    print(f"\nTrial correlation diagnostics:")
+    print(f"  Dynamic rho:         {dynamic_rho:.4f}")
+    print(f"  Raw trial count:     {len(trial_cv_oos_ics)}")
+    print(f"  Effective N (ONC):   {effective_n_trials:.1f}")
+    print(f"  Correlation shrinkage: {effective_n_trials / max(len(trial_cv_oos_ics), 1):.1%}")
+
+    # Compute PSR/DSR for best trial's CV OOS ICs (skew/kurtosis-aware)
+    best_cv_oos = best_trial.user_attrs.get("cv_oos_ics") if best_trial else None
+    if best_cv_oos is not None and len(best_cv_oos) >= 3:
+        best_cv_oos_arr = np.array(best_cv_oos, dtype=np.float64)
+        obj_std = float(np.std(trial_objective_values)) if trial_objective_values else 0.0
+        dsr_prob, sr0_bench, sr_hat_cv = compute_deflated_sr(
+            best_cv_oos_arr, len(trial_cv_oos_ics), effective_n_trials, obj_std
+        )
+        sk_cv = float(skew(best_cv_oos_arr, bias=False))
+        kt_cv = float(kurtosis(best_cv_oos_arr, bias=False))
+        print(f"\n  [DSR] Best trial CV fold IC diagnostics:")
+        print(f"    SR_hat (fold IC):  {sr_hat_cv:.4f}")
+        print(f"    SR_benchmark (E[max]): {sr0_bench:.4f}")
+        print(f"    Skew / Kurt(excess): {sk_cv:.2f} / {kt_cv:.2f}")
+        print(f"    DSR probability:   {dsr_prob:.2%}")
+    else:
+        dsr_prob, sr0_bench, sr_hat_cv = np.nan, np.nan, np.nan
 
     best_m4_val = best_raw_m[3] if (best_raw_m is not None and len(best_raw_m) > 3) else np.nan
     best_obj_val = best_trial.value if best_trial is not None else np.nan
@@ -2473,7 +2673,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     
     # Outer metrics calculation
     val_tail_ic_outer = side_tail_ic(y_sel_val_outer, val_preds_outer, side)
-    val_tail_sharpe_outer = compute_val_tail_sharpe(y_sel_val_outer, val_preds_outer, side)
+    _v5_fn_outer = compute_val_tail_sortino if ratio_type == "sortino" else compute_val_tail_sharpe
+    val_tail_sharpe_outer = _v5_fn_outer(y_sel_val_outer, val_preds_outer, side)
         
     val_mono_outer = compute_decile_monotonicity(y_sel_val_outer, val_preds_outer)
     val_spread_outer = compute_top_bottom_spread(y_sel_val_outer, val_preds_outer)
@@ -2636,6 +2837,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         tag_suffix += "_calibrated"
     if sharpe_objective:
         tag_suffix += "_sharpe"
+    if ratio_type != "sharpe":
+        tag_suffix += f"_{ratio_type}"
+    if sharpe_weight_override is not None:
+        tag_suffix += f"_sw{sharpe_weight_override:.2f}"
+    if embargo_days != 10:
+        tag_suffix += f"_emb{embargo_days}"
     tag += tag_suffix
 
     model_dir = ROLLING_MODELS_DIR if rolling else MODELS_DIR
@@ -2678,6 +2885,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "target_transform": target_transform,
         "post_hoc_calibrate": post_hoc_calibrate,
         "sharpe_objective": sharpe_objective,
+        "ratio_type": ratio_type,
+        "sharpe_weight_override": sharpe_weight_override,
+        "embargo_days": embargo_days,
     }
     joblib.dump(scaler_meta, model_dir / f"scaler_{tag}.joblib")
     
@@ -2745,6 +2955,13 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "performance_degradation": perf_deg,
         "mcs_size": mcs_size,
         "bayesian_prob_true_discovery": bayesian_prob_true_discovery,
+        "dsr": {
+            "probability": float(dsr_prob) if not np.isnan(dsr_prob) else None,
+            "sr_benchmark": float(sr0_bench) if not np.isnan(sr0_bench) else None,
+            "sr_hat": float(sr_hat_cv) if not np.isnan(sr_hat_cv) else None,
+            "effective_n_trials": float(effective_n_trials),
+            "dynamic_rho": float(dynamic_rho),
+        },
         "quarterly_rolling_test": quarterly_test_res,
         "plateau_trial": int(best_trial.number) if (best_trial is not None and hasattr(best_trial, 'number')) else None,
         "plateau_val": float(best_trial.value) if (best_trial is not None and hasattr(best_trial, 'value')) else None,
@@ -2863,6 +3080,12 @@ if __name__ == "__main__":
                     help="Predict early window (10:00 to 13:05, exiting at close of 13:00~13:05 bar)")
     ap.add_argument("--sharpe-objective", action="store_true", dest="sharpe_objective", default=False,
                     help="Optimizes Optuna hyperparameters using validation set tail-Sharpe objective instead of Tail IC. Set to False by default, use --sharpe-objective to enable.")
+    ap.add_argument("--embargo-days", type=int, default=10,
+                    help="Embargo gap (days) between validation blocks and before lockbox. Default 10.")
+    ap.add_argument("--ratio-type", default="sortino", choices=["sharpe", "sortino"],
+                    help="V5 ratio: sharpe (total vol) or sortino (downside dev only). Default sortino (best OOS Tail IC).")
+    ap.add_argument("--sharpe-weight", type=float, default=None, dest="sharpe_weight_override",
+                    help="Override V5 (tail ratio) weight in objective. Remaining weights renormalized. Default None (use SIDE_CONFIG).")
     args = ap.parse_args()
 
     skip_step1 = True # Bypassed by default because univariate screening deletes joint predictive features.
@@ -2955,7 +3178,10 @@ if __name__ == "__main__":
                               target_transform=args.target_transform,
                               post_hoc_calibrate=args.post_hoc_calibrate,
                               early=args.early,
-                              sharpe_objective=args.sharpe_objective)
+                              sharpe_objective=args.sharpe_objective,
+                              embargo_days=args.embargo_days,
+                              ratio_type=args.ratio_type,
+                              sharpe_weight_override=args.sharpe_weight_override)
                 except Exception as e:
                     print(f"  [ERROR] Failed to train {etf} ({side}): {e}")
                     import traceback
