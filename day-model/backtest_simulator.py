@@ -249,12 +249,25 @@ def simulate_etf_trades(
     stop_type: str | None,
     stop_val: float | None,
     cost_bps: float,
+    asset_type: str = "ETF",
 ) -> pd.DataFrame:
-    """Run trade simulation on the actual 5-minute ETF bars."""
-    # Load 5m ETF data
-    path_5m = ETF_5M_DIR / ETF_5M_FILE[etf]
+    """Run trade simulation on the actual 5-minute ETF or Future bars."""
+    # Load 5m ETF or Future data
+    if asset_type == "Future":
+        future_file_map = {
+            "50ETF": "IH88_5m.parquet",
+            "300ETF": "IF88_5m.parquet",
+            "500ETF": "IC88_5m.parquet",
+        }
+        if etf not in future_file_map:
+            print(f"  [WARNING] ETF {etf} has no corresponding future mapped.")
+            return pd.DataFrame()
+        path_5m = ETF_5M_DIR / future_file_map[etf]
+    else:
+        path_5m = ETF_5M_DIR / ETF_5M_FILE[etf]
+
     if not path_5m.exists():
-        print(f"  [WARNING] ETF 5m file not found: {path_5m}")
+        print(f"  [WARNING] 5m file not found: {path_5m}")
         return pd.DataFrame()
         
     df_5m = pd.read_parquet(path_5m)
@@ -419,6 +432,7 @@ def summarize_trades(trades: pd.DataFrame, etf_name: str) -> dict:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("-e", "--etf", default="all", help="ETF name: 300ETF|50ETF|500ETF|588000ETF|159915ETF|all")
+    ap.add_argument("--type", choices=["ETF", "Future"], default="ETF", help="Asset type: ETF or Future")
     ap.add_argument("--long-thr", type=float, default=90.0, help="Long rank threshold (percentile: 0 to 100)")
     ap.add_argument("--short-thr", type=float, default=90.0, help="Short rank threshold (percentile: 0 to 100)")
     ap.add_argument("--cost-bps", type=float, default=DEFAULT_COST_BPS, help="Transaction cost in bps")
@@ -441,16 +455,29 @@ def main():
 
     etfs = ["50ETF", "300ETF", "500ETF", "588000ETF", "159915ETF"]
     if args.etf != "all":
-        # Handle formats like "300", "300ETF"
-        target_etf = args.etf if args.etf.endswith("ETF") else f"{args.etf}ETF"
-        if target_etf not in etfs:
-            print(f"[ERROR] Unknown ETF: {args.etf}")
+        # Handle formats like "300", "300ETF", "IH", "IF", "IC", "IM"
+        val = args.etf.upper()
+        mapping = {
+            "50": "50ETF", "50ETF": "50ETF", "IH": "50ETF", "IH88": "50ETF",
+            "300": "300ETF", "300ETF": "300ETF", "IF": "300ETF", "IF88": "300ETF",
+            "500": "500ETF", "500ETF": "500ETF", "IC": "500ETF", "IC88": "500ETF",
+            "588000": "588000ETF", "588000ETF": "588000ETF",
+            "159915": "159915ETF", "159915ETF": "159915ETF",
+        }
+        if val in ["IM", "IM88"]:
+            print(f"[ERROR] IM (CSI 1000) future is not supported/traded in this simulator.")
+            sys.exit(1)
+        if val in mapping:
+            target_etf = mapping[val]
+        else:
+            print(f"[ERROR] Unknown ETF/Future: {args.etf}")
             sys.exit(1)
         etfs = [target_etf]
 
     print("=" * 80)
     print(f"DAY-MODEL WALK-FORWARD OOS SIMULATOR")
     print(f"OOS Period : {LOCKBOX_DATE} onwards")
+    print(f"Asset Type : {args.type}")
     print(f"Models     : {'ROLLING (auto-select per date)' if args.rolling else 'STATIC'} (Early: {args.early})")
     print(f"Thresholds : Long={args.long_thr}%, Short={args.short_thr}%")
     print(f"Stops      : Type={args.stop_type}, Val={args.stop_val}")
@@ -462,6 +489,18 @@ def main():
     combined_df_list = []
 
     for etf in etfs:
+        if args.type == "Future" and etf not in ["50ETF", "300ETF", "500ETF"]:
+            print(f"[{etf}] Not traded as Future. Skipping.")
+            print("-" * 50)
+            continue
+
+        name_map = {
+            "50ETF": "IH",
+            "300ETF": "IF",
+            "500ETF": "IC",
+        }
+        display_name = name_map.get(etf, etf) if args.type == "Future" else etf
+
         try:
             # 1. Predictions
             if args.rolling:
@@ -504,9 +543,9 @@ def main():
             # Filter strictly for OOS period
             signals_oos = signals[signals.index >= pd.Timestamp(LOCKBOX_DATE)]
             
-            # 3. Simulate execution on ETF 5m
+            # 3. Simulate execution on ETF 5m or Future 5m
             trades = simulate_etf_trades(
-                etf, signals_oos, args.stop_type, args.stop_val, args.cost_bps
+                etf, signals_oos, args.stop_type, args.stop_val, args.cost_bps, asset_type=args.type
             )
             
             if not trades.empty:
@@ -514,12 +553,12 @@ def main():
                 # Save details for combined portfolio
                 # Add etf column
                 t_df = trades[["net_ret"]].copy()
-                t_df.columns = [f"{etf}_net"]
+                t_df.columns = [f"{display_name}_net"]
                 combined_df_list.append(t_df)
                 
-                # Print single ETF summary
-                metrics = summarize_trades(trades, etf)
-                print(f"[{etf}] OOS Summary:")
+                # Print single ETF/Future summary
+                metrics = summarize_trades(trades, display_name)
+                print(f"[{display_name}] OOS Summary:")
                 print(f"  Trades  : {metrics['n_trades']} (Long: {metrics['n_long']}, Short: {metrics['n_short']})")
                 print(f"  Win Rate: {metrics['win_rate']:.1%} | Avg Net Return: {metrics['mean_net_ret']*1e4:.1f} bps")
                 print(f"  P&L     : {metrics['total_net_ret']*1e4:+.0f} bps | Sharpe: {metrics['sharpe']:.2f} | MaxDD: {metrics['max_dd']*1e4:.0f} bps")
@@ -529,11 +568,11 @@ def main():
                 # Yearly OOS breakdown
                 print("  Yearly Breakdown:")
                 for year, g in trades.groupby(trades.index.year):
-                    y_metrics = summarize_trades(g, etf)
+                    y_metrics = summarize_trades(g, display_name)
                     print(f"    {year}: n={y_metrics['n_trades']:>3}, wr={y_metrics['win_rate']:.1%}, pnl={y_metrics['total_net_ret']*1e4:+.0f}bps, sharpe={y_metrics['sharpe']:.2f}")
                 print("-" * 50)
             else:
-                print(f"[{etf}] No OOS trades triggered.")
+                print(f"[{display_name}] No OOS trades triggered.")
                 print("-" * 50)
                 
         except Exception as e:
@@ -583,13 +622,14 @@ def main():
         for col in merged.columns:
             plt.plot(np.cumsum(merged[col]) * 100, label=col.replace("_net", ""), alpha=0.5)
         plt.plot(np.cumsum(portfolio_rets) * 100, label="COMBINED PORTFOLIO", color="black", linewidth=2.5)
-        plt.title(f"Out-of-Sample Walk-Forward Cumulative Net P&L (from {LOCKBOX_DATE})")
+        plt.title(f"Out-of-Sample Walk-Forward Cumulative Net P&L (from {LOCKBOX_DATE}) ({args.type})")
         plt.xlabel("Date")
         plt.ylabel("Net Return (%)")
         plt.grid(True, linestyle="--", alpha=0.6)
         plt.legend()
         
-        plot_path = PLOTS_DIR / "backtest_simulator_oos.png"
+        type_suffix = f"_{args.type.lower()}"
+        plot_path = PLOTS_DIR / f"backtest_simulator_oos{type_suffix}.png"
         plt.savefig(plot_path, dpi=150, bbox_inches="tight")
         print(f"Saved performance chart to: {plot_path}")
         plt.close()
