@@ -57,7 +57,7 @@ python -m daytrade.gating_only                           # Gate-only diagnostic 
 python -m daytrade.methods.download_futures_data         # Download index futures 5m data
 python -m daytrade.methods.report                        # Generate execution placement evaluation report
 python3 day-model/train_model.py -e 300 --trials 100 --skip-step 2  # Train with Step 2 filter skipped (Step 1 skipped by default)
-python3 day-model/backtest_simulator.py --etf all --long-thr 70 --short-thr 70 # Run lightweight look-ahead free OOS backtest
+python3 day-model/backtest_simulator.py --etf all --long-thr 70 --short-thr 70 [--type {ETF,Future}] # Run lightweight look-ahead free OOS backtest
 ```
 
 ## Project Structure
@@ -239,4 +239,4 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 - Exit Bar changed from 42 (14:35 close) to 24 (13:05 close, close of the 13:00~13:05 bar).
 - Pipeline commands support `--early` parameter to execute the early target flow.
 - Early output files suffix everything with `_early` to isolate them (e.g. `features_{ETF}_early.parquet`, `linear_{tag}_early.joblib`, `REPORT_early.md`, `plots/diagnostics_{tag}_early.png`).
-- Run: `python3 day-model/build_features.py -e all --early`, `python3 day-model/train_model.py -e all --trials 100 --early`, `python3 day-model/generate_report.py --early`, `python3 day-model/backtest_simulator.py --etf all --early`.
+- Run: `python3 day-model/build_features.py -e all --early`, `python3 day-model/train_model.py -e all --trials 100 --early`, `python3 day-model/generate_report.py --early`, `python3 day-model/backtest_simulator.py --etf all --early [--type {ETF,Future}]`.
