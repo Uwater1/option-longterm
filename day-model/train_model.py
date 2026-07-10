@@ -3194,8 +3194,10 @@ if __name__ == "__main__":
                     help="Target transform: none|rank|gauss")
     ap.add_argument("--post-hoc-calibrate", action="store_true", default=False,
                     help="Enable post-hoc Spearman IC calibration of active coefficients")
-    ap.add_argument("--blend-cpcv", action="store_true", default=False,
-                    help="Enable outer validation blend of single refit and CPCV-bagged model")
+    ap.add_argument("--blend-cpcv", action="store_true", dest="blend_cpcv", default=True,
+                    help="Enable CPCV out-of-sample path blending of single refit and bagged model (default True)")
+    ap.add_argument("--no-blend-cpcv", action="store_false", dest="blend_cpcv",
+                    help="Disable CPCV out-of-sample path blending of single refit and bagged model")
     ap.add_argument("--early", action="store_true",
                     help="Predict early window (10:00 to 13:05, exiting at close of 13:00~13:05 bar)")
     ap.add_argument("--sharpe-objective", action="store_true", dest="sharpe_objective", default=False,

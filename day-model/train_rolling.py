@@ -111,7 +111,7 @@ def _check_model_exists(etf: str, side: str, lb_date: str, early: bool = False,
                         target_transform: str = "none", post_hoc_calibrate: bool = False,
                         sharpe_objective: bool = False, ratio_type: str = "sharpe",
                         sharpe_weight_override: float = None, embargo_days: int = 10,
-                        blend_cpcv: bool = False) -> bool:
+                        blend_cpcv: bool = True) -> bool:
     """Check if rolling model artifacts already exist."""
     tag = rolling_tag(etf, side, lb_date)
     if early:
@@ -182,7 +182,7 @@ def _train_single(etf: str, side: str, lb_date: str, args, skip_step1: bool,
             post_hoc_calibrate=args.post_hoc_calibrate,
             early=getattr(args, "earlyNoGood", False),
             sharpe_objective=getattr(args, "sharpe_objective", False),
-            blend_cpcv=getattr(args, "blend_cpcv", False),
+            blend_cpcv=getattr(args, "blend_cpcv", True),
             ratio_type=getattr(args, "ratio_type", "sortino"),
         )
         elapsed = time.perf_counter() - t0
@@ -195,7 +195,7 @@ def _train_single(etf: str, side: str, lb_date: str, args, skip_step1: bool,
         return tag, None
 
 
-def smooth_rolling_models(etfs, sides, target_transform="none", early=False, sharpe_objective=False, ratio_type="sortino", blend_cpcv=False):
+def smooth_rolling_models(etfs, sides, target_transform="none", early=False, sharpe_objective=False, ratio_type="sortino", blend_cpcv=True):
     """Smoothes/blends rolling model coefficients sequentially over the last 2-3 quarters."""
     print(f"\nRunning Cross-Quarter Rolling Model Smoothing...")
     import joblib
@@ -361,8 +361,10 @@ def main():
                     help="Predict early window (10:00 to 13:05, exiting at close of 13:00~13:05 bar) [ABORTED - DO NOT RUN]")
     ap.add_argument("--sharpe-objective", action="store_true", dest="sharpe_objective", default=False,
                     help="Optimizes Optuna hyperparameters using validation set tail-Sharpe objective instead of Tail IC. Set to False by default, use --sharpe-objective to enable.")
-    ap.add_argument("--blend-cpcv", action="store_true", default=False,
-                    help="Enable outer validation blend of single refit and CPCV-bagged model")
+    ap.add_argument("--blend-cpcv", action="store_true", dest="blend_cpcv", default=True,
+                    help="Enable CPCV out-of-sample path blending of single refit and bagged model (default True)")
+    ap.add_argument("--no-blend-cpcv", action="store_false", dest="blend_cpcv",
+                    help="Disable CPCV out-of-sample path blending of single refit and bagged model")
     ap.add_argument("--smooth-quarters", action="store_true", dest="smooth_quarters", default=True,
                     help="Enable cross-quarter EWMA smoothing of model coefficients (default True)")
     ap.add_argument("--no-smooth-quarters", action="store_false", dest="smooth_quarters",
@@ -441,7 +443,7 @@ def main():
                 post_hoc_calibrate=args.post_hoc_calibrate,
                 sharpe_objective=args.sharpe_objective,
                 ratio_type=getattr(args, "ratio_type", "sortino"),
-                blend_cpcv=getattr(args, "blend_cpcv", False)
+                blend_cpcv=getattr(args, "blend_cpcv", True)
             ) for e in etfs for s in sides)
             if all_exist:
                 skip_count += 1
@@ -498,7 +500,7 @@ def main():
             early=args.earlyNoGood,
             sharpe_objective=args.sharpe_objective,
             ratio_type=getattr(args, "ratio_type", "sortino"),
-            blend_cpcv=getattr(args, "blend_cpcv", False)
+            blend_cpcv=getattr(args, "blend_cpcv", True)
         )
 
     # Load all results for warning summary
