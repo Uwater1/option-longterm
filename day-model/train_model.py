@@ -2827,57 +2827,55 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     final_model.coef_ = avg_coef
     final_model.intercept_ = avg_intercept
 
-    # ── CPCV Blending on Outer Validation ──
-    best_w = None
+    # ── CPCV Blending via Out-of-Sample CV Paths ──
+    best_w = 0.0
     if blend_cpcv:
-        print(f"\nTuning blend weight w (single refit vs CPCV-bagged) on outer validation block...")
-        # Fit single refit on selection train (bagged features only)
-        X_sel_train_bagged = X_sel_train_scaled_base[:, bagged_selected_idx_in_sel]
+        print(f"\nTuning blend weight w (single refit vs CPCV-bagged) on CPCV out-of-sample paths...")
+        all_preds_single = []
+        all_preds_bagged = []
+        all_y_te = []
         
-        # Compute weights for selection train
-        w_best_tr = compute_sample_weights(y_sel_train, k_weight).astype(np.float32)
-        sqrt_w_best = np.sqrt(w_best_tr)[:, np.newaxis]
-        y_sel_train_trans = transform_target(y_sel_train, target_transform)
-        
-        X_weighted_sel_tr_bagged = X_sel_train_bagged * sqrt_w_best
-        y_weighted_sel_tr_bagged = y_sel_train_trans * sqrt_w_best[:, 0]
-        
-        single_val_model = _build_model(model_type, params)
-        single_val_model.fit(X_weighted_sel_tr_bagged, y_weighted_sel_tr_bagged)
-        if post_hoc_calibrate:
-            single_val_model.coef_ = calibrate_coefficients(single_val_model.coef_, X_sel_train_bagged, y_sel_train)
+        for i, fold_i in enumerate(loyo_folds):
+            # Unpack fold: test_idx, X_tr_scaled, X_te_scaled, y_tr, y_te_fold
+            _, _, X_te_s_i, _, y_te_i = fold_i
+            X_te_fold_i = X_te_s_i[:, bagged_selected_idx_in_sel]
             
-        # CPCV-bagged model on selection train (bagged features only)
-        coef_val_bagged = np.mean(fold_coefs + [single_val_model.coef_], axis=0)
-        intercept_val_bagged = np.mean(fold_intercepts + [getattr(single_val_model, "intercept_", 0.0)], axis=0)
+            # Predict using single model fitted on train fold i
+            preds_single_i = X_te_fold_i @ fold_coefs[i] + fold_intercepts[i]
+            
+            # Predict using bagged model of the other 14 train folds
+            other_coefs = [fold_coefs[j] for j in range(len(loyo_folds)) if j != i]
+            other_intercepts = [fold_intercepts[j] for j in range(len(loyo_folds)) if j != i]
+            coef_bagged_other_i = np.mean(other_coefs, axis=0)
+            intercept_bagged_other_i = np.mean(other_intercepts, axis=0)
+            
+            preds_bagged_i = X_te_fold_i @ coef_bagged_other_i + intercept_bagged_other_i
+            
+            all_preds_single.append(preds_single_i)
+            all_preds_bagged.append(preds_bagged_i)
+            all_y_te.append(y_te_i)
+            
+        all_preds_single = np.concatenate(all_preds_single)
+        all_preds_bagged = np.concatenate(all_preds_bagged)
+        all_y_te = np.concatenate(all_y_te)
         
-        # Predict on outer validation block
-        X_sel_val_outer_bagged = X_sel_val_outer_scaled_base[:, bagged_selected_idx_in_sel]
-        
-        preds_val_single = X_sel_val_outer_bagged @ single_val_model.coef_ + getattr(single_val_model, "intercept_", 0.0)
-        preds_val_bagged = X_sel_val_outer_bagged @ coef_val_bagged + intercept_val_bagged
-        
-        best_w = 0.0
         best_metric = -1e10
-        
         _v5_fn_outer = compute_val_tail_sortino if ratio_type == "sortino" else compute_val_tail_sharpe
         
-        # Sweep w in [0.0, 1.0]
         for w_candidate in np.linspace(0.0, 1.0, 11):
-            preds_blended = w_candidate * preds_val_single + (1.0 - w_candidate) * preds_val_bagged
-            # Evaluate using ratio_type tail metric
-            metric_val = _v5_fn_outer(y_sel_val_outer, preds_blended, side)
+            preds_blended = w_candidate * all_preds_single + (1.0 - w_candidate) * all_preds_bagged
+            metric_val = _v5_fn_outer(all_y_te, preds_blended, side)
             print(f"  w = {w_candidate:.1f}: metric = {metric_val:.4f}")
             if metric_val > best_metric:
                 best_metric = metric_val
                 best_w = w_candidate
                 
-        print(f"Optimal blend weight w_single = {best_w:.1f} (metric = {best_metric:.4f})")
+        print(f"Optimal CPCV path blend weight w_single = {best_w:.1f} (metric = {best_metric:.4f})")
         # Final blended coefficients/intercept
-        avg_coef = best_w * final_model.coef_ + (1.0 - best_w) * avg_coef
-        avg_intercept = best_w * getattr(final_model, "intercept_", 0.0) + (1.0 - best_w) * avg_intercept
-        final_model.coef_ = avg_coef
-        final_model.intercept_ = avg_intercept
+        avg_coef_blended = best_w * final_model.coef_ + (1.0 - best_w) * avg_coef
+        avg_intercept_blended = best_w * getattr(final_model, "intercept_", 0.0) + (1.0 - best_w) * avg_intercept
+        final_model.coef_ = avg_coef_blended
+        final_model.intercept_ = avg_intercept_blended
 
     # ── Weight Concentration & Effective Sample Size Diagnostics ──
     sum_w = w_final.sum()
