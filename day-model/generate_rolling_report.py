@@ -339,6 +339,16 @@ def render_quarter_diagnostics(tag: str, r: dict, quarter_dir: Path, early: bool
     if not (model_path.exists() and scaler_path.exists()):
         return None
 
+    if early:
+        out_dir = quarter_dir / "early"
+    else:
+        out_dir = quarter_dir
+    fname = f"diagnostics_{tag.replace('ETF', '')}.png"
+    out_path = out_dir / fname
+    
+    if out_path.exists() and out_path.stat().st_mtime > model_path.stat().st_mtime and out_path.stat().st_mtime > scaler_path.stat().st_mtime:
+        return f"early/{fname}" if early else fname
+
     df = _load_features(etf, early=early)
     if df is None:
         return None
@@ -604,14 +614,14 @@ def generate_report(all_results: dict, eval_metrics: dict, warnings_dict: dict,
             for quarter in sorted(all_results.keys()):
                 for tag, res in all_results[quarter].items():
                     if res.get("etf") == etf and res.get("side") == side_label:
-                        active = set(res.get("active_features", []))
-                        etf_features[quarter_label(quarter)] = active
+                        etf_features[quarter_label(quarter)] = res
             if not etf_features:
                 continue
 
             all_feats = set()
-            for s in etf_features.values():
-                all_feats |= s
+            for res_q in etf_features.values():
+                active = set(res_q.get("active_features", res_q.get("selected_features", [])))
+                all_feats |= active
             if not all_feats:
                 continue
 
@@ -628,10 +638,19 @@ def generate_report(all_results: dict, eval_metrics: dict, warnings_dict: dict,
                 row = [f]
                 count = 0
                 for ql in qls:
-                    present = f in etf_features[ql]
-                    row.append("Y" if present else "-")
+                    res_q = etf_features[ql]
+                    active_feats = set(res_q.get("active_features", res_q.get("selected_features", [])))
+                    present = f in active_feats
                     if present:
+                        coef_mean = res_q.get("bagged_coef_mean", {}).get(f)
+                        coef_cv_std = res_q.get("bagged_coef_cv_std", {}).get(f)
+                        if coef_mean is not None and coef_cv_std is not None:
+                            row.append(f"{coef_mean:+.3f} ({coef_cv_std:.3f})")
+                        else:
+                            row.append("Y")
                         count += 1
+                    else:
+                        row.append("-")
                 row.append(f"{count}/{len(qls)}")
                 feat_counts[f] = count
                 L.append("| " + " | ".join(row) + " |")
