@@ -1,6 +1,6 @@
 # Day-Model Rolling Strategy Report
 
-Generated: 2026-07-10 18:13
+Generated: 2026-07-10 18:27
 Quarters: ['2024-03-01', '2024-06-01', '2024-09-01', '2024-12-01', '2025-03-01', '2025-06-01', '2025-09-01', '2025-12-01']
 Window: 6 years (rolling)
 Signal threshold: 90.0th percentile

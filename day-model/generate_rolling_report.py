@@ -33,6 +33,7 @@ sys.path.insert(0, str(ROOT))
 import numpy as np
 import pandas as pd
 import joblib
+from joblib import Parallel, delayed
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -120,6 +121,64 @@ def _load_features(etf: str, early: bool = False, _cache={}):
     df = df.sort_values("date").reset_index(drop=True)
     _cache[cache_key] = df
     return df
+
+
+# ============================================================
+# Unified model loading + prediction (computed once, reused everywhere)
+# ============================================================
+def _compute_model_predictions(tag: str, r: dict, early: bool = False) -> dict | None:
+    """Load model + scaler + features, compute full-history predictions.
+
+    Returns dict with model, sel_feats, preds, y (scaled x100), dates, oos_mask,
+    all_post_mask, etf, side, lb_date. Returns None on any failure.
+    """
+    etf = r.get("etf", "")
+    side = r.get("side", "single")
+    lb_date = r.get("lockbox_date", "")
+
+    model_path = ROLLING_MODELS_DIR / f"linear_{tag}.joblib"
+    scaler_path = ROLLING_MODELS_DIR / f"scaler_{tag}.joblib"
+    if not (model_path.exists() and scaler_path.exists()):
+        return None
+
+    df = _load_features(etf, early=early)
+    if df is None:
+        return None
+
+    try:
+        model = joblib.load(model_path)
+        scaler_meta = joblib.load(scaler_path)
+        sel_feats = scaler_meta["selected_features"]
+        scaler = scaler_meta["scaler"]
+        target_col = scaler_meta.get("target", TARGET)
+
+        X_df = df[sel_feats].ffill().fillna(df[sel_feats].median().fillna(0.0))
+        X = X_df.values.astype(np.float32)
+        X_scaled = scaler.transform(X)
+        preds = model.predict(X_scaled).astype(np.float64)
+
+        y = df[target_col].values.astype(np.float64) * 100.0
+        dates = df["date"].values
+
+        lb_ts = pd.Timestamp(lb_date)
+        oos_end = lb_ts + pd.DateOffset(months=3)
+        oos_mask = ((df["date"] >= lb_ts) & (df["date"] < oos_end)).values
+        all_post_mask = (df["date"] >= lb_ts).values
+
+        return {
+            "model": model,
+            "sel_feats": sel_feats,
+            "preds": preds,
+            "y": y,
+            "dates": dates,
+            "oos_mask": oos_mask,
+            "all_post_mask": all_post_mask,
+            "etf": etf,
+            "side": side,
+            "lb_date": lb_date,
+        }
+    except Exception:
+        return None
 
 
 # ============================================================
@@ -216,72 +275,43 @@ def simulate_strategy(pred_series: pd.Series, actual_returns: pd.Series,
 # ============================================================
 # Per-model evaluation
 # ============================================================
-def evaluate_model(tag: str, r: dict, signal_thr: float, cost_bps: float, early: bool = False) -> dict:
+def evaluate_model(tag: str, r: dict, signal_thr: float, cost_bps: float,
+                   early: bool = False, precomputed: dict | None = None) -> dict:
     """Load model, predict OOS, compute IC + strategy metrics. Returns enriched results."""
-    etf = r["etf"]
     side = r.get("side", "single")
-    lb_date = r.get("lockbox_date", "")
 
-    model_path = ROLLING_MODELS_DIR / f"linear_{tag}.joblib"
-    scaler_path = ROLLING_MODELS_DIR / f"scaler_{tag}.joblib"
+    if precomputed is None:
+        precomputed = _compute_model_predictions(tag, r, early=early)
+    if precomputed is None:
+        return {"error": f"missing model/scaler/features for {tag}"}
 
-    if not (model_path.exists() and scaler_path.exists()):
-        return {"error": f"missing model/scaler for {tag}"}
+    y = precomputed["y"]
+    preds = precomputed["preds"]
+    oos_mask = precomputed["oos_mask"]
 
-    df = _load_features(etf, early=early)
-    if df is None:
-        return {"error": f"missing features for {etf}"}
+    y_oos = y[oos_mask]
+    pred_oos = preds[oos_mask]
 
-    try:
-        model = joblib.load(model_path)
-        scaler_meta = joblib.load(scaler_path)
-        sel_feats = scaler_meta["selected_features"]
-        scaler = scaler_meta["scaler"]
-        target_col = scaler_meta.get("target", TARGET)
+    if len(y_oos) < 5:
+        return {"error": f"insufficient OOS data ({len(y_oos)} rows) for {tag}"}
 
-        # Predict all dates
-        X_df = df[sel_feats].ffill()
-        X_df = X_df.fillna(X_df.median().fillna(0.0))
-        X = X_df.values.astype(np.float32)
-        X_scaled = scaler.transform(X)
-        preds = model.predict(X_scaled).astype(np.float64)
+    # IC metrics
+    oos_ic = spearman_ic(y_oos, pred_oos)
+    oos_tail_ic = side_tail_ic(y_oos, pred_oos, side)
+    oos_mono = compute_decile_monotonicity(y_oos, pred_oos)
 
-        y = df[target_col].values.astype(np.float64)
-        y_scaled = y * 100.0  # match training target scaling
-        dates = df["date"].values
+    # Strategy simulation
+    pred_series = pd.Series(pred_oos, index=range(len(pred_oos)))
+    actual_series = pd.Series(y_oos, index=range(len(y_oos)))
+    strat = simulate_strategy(pred_series, actual_series, signal_thr, cost_bps, side)
 
-        # OOS window: lockbox to lockbox + 3 months
-        lb_ts = pd.Timestamp(lb_date)
-        oos_end = lb_ts + pd.DateOffset(months=3)
-        oos_mask = (df["date"] >= lb_ts) & (df["date"] < oos_end)
-
-        y_oos = y_scaled[oos_mask]
-        pred_oos = preds[oos_mask]
-        dates_oos = dates[oos_mask]
-
-        if len(y_oos) < 5:
-            return {"error": f"insufficient OOS data ({len(y_oos)} rows) for {tag}"}
-
-        # IC metrics
-        oos_ic = spearman_ic(y_oos, pred_oos)
-        oos_tail_ic = side_tail_ic(y_oos, pred_oos, side)
-        oos_mono = compute_decile_monotonicity(y_oos, pred_oos)
-
-        # Strategy simulation
-        pred_series = pd.Series(pred_oos, index=range(len(pred_oos)))
-        actual_series = pd.Series(y_oos, index=range(len(y_oos)))
-        strat = simulate_strategy(pred_series, actual_series, signal_thr, cost_bps, side)
-
-        return {
-            "oos_ic": oos_ic,
-            "oos_tail_ic": oos_tail_ic,
-            "oos_mono": oos_mono,
-            "n_oos": len(y_oos),
-            **{f"strat_{k}": v for k, v in strat.items()},
-        }
-    except Exception as ex:
-        import traceback
-        return {"error": f"{ex}\n{traceback.format_exc()}"}
+    return {
+        "oos_ic": oos_ic,
+        "oos_tail_ic": oos_tail_ic,
+        "oos_mono": oos_mono,
+        "n_oos": len(y_oos),
+        **{f"strat_{k}": v for k, v in strat.items()},
+    }
 
 
 # ============================================================
@@ -328,7 +358,8 @@ def evaluate_warnings(all_results: dict) -> dict:
 # ============================================================
 # Diagnostic plots (per-quarter subdirectories)
 # ============================================================
-def render_quarter_diagnostics(tag: str, r: dict, quarter_dir: Path, early: bool = False) -> str | None:
+def render_quarter_diagnostics(tag: str, r: dict, quarter_dir: Path,
+                               early: bool = False, precomputed: dict | None = None) -> str | None:
     """Render 15-panel diagnostic figure for one rolling model. Returns filename or None."""
     etf = r["etf"]
     side = r.get("side", "single")
@@ -336,45 +367,34 @@ def render_quarter_diagnostics(tag: str, r: dict, quarter_dir: Path, early: bool
 
     model_path = ROLLING_MODELS_DIR / f"linear_{tag}.joblib"
     scaler_path = ROLLING_MODELS_DIR / f"scaler_{tag}.joblib"
-    if not (model_path.exists() and scaler_path.exists()):
-        return None
 
-    if early:
-        out_dir = quarter_dir / "early"
-    else:
-        out_dir = quarter_dir
+    out_dir = quarter_dir / "early" if early else quarter_dir
     fname = f"diagnostics_{tag.replace('ETF', '')}.png"
     out_path = out_dir / fname
-    
-    if out_path.exists() and out_path.stat().st_mtime > model_path.stat().st_mtime and out_path.stat().st_mtime > scaler_path.stat().st_mtime:
+
+    # Skip if plot already up-to-date (check before loading anything)
+    if (model_path.exists() and scaler_path.exists()
+            and out_path.exists()
+            and out_path.stat().st_mtime > model_path.stat().st_mtime
+            and out_path.stat().st_mtime > scaler_path.stat().st_mtime):
         return f"early/{fname}" if early else fname
 
-    df = _load_features(etf, early=early)
-    if df is None:
+    if precomputed is None:
+        precomputed = _compute_model_predictions(tag, r, early=early)
+    if precomputed is None:
         return None
 
     try:
-        model = joblib.load(model_path)
-        scaler_meta = joblib.load(scaler_path)
-        sel_feats = scaler_meta["selected_features"]
-        scaler = scaler_meta["scaler"]
-        target_col = scaler_meta.get("target", TARGET)
-
-        X_df = df[sel_feats].ffill().fillna(df[sel_feats].median().fillna(0.0))
-        X = X_df.values.astype(np.float32)
-        X_scaled = scaler.transform(X)
-        preds = model.predict(X_scaled).astype(np.float64)
-
-        y = df[target_col].values.astype(np.float64) * 100.0
-        dates = df["date"].values
-
-        lb_ts = pd.Timestamp(lb_date)
-        oos_end = lb_ts + pd.DateOffset(months=3)
-        oos_mask = (df["date"] >= lb_ts) & (df["date"] < oos_end)
-        all_post = df["date"] >= lb_ts
+        model = precomputed["model"]
+        sel_feats = precomputed["sel_feats"]
+        preds = precomputed["preds"]
+        y = precomputed["y"]
+        dates = precomputed["dates"]
+        oos_mask = precomputed["oos_mask"]
+        all_post_mask = precomputed["all_post_mask"]
 
         y_oos, pred_oos, dates_oos = y[oos_mask], preds[oos_mask], dates[oos_mask]
-        y_post, pred_post = y[all_post], preds[all_post]
+        y_post, pred_post = y[all_post_mask], preds[all_post_mask]
 
         if len(y_oos) < 5:
             return None
@@ -406,13 +426,8 @@ def render_quarter_diagnostics(tag: str, r: dict, quarter_dir: Path, early: bool
         _render_precision_at_k(ax[14], y_oos, pred_oos, side)
 
         fig.tight_layout(rect=(0, 0, 1, 0.985))
-        if early:
-            out_dir = quarter_dir / "early"
-        else:
-            out_dir = quarter_dir
         out_dir.mkdir(parents=True, exist_ok=True)
-        fname = f"diagnostics_{tag.replace('ETF', '')}.png"
-        fig.savefig(out_dir / fname, dpi=110)
+        fig.savefig(out_path, dpi=110)
         plt.close(fig)
         return f"early/{fname}" if early else fname
     except Exception as ex:
@@ -424,7 +439,8 @@ def render_quarter_diagnostics(tag: str, r: dict, quarter_dir: Path, early: bool
 # Report generator
 # ============================================================
 def generate_report(all_results: dict, eval_metrics: dict, warnings_dict: dict,
-                    signal_thr: float, cost_bps: float, early: bool = False):
+                    signal_thr: float, cost_bps: float, early: bool = False,
+                    pred_data: dict | None = None):
     """Generate comprehensive ROLLING_REPORT.md."""
     L = []
     L.append("# Day-Model Rolling Strategy Report")
@@ -487,7 +503,10 @@ def generate_report(all_results: dict, eval_metrics: dict, warnings_dict: dict,
                 continue
             # Reconstruct daily returns for aggregation
             try:
-                daily_rets = _compute_daily_returns(tag, res, signal_thr, cost_bps, side, early=early)
+                daily_rets = _compute_daily_returns(
+                    tag, res, signal_thr, cost_bps, side,
+                    early=early,
+                    precomputed=pred_data.get(tag) if pred_data else None)
                 for dt, ret in daily_rets.items():
                     port_daily.setdefault(dt, []).append(ret)
             except Exception:
@@ -676,36 +695,22 @@ def generate_report(all_results: dict, eval_metrics: dict, warnings_dict: dict,
 
 
 def _compute_daily_returns(tag: str, r: dict, signal_thr: float, cost_bps: float,
-                           side: str, early: bool = False) -> dict:
+                           side: str, early: bool = False,
+                           precomputed: dict | None = None) -> dict:
     """Reconstruct daily returns for portfolio aggregation. Returns {date: return}."""
-    etf = r["etf"]
-    lb_date = r.get("lockbox_date", "")
-    model_path = ROLLING_MODELS_DIR / f"linear_{tag}.joblib"
-    scaler_path = ROLLING_MODELS_DIR / f"scaler_{tag}.joblib"
-
-    df = _load_features(etf, early=early)
-    if df is None or not (model_path.exists() and scaler_path.exists()):
+    if precomputed is None:
+        precomputed = _compute_model_predictions(tag, r, early=early)
+    if precomputed is None:
         return {}
 
-    model = joblib.load(model_path)
-    scaler_meta = joblib.load(scaler_path)
-    sel_feats = scaler_meta["selected_features"]
-    scaler = scaler_meta["scaler"]
-    target_col = scaler_meta.get("target", TARGET)
+    oos_mask = precomputed["oos_mask"]
+    dates = precomputed["dates"]
+    preds = precomputed["preds"]
+    y = precomputed["y"]
 
-    X_df = df[sel_feats].ffill().fillna(df[sel_feats].median().fillna(0.0))
-    X = X_df.values.astype(np.float32)
-    preds = model.predict(scaler.transform(X)).astype(np.float64)
-
-    y = df[target_col].values.astype(np.float64) * 100.0
-    dates = pd.to_datetime(df["date"])
-
-    lb_ts = pd.Timestamp(lb_date)
-    oos_end = lb_ts + pd.DateOffset(months=3)
-    oos_mask = (dates >= lb_ts) & (dates < oos_end)
-
-    pred_oos = pd.Series(preds[oos_mask], index=dates[oos_mask])
-    y_oos = pd.Series(y[oos_mask], index=dates[oos_mask])
+    oos_dates = pd.to_datetime(dates[oos_mask])
+    pred_oos = pd.Series(preds[oos_mask], index=oos_dates)
+    y_oos = pd.Series(y[oos_mask], index=oos_dates)
 
     rank = pd.Series(pred_oos.values, index=pred_oos.index).rank(pct=True)
     thr = signal_thr / 100.0
@@ -778,6 +783,19 @@ def main():
     total_models = sum(len(v) for v in all_results.values())
     print(f"Loaded {total_models} models across {len(all_results)} quarters.")
 
+    # 0. Precompute model predictions once (eliminates triple-loading redundancy)
+    print("\nPrecomputing model predictions (single pass)...")
+    pred_data = {}
+    all_tags = []
+    for quarter in sorted(all_results.keys()):
+        for tag in sorted(all_results[quarter].keys()):
+            r = all_results[quarter][tag]
+            data = _compute_model_predictions(tag, r, early=args.early)
+            if data is not None:
+                pred_data[tag] = data
+            all_tags.append((quarter, tag))
+    print(f"  Predictions cached for {len(pred_data)}/{len(all_tags)} models.")
+
     # 1. Evaluate each model (IC + strategy returns)
     print("\nEvaluating models (IC + strategy simulation)...")
     eval_metrics = {}
@@ -785,7 +803,8 @@ def main():
         eval_metrics[quarter] = {}
         for tag in sorted(all_results[quarter].keys()):
             res = all_results[quarter][tag]
-            ev = evaluate_model(tag, res, args.thr, args.cost_bps, early=args.early)
+            ev = evaluate_model(tag, res, args.thr, args.cost_bps,
+                                early=args.early, precomputed=pred_data.get(tag))
             eval_metrics[quarter][tag] = ev
             if "error" not in ev:
                 nt = ev.get("strat_n_trades", 0)
@@ -802,23 +821,56 @@ def main():
     n_alert = sum(1 for v in warnings_dict.values() if v["status"] == "ALERT")
     print(f"  WARNING: {n_warn} | ALERT: {n_alert}")
 
-    # 3. Diagnostic plots
+    # 3. Diagnostic plots (parallelized via joblib loky backend)
     if not args.no_plots:
         ROLLING_PLOTS_DIR.mkdir(parents=True, exist_ok=True)
-        print("\nGenerating diagnostic plots...")
+
+        # Build task list: (tag, result, quarter_dir, quarter_label)
+        plot_tasks = []
         for quarter in sorted(all_results.keys()):
             ql = quarter_label(quarter)
             qdir = ROLLING_PLOTS_DIR / ql
-            qdir.mkdir(parents=True, exist_ok=True)
             for tag in sorted(all_results[quarter].keys()):
-                fname = render_quarter_diagnostics(tag, all_results[quarter][tag], qdir, early=args.early)
-                if fname:
-                    print(f"  {ql}/{fname}")
+                plot_tasks.append((tag, all_results[quarter][tag], qdir, ql))
+
+        n_jobs = args.jobs if args.jobs > 0 else min(
+            len(plot_tasks), max(1, (os.cpu_count() or 4) - 1))
+
+        if n_jobs > 1 and len(plot_tasks) > 1:
+            print(f"\nGenerating {len(plot_tasks)} diagnostic plots ({n_jobs} parallel workers)...")
+            try:
+                plot_results = Parallel(n_jobs=n_jobs, backend="loky")(
+                    delayed(render_quarter_diagnostics)(
+                        tag, r, qdir, early=args.early,
+                        precomputed=pred_data.get(tag))
+                    for tag, r, qdir, ql in plot_tasks
+                )
+            except Exception as e:
+                print(f"  [WARNING] Parallel plot generation failed ({e}); falling back to sequential.")
+                plot_results = [
+                    render_quarter_diagnostics(
+                        tag, r, qdir, early=args.early,
+                        precomputed=pred_data.get(tag))
+                    for tag, r, qdir, ql in plot_tasks
+                ]
+        else:
+            print(f"\nGenerating {len(plot_tasks)} diagnostic plots (sequential)...")
+            plot_results = [
+                render_quarter_diagnostics(
+                    tag, r, qdir, early=args.early,
+                    precomputed=pred_data.get(tag))
+                for tag, r, qdir, ql in plot_tasks
+            ]
+
+        for (tag, r, qdir, ql), fname in zip(plot_tasks, plot_results):
+            if fname:
+                print(f"  {ql}/{fname}")
     else:
         print("\nSkipping plots (--no-plots).")
 
     # 4. Generate report
-    generate_report(all_results, eval_metrics, warnings_dict, args.thr, args.cost_bps, early=args.early)
+    generate_report(all_results, eval_metrics, warnings_dict, args.thr, args.cost_bps,
+                    early=args.early, pred_data=pred_data)
 
 
 if __name__ == "__main__":
