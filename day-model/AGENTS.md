@@ -26,7 +26,7 @@ python3 day-model/generate_report.py (--early)
 python3 day-model/backtest_simulator.py --etf all (--early) (--type {ETF,Future})
 ```
 
-(--early : Outputs will be saved with `_early` suffixes ）
+(--early : Outputs will be saved with `_early` suffixes)
 ### Rolling Model Training (Quarterly Retraining)
 
 Trains 8 quarterly rolling models (2024Q1-Q4 + 2025Q1-Q4) per ETF, each using a 6-year rolling window with relative validation blocks.
