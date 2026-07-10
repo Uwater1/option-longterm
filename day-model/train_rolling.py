@@ -107,11 +107,21 @@ def evaluate_warnings(all_results: dict) -> dict:
 # ============================================================
 # Main
 # ============================================================
-def _check_model_exists(etf: str, side: str, lb_date: str, early: bool = False) -> bool:
+def _check_model_exists(etf: str, side: str, lb_date: str, early: bool = False,
+                        target_transform: str = "none", post_hoc_calibrate: bool = False,
+                        sharpe_objective: bool = False) -> bool:
     """Check if rolling model artifacts already exist."""
     tag = rolling_tag(etf, side, lb_date)
     if early:
         tag += "_early"
+    tag_suffix = ""
+    if target_transform != "none":
+        tag_suffix += f"_{target_transform}"
+    if post_hoc_calibrate:
+        tag_suffix += "_calibrated"
+    if sharpe_objective:
+        tag_suffix += "_sharpe"
+    tag += tag_suffix
     model_path = ROLLING_MODELS_DIR / f"linear_{tag}.joblib"
     scaler_path = ROLLING_MODELS_DIR / f"scaler_{tag}.joblib"
     result_path = ROLLING_DATA_DIR / f"results_{tag}.json"
@@ -161,6 +171,7 @@ def _train_single(etf: str, side: str, lb_date: str, args, skip_step1: bool,
             target_transform=args.target_transform,
             post_hoc_calibrate=args.post_hoc_calibrate,
             early=getattr(args, "earlyNoGood", False),
+            sharpe_objective=getattr(args, "sharpe_objective", False),
         )
         elapsed = time.perf_counter() - t0
         print(f"  [{tag}] elapsed {elapsed:.1f}s")
@@ -202,6 +213,8 @@ def main():
                     help="Enable post-hoc Spearman IC calibration of active coefficients")
     ap.add_argument("--earlyNoGood", action="store_true",
                     help="Predict early window (10:00 to 13:05, exiting at close of 13:00~13:05 bar) [ABORTED - DO NOT RUN]")
+    ap.add_argument("--sharpe-objective", action="store_true", dest="sharpe_objective", default=False,
+                    help="Optimizes Optuna hyperparameters using validation set tail-Sharpe objective instead of Tail IC. Set to False by default, use --sharpe-objective to enable.")
     args = ap.parse_args()
 
     # Resolve ETFs
@@ -268,7 +281,7 @@ def main():
         skip_count = 0
         new_quarters = []
         for lb_date in quarters:
-            all_exist = all(_check_model_exists(e, s, lb_date, early=args.earlyNoGood) for e in etfs for s in sides)
+            all_exist = all(_check_model_exists(e, s, lb_date, early=args.earlyNoGood, target_transform=args.target_transform, post_hoc_calibrate=args.post_hoc_calibrate, sharpe_objective=args.sharpe_objective) for e in etfs for s in sides)
             if all_exist:
                 skip_count += 1
             else:

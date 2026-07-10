@@ -333,17 +333,35 @@ Multi-ETF validation (all 5 ETFs x 3 sides, 100 Optuna trials)
 - **Parallelism**: Default `--optuna-jobs 1` for deterministic trial ordering. Use `--optuna-jobs N` for faster wall time when reproducibility is not critical.
 - **588000ETF special case**: Already overrides FDR to 0.25 and has a separate VIF threshold (5.0 vs 10.0). Track separately in all sweeps.
 
-### 8.6 Target Transformation Analysis & Decision (July 2026)
+### 8.6 Target Transformation & Objective Function Calibrations (July 2026)
 
-- Tested rank-transformation of target returns:
-  - `none` (default): Minimize Huber loss directly on raw return targets.
-  - `rank`: Minimize Huber loss on uniform-spaced target ranks (Pearson-on-ranks).
-  - `gauss`: Map target ranks to standard normal quantiles to preserve smooth Gaussian tails.
-- **Empirical Results**:
-  - *Validation Folds*: Ranks/Gauss transforms improve historical Tail IC metrics (Inner Val Tail IC / Outer Val Tail IC) by standardizing target variance and forcing the optimizer to focus strictly on ranking order.
-  - *OOS Backtest Simulator*: True OOS portfolio performance (2024-03 onwards) drops significantly under target transformations:
-    - Baseline (`none`): **+1908 bps** P&L, **1.22 Sharpe**.
-    - Rank (`rank`): **+995 bps** P&L, **0.66 Sharpe**.
-    - Gauss (`gauss`): **+122 bps** P&L, **0.09 Sharpe**.
-- **Conclusion**: Discarding target magnitude scale entirely harms model capacity to separate high-conviction outlier days from normal noise. **Raw returns (`none`) remain the default target representation.**
+- **Target Transformations**:
+  - `none` (Default): Minimizes Huber loss directly on raw target returns.
+  - `gauss`: Maps target ranks to standard normal quantiles.
+    - *Why it failed*: By standardizing target ranks to standard normal quantiles, it standardizes variance and spreads scores uniformly. This flattens the prediction landscape and destroys the selectivity of the rolling percentile entry threshold (which expects highly positive/negative outliers). Consequently, it trades almost every day without selectivity (365 active days vs 347 baseline), over-trading noise and destroying returns (+121.7 bps, 0.0870 Sharpe).
+- **Objective Function Optimization**:
+  - `Val Tail Sharpe` (V5): Annualized Sharpe ratio of winsorized active tail returns. Block-bootstrapped over validation blocks with standard error soft penalty.
+  - `Win Rate Constraint` (M9): Enforced daily tail win rate after 15 bps transaction cost must be $\ge 45\%$ across all cross-validation folds.
+- **Audited Empirical Results (Static OOS Backtest 2024-03 onwards)**:
+  - **Baseline (None - Raw returns)**: Cumulative P&L `+1908.5 bps`, Annual Sharpe `1.2204`, MaxDD `949.5 bps`.
+  - **Sharpe-Objective + Win Rate**: Cumulative P&L `+1840.8 bps`, Annual Sharpe `1.2215`, MaxDD `970.8 bps`.
+  - **Metadispersion Block Bootstrap CI (Delta: Sharpe - Baseline)**:
+    - *P&L Delta 95% CI*: `[-754.9, +663.6] bps`
+    - *Sharpe Delta 95% CI*: `[-0.542, +0.536]`
+    - *MaxDD Delta 95% CI*: `[-416.5, +433.4] bps` (drawdown delta is statistically zero)
+  - **Cross-ETF Correlation**:
+    - *Unconditional*: Mean correlation is `0.3938` (Sharpe) vs. `0.3968` (Baseline).
+    - *Conditional (Bottom 20% Portfolio Return Days)*: Mean correlation is `-0.0129` (Sharpe, N=69) vs. `-0.0447` (Baseline, N=70). Tail returns are nearly uncorrelated, confirming bad days are driven by idiosyncratic asset-level drawdowns rather than synchronous market-wide crashes.
+- **Conclusion**: The block-bootstrapped validation tail Sharpe objective does not show a statistically significant improvement at the portfolio level (CIs for P&L, Sharpe, and MaxDD all straddle zero). The differences across individual ETFs represent variance reallocation across a small sample rather than a structural skill uplift. Therefore, **raw returns (`none`) target transform and the Tail IC validation objective remain the default configurations (`--target-transform none` and `--sharpe-objective` default to `False`).**
+
+### 8.7 Meta-Level Configuration Trials Log (July 2026)
+
+To prevent future duplicate search loops and re-litigation of null results, the following table tracks configurations tested at the pipeline level:
+
+| Order | Configuration | Proposed By | Key Metric (OOS Sharpe) | Status / Verdict |
+| :---: | :--- | :---: | :---: | :--- |
+| 1 | Baseline (none transform, Tail IC) | Standard Baseline | 1.2204 | **Active Default**. Benchmark to beat. |
+| 2 | Uniform Rank transform (`rank`) | Research suggestion | 0.6600 | **Killed**. Magnitude loss degrades selectivity. |
+| 3 | Normal Rank transform (`gauss`) | Research suggestion | 0.0870 | **Killed**. Variance standardization causes over-trading of noise. |
+| 4 | Sharpe Objective + Win Rate (on `none`) | Research suggestion | 1.2215 | **Killed**. Statistically identical to Baseline (95% CI straddles zero). |
 

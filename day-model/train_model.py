@@ -85,7 +85,7 @@ VAL_BLOCKS_OUTER = [
     ("2023-07-01", "2023-10-01"),
 ]
 VAL_BLOCKS = VAL_BLOCKS_INNER + VAL_BLOCKS_OUTER
-PILOT_N_TRIALS = 50
+PILOT_N_TRIALS = 100
 PILOT_SEED = 42
 STABILITY_B = 400      
 STABILITY_PI = 0.50   
@@ -154,9 +154,9 @@ def rolling_tag(etf_name: str, side: str, lockbox_date: str) -> str:
 # Note: CV fold metrics (M1..M6 in calculate_yearly_metrics) stay two-sided for all sides;
 # only the validation objective (V2) and the lockbox Tail IC are side-aware.
 SIDE_CONFIG = {
-    "single": {"tail_def": "two_sided", "weights": [0.40, 0.40, 0.15, 0.05]},
-    "long":   {"tail_def": "top_only",  "weights": [0.35, 0.50, 0.15, 0.00]},
-    "short":  {"tail_def": "bot_only",  "weights": [0.35, 0.50, 0.15, 0.00]},
+    "single": {"tail_def": "two_sided", "weights": [0.10, 0.35, 0.10, 0.05, 0.40]},
+    "long":   {"tail_def": "top_only",  "weights": [0.10, 0.40, 0.10, 0.00, 0.40]},
+    "short":  {"tail_def": "bot_only",  "weights": [0.10, 0.40, 0.10, 0.00, 0.40]},
 }
 
 # Sample-weighting scale_data_with_weights can be done without a full rescale
@@ -331,6 +331,58 @@ def side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str = "single") -
         order = np.argsort(y_pred, kind="quicksort")
         idx = np.concatenate([order[:n_tail], order[-n_tail:]])
     return _spearman_from_arrays(y_true[idx], y_pred[idx])
+
+
+def compute_val_tail_sharpe(y_true: np.ndarray, y_pred: np.ndarray, side: str = "single") -> float:
+    """Calculate the annualized Sharpe ratio of winsorized active tail returns.
+
+    - "single": Long top 10%, Short bottom 10%.
+    - "long": Long top 15% (P85).
+    - "short": Short bottom 15% (P15).
+    Transaction cost of 15 bps (0.15% since y_true is scaled by 100) is paid per active day.
+    """
+    y_true = np.asarray(y_true, dtype=np.float64)
+    y_pred = np.asarray(y_pred, dtype=np.float64)
+    n = len(y_pred)
+    if n < 10:
+        return 0.0
+
+    direction = np.zeros(n, dtype=np.float64)
+    if side == "single":
+        p90 = np.percentile(y_pred, 90.0)
+        p10 = np.percentile(y_pred, 10.0)
+        direction[y_pred >= p90] = 1.0
+        direction[y_pred <= p10] = -1.0
+    elif side == "long":
+        p85 = np.percentile(y_pred, 85.0)
+        direction[y_pred >= p85] = 1.0
+    elif side == "short":
+        p15 = np.percentile(y_pred, 15.0)
+        direction[y_pred <= p15] = -1.0
+
+    # Filter for active days
+    active_mask = direction != 0.0
+    if not np.any(active_mask):
+        return 0.0
+
+    # Target is scaled by 100.0, so 15 bps cost is 0.15
+    cost = 0.15
+    tail_returns = direction[active_mask] * y_true[active_mask] - cost
+
+    n_active = len(tail_returns)
+    if n_active < 2:
+        return 0.0
+
+    # Winsorize lightly: 1-99% clip
+    p1 = np.percentile(tail_returns, 1.0)
+    p99 = np.percentile(tail_returns, 99.0)
+    clipped = np.clip(tail_returns, p1, p99)
+
+    mean_ret = np.mean(clipped)
+    std_ret = np.std(clipped)
+    if std_ret < 1e-8:
+        return 0.0
+    return float(mean_ret / std_ret * np.sqrt(244.0))
 
 
 def compute_decile_monotonicity(y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -784,6 +836,7 @@ def calculate_yearly_metrics(year_groups, y_true: np.ndarray, y_pred: np.ndarray
     y_tail_hits = np.empty(len(year_groups))
     y_monos = np.empty(len(year_groups))
     y_spreads = np.empty(len(year_groups))
+    y_tail_win_rates = np.empty(len(year_groups))
 
     for i, (_year, idx) in enumerate(year_groups):
         y_t = y_true[idx]
@@ -797,6 +850,29 @@ def calculate_yearly_metrics(year_groups, y_true: np.ndarray, y_pred: np.ndarray
         y_monos[i] = compute_decile_monotonicity(y_t, y_p)
         y_spreads[i] = compute_top_bottom_spread(y_t, y_p)
 
+        # Compute tail win rate for this year (after 15 bps cost = 0.15)
+        n_y = len(y_p)
+        pct = 0.15 if side in ["long", "short"] else 0.10
+        n_tail = max(5, int(n_y * pct))
+        if side == "single":
+            order = np.argsort(y_p)
+            long_idx = order[-n_tail:]
+            short_idx = order[:n_tail]
+            rets = np.concatenate([y_t[long_idx] - 0.15, -y_t[short_idx] - 0.15])
+        elif side == "long":
+            order = np.argsort(y_p)
+            long_idx = order[-n_tail:]
+            rets = y_t[long_idx] - 0.15
+        else: # short
+            order = np.argsort(y_p)
+            short_idx = order[:n_tail]
+            rets = -y_t[short_idx] - 0.15
+
+        if len(rets) > 0:
+            y_tail_win_rates[i] = float(np.mean(rets > 0))
+        else:
+            y_tail_win_rates[i] = 0.5
+
     mean_tail_ic = float(y_tail_ics.mean())
     std_tail_ic = float(y_tail_ics.std())
 
@@ -808,8 +884,9 @@ def calculate_yearly_metrics(year_groups, y_true: np.ndarray, y_pred: np.ndarray
     m6 = float(y_spreads.mean())                  # Top-Bottom Spread
     m7 = -float(k_features) / (ess / ACTIVE_FEATURE_ESS_DIVISOR) if ess > 0.0 else -float(k_features)  # Sparsity penalty tied to ESS
     m8 = -coef_norm                               # Coefficient Bloat (penalized)
+    m9 = float(y_tail_win_rates.mean())           # Yearly daily win rate after cost
 
-    raw_metrics = [m1, m2, m3, m4, m5, m6, m7, m8]
+    raw_metrics = [m1, m2, m3, m4, m5, m6, m7, m8, m9]
     return raw_metrics, [_y for _y, _ in year_groups], y_tail_ics
 
 
@@ -824,6 +901,28 @@ def compute_deflated_metric(values: list, best_value: float, rho: float = 0.5) -
     std_val = np.std(values)
     overfit_bias = std_val * np.sqrt(2.0 * np.log(n)) * np.sqrt(1.0 - rho)
     return float(best_value - overfit_bias)
+
+
+def compute_dynamic_rho(trial_observations: list) -> float:
+    """Compute the average off-diagonal correlation among trials.
+
+    trial_observations: list of 1D arrays/lists, each representing observations for a trial.
+    """
+    if len(trial_observations) <= 1:
+        return 0.5
+    matrix = np.array(trial_observations, dtype=np.float64) # shape (N_trials, M)
+    stds = np.std(matrix, axis=1)
+    valid_mask = stds > 1e-8
+    matrix = matrix[valid_mask]
+    if matrix.shape[0] <= 1:
+        return 0.5
+
+    corr = np.corrcoef(matrix)
+    np.fill_diagonal(corr, np.nan)
+    mean_corr = np.nanmean(corr)
+    if np.isnan(mean_corr):
+        return 0.5
+    return float(np.clip(mean_corr, 0.0, 0.99))
 
 
 def compute_model_confidence_set(oos_matrix: np.ndarray, alpha: float = 0.10) -> list:
@@ -1194,7 +1293,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
               skip_step1: bool = True, skip_step2: bool = False,
               lockbox_date: str = LOCKBOX_DATE, window_years: int = 0,
               rolling: bool = False, target_transform: str = "none",
-              post_hoc_calibrate: bool = False, early: bool = False):
+              post_hoc_calibrate: bool = False, early: bool = False,
+              sharpe_objective: bool = False):
     print(f"\n" + "=" * 80)
     print(f"Train {etf_name} (Side: {side}) | Early: {early}")
     print(f"Lockbox: {lockbox_date} | Window: {window_years if window_years > 0 else 'all'} years | Rolling: {rolling}")
@@ -1255,6 +1355,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         tag_suffix += f"_{target_transform}"
     if post_hoc_calibrate:
         tag_suffix += "_calibrated"
+    if sharpe_objective:
+        tag_suffix += "_sharpe"
     tag += tag_suffix
     pilot_db_path = DATA_DIR / f"optuna_pilot_{tag}.log"
     main_db_path = DATA_DIR / f"optuna_main_{tag}.log"
@@ -1680,20 +1782,18 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
         # Retrieve side-specific fold metrics to enforce fold sign-consistency constraints
         if side != "single":
-            _, _, side_y_tail_ics = calculate_yearly_metrics(
+            side_metrics, _, side_y_tail_ics = calculate_yearly_metrics(
                 year_groups, y_sel_train, oof_preds, active_k, coef_norm, ess=ess, side=side)
         else:
+            side_metrics = None
             side_y_tail_ics = None
 
         # Predict on inner selection validation block and compute validation metrics
         val_preds = model_temp.predict(X_sel_val_inner_scaled_base)
         val_ic = spearman_ic(y_sel_val_inner, val_preds)
 
-        # Side-aware Tail IC (V2): top-only for long, bot-only for short,
-        # two-sided for legacy single. CV fold M1..M6 stay two-sided.
+        # V2: Val Tail IC (block-bootstrapped)
         val_tail_ic = side_tail_ic(y_sel_val_inner, val_preds, side)
-
-        # Bootstrapped Tail IC calculation for inner validation set (when side != "single")
         if side != "single":
             boot_tail_ics = []
             n_months = len(val_inner_month_indices)
@@ -1702,23 +1802,37 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 boot_months = rng_boot.choice(n_months, size=n_months, replace=True)
                 boot_idx = np.concatenate([val_inner_month_indices[m] for m in boot_months])
                 boot_tail_ics.append(side_tail_ic(y_sel_val_inner[boot_idx], val_preds[boot_idx], side))
-            
             boot_tail_ics = np.array(boot_tail_ics)
             val_tail_ic_std = float(boot_tail_ics.std())
-            # Soft penalty: subtract 1.0 * std from raw val_tail_ic
             val_tail_ic_adj = val_tail_ic - 1.0 * val_tail_ic_std
         else:
             val_tail_ic_adj = val_tail_ic
 
+        # V5: Val Tail Sharpe (block-bootstrapped)
+        val_tail_sharpe = compute_val_tail_sharpe(y_sel_val_inner, val_preds, side)
+        if side != "single":
+            boot_tail_sharpes = []
+            n_months = len(val_inner_month_indices)
+            rng_boot2 = np.random.default_rng(PILOT_SEED)
+            for _ in range(100):
+                boot_months = rng_boot2.choice(n_months, size=n_months, replace=True)
+                boot_idx = np.concatenate([val_inner_month_indices[m] for m in boot_months])
+                boot_tail_sharpes.append(compute_val_tail_sharpe(y_sel_val_inner[boot_idx], val_preds[boot_idx], side))
+            boot_tail_sharpes = np.array(boot_tail_sharpes)
+            val_tail_sharpe_std = float(boot_tail_sharpes.std())
+            val_tail_sharpe_adj = val_tail_sharpe - 1.0 * val_tail_sharpe_std
+        else:
+            val_tail_sharpe_adj = val_tail_sharpe
+
         val_mono = compute_decile_monotonicity(y_sel_val_inner, val_preds)
         val_spread = compute_top_bottom_spread(y_sel_val_inner, val_preds)
 
-        val_metrics = [val_ic, val_tail_ic_adj, val_mono, val_spread]
+        val_metrics = [val_ic, val_tail_ic_adj, val_mono, val_spread, val_tail_sharpe_adj]
 
-        return raw_metrics, val_metrics, model_temp, scaler_init, cv_is_ics, cv_oos_ics, side_y_tail_ics, reg_kappa, raw_X_cond
+        return raw_metrics, val_metrics, model_temp, scaler_init, cv_is_ics, cv_oos_ics, side_y_tail_ics, reg_kappa, raw_X_cond, side_metrics
 
     # ── Pilot calibration cache ───────────────────────────────────────
-    # Pilot val_metrics (V2 Tail IC) are side-aware for `long`/`short`,
+    # Pilot val_metrics (V2 Tail IC or Sharpe) are side-aware for `long`/`short`,
     # so each side needs its own pilot medians/MADs. To preserve the
     # existing single-side cache (and thus identical single-side results),
     # the side tag is prepended to the cache key ONLY when side != "single".
@@ -1727,7 +1841,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "v17_unified", etf_name, len(FEATURES), int(parquet_mtime),
         tuple(int(i) for i in stability_selected_idx),
         tuple(VAL_BLOCKS), TARGET, PILOT_N_TRIALS, PILOT_SEED,
-        target_transform, post_hoc_calibrate, early
+        target_transform, post_hoc_calibrate, early, sharpe_objective
     ]
     if side != "single":
         pilot_key = ["v17_unified_side", side] + pilot_key
@@ -1856,7 +1970,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     main_storage = JournalStorage(JournalFileBackend(str(main_db_path)))
     
     def constraints_func(trial):
-        return trial.user_attrs.get("constraints", [1e9] * 10)
+        return trial.user_attrs.get("constraints", [1e9] * 12)
 
     sampler = optuna.samplers.TPESampler(
         seed=PILOT_SEED + 1,
@@ -1897,11 +2011,12 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             side_y_tail_ics = res[6]
             reg_kappa = res[7]
             raw_X_cond = res[8]
+            side_metrics = res[9]
             SAFE_KAPPA = 40.0 * raw_X_cond
             HARD_KAPPA = 10.0 * SAFE_KAPPA
 
             # Extract metrics for kill switches (CV folds)
-            m1, m2, m3, m4, m5, m6, m7, m8 = raw_metrics
+            m1, m2, m3, m4, m5, m6, m7, m8, m9 = raw_metrics
 
             # Calculate Kish ESS percentage on selection train subset
             w_temp = compute_sample_weights(y_sel_train, k_weight)
@@ -1931,9 +2046,11 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             if side != "single" and side_y_tail_ics is not None:
                 side_m2 = float(side_y_tail_ics.mean())
                 side_m3 = float((side_y_tail_ics > 0).mean())
+                side_m9 = float(side_metrics[8]) if side_metrics is not None else 0.5
             else:
                 side_m2 = 0.0
                 side_m3 = 0.0
+                side_m9 = 0.5
 
             # Hard Constraints / Kill Switches (on CV folds to ensure training stability):
             # Refactored to signed margins for TPESampler constraints_func
@@ -1949,7 +2066,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                     0.0,
                     0.0 - side_m2 if side != "single" else 0.0,
                     0.50 - side_m3 if side != "single" else 0.0,
-                    reg_kappa - HARD_KAPPA
+                    reg_kappa - HARD_KAPPA,
+                    0.45 - m9,
+                    0.45 - side_m9 if side != "single" else 0.0
                 ]
             else:
                 constraints = [
@@ -1962,7 +2081,9 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                     float(min_active_features - active_k),
                     0.0 - side_m2 if side != "single" else 0.0,
                     0.50 - side_m3 if side != "single" else 0.0,
-                    reg_kappa - HARD_KAPPA
+                    reg_kappa - HARD_KAPPA,
+                    0.45 - m9,
+                    0.45 - side_m9 if side != "single" else 0.0
                 ]
 
             pruning_reasons = []
@@ -1987,6 +2108,11 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                     pruning_reasons.append(f"Side-specific Hit Rate ({side_m3:.2%} < 50%)")
             if constraints[9] > 0:
                 pruning_reasons.append(f"Regularized condition number ({reg_kappa:.2f}) exceeds threshold ({HARD_KAPPA:.2f})")
+            if constraints[10] > 0:
+                pruning_reasons.append(f"Yearly Daily Win Rate ({m9:.2%} < 45%)")
+            if side != "single":
+                if constraints[11] > 0:
+                    pruning_reasons.append(f"Side-specific Yearly Daily Win Rate ({side_m9:.2%} < 45%)")
 
             trial.set_user_attr("constraints", constraints)
             trial.set_user_attr("pruned_reasons", pruning_reasons)
@@ -2008,14 +2134,14 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
 
             # Normalize selection validation metrics
             norm_val_metrics = []
-            for i in range(4):
+            for i in range(5):
                 n_m = (val_metrics[i] - val_medians[i]) / (val_mads[i] + 1e-10)
                 norm_val_metrics.append(n_m)
 
             # Compute weighted sum on selection validation metrics.
             # Weights are side-aware (see SIDE_CONFIG):
-            #   single -> [0.40, 0.40, 0.15, 0.05]
-            #   long/short -> [0.45, 0.45, 0.10, 0.00] (V4 dropped per user spec)
+            #   single -> [0.10, 0.35, 0.10, 0.05, 0.40]
+            #   long/short -> [0.10, 0.40, 0.10, 0.00, 0.40]
             _w = SIDE_CONFIG.get(side, SIDE_CONFIG["single"])["weights"]
             # Soft condition number penalty
             cond_penalty = 0.0
@@ -2026,7 +2152,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
                 _w[0] * norm_val_metrics[0] +  # Val Overall IC (V1)
                 _w[1] * norm_val_metrics[1] +  # Val Tail IC  (V2, side-aware)
                 _w[2] * norm_val_metrics[2] +  # Val Monotonicity (V3)
-                _w[3] * norm_val_metrics[3]    # Val Top-Bottom Spread (V4, 0 for long/short)
+                _w[3] * norm_val_metrics[3] +  # Val Top-Bottom Spread (V4, 0 for long/short)
+                _w[4] * norm_val_metrics[4]    # Val Tail Sharpe (V5, block-bootstrapped)
             ) + ess_penalty + gini_penalty + cond_penalty
 
             trial.set_user_attr("raw_metrics", raw_metrics)
@@ -2253,7 +2380,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         best_params["model_type"] = "unified"
 
     if best_val_m is None:
-        best_val_m = [np.nan, np.nan, np.nan, np.nan]
+        best_val_m = [np.nan, np.nan, np.nan, np.nan, np.nan]
 
     # ── Model Confidence Set (MCS) & Bayesian True Discovery Posterior ──
     mcs_size = 0
@@ -2284,25 +2411,38 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     trial_objective_values = []
     trial_val_ic_values = []
     trial_val_tail_ic_values = []
+    trial_val_tail_sharpe_values = []
+    trial_cv_oos_ics = []
     for t in completed_trials:
         m = t.user_attrs.get("raw_metrics")
         val_m = t.user_attrs.get("val_metrics")
+        cv_oos = t.user_attrs.get("cv_oos_ics")
+        if cv_oos is not None:
+            trial_cv_oos_ics.append(cv_oos)
         if m is not None:
             trial_m4_values.append(m[3]) # M4 is index 3
             trial_objective_values.append(t.value)
         if val_m is not None:
             trial_val_ic_values.append(val_m[0])
             trial_val_tail_ic_values.append(val_m[1])
+            if len(val_m) > 4:
+                trial_val_tail_sharpe_values.append(val_m[4])
+
+    # Compute dynamic rho from completed trials' CV OOS ICs
+    dynamic_rho = compute_dynamic_rho(trial_cv_oos_ics)
+    print(f"\nDynamic rho calculated from CV OOS ICs: {dynamic_rho:.4f}")
 
     best_m4_val = best_raw_m[3] if (best_raw_m is not None and len(best_raw_m) > 3) else np.nan
     best_obj_val = best_trial.value if best_trial is not None else np.nan
     best_val_ic_val = best_val_m[0] if (best_val_m is not None and len(best_val_m) > 0) else np.nan
     best_val_tail_ic_val = best_val_m[1] if (best_val_m is not None and len(best_val_m) > 1) else np.nan
+    best_val_tail_sharpe_val = best_val_m[4] if (best_val_m is not None and len(best_val_m) > 4) else np.nan
 
-    deflated_cv_ic = compute_deflated_metric(trial_m4_values, best_m4_val, rho=0.5)
-    deflated_objective = compute_deflated_metric(trial_objective_values, best_obj_val, rho=0.5)
-    deflated_val_ic = compute_deflated_metric(trial_val_ic_values, best_val_ic_val, rho=0.5)
-    deflated_val_tail_ic = compute_deflated_metric(trial_val_tail_ic_values, best_val_tail_ic_val, rho=0.5)
+    deflated_cv_ic = compute_deflated_metric(trial_m4_values, best_m4_val, rho=dynamic_rho)
+    deflated_objective = compute_deflated_metric(trial_objective_values, best_obj_val, rho=dynamic_rho)
+    deflated_val_ic = compute_deflated_metric(trial_val_ic_values, best_val_ic_val, rho=dynamic_rho)
+    deflated_val_tail_ic = compute_deflated_metric(trial_val_tail_ic_values, best_val_tail_ic_val, rho=dynamic_rho)
+    deflated_val_tail_sharpe = compute_deflated_metric(trial_val_tail_sharpe_values, best_val_tail_sharpe_val, rho=dynamic_rho)
 
     model_type = best_params["model_type"]
     k_weight = best_params["k_weight"]
@@ -2331,14 +2471,16 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     val_preds_outer = best_model_for_val.predict(X_sel_val_outer_scaled_base)
     val_ic_outer = spearman_ic(y_sel_val_outer, val_preds_outer)
     
-    # Side-aware outer Tail IC
+    # Outer metrics calculation
     val_tail_ic_outer = side_tail_ic(y_sel_val_outer, val_preds_outer, side)
+    val_tail_sharpe_outer = compute_val_tail_sharpe(y_sel_val_outer, val_preds_outer, side)
         
     val_mono_outer = compute_decile_monotonicity(y_sel_val_outer, val_preds_outer)
     val_spread_outer = compute_top_bottom_spread(y_sel_val_outer, val_preds_outer)
     
-    deflated_val_outer_ic = compute_deflated_metric(trial_val_ic_values, val_ic_outer, rho=0.5)
-    deflated_val_outer_tail = compute_deflated_metric(trial_val_tail_ic_values, val_tail_ic_outer, rho=0.5)
+    deflated_val_outer_ic = compute_deflated_metric(trial_val_ic_values, val_ic_outer, rho=dynamic_rho)
+    deflated_val_outer_tail = compute_deflated_metric(trial_val_tail_ic_values, val_tail_ic_outer, rho=dynamic_rho)
+    deflated_val_outer_tail_sharpe = compute_deflated_metric(trial_val_tail_sharpe_values, val_tail_sharpe_outer, rho=dynamic_rho)
 
     print(f"\nBest params:")
     for k, v in best_params.items():
@@ -2354,12 +2496,16 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     print(f"  M6 (Spread):      {best_raw_m[5]:.4f}")
     print(f"  M7 (Parsimony):   {best_raw_m[6]:.4f}")
     print(f"  M8 (Coef Bloat):  {best_raw_m[7]:.4f}")
+    if len(best_raw_m) > 8:
+        print(f"  M9 (Win Rate):    {best_raw_m[8]:.2%}")
 
     print(f"Best trial Selection Val INNER metrics (Tuned):")
     print(f"  Val IC:           {best_val_m[0]:.4f}")
     print(f"  Deflated Val IC:  {deflated_val_ic:.4f}")
     print(f"  Val Tail IC:      {best_val_m[1]:.4f}")
     print(f"  Deflated Val Tail:{deflated_val_tail_ic:.4f}")
+    print(f"  Val Tail Sharpe:  {best_val_m[4]:.4f}")
+    print(f"  Defl Val Sharpe:  {deflated_val_tail_sharpe:.4f}")
     print(f"  Val Mono:         {best_val_m[2]:.4f}")
     print(f"  Val Spread:       {best_val_m[3]:.4f}")
 
@@ -2368,6 +2514,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     print(f"  Defl Outer Val IC:{deflated_val_outer_ic:.4f}")
     print(f"  Outer Tail IC:    {val_tail_ic_outer:.4f}")
     print(f"  Defl Outer Tail:  {deflated_val_outer_tail:.4f}")
+    print(f"  Outer Tail Sharpe:{val_tail_sharpe_outer:.4f}")
+    print(f"  Defl Outer Sharpe:{deflated_val_outer_tail_sharpe:.4f}")
     print(f"  Outer Mono:       {val_mono_outer:.4f}")
     print(f"  Outer Spread:     {val_spread_outer:.4f}")
     
@@ -2486,6 +2634,8 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         tag_suffix += f"_{target_transform}"
     if post_hoc_calibrate:
         tag_suffix += "_calibrated"
+    if sharpe_objective:
+        tag_suffix += "_sharpe"
     tag += tag_suffix
 
     model_dir = ROLLING_MODELS_DIR if rolling else MODELS_DIR
@@ -2506,22 +2656,28 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         "deflated_cv_ic": deflated_cv_ic,
         "deflated_val_ic": deflated_val_ic,
         "deflated_val_tail_ic": deflated_val_tail_ic,
+        "deflated_val_tail_sharpe": deflated_val_tail_sharpe,
         "selection_val_overall_ic": best_val_m[0],
         "selection_val_tail_ic": best_val_m[1],
         "selection_val_monotonicity": best_val_m[2],
         "selection_val_spread": best_val_m[3],
+        "selection_val_tail_sharpe": best_val_m[4] if len(best_val_m) > 4 else np.nan,
         "selection_val_outer_overall_ic": val_ic_outer,
         "selection_val_outer_tail_ic": val_tail_ic_outer,
+        "selection_val_outer_tail_sharpe": val_tail_sharpe_outer,
         "selection_val_outer_monotonicity": val_mono_outer,
         "selection_val_outer_spread": val_spread_outer,
         "deflated_val_outer_ic": deflated_val_outer_ic,
         "deflated_val_outer_tail_ic": deflated_val_outer_tail,
+        "deflated_val_outer_tail_sharpe": deflated_val_outer_tail_sharpe,
+        "yearly_tail_win_rate": best_raw_m[8] if (best_raw_m is not None and len(best_raw_m) > 8) else np.nan,
         "side": side,
         "target": TARGET,
         "skip_step1": skip_step1,
         "skip_step2": skip_step2,
         "target_transform": target_transform,
         "post_hoc_calibrate": post_hoc_calibrate,
+        "sharpe_objective": sharpe_objective,
     }
     joblib.dump(scaler_meta, model_dir / f"scaler_{tag}.joblib")
     
@@ -2705,6 +2861,8 @@ if __name__ == "__main__":
                     help="Enable post-hoc Spearman IC calibration of active coefficients")
     ap.add_argument("--early", action="store_true",
                     help="Predict early window (10:00 to 13:05, exiting at close of 13:00~13:05 bar)")
+    ap.add_argument("--sharpe-objective", action="store_true", dest="sharpe_objective", default=False,
+                    help="Optimizes Optuna hyperparameters using validation set tail-Sharpe objective instead of Tail IC. Set to False by default, use --sharpe-objective to enable.")
     args = ap.parse_args()
 
     skip_step1 = True # Bypassed by default because univariate screening deletes joint predictive features.
@@ -2796,7 +2954,8 @@ if __name__ == "__main__":
                               rolling=effective_rolling,
                               target_transform=args.target_transform,
                               post_hoc_calibrate=args.post_hoc_calibrate,
-                              early=args.early)
+                              early=args.early,
+                              sharpe_objective=args.sharpe_objective)
                 except Exception as e:
                     print(f"  [ERROR] Failed to train {etf} ({side}): {e}")
                     import traceback
