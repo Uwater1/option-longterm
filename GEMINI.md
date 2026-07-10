@@ -240,3 +240,11 @@ daytrade/                      # Frozen-Linear Intraday Alpha Strategy
 - Pipeline commands support `--early` parameter to execute the early target flow.
 - Early output files suffix everything with `_early` to isolate them (e.g. `features_{ETF}_early.parquet`, `linear_{tag}_early.joblib`, `REPORT_early.md`, `plots/diagnostics_{tag}_early.png`).
 - Run: `python3 day-model/build_features.py -e all --early`, `python3 day-model/train_model.py -e all --trials 100 --early`, `python3 day-model/generate_report.py --early`, `python3 day-model/backtest_simulator.py --etf all --early [--type {ETF,Future}]`.
+
+## Day-Model Tail-Sharpe Optimization & Win Rate Kill-Switch (July 2026)
+- **Validation Tail Sharpe Objective**: Optimizes Optuna hyperparameters using validation set tail-Sharpe (winsorized 1-99% clip on active days, annualized by $\sqrt{244}$) instead of Tail IC. It uses month-block bootstrap resamples to penalize standard error. Default weights: `single` `[0.10, 0.35, 0.10, 0.05, 0.40]`; `long`/`short` `[0.10, 0.40, 0.10, 0.00, 0.40]`.
+- **CV Fold Win Rate Kill-Switch**: Adds a hard constraint that the CV fold average tail win rate after 15 bps cost must be $\ge 45\%$. Add side-specific win rate constraint for `long` and `short` sides.
+- **CLI Defaults**: Bumps `PILOT_N_TRIALS = 100` for stability. Default `--target-transform` is set to `"none"`. Default `--sharpe-objective` is set to `False` (Validation Tail IC remains the standard default).
+- **Audited OOS Comparison**: P&L delta 95% CI is `[-754.9, +663.6] bps` and Sharpe delta 95% CI is `[-0.542, +0.536]`. The difference in portfolio performance is statistically indistinguishable from zero, representing variance reallocation across assets rather than structural skill uplift.
+- Run: `python3 day-model/train_model.py -e all --trials 100 --sharpe-objective` to enable the Sharpe-objective model training.
+- Backtest: `python3 day-model/backtest_simulator.py --etf all` (loads the standard raw-return baseline by default). Use `--sharpe-objective` to load Sharpe-objective models.

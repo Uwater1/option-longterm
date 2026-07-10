@@ -83,7 +83,7 @@ def expanding_pct_rank(series: pd.Series, min_periods: int = 60) -> pd.Series:
     return pd.Series(out, index=series.index)
 
 
-def load_predictions(etf: str, target_transform: str = "gauss", early: bool = False) -> tuple[pd.Series, pd.Series]:
+def load_predictions(etf: str, target_transform: str = "gauss", early: bool = False, sharpe_objective: bool = False) -> tuple[pd.Series, pd.Series]:
     """Load static model predictions for both long and short sides."""
     # Load features
     feat_path = FEATURES_DIR / (f"features_{etf}_early.parquet" if early else f"features_{etf}.parquet")
@@ -92,6 +92,8 @@ def load_predictions(etf: str, target_transform: str = "gauss", early: bool = Fa
     df = pd.read_parquet(feat_path)
 
     suffix = f"_{target_transform}" if target_transform != "none" else ""
+    if sharpe_objective:
+        suffix += "_sharpe"
     early_suffix = "_early" if early else ""
 
     # 1. Long side
@@ -132,8 +134,9 @@ def load_predictions(etf: str, target_transform: str = "gauss", early: bool = Fa
     return long_scores, short_scores
 
 
-def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform: str = "gauss", early: bool = False) -> tuple[pd.Series, pd.Series]:
+def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform: str = "gauss", early: bool = False, sharpe_objective: bool = False) -> tuple[pd.Series, pd.Series]:
     """Load rolling model predictions, auto-selecting the best model per date."""
+    # Load features
     feat_path = FEATURES_DIR / (f"features_{etf}_early.parquet" if early else f"features_{etf}.parquet")
     if not feat_path.exists():
         raise FileNotFoundError(f"Feature parquet not found: {feat_path}")
@@ -144,6 +147,8 @@ def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform
     df = df.sort_values("date").reset_index(drop=True)
 
     suffix = f"_{target_transform}" if target_transform != "none" else ""
+    if sharpe_objective:
+        suffix += "_sharpe"
     early_suffix = "_early" if early else ""
 
     # Discover rolling models for this ETF
@@ -187,7 +192,7 @@ def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform
 
     if not rolling_models:
         print(f"  [WARNING] No rolling models found for {etf} (transform: {target_transform}), falling back to static.")
-        return load_predictions(etf, target_transform=target_transform, early=early)
+        return load_predictions(etf, target_transform=target_transform, early=early, sharpe_objective=sharpe_objective)
 
     # Sort by lockbox date descending (most recent first)
     rolling_models.sort(key=lambda m: m["lockbox"], reverse=True)
@@ -232,7 +237,7 @@ def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform
         static_short_path = MODELS_DIR / f"linear_{etf}_short{suffix}.joblib"
         if static_long_path.exists() and static_short_path.exists():
             print(f"  [INFO] {remaining_mask.sum()} dates not covered by rolling, using static model.")
-            static_long, static_short = load_predictions(etf, target_transform=target_transform)
+            static_long, static_short = load_predictions(etf, target_transform=target_transform, sharpe_objective=sharpe_objective)
             static_long = static_long[static_long.index.isin(df.index[remaining_mask])]
             static_short = static_short[static_short.index.isin(df.index[remaining_mask])]
             long_scores = pd.concat([long_scores, static_long])
@@ -447,6 +452,8 @@ def main():
                     help="Target transform to load: none|rank|gauss")
     ap.add_argument("--early", action="store_true",
                     help="Use early-window models & features (10:00 to 13:05)")
+    ap.add_argument("--sharpe-objective", action="store_true", dest="sharpe_objective", default=False,
+                    help="Use models trained with validation set tail-Sharpe objective instead of Tail IC. Set to False by default, use --sharpe-objective to enable.")
     args = ap.parse_args()
 
     global EXIT_BAR
@@ -505,10 +512,10 @@ def main():
             # 1. Predictions
             if args.rolling:
                 long_scores, short_scores = load_predictions_rolling(
-                    etf, max_age_months=args.max_age_months, target_transform=args.target_transform, early=args.early
+                    etf, max_age_months=args.max_age_months, target_transform=args.target_transform, early=args.early, sharpe_objective=args.sharpe_objective
                 )
             else:
-                long_scores, short_scores = load_predictions(etf, target_transform=args.target_transform, early=args.early)
+                long_scores, short_scores = load_predictions(etf, target_transform=args.target_transform, early=args.early, sharpe_objective=args.sharpe_objective)
             
             # 2. Expanding Percentile Ranks (walk-forward, look-ahead free)
             long_rank = expanding_pct_rank(long_scores, min_periods=args.min_periods)
