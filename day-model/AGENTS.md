@@ -224,4 +224,5 @@ Upgraded model training stability, tail performance, overfit diagnostics, and de
    - Command-line arguments:
      - `--target-transform`: choices `none` (default), `rank` (Pearson-on-ranks), `gauss` (normal quantile mapping of ranks).
      - `--post-hoc-calibrate`: optimize active coefficients post-hoc using SciPy Nelder-Mead on Spearman IC.
+     - `--sharpe-objective`: use validation tail-Sharpe (winsorized, annualized) instead of tail-IC as Optuna objective. **Performance note**: no significant OOS uplift (P&L CI `[-755, +664] bps`, Sharpe CI `[-0.54, +0.54]`); default Tail IC remains recommended.
    - Saves model and results with `_rank`, `_gauss`, and `_calibrated` suffixes to run A-B tests side-by-side.
