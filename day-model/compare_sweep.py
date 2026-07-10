@@ -23,6 +23,7 @@ def load_config(suffix=""):
 
 def agg(results):
     """Compute aggregate stats across all ETF x side combinations."""
+    import numpy as np
     if not results:
         return None
     out_ics = [v.get("lockbox_overall_ic", 0) for v in results.values()]
@@ -33,12 +34,14 @@ def agg(results):
     feats = [len(v.get("selected_features", [])) for v in results.values()]
     return {
         "n": len(results),
-        "out_ic": sum(out_ics) / len(out_ics) if out_ics else 0,
-        "out_tic": sum(out_tics) / len(out_tics) if out_tics else 0,
-        "pbo": sum(pbos) / len(pbos) if pbos else 0,
-        "perf_deg": sum(perf_degs) / len(perf_degs) if perf_degs else 0,
-        "ic_gap": sum(ic_gaps) / len(ic_gaps) if ic_gaps else 0,
-        "feats": sum(feats) / len(feats) if feats else 0,
+        "out_ic": float(np.mean(out_ics)) if out_ics else 0.0,
+        "out_ic_std": float(np.std(out_ics)) if out_ics else 0.0,
+        "out_tic": float(np.mean(out_tics)) if out_tics else 0.0,
+        "out_tic_std": float(np.std(out_tics)) if out_tics else 0.0,
+        "pbo": float(np.mean(pbos)) if pbos else 0.0,
+        "perf_deg": float(np.mean(perf_degs)) if perf_degs else 0.0,
+        "ic_gap": float(np.mean(ic_gaps)) if ic_gaps else 0.0,
+        "feats": float(np.mean(feats)) if feats else 0.0,
     }
 
 def per_etf_table(configs):
@@ -62,6 +65,7 @@ def per_etf_table(configs):
 CONFIGS = {
     "baseline": "",
     "sortino": "_sortino",
+    "s+cpcvblend": "_sortino_blended",
     "s+sw0.20": "_sortino_sw0.20",
     "s+sw0.30": "_sortino_sw0.30",
     "s+sw0.50": "_sortino_sw0.50",
@@ -78,15 +82,15 @@ def main():
             all_results[name] = r
     
     # Aggregate summary
-    print("=" * 80)
+    print("=" * 105)
     print("AGGREGATE COMPARISON (mean across all ETF x side)")
-    print("=" * 80)
-    print(f"{'Config':<14} {'N':>3} {'OutIC':>8} {'OutTIC':>8} {'PBO':>8} {'PerfDeg':>8} {'ICgap':>8} {'Feats':>6}")
-    print("-" * 70)
+    print("=" * 105)
+    print(f"{'Config':<14} {'N':>3} {'OutIC':>8} {'OutICstd':>9} {'OutTIC':>8} {'OutTICstd':>9} {'PBO':>8} {'PerfDeg':>8} {'ICgap':>8} {'Feats':>6}")
+    print("-" * 102)
     for name, results in all_results.items():
         a = agg(results)
         if a:
-            print(f"{name:<14} {a['n']:3d} {a['out_ic']:8.4f} {a['out_tic']:8.4f} {a['pbo']*100:7.1f}% {a['perf_deg']:8.3f} {a['ic_gap']:8.4f} {a['feats']:6.1f}")
+            print(f"{name:<14} {a['n']:3d} {a['out_ic']:8.4f} {a['out_ic_std']:9.4f} {a['out_tic']:8.4f} {a['out_tic_std']:9.4f} {a['pbo']*100:7.1f}% {a['perf_deg']:8.3f} {a['ic_gap']:8.4f} {a['feats']:6.1f}")
     
     # Per-ETF detail
     print(f"\n{'=' * 80}")
