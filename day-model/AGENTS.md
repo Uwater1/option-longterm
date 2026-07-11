@@ -23,7 +23,7 @@ python3 day-model/train_model.py -e all --trials 100 (--early)
 python3 day-model/generate_report.py (--early)
 
 # 4. Run out-of-sample backtest simulator
-python3 day-model/backtest_simulator.py --etf all (--early) (--type {ETF,Future})
+python3 day-model/backtest_simulator.py --etf all (--early) (--type {ETF,Future}) (--option)
 ```
 
 (--early : Outputs will be saved with `_early` suffixes)
@@ -50,7 +50,7 @@ python3 day-model/generate_rolling_report.py --thr 70        # Custom signal thr
 
 Run backtest with rolling models (auto-selects per date):
 ```bash
-python3 day-model/backtest_simulator.py --etf all --rolling (--type {ETF,Future})
+python3 day-model/backtest_simulator.py --etf all --rolling (--type {ETF,Future}) (--option)
 ```
 
 **Rolling Artifact Layout**:

@@ -31,6 +31,12 @@ try:
 except ImportError:
     pass
 
+try:
+    from backtest_engine import select_underlying, load_data as load_engine_data, get_strike_by_level, _bs_price
+except ImportError:
+    pass
+
+
 # Constants
 LOCKBOX_DATE = "2024-03-01"
 DEFAULT_COST_BPS = 15.0
@@ -248,6 +254,49 @@ def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform
     return long_scores, short_scores
 
 
+def get_option_price(
+    contract_id: str,
+    bar_dt: pd.Timestamp,
+    spot_px: float,
+    strike_px: float,
+    option_type: str,
+    T: float,
+    iv: float,
+    r: float,
+    opt_5m_by_id: dict | None,
+    is_entry: bool = True,
+) -> float:
+    """Find option price at bar_dt (from opt_5m_by_id dict) or fall back to Black-Scholes pricing."""
+    if opt_5m_by_id is not None and contract_id in opt_5m_by_id:
+        contract_data = opt_5m_by_id[contract_id]
+        # Try to match exact datetime first (O(1) index lookup)
+        if bar_dt in contract_data.index:
+            row_val = contract_data.loc[bar_dt]
+            if isinstance(row_val, pd.DataFrame):
+                row_val = row_val.iloc[0]
+            val = float(row_val["open"]) if is_entry else float(row_val["close"])
+            if val > 0:
+                return val
+        
+        # Fallback to closest bar on the same day
+        day_data = contract_data[contract_data.index.date == bar_dt.date()]
+        if not day_data.empty:
+            time_diff = (day_data.index - bar_dt).abs()
+            closest_idx = time_diff.idxmin()
+            closest_row = day_data.loc[closest_idx]
+            if isinstance(closest_row, pd.DataFrame):
+                closest_row = closest_row.iloc[0]
+            val = float(closest_row["open"]) if is_entry else float(closest_row["close"])
+            if val > 0:
+                return val
+    # Black-Scholes pricing fallback
+    is_call = (option_type == "C")
+    T_calc = max(1e-5, T)
+    price = _bs_price(spot_px, strike_px, T_calc, r, iv, is_call)
+    return max(0.0001, price)
+
+
+
 def simulate_etf_trades(
     etf: str,
     signals: pd.DataFrame,
@@ -386,9 +435,245 @@ def simulate_etf_trades(
             "short_rank": row["short_rank"],
         })
 
+    return pd.DataFrame(trades).set_index("date").sort_index()
+
+
+def get_strike_by_level_lookahead_free(opt, entry_date, expiry_date, option_type, level, spot_price):
+    """Select option strike price dynamically based on actual spot price at entry time."""
+    day_opt = opt[
+        (opt["date"] == entry_date) &
+        (opt["maturity_date"] == expiry_date) &
+        (opt["option_type"] == option_type) &
+        (opt["close"] > 0)
+    ].copy()
+    if day_opt.empty:
+        return None
+    if option_type == "C":
+        if level == 0:
+            candidates = day_opt[day_opt["strike_price"] <= spot_price].sort_values("strike_price", ascending=False)
+            idx = 0
+        else:
+            candidates = day_opt[day_opt["strike_price"] > spot_price].sort_values("strike_price")
+            idx = level - 1
+    else:
+        if level == 0:
+            candidates = day_opt[day_opt["strike_price"] >= spot_price].sort_values("strike_price", ascending=True)
+            idx = 0
+        else:
+            candidates = day_opt[day_opt["strike_price"] < spot_price].sort_values("strike_price", ascending=False)
+            idx = level - 1
+    if idx >= 0 and idx < len(candidates):
+        return candidates.iloc[idx].to_dict()
+    return None
+
+
+def simulate_option_trades(
+    etf: str,
+    signals: pd.DataFrame,
+    stop_type: str | None,
+    stop_val: float | None,
+    opt: pd.DataFrame,
+    etf_daily: pd.DataFrame,
+    opt_5m: pd.DataFrame | None,
+) -> pd.DataFrame:
+    """Run option trade simulation, buying the nearest OTM call/put contract.
+    Assumes 2 RMB commission per contract per side (4 RMB round-trip) and 1% slippage.
+    """
+    path_5m = ETF_5M_DIR / ETF_5M_FILE[etf]
+    if not path_5m.exists():
+        print(f"  [WARNING] 5m file not found: {path_5m}")
+        return pd.DataFrame()
+
+    df_5m = pd.read_parquet(path_5m)
+    df_5m["datetime"] = pd.to_datetime(df_5m["datetime"])
+    df_5m = df_5m.set_index("datetime").sort_index()
+
+    # Precompute daily ATR14 (look-ahead free)
+    daily_tr = df_5m.groupby(df_5m.index.date).agg(
+        high=("high", "max"),
+        low=("low", "min")
+    )
+    daily_tr["tr"] = daily_tr["high"] - daily_tr["low"]
+    daily_tr["atr14"] = daily_tr["tr"].rolling(window=14, min_periods=1).mean()
+    daily_tr["atr14_prev"] = daily_tr["atr14"].shift(1)
+    atr_map = daily_tr["atr14_prev"].to_dict()
+
+    # Group 5m data by date for quick access
+    df_5m["date"] = df_5m.index.date
+    grouped_5m = {d: g for d, g in df_5m.groupby("date")}
+
+    expiries = (
+        opt.groupby(["maturity_date", "option_type"])["order_book_id"]
+        .nunique()
+        .unstack("option_type")
+        .dropna()
+        .index.tolist()
+    )
+    expiries = sorted(expiries)
+
+    # Pre-group opt_5m by order_book_id for O(1) dictionary lookups
+    opt_5m_by_id = None
+    if opt_5m is not None and not opt_5m.empty:
+        opt_5m_by_id = {}
+        for cid, g in opt_5m.groupby("order_book_id"):
+            opt_5m_by_id[cid] = g.set_index("datetime").sort_index()
+
+    decision_bar = DECISION_BAR[etf]
+    entry_idx = decision_bar + 1
+
+    trades = []
+
+    for date, row in signals.iterrows():
+        date_d = date.date()
+        direction = int(row["direction"])
+        if direction == 0:
+            continue
+
+        if date_d not in grouped_5m:
+            continue
+
+        day_bars = grouped_5m[date_d].reset_index()
+        L = len(day_bars)
+        if L <= EXIT_BAR or entry_idx >= L:
+            continue
+
+        spot_entry = float(day_bars.iloc[entry_idx]["open"])
+        spot_exit = float(day_bars.iloc[EXIT_BAR]["close"])
+        if spot_entry <= 0 or spot_exit <= 0:
+            continue
+
+        # Find next expiry with at least 5 days to maturity (Avoid 5 day to maturity rule)
+        expiry_date = None
+        for exp in expiries:
+            if exp > date:
+                if (exp - date).days >= 5:
+                    expiry_date = exp
+                    break
+        if expiry_date is None:
+            continue
+
+        # Select closest OTM option
+        option_type = "C" if direction > 0 else "P"
+        leg = get_strike_by_level_lookahead_free(opt, date, expiry_date, option_type, level=1, spot_price=spot_entry)
+        if leg is None:
+            continue
+
+        contract_id = leg["order_book_id"]
+        strike_price = float(leg["strike_price"])
+        contract_multiplier = float(leg.get("contract_multiplier", 10000.0))
+
+        # Time to expiry
+        T_entry = (expiry_date - date).days / 365.0
+        elapsed_hours = (EXIT_BAR - entry_idx) * 5 / 60.0
+        T_exit = max(1e-5, T_entry - (elapsed_hours / (24.0 * 365.0)))
+
+        # IV fallback
+        iv = etf_daily.loc[date.normalize(), "iv"] if "iv" in etf_daily.columns else np.nan
+        if pd.isna(iv) or iv <= 0:
+            iv = 0.20
+
+        # Entry option price
+        entry_px = get_option_price(
+            contract_id, day_bars.iloc[entry_idx]["datetime"],
+            spot_entry, strike_price, option_type, T_entry, iv, 0.02, opt_5m_by_id, is_entry=True
+        )
+
+        exit_spot = spot_exit
+        exit_type = "target"
+        stop_level = np.nan
+        exit_bar_idx = EXIT_BAR
+
+        # Check Stop Loss on ETF price
+        if stop_type == "pct" and stop_val is not None:
+            if direction > 0:
+                stop_level = spot_entry * (1.0 - stop_val)
+            else:
+                stop_level = spot_entry * (1.0 + stop_val)
+        elif stop_type == "atr" and stop_val is not None:
+            atr = atr_map.get(date_d, np.nan)
+            if not np.isnan(atr):
+                if direction > 0:
+                    stop_level = spot_entry - stop_val * atr
+                else:
+                    stop_level = spot_entry + stop_val * atr
+        elif stop_type == "struct":
+            morning_bars = day_bars.iloc[:entry_idx]
+            struct_low = float(morning_bars["low"].min())
+            struct_high = float(morning_bars["high"].max())
+            if direction > 0:
+                stop_level = min(struct_low, spot_entry * 0.999)
+            else:
+                stop_level = max(struct_high, spot_entry * 1.001)
+        elif stop_type == "struct_atr" and stop_val is not None:
+            morning_bars = day_bars.iloc[:entry_idx]
+            struct_low = float(morning_bars["low"].min())
+            struct_high = float(morning_bars["high"].max())
+            atr = atr_map.get(date_d, np.nan)
+            if not np.isnan(atr):
+                if direction > 0:
+                    stop_level = struct_low - stop_val * atr
+                else:
+                    stop_level = struct_high + stop_val * atr
+
+        if not np.isnan(stop_level):
+            trade_bars = day_bars.iloc[entry_idx : EXIT_BAR + 1]
+            for idx_bar, bar in enumerate(trade_bars.itertuples()):
+                hi = float(bar.high)
+                lo = float(bar.low)
+                if direction > 0 and lo <= stop_level:
+                    exit_spot = stop_level
+                    exit_type = "stop"
+                    exit_bar_idx = entry_idx + idx_bar
+                    break
+                elif direction < 0 and hi >= stop_level:
+                    exit_spot = stop_level
+                    exit_type = "stop"
+                    exit_bar_idx = entry_idx + idx_bar
+                    break
+
+        # Calculate decay/time at exit bar
+        elapsed_hours_exit = (exit_bar_idx - entry_idx) * 5 / 60.0
+        T_exit_actual = max(1e-5, T_entry - (elapsed_hours_exit / (24.0 * 365.0)))
+
+        exit_px = get_option_price(
+            contract_id, day_bars.iloc[exit_bar_idx]["datetime"],
+            exit_spot, strike_price, option_type, T_exit_actual, iv, 0.02, opt_5m_by_id, is_entry=False
+        )
+
+        # Apply 1% slippage & 2 RMB commission per side
+        entry_px_slip = entry_px * 1.01
+        exit_px_slip = exit_px * 0.99
+
+        gross_pnl_rmb = (exit_px_slip - entry_px_slip) * contract_multiplier
+        net_pnl_rmb = gross_pnl_rmb - 4.0  # 2 RMB round-trip per leg/contract = 4 RMB total
+
+        # Return relative to the premium paid (option capital outlay)
+        premium_paid = entry_px_slip * contract_multiplier
+        net_ret = net_pnl_rmb / premium_paid if premium_paid > 0 else 0.0
+
+        trades.append({
+            "date": date,
+            "direction": direction,
+            "side": "long" if direction > 0 else "short",
+            "entry_price": entry_px,
+            "exit_price": exit_px,
+            "exit_type": exit_type,
+            "stop_level": stop_level,
+            "gross_ret": (exit_px - entry_px) / entry_px if entry_px > 0 else 0.0,
+            "net_ret": net_ret,
+            "long_rank": row["long_rank"],
+            "short_rank": row["short_rank"],
+            "contract": contract_id,
+            "strike": strike_price,
+            "multiplier": contract_multiplier,
+            "spot_entry": spot_entry,
+            "spot_exit": exit_spot,
+            "net_pnl_rmb": net_pnl_rmb,
+        })
+
     if not trades:
         return pd.DataFrame()
-        
+
     return pd.DataFrame(trades).set_index("date").sort_index()
 
 
@@ -454,6 +739,8 @@ def main():
                     help="Use early-window models & features (10:00 to 13:05)")
     ap.add_argument("--sharpe-objective", action="store_true", dest="sharpe_objective", default=False,
                     help="Use models trained with validation set tail-Sharpe objective instead of Tail IC. Set to False by default, use --sharpe-objective to enable.")
+    ap.add_argument("--option", action="store_true",
+                    help="Trade nearest OTM option instead of ETF/Future")
     args = ap.parse_args()
 
     global EXIT_BAR
@@ -550,10 +837,44 @@ def main():
             # Filter strictly for OOS period
             signals_oos = signals[signals.index >= pd.Timestamp(LOCKBOX_DATE)]
             
-            # 3. Simulate execution on ETF 5m or Future 5m
-            trades = simulate_etf_trades(
-                etf, signals_oos, args.stop_type, args.stop_val, args.cost_bps, asset_type=args.type
-            )
+            # 3. Simulate execution on ETF 5m or Future 5m, or Options
+            if args.option:
+                # Load option daily data using backtest_engine
+                from backtest_engine import select_underlying, load_data as load_engine_data
+                etf_choice = {"50ETF": "50", "300ETF": "300", "500ETF": "500", "588000ETF": "588000", "159915ETF": "159915"}[etf]
+                select_underlying(etf_choice)
+                inst, opt_daily, etf_daily = load_engine_data()
+                
+                # Reindex to prevent KeyErrors on missing dates
+                all_dates = signals_oos.index.normalize().union(etf_daily.index)
+                etf_daily = etf_daily.reindex(all_dates).ffill()
+                
+                # Check for 5m option price data and download if missing
+                opt_5m_path = ETF_5M_DIR / f"{etf}_historical_prices_5m.parquet"
+                if not opt_5m_path.exists():
+                    print(f"  [INFO] 5m option data not found for {etf}. Attempting to download...")
+                    try:
+                        import subprocess
+                        subprocess.run([sys.executable, str(ROOT_DIR / "download_5m_data.py")], check=True)
+                    except Exception as e:
+                        print(f"  [WARNING] Failed to run download_5m_data.py: {e}")
+                
+                if opt_5m_path.exists():
+                    print(f"Loading 5m option data from {opt_5m_path}...")
+                    opt_5m = pd.read_parquet(opt_5m_path)
+                    opt_5m["datetime"] = pd.to_datetime(opt_5m["datetime"])
+                else:
+                    print(f"  [INFO] 5m option data still not found for {etf}, using Black-Scholes pricing fallback.")
+                    opt_5m = None
+                
+                trades = simulate_option_trades(
+                    etf, signals_oos, args.stop_type, args.stop_val,
+                    opt_daily, etf_daily, opt_5m
+                )
+            else:
+                trades = simulate_etf_trades(
+                    etf, signals_oos, args.stop_type, args.stop_val, args.cost_bps, asset_type=args.type
+                )
             
             if not trades.empty:
                 all_trades[etf] = trades
@@ -565,10 +886,15 @@ def main():
                 
                 # Print single ETF/Future summary
                 metrics = summarize_trades(trades, display_name)
+                
+                is_option = args.option
+                ret_unit = "%" if is_option else "bps"
+                ret_scale = 100.0 if is_option else 1e4
+                
                 print(f"[{display_name}] OOS Summary:")
                 print(f"  Trades  : {metrics['n_trades']} (Long: {metrics['n_long']}, Short: {metrics['n_short']})")
-                print(f"  Win Rate: {metrics['win_rate']:.1%} | Avg Net Return: {metrics['mean_net_ret']*1e4:.1f} bps")
-                print(f"  P&L     : {metrics['total_net_ret']*1e4:+.0f} bps | Sharpe: {metrics['sharpe']:.2f} | MaxDD: {metrics['max_dd']*1e4:.0f} bps")
+                print(f"  Win Rate: {metrics['win_rate']:.1%} | Avg Net Return: {metrics['mean_net_ret']*ret_scale:.2f} {ret_unit}")
+                print(f"  P&L     : {metrics['total_net_ret']*ret_scale:+.2f} {ret_unit} | Sharpe: {metrics['sharpe']:.2f} | MaxDD: {metrics['max_dd']*ret_scale:.2f} {ret_unit}")
                 if args.stop_type:
                     print(f"  Stopped : {metrics['n_stopped']} times ({metrics['n_stopped'] / metrics['n_trades']:.1%})")
                 
@@ -576,7 +902,7 @@ def main():
                 print("  Yearly Breakdown:")
                 for year, g in trades.groupby(trades.index.year):
                     y_metrics = summarize_trades(g, display_name)
-                    print(f"    {year}: n={y_metrics['n_trades']:>3}, wr={y_metrics['win_rate']:.1%}, pnl={y_metrics['total_net_ret']*1e4:+.0f}bps, sharpe={y_metrics['sharpe']:.2f}")
+                    print(f"    {year}: n={y_metrics['n_trades']:>3}, wr={y_metrics['win_rate']:.1%}, pnl={y_metrics['total_net_ret']*ret_scale:+.2f}{ret_unit}, sharpe={y_metrics['sharpe']:.2f}")
                 print("-" * 50)
             else:
                 print(f"[{display_name}] No OOS trades triggered.")
@@ -609,19 +935,23 @@ def main():
         # Calculate active days count
         active_days = (merged != 0).any(axis=1).sum()
         
+        is_option = args.option
+        ret_unit = "%" if is_option else "bps"
+        ret_scale = 100.0 if is_option else 1e4
+
         print("\n" + "=" * 80)
         print("COMBINED EQUAL-WEIGHT PORTFOLIO SUMMARY (OOS ONLY)")
         print("=" * 80)
         print(f"  Active Days     : {active_days} days")
-        print(f"  Avg Net Return  : {metrics['mean_net_ret']*1e4:.1f} bps")
-        print(f"  Cumulative P&L  : {metrics['total_net_ret']*1e4:+.0f} bps")
+        print(f"  Avg Net Return  : {metrics['mean_net_ret']*ret_scale:.2f} {ret_unit}")
+        print(f"  Cumulative P&L  : {metrics['total_net_ret']*ret_scale:+.2f} {ret_unit}")
         print(f"  Annual Sharpe   : {metrics['sharpe']:.2f}")
-        print(f"  Max Drawdown    : {metrics['max_dd']*1e4:.0f} bps")
+        print(f"  Max Drawdown    : {metrics['max_dd']*ret_scale:.2f} {ret_unit}")
         
         print("  Yearly Breakdown:")
         for year, g in port_trades.groupby(port_trades.index.year):
             y_metrics = summarize_trades(g, "Portfolio")
-            print(f"    {year}: n_days={len(g)}, pnl={y_metrics['total_net_ret']*1e4:+.0f}bps, sharpe={y_metrics['sharpe']:.2f}")
+            print(f"    {year}: n_days={len(g)}, pnl={y_metrics['total_net_ret']*ret_scale:+.2f}{ret_unit}, sharpe={y_metrics['sharpe']:.2f}")
         print("=" * 80)
 
         # Plot cumulative performance
@@ -629,13 +959,13 @@ def main():
         for col in merged.columns:
             plt.plot(np.cumsum(merged[col]) * 100, label=col.replace("_net", ""), alpha=0.5)
         plt.plot(np.cumsum(portfolio_rets) * 100, label="COMBINED PORTFOLIO", color="black", linewidth=2.5)
-        plt.title(f"Out-of-Sample Walk-Forward Cumulative Net P&L (from {LOCKBOX_DATE}) ({args.type})")
+        plt.title(f"Out-of-Sample Walk-Forward Cumulative Net P&L (from {LOCKBOX_DATE}) ({'Option' if is_option else args.type})")
         plt.xlabel("Date")
         plt.ylabel("Net Return (%)")
         plt.grid(True, linestyle="--", alpha=0.6)
         plt.legend()
         
-        type_suffix = f"_{args.type.lower()}"
+        type_suffix = "_option" if is_option else f"_{args.type.lower()}"
         plot_path = PLOTS_DIR / f"backtest_simulator_oos{type_suffix}.png"
         plt.savefig(plot_path, dpi=150, bbox_inches="tight")
         print(f"Saved performance chart to: {plot_path}")
