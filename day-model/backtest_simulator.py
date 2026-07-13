@@ -965,8 +965,10 @@ def main():
         plt.grid(True, linestyle="--", alpha=0.6)
         plt.legend()
         
-        type_suffix = "_option" if is_option else f"_{args.type.lower()}"
-        plot_path = PLOTS_DIR / f"backtest_simulator_oos{type_suffix}.png"
+        asset_type = "option" if is_option else args.type.lower()
+        model_type = "roll" if args.rolling else "stat"
+        early_suffix = "_early" if args.early else ""
+        plot_path = PLOTS_DIR / f"bs_oos_{asset_type}_{model_type}{early_suffix}.png"
         plt.savefig(plot_path, dpi=150, bbox_inches="tight")
         print(f"Saved performance chart to: {plot_path}")
         plt.close()
