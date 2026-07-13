@@ -225,4 +225,23 @@ Upgraded model training stability, tail performance, overfit diagnostics, and de
      - `--target-transform`: choices `none` (default), `rank` (Pearson-on-ranks), `gauss` (normal quantile mapping of ranks).
      - `--post-hoc-calibrate`: optimize active coefficients post-hoc using SciPy Nelder-Mead on Spearman IC.
      - `--sharpe-objective`: use validation tail-Sharpe (winsorized, annualized) instead of tail-IC as Optuna objective. **Performance note**: no significant OOS uplift (P&L CI `[-755, +664] bps`, Sharpe CI `[-0.54, +0.54]`); default Tail IC remains recommended.
-   - Saves model and results with `_rank`, `_gauss`, and `_calibrated` suffixes to run A-B tests side-by-side.
+    - Saves model and results with `_rank`, `_gauss`, and `_calibrated` suffixes to run A-B tests side-by-side.
+
+## Sortino Ratio as Default V5 Objective (July 2026)
+- **Sortino Ratio**: $S(\tau) = \frac{E[R]-\tau}{\sqrt{E[\min(R-\tau,0)^2]}} \times \sqrt{244}$. Downside deviation only; upside volatility not penalized.
+- Default weight 0.40 is best sortino variant — OutTIC +23% over Sharpe baseline. IC generalization gap tightened 34%.
+- **Default**: `--ratio-type sortino`. Use `--ratio-type sharpe` to revert.
+- Report cleanup: `_sharpe`, `_sw*`, `_sortino_sw*`, `_emb*` suffix variants filtered from reports.
+
+## Deflated Sharpe Ratio — PSR/DSR Overfit Correction (July 2026)
+- **PSR**: López de Prado & Bailey (2014) formula with skewness/kurtosis terms. Replaces ad-hoc Gaussian correction.
+- **DSR**: Sets $SR_0 = E[\max_N(SR)]$ via Gumbel approximation.
+- **Trial Correlation**: `dynamic_rho` reduces overfit penalty via $\sqrt{1-\rho}$. Search-budget uses raw trial count N (not ONC effective-N).
+- **Output**: `results_{tag}.json` contains `dsr.probability`, `dsr.sr_benchmark`, `dsr.sr_hat`, `dsr.effective_n_trials`, `dsr.dynamic_rho`.
+
+## CPCV-Bagging Refits, Coef Dispersion & Rolling EWMA Smoothing (July 2026)
+- **CPCV-Bagged Refit & Blending**: Bagging over all 15 validation folds. Blending parameter `w` tuned OOS to combine single refit and bagged model.
+- **Coefficient Dispersion**: Saves std of active coefficients across CPCV folds and bootstrap samples to JSON and joblib.
+- **Cross-Quarter EWMA Smoothing**: `train_rolling.py` applies EWMA smoothing ($[0.5, 0.3, 0.2]$ weight decay) to model coefficients and scaler statistics.
+- **Smart Plot/Report Skips & Parallelization**: Skip existing plots. `generate_rolling_report.py` parallelizes via `joblib.Parallel(backend="loky")`.
+- Run full rolling retraining: `python3 day-model/train_rolling.py -e all --trials 200`
