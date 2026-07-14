@@ -99,6 +99,9 @@ def load_rolling_results(early: bool = False) -> dict:
             tag = r.get("tag", "")
             if not lb or not tag:
                 continue
+            # For rolling reports, only keep the champion sortino_blended configuration
+            if "_sortino_blended" not in tag:
+                continue
             out.setdefault(lb, {})[tag] = r
         except Exception as e:
             print(f"  [WARN] Failed to load {p.name}: {e}")

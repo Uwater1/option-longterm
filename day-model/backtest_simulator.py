@@ -163,21 +163,19 @@ def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform
         glob_pattern = f"linear_{etf}_long_r*{suffix}{early_suffix}.joblib"
         for model_path in sorted(ROLLING_MODELS_DIR.glob(glob_pattern)):
             tag = model_path.stem.replace("linear_", "")
+            
+            # For rolling models, only use the champion sortino_blended configuration
+            if "_sortino_blended" not in tag:
+                continue
+                
             scaler_path = ROLLING_MODELS_DIR / f"scaler_{tag}.joblib"
             
             parts = tag.split("_r")
-            base_etf_long = parts[0]
             r_suffix = parts[1]
-            if early and r_suffix.endswith("_early"):
-                r_suffix = r_suffix[:-6]
-                if r_suffix.endswith(suffix):
-                    r_suffix = r_suffix[:-len(suffix)]
-            elif r_suffix.endswith(suffix):
-                r_suffix = r_suffix[:-len(suffix)]
             
-            base_etf_short = base_etf_long.replace("_long", "_short")
-            short_model_path = ROLLING_MODELS_DIR / f"linear_{base_etf_short}_r{r_suffix}{early_suffix}.joblib"
-            short_scaler_path = ROLLING_MODELS_DIR / f"scaler_{base_etf_short}_r{r_suffix}{early_suffix}.joblib"
+            short_tag = tag.replace("_long", "_short")
+            short_model_path = ROLLING_MODELS_DIR / f"linear_{short_tag}.joblib"
+            short_scaler_path = ROLLING_MODELS_DIR / f"scaler_{short_tag}.joblib"
 
             if not (scaler_path.exists() and short_model_path.exists() and short_scaler_path.exists()):
                 continue
@@ -223,7 +221,7 @@ def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform
         X_long = X_long.fillna(X_long.median().fillna(0.0))
         X_long_scaled = m["long_scaler"]["scaler"].transform(X_long.values)
         long_pred = X_long_scaled @ m["long_model"].coef_ + m["long_model"].intercept_
-        long_s = pd.Series(long_pred, index=df.index[applicable_mask])
+        long_s = pd.Series(long_pred, index=df.loc[applicable_mask, "date"])
 
         # Short predictions
         short_sel = m["short_scaler"]["selected_features"]
@@ -231,7 +229,7 @@ def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform
         X_short = X_short.fillna(X_short.median().fillna(0.0))
         X_short_scaled = m["short_scaler"]["scaler"].transform(X_short.values)
         short_pred = X_short_scaled @ m["short_model"].coef_ + m["short_model"].intercept_
-        short_s = -pd.Series(short_pred, index=df.index[applicable_mask])
+        short_s = -pd.Series(short_pred, index=df.loc[applicable_mask, "date"])
 
         long_scores = pd.concat([long_scores, long_s])
         short_scores = pd.concat([short_scores, short_s])
@@ -244,8 +242,8 @@ def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform
         if static_long_path.exists() and static_short_path.exists():
             print(f"  [INFO] {remaining_mask.sum()} dates not covered by rolling, using static model.")
             static_long, static_short = load_predictions(etf, target_transform=target_transform, sharpe_objective=sharpe_objective)
-            static_long = static_long[static_long.index.isin(df.index[remaining_mask])]
-            static_short = static_short[static_short.index.isin(df.index[remaining_mask])]
+            static_long = static_long[static_long.index.isin(df.loc[remaining_mask, "date"])]
+            static_short = static_short[static_short.index.isin(df.loc[remaining_mask, "date"])]
             long_scores = pd.concat([long_scores, static_long])
             short_scores = pd.concat([short_scores, static_short])
 
