@@ -50,57 +50,136 @@ from train_model import (
 )
 
 
-# ============================================================
-# Warning System (pre-lockbox validation metrics only)
-# ============================================================
-def evaluate_warnings(all_results: dict) -> dict:
-    """Evaluate model health using ONLY pre-lockbox validation metrics.
+ETF_ORDER = ["300ETF", "500ETF", "588000ETF", "159915ETF", "50ETF"]
+TARGET = "trade_return"
 
-    Parameters
-    ----------
-    all_results : dict
-        {quarter_date: {tag: results_dict}}
+def _load_features(etf: str, early: bool = False, _cache={}):
+    """Load features parquet once per ETF (cached)."""
+    cache_key = (etf, early)
+    if cache_key in _cache:
+        return _cache[cache_key]
+    fname = f"features_{etf}_early.parquet" if early else f"features_{etf}.parquet"
+    path = DATA_DIR / fname
+    if not path.exists():
+        return None
+    df = pd.read_parquet(path)
+    if "date" not in df.columns:
+        df = df.reset_index()
+    df["date"] = pd.to_datetime(df["date"])
+    df = df.sort_values("date").reset_index(drop=True)
+    _cache[cache_key] = df
+    return df
 
-    Returns
-    -------
-    dict : {(quarter, tag): {"status": "OK"|"WARNING"|"ALERT", "reasons": [...]}}
+
+def evaluate_warnings(all_results: dict, early: bool = False) -> dict:
+    """Evaluate model health using ex-ante market-regime flags.
+    
+    Checks:
+    - VIX level and percentile.
+    - VIX acceleration (VIX vs 20-day SMA).
+    - Cross-ETF return correlation over the preceding 60 days.
     """
     warnings_out = {}
-    prev_outer_ic = {}  # (etf, side) -> previous quarter outer IC
+    
+    # Pre-cache ETF returns dataframes to avoid repeatedly loading them
+    etf_dfs = {}
+    for etf in ETF_ORDER:
+        df = _load_features(etf, early=early)
+        if df is not None:
+            etf_dfs[etf] = df
+            
+    def get_cross_corr(lb_date_str: str) -> float:
+        lb_ts = pd.Timestamp(lb_date_str)
+        etf_returns = {}
+        for etf, df in etf_dfs.items():
+            # Filter to preceding 60 trading days leading up to lockbox
+            mask = (df["date"] < lb_ts) & (df["date"] >= lb_ts - pd.Timedelta(days=90))
+            sub_df = df[mask].sort_values("date").set_index("date")
+            etf_returns[etf] = sub_df[TARGET]
+            
+        if not etf_returns:
+            return 1.0
+            
+        merged_df = pd.DataFrame(etf_returns).ffill().dropna().tail(60)
+        if len(merged_df) < 10:
+            return 1.0
+            
+        corr_matrix = merged_df.corr(method="spearman")
+        n = corr_matrix.shape[0]
+        if n < 2:
+            return 1.0
+        corrs = []
+        for i in range(n):
+            for j in range(i + 1, n):
+                corrs.append(corr_matrix.iloc[i, j])
+        return float(np.mean(corrs))
 
     for quarter in sorted(all_results.keys()):
+        lb_ts = pd.Timestamp(quarter)
+        
+        # Calculate cross-ETF correlation once per quarter
+        cross_corr = get_cross_corr(quarter)
+        
         for tag, res in all_results[quarter].items():
-            outer_ic = res.get("selection_val_outer_overall_ic", 0) or 0
-            outer_tail_ic = res.get("selection_val_outer_tail_ic", 0) or 0
-
+            etf = res.get("etf", "")
+            
+            # Fetch VIX metrics for this ETF at lockbox_date
+            vix_level = 20.0
+            vix_pct = 0.5
+            vix_accel = 0.0
+            
+            df = etf_dfs.get(etf)
+            if df is not None and "vix" in df.columns:
+                sub_df = df[df["date"] < lb_ts].sort_values("date")
+                if len(sub_df) >= 60:
+                    vix_series = sub_df["vix"].ffill().dropna()
+                    if len(vix_series) >= 60:
+                        vix_level = float(vix_series.iloc[-1])
+                        past_year = vix_series.tail(252)
+                        vix_pct = float((past_year < vix_level).mean())
+                        vix_sma20 = float(vix_series.tail(20).mean())
+                        vix_accel = vix_level - vix_sma20
+                        
             status = "OK"
             reasons = []
-
-            # Check outer validation IC (most recent held-out block before lockbox)
-            if outer_ic < 0:
-                reasons.append(f"outer_IC={outer_ic:+.4f}<0")
-            if outer_tail_ic < 0:
-                reasons.append(f"outer_tail_IC={outer_tail_ic:+.4f}<0")
-
-            # Cross-model decay: compare to previous quarter's outer IC
-            etf = res.get("etf", "")
-            side = res.get("side", "single")
-            prev = prev_outer_ic.get((etf, side))
-            if prev is not None and prev > 0.005 and outer_ic < prev * 0.5:
-                decay_pct = 100 * (1 - outer_ic / prev)
-                reasons.append(f"IC_decay={decay_pct:.0f}%>50%")
-
+            
+            # Warning conditions
+            # VIX is in decimals (e.g. 0.25 represents 25% VIX)
+            if vix_level > 0.25:
+                reasons.append(f"VIX={vix_level * 100.0:.1f}%>25%")
+            if vix_pct > 0.85:
+                reasons.append(f"VIX_pct={vix_pct:.1%}>85%")
+            if vix_accel > 0.03:
+                reasons.append(f"VIX_accel={vix_accel * 100.0:+.1f}%>3%")
+            if cross_corr < 0.65:
+                reasons.append(f"cross_corr={cross_corr:.2f}<0.65")
+                
             # Status determination
-            if len(reasons) >= 2:
-                status = "ALERT"
-            elif any("decay" in r for r in reasons):
+            # Alert conditions:
+            # - VIX level extremely high (>30%) OR VIX percentile > 95%
+            # - Cross-correlation completely broken down (<0.55)
+            # - Or 2 or more warnings active
+            is_alert = (
+                vix_level > 0.30 or 
+                vix_pct > 0.95 or 
+                cross_corr < 0.55 or 
+                len(reasons) >= 2
+            )
+            
+            if is_alert:
                 status = "ALERT"
             elif reasons:
                 status = "WARNING"
-
-            warnings_out[(quarter, tag)] = {"status": status, "reasons": reasons}
-            prev_outer_ic[(etf, side)] = outer_ic
-
+                
+            warnings_out[(quarter, tag)] = {
+                "status": status,
+                "reasons": reasons,
+                "vix_level": vix_level,
+                "vix_percentile": vix_pct,
+                "vix_acceleration": vix_accel,
+                "cross_corr": cross_corr
+            }
+            
     return warnings_out
 
 
@@ -508,7 +587,7 @@ def main():
 
     # Evaluate warnings
     print("\nEvaluating model health warnings...")
-    warnings_dict = evaluate_warnings(all_results)
+    warnings_dict = evaluate_warnings(all_results, early=args.earlyNoGood)
 
     # Print warning summary
     n_warn = sum(1 for v in warnings_dict.values() if v["status"] == "WARNING")
