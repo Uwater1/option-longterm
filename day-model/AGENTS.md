@@ -250,3 +250,22 @@ Upgraded model training stability, tail performance, overfit diagnostics, and de
 - **Precedence Bug**: Previously, `backtest_simulator.py` glob-matched all rolling models. Alphabetical sorting caused the baseline model (`linear_..._r{quarter}.joblib`) to take precedence over the blended model (`linear_..._r{quarter}_sortino_blended.joblib`), blocking the latter during date-range stitching.
 - **Filtering Fix**: Both `backtest_simulator.py` and `generate_rolling_report.py` are updated to filter for and load only the champion `_sortino_blended` configuration. Non-blended baseline models remain untouched on disk and are still loaded for static model comparisons.
 - **Short-side Mapping**: Fixed potential path mismatches in `backtest_simulator.py` for rolling early models by directly mapping the long tag to the short tag via string replacement of `_long` with `_short`.
+
+## Frozen-vs-CSS Experiment (July 2026)
+A/B/C test of feature selection stability. Answers: does a frozen handpicked feature set beat quarterly CSS? See [frozen_vs_css.md](file:///home/hallo/Documents/option-longterm/day-model/frozen_vs_css.md).
+
+**Verdict: Case 3** — neither frozen arm significantly beats CSS (Wilcoxon p = 0.87 for handpick, p = 0.37 for random). Feature reselection is NOT the source of pipeline instability. Quarter effect dominates variance decomposition (~17-33%). Do not invest in frozen feature sets for this pipeline.
+
+- `train_etf` extended with three optional params (defaults preserve production behavior):
+  - `frozen_features: list = None` — bypass CSS, use provided feature names; VIF + cond pruning still apply
+  - `artifact_subdir: str = ""` — write model/scaler/results to `{ROLLING_MODELS_DIR,ROLLING_DATA_DIR}/{subdir}/`
+  - `variant_tag: str = ""` — appended to model tag, isolates Optuna studies + caches
+- Workflow:
+  ```bash
+  python3 day-model/build_frozen_features.py            # Build Arm B/C feature lists from historical CSS
+  python3 day-model/train_frozen_rolling.py --arm both --trials 100 --skip-existing  # Train 240 models
+  python3 day-model/analyze_frozen_vs_css.py            # Wilcoxon + variance decomp + report
+  ```
+- **Arm B (Handpicked)**: features selected in >=6/8 historical quarters, topped up to median CSS size. 120/120 trained OK. Stored in `data/rolling/frozen_armB/`, `models/rolling/frozen_armB/`.
+- **Arm C (Random placebo)**: random sample of same size, seed 42 + per-ETF hash. 112/120 trained (8 collapses — random features lack bootstrap stability).
+- Artifacts: `data/frozen/{arm_b_handpicked,arm_c_random,frozen_features_summary,arm_metrics_thr90}.json/.csv`.

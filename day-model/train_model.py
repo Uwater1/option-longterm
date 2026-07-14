@@ -1451,11 +1451,29 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
               post_hoc_calibrate: bool = False, early: bool = False,
               sharpe_objective: bool = False, embargo_days: int = 10,
               ratio_type: str = "sharpe", sharpe_weight_override: float = None,
-              blend_cpcv: bool = False):
+              blend_cpcv: bool = False,
+              frozen_features: list = None,
+              artifact_subdir: str = "",
+              variant_tag: str = ""):
+    # frozen_features: when set (list of feature names), bypasses CSS and uses
+    #   these features directly as the post-screen feature set. VIF + condition
+    #   number pruning still apply. Used for the frozen-vs-CSS experiment
+    #   (Arm B handpicked, Arm C random placebo).
+    # artifact_subdir: when set, model/scaler/results are written to
+    #   {ROLLING_MODELS_DIR,ROLLING_DATA_DIR}/{artifact_subdir}/ instead of the
+    #   default dirs. Keeps Arm B/C artifacts isolated from production (Arm A).
+    # variant_tag: appended to the model tag (e.g. "_armB") so Optuna study
+    #   names and cache files remain unique across arms.
     print(f"\n" + "=" * 80)
     print(f"Train {etf_name} (Side: {side}) | Early: {early}")
     print(f"Lockbox: {lockbox_date} | Window: {window_years if window_years > 0 else 'all'} years | Rolling: {rolling}")
     print(f"Cache: {use_cache} | Jobs: Optuna={optuna_n_jobs}, Bootstrap={bootstrap_n_jobs}, LOYO={loyo_n_jobs}")
+    if frozen_features is not None:
+        print(f"FROZEN feature mode: {len(frozen_features)} features (CSS bypassed; VIF+cond still apply)")
+    if artifact_subdir:
+        print(f"Artifact subdir: {artifact_subdir}")
+    if variant_tag:
+        print(f"Variant tag: {variant_tag}")
     print(f"=" * 80)
 
     timings = {}
@@ -1520,6 +1538,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         tag_suffix += f"_sw{sharpe_weight_override:.2f}"
     if embargo_days != 10:
         tag_suffix += f"_emb{embargo_days}"
+    tag_suffix += variant_tag
     tag += tag_suffix
     pilot_db_path = DATA_DIR / f"optuna_pilot_{tag}.log"
     main_db_path = DATA_DIR / f"optuna_main_{tag}.log"
@@ -1614,12 +1633,16 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     # Auto-invalidate when: feature parquet regen (mtime), FEATURES list
     # length changes, or any of the deterministic knobs below change.
     # See AGENTS.md "Cache invalidation" for manual-clear guidance.
+    frozen_key_part = ()
+    if frozen_features is not None:
+        frozen_key_part = ("frozen", tuple(sorted(frozen_features)))
     select_key = [
         "v15_vif_cond", etf_name, len(FEATURES), int(parquet_mtime),
         int(X_sel_train.shape[0]), int(X_sel_train.shape[1]),
         STABILITY_B, STABILITY_PI, MIN_FEATURE, fdr_level,
         tuple(val_blocks_all), TARGET, vif_threshold,
         skip_step1, skip_step2, target_transform, early,
+        frozen_key_part,
     ]
     select_cache_path = CACHE_DIR / f"cache_select_{etf_name}_{_cache_key(select_key)}.joblib"
 
@@ -1627,7 +1650,7 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
     def _compute_selection():
         t_sel_start = time.perf_counter()
         y_sel_train_trans = transform_target(y_sel_train, target_transform)
-        
+
         # Step 1: Cheap screening (Bypassed / Not Working)
         if skip_step1:
             print("Skipping Step 1 filter (screening) [Disabled: Univariate screening deletes joint predictive features]...")
@@ -1641,11 +1664,26 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
             screen_mask, p_vals, rhos = run_screening(X_sel_train, y_sel_train_trans, fdr_level=fdr_level)
             t_screen = time.perf_counter() - t_sel_start
             print(f"Screening kept {screen_mask.sum()} features.")
-        
+
         # Step 2: Stability Selection
         t_stab_start = time.perf_counter()
         stability_fallback_triggered = False
-        if skip_step2:
+        if frozen_features is not None:
+            # FROZEN mode: bypass CSS entirely, use the provided feature names.
+            # Convert names to indices in the FEATURES master list (drops any
+            # names that are not present). VIF + condition pruning still apply.
+            print(f"FROZEN mode: using {len(frozen_features)} provided features (CSS bypassed)...")
+            feat_to_idx = {f: i for i, f in enumerate(FEATURES)}
+            stability_selected_idx = np.array(
+                sorted({feat_to_idx[f] for f in frozen_features if f in feat_to_idx}),
+                dtype=np.int64,
+            )
+            stability_scores = np.zeros(len(FEATURES), dtype=np.float32)
+            for i in stability_selected_idx:
+                stability_scores[i] = 1.0
+            t_stab = time.perf_counter() - t_stab_start
+            print(f"  Frozen features resolved to {len(stability_selected_idx)} indices.")
+        elif skip_step2:
             print("Skipping Step 2 filter (CSS)...")
             screened_features_idx = np.where(screen_mask)[0]
             stability_selected_idx = screened_features_idx
@@ -2947,10 +2985,16 @@ def train_etf(etf_name: str, n_trials: int = 50, side: str = "single",
         tag_suffix += f"_emb{embargo_days}"
     if blend_cpcv:
         tag_suffix += "_blended"
+    tag_suffix += variant_tag
     tag += tag_suffix
 
     model_dir = ROLLING_MODELS_DIR if rolling else MODELS_DIR
     data_dir = ROLLING_DATA_DIR if rolling else DATA_DIR
+    if artifact_subdir:
+        model_dir = model_dir / artifact_subdir
+        data_dir = data_dir / artifact_subdir
+        model_dir.mkdir(parents=True, exist_ok=True)
+        data_dir.mkdir(parents=True, exist_ok=True)
 
     joblib.dump(final_model, model_dir / f"linear_{tag}.joblib")
     

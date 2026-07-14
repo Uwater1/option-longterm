@@ -1,0 +1,256 @@
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_frozen_rolling.py", line 104, in train_single
+    res = train_etf(
+        etf, n_trials=args.trials, side=side,
+    ...<17 lines>...
+        variant_tag=cfg["variant_tag"],
+    )
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2816, in train_etf
+    X_working_scaled = scaler_final.fit_transform(X_working_final_bagged)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\base.py", line 907, in fit_transform
+    return self.fit(X, **fit_params).transform(X)
+           ~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\preprocessing\_data.py", line 924, in fit
+    return self.partial_fit(X, y, sample_weight)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\preprocessing\_data.py", line 961, in partial_fit
+    X = validate_data(
+        self,
+    ...<4 lines>...
+        reset=first_call,
+    )
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\validation.py", line 1106, in check_array
+    raise ValueError(
+    ...<3 lines>...
+    )
+ValueError: Found array with 0 feature(s) (shape=(875, 0)) while a minimum of 1 is required by StandardScaler.
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_frozen_rolling.py", line 104, in train_single
+    res = train_etf(
+        etf, n_trials=args.trials, side=side,
+    ...<17 lines>...
+        variant_tag=cfg["variant_tag"],
+    )
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2816, in train_etf
+    X_working_scaled = scaler_final.fit_transform(X_working_final_bagged)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\base.py", line 907, in fit_transform
+    return self.fit(X, **fit_params).transform(X)
+           ~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\preprocessing\_data.py", line 924, in fit
+    return self.partial_fit(X, y, sample_weight)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\preprocessing\_data.py", line 961, in partial_fit
+    X = validate_data(
+        self,
+    ...<4 lines>...
+        reset=first_call,
+    )
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\validation.py", line 1106, in check_array
+    raise ValueError(
+    ...<3 lines>...
+    )
+ValueError: Found array with 0 feature(s) (shape=(939, 0)) while a minimum of 1 is required by StandardScaler.
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_frozen_rolling.py", line 104, in train_single
+    res = train_etf(
+        etf, n_trials=args.trials, side=side,
+    ...<17 lines>...
+        variant_tag=cfg["variant_tag"],
+    )
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2816, in train_etf
+    X_working_scaled = scaler_final.fit_transform(X_working_final_bagged)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\base.py", line 907, in fit_transform
+    return self.fit(X, **fit_params).transform(X)
+           ~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\preprocessing\_data.py", line 924, in fit
+    return self.partial_fit(X, y, sample_weight)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\preprocessing\_data.py", line 961, in partial_fit
+    X = validate_data(
+        self,
+    ...<4 lines>...
+        reset=first_call,
+    )
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\validation.py", line 1106, in check_array
+    raise ValueError(
+    ...<3 lines>...
+    )
+ValueError: Found array with 0 feature(s) (shape=(1454, 0)) while a minimum of 1 is required by StandardScaler.
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_frozen_rolling.py", line 104, in train_single
+    res = train_etf(
+        etf, n_trials=args.trials, side=side,
+    ...<17 lines>...
+        variant_tag=cfg["variant_tag"],
+    )
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2816, in train_etf
+    X_working_scaled = scaler_final.fit_transform(X_working_final_bagged)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\base.py", line 907, in fit_transform
+    return self.fit(X, **fit_params).transform(X)
+           ~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\preprocessing\_data.py", line 924, in fit
+    return self.partial_fit(X, y, sample_weight)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\preprocessing\_data.py", line 961, in partial_fit
+    X = validate_data(
+        self,
+    ...<4 lines>...
+        reset=first_call,
+    )
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\validation.py", line 1106, in check_array
+    raise ValueError(
+    ...<3 lines>...
+    )
+ValueError: Found array with 0 feature(s) (shape=(997, 0)) while a minimum of 1 is required by StandardScaler.
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_frozen_rolling.py", line 104, in train_single
+    res = train_etf(
+        etf, n_trials=args.trials, side=side,
+    ...<17 lines>...
+        variant_tag=cfg["variant_tag"],
+    )
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2816, in train_etf
+    X_working_scaled = scaler_final.fit_transform(X_working_final_bagged)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\base.py", line 907, in fit_transform
+    return self.fit(X, **fit_params).transform(X)
+           ~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\preprocessing\_data.py", line 924, in fit
+    return self.partial_fit(X, y, sample_weight)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\preprocessing\_data.py", line 961, in partial_fit
+    X = validate_data(
+        self,
+    ...<4 lines>...
+        reset=first_call,
+    )
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\validation.py", line 1106, in check_array
+    raise ValueError(
+    ...<3 lines>...
+    )
+ValueError: Found array with 0 feature(s) (shape=(1455, 0)) while a minimum of 1 is required by StandardScaler.
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_frozen_rolling.py", line 104, in train_single
+    res = train_etf(
+        etf, n_trials=args.trials, side=side,
+    ...<17 lines>...
+        variant_tag=cfg["variant_tag"],
+    )
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2816, in train_etf
+    X_working_scaled = scaler_final.fit_transform(X_working_final_bagged)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\base.py", line 907, in fit_transform
+    return self.fit(X, **fit_params).transform(X)
+           ~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\preprocessing\_data.py", line 924, in fit
+    return self.partial_fit(X, y, sample_weight)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\preprocessing\_data.py", line 961, in partial_fit
+    X = validate_data(
+        self,
+    ...<4 lines>...
+        reset=first_call,
+    )
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\validation.py", line 1106, in check_array
+    raise ValueError(
+    ...<3 lines>...
+    )
+ValueError: Found array with 0 feature(s) (shape=(1454, 0)) while a minimum of 1 is required by StandardScaler.
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_frozen_rolling.py", line 104, in train_single
+    res = train_etf(
+        etf, n_trials=args.trials, side=side,
+    ...<17 lines>...
+        variant_tag=cfg["variant_tag"],
+    )
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2816, in train_etf
+    X_working_scaled = scaler_final.fit_transform(X_working_final_bagged)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\base.py", line 907, in fit_transform
+    return self.fit(X, **fit_params).transform(X)
+           ~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\preprocessing\_data.py", line 924, in fit
+    return self.partial_fit(X, y, sample_weight)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\preprocessing\_data.py", line 961, in partial_fit
+    X = validate_data(
+        self,
+    ...<4 lines>...
+        reset=first_call,
+    )
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\validation.py", line 1106, in check_array
+    raise ValueError(
+    ...<3 lines>...
+    )
+ValueError: Found array with 0 feature(s) (shape=(1454, 0)) while a minimum of 1 is required by StandardScaler.
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_frozen_rolling.py", line 104, in train_single
+    res = train_etf(
+        etf, n_trials=args.trials, side=side,
+    ...<17 lines>...
+        variant_tag=cfg["variant_tag"],
+    )
+  File "C:\Users\Administrator\Documents\option-longterm\day-model\train_model.py", line 2816, in train_etf
+    X_working_scaled = scaler_final.fit_transform(X_working_final_bagged)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\base.py", line 907, in fit_transform
+    return self.fit(X, **fit_params).transform(X)
+           ~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\preprocessing\_data.py", line 924, in fit
+    return self.partial_fit(X, y, sample_weight)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\preprocessing\_data.py", line 961, in partial_fit
+    X = validate_data(
+        self,
+    ...<4 lines>...
+        reset=first_call,
+    )
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+  File "C:\Users\Administrator\AppData\Local\Python\pythoncore-3.13-64\Lib\site-packages\sklearn\utils\validation.py", line 1106, in check_array
+    raise ValueError(
+    ...<3 lines>...
+    )
+ValueError: Found array with 0 feature(s) (shape=(1454, 0)) while a minimum of 1 is required by StandardScaler.
