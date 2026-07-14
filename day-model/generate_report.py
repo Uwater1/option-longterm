@@ -706,21 +706,9 @@ def render_diagnostics_figure(etf, side, model, selected_features,
 # Main
 # ============================================================
 def _load_results_dict(early: bool = False):
-    """Load all results_*.json keyed by tag.
-    Skips target-transform variants (_rank, _gauss) which consistently
-    degrade OOS performance and clutter the report.
-    Also skips sweep variants (_sw*, _emb*, _sortino_sw*, _sharpe) that
-    underperform their parent configs on OOS metrics.
-    """
+    """Load only champion sortino_blended configurations."""
     out = {}
     pattern = "results_*_early.json" if early else "results_*.json"
-    skip_suffixes = (
-        "_rank", "_gauss",                          # target transforms
-        "_sharpe",                                  # sharpe-objective (worse OutTIC than sortino)
-        "_sw0.20", "_sw0.30", "_sw0.50",            # sharpe weight overrides
-        "_sortino_sw0.20", "_sortino_sw0.30", "_sortino_sw0.50",  # sortino weight overrides (default 0.40 wins)
-        "_emb20",                                   # embargo variants (no effect in static mode)
-    )
     for p in DATA_DIR.glob(pattern):
         if not early and p.name.endswith("_early.json"):
             continue
@@ -728,13 +716,14 @@ def _load_results_dict(early: bool = False):
             with open(p) as f:
                 r = json.load(f)
             tag = r.get("tag", r.get("etf"))
-            # Filter out underperforming variants
-            if any(tag.endswith(s) for s in skip_suffixes):
+            # Only keep sortino_blended configs
+            if not tag.endswith("_sortino_blended"):
                 continue
             out[tag] = r
         except Exception as e:
             print(f"  [WARNING] Failed to load {p.name}: {e}")
     return out
+
 
 
 def _ordered_tags(results_dict):

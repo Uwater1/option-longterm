@@ -19,7 +19,7 @@ python3 day-model/build_features.py -e all (--early)
 python3 day-model/train_model.py -e all --trials 100 (--early)
 # Cap trials at 100 to prevent overfit risk.
 
-# 3. Generate summary REPORT.md and plots
+# 3. Generate summary REPORT.md and plots (displays only champion `_sortino_blended` configs to reduce size)
 python3 day-model/generate_report.py (--early)
 
 # 4. Run out-of-sample backtest simulator
