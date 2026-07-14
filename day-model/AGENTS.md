@@ -245,3 +245,8 @@ Upgraded model training stability, tail performance, overfit diagnostics, and de
 - **Cross-Quarter EWMA Smoothing**: `train_rolling.py` applies EWMA smoothing ($[0.5, 0.3, 0.2]$ weight decay) to model coefficients and scaler statistics.
 - **Smart Plot/Report Skips & Parallelization**: Skip existing plots. `generate_rolling_report.py` parallelizes via `joblib.Parallel(backend="loky")`.
 - Run full rolling retraining: `python3 day-model/train_rolling.py -e all --trials 200`
+
+## Rolling Model Selection Filtering (July 2026)
+- **Precedence Bug**: Previously, `backtest_simulator.py` glob-matched all rolling models. Alphabetical sorting caused the baseline model (`linear_..._r{quarter}.joblib`) to take precedence over the blended model (`linear_..._r{quarter}_sortino_blended.joblib`), blocking the latter during date-range stitching.
+- **Filtering Fix**: Both `backtest_simulator.py` and `generate_rolling_report.py` are updated to filter for and load only the champion `_sortino_blended` configuration. Non-blended baseline models remain untouched on disk and are still loaded for static model comparisons.
+- **Short-side Mapping**: Fixed potential path mismatches in `backtest_simulator.py` for rolling early models by directly mapping the long tag to the short tag via string replacement of `_long` with `_short`.
