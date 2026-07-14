@@ -275,6 +275,105 @@ def simulate_strategy(pred_series: pd.Series, actual_returns: pd.Series,
     }
 
 
+def simulate_strategy_fast(pred_vals: np.ndarray, actual_returns: np.ndarray,
+                           signal_thr: float = 80.0, cost_bps: float = 15.0,
+                           side: str = "long") -> float:
+    n = len(pred_vals)
+    if n < 10:
+        return 0.0
+
+    from scipy.stats import rankdata
+    rank = rankdata(pred_vals, method='average') / n
+    thr = signal_thr / 100.0
+    cost = cost_bps / 1e4
+
+    cfg = SIDE_CONFIG.get(side, SIDE_CONFIG["single"])
+    
+    if cfg["tail_def"] == "top_only":
+        mask = rank >= thr
+        trades_ret = actual_returns[mask] - cost
+    elif cfg["tail_def"] == "bot_only":
+        mask = (1.0 - rank) >= thr
+        trades_ret = -actual_returns[mask] - cost
+    else:
+        top_mask = rank >= thr
+        bot_mask = rank <= (1.0 - thr)
+        trades_ret_top = actual_returns[top_mask] - cost
+        trades_ret_bot = -actual_returns[bot_mask] - cost
+        trades_ret = np.concatenate([trades_ret_top, trades_ret_bot])
+
+    if len(trades_ret) == 0:
+        return 0.0
+
+    n_t = len(trades_ret)
+    mean_ret = trades_ret.mean()
+    std_ret = trades_ret.std(ddof=1) if n_t > 1 else 0.0
+    sharpe = mean_ret / std_ret * np.sqrt(252) if std_ret > 1e-8 else 0.0
+    return sharpe
+
+
+def compute_block_bootstrap_ci(y_oos: np.ndarray, pred_oos: np.ndarray, side: str,
+                               block_size: int = 5, B: int = 1000, alpha: float = 0.05,
+                               signal_thr: float = 90.0, cost_bps: float = 15.0) -> dict:
+    """
+    Computes a block-bootstrapped confidence interval for Spearman IC and Strategy Sharpe.
+    Returns a dict with:
+      - 'ic_ci_lower', 'ic_ci_upper', 'ic_spans_zero'
+      - 'sh_ci_lower', 'sh_ci_upper', 'sh_spans_zero'
+    """
+    N = len(y_oos)
+    if N <= block_size:
+        block_size = max(1, N // 2)
+
+    ic_boots = np.zeros(B)
+    sh_boots = np.zeros(B)
+
+    # Use a fixed seed for reproducible reports
+    rng = np.random.default_rng(42)
+    n_blocks = int(np.ceil(N / block_size))
+
+    from scipy.stats import rankdata
+    from generate_report import _spearman_from_arrays
+
+    for b in range(B):
+        # Sample start indices
+        start_indices = rng.choice(N - block_size + 1, size=n_blocks, replace=True)
+        # Reconstruct indices
+        indices = np.zeros(n_blocks * block_size, dtype=int)
+        for i, start in enumerate(start_indices):
+            indices[i * block_size : (i + 1) * block_size] = np.arange(start, start + block_size)
+        
+        # Truncate to N
+        indices = indices[:N]
+        
+        y_boot = y_oos[indices]
+        pred_boot = pred_oos[indices]
+        
+        ic_boots[b] = _spearman_from_arrays(y_boot, pred_boot)
+        sh_boots[b] = simulate_strategy_fast(pred_boot, y_boot, signal_thr, cost_bps, side)
+
+    # Sort to compute percentiles
+    ic_boots.sort()
+    sh_boots.sort()
+
+    lower_idx = int(B * (alpha / 2.0))
+    upper_idx = int(B * (1.0 - alpha / 2.0))
+
+    ic_lower = float(ic_boots[lower_idx])
+    ic_upper = float(ic_boots[upper_idx])
+    sh_lower = float(sh_boots[lower_idx])
+    sh_upper = float(sh_boots[upper_idx])
+
+    return {
+        "ic_ci_lower": ic_lower,
+        "ic_ci_upper": ic_upper,
+        "ic_spans_zero": bool(ic_lower <= 0.0 <= ic_upper),
+        "sh_ci_lower": sh_lower,
+        "sh_ci_upper": sh_upper,
+        "sh_spans_zero": bool(sh_lower <= 0.0 <= sh_upper),
+    }
+
+
 # ============================================================
 # Per-model evaluation
 # ============================================================
@@ -308,57 +407,130 @@ def evaluate_model(tag: str, r: dict, signal_thr: float, cost_bps: float,
     actual_series = pd.Series(y_oos, index=range(len(y_oos)))
     strat = simulate_strategy(pred_series, actual_series, signal_thr, cost_bps, side)
 
+    # Block-bootstrap CIs (B=1000)
+    boot = compute_block_bootstrap_ci(y_oos, pred_oos, side, signal_thr=signal_thr, cost_bps=cost_bps)
+
     return {
         "oos_ic": oos_ic,
         "oos_tail_ic": oos_tail_ic,
         "oos_mono": oos_mono,
         "n_oos": len(y_oos),
         **{f"strat_{k}": v for k, v in strat.items()},
+        **boot,
     }
-
-
 # ============================================================
 # Warning System (pre-lockbox validation metrics only)
 # ============================================================
-def evaluate_warnings(all_results: dict) -> dict:
-    """Evaluate model health using ONLY pre-lockbox validation metrics."""
+def evaluate_warnings(all_results: dict, early: bool = False) -> dict:
+    """Evaluate model health using ex-ante market-regime flags.
+    
+    Checks:
+    - VIX level and percentile.
+    - VIX acceleration (VIX vs 20-day SMA).
+    - Cross-ETF return correlation over the preceding 60 days.
+    """
     warnings_out = {}
-    prev_outer_ic = {}
+    
+    # Pre-cache ETF returns dataframes to avoid repeatedly loading them
+    etf_dfs = {}
+    for etf in ETF_ORDER:
+        df = _load_features(etf, early=early)
+        if df is not None:
+            etf_dfs[etf] = df
+            
+    def get_cross_corr(lb_date_str: str) -> float:
+        lb_ts = pd.Timestamp(lb_date_str)
+        etf_returns = {}
+        for etf, df in etf_dfs.items():
+            # Filter to preceding 60 trading days leading up to lockbox
+            mask = (df["date"] < lb_ts) & (df["date"] >= lb_ts - pd.Timedelta(days=90))
+            sub_df = df[mask].sort_values("date").set_index("date")
+            etf_returns[etf] = sub_df[TARGET]
+            
+        if not etf_returns:
+            return 1.0
+            
+        merged_df = pd.DataFrame(etf_returns).ffill().dropna().tail(60)
+        if len(merged_df) < 10:
+            return 1.0
+            
+        corr_matrix = merged_df.corr(method="spearman")
+        n = corr_matrix.shape[0]
+        if n < 2:
+            return 1.0
+        corrs = []
+        for i in range(n):
+            for j in range(i + 1, n):
+                corrs.append(corr_matrix.iloc[i, j])
+        return float(np.mean(corrs))
 
     for quarter in sorted(all_results.keys()):
+        lb_ts = pd.Timestamp(quarter)
+        
+        # Calculate cross-ETF correlation once per quarter
+        cross_corr = get_cross_corr(quarter)
+        
         for tag, res in all_results[quarter].items():
-            outer_ic = res.get("selection_val_outer_overall_ic", 0) or 0
-            outer_tail_ic = res.get("selection_val_outer_tail_ic", 0) or 0
-
+            etf = res.get("etf", "")
+            
+            # Fetch VIX metrics for this ETF at lockbox_date
+            vix_level = 20.0
+            vix_pct = 0.5
+            vix_accel = 0.0
+            
+            df = etf_dfs.get(etf)
+            if df is not None and "vix" in df.columns:
+                sub_df = df[df["date"] < lb_ts].sort_values("date")
+                if len(sub_df) >= 60:
+                    vix_series = sub_df["vix"].ffill().dropna()
+                    if len(vix_series) >= 60:
+                        vix_level = float(vix_series.iloc[-1])
+                        past_year = vix_series.tail(252)
+                        vix_pct = float((past_year < vix_level).mean())
+                        vix_sma20 = float(vix_series.tail(20).mean())
+                        vix_accel = vix_level - vix_sma20
+                        
             status = "OK"
             reasons = []
-
-            if outer_ic < 0:
-                reasons.append(f"outer_IC={outer_ic:+.4f}<0")
-            if outer_tail_ic < 0:
-                reasons.append(f"outer_tail_IC={outer_tail_ic:+.4f}<0")
-
-            etf = res.get("etf", "")
-            side = res.get("side", "single")
-            prev = prev_outer_ic.get((etf, side))
-            if prev is not None and prev > 0.005 and outer_ic < prev * 0.5:
-                decay_pct = 100 * (1 - outer_ic / prev)
-                reasons.append(f"IC_decay={decay_pct:.0f}%>50%")
-
-            if len(reasons) >= 2:
-                status = "ALERT"
-            elif any("decay" in r for r in reasons):
+            
+            # Warning conditions
+            # VIX is in decimals (e.g. 0.25 represents 25% VIX)
+            if vix_level > 0.25:
+                reasons.append(f"VIX={vix_level * 100.0:.1f}%>25%")
+            if vix_pct > 0.85:
+                reasons.append(f"VIX_pct={vix_pct:.1%}>85%")
+            if vix_accel > 0.03:
+                reasons.append(f"VIX_accel={vix_accel * 100.0:+.1f}%>3%")
+            if cross_corr < 0.65:
+                reasons.append(f"cross_corr={cross_corr:.2f}<0.65")
+                
+            # Status determination
+            # Alert conditions:
+            # - VIX level extremely high (>30%) OR VIX percentile > 95%
+            # - Cross-correlation completely broken down (<0.55)
+            # - Or 2 or more warnings active
+            is_alert = (
+                vix_level > 0.30 or 
+                vix_pct > 0.95 or 
+                cross_corr < 0.55 or 
+                len(reasons) >= 2
+            )
+            
+            if is_alert:
                 status = "ALERT"
             elif reasons:
                 status = "WARNING"
-
-            warnings_out[(quarter, tag)] = {"status": status, "reasons": reasons}
-            prev_outer_ic[(etf, side)] = outer_ic
-
+                
+            warnings_out[(quarter, tag)] = {
+                "status": status,
+                "reasons": reasons,
+                "vix_level": vix_level,
+                "vix_percentile": vix_pct,
+                "vix_acceleration": vix_accel,
+                "cross_corr": cross_corr
+            }
+            
     return warnings_out
-
-
-# ============================================================
 # Diagnostic plots (per-quarter subdirectories)
 # ============================================================
 def render_quarter_diagnostics(tag: str, r: dict, quarter_dir: Path,
@@ -481,9 +653,15 @@ def generate_report(all_results: dict, eval_metrics: dict, warnings_dict: dict,
             wr = ev.get("strat_win_rate", 0)
             tr = ev.get("strat_total_ret", 0)
             sh = ev.get("strat_sharpe", 0)
+            sh_lower = ev.get("sh_ci_lower", 0.0)
+            sh_upper = ev.get("sh_ci_upper", 0.0)
+            sh_flag = "*" if ev.get("sh_spans_zero", False) else ""
+            sh_str = f"{sh:+.2f} [{sh_lower:+.2f}, {sh_upper:+.2f}]{sh_flag}"
             dd = ev.get("strat_max_dd", 0)
             mr = ev.get("strat_mean_ret", 0)
-            L.append(f"| {ql} | {etf} | `{side}` | {n_t} | {wr:.1%} | {tr*1e4:+.0f}bps | {sh:+.2f} | {dd*1e4:.0f}bps | {mr*1e4:+.1f}bps |")
+            L.append(f"| {ql} | {etf} | `{side}` | {n_t} | {wr:.1%} | {tr*1e4:+.0f}bps | {sh_str} | {dd*1e4:.0f}bps | {mr*1e4:+.1f}bps |")
+    L.append("")
+    L.append("- \* Note: \* indicates 95% block-bootstrap confidence interval (block_size=5 days, B=1000) spans zero.")
     L.append("")
 
     # === Portfolio-level aggregation ===
@@ -572,34 +750,51 @@ def generate_report(all_results: dict, eval_metrics: dict, warnings_dict: dict,
                 L.append(f"| {ql} | {etf} | `{side}` | - | ERR | ERR | ERR |")
                 continue
             n_oos = ev.get("n_oos", 0)
-            L.append(f"| {ql} | {etf} | `{side}` | {n_oos} | {ev.get('oos_ic', 0):+.4f} | {ev.get('oos_tail_ic', 0):+.4f} | {ev.get('oos_mono', 0):+.4f} |")
+            ic = ev.get("oos_ic", 0)
+            ic_lower = ev.get("ic_ci_lower", 0.0)
+            ic_upper = ev.get("ic_ci_upper", 0.0)
+            ic_flag = "*" if ev.get("ic_spans_zero", False) else ""
+            ic_str = f"{ic:+.4f} [{ic_lower:+.4f}, {ic_upper:+.4f}]{ic_flag}"
+            L.append(f"| {ql} | {etf} | `{side}` | {n_oos} | {ic_str} | {ev.get('oos_tail_ic', 0):+.4f} | {ev.get('oos_mono', 0):+.4f} |")
+    L.append("")
+    L.append("- \* Note: \* indicates 95% block-bootstrap confidence interval (block_size=5 days, B=1000) spans zero.")
     L.append("")
 
     # === Model Health ===
-    L.append("## Model Health Warnings")
+    L.append("## Model Health Warnings (Regime-Based)")
     L.append("")
-    L.append("| Quarter | Tag | Outer IC | Outer Tail IC | Deflated Val IC | Status | Reason |")
-    L.append("| :--- | :--- | :---: | :---: | :---: | :---: | :--- |")
+    L.append("Evaluating ex-ante market-state indicators leading up to each lockbox date.")
+    L.append("")
+    L.append("| Quarter | Tag | VIX Level | VIX %tile | VIX Accel | Cross-Corr | Status | Reason |")
+    L.append("| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |")
     for quarter in sorted(all_results.keys()):
         ql = quarter_label(quarter)
         for tag in sorted(all_results[quarter].keys()):
-            res = all_results[quarter][tag]
-            outer_ic = res.get("selection_val_outer_overall_ic", 0) or 0
-            outer_tail_ic = res.get("selection_val_outer_tail_ic", 0) or 0
-            deflated_ic = res.get("deflated_val_ic", 0) or 0
-            w = warnings_dict.get((quarter, tag), {"status": "OK", "reasons": []})
+            w = warnings_dict.get((quarter, tag), {
+                "status": "OK", "reasons": [], 
+                "vix_level": 20.0, "vix_percentile": 0.5, 
+                "vix_acceleration": 0.0, "cross_corr": 1.0
+            })
             reason = ", ".join(w["reasons"]) if w["reasons"] else "-"
-            L.append(f"| {ql} | {tag} | {outer_ic:+.4f} | {outer_tail_ic:+.4f} | {deflated_ic:+.4f} | {w['status']} | {reason} |")
+            vl = w["vix_level"] * 100.0
+            vp = w["vix_percentile"]
+            va = w["vix_acceleration"] * 100.0
+            cc = w["cross_corr"]
+            L.append(f"| {ql} | {tag} | {vl:.1f}% | {vp:.1%} | {va:+.1f}% | {cc:.2f} | **{w['status']}** | {reason} |")
     L.append("")
-    L.append("### Warning Levels")
+    L.append("### Warning Trigger Levels")
     L.append("")
-    L.append("- **OK**: Outer validation IC >= 0 and no significant decay.")
-    L.append("- **WARNING**: Outer IC < 0 OR outer Tail IC < 0 (single metric negative).")
-    L.append("- **ALERT**: Both outer IC and Tail IC negative, OR IC decay > 50% vs previous quarter.")
+    L.append("- **WARNING**: Triggered if any one of the following holds:")
+    L.append("  - VIX Level > 25.0% or VIX past-year percentile > 85%")
+    L.append("  - VIX Acceleration > 3.0% (rising sharply above 20-day SMA)")
+    L.append("  - Cross-ETF correlation breakdown (average Spearman correlation < 0.65)")
+    L.append("- **ALERT**: Triggered if VIX is extremely high (>30.0% or percentile > 95%), cross-ETF correlation completely breaks down (<0.55), or 2 or more warnings are active.")
     L.append("")
 
     # === IC Timeline by ETF ===
     L.append("## IC & Return Timeline by ETF")
+    L.append("")
+    L.append("- \* Note: \* indicates 95% block-bootstrap confidence interval (block_size=5 days, B=1000) spans zero.")
     L.append("")
     for etf in ETF_ORDER:
         for side_label in ["long", "short"]:
@@ -618,13 +813,27 @@ def generate_report(all_results: dict, eval_metrics: dict, warnings_dict: dict,
             L.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: |")
             for quarter, tag, res, ev in rows:
                 ql = quarter_label(quarter)
-                ic = ev.get("oos_ic", 0) if "error" not in ev else 0
-                tic = ev.get("oos_tail_ic", 0) if "error" not in ev else 0
-                nt = ev.get("strat_n_trades", 0) if "error" not in ev else 0
-                pnl = ev.get("strat_total_ret", 0) * 1e4 if "error" not in ev else 0
-                sh = ev.get("strat_sharpe", 0) if "error" not in ev else 0
-                wr = ev.get("strat_win_rate", 0) if "error" not in ev else 0
-                L.append(f"| {ql} | {ic:+.4f} | {tic:+.4f} | {nt} | {pnl:+.0f}bps | {sh:+.2f} | {wr:.0%} |")
+                if "error" in ev:
+                    L.append(f"| {ql} | ERR | - | - | - | - | - |")
+                    continue
+                ic = ev.get("oos_ic", 0)
+                ic_lower = ev.get("ic_ci_lower", 0.0)
+                ic_upper = ev.get("ic_ci_upper", 0.0)
+                ic_flag = "*" if ev.get("ic_spans_zero", False) else ""
+                ic_str = f"{ic:+.4f} [{ic_lower:+.4f}, {ic_upper:+.4f}]{ic_flag}"
+
+                tic = ev.get("oos_tail_ic", 0)
+                nt = ev.get("strat_n_trades", 0)
+                pnl = ev.get("strat_total_ret", 0) * 1e4
+                
+                sh = ev.get("strat_sharpe", 0)
+                sh_lower = ev.get("sh_ci_lower", 0.0)
+                sh_upper = ev.get("sh_ci_upper", 0.0)
+                sh_flag = "*" if ev.get("sh_spans_zero", False) else ""
+                sh_str = f"{sh:+.2f} [{sh_lower:+.2f}, {sh_upper:+.2f}]{sh_flag}"
+
+                wr = ev.get("strat_win_rate", 0)
+                L.append(f"| {ql} | {ic_str} | {tic:+.4f} | {nt} | {pnl:+.0f}bps | {sh_str} | {wr:.0%} |")
             L.append("")
 
     # === Feature Stability ===
@@ -800,26 +1009,39 @@ def main():
     print(f"  Predictions cached for {len(pred_data)}/{len(all_tags)} models.")
 
     # 1. Evaluate each model (IC + strategy returns)
-    print("\nEvaluating models (IC + strategy simulation)...")
-    eval_metrics = {}
+    print("\nEvaluating models (IC + strategy simulation + block-bootstrap)...")
+    eval_tasks = []
     for quarter in sorted(all_results.keys()):
-        eval_metrics[quarter] = {}
         for tag in sorted(all_results[quarter].keys()):
             res = all_results[quarter][tag]
-            ev = evaluate_model(tag, res, args.thr, args.cost_bps,
-                                early=args.early, precomputed=pred_data.get(tag))
-            eval_metrics[quarter][tag] = ev
-            if "error" not in ev:
-                nt = ev.get("strat_n_trades", 0)
-                pnl = ev.get("strat_total_ret", 0) * 1e4
-                ic = ev.get("oos_ic", 0)
-                print(f"  [{quarter_label(quarter)}] {tag}: IC={ic:+.4f} trades={nt} P&L={pnl:+.0f}bps")
-            else:
-                print(f"  [{quarter_label(quarter)}] {tag}: ERROR - {ev['error'][:60]}")
+            eval_tasks.append((quarter, tag, res))
+
+    n_eval_jobs = args.jobs if args.jobs > 0 else min(
+        len(eval_tasks), max(1, (os.cpu_count() or 4) - 1))
+
+    print(f"  Running {len(eval_tasks)} evaluations in parallel ({n_eval_jobs} workers)...")
+    eval_results = Parallel(n_jobs=n_eval_jobs, backend="loky")(
+        delayed(evaluate_model)(
+            tag, res, args.thr, args.cost_bps,
+            early=args.early, precomputed=pred_data.get(tag)
+        ) for quarter, tag, res in eval_tasks
+    )
+
+    eval_metrics = {}
+    for (quarter, tag, res), ev in zip(eval_tasks, eval_results):
+        eval_metrics.setdefault(quarter, {})[tag] = ev
+        if "error" not in ev:
+            nt = ev.get("strat_n_trades", 0)
+            pnl = ev.get("strat_total_ret", 0) * 1e4
+            ic = ev.get("oos_ic", 0)
+            sh = ev.get("strat_sharpe", 0)
+            print(f"  [{quarter_label(quarter)}] {tag}: IC={ic:+.4f} Sharpe={sh:+.2f} trades={nt} P&L={pnl:+.0f}bps")
+        else:
+            print(f"  [{quarter_label(quarter)}] {tag}: ERROR - {ev['error'][:60]}")
 
     # 2. Warnings
     print("\nEvaluating model health warnings...")
-    warnings_dict = evaluate_warnings(all_results)
+    warnings_dict = evaluate_warnings(all_results, early=args.early)
     n_warn = sum(1 for v in warnings_dict.values() if v["status"] == "WARNING")
     n_alert = sum(1 for v in warnings_dict.values() if v["status"] == "ALERT")
     print(f"  WARNING: {n_warn} | ALERT: {n_alert}")

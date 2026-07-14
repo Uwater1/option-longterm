@@ -269,3 +269,12 @@ A/B/C test of feature selection stability. Answers: does a frozen handpicked fea
 - **Arm B (Handpicked)**: features selected in >=6/8 historical quarters, topped up to median CSS size. 120/120 trained OK. Stored in `data/rolling/frozen_armB/`, `models/rolling/frozen_armB/`.
 - **Arm C (Random placebo)**: random sample of same size, seed 42 + per-ETF hash. 112/120 trained (8 collapses — random features lack bootstrap stability).
 - Artifacts: `data/frozen/{arm_b_handpicked,arm_c_random,frozen_features_summary,arm_metrics_thr90}.json/.csv`.
+
+## Block-Bootstrap CIs & Regime warnings for OOS (July 2026)
+- **Problem**: Per-quarter out-of-sample (OOS) metrics have high noise ($n \approx 60$ days). Pre-lockbox validation IC decay warning system is anti-correlated with reality.
+- **Solution**: 
+  - Wrap 95% circular block-bootstrap confidence intervals (block size $= 5$ days, $B = 1000$) around quarterly Sharpe and Spearman IC. Flag any interval spanning zero with `*`.
+  - Replace warning system with ex-ante market-state indicators: VIX level (>25% warning, >30% alert), VIX percentile (>85% warning, >95% alert), VIX acceleration (>3% warning), and average cross-ETF returns correlation breakdown (<0.65 warning, <0.55 alert).
+- **Parallelized Evaluation**: Model evaluation step in `generate_rolling_report.py` parallelized using `joblib.Parallel` (`backend="loky"`) to offset cost of $B=1000$ bootstrap iterations.
+- **Findings**: Most quarterly metrics span zero, confirming high uncertainty of short-term point estimates. VIX/cross-ETF warnings properly flag periods of market stress (e.g. ALERT status in 2024Q1).
+
