@@ -416,8 +416,9 @@ def simulate_etf_trades(
                     break
 
         # Calculate returns
-        gross = direction * (exit_price / entry_price - 1.0)
-        net = gross - cost_bps / 1e4
+        size = float(row.get("size", 1.0))
+        gross = direction * (exit_price / entry_price - 1.0) * size
+        net = gross - (cost_bps / 1e4) * size
 
         trades.append({
             "date": date,
@@ -431,6 +432,7 @@ def simulate_etf_trades(
             "net_ret": net,
             "long_rank": row["long_rank"],
             "short_rank": row["short_rank"],
+            "size": size,
         })
 
     return pd.DataFrame(trades).set_index("date").sort_index()
@@ -642,12 +644,15 @@ def simulate_option_trades(
         entry_px_slip = entry_px * 1.01
         exit_px_slip = exit_px * 0.99
 
+        size = float(row.get("size", 1.0))
         gross_pnl_rmb = (exit_px_slip - entry_px_slip) * contract_multiplier
-        net_pnl_rmb = gross_pnl_rmb - 4.0  # 2 RMB round-trip per leg/contract = 4 RMB total
+        net_pnl_rmb = (gross_pnl_rmb - 4.0) * size  # 2 RMB round-trip per leg/contract = 4 RMB total
 
         # Return relative to the premium paid (option capital outlay)
         premium_paid = entry_px_slip * contract_multiplier
-        net_ret = net_pnl_rmb / premium_paid if premium_paid > 0 else 0.0
+        # Note: both return and absolute P&L are scaled by size
+        net_ret = (net_pnl_rmb / premium_paid if premium_paid > 0 else 0.0)
+        gross_ret = ((exit_px - entry_px) / entry_px if entry_px > 0 else 0.0) * size
 
         trades.append({
             "date": date,
@@ -657,7 +662,7 @@ def simulate_option_trades(
             "exit_price": exit_px,
             "exit_type": exit_type,
             "stop_level": stop_level,
-            "gross_ret": (exit_px - entry_px) / entry_px if entry_px > 0 else 0.0,
+            "gross_ret": gross_ret,
             "net_ret": net_ret,
             "long_rank": row["long_rank"],
             "short_rank": row["short_rank"],
@@ -667,6 +672,7 @@ def simulate_option_trades(
             "spot_entry": spot_entry,
             "spot_exit": exit_spot,
             "net_pnl_rmb": net_pnl_rmb,
+            "size": size,
         })
 
     if not trades:
@@ -739,6 +745,16 @@ def main():
                     help="Use models trained with validation set tail-Sharpe objective instead of Tail IC. Set to False by default, use --sharpe-objective to enable.")
     ap.add_argument("--option", action="store_true",
                     help="Trade nearest OTM option instead of ETF/Future")
+    ap.add_argument("--garch-gate", action="store_true",
+                    help="Enable look-ahead free multi-scale GARCH gating layer")
+    ap.add_argument("--turbulent-thr", type=float, default=92.0,
+                    help="Signal threshold in Turbulent volatility regime")
+    ap.add_argument("--turbulent-size", type=float, default=0.8,
+                    help="Position sizing scale in Turbulent volatility regime")
+    ap.add_argument("--crisis-thr", type=float, default=98.0,
+                    help="Signal threshold in Crisis volatility regime")
+    ap.add_argument("--crisis-size", type=float, default=0.2,
+                    help="Position sizing scale in Crisis volatility regime")
     args = ap.parse_args()
 
     global EXIT_BAR
@@ -812,24 +828,82 @@ def main():
             short_rank = short_rank.loc[common_idx]
             
             # Generate signals
-            long_fires = long_rank >= (args.long_thr / 100.0)
-            short_fires = short_rank >= (args.short_thr / 100.0)
-            
-            long_margin = long_rank / max(args.long_thr / 100.0, 1e-12)
-            short_margin = short_rank / max(args.short_thr / 100.0, 1e-12)
-            both_fire = long_fires & short_fires
-            
-            direction = pd.Series(0, index=common_idx, dtype=int)
-            direction[long_fires & ~both_fire] = 1
-            direction[short_fires & ~both_fire] = -1
-            # Conflict resolution: higher margin wins
-            direction[both_fire & (long_margin >= short_margin)] = 1
-            direction[both_fire & (long_margin < short_margin)] = -1
-            
+            if args.garch_gate:
+                from garch_regime import generate_garch_regimes
+                regime_df = generate_garch_regimes(etf, force=False)
+                # Map date (as pd.Timestamp) to look-ahead free state signal
+                regime_map = regime_df.set_index("date")["state_signal"].to_dict()
+                
+                # We need dynamic thresholding and sizing per timestamp
+                direction_vals = []
+                size_vals = []
+                
+                for t in common_idx:
+                    # Look up regime state
+                    state = regime_map.get(t, 0) # default to Calm (0) if missing
+                    
+                    if state == 0: # Calm
+                        l_thr = args.long_thr
+                        s_thr = args.short_thr
+                        sz = 1.0
+                    elif state == 1: # Turbulent
+                        l_thr = args.turbulent_thr
+                        s_thr = args.turbulent_thr
+                        sz = args.turbulent_size
+                    elif state == 2: # Crisis
+                        l_thr = args.crisis_thr
+                        s_thr = args.crisis_thr
+                        sz = args.crisis_size
+                    else:
+                        l_thr = args.long_thr
+                        s_thr = args.short_thr
+                        sz = 1.0
+                        
+                    l_val = long_rank.loc[t]
+                    s_val = short_rank.loc[t]
+                    
+                    l_fire = l_val >= (l_thr / 100.0)
+                    s_fire = s_val >= (s_thr / 100.0)
+                    
+                    if l_fire and not s_fire:
+                        d = 1
+                    elif s_fire and not l_fire:
+                        d = -1
+                    elif l_fire and s_fire:
+                        # Conflict resolution: higher margin wins
+                        l_margin = l_val / max(l_thr / 100.0, 1e-12)
+                        s_margin = s_val / max(s_thr / 100.0, 1e-12)
+                        d = 1 if l_margin >= s_margin else -1
+                    else:
+                        d = 0
+                        
+                    direction_vals.append(d)
+                    size_vals.append(sz)
+                    
+                direction = pd.Series(direction_vals, index=common_idx, dtype=int)
+                size = pd.Series(size_vals, index=common_idx, dtype=float)
+            else:
+                long_fires = long_rank >= (args.long_thr / 100.0)
+                short_fires = short_rank >= (args.short_thr / 100.0)
+                
+                long_margin = long_rank / max(args.long_thr / 100.0, 1e-12)
+                short_margin = short_rank / max(args.short_thr / 100.0, 1e-12)
+                both_fire = long_fires & short_fires
+                
+                direction = pd.Series(0, index=common_idx, dtype=int)
+                direction[long_fires & ~both_fire] = 1
+                direction[short_fires & ~both_fire] = -1
+                # Conflict resolution: higher margin wins
+                direction[both_fire & (long_margin >= short_margin)] = 1
+                direction[both_fire & (long_margin < short_margin)] = -1
+                
+                size = pd.Series(1.0, index=common_idx, dtype=float)
+                
             signals = pd.DataFrame({
                 "direction": direction,
                 "long_rank": long_rank,
-                "short_rank": short_rank
+                "short_rank": short_rank,
+                "size": size
             })
             
             # Filter strictly for OOS period

@@ -205,7 +205,7 @@ def expanding_pct_rank(series: pd.Series, min_periods: int = 60) -> pd.Series:
 
 def simulate_strategy(pred_series: pd.Series, actual_returns: pd.Series,
                       signal_thr: float = 80.0, cost_bps: float = 15.0,
-                      side: str = "long") -> dict:
+                      side: str = "long", etf: str = "", garch_gate: bool = False) -> dict:
     """Simple strategy simulation using within-window percentile signals.
 
     For rolling models with short OOS windows (~63 days), uses simple
@@ -226,28 +226,64 @@ def simulate_strategy(pred_series: pd.Series, actual_returns: pd.Series,
     pred_vals = pred_series.values.astype(np.float64)
     rank = pd.Series(pred_vals, index=pred_series.index).rank(pct=True)
 
-    thr = signal_thr / 100.0
     cost = cost_bps / 1e4
-
     trades_ret = []
     cfg = SIDE_CONFIG.get(side, SIDE_CONFIG["single"])
 
-    if cfg["tail_def"] == "top_only":
-        mask = rank >= thr
-        for i in np.where(mask.values)[0]:
-            trades_ret.append(float(actual_returns.iloc[i]) - cost)
-    elif cfg["tail_def"] == "bot_only":
-        neg_rank = 1.0 - rank
-        mask = neg_rank >= thr
-        for i in np.where(mask.values)[0]:
-            trades_ret.append(float(-actual_returns.iloc[i]) - cost)
+    if garch_gate and etf:
+        from garch_regime import generate_garch_regimes
+        regime_df = generate_garch_regimes(etf, force=False)
+        # Convert date to pd.Timestamp and map
+        regime_map = regime_df.set_index("date")["state_signal"].to_dict()
+
+        for idx, (t, r_val) in enumerate(rank.items()):
+            # Look up state
+            t_dt = pd.to_datetime(t)
+            state = regime_map.get(t_dt, 0)
+
+            if state == 0: # Calm
+                t_thr = signal_thr / 100.0
+                sz = 1.0
+            elif state == 1: # Turbulent
+                t_thr = 92.0 / 100.0
+                sz = 0.8
+            elif state == 2: # Crisis
+                t_thr = 98.0 / 100.0
+                sz = 0.2
+            else:
+                t_thr = signal_thr / 100.0
+                sz = 1.0
+
+            actual_ret = float(actual_returns.iloc[idx])
+
+            if cfg["tail_def"] == "top_only":
+                if r_val >= t_thr:
+                    trades_ret.append((actual_ret - cost) * sz)
+            elif cfg["tail_def"] == "bot_only":
+                if (1.0 - r_val) >= t_thr:
+                    trades_ret.append((-actual_ret - cost) * sz)
+            else:
+                if r_val >= t_thr:
+                    trades_ret.append((actual_ret - cost) * sz)
+                if (1.0 - r_val) >= t_thr:
+                    trades_ret.append((-actual_ret - cost) * sz)
     else:
-        top_mask = rank >= thr
-        bot_mask = rank <= (1.0 - thr)
-        for i in np.where(top_mask.values)[0]:
-            trades_ret.append(float(actual_returns.iloc[i]) - cost)
-        for i in np.where(bot_mask.values)[0]:
-            trades_ret.append(float(-actual_returns.iloc[i]) - cost)
+        thr = signal_thr / 100.0
+        if cfg["tail_def"] == "top_only":
+            mask = rank >= thr
+            for i in np.where(mask.values)[0]:
+                trades_ret.append(float(actual_returns.iloc[i]) - cost)
+        elif cfg["tail_def"] == "bot_only":
+            mask = (1.0 - rank) >= thr
+            for i in np.where(mask.values)[0]:
+                trades_ret.append(float(-actual_returns.iloc[i]) - cost)
+        else:
+            top_mask = rank >= thr
+            bot_mask = rank <= (1.0 - thr)
+            for i in np.where(top_mask.values)[0]:
+                trades_ret.append(float(actual_returns.iloc[i]) - cost)
+            for i in np.where(bot_mask.values)[0]:
+                trades_ret.append(float(-actual_returns.iloc[i]) - cost)
 
     if not trades_ret:
         return {"n_trades": 0, "total_ret": 0.0, "sharpe": 0.0,
@@ -378,9 +414,11 @@ def compute_block_bootstrap_ci(y_oos: np.ndarray, pred_oos: np.ndarray, side: st
 # Per-model evaluation
 # ============================================================
 def evaluate_model(tag: str, r: dict, signal_thr: float, cost_bps: float,
-                   early: bool = False, precomputed: dict | None = None) -> dict:
+                   early: bool = False, precomputed: dict | None = None,
+                   garch_gate: bool = False) -> dict:
     """Load model, predict OOS, compute IC + strategy metrics. Returns enriched results."""
     side = r.get("side", "single")
+    etf = r.get("etf", "")
 
     if precomputed is None:
         precomputed = _compute_model_predictions(tag, r, early=early)
@@ -390,9 +428,11 @@ def evaluate_model(tag: str, r: dict, signal_thr: float, cost_bps: float,
     y = precomputed["y"]
     preds = precomputed["preds"]
     oos_mask = precomputed["oos_mask"]
+    dates = precomputed["dates"]
 
     y_oos = y[oos_mask]
     pred_oos = preds[oos_mask]
+    dates_oos = dates[oos_mask]
 
     if len(y_oos) < 5:
         return {"error": f"insufficient OOS data ({len(y_oos)} rows) for {tag}"}
@@ -402,10 +442,10 @@ def evaluate_model(tag: str, r: dict, signal_thr: float, cost_bps: float,
     oos_tail_ic = side_tail_ic(y_oos, pred_oos, side)
     oos_mono = compute_decile_monotonicity(y_oos, pred_oos)
 
-    # Strategy simulation
-    pred_series = pd.Series(pred_oos, index=range(len(pred_oos)))
-    actual_series = pd.Series(y_oos, index=range(len(y_oos)))
-    strat = simulate_strategy(pred_series, actual_series, signal_thr, cost_bps, side)
+    # Strategy simulation (align index to dates for look-ahead free state lookup)
+    pred_series = pd.Series(pred_oos, index=dates_oos)
+    actual_series = pd.Series(y_oos, index=dates_oos)
+    strat = simulate_strategy(pred_series, actual_series, signal_thr, cost_bps, side, etf=etf, garch_gate=garch_gate)
 
     # Block-bootstrap CIs (B=1000)
     boot = compute_block_bootstrap_ci(y_oos, pred_oos, side, signal_thr=signal_thr, cost_bps=cost_bps)
@@ -615,7 +655,7 @@ def render_quarter_diagnostics(tag: str, r: dict, quarter_dir: Path,
 # ============================================================
 def generate_report(all_results: dict, eval_metrics: dict, warnings_dict: dict,
                     signal_thr: float, cost_bps: float, early: bool = False,
-                    pred_data: dict | None = None):
+                    pred_data: dict | None = None, garch_gate: bool = False):
     """Generate comprehensive ROLLING_REPORT.md."""
     L = []
     L.append("# Day-Model Rolling Strategy Report")
@@ -625,6 +665,10 @@ def generate_report(all_results: dict, eval_metrics: dict, warnings_dict: dict,
     L.append(f"Window: 6 years (rolling)")
     L.append(f"Signal threshold: {signal_thr}th percentile")
     L.append(f"Transaction cost: {cost_bps} bps")
+    if garch_gate:
+        L.append("GARCH Volatility Gating: **ENABLED** (Turbulent: thr=92%, size=0.8 | Crisis: thr=98%, size=0.2)")
+    else:
+        L.append("GARCH Volatility Gating: **DISABLED**")
     if early:
         L.append(f"Target: `trade_return` = log(close@13:05 / open@10:05) (early target)")
     else:
@@ -965,11 +1009,13 @@ def main():
                     help="Parallel workers for plot generation (0 = auto)")
     ap.add_argument("--early", action="store_true",
                     help="Generate early-window report (10:00 to 13:05)")
+    ap.add_argument("--garch-gate", action="store_true",
+                    help="Enable look-ahead free multi-scale GARCH gating layer")
     args = ap.parse_args()
 
     print("=" * 80)
     print("Rolling Day-Model Comprehensive Report Generator")
-    print(f"Signal threshold: {args.thr}th percentile | Cost: {args.cost_bps} bps | Early: {args.early}")
+    print(f"Signal threshold: {args.thr}th percentile | Cost: {args.cost_bps} bps | Early: {args.early} | GARCH gate: {args.garch_gate}")
     print("=" * 80)
 
     # Load results
@@ -1023,7 +1069,8 @@ def main():
     eval_results = Parallel(n_jobs=n_eval_jobs, backend="loky")(
         delayed(evaluate_model)(
             tag, res, args.thr, args.cost_bps,
-            early=args.early, precomputed=pred_data.get(tag)
+            early=args.early, precomputed=pred_data.get(tag),
+            garch_gate=args.garch_gate
         ) for quarter, tag, res in eval_tasks
     )
 
@@ -1095,7 +1142,7 @@ def main():
 
     # 4. Generate report
     generate_report(all_results, eval_metrics, warnings_dict, args.thr, args.cost_bps,
-                    early=args.early, pred_data=pred_data)
+                    early=args.early, pred_data=pred_data, garch_gate=args.garch_gate)
 
 
 if __name__ == "__main__":

@@ -278,3 +278,34 @@ A/B/C test of feature selection stability. Answers: does a frozen handpicked fea
 - **Parallelized Evaluation**: Model evaluation step in `generate_rolling_report.py` parallelized using `joblib.Parallel` (`backend="loky"`) to offset cost of $B=1000$ bootstrap iterations.
 - **Findings**: Most quarterly metrics span zero, confirming high uncertainty of short-term point estimates. VIX/cross-ETF warnings properly flag periods of market stress (e.g. ALERT status in 2024Q1).
 
+## HMM Regime Tagging Research (July 2026)
+- **Problem**: Rolling model evaluation is highly variable across quarters (due to regime shifts).
+- **HMM Setup**: Fit Gaussian HMM with $K \in \{2, 3, 4\}$ states on CSI 300 returns and volatility features (`yesterday_return` + `vol20` or `vix`).
+- **Fit Scopes**: Tested on OOS only (2024-2026) and 10-year extended history (2016-2026). Quarter assignments are identical and highly stable between both.
+- **Variance Explained**: On the 10-year history (41 quarters), `yesterday_return` + `vol20` ($K=4$) explains **10.4%** of the quarterly Sharpe ratio variance (unbiased variance reduction is **+3.1%**).
+- **State mapping ($K=4$)**:
+  - Regime 1 (10 quarters): Chop/drawdown. Mean Sharpe: **-0.82**. (Avoid/gate state).
+  - Regime 0 (13 quarters): Med/flat. Mean Sharpe: **+0.50**.
+  - Regime 3 (8 quarters): Strong bull. Mean Sharpe: **+1.77**.
+  - Regime 2 (10 quarters): Super trend. Mean Sharpe: **+3.49**. (Maximize exposure state).
+- **Verdict**: Yes, Sharpe variance shrinks significantly within HMM regimes. Proceed to MS-GARCH vol-regime gating.
+
+## Multi-scale GARCH Volatility Gating (July 2026)
+- **Concept**: A look-ahead free gating layer based on multi-scale volatility states to scale trade sizes and thresholds dynamically.
+- **Workflow**:
+  1. `garch_regime.py` resamples 5m index bars to Daily, 2-hourly, and 1-hourly returns.
+  2. Fits GARCH(1,1) conditional volatility on each scale and annualizes them.
+  3. Fits a 3-state HMM on GARCH vol features, dynamically sorting states: State 0 (Calm, ~14% vol), State 1 (Turbulent, ~20% vol), State 2 (Crisis, ~35% vol).
+  4. Saves look-ahead free signal (yesterday's state applies to today's trade) to `data/garch_regimes_{etf}.parquet`.
+- **Gating Rules (`backtest_simulator.py` + `generate_rolling_report.py`)**:
+  - Calm (State 0): default threshold (e.g. 90%), size = 1.0.
+  - Turbulent (State 1): `--turbulent-thr` (default 92%), `--turbulent-size` (default 0.8).
+  - Crisis (State 2): `--crisis-thr` (default 98%), `--crisis-size` (default 0.2).
+- **Commands**:
+  ```bash
+  python3 day-model/garch_regime.py -e all -f                            # Rebuild all GARCH caches
+  python3 day-model/backtest_simulator.py --etf 300ETF --garch-gate      # Sim with gating active
+  python3 day-model/generate_rolling_report.py --no-plots --garch-gate   # Compile report with gating
+  ```
+- **Results**: On `300ETF` OOS, GARCH gating reduces Max Drawdown by **33.7%** (from 662.39 bps to 439.36 bps) and improves 2025 Sharpe from **0.33** to **2.25**.
+
