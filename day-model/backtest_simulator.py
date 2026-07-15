@@ -755,7 +755,12 @@ def main():
                     help="Signal threshold in Crisis volatility regime")
     ap.add_argument("--crisis-size", type=float, default=0.2,
                     help="Position sizing scale in Crisis volatility regime")
+    ap.add_argument("--hmm-gate", action="store_true",
+                    help="Enable look-ahead free HMM gating layer (3D: returns, vol20, amihud)")
     args = ap.parse_args()
+
+    if args.hmm_gate and args.garch_gate:
+        ap.error("Cannot specify both --hmm-gate and --garch-gate")
 
     global EXIT_BAR
     if args.early:
@@ -828,7 +833,67 @@ def main():
             short_rank = short_rank.loc[common_idx]
             
             # Generate signals
-            if args.garch_gate:
+            if args.hmm_gate:
+                from hmm_regime import generate_hmm_regimes
+                regime_df = generate_hmm_regimes(etf, force=False)
+                # Map date (as pd.Timestamp) to look-ahead free state signal
+                regime_map = regime_df.set_index("date")["state_signal"].to_dict()
+                
+                # We need dynamic thresholding and sizing per timestamp
+                direction_vals = []
+                size_vals = []
+                
+                for t in common_idx:
+                    # Look up HMM regime state (0=Calm, 1=Steady, 2=Turbulent, 3=Crisis)
+                    state = regime_map.get(t, 0)
+                    
+                    if state == 0 or state == 1: # Calm or Steady
+                        l_thr = args.long_thr
+                        s_thr = args.short_thr
+                        sz = 1.0
+                    elif state == 2: # Turbulent
+                        l_thr = args.turbulent_thr
+                        s_thr = args.turbulent_thr
+                        sz = args.turbulent_size
+                    elif state == 3: # Crisis
+                        # Dynamic category routing: Value ETFs (50, 300, 500) vs Growth/Tech ETFs (588000, 159915)
+                        if etf in ["50ETF", "300ETF", "500ETF"]:
+                            l_thr = 101.0 # Shut down long trading completely
+                            s_thr = args.crisis_thr
+                            sz = args.crisis_size
+                        else:
+                            # Growth ETFs (STAR 50, Chinext) keep trading long during Crisis
+                            l_thr = args.crisis_thr
+                            s_thr = args.crisis_thr
+                            sz = 1.0 # Full size for tech crisis alpha!
+                    else:
+                        l_thr = args.long_thr
+                        s_thr = args.short_thr
+                        sz = 1.0
+                        
+                    l_val = long_rank.loc[t]
+                    s_val = short_rank.loc[t]
+                    
+                    l_fire = l_val >= (l_thr / 100.0)
+                    s_fire = s_val >= (s_thr / 100.0)
+                    
+                    if l_fire and not s_fire:
+                        d = 1
+                    elif s_fire and not l_fire:
+                        d = -1
+                    elif l_fire and s_fire:
+                        l_margin = l_val / max(l_thr / 100.0, 1e-12)
+                        s_margin = s_val / max(s_thr / 100.0, 1e-12)
+                        d = 1 if l_margin >= s_margin else -1
+                    else:
+                        d = 0
+                        
+                    direction_vals.append(d)
+                    size_vals.append(sz)
+                    
+                direction = pd.Series(direction_vals, index=common_idx, dtype=int)
+                size = pd.Series(size_vals, index=common_idx, dtype=float)
+            elif args.garch_gate:
                 from garch_regime import generate_garch_regimes
                 regime_df = generate_garch_regimes(etf, force=False)
                 # Map date (as pd.Timestamp) to look-ahead free state signal
