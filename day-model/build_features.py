@@ -116,7 +116,10 @@ BASE_DAY_FEATURES = [
     "demark_setup_count_day", "consecutive_inside_bars_3d", "outside_bar_reversal_day", "wavetrend_osc_day",
     "wavetrend_cross_day", "keltner_squeeze_width", "stoch_rsi_divergence", "yesterday_wavetrend_osc",
     "yesterday_stoch_rsi_cross", "cvd_divergence_day", "yesterday_illiquidity_amihud", "turtle_channel_proximity_day",
-    "chande_momentum_osc_day", "coppock_curve_day", "elder_ray_power_spread"
+    "chande_momentum_osc_day", "coppock_curve_day", "elder_ray_power_spread",
+    # GARCH Volatility and HMM Regime Features
+    "garch_vol_daily", "garch_vol_2h", "garch_vol_1h", "garch_state",
+    "garch_vol_daily_diff", "garch_vol_2h_diff", "garch_vol_1h_diff"
 ]
 
 BASE_YESTERDAY_FEATURES = [
@@ -529,6 +532,35 @@ def compute_daylevel_indicators(df_1d: pd.DataFrame, margin_cache: pd.DataFrame,
     df["vix_iv_ratio"] = df["vix"] / (df["iv"] + 1e-8)
     df["iv_diff_1d"] = df["iv"].diff(1)
     df["vix_diff_1d"] = df["vix"].diff(1)
+
+    # ── GARCH volatility and regime features ──
+    try:
+        from garch_regime import generate_garch_regimes
+        garch_df = generate_garch_regimes(f"{etf_key}ETF", force=False)
+        garch_df = garch_df[["date", "vol_daily", "vol_2h", "vol_1h", "state"]].copy()
+        garch_df["date"] = pd.to_datetime(garch_df["date"])
+        garch_df = garch_df.rename(columns={
+            "vol_daily": "garch_vol_daily",
+            "vol_2h": "garch_vol_2h",
+            "vol_1h": "garch_vol_1h",
+            "state": "garch_state"
+        })
+        # Calculate differences (vol-of-vol)
+        garch_df = garch_df.sort_values("date").reset_index(drop=True)
+        garch_df["garch_vol_daily_diff"] = garch_df["garch_vol_daily"].diff(1)
+        garch_df["garch_vol_2h_diff"] = garch_df["garch_vol_2h"].diff(1)
+        garch_df["garch_vol_1h_diff"] = garch_df["garch_vol_1h"].diff(1)
+        
+        df = df.merge(garch_df, on="date", how="left")
+    except Exception as e:
+        print(f"    [WARN] Failed to load GARCH features for {etf_key}ETF: {e}")
+        df["garch_vol_daily"] = np.nan
+        df["garch_vol_2h"] = np.nan
+        df["garch_vol_1h"] = np.nan
+        df["garch_state"] = np.nan
+        df["garch_vol_daily_diff"] = np.nan
+        df["garch_vol_2h_diff"] = np.nan
+        df["garch_vol_1h_diff"] = np.nan
 
     # ── Mined daily option-derived features ──
     opt_prices_file = f"{etf_key}ETF_historical_prices.parquet" if etf_key != "50" else "50ETF_historical_prices.parquet"
@@ -1210,7 +1242,7 @@ def build_features_for_etf(etf_name: str, save: bool = True, early: bool = False
         atr20 = ctx.get("atr20", 0.0)
         
         # Calculate early features on Index 5m data
-        early = extract_day_early_features(
+        early_dict = extract_day_early_features(
             day_idx_df, prev_close, expected_bar_vol, decision_bar=decision_bar,
             is_20pct=is_20pct, atr14_prev=atr14_prev,
             bb_width_prev_price=bb_width_prev_price, buy_break=buy_break,
@@ -1218,26 +1250,26 @@ def build_features_for_etf(etf_name: str, save: bool = True, early: bool = False
             buy_setup=buy_setup, high20=high20,
             low20=low20, atr20=atr20
         )
-        early["date"] = date_ts
+        early_dict["date"] = date_ts
         
         # Target/diagnostics calculated on ETF 5m data
-        early["pm_return"] = compute_pm_return(day_etf_df)                              # diagnostic only
-        early["trade_return"] = compute_trade_return(day_etf_df, decision_bar, exit_bar)  # target
+        early_dict["pm_return"] = compute_pm_return(day_etf_df)                              # diagnostic only
+        early_dict["trade_return"] = compute_trade_return(day_etf_df, decision_bar, exit_bar)  # target
         
         # AM return of ETF (diagnostic)
         am_etf = day_etf_df.reset_index(drop=True).iloc[:BAR_LUNCH]
         if len(am_etf) >= 2:
-            early["am_return"] = float(np.log(np.maximum(am_etf["close"].iloc[-1], 1e-10) /
+            early_dict["am_return"] = float(np.log(np.maximum(am_etf["close"].iloc[-1], 1e-10) /
                                               np.maximum(am_etf["open"].iloc[0], 1e-10)))
         else:
-            early["am_return"] = np.nan
+            early_dict["am_return"] = np.nan
             
         # Compute day full features (to be shifted later) on Index 5m data
         full_feats = extract_day_full_features(day_idx_df)
         for k, v in full_feats.items():
-            early[k] = v
+            early_dict[k] = v
             
-        rows.append(early)
+        rows.append(early_dict)
 
     early_df = pd.DataFrame(rows).set_index("date").sort_index()
 

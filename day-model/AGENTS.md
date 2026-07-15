@@ -309,3 +309,10 @@ A/B/C test of feature selection stability. Answers: does a frozen handpicked fea
   ```
 - **Results**: On `300ETF` OOS, GARCH gating reduces Max Drawdown by **33.7%** (from 662.39 bps to 439.36 bps) and improves 2025 Sharpe from **0.33** to **2.25**.
 
+## Multi-scale GARCH Volatility Features (July 2026)
+- **Predictor Features Added**:
+  - `garch_vol_daily`, `garch_vol_2h`, `garch_vol_1h`: Annualized GARCH(1,1) conditional volatilities from Daily, 2-hourly, and 1-hourly scales.
+  - `garch_state`: 3-state HMM volatility regime state (0=Calm, 1=Turbulent, 2=Crisis).
+  - `garch_vol_daily_diff`, `garch_vol_2h_diff`, `garch_vol_1h_diff`: 1-day change in GARCH volatility at each scale (vol-of-vol velocity).
+- **Look-Ahead Safety**: Features are merged on daily indicators and shifted by 1 day (`T-1`), ensuring zero forward leakage at entry time.
+
