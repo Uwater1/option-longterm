@@ -48,6 +48,11 @@ python3 day-model/generate_rolling_report.py --no-plots      # Skip diagnostic p
 python3 day-model/generate_rolling_report.py --thr 70        # Custom signal threshold
 ```
 
+Run CSI 300 HMM performance partitioning analysis across all ETFs:
+```bash
+python3 day-model/research_hmm_partition.py
+```
+
 Run backtest with rolling models (auto-selects per date):
 ```bash
 python3 day-model/backtest_simulator.py --etf all --rolling (--type {ETF,Future}) (--option)
@@ -60,6 +65,8 @@ day-model/
   data/rolling/results_{tag}_r{YYYYMM}.json
   plots/rolling/{YYYY}Q{Q}/diagnostics_{tag}_r{YYYYMM}.png
   ROLLING_REPORT.md
+  research_hmm_partition.py
+  hmm_etf_partition_report.md
 ```
 
 **Warning System** (pre-lockbox validation metrics only):
@@ -289,6 +296,12 @@ A/B/C test of feature selection stability. Answers: does a frozen handpicked fea
   - Regime 3 (8 quarters): Strong bull. Mean Sharpe: **+1.77**.
   - Regime 2 (10 quarters): Super trend. Mean Sharpe: **+3.49**. (Maximize exposure state).
 - **Verdict**: Yes, Sharpe variance shrinks significantly within HMM regimes. Proceed to MS-GARCH vol-regime gating.
+- **Multi-ETF Extension & Pitfalls (July 2026)**:
+  - Extended CSI 300 HMM states to other ETFs ([report](file:///home/hallo/Documents/option-longterm/backtest/hmm_etf_partition_report.md)).
+  - CSI 300 state explains 1.3% of global Sharpe variance. But per-ETF partition shows decoupling:
+    - Broad indices SSE 50 ([50ETF](file:///home/hallo/Documents/option-longterm/data/50ETF_instruments.parquet)) and CSI 300 ([300ETF](file:///home/hallo/Documents/option-longterm/data/300ETF_instruments.parquet)) align: worst performance in High Vol (State 0), best in Med/Low Vol.
+    - Tech/growth indices STAR 50 ([588000ETF](file:///home/hallo/Documents/option-longterm/data/588000ETF_instruments.parquet)) and Chinext ([159915ETF](file:///home/hallo/Documents/option-longterm/data/159915ETF_instruments.parquet)) invert: perform exceptionally well in High Vol State 0 (STAR 50 Sharpe +7.22, Chinext Sharpe +8.51) due to strong trends in market drawdowns.
+  - **Decision**: Avoid global HMM gating based on CSI 300. Maintain asset-specific GARCH vol HMM gating (already active in [garch_regime.py](file:///home/hallo/Documents/option-longterm/day-model/garch_regime.py)).
 
 ## Multi-scale GARCH Volatility Gating (July 2026)
 - **Concept**: A look-ahead free gating layer based on multi-scale volatility states to scale trade sizes and thresholds dynamically.
