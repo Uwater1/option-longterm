@@ -11,5 +11,7 @@ seaborn
 xgboost
 optuna
 skglm
+hmmlearn
+arch
 
 # Don't add torch here, it's not needed most of the time

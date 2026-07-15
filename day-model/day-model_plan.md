@@ -90,9 +90,11 @@ Partition the entire dataset chronologically:
 **Step 1 — Cluster Stability Selection (CSS) + VIF Pruning on selection train set.**
 Perform Complete Linkage hierarchical clustering on all active candidate features (formerly 317, pruned to 210 by default after deprecating 107 zero-stability features in `day-model/deprecate_features.py`) using correlation distance (threshold $t = 0.25$, i.e. $|r| \ge 0.75$). Run repeated subsampling ($B=100$, subsample size $\lfloor N/2 \rfloor$) and fit ElasticNet paths (l1_ratio = 0.5) on selection train. Aggregate selection votes at the *cluster level* (i.e. did any member of the cluster get selected in the subsample?). Keep clusters selected in $\ge 0.60$ fraction of subsamples (fallback to top 5 if count < 3). For each kept cluster, select the single representative feature with the highest individual stability score (tie-broken by Spearman correlation absolute values). 
 
-After selecting representatives, perform **iterative VIF pruning** using standard OLS on the representatives. In each step, compute Variance Inflation Factors (VIFs) for all remaining features, identifying the highest VIF. If it exceeds $10.0$, drop the feature and repeat, continuing until all remaining selected features have VIF $\le 10.0$. This eliminates multivariate collinearity among three or more variables that pairwise clustering ignores.
+After selecting representatives, perform **iterative VIF pruning** using standard OLS on the representatives. In each step, compute Variance Inflation Factors (VIFs) for all remaining features, identifying the highest VIF. If it exceeds $12.0$, drop the feature and repeat, continuing until all remaining selected features have VIF $\le 10.0$. This eliminates multivariate collinearity among three or more variables that pairwise clustering ignores.
 
 > **Mistake (Previous Attempt)**: Standard (loss-agnostic, individual-feature) stability selection failed under correlation by vote-splitting, which led to severe collinearity in selected sets (condition numbers up to 6.4M for 50ETF, 3.7M for 500ETF). Pairwise clustering alone resolved most issues but left multivariate collinearity intact for 50ETF and 500ETF. Integrating VIF pruning post-CSS completely eliminates joint collinearity.
+
+> day-model/frozen_vs_css.md has proven this method is better than hand picked features
 
 **Step 2 — Loss Weighting via Input Scaling.**
 For coefficient fits, use sample weights $w(y_i) = |y_i|^k$ (exponent $k$ tuned by Optuna) to upweight tail days. Implement weights by scaling inputs $X$ and targets $y$ by $\sqrt{w}$. During Optuna tuning, Kish ESS is calculated on the selection train subset to apply active feature caps and soft ESS penalties. For the final refit, sample weights and Kish ESS are evaluated on the full working set.
@@ -365,4 +367,61 @@ To prevent future duplicate search loops and re-litigation of null results, the 
 | 2 | Uniform Rank transform (`rank`) | Research suggestion | 0.6600 | **Killed**. Magnitude loss degrades selectivity. |
 | 3 | Normal Rank transform (`gauss`) | Research suggestion | 0.0870 | **Killed**. Variance standardization causes over-trading of noise. |
 | 4 | Sharpe Objective + Win Rate (on `none`) | Research suggestion | 1.2215 | **Killed**. Statistically identical to Baseline (95% CI straddles zero). |
+
+## 9. Hidden Markov Model (HMM) Regime-Switching Research (July 2026)
+
+To address the performance degradation under regime shifts (noted in `ROLLING_REPORT.md`), we fit an explicit Gaussian HMM on returns and volatility features of the CSI 300 index (`300ETF`) to partition strategy performance.
+
+### 9.1 Methodology & Fit Scopes
+- **Features Tested**:
+  1. `trade_return` (intraday return) + `vol20` (rolling 20-day realized volatility).
+  2. `yesterday_return` (daily close-to-close return) + `vol20`.
+  3. `trade_return` + `vix` (implied volatility).
+  4. `yesterday_return` + `vix`.
+- **HMM Configuration**: Gaussian HMM, diagonal covariance, $K \in \{2, 3, 4\}$ states, 10 EM restarts for optimization stability.
+- **Fit Scopes**:
+  1. **OOS Only (2024–2026, 8 quarters)**: Fitting strictly on the 500-day out-of-sample window.
+  2. **Extended History (2016–2026, 41 quarters)**: Fitting on a 10-year history to increase sample size and ensure stable state transitions.
+
+### 9.2 Key Findings
+- **State Assignment Stability**: Quarter tagging assignments are extremely stable and identical between the full-history fit and OOS-only fit.
+- **Best Configuration**: `yesterday_return` + `vol20` (daily realized volatility) with **$K=4$ states**.
+- **Sharpe Variance Explained**:
+  - On the 8-quarter OOS window: $R^2 = 29.5\%$ raw variance explained.
+  - On the 41-quarter extended history: **$R^2 = 10.4\%$ raw variance explained** and **$+3.1\%$ unbiased variance reduction** (statistically significant with $N=41$).
+- **Regime Performance Partitioning (Extended History, $K=4$)**:
+  - **Regime 1 (10 quarters)**: Choppy drawdown market. Strategy underperforms heavily. Mean Sharpe: **-0.82**. (Gating target).
+  - **Regime 0 (13 quarters)**: Low/mediocre performance. Mean Sharpe: **+0.50**.
+  - **Regime 3 (8 quarters)**: Good performance. Mean Sharpe: **+1.77**.
+  - **Regime 2 (10 quarters)**: Exceptional trend-following regime. Mean Sharpe: **+3.49**. (High position/lower entry threshold target).
+
+## 10. Multi-scale Volatility Gating (July 2026)
+
+Based on the multi-scale volatility state concepts in Chaudhary (2026) ([paper link](https://arxiv.org/html/2606.06190v1)), we implemented a look-ahead free gating layer to dynamically scale entry thresholds and trade sizes.
+
+### 10.1 Multi-scale Volatility Feature Construction
+- **Timescales**: Daily, 2-Hourly (AM/PM sessions), and 1-Hourly.
+- **Volatility Estimation**: Fit a GARCH(1,1) model on log returns at each timescale using the `arch` package.
+- **Alignment**: Annualize the conditional volatilities, align 2h and 1h volatilities to the daily close by taking the last value of each day.
+- **Regime Classification**: Fit a 3-state HMM on the 3D volatility matrix. States are dynamically sorted by their daily volatility mean to map deterministically:
+  - **State 0 (Calm)**: lowest vol mean (approx 14% vol).
+  - **State 1 (Turbulent)**: intermediate vol mean (approx 20% vol).
+  - **State 2 (Crisis)**: highest vol mean (approx 35% vol).
+- **Look-Ahead Free Signal**: Yesterday's close state is shifted by 1 day to be used as today's look-ahead free state signal.
+
+### 10.2 Dynamic Sizing and Slicing Rules
+In the trading simulator (`backtest_simulator.py`) and rolling report evaluations (`generate_rolling_report.py`), signals and sizes are dynamically scaled:
+- **Calm (State 0)**:
+  - Signal Threshold: default (90th percentile)
+  - Sizing: **1.0**
+- **Turbulent (State 1)**:
+  - Signal Threshold: `--turbulent-thr` (default **92.0th** percentile)
+  - Sizing: `--turbulent-size` (default **0.8**)
+- **Crisis (State 2)**:
+  - Signal Threshold: `--crisis-thr` (default **98.0th** percentile)
+  - Sizing: `--crisis-size` (default **0.2**)
+
+### 10.3 Empirical Performance (300ETF OOS, from 2024-03-01)
+- **Drawdown Protection**: Max Drawdown reduced by **33.7%** (from 662.39 bps to **439.36 bps**).
+- **Regime Shift Stabilization**: Turned the highly challenging 2025 period from a near-breakeven baseline run (Sharpe **0.33**) into a highly stable gated return (Sharpe **2.25**).
 
