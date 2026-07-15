@@ -48,14 +48,16 @@ python3 day-model/generate_rolling_report.py --no-plots      # Skip diagnostic p
 python3 day-model/generate_rolling_report.py --thr 70        # Custom signal threshold
 ```
 
-Run CSI 300 HMM performance partitioning analysis across all ETFs:
+Run asset-specific 3D HMM performance partitioning analysis and cache regimes:
 ```bash
-python3 day-model/research_hmm_partition.py
+python3 day-model/research_hmm_partition.py                  # Analyze and generate report
+python3 day-model/hmm_regime.py -e all                       # Cache look-ahead free HMM regimes
 ```
 
-Run backtest with rolling models (auto-selects per date):
+Run backtest with rolling models or HMM gating (auto-selects per date):
 ```bash
 python3 day-model/backtest_simulator.py --etf all --rolling (--type {ETF,Future}) (--option)
+python3 day-model/backtest_simulator.py --etf all --hmm-gate  # Enable 3D HMM gating layer
 ```
 
 **Rolling Artifact Layout**:
