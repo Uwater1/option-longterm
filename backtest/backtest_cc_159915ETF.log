@@ -1,33 +1,41 @@
 
 Pre-calculating daily 30-day IVs...
-  Progress: 0/2781
-  Progress: 100/2781
-  Progress: 200/2781
-  Progress: 300/2781
-  Progress: 400/2781
-  Progress: 500/2781
-  Progress: 600/2781
-  Progress: 700/2781
-  Progress: 800/2781
-  Progress: 900/2781
-  Progress: 1000/2781
-  Progress: 1100/2781
-  Progress: 1200/2781
-  Progress: 1300/2781
-  Progress: 1400/2781
-  Progress: 1500/2781
-  Progress: 1600/2781
-  Progress: 1700/2781
-  Progress: 1800/2781
-  Progress: 1900/2781
-  Progress: 2000/2781
-  Progress: 2100/2781
-  Progress: 2200/2781
-  Progress: 2300/2781
-  Progress: 2400/2781
-  Progress: 2500/2781
-  Progress: 2600/2781
-  Progress: 2700/2781
+  Progress: 0/3543
+  Progress: 100/3543
+  Progress: 200/3543
+  Progress: 300/3543
+  Progress: 400/3543
+  Progress: 500/3543
+  Progress: 600/3543
+  Progress: 700/3543
+  Progress: 800/3543
+  Progress: 900/3543
+  Progress: 1000/3543
+  Progress: 1100/3543
+  Progress: 1200/3543
+  Progress: 1300/3543
+  Progress: 1400/3543
+  Progress: 1500/3543
+  Progress: 1600/3543
+  Progress: 1700/3543
+  Progress: 1800/3543
+  Progress: 1900/3543
+  Progress: 2000/3543
+  Progress: 2100/3543
+  Progress: 2200/3543
+  Progress: 2300/3543
+  Progress: 2400/3543
+  Progress: 2500/3543
+  Progress: 2600/3543
+  Progress: 2700/3543
+  Progress: 2800/3543
+  Progress: 2900/3543
+  Progress: 3000/3543
+  Progress: 3100/3543
+  Progress: 3200/3543
+  Progress: 3300/3543
+  Progress: 3400/3543
+  Progress: 3500/3543
   Saved IV cache to ./data/30d_iv_cache_159915.parquet
 
 ======================================================================
@@ -305,19 +313,24 @@ Cycle  2026-05-28 → 2026-06-24   IV=32.1% (IVR=0.64)  calls= puts=None   ETF=4
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
+Cycle  2026-06-25 → 2026-07-22   IV=36.4% (IVR=0.78)  calls= puts=None   ETF=4.3950 RSI=64.6 BBU=5.058 (Total 0 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+                                        CYCLE TOTAL      0.00
+
 ======================================================================
   SUMMARY  [FILTERED]
 ======================================================================
-  Cycles traded          : 45
-  Winning cycles         : 18/45  (40%)
-  Avg gross premium/cyc  :   217.10 RMB
+  Cycles traded          : 46
+  Winning cycles         : 18/46  (39%)
+  Avg gross premium/cyc  :   212.38 RMB
   Total net P&L          :  -932.38 RMB
-  Cumulative by cycle    : ['0', '0', '666', '-2158', '-2158', '-1665', '-1665', '-1341', '-1341', '-1341', '-1124', '-743', '-743', '-528', '-336', '-336', '2', '2', '225', '4', '227', '403', '403', '399', '399', '1802', '2625', '3143', '3143', '3143', '3381', '3381', '3002', '3002', '3002', '3002', '3002', '3749', '3909', '3909', '4730', '4730', '-932', '-932', '-932']
+  Cumulative by cycle    : ['0', '0', '666', '-2158', '-2158', '-1665', '-1665', '-1341', '-1341', '-1341', '-1124', '-743', '-743', '-528', '-336', '-336', '2', '2', '225', '4', '227', '403', '403', '399', '399', '1802', '2625', '3143', '3143', '3143', '3381', '3381', '3002', '3002', '3002', '3002', '3002', '3749', '3909', '3909', '4730', '4730', '-932', '-932', '-932', '-932']
   ── Placement & Filter Lift ─────────────────────────────────────
-  Placement rate         : 51.1%  (23/45 cycles)
+  Placement rate         : 50.0%  (23/46 cycles)
   Avg P&L / placed cycle :   -40.54 RMB
-  Avg P&L / all cycles   :   -20.72 RMB
-  Filter lift            :   -19.82 RMB/cycle
+  Avg P&L / all cycles   :   -20.27 RMB
+  Filter lift            :   -20.27 RMB/cycle
   ─────────────────────────────────────────────────────────────
 
   Chart saved → backtest/backtest_cc_159915ETF.png

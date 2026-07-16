@@ -1,33 +1,38 @@
 
 Pre-calculating daily 30-day IVs...
-  Progress: 0/2780
-  Progress: 100/2780
-  Progress: 200/2780
-  Progress: 300/2780
-  Progress: 400/2780
-  Progress: 500/2780
-  Progress: 600/2780
-  Progress: 700/2780
-  Progress: 800/2780
-  Progress: 900/2780
-  Progress: 1000/2780
-  Progress: 1100/2780
-  Progress: 1200/2780
-  Progress: 1300/2780
-  Progress: 1400/2780
-  Progress: 1500/2780
-  Progress: 1600/2780
-  Progress: 1700/2780
-  Progress: 1800/2780
-  Progress: 1900/2780
-  Progress: 2000/2780
-  Progress: 2100/2780
-  Progress: 2200/2780
-  Progress: 2300/2780
-  Progress: 2400/2780
-  Progress: 2500/2780
-  Progress: 2600/2780
-  Progress: 2700/2780
+  Progress: 0/3239
+  Progress: 100/3239
+  Progress: 200/3239
+  Progress: 300/3239
+  Progress: 400/3239
+  Progress: 500/3239
+  Progress: 600/3239
+  Progress: 700/3239
+  Progress: 800/3239
+  Progress: 900/3239
+  Progress: 1000/3239
+  Progress: 1100/3239
+  Progress: 1200/3239
+  Progress: 1300/3239
+  Progress: 1400/3239
+  Progress: 1500/3239
+  Progress: 1600/3239
+  Progress: 1700/3239
+  Progress: 1800/3239
+  Progress: 1900/3239
+  Progress: 2000/3239
+  Progress: 2100/3239
+  Progress: 2200/3239
+  Progress: 2300/3239
+  Progress: 2400/3239
+  Progress: 2500/3239
+  Progress: 2600/3239
+  Progress: 2700/3239
+  Progress: 2800/3239
+  Progress: 2900/3239
+  Progress: 3000/3239
+  Progress: 3100/3239
+  Progress: 3200/3239
   Saved IV cache to ./data/30d_iv_cache_500.parquet
 
 ======================================================================
@@ -293,23 +298,30 @@ Cycle  2026-04-23 → 2026-05-27   IV=19.6% (IVR=0.40)  calls=OTM2+OTM3 puts=Non
 Cycle  2026-05-28 → 2026-06-24   IV=21.0% (IVR=0.44)  calls=OTM2+OTM3 puts=None   ETF=8.6490 RSI=53.1 BBU=3.013 (Total 2 contracts) [FILTER PASS]
   Leg                       side       K  exec_px     prem       exer       net
   -----------------------------------------------------------------------------
-  Call Leg A (OTM2)         sell   8.750   0.1575  1574.86       0.00   1572.86  [expires_worthless]
-  Call Leg B (OTM3)         sell   8.933   0.0997  1004.13       0.00   1002.13  [expires_worthless]
-                                        CYCLE TOTAL   2574.99
+  Call Leg A (OTM2)         sell   8.750   0.1575  1574.86   -2350.00   -777.14  [assigned  ETF=8.9850 K=8.7500]
+  Call Leg B (OTM3)         sell   8.933   0.0997  1004.13    -523.90    478.23  [assigned  ETF=8.9850 K=8.9330]
+                                        CYCLE TOTAL   -298.91
+
+Cycle  2026-06-25 → 2026-07-22   IV=20.5% (IVR=0.42)  calls=OTM2+OTM3 puts=None   ETF=9.0850 RSI=64.4 BBU=3.048 (Total 2 contracts) [FILTER PASS]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+  Call Leg A (OTM2)         sell   9.500   0.0793   792.82       0.00    790.82  [expires_worthless]
+  Call Leg B (OTM3)         sell   9.750   0.0423   423.36       0.00    421.36  [expires_worthless]
+                                        CYCLE TOTAL   1212.18
 
 ======================================================================
   SUMMARY  [FILTERED]
 ======================================================================
-  Cycles traded          : 45
-  Winning cycles         : 19/45  (42%)
-  Avg gross premium/cyc  :   382.88 RMB
-  Total net P&L          : 16953.74 RMB
-  Cumulative by cycle    : ['0', '0', '376', '376', '467', '607', '670', '670', '670', '670', '670', '670', '670', '670', '846', '846', '846', '1659', '1827', '1827', '1827', '1827', '1827', '1827', '1827', '2934', '4334', '4334', '4334', '4951', '5230', '5230', '5230', '5312', '5312', '6577', '7391', '8532', '8532', '8532', '11077', '13224', '13224', '14379', '16954']
+  Cycles traded          : 46
+  Winning cycles         : 19/46  (41%)
+  Avg gross premium/cyc  :   401.00 RMB
+  Total net P&L          : 15292.02 RMB
+  Cumulative by cycle    : ['0', '0', '376', '376', '467', '607', '670', '670', '670', '670', '670', '670', '670', '670', '846', '846', '846', '1659', '1827', '1827', '1827', '1827', '1827', '1827', '1827', '2934', '4334', '4334', '4334', '4951', '5230', '5230', '5230', '5312', '5312', '6577', '7391', '8532', '8532', '8532', '11077', '13224', '13224', '14379', '14080', '15292']
   ── Placement & Filter Lift ─────────────────────────────────────
-  Placement rate         : 42.2%  (19/45 cycles)
-  Avg P&L / placed cycle :  +892.30 RMB
-  Avg P&L / all cycles   :  +376.75 RMB
-  Filter lift            :  +515.55 RMB/cycle
+  Placement rate         : 43.5%  (20/46 cycles)
+  Avg P&L / placed cycle :  +764.60 RMB
+  Avg P&L / all cycles   :  +332.44 RMB
+  Filter lift            :  +432.17 RMB/cycle
   ─────────────────────────────────────────────────────────────
 
   Chart saved → backtest/backtest_cc_500ETF.png

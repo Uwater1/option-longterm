@@ -60,7 +60,7 @@ def main():
         else:
             inst_info = rq.instruments(symbol)
             listed_date = pd.Timestamp(inst_info.listed_date)
-            start_date = max(pd.Timestamp("2015-01-05"), listed_date)
+            start_date = max(pd.Timestamp("2010-01-04"), listed_date)
         
         # 1. Download 1d data
         path_1d = os.path.join(DATA_DIR, cfg["file_1d"])

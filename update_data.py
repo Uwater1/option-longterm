@@ -74,7 +74,7 @@ def update_etf_prices(cfg):
     else:
         existing = pd.DataFrame()
         listed_date_str = rq.instruments(underlying).listed_date
-        start = max(pd.Timestamp("2015-01-05"), pd.Timestamp(listed_date_str))
+        start = max(pd.Timestamp("2010-01-04"), pd.Timestamp(listed_date_str))
         last_date = start - pd.Timedelta(days=1)
 
     today_date = pd.Timestamp.now().date()
@@ -141,7 +141,7 @@ def update_option_prices(cfg, inst):
         start = last_date + pd.Timedelta(days=1)
     else:
         existing = pd.DataFrame()
-        last_date = pd.Timestamp("2015-01-01")
+        last_date = pd.Timestamp("2010-01-01")
         start = pd.to_datetime(inst["listed_date"].min())
 
     today = pd.Timestamp.now().strftime("%Y-%m-%d")
@@ -195,6 +195,52 @@ def update_option_prices(cfg, inst):
     print(f"  Option prices: +{len(new_df)} rows ({last_date.date()} -> {combined['date'].max().date()}) -> {path}")
 
 
+def update_vix_prices():
+    path = os.path.join(DATA_DIR, "rq_vix.parquet")
+    print("=== Updating VIX Indices (rq_vix.parquet) ===")
+    symbols = {
+        "vix_50": "VX0004.RI",
+        "vix_300": "VX0005.RI",
+        "vix_500": "VX0006.RI",
+        "vix_588000": "VX0007.RI",
+        "vix_159915": "VX0010.RI",
+    }
+    
+    dfs = []
+    for col, sym in symbols.items():
+        try:
+            inst = rq.instruments(sym)
+            if inst is None:
+                continue
+            listed_date = pd.Timestamp(inst.listed_date)
+            start_date = max(pd.Timestamp("2010-01-01"), listed_date)
+            
+            df = rq.get_price(
+                sym,
+                start_date=start_date.strftime("%Y-%m-%d"),
+                end_date=pd.Timestamp.now().strftime("%Y-%m-%d"),
+                frequency="1d"
+            )
+            if df is not None and not df.empty:
+                df = df.reset_index()
+                # Close price is in percentage (e.g. 24.11), convert to decimal (e.g. 0.2411)
+                df[col] = df["close"] / 100.0
+                df["date"] = pd.to_datetime(df["date"])
+                df = df[["date", col]].set_index("date")
+                dfs.append(df)
+                print(f"  VIX {col} ({sym}): downloaded {len(df)} rows from {df.index.min().date()} to {df.index.max().date()}")
+        except Exception as e:
+            print(f"  [WARN] Failed to fetch VIX data for {sym}: {e}")
+            
+    if dfs:
+        vix_df = pd.concat(dfs, axis=1)
+        vix_df = vix_df.sort_index()
+        vix_df.to_parquet(path)
+        print(f"  Saved VIX indices cache to {path} (shape: {vix_df.shape})")
+    else:
+        print("  Warning: No VIX data collected")
+
+
 def main():
     rq.init()
     print("rqdatac connected.\n")
@@ -205,6 +251,9 @@ def main():
         update_etf_prices(cfg)
         update_option_prices(cfg, inst)
         print()
+
+    update_vix_prices()
+    print()
 
     for f in os.listdir(DATA_DIR):
         if f.startswith("30d_iv_cache"):

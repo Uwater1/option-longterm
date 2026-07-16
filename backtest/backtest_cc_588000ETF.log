@@ -1,19 +1,19 @@
 
 Pre-calculating daily 30-day IVs...
-  Progress: 0/1353
-  Progress: 100/1353
-  Progress: 200/1353
-  Progress: 300/1353
-  Progress: 400/1353
-  Progress: 500/1353
-  Progress: 600/1353
-  Progress: 700/1353
-  Progress: 800/1353
-  Progress: 900/1353
-  Progress: 1000/1353
-  Progress: 1100/1353
-  Progress: 1200/1353
-  Progress: 1300/1353
+  Progress: 0/1373
+  Progress: 100/1373
+  Progress: 200/1373
+  Progress: 300/1373
+  Progress: 400/1373
+  Progress: 500/1373
+  Progress: 600/1373
+  Progress: 700/1373
+  Progress: 800/1373
+  Progress: 900/1373
+  Progress: 1000/1373
+  Progress: 1100/1373
+  Progress: 1200/1373
+  Progress: 1300/1373
   Saved IV cache to ./data/30d_iv_cache_588000.parquet
 
 ======================================================================
@@ -245,19 +245,24 @@ Cycle  2026-05-28 → 2026-06-24   IV=38.5% (IVR=0.53)  calls= puts=None   ETF=1
   -----------------------------------------------------------------------------
                                         CYCLE TOTAL      0.00
 
+Cycle  2026-06-25 → 2026-07-22   IV=46.6% (IVR=0.72)  calls= puts=None   ETF=2.1780 RSI=72.5 BBU=1.487 (Total 0 contracts) [FILTER FAIL]
+  Leg                       side       K  exec_px     prem       exer       net
+  -----------------------------------------------------------------------------
+                                        CYCLE TOTAL      0.00
+
 ======================================================================
   SUMMARY  [FILTERED]
 ======================================================================
-  Cycles traded          : 37
-  Winning cycles         : 19/37  (51%)
-  Avg gross premium/cyc  :    82.24 RMB
+  Cycles traded          : 38
+  Winning cycles         : 19/38  (50%)
+  Avg gross premium/cyc  :    80.08 RMB
   Total net P&L          :  1882.90 RMB
-  Cumulative by cycle    : ['0', '126', '179', '303', '303', '372', '414', '489', '531', '531', '615', '626', '666', '685', '685', '703', '703', '703', '1060', '1060', '1060', '1060', '1219', '1219', '1320', '1320', '1320', '1320', '1320', '1853', '2024', '2024', '2593', '2801', '1883', '1883', '1883']
+  Cumulative by cycle    : ['0', '126', '179', '303', '303', '372', '414', '489', '531', '531', '615', '626', '666', '685', '685', '703', '703', '703', '1060', '1060', '1060', '1060', '1219', '1219', '1320', '1320', '1320', '1320', '1320', '1853', '2024', '2024', '2593', '2801', '1883', '1883', '1883', '1883']
   ── Placement & Filter Lift ─────────────────────────────────────
-  Placement rate         : 54.1%  (20/37 cycles)
+  Placement rate         : 52.6%  (20/38 cycles)
   Avg P&L / placed cycle :   +94.15 RMB
-  Avg P&L / all cycles   :   +50.89 RMB
-  Filter lift            :   +43.26 RMB/cycle
+  Avg P&L / all cycles   :   +49.55 RMB
+  Filter lift            :   +44.60 RMB/cycle
   ─────────────────────────────────────────────────────────────
 
   Chart saved → backtest/backtest_cc_588000ETF.png

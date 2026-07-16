@@ -47,7 +47,7 @@ def main():
         print(f"=== Fetching 1m Data for {name} ({symbol}) ===")
         inst_info = rq.instruments(symbol)
         listed_date = pd.Timestamp(inst_info.listed_date)
-        start_date = max(pd.Timestamp("2015-01-05"), listed_date)
+        start_date = max(pd.Timestamp("2010-01-04"), listed_date)
         end_date = pd.Timestamp.now()
         
         print(f"  Listing date: {listed_date.date()}, downloading from {start_date.date()} to {end_date.date()}")
