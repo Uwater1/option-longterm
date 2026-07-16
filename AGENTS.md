@@ -73,6 +73,7 @@ daytrade/methods/              # See daytrade/methods/AGENTS.md for details
 - **Technical indicators & forward returns**: Use post-adjusted prices (`close_adj`, `open_adj`).
 - **`prev_close` calculation**: Shift `close_adj` (`df['prev_close'] = df['close_adj'].shift(1)`).
 - **ATM 30d IV Speedup**: Pre-grouped dictionaries bypass slow filters.
+- **Historical Date Limits**: The day-model dataset spans from `2010-01-04` (or listing date) to present. Missing option prices and VIX data prior to February 2015 are forward-filled and median-imputed dynamically.
 
 ### Call Strategy
 - Cycles: Monthly expiry. Enter first trading day after expiry.

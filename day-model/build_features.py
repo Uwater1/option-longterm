@@ -1171,9 +1171,9 @@ def build_features_for_etf(etf_name: str, save: bool = True, early: bool = False
 
     # ── Fetch/Load caches once for all ETFs ──
     all_etf_ids = ["510300.XSHG", "510050.XSHG", "510500.XSHG", "588000.XSHG", "159915.XSHE"]
-    margin_df = get_cached_margin_data(all_etf_ids, "2015-01-01", "2026-06-19")
-    cap_df = get_cached_capital_flow(all_etf_ids, "2015-01-01", "2026-06-19")
-    quota_df = get_cached_stock_connect_quota("2015-01-01", "2026-06-19")
+    margin_df = get_cached_margin_data(all_etf_ids, "2010-01-01", "2026-06-19")
+    cap_df = get_cached_capital_flow(all_etf_ids, "2010-01-01", "2026-06-19")
+    quota_df = get_cached_stock_connect_quota("2010-01-01", "2026-06-19")
 
     # Add adjusted columns to daily Index data for compatibility with compute_daylevel_indicators
     for col in ["open", "high", "low", "close"]:

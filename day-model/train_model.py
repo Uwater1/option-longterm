@@ -101,7 +101,7 @@ def compute_val_blocks(lockbox_date: str, window_years: int = 0, embargo_days: i
 
     Blocks are placed backward from the lockbox with embargo gaps.
     Outer blocks are the most recent (closest to lockbox), inner blocks are older.
-    When window_years=0, uses all available history (train_start = 2015-01-01).
+    When window_years=0, uses all available history (train_start = 2010-01-01).
 
     Returns (inner_blocks, outer_blocks) each as list of (start, end) date strings.
     """
@@ -109,7 +109,7 @@ def compute_val_blocks(lockbox_date: str, window_years: int = 0, embargo_days: i
     if window_years > 0:
         train_start = lb - pd.DateOffset(years=window_years)
     else:
-        train_start = pd.Timestamp("2015-01-01")
+        train_start = pd.Timestamp("2010-01-01")
 
     blocks = []
     cursor = lb - pd.Timedelta(days=embargo_days)  # embargo before lockbox
