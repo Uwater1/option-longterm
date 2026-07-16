@@ -101,7 +101,7 @@ def compute_val_blocks(lockbox_date: str, window_years: int = 0, embargo_days: i
 
     Blocks are placed backward from the lockbox with embargo gaps.
     Outer blocks are the most recent (closest to lockbox), inner blocks are older.
-    When window_years=0, uses all available history (train_start = 2010-01-01).
+    When window_years=0, uses all available history (train_start = 2015-01-01).
 
     Returns (inner_blocks, outer_blocks) each as list of (start, end) date strings.
     """
@@ -109,7 +109,7 @@ def compute_val_blocks(lockbox_date: str, window_years: int = 0, embargo_days: i
     if window_years > 0:
         train_start = lb - pd.DateOffset(years=window_years)
     else:
-        train_start = pd.Timestamp("2010-01-01")
+        train_start = pd.Timestamp("2015-01-01")
 
     blocks = []
     cursor = lb - pd.Timedelta(days=embargo_days)  # embargo before lockbox
@@ -126,11 +126,12 @@ def compute_val_blocks(lockbox_date: str, window_years: int = 0, embargo_days: i
     return inner, outer
 
 
-# Rolling quarter schedule (8 quarters: 2024 Q1-Q4 + 2025 Q1-Q4)
+# Rolling quarter schedule (from 2017 Q1 to 2026 Q1)
 ROLLING_QUARTERS = [
-    "2024-03-01", "2024-06-01", "2024-09-01", "2024-12-01",
-    "2025-03-01", "2025-06-01", "2025-09-01", "2025-12-01",
-]
+    f"{y}-{m:02d}-01"
+    for y in range(2017, 2026)
+    for m in [3, 6, 9, 12]
+] + ["2026-03-01"]
 
 
 def quarter_label(lockbox_date: str) -> str:
