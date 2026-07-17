@@ -27,11 +27,7 @@ sys.path.append(str(REPO_ROOT / "day-model"))
 
 from build_features import FEATURES
 
-# Date ranges
-OOS_START = pd.Timestamp("2022-01-01")
-LOCKBOX_START = pd.Timestamp("2024-03-01")
-TRAIN_START = pd.Timestamp("2015-01-01")
-TRAIN_END = pd.Timestamp("2022-01-01")
+# Date ranges will be set dynamically based on ETF
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
@@ -223,6 +219,18 @@ def main():
     parser.add_argument("--early", action="store_true", help="Use early window return dataset")
     args = parser.parse_args()
 
+    # Determine dynamic date ranges
+    if args.etf == "588000ETF":
+        train_start = pd.Timestamp("2020-11-01")
+        train_end = pd.Timestamp("2025-01-01")
+        oos_start = pd.Timestamp("2025-01-01")
+        lockbox_start = pd.Timestamp("2025-07-01")
+    else:
+        train_start = pd.Timestamp("2015-01-01")
+        train_end = pd.Timestamp("2022-01-01")
+        oos_start = pd.Timestamp("2022-01-01")
+        lockbox_start = pd.Timestamp("2024-03-01")
+
     print(f"================================================================================")
     print(f"Stage B Evaluation: ETF={args.etf}, Side={args.side}, Early={args.early}, k={args.k}")
     print(f"================================================================================")
@@ -257,13 +265,13 @@ def main():
     df = df.sort_values("date").reset_index(drop=True)
 
     # Filter to training and OOS periods
-    train_mask = (df["date"] >= TRAIN_START) & (df["date"] < TRAIN_END)
+    train_mask = (df["date"] >= train_start) & (df["date"] < train_end)
     train_df = df[train_mask].reset_index(drop=True)
     
-    oos_mask = df["date"] >= OOS_START
+    oos_mask = df["date"] >= oos_start
     oos_df = df[oos_mask].reset_index(drop=True)
     
-    lockbox_mask = df["date"] >= LOCKBOX_START
+    lockbox_mask = df["date"] >= lockbox_start
     lockbox_df = df[lockbox_mask].reset_index(drop=True)
 
     # Standardize and prepare feature values based on selection pool
@@ -377,9 +385,9 @@ def main():
             "max_dd": max_dd
         }
 
-    train_results = run_eval(y_train, pred_train, "Training Period (2015-2022)")
-    oos_results = run_eval(y_oos, pred_oos, "Holdout OOS Period (2022-present)")
-    lock_results = run_eval(y_lock, pred_lock, "OOS Lockbox Period (2024-present)")
+    train_results = run_eval(y_train, pred_train, f"Training Period ({train_start.year}-{train_end.year})")
+    oos_results = run_eval(y_oos, pred_oos, f"Holdout OOS Period ({oos_start.year}-present)")
+    lock_results = run_eval(y_lock, pred_lock, f"OOS Lockbox Period ({lockbox_start.year}-present)")
 
     # Save results to a report file
     results_path = data_out_dir / f"results_{args.etf}_{args.side}{suffix}.json"
