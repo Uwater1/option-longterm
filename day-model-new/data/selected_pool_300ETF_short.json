@@ -1,0 +1,42 @@
+[
+  {
+    "feature_name": "yesterday_day_close_pos",
+    "sign": -1,
+    "overall_ic": 0.06257162546318092,
+    "deflated_ic": -0.003774317633260943,
+    "ic_ir": 0.23223698216313196,
+    "monotonicity": 0.5700879765395894
+  },
+  {
+    "feature_name": "yesterday_lunch_gap",
+    "sign": -1,
+    "overall_ic": 0.05095959147613289,
+    "deflated_ic": -0.01538635162030897,
+    "ic_ir": 0.20601123938463994,
+    "monotonicity": 0.5782991202346041
+  },
+  {
+    "feature_name": "gap_pct",
+    "sign": 1,
+    "overall_ic": 0.041864889284629205,
+    "deflated_ic": -0.024481053811812654,
+    "ic_ir": 0.2468762515244207,
+    "monotonicity": 0.5659824046920822
+  },
+  {
+    "feature_name": "sma20_dist",
+    "sign": -1,
+    "overall_ic": 0.03698496197726176,
+    "deflated_ic": -0.029360981119180098,
+    "ic_ir": 0.28161640783760056,
+    "monotonicity": 0.6263929618768328
+  },
+  {
+    "feature_name": "yesterday_body_ratio",
+    "sign": -1,
+    "overall_ic": 0.03499211822352455,
+    "deflated_ic": -0.03135382487291731,
+    "ic_ir": 0.31507813991292455,
+    "monotonicity": 0.6240469208211143
+  }
+]

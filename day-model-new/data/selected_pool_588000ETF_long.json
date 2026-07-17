@@ -1,0 +1,66 @@
+[
+  {
+    "feature_name": "max_up_ret",
+    "sign": 1,
+    "overall_ic": 0.13908230158956278,
+    "deflated_ic": 0.005392772883614699,
+    "ic_ir": 0.2894851090440852,
+    "monotonicity": 0.5836177474402731
+  },
+  {
+    "feature_name": "bar_vwap_dev_3",
+    "sign": 1,
+    "overall_ic": 0.13143652898066047,
+    "deflated_ic": -0.0022529997252876133,
+    "ic_ir": 0.6586998535290978,
+    "monotonicity": 0.6723549488054608
+  },
+  {
+    "feature_name": "yearly_high_distance",
+    "sign": -1,
+    "overall_ic": 0.11528157938753801,
+    "deflated_ic": -0.01840794931841007,
+    "ic_ir": 0.6355586210371993,
+    "monotonicity": 0.5631399317406144
+  },
+  {
+    "feature_name": "yesterday_day_kurtosis",
+    "sign": -1,
+    "overall_ic": 0.0959719901799609,
+    "deflated_ic": -0.03771753852598718,
+    "ic_ir": 0.39896909643652045,
+    "monotonicity": 0.552901023890785
+  },
+  {
+    "feature_name": "vol_ratio_5_20",
+    "sign": 1,
+    "overall_ic": 0.0852617357195812,
+    "deflated_ic": -0.048427792986366874,
+    "ic_ir": 0.2387997131691805,
+    "monotonicity": 0.5665529010238908
+  },
+  {
+    "feature_name": "yesterday_afternoon_reversal",
+    "sign": 1,
+    "overall_ic": 0.05471484961276109,
+    "deflated_ic": -0.07897467909318699,
+    "ic_ir": 0.24961876570512648,
+    "monotonicity": 0.6143344709897611
+  },
+  {
+    "feature_name": "early_range",
+    "sign": -1,
+    "overall_ic": 0.0388312321515637,
+    "deflated_ic": -0.09485829655438438,
+    "ic_ir": 0.30215134232080626,
+    "monotonicity": 0.621160409556314
+  },
+  {
+    "feature_name": "northbound_net",
+    "sign": -1,
+    "overall_ic": 0.03544222643818403,
+    "deflated_ic": -0.09824730226776404,
+    "ic_ir": 0.5420226011525376,
+    "monotonicity": 0.6757679180887372
+  }
+]
