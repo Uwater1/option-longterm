@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Baseline runner for Day-Model Rewrite v3.
-Runs select_features.py and evaluate_concept.py across all 5 ETFs and all 3 sides,
+Runs select_features.py and evaluate_concept.py in parallel across all 5 ETFs and 3 sides,
 then compiles a baseline performance report.
 """
 
@@ -11,22 +11,35 @@ import json
 import argparse
 import subprocess
 from pathlib import Path
+from joblib import Parallel, delayed
 
 HERE = Path(__file__).resolve().parent
 
 ETFS = ["300ETF", "50ETF", "500ETF", "588000ETF", "159915ETF"]
 SIDES = ["single", "long", "short"]
 
-def run_cmd(cmd):
-    """Run a shell command and print its output."""
-    print(f"Executing: {cmd}")
-    res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    if res.returncode != 0:
-        print(f"Error executing command: {cmd}")
-        print(res.stderr)
-        return False
-    print(res.stdout)
-    return True
+def run_combination(etf, side, early, python_exe):
+    """Run select_features and evaluate_concept for a single combination."""
+    suffix = "_early" if early else ""
+    select_cmd = f'"{python_exe}" "{HERE}/select_features.py" -e {etf} -s {side} --n-jobs 1'
+    if early:
+        select_cmd += " --early"
+        
+    print(f"Starting feature selection: ETF={etf}, Side={side}")
+    res_select = subprocess.run(select_cmd, shell=True, capture_output=True, text=True)
+    if res_select.returncode != 0:
+        return False, f"select_features failed for {etf} {side}:\n{res_select.stderr}"
+        
+    eval_cmd = f'"{python_exe}" "{HERE}/evaluate_concept.py" -e {etf} -s {side}'
+    if early:
+        eval_cmd += " --early"
+        
+    print(f"Starting evaluation: ETF={etf}, Side={side}")
+    res_eval = subprocess.run(eval_cmd, shell=True, capture_output=True, text=True)
+    if res_eval.returncode != 0:
+        return False, f"evaluate_concept failed for {etf} {side}:\n{res_eval.stderr}"
+        
+    return True, f"Success {etf} {side}"
 
 def main():
     parser = argparse.ArgumentParser()
@@ -34,6 +47,7 @@ def main():
     parser.add_argument("-s", "--side", default="all", help="Side: single, long, short, or 'all'")
     parser.add_argument("--early", action="store_true", help="Use early window return dataset")
     parser.add_argument("--compile-only", action="store_true", help="Only compile the baseline report from existing JSON outputs")
+    parser.add_argument("--n-jobs", type=int, default=4, help="Number of parallel workers for baseline loop")
     args = parser.parse_args()
 
     etfs_to_run = ETFS if args.etf == "all" else [args.etf]
@@ -41,26 +55,25 @@ def main():
     suffix = "_early" if args.early else ""
 
     if not args.compile_only:
-        print(f"Running Baseline Selection & Evaluation for ETFs: {etfs_to_run}, Sides: {sides_to_run}")
-
+        print(f"Running Baseline Selection & Evaluation in parallel for ETFs: {etfs_to_run}, Sides: {sides_to_run}")
+        
+        tasks = []
         for etf in etfs_to_run:
             for side in sides_to_run:
-                print(f"\n=======================================================")
-                print(f"Running ETF={etf}, Side={side}")
-                print(f"=======================================================")
+                tasks.append((etf, side, args.early, sys.executable))
                 
-                # Step 1: Run feature selection
-                select_cmd = f"python3 {HERE}/select_features.py -e {etf} -s {side}"
-                if args.early:
-                    select_cmd += " --early"
-                if not run_cmd(select_cmd):
-                    continue
-                    
-                # Step 2: Run evaluation
-                eval_cmd = f"python3 {HERE}/evaluate_concept.py -e {etf} -s {side}"
-                if args.early:
-                    eval_cmd += " --early"
-                run_cmd(eval_cmd)
+        # Run in parallel
+        results = Parallel(n_jobs=args.n_jobs)(
+            delayed(run_combination)(etf, side, early, python_exe)
+            for etf, side, early, python_exe in tasks
+        )
+        
+        # Report status
+        success_count = sum(1 for success, _ in results if success)
+        print(f"\nCompleted {success_count}/{len(tasks)} combinations successfully.")
+        for success, msg in results:
+            if not success:
+                print(f"ERROR: {msg}")
 
     # Compile results into a Markdown report
     print("\nCompiling baseline report...")
@@ -68,11 +81,11 @@ def main():
         "# Day-Model Rewrite v3 — Baseline Performance Report",
         "",
         "This report summarizes the baseline performance of the simple IC-weighted combination model",
-        "evaluated on existing 221 candidate features (no feature mining yet).",
-        "The selection train period is `2015-01-01` to `2022-01-01`. Holdout OOS is `2022-01-01` to present,",
-        "and OOS Lockbox is `2024-03-01` to present.",
+        "evaluated on existing candidate features.",
+        "The selection train period is `2015-01-01` to `2022-01-01` (except `588000ETF` which uses `2020-11-01` to `2025-01-01`).",
+        "Holdout OOS starts `2022-01-01` (`2025-01-01` for `588000ETF`), and OOS Lockbox starts `2024-03-01` (`2025-07-01` for `588000ETF`).",
         "",
-        "## Performance Table (Holdout OOS: 2022-present)",
+        "## Performance Table (Holdout OOS)",
         "",
         "| ETF | Side | Features Admitted | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Ann. Return | Sharpe | Sortino | Max DD |",
         "| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |"
@@ -116,7 +129,7 @@ def main():
         "",
         "\\* indicates that the 95% circular block-bootstrap confidence interval spans zero (statistically indistinguishable from noise).",
         "",
-        "## Performance Table (OOS Lockbox: 2024-present)",
+        "## Performance Table (OOS Lockbox)",
         "",
         "| ETF | Side | Features Admitted | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Ann. Return | Sharpe | Sortino | Max DD |",
         "| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |"
