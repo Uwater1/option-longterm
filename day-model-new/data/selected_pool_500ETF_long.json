@@ -1,0 +1,50 @@
+[
+  {
+    "feature_name": "max_up_ret",
+    "sign": 1,
+    "overall_ic": 0.17094963046395117,
+    "deflated_ic": 0.07437833672032598,
+    "ic_ir": 0.27994480744686157,
+    "monotonicity": 0.5683284457478006
+  },
+  {
+    "feature_name": "max_down_ret",
+    "sign": 1,
+    "overall_ic": 0.13345176305406317,
+    "deflated_ic": 0.03688046931043798,
+    "ic_ir": 0.32786159901536066,
+    "monotonicity": 0.5530791788856305
+  },
+  {
+    "feature_name": "yesterday_afternoon_momentum",
+    "sign": -1,
+    "overall_ic": 0.09051191113221428,
+    "deflated_ic": -0.00605938261141091,
+    "ic_ir": 0.3133097920251752,
+    "monotonicity": 0.6404692082111437
+  },
+  {
+    "feature_name": "bar_vwap_dev_1",
+    "sign": 1,
+    "overall_ic": 0.07859251820999465,
+    "deflated_ic": -0.017978775533630545,
+    "ic_ir": 0.15012461378102768,
+    "monotonicity": 0.5741935483870968
+  },
+  {
+    "feature_name": "total_balance",
+    "sign": -1,
+    "overall_ic": 0.042694674889089346,
+    "deflated_ic": -0.053876618854535846,
+    "ic_ir": 0.34522215576598453,
+    "monotonicity": 0.5870967741935483
+  },
+  {
+    "feature_name": "bar_vol_5",
+    "sign": 1,
+    "overall_ic": 0.03859937566286008,
+    "deflated_ic": -0.057971918080765114,
+    "ic_ir": 0.18488151564323602,
+    "monotonicity": 0.5536656891495602
+  }
+]

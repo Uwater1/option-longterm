@@ -1,0 +1,2225 @@
+[
+  {
+    "feature_name": "yesterday_afternoon_momentum",
+    "sign": -1,
+    "raw_ic": -0.10182210427667367,
+    "overall_ic": 0.10182210427667367,
+    "ic_ir": -0.17198792159588933,
+    "monotonicity": 0.43284457478005867,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "first_bar_return",
+    "sign": 1,
+    "raw_ic": 0.10010373658872648,
+    "overall_ic": 0.10010373658872648,
+    "ic_ir": -0.08335670639286227,
+    "monotonicity": 0.4381231671554252,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bar_ret_0",
+    "sign": 1,
+    "raw_ic": 0.10010373658872648,
+    "overall_ic": 0.10010373658872648,
+    "ic_ir": -0.08335670639286227,
+    "monotonicity": 0.4381231671554252,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bar_body_rng_0",
+    "sign": 1,
+    "raw_ic": 0.09683210400353404,
+    "overall_ic": 0.09683210400353404,
+    "ic_ir": 0.08084199556939509,
+    "monotonicity": 0.5131964809384164,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "max_up_ret",
+    "sign": 1,
+    "raw_ic": 0.08599918832579577,
+    "overall_ic": 0.08599918832579577,
+    "ic_ir": -0.11580185038506112,
+    "monotonicity": 0.36480938416422287,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_day_vwap_dev",
+    "sign": -1,
+    "raw_ic": -0.07311568757737691,
+    "overall_ic": 0.07311568757737691,
+    "ic_ir": -0.054928728213653945,
+    "monotonicity": 0.46920821114369504,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_early_vwap_dev",
+    "sign": 1,
+    "raw_ic": 0.0678965495000257,
+    "overall_ic": 0.0678965495000257,
+    "ic_ir": -0.21456903133312114,
+    "monotonicity": 0.41524926686217006,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "short_sell_cover_spread",
+    "sign": 1,
+    "raw_ic": 0.0644086846510774,
+    "overall_ic": 0.0644086846510774,
+    "ic_ir": 0.16160311807278605,
+    "monotonicity": 0.547800586510264,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_pm_return",
+    "sign": -1,
+    "raw_ic": -0.06427122690562327,
+    "overall_ic": 0.06427122690562327,
+    "ic_ir": 0.04335702853324991,
+    "monotonicity": 0.46803519061583576,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "max_down_ret",
+    "sign": 1,
+    "raw_ic": 0.06227726669383315,
+    "overall_ic": 0.06227726669383315,
+    "ic_ir": -0.1974472674053362,
+    "monotonicity": 0.4228739002932551,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_close_position",
+    "sign": -1,
+    "raw_ic": -0.061784644273261795,
+    "overall_ic": 0.061784644273261795,
+    "ic_ir": 0.16442380862621608,
+    "monotonicity": 0.5360703812316715,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "capital_net_ratio",
+    "sign": -1,
+    "raw_ic": -0.05828271303593149,
+    "overall_ic": 0.05828271303593149,
+    "ic_ir": 0.041383146982889564,
+    "monotonicity": 0.3249266862170088,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "capital_large_order_ratio",
+    "sign": -1,
+    "raw_ic": -0.05803569215262963,
+    "overall_ic": 0.05803569215262963,
+    "ic_ir": 0.05159445571632728,
+    "monotonicity": 0.32903225806451614,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_afternoon_reversal",
+    "sign": -1,
+    "raw_ic": -0.057483260050186454,
+    "overall_ic": 0.057483260050186454,
+    "ic_ir": -0.10701217895821119,
+    "monotonicity": 0.4475073313782991,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_early_trend",
+    "sign": 1,
+    "raw_ic": 0.056176010271197764,
+    "overall_ic": 0.056176010271197764,
+    "ic_ir": -0.19361267571550367,
+    "monotonicity": 0.4287390029325513,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_early_momentum",
+    "sign": 1,
+    "raw_ic": 0.05567020411775509,
+    "overall_ic": 0.05567020411775509,
+    "ic_ir": -0.10080785431460625,
+    "monotonicity": 0.47390029325513194,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vix_iv_ratio",
+    "sign": 1,
+    "raw_ic": 0.05462294898410587,
+    "overall_ic": 0.05462294898410587,
+    "ic_ir": 0.09576459957193358,
+    "monotonicity": 0.1565982404692082,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "iv",
+    "sign": -1,
+    "raw_ic": -0.053823695415218906,
+    "overall_ic": 0.053823695415218906,
+    "ic_ir": 0.1061248342209186,
+    "monotonicity": 0.14897360703812318,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vix_iv_spread",
+    "sign": 1,
+    "raw_ic": 0.05278176981864748,
+    "overall_ic": 0.05278176981864748,
+    "ic_ir": 0.16904635248865407,
+    "monotonicity": 0.1653958944281525,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "outside_bar_reversal_day",
+    "sign": 1,
+    "raw_ic": 0.048645284634646804,
+    "overall_ic": 0.048645284634646804,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "twenty_gap_bars_regime",
+    "sign": -1,
+    "raw_ic": -0.048333231930141406,
+    "overall_ic": 0.048333231930141406,
+    "ic_ir": 0.2837209459075322,
+    "monotonicity": 0.45454545454545453,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "capital_net_value",
+    "sign": -1,
+    "raw_ic": -0.04778814903168988,
+    "overall_ic": 0.04778814903168988,
+    "ic_ir": 0.015485280719728232,
+    "monotonicity": 0.47214076246334313,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "first_30min_return",
+    "sign": 1,
+    "raw_ic": 0.045424978433381384,
+    "overall_ic": 0.045424978433381384,
+    "ic_ir": -0.06559519316511107,
+    "monotonicity": 0.4604105571847507,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "option_oi_growth",
+    "sign": 1,
+    "raw_ic": 0.045114163153009444,
+    "overall_ic": 0.045114163153009444,
+    "ic_ir": 0.17055827126254694,
+    "monotonicity": 0.16715542521994134,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "growth_momentum_ratio",
+    "sign": 1,
+    "raw_ic": 0.04488756231344119,
+    "overall_ic": 0.04488756231344119,
+    "ic_ir": 0.015445736999705216,
+    "monotonicity": 0.14310850439882697,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "measured_move_proximity",
+    "sign": 1,
+    "raw_ic": 0.04482426717268257,
+    "overall_ic": 0.04482426717268257,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "northbound_net",
+    "sign": 1,
+    "raw_ic": 0.04339593546453679,
+    "overall_ic": 0.04339593546453679,
+    "ic_ir": -0.03844408289146113,
+    "monotonicity": 0.4627565982404692,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_northbound_net_ratio",
+    "sign": 1,
+    "raw_ic": 0.04051628904623274,
+    "overall_ic": 0.04051628904623274,
+    "ic_ir": 0.053207673319763775,
+    "monotonicity": 0.4979472140762463,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "margin_buy_repayment_spread",
+    "sign": 1,
+    "raw_ic": 0.03980354484448666,
+    "overall_ic": 0.03980354484448666,
+    "ic_ir": 0.028227082960552513,
+    "monotonicity": 0.49149560117302055,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "total_path_length",
+    "sign": 1,
+    "raw_ic": 0.03891661184903888,
+    "overall_ic": 0.03891661184903888,
+    "ic_ir": 0.07070857529484649,
+    "monotonicity": 0.5114369501466276,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "early_range",
+    "sign": 1,
+    "raw_ic": 0.037873024404211766,
+    "overall_ic": 0.037873024404211766,
+    "ic_ir": 0.05075357700653331,
+    "monotonicity": 0.4961876832844575,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "short_sell_quantity",
+    "sign": 1,
+    "raw_ic": 0.03743917266868923,
+    "overall_ic": 0.03743917266868923,
+    "ic_ir": 0.11532042415119724,
+    "monotonicity": 0.5096774193548387,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "capital_sell_volume",
+    "sign": 1,
+    "raw_ic": 0.037291107086741895,
+    "overall_ic": 0.037291107086741895,
+    "ic_ir": -0.08700895788716437,
+    "monotonicity": 0.2909090909090909,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "consecutive_inside_bars_3d",
+    "sign": -1,
+    "raw_ic": -0.036492677258833935,
+    "overall_ic": 0.036492677258833935,
+    "ic_ir": 0.1339984895803739,
+    "monotonicity": 0.47624633431085045,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bar_vwap_dev_2",
+    "sign": 1,
+    "raw_ic": 0.03587924974712492,
+    "overall_ic": 0.03587924974712492,
+    "ic_ir": -0.15124846899191882,
+    "monotonicity": 0.4299120234604106,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_first_30min_return",
+    "sign": 1,
+    "raw_ic": 0.03554229178745801,
+    "overall_ic": 0.03554229178745801,
+    "ic_ir": -0.062451623499815874,
+    "monotonicity": 0.44574780058651026,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "short_balance_quantity",
+    "sign": 1,
+    "raw_ic": 0.03515278197315614,
+    "overall_ic": 0.03515278197315614,
+    "ic_ir": 0.003450966230731416,
+    "monotonicity": 0.4674486803519062,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vix",
+    "sign": -1,
+    "raw_ic": -0.03495304658183637,
+    "overall_ic": 0.03495304658183637,
+    "ic_ir": 0.18005641650341564,
+    "monotonicity": 0.16950146627565982,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "capital_sell_value",
+    "sign": 1,
+    "raw_ic": 0.03435444805135146,
+    "overall_ic": 0.03435444805135146,
+    "ic_ir": -0.07866314321497257,
+    "monotonicity": 0.30087976539589445,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "margin_net_buy",
+    "sign": 1,
+    "raw_ic": 0.034216698733492736,
+    "overall_ic": 0.034216698733492736,
+    "ic_ir": 0.04356612078283418,
+    "monotonicity": 0.5202346041055719,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "short_balance",
+    "sign": 1,
+    "raw_ic": 0.03375077737011992,
+    "overall_ic": 0.03375077737011992,
+    "ic_ir": -0.061042976719360424,
+    "monotonicity": 0.4217008797653959,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bar_vwap_dev_1",
+    "sign": 1,
+    "raw_ic": 0.033423690133356665,
+    "overall_ic": 0.033423690133356665,
+    "ic_ir": 0.10476008748257505,
+    "monotonicity": 0.5114369501466276,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "short_repayment_quantity",
+    "sign": -1,
+    "raw_ic": -0.033379938886461416,
+    "overall_ic": 0.033379938886461416,
+    "ic_ir": 0.11997202724965046,
+    "monotonicity": 0.5589442815249267,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "stoch_d",
+    "sign": -1,
+    "raw_ic": -0.033028679636583104,
+    "overall_ic": 0.033028679636583104,
+    "ic_ir": -0.05723728726543701,
+    "monotonicity": 0.45454545454545453,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bar_ret_1",
+    "sign": 1,
+    "raw_ic": 0.03260583040855919,
+    "overall_ic": 0.03260583040855919,
+    "ic_ir": 0.11348642455562583,
+    "monotonicity": 0.5583577712609971,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_early_realized_vol",
+    "sign": 1,
+    "raw_ic": 0.03217030564220756,
+    "overall_ic": 0.03217030564220756,
+    "ic_ir": 0.06834595534316235,
+    "monotonicity": 0.5178885630498534,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bar_body_rng_1",
+    "sign": 1,
+    "raw_ic": 0.03173210437740855,
+    "overall_ic": 0.03173210437740855,
+    "ic_ir": 0.13293256810715368,
+    "monotonicity": 0.5155425219941349,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bar_rng_5",
+    "sign": 1,
+    "raw_ic": 0.029966633464184912,
+    "overall_ic": 0.029966633464184912,
+    "ic_ir": -0.09716239584225,
+    "monotonicity": 0.4604105571847507,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "tech_value_rotation",
+    "sign": 1,
+    "raw_ic": 0.029210072938111408,
+    "overall_ic": 0.029210072938111408,
+    "ic_ir": -0.056801203430035085,
+    "monotonicity": 0.4586510263929619,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "ema12_dist",
+    "sign": -1,
+    "raw_ic": -0.028965909942253988,
+    "overall_ic": 0.028965909942253988,
+    "ic_ir": 0.07364538474142406,
+    "monotonicity": 0.48211143695014663,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_day_realized_vol",
+    "sign": 1,
+    "raw_ic": 0.02873181135530275,
+    "overall_ic": 0.02873181135530275,
+    "ic_ir": -0.15218885733574625,
+    "monotonicity": 0.4146627565982405,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_range_ratio",
+    "sign": 1,
+    "raw_ic": 0.02797203806266237,
+    "overall_ic": 0.02797203806266237,
+    "ic_ir": 0.08175761262608842,
+    "monotonicity": 0.47683284457478003,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "willr14",
+    "sign": -1,
+    "raw_ic": -0.02716895063041361,
+    "overall_ic": 0.02716895063041361,
+    "ic_ir": -0.0646196138343828,
+    "monotonicity": 0.4785923753665689,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_day_range",
+    "sign": 1,
+    "raw_ic": 0.026642566446496544,
+    "overall_ic": 0.026642566446496544,
+    "ic_ir": 0.07021351725686481,
+    "monotonicity": 0.48035190615835777,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "iv_envelope_deviation",
+    "sign": -1,
+    "raw_ic": -0.025818985984550177,
+    "overall_ic": 0.025818985984550177,
+    "ic_ir": 0.12419062452781732,
+    "monotonicity": 0.17419354838709677,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_early_range",
+    "sign": 1,
+    "raw_ic": 0.025643731363090234,
+    "overall_ic": 0.025643731363090234,
+    "ic_ir": 0.05238515254862726,
+    "monotonicity": 0.47096774193548385,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "sma10_dist",
+    "sign": -1,
+    "raw_ic": -0.025638532104459967,
+    "overall_ic": 0.025638532104459967,
+    "ic_ir": 0.2399417082624584,
+    "monotonicity": 0.547800586510264,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "num_up_bars",
+    "sign": 1,
+    "raw_ic": 0.02483769868560699,
+    "overall_ic": 0.02483769868560699,
+    "ic_ir": -0.17897529439251644,
+    "monotonicity": 0.4005865102639296,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bar_rng_3",
+    "sign": 1,
+    "raw_ic": 0.02482231750014643,
+    "overall_ic": 0.02482231750014643,
+    "ic_ir": -0.10404772639737986,
+    "monotonicity": 0.432258064516129,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yearly_low_distance",
+    "sign": 1,
+    "raw_ic": 0.02250353530974844,
+    "overall_ic": 0.02250353530974844,
+    "ic_ir": -0.5751503538058554,
+    "monotonicity": 0.2967741935483871,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "capital_net_accel",
+    "sign": -1,
+    "raw_ic": -0.022119357566945077,
+    "overall_ic": 0.022119357566945077,
+    "ic_ir": 0.22503158456366515,
+    "monotonicity": 0.3548387096774194,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "volatility_percentile_20d",
+    "sign": 1,
+    "raw_ic": 0.021841152731519282,
+    "overall_ic": 0.021841152731519282,
+    "ic_ir": 0.06897713021185424,
+    "monotonicity": 0.17888563049853373,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bar_ret_2",
+    "sign": 1,
+    "raw_ic": 0.020852336716939226,
+    "overall_ic": 0.020852336716939226,
+    "ic_ir": -0.012057911408631173,
+    "monotonicity": 0.45571847507331376,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "roc5",
+    "sign": -1,
+    "raw_ic": -0.019873177710314376,
+    "overall_ic": 0.019873177710314376,
+    "ic_ir": 0.08315856286467407,
+    "monotonicity": 0.5126099706744868,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_stoch_rsi_cross",
+    "sign": 1,
+    "raw_ic": 0.01939794005022013,
+    "overall_ic": 0.01939794005022013,
+    "ic_ir": -0.07580022655547845,
+    "monotonicity": 0.41055718475073316,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "early_realized_vol",
+    "sign": 1,
+    "raw_ic": 0.019042575867625814,
+    "overall_ic": 0.019042575867625814,
+    "ic_ir": 0.09253595010707313,
+    "monotonicity": 0.5630498533724341,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "capital_buy_value",
+    "sign": 1,
+    "raw_ic": 0.018430805748916868,
+    "overall_ic": 0.018430805748916868,
+    "ic_ir": 0.0008496146989257307,
+    "monotonicity": 0.3032258064516129,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bar_rng_2",
+    "sign": 1,
+    "raw_ic": 0.018340390265686034,
+    "overall_ic": 0.018340390265686034,
+    "ic_ir": -0.15965576133888584,
+    "monotonicity": 0.4287390029325513,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vol_ratio_5_20",
+    "sign": -1,
+    "raw_ic": -0.01825681475559671,
+    "overall_ic": 0.01825681475559671,
+    "ic_ir": -0.07706413259695562,
+    "monotonicity": 0.4774193548387097,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "high_beta_vol_ratio",
+    "sign": 1,
+    "raw_ic": 0.01785175022534027,
+    "overall_ic": 0.01785175022534027,
+    "ic_ir": -0.1628430883388059,
+    "monotonicity": 0.10146627565982405,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "early_kurtosis",
+    "sign": -1,
+    "raw_ic": -0.01759006884996885,
+    "overall_ic": 0.01759006884996885,
+    "ic_ir": 0.041706602983104524,
+    "monotonicity": 0.5055718475073314,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "margin_extreme_rank_252d",
+    "sign": 1,
+    "raw_ic": 0.017477528132442417,
+    "overall_ic": 0.017477528132442417,
+    "ic_ir": 0.12517911692707995,
+    "monotonicity": 0.2785923753665689,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "capital_buy_volume",
+    "sign": 1,
+    "raw_ic": 0.017012968481996935,
+    "overall_ic": 0.017012968481996935,
+    "ic_ir": -0.07175263328108282,
+    "monotonicity": 0.28621700879765394,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "mfi14",
+    "sign": -1,
+    "raw_ic": -0.01700939373258424,
+    "overall_ic": 0.01700939373258424,
+    "ic_ir": 0.07100764908231234,
+    "monotonicity": 0.5296187683284458,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bar_rng_0",
+    "sign": 1,
+    "raw_ic": 0.016886240548620153,
+    "overall_ic": 0.016886240548620153,
+    "ic_ir": -0.2032563957870083,
+    "monotonicity": 0.39589442815249265,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "margin_short_ratio",
+    "sign": -1,
+    "raw_ic": -0.016718296626368673,
+    "overall_ic": 0.016718296626368673,
+    "ic_ir": -0.13644597575557293,
+    "monotonicity": 0.4422287390029325,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "margin_lever_ratio",
+    "sign": -1,
+    "raw_ic": -0.016718296626368673,
+    "overall_ic": 0.016718296626368673,
+    "ic_ir": -0.13644597575557293,
+    "monotonicity": 0.4422287390029325,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_am_return",
+    "sign": 1,
+    "raw_ic": 0.01596562430554109,
+    "overall_ic": 0.01596562430554109,
+    "ic_ir": -0.31051363442359503,
+    "monotonicity": 0.32609970674486805,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "buy_on_margin_value",
+    "sign": 1,
+    "raw_ic": 0.015759116330904224,
+    "overall_ic": 0.015759116330904224,
+    "ic_ir": 0.08259969666427065,
+    "monotonicity": 0.5143695014662757,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "roc20",
+    "sign": -1,
+    "raw_ic": -0.01542920248904163,
+    "overall_ic": 0.01542920248904163,
+    "ic_ir": 0.19557234416548283,
+    "monotonicity": 0.5413489736070382,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vol5",
+    "sign": -1,
+    "raw_ic": -0.01473216530315645,
+    "overall_ic": 0.01473216530315645,
+    "ic_ir": -0.23614219507058484,
+    "monotonicity": 0.42639296187683284,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vol_gk10",
+    "sign": 1,
+    "raw_ic": 0.014726031509564003,
+    "overall_ic": 0.014726031509564003,
+    "ic_ir": -0.0999313506335809,
+    "monotonicity": 0.419941348973607,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "early_skew",
+    "sign": -1,
+    "raw_ic": -0.014682900057876827,
+    "overall_ic": 0.014682900057876827,
+    "ic_ir": -0.049063458801349914,
+    "monotonicity": 0.4809384164222874,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "volume_percentile_20d",
+    "sign": 1,
+    "raw_ic": 0.013743948641338273,
+    "overall_ic": 0.013743948641338273,
+    "ic_ir": -0.03015245411347847,
+    "monotonicity": 0.38592375366568915,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "iv_diff_1d",
+    "sign": -1,
+    "raw_ic": -0.013482650963001145,
+    "overall_ic": 0.013482650963001145,
+    "ic_ir": 0.07305794807227377,
+    "monotonicity": 0.16715542521994134,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "northbound_sell",
+    "sign": -1,
+    "raw_ic": -0.013460989945710196,
+    "overall_ic": 0.013460989945710196,
+    "ic_ir": 0.12934761270263545,
+    "monotonicity": 0.5513196480938416,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "margin_repayment",
+    "sign": 1,
+    "raw_ic": 0.013410714708570172,
+    "overall_ic": 0.013410714708570172,
+    "ic_ir": 0.08953079770698663,
+    "monotonicity": 0.5208211143695015,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "aroon_osc",
+    "sign": -1,
+    "raw_ic": -0.012601102554480059,
+    "overall_ic": 0.012601102554480059,
+    "ic_ir": -0.09832069941136538,
+    "monotonicity": 0.40175953079178883,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "iv_vol_ratio",
+    "sign": -1,
+    "raw_ic": -0.011613091918927468,
+    "overall_ic": 0.011613091918927468,
+    "ic_ir": 0.17595775901229435,
+    "monotonicity": 0.5173020527859238,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_day_kurtosis",
+    "sign": -1,
+    "raw_ic": -0.011479915844666651,
+    "overall_ic": 0.011479915844666651,
+    "ic_ir": -0.11516589932658902,
+    "monotonicity": 0.4633431085043988,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "volume_sma_ratio",
+    "sign": 1,
+    "raw_ic": 0.011478662938337821,
+    "overall_ic": 0.011478662938337821,
+    "ic_ir": -0.2424298286480498,
+    "monotonicity": 0.38005865102639297,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_volume_ratio",
+    "sign": 1,
+    "raw_ic": 0.011478662938337821,
+    "overall_ic": 0.011478662938337821,
+    "ic_ir": -0.2424298286480498,
+    "monotonicity": 0.38005865102639297,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "total_balance",
+    "sign": 1,
+    "raw_ic": 0.011452474169721477,
+    "overall_ic": 0.011452474169721477,
+    "ic_ir": -0.006780092673359709,
+    "monotonicity": 0.47038123167155427,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "cci14",
+    "sign": -1,
+    "raw_ic": -0.011197746812963863,
+    "overall_ic": 0.011197746812963863,
+    "ic_ir": -0.1363909452739307,
+    "monotonicity": 0.4404692082111437,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bar_vwap_dev_3",
+    "sign": 1,
+    "raw_ic": 0.010822831238952215,
+    "overall_ic": 0.010822831238952215,
+    "ic_ir": 0.08287237502650507,
+    "monotonicity": 0.5319648093841642,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_first_bar_volume",
+    "sign": 1,
+    "raw_ic": 0.010757444055037459,
+    "overall_ic": 0.010757444055037459,
+    "ic_ir": 0.14110444270431272,
+    "monotonicity": 0.5912023460410557,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "sma_distance_5d",
+    "sign": 1,
+    "raw_ic": 0.010721561301994764,
+    "overall_ic": 0.010721561301994764,
+    "ic_ir": -0.1409749045532965,
+    "monotonicity": 0.4310850439882698,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_day_skew",
+    "sign": -1,
+    "raw_ic": -0.010046574056959483,
+    "overall_ic": 0.010046574056959483,
+    "ic_ir": 0.13028651496549326,
+    "monotonicity": 0.5255131964809384,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bar_body_rng_2",
+    "sign": 1,
+    "raw_ic": 0.00932435769074612,
+    "overall_ic": 0.00932435769074612,
+    "ic_ir": 0.0005508417163337715,
+    "monotonicity": 0.45982404692082113,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "cvd_divergence_day",
+    "sign": -1,
+    "raw_ic": -0.009269513078056275,
+    "overall_ic": 0.009269513078056275,
+    "ic_ir": 0.14532277105739377,
+    "monotonicity": 0.5759530791788856,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "limit_up_proximity_day",
+    "sign": -1,
+    "raw_ic": -0.008932007955432236,
+    "overall_ic": 0.008932007955432236,
+    "ic_ir": -0.039529854248616075,
+    "monotonicity": 0.4991202346041056,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "limit_down_proximity_day",
+    "sign": -1,
+    "raw_ic": -0.008932007955432236,
+    "overall_ic": 0.008932007955432236,
+    "ic_ir": -0.039529854248616075,
+    "monotonicity": 0.4991202346041056,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_return",
+    "sign": -1,
+    "raw_ic": -0.008932007955432236,
+    "overall_ic": 0.008932007955432236,
+    "ic_ir": -0.039529854248616075,
+    "monotonicity": 0.4991202346041056,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yearly_high_distance",
+    "sign": 1,
+    "raw_ic": 0.008401203830773987,
+    "overall_ic": 0.008401203830773987,
+    "ic_ir": -0.19290752221081509,
+    "monotonicity": 0.4258064516129032,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vix_realized_spread",
+    "sign": -1,
+    "raw_ic": -0.0077765971075851184,
+    "overall_ic": 0.0077765971075851184,
+    "ic_ir": 0.23661352124542445,
+    "monotonicity": 0.5243401759530791,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bar_vol_4",
+    "sign": -1,
+    "raw_ic": -0.007771132741238896,
+    "overall_ic": 0.007771132741238896,
+    "ic_ir": -0.1760478154661015,
+    "monotonicity": 0.40175953079178883,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "northbound_volume_share",
+    "sign": -1,
+    "raw_ic": -0.006633368501739618,
+    "overall_ic": 0.006633368501739618,
+    "ic_ir": 0.023838941410760595,
+    "monotonicity": 0.49266862170087977,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vix_vol_ratio",
+    "sign": -1,
+    "raw_ic": -0.005594710973233928,
+    "overall_ic": 0.005594710973233928,
+    "ic_ir": 0.2286265168646079,
+    "monotonicity": 0.5454545454545454,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "northbound_buy",
+    "sign": -1,
+    "raw_ic": -0.005059398657531706,
+    "overall_ic": 0.005059398657531706,
+    "ic_ir": 0.07700839025258245,
+    "monotonicity": 0.5425219941348973,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vol10",
+    "sign": 1,
+    "raw_ic": 0.005035974066913854,
+    "overall_ic": 0.005035974066913854,
+    "ic_ir": -0.03509763435112393,
+    "monotonicity": 0.4023460410557185,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vix_diff_1d",
+    "sign": -1,
+    "raw_ic": -0.004997050482645257,
+    "overall_ic": 0.004997050482645257,
+    "ic_ir": -0.026404684890304782,
+    "monotonicity": 0.1501466275659824,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_vix_early_drift",
+    "sign": -1,
+    "raw_ic": -0.004997050482645257,
+    "overall_ic": 0.004997050482645257,
+    "ic_ir": -0.026404684890304782,
+    "monotonicity": 0.1501466275659824,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vix_skew_proxy",
+    "sign": -1,
+    "raw_ic": -0.004521362643890341,
+    "overall_ic": 0.004521362643890341,
+    "ic_ir": -0.09041025102587048,
+    "monotonicity": 0.13900293255131965,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vix_rolling_percentile_60d",
+    "sign": -1,
+    "raw_ic": -0.004410223971407384,
+    "overall_ic": 0.004410223971407384,
+    "ic_ir": -0.012314684487135387,
+    "monotonicity": 0.130791788856305,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vol_ratio_10_60",
+    "sign": 1,
+    "raw_ic": 0.0043318104466732905,
+    "overall_ic": 0.0043318104466732905,
+    "ic_ir": -0.03541499488124097,
+    "monotonicity": 0.46803519061583576,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "iv_corridor_width",
+    "sign": 1,
+    "raw_ic": 0.003928871624365993,
+    "overall_ic": 0.003928871624365993,
+    "ic_ir": 0.11289419736286813,
+    "monotonicity": 0.17067448680351907,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "cl_pos_in_range",
+    "sign": 1,
+    "raw_ic": 0.0036320645450404116,
+    "overall_ic": 0.0036320645450404116,
+    "ic_ir": 0.0950838673124107,
+    "monotonicity": 0.5155425219941349,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vol20",
+    "sign": -1,
+    "raw_ic": -0.0035809224993987214,
+    "overall_ic": 0.0035809224993987214,
+    "ic_ir": -0.1665253199177915,
+    "monotonicity": 0.41818181818181815,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "keltner_squeeze_width",
+    "sign": -1,
+    "raw_ic": -0.0035375017292452755,
+    "overall_ic": 0.0035375017292452755,
+    "ic_ir": -0.08997651331838737,
+    "monotonicity": 0.42756598240469207,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vol60",
+    "sign": -1,
+    "raw_ic": -0.003346386908404286,
+    "overall_ic": 0.003346386908404286,
+    "ic_ir": 0.005454157555809708,
+    "monotonicity": 0.48211143695014663,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bb_width",
+    "sign": -1,
+    "raw_ic": -0.0028663978885606124,
+    "overall_ic": 0.0028663978885606124,
+    "ic_ir": 0.012010864949821103,
+    "monotonicity": 0.5002932551319648,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vol_gk20",
+    "sign": 1,
+    "raw_ic": 0.0015393013470007442,
+    "overall_ic": 0.0015393013470007442,
+    "ic_ir": 0.029546567124475752,
+    "monotonicity": 0.493841642228739,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vol_pk20",
+    "sign": -1,
+    "raw_ic": -0.0010152112349197568,
+    "overall_ic": 0.0010152112349197568,
+    "ic_ir": -0.1336489049516613,
+    "monotonicity": 0.4422287390029325,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_cvd_close",
+    "sign": -1,
+    "raw_ic": -0.0003971616219391021,
+    "overall_ic": 0.0003971616219391021,
+    "ic_ir": 0.08151070223182541,
+    "monotonicity": 0.521407624633431,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bar_vol_5",
+    "sign": 1,
+    "raw_ic": 0.00013109394973367773,
+    "overall_ic": 0.00013109394973367773,
+    "ic_ir": -0.12007812922259718,
+    "monotonicity": 0.44516129032258067,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "bar_vwap_dev_0",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "spike_exhaustion_ratio",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "first_bar_sentiment",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "or_fill_ratio",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "close_vs_open_range",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "inside_bar_failure_bull",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "consecutive_higher_highs",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "early_bearish_engulfing_count",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "volume_surge_max",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "volume_concentration",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "volume_trend_intraday",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "volume_acceleration",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "volume_surge_direction",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "pullback_ratio",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "rally_ratio",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "range_expansion_ratio",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "pullback_depth_ratio",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "pullback_depth_max",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "rally_strength_max",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "vwap_slope_intraday",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "volume_weighted_price_position",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "net_volume_flow",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "early_body_momentum",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "late_bar_momentum",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "trend_strength_intraday",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "high_low_sequence_momentum",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "intraday_slope",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "intraday_autocorr",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "opening_momentum_score",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "opening_direction_stability",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "early_trend_hhi",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "session_high_proximity",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "session_low_proximity",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "close_above_open_count",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "open_to_current_return",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "upper_wick_dominance",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "rsi_opening",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "stoch_opening",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "momentum_strength_intraday",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "opening_auction_imbalance",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "intraday_close_position",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "limit_down_proximity_early",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "morning_trend_extrapolated",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "demark_setup_reversal_early",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "failed_breakout_reversal_early",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "early_wavetrend_cross",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "atr_expansion_flag_early",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "volatility_breakout_squeeze",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "early_bid_ask_spread_proxy",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "early_vwap_acceleration",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "early_order_flow_imbalance",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "rbreaker_sell_setup_proximity_early",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "rbreaker_buy_setup_proximity_early",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "skypark_gap_reversal_early",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "turtle_breakout_strength_early",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_limit_up_touch",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_illiquidity_amihud",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "garch_vol_daily",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "garch_vol_2h",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "garch_vol_1h",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "garch_state",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "garch_vol_daily_diff",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "garch_vol_2h_diff",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "garch_vol_1h_diff",
+    "sign": 1,
+    "raw_ic": 0.0,
+    "overall_ic": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_rolling_guard": false,
+    "verdict": "REJECTED_ROLLING_GUARD"
+  },
+  {
+    "feature_name": "yesterday_day_close_pos",
+    "sign": -1,
+    "raw_ic": -0.06257162546318092,
+    "overall_ic": 0.06257162546318092,
+    "ic_ir": 0.23223698216313196,
+    "monotonicity": 0.5700879765395894,
+    "passes_rolling_guard": true,
+    "max_corr": 0.0,
+    "verdict": "ADMITTED"
+  },
+  {
+    "feature_name": "yesterday_lunch_gap",
+    "sign": -1,
+    "raw_ic": -0.05095959147613289,
+    "overall_ic": 0.05095959147613289,
+    "ic_ir": 0.20601123938463994,
+    "monotonicity": 0.5782991202346041,
+    "passes_rolling_guard": true,
+    "max_corr": 0.05517531231167393,
+    "max_corr_feature": "yesterday_day_close_pos",
+    "verdict": "ADMITTED"
+  },
+  {
+    "feature_name": "gap_pct",
+    "sign": 1,
+    "raw_ic": 0.041864889284629205,
+    "overall_ic": 0.041864889284629205,
+    "ic_ir": 0.2468762515244207,
+    "monotonicity": 0.5659824046920822,
+    "passes_rolling_guard": true,
+    "max_corr": 0.07199709163604111,
+    "max_corr_feature": "yesterday_day_close_pos",
+    "verdict": "ADMITTED"
+  },
+  {
+    "feature_name": "sma20_dist",
+    "sign": -1,
+    "raw_ic": -0.03698496197726176,
+    "overall_ic": 0.03698496197726176,
+    "ic_ir": 0.28161640783760056,
+    "monotonicity": 0.6263929618768328,
+    "passes_rolling_guard": true,
+    "max_corr": 0.2242190335383069,
+    "max_corr_feature": "yesterday_day_close_pos",
+    "verdict": "ADMITTED"
+  },
+  {
+    "feature_name": "roc10",
+    "sign": -1,
+    "raw_ic": -0.03637217336032468,
+    "overall_ic": 0.03637217336032468,
+    "ic_ir": 0.5834227784013453,
+    "monotonicity": 0.7020527859237536,
+    "passes_rolling_guard": true,
+    "max_corr": 0.9167478456842183,
+    "max_corr_feature": "sma20_dist",
+    "verdict": "REJECTED_REDUNDANCY"
+  },
+  {
+    "feature_name": "coppock_curve_day",
+    "sign": -1,
+    "raw_ic": -0.03534242235930291,
+    "overall_ic": 0.03534242235930291,
+    "ic_ir": 0.4219324291621953,
+    "monotonicity": 0.6533724340175953,
+    "passes_rolling_guard": true,
+    "max_corr": 0.8292838885598914,
+    "max_corr_feature": "sma20_dist",
+    "verdict": "REJECTED_REDUNDANCY"
+  },
+  {
+    "feature_name": "yesterday_body_ratio",
+    "sign": -1,
+    "raw_ic": -0.03499211822352455,
+    "overall_ic": 0.03499211822352455,
+    "ic_ir": 0.31507813991292455,
+    "monotonicity": 0.6240469208211143,
+    "passes_rolling_guard": true,
+    "max_corr": 0.09179805773371758,
+    "max_corr_feature": "yesterday_day_close_pos",
+    "verdict": "ADMITTED"
+  },
+  {
+    "feature_name": "rsi5",
+    "sign": -1,
+    "raw_ic": -0.02867653821233232,
+    "overall_ic": 0.02867653821233232,
+    "ic_ir": 0.26954271272792707,
+    "monotonicity": 0.6105571847507332,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "volume_slope",
+    "sign": 1,
+    "raw_ic": 0.02713439089163198,
+    "overall_ic": 0.02713439089163198,
+    "ic_ir": 0.26163171248525685,
+    "monotonicity": 0.617008797653959,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "stoch_k",
+    "sign": -1,
+    "raw_ic": -0.02662164475883785,
+    "overall_ic": 0.02662164475883785,
+    "ic_ir": 0.22136502795717733,
+    "monotonicity": 0.587683284457478,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "wavetrend_osc_day",
+    "sign": -1,
+    "raw_ic": -0.025617730227788835,
+    "overall_ic": 0.025617730227788835,
+    "ic_ir": 0.38562619910743745,
+    "monotonicity": 0.6252199413489736,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "yesterday_wavetrend_osc",
+    "sign": -1,
+    "raw_ic": -0.025617730227788835,
+    "overall_ic": 0.025617730227788835,
+    "ic_ir": 0.38562619910743745,
+    "monotonicity": 0.6252199413489736,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "macd_hist",
+    "sign": -1,
+    "raw_ic": -0.024377912230579054,
+    "overall_ic": 0.024377912230579054,
+    "ic_ir": 0.5056907805111451,
+    "monotonicity": 0.6926686217008797,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "yesterday_gap_pct",
+    "sign": 1,
+    "raw_ic": 0.023960873582630878,
+    "overall_ic": 0.023960873582630878,
+    "ic_ir": 0.29249985806827705,
+    "monotonicity": 0.612316715542522,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "yesterday_gap",
+    "sign": 1,
+    "raw_ic": 0.023587321073861994,
+    "overall_ic": 0.023587321073861994,
+    "ic_ir": 0.2924618261420004,
+    "monotonicity": 0.6105571847507332,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "rsi21",
+    "sign": -1,
+    "raw_ic": -0.01883998515113525,
+    "overall_ic": 0.01883998515113525,
+    "ic_ir": 0.29365860531634214,
+    "monotonicity": 0.5618768328445748,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "first_bar_volume",
+    "sign": -1,
+    "raw_ic": -0.01584909558445201,
+    "overall_ic": 0.01584909558445201,
+    "ic_ir": 0.21895492109111303,
+    "monotonicity": 0.5618768328445748,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "bar_vol_0",
+    "sign": -1,
+    "raw_ic": -0.01584909558445201,
+    "overall_ic": 0.01584909558445201,
+    "ic_ir": 0.21895492109111303,
+    "monotonicity": 0.5618768328445748,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "sma50_dist",
+    "sign": -1,
+    "raw_ic": -0.01224884806415141,
+    "overall_ic": 0.01224884806415141,
+    "ic_ir": 0.23302661779312936,
+    "monotonicity": 0.5706744868035191,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "margin_balance",
+    "sign": 1,
+    "raw_ic": 0.012141955180433168,
+    "overall_ic": 0.012141955180433168,
+    "ic_ir": 0.21342601018389276,
+    "monotonicity": 0.5648093841642229,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "yesterday_day_pm_am_vol_ratio",
+    "sign": -1,
+    "raw_ic": -0.011628275690987873,
+    "overall_ic": 0.011628275690987873,
+    "ic_ir": 0.17423962584405805,
+    "monotonicity": 0.5636363636363636,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "yesterday_pm_am_vol_ratio",
+    "sign": -1,
+    "raw_ic": -0.011628275690987873,
+    "overall_ic": 0.011628275690987873,
+    "ic_ir": 0.17423962584405805,
+    "monotonicity": 0.5636363636363636,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "sma100_dist",
+    "sign": -1,
+    "raw_ic": -0.010193996947243492,
+    "overall_ic": 0.010193996947243492,
+    "ic_ir": 0.3876921580543139,
+    "monotonicity": 0.6152492668621701,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "early_trend",
+    "sign": -1,
+    "raw_ic": -0.009799445244188408,
+    "overall_ic": 0.009799445244188408,
+    "ic_ir": 0.2176014613428629,
+    "monotonicity": 0.6070381231671554,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "sma200_dist",
+    "sign": -1,
+    "raw_ic": -0.007262412823995743,
+    "overall_ic": 0.007262412823995743,
+    "ic_ir": 0.3365138808273647,
+    "monotonicity": 0.6105571847507332,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "sma_distance_60d",
+    "sign": -1,
+    "raw_ic": -0.00670494335045469,
+    "overall_ic": 0.00670494335045469,
+    "ic_ir": 0.32867081796091524,
+    "monotonicity": 0.6469208211143695,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "early_vwap_dev",
+    "sign": -1,
+    "raw_ic": -0.006170110928458687,
+    "overall_ic": 0.006170110928458687,
+    "ic_ir": 0.3840448062561804,
+    "monotonicity": 0.612316715542522,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "bar_vwap_dev_5",
+    "sign": -1,
+    "raw_ic": -0.006170110928458687,
+    "overall_ic": 0.006170110928458687,
+    "ic_ir": 0.3840448062561804,
+    "monotonicity": 0.612316715542522,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "atr14_norm",
+    "sign": 1,
+    "raw_ic": 0.00486915836562708,
+    "overall_ic": 0.00486915836562708,
+    "ic_ir": 0.29425031346165437,
+    "monotonicity": 0.6269794721407624,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "early_momentum",
+    "sign": -1,
+    "raw_ic": -0.0034287809338782093,
+    "overall_ic": 0.0034287809338782093,
+    "ic_ir": 0.27184183828555475,
+    "monotonicity": 0.6052785923753665,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "roc60",
+    "sign": -1,
+    "raw_ic": -0.003016308433439545,
+    "overall_ic": 0.003016308433439545,
+    "ic_ir": 0.3083851962643083,
+    "monotonicity": 0.617008797653959,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  },
+  {
+    "feature_name": "body_to_range_ratio",
+    "sign": -1,
+    "raw_ic": -0.002443663661600697,
+    "overall_ic": 0.002443663661600697,
+    "ic_ir": 0.16615167841239115,
+    "monotonicity": 0.5747800586510264,
+    "passes_rolling_guard": true,
+    "verdict": "REJECTED_TAU_IC_THRESHOLD"
+  }
+]
