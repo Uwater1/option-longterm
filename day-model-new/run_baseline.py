@@ -33,32 +33,34 @@ def main():
     parser.add_argument("-e", "--etf", default="all", help="ETF: 300ETF, 50ETF, etc., or 'all'")
     parser.add_argument("-s", "--side", default="all", help="Side: single, long, short, or 'all'")
     parser.add_argument("--early", action="store_true", help="Use early window return dataset")
+    parser.add_argument("--compile-only", action="store_true", help="Only compile the baseline report from existing JSON outputs")
     args = parser.parse_args()
 
     etfs_to_run = ETFS if args.etf == "all" else [args.etf]
     sides_to_run = SIDES if args.side == "all" else [args.side]
     suffix = "_early" if args.early else ""
 
-    print(f"Running Baseline Selection & Evaluation for ETFs: {etfs_to_run}, Sides: {sides_to_run}")
+    if not args.compile_only:
+        print(f"Running Baseline Selection & Evaluation for ETFs: {etfs_to_run}, Sides: {sides_to_run}")
 
-    for etf in etfs_to_run:
-        for side in sides_to_run:
-            print(f"\n=======================================================")
-            print(f"Running ETF={etf}, Side={side}")
-            print(f"=======================================================")
-            
-            # Step 1: Run feature selection
-            select_cmd = f"python3 {HERE}/select_features.py -e {etf} -s {side}"
-            if args.early:
-                select_cmd += " --early"
-            if not run_cmd(select_cmd):
-                continue
+        for etf in etfs_to_run:
+            for side in sides_to_run:
+                print(f"\n=======================================================")
+                print(f"Running ETF={etf}, Side={side}")
+                print(f"=======================================================")
                 
-            # Step 2: Run evaluation
-            eval_cmd = f"python3 {HERE}/evaluate_concept.py -e {etf} -s {side}"
-            if args.early:
-                eval_cmd += " --early"
-            run_cmd(eval_cmd)
+                # Step 1: Run feature selection
+                select_cmd = f"python3 {HERE}/select_features.py -e {etf} -s {side}"
+                if args.early:
+                    select_cmd += " --early"
+                if not run_cmd(select_cmd):
+                    continue
+                    
+                # Step 2: Run evaluation
+                eval_cmd = f"python3 {HERE}/evaluate_concept.py -e {etf} -s {side}"
+                if args.early:
+                    eval_cmd += " --early"
+                run_cmd(eval_cmd)
 
     # Compile results into a Markdown report
     print("\nCompiling baseline report...")
@@ -157,8 +159,29 @@ def main():
     report_lines.extend([
         "",
         "\\* indicates that the 95% circular block-bootstrap confidence interval spans zero (statistically indistinguishable from noise).",
+        "",
+        "## Admitted Features Details",
         ""
     ])
+
+    for etf in ETFS:
+        for side in SIDES:
+            pool_file = HERE / "data" / f"selected_pool_{etf}_{side}{suffix}.json"
+            if pool_file.exists():
+                with open(pool_file, "r") as f:
+                    pool_data = json.load(f)
+                
+                heading = f"### {etf} ({side})"
+                report_lines.append(heading)
+                
+                if not pool_data:
+                    report_lines.append("No features admitted.")
+                else:
+                    for item in pool_data:
+                        sign_str = f"{item['sign']:+d}"
+                        line = f"- `{item['feature_name']}` (sign={sign_str}, overall_ic={item['overall_ic']:.4f}, deflated_ic={item['deflated_ic']:.4f})"
+                        report_lines.append(line)
+                report_lines.append("")
 
     report_path = HERE / f"BASELINE_REPORT{suffix}.md"
     with open(report_path, "w") as f:

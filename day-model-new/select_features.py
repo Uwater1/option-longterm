@@ -29,6 +29,7 @@ from build_features import FEATURES
 # Training period for Stage A (IC testing)
 TRAIN_START = pd.Timestamp("2015-01-01")
 TRAIN_END = pd.Timestamp("2022-01-01")
+DEFLATED_IC_MIN = 0.02
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
@@ -142,6 +143,29 @@ def numba_rolling_tail_ic(x: np.ndarray, y: np.ndarray, window_starts: np.ndarra
         
     return out
 
+def compute_side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str) -> float:
+    """Compute tail-specific Spearman correlation on the active strategy tail."""
+    n = len(y_pred)
+    if side == "long":
+        pct = 0.15
+    elif side == "short":
+        pct = 0.15
+    else:  # single / both
+        pct = 0.10
+    n_tail = max(5, int(n * pct))
+    if n < n_tail:
+        return 0.0
+        
+    order = np.argsort(y_pred)
+    if side == "long":
+        idx = order[-n_tail:]
+    elif side == "short":
+        idx = order[:n_tail]
+    else:  # two-sided
+        idx = np.concatenate([order[:n_tail], order[-n_tail:]])
+        
+    return _spearman_from_arrays(y_true[idx], y_pred[idx])
+
 def compute_rolling_tail_ic_series(x_flipped: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str) -> np.ndarray:
     """Calculate the rolling tail IC series for a single flipped feature using Numba."""
     if side == "long":
@@ -157,11 +181,11 @@ def compute_rolling_tail_ic_series(x_flipped: np.ndarray, y: np.ndarray, window_
 
 def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, dates: pd.Series, window_starts: np.ndarray, window_ends: np.ndarray, side: str):
     """Evaluate a single candidate feature: compute overall IC, flip if needed, and run rolling tail IC pre-filter."""
-    # Compute overall raw IC
+    # Compute overall raw IC for flipping
     raw_ic = _spearman_from_arrays(x, y)
     sign_flip = -1.0 if raw_ic < 0 else 1.0
     x_flipped = x * sign_flip
-    overall_ic = abs(raw_ic)
+    overall_ic = compute_side_tail_ic(y, x_flipped, side)
     
     # Compute rolling tail IC series
     rolling_tail_ics = compute_rolling_tail_ic_series(x_flipped, y, window_starts, window_ends, side)
@@ -287,7 +311,22 @@ def main():
 
     print(f"{len(surviving_candidates)} features survived rolling guard out of {len(FEATURES)}.")
 
-    # 4. Admission Gate (A2)
+    # 4. Compute Multiple-Testing Overfit Bias (A4)
+    all_trial_ics = [item["overall_ic"] for item in eval_results]
+    std_trial_ics = np.std(all_trial_ics)
+    n_trials = len(all_trial_ics)
+    
+    if n_trials > 1:
+        corr_matrix = np.corrcoef(X_train.T)
+        np.fill_diagonal(corr_matrix, np.nan)
+        mean_rho = float(np.clip(np.nanmean(abs(corr_matrix)), 0.0, 0.99))
+    else:
+        mean_rho = 0.5
+        
+    overfit_bias = std_trial_ics * np.sqrt(2.0 * np.log(max(float(n_trials), 1.001))) * np.sqrt(max(1.0 - mean_rho, 0.0))
+    print(f"Calculated Multiple-Testing Overfit Bias: {overfit_bias:.4f}")
+
+    # 5. Admission Gate (A2)
     # The pool of admitted features
     admitted_pool = []  # list of dicts
 
@@ -295,6 +334,8 @@ def main():
         cand_name = cand["feature_name"]
         cand_ic = cand["overall_ic"]
         x_cand = cand["x_flipped"]
+        deflated_ic = cand_ic - overfit_bias
+        cand["deflated_ic"] = deflated_ic
         
         # Check overall IC >= tau_IC admission gate
         if cand_ic < args.tau:
@@ -303,10 +344,26 @@ def main():
                 "sign": cand["sign"],
                 "raw_ic": cand["raw_ic"],
                 "overall_ic": cand_ic,
+                "deflated_ic": deflated_ic,
                 "ic_ir": cand["ic_ir"],
                 "monotonicity": cand["monotonicity"],
                 "passes_rolling_guard": True,
                 "verdict": "REJECTED_TAU_IC_THRESHOLD"
+            })
+            continue
+
+        # Check deflated IC >= DEFLATED_IC_MIN gate
+        if deflated_ic < DEFLATED_IC_MIN:
+            attempts_log.append({
+                "feature_name": cand_name,
+                "sign": cand["sign"],
+                "raw_ic": cand["raw_ic"],
+                "overall_ic": cand_ic,
+                "deflated_ic": deflated_ic,
+                "ic_ir": cand["ic_ir"],
+                "monotonicity": cand["monotonicity"],
+                "passes_rolling_guard": True,
+                "verdict": "REJECTED_DEFLATED_IC_THRESHOLD"
             })
             continue
 
@@ -318,6 +375,7 @@ def main():
                 "sign": cand["sign"],
                 "raw_ic": cand["raw_ic"],
                 "overall_ic": cand_ic,
+                "deflated_ic": deflated_ic,
                 "ic_ir": cand["ic_ir"],
                 "monotonicity": cand["monotonicity"],
                 "passes_rolling_guard": True,
@@ -343,6 +401,7 @@ def main():
                 "sign": cand["sign"],
                 "raw_ic": cand["raw_ic"],
                 "overall_ic": cand_ic,
+                "deflated_ic": deflated_ic,
                 "ic_ir": cand["ic_ir"],
                 "monotonicity": cand["monotonicity"],
                 "passes_rolling_guard": True,
@@ -377,6 +436,7 @@ def main():
                             "sign": cand["sign"],
                             "raw_ic": cand["raw_ic"],
                             "overall_ic": cand_ic,
+                            "deflated_ic": deflated_ic,
                             "ic_ir": cand["ic_ir"],
                             "monotonicity": cand["monotonicity"],
                             "passes_rolling_guard": True,
@@ -396,6 +456,7 @@ def main():
                     "sign": cand["sign"],
                     "raw_ic": cand["raw_ic"],
                     "overall_ic": cand_ic,
+                    "deflated_ic": deflated_ic,
                     "ic_ir": cand["ic_ir"],
                     "monotonicity": cand["monotonicity"],
                     "passes_rolling_guard": True,
@@ -405,29 +466,6 @@ def main():
                 })
 
     print(f"Final admitted pool size: {len(admitted_pool)}")
-
-    # 5. Deflated IC calculation (A4)
-    # Total trial count N is the number of all candidates evaluated (i.e. length of FEATURES)
-    # The distribution of overall ICs is the distribution across all completed trials
-    all_trial_ics = [item["overall_ic"] for item in eval_results]
-    std_trial_ics = np.std(all_trial_ics)
-    n_trials = len(all_trial_ics)
-    
-    # Calculate mean off-diagonal correlation among all trials' daily values
-    # Standard Pearson correlation of X_train
-    if n_trials > 1:
-        corr_matrix = np.corrcoef(X_train.T)
-        np.fill_diagonal(corr_matrix, np.nan)
-        mean_rho = float(np.clip(np.nanmean(abs(corr_matrix)), 0.0, 0.99))
-    else:
-        mean_rho = 0.5
-
-    # Compute deflated IC for each admitted pool member
-    for item in admitted_pool:
-        raw_best_ic = item["overall_ic"]
-        overfit_bias = std_trial_ics * np.sqrt(2.0 * np.log(max(float(n_trials), 1.001))) * np.sqrt(max(1.0 - mean_rho, 0.0))
-        deflated_ic = float(raw_best_ic - overfit_bias)
-        item["deflated_ic"] = deflated_ic
 
     # Format the selected pool output
     selected_output = []

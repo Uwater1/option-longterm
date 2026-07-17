@@ -1,82 +1,10 @@
 [
   {
-    "feature_name": "bar_vwap_dev_1",
+    "feature_name": "yesterday_range_ratio",
     "sign": 1,
-    "overall_ic": 0.19585167275568885,
-    "deflated_ic": 0.06216214404974077,
-    "ic_ir": 0.627718074892477,
-    "monotonicity": 0.7303754266211604
-  },
-  {
-    "feature_name": "first_30min_return",
-    "sign": 1,
-    "overall_ic": 0.1923676198236553,
-    "deflated_ic": 0.05867809111770722,
-    "ic_ir": 0.9440430235580854,
-    "monotonicity": 0.764505119453925
-  },
-  {
-    "feature_name": "yesterday_day_skew",
-    "sign": -1,
-    "overall_ic": 0.14172218983437032,
-    "deflated_ic": 0.008032661128422242,
-    "ic_ir": 0.7077379364347703,
-    "monotonicity": 0.7235494880546075
-  },
-  {
-    "feature_name": "yesterday_day_kurtosis",
-    "sign": -1,
-    "overall_ic": 0.0959719901799609,
-    "deflated_ic": -0.03771753852598718,
-    "ic_ir": 1.0125659711977515,
-    "monotonicity": 0.8156996587030717
-  },
-  {
-    "feature_name": "yesterday_pm_return",
-    "sign": 1,
-    "overall_ic": 0.08903537103279294,
-    "deflated_ic": -0.04465415767315514,
-    "ic_ir": 0.7962790885336102,
-    "monotonicity": 0.7167235494880546
-  },
-  {
-    "feature_name": "capital_sell_volume",
-    "sign": 1,
-    "overall_ic": 0.08089523079877811,
-    "deflated_ic": -0.05279429790716997,
-    "ic_ir": 0.7932413871383291,
-    "monotonicity": 0.7235494880546075
-  },
-  {
-    "feature_name": "sma200_dist",
-    "sign": -1,
-    "overall_ic": 0.060359811189162775,
-    "deflated_ic": -0.0733297175167853,
-    "ic_ir": 1.4514019730738428,
-    "monotonicity": 0.8873720136518771
-  },
-  {
-    "feature_name": "yesterday_afternoon_reversal",
-    "sign": 1,
-    "overall_ic": 0.05471484961276109,
-    "deflated_ic": -0.07897467909318699,
-    "ic_ir": 0.5200794713939652,
-    "monotonicity": 0.7030716723549488
-  },
-  {
-    "feature_name": "stoch_d",
-    "sign": -1,
-    "overall_ic": 0.036344735659470204,
-    "deflated_ic": -0.09734479304647788,
-    "ic_ir": 1.0401874073224113,
-    "monotonicity": 0.8122866894197952
-  },
-  {
-    "feature_name": "northbound_net",
-    "sign": -1,
-    "overall_ic": 0.03544222643818403,
-    "deflated_ic": -0.09824730226776404,
-    "ic_ir": 0.8586803112163633,
-    "monotonicity": 0.7849829351535836
+    "overall_ic": 0.41696145682734015,
+    "deflated_ic": 0.0757613676120566,
+    "ic_ir": 0.8883876156643631,
+    "monotonicity": 0.7815699658703071
   }
 ]
