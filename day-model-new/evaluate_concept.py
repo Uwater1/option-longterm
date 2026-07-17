@@ -168,6 +168,9 @@ def simulate_returns(y_true: np.ndarray, y_pred: np.ndarray, side: str):
     if n < 10:
         return 0.0, 0.0, 0.0, 0.0
         
+    if np.max(y_pred) - np.min(y_pred) < 1e-12:
+        return 0.0, 0.0, 0.0, 0.0
+        
     order = np.argsort(y_pred, kind="quicksort")
     strat_returns = np.zeros(n)
     
@@ -326,7 +329,7 @@ def main():
 
     # 3. IC-weighted combination predictions (B1)
     if selected_pool:
-        weights = np.array([abs(item["overall_ic"])**args.k for item in selected_pool])
+        weights = np.array([max(0.0, item.get("deflated_ic", 0.0))**args.k for item in selected_pool])
         # Normalize weights so they sum to 1.0 (or just scale predictions)
         if sum(weights) > 1e-12:
             weights = weights / sum(weights)

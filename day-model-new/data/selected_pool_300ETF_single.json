@@ -1,10 +1,1 @@
-[
-  {
-    "feature_name": "twenty_gap_bars_regime",
-    "sign": -1,
-    "overall_ic": 0.048333231930141406,
-    "deflated_ic": -0.018012711166300453,
-    "ic_ir": 1.1029701978135593,
-    "monotonicity": 0.8328445747800587
-  }
-]
+[]

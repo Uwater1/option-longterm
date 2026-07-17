@@ -2,25 +2,9 @@
   {
     "feature_name": "max_up_ret",
     "sign": 1,
-    "overall_ic": 0.17094963046395117,
-    "deflated_ic": 0.07437833672032598,
+    "overall_ic": 0.24996371957717006,
+    "deflated_ic": 0.08955305056830229,
     "ic_ir": 0.7453776715531585,
     "monotonicity": 0.7788856304985338
-  },
-  {
-    "feature_name": "total_balance",
-    "sign": -1,
-    "overall_ic": 0.042694674889089346,
-    "deflated_ic": -0.053876618854535846,
-    "ic_ir": 0.6015474514944631,
-    "monotonicity": 0.7225806451612903
-  },
-  {
-    "feature_name": "atr14_norm",
-    "sign": 1,
-    "overall_ic": 0.03072879490555459,
-    "deflated_ic": -0.0658424988380706,
-    "ic_ir": 0.6643837041663274,
-    "monotonicity": 0.7178885630498534
   }
 ]

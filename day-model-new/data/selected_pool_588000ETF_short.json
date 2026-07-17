@@ -1,74 +1,10 @@
 [
   {
-    "feature_name": "first_30min_return",
+    "feature_name": "yesterday_day_range",
     "sign": 1,
-    "overall_ic": 0.1923676198236553,
-    "deflated_ic": 0.05867809111770722,
-    "ic_ir": 0.19996232914916512,
-    "monotonicity": 0.5563139931740614
-  },
-  {
-    "feature_name": "vol_ratio_5_20",
-    "sign": 1,
-    "overall_ic": 0.0852617357195812,
-    "deflated_ic": -0.048427792986366874,
-    "ic_ir": 0.45826647078768107,
-    "monotonicity": 0.5733788395904437
-  },
-  {
-    "feature_name": "capital_sell_volume",
-    "sign": 1,
-    "overall_ic": 0.08089523079877811,
-    "deflated_ic": -0.05279429790716997,
-    "ic_ir": 0.5031250374567751,
-    "monotonicity": 0.6348122866894198
-  },
-  {
-    "feature_name": "bar_ret_2",
-    "sign": 1,
-    "overall_ic": 0.06049695580696162,
-    "deflated_ic": -0.07319257289898645,
-    "ic_ir": 0.34628943213629326,
-    "monotonicity": 0.621160409556314
-  },
-  {
-    "feature_name": "yesterday_early_range",
-    "sign": -1,
-    "overall_ic": 0.05507026785654652,
-    "deflated_ic": -0.07861926084940156,
-    "ic_ir": 0.39203895069943656,
-    "monotonicity": 0.6245733788395904
-  },
-  {
-    "feature_name": "sma100_dist",
-    "sign": -1,
-    "overall_ic": 0.05491426548645546,
-    "deflated_ic": -0.07877526321949262,
-    "ic_ir": 0.36220410262461916,
-    "monotonicity": 0.6143344709897611
-  },
-  {
-    "feature_name": "yesterday_early_trend",
-    "sign": -1,
-    "overall_ic": 0.04739848157693111,
-    "deflated_ic": -0.08629104712901697,
-    "ic_ir": 0.8115492628761863,
-    "monotonicity": 0.7372013651877133
-  },
-  {
-    "feature_name": "bar_rng_5",
-    "sign": 1,
-    "overall_ic": 0.04558274756908234,
-    "deflated_ic": -0.08810678113686574,
-    "ic_ir": 0.43677307223668477,
-    "monotonicity": 0.6416382252559727
-  },
-  {
-    "feature_name": "stoch_d",
-    "sign": -1,
-    "overall_ic": 0.036344735659470204,
-    "deflated_ic": -0.09734479304647788,
-    "ic_ir": 0.6997069765493186,
-    "monotonicity": 0.7303754266211604
+    "overall_ic": 0.42222893385684085,
+    "deflated_ic": 0.045444016973215484,
+    "ic_ir": 0.5524105418395948,
+    "monotonicity": 0.6552901023890785
   }
 ]
