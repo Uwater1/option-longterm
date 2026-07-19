@@ -26,7 +26,7 @@ Before generating combos for a given ETF/side, check current admitted pool size 
 for etf, side in all_combos:
     pool = load_admitted_pool(etf, side)
     if len(pool) >= MIN_POOL_TO_COMBINE:
-        generate_combos(pool)   # min/max/IfElse/ratio, as below
+        generate_combos(pool)   # all ops below
     else:
         skip combo-generation for this etf/side this round
         (1a document-mining and single-feature mining still allowed)
@@ -34,10 +34,56 @@ for etf, side in all_combos:
 This makes 0.2 self-enforcing every batch rather than a one-time gate — as the pool grows from
 admissions, combo-generation switches on automatically for that ETF/side, no manual re-check needed.
 
-Combo types once eligible:
-- `min(A, B)`, `max(A, B)`
-- `IfElse(regime_cond, A, B)` — regime_cond drawn from existing regime-style features (vol, skew)
-- ratio / difference combos between correlated-but-not-too-correlated pairs
+#### 2-Way Combo Types (11 ops)
+
+| Op | Formula | Rationale |
+|----|---------|-----------|
+| `min` | min(A, B) | Conservative consensus |
+| `max` | max(A, B) | At-least-one-strong |
+| `diff` | A - B | Directional divergence |
+| `ratio` | A / |B| | Scale-normalized (B must be vol/volume-type) |
+| `ifelse` | IfElse(regime_cond, A, B) | Regime-conditioned switching |
+| `mean` | (A + B) / 2 | Smoothed consensus signal |
+| `product` | A * B | Interaction/amplification term |
+| `abs_diff` | |A - B| | Divergence magnitude (direction-agnostic) |
+| `rank_min` | min(rank(A), rank(B)) | Non-parametric consensus |
+| `rank_max` | max(rank(A), rank(B)) | Non-parametric at-least-one-strong |
+| `clamp_diff` | clip(A - B, -2, 2) | Bounded difference, outlier-resistant |
+
+- Correlation sweet-spot: **[0.15, 0.85]** — pairs outside this range are skipped.
+- Top-K default: **50** features (by absolute tail-IC on train set).
+- `ratio` only generated when denominator is a vol/volume/scaling feature.
+- `ifelse` uses regime features (vol20, vix, gap_pct, etc.) as condition, non-regime as actions.
+
+#### 3-Way Combo Types (5 ops)
+
+| Op | Formula | Rationale |
+|----|---------|-----------|
+| `tri_mean` | (A + B + C) / 3 | 3-signal consensus |
+| `tri_min` | min(A, B, C) | All-agree-strong |
+| `tri_max` | max(A, B, C) | At-least-one-strong |
+| `tri_median` | median(A, B, C) | Robust central tendency |
+| `tri_ifelse` | IfElse(cond1, A, IfElse(cond2, B, C)) | Nested regime branching |
+
+- Correlation sweet-spot: **[0.10, 0.90]** (relaxed vs 2-way to allow broader exploration).
+- Additional filter: skip triple if any pair has corr > 0.90 (redundant pair within triple).
+- Top-K default: **25** features — C(25,3) = 2300 triples x 4 ops = ~9200 candidates max (plus tri_ifelse).
+- `tri_ifelse` picks 2 regime conditions + 3 action features from the top-K_3 pool.
+
+#### CLI Usage
+```bash
+# Default: 2-way + 3-way (aggressive mode)
+python mining/generate_combos.py -e 300ETF -s single
+
+# 2-way only (skip 3-way combos)
+python mining/generate_combos.py -e 300ETF -s single --two-only
+
+# Custom top-K for broader search
+python mining/generate_combos.py -e 300ETF -s single -k 60 --top-k-3 30
+
+# Regenerate everything (ignore mining log dedup)
+python mining/generate_combos.py -e 300ETF -s single --no-dedup
+```
 
 Only generate combos within an ETF/side's own pool. Don't cross-pollinate across ETFs — different
 listing histories, different regimes, keep it clean.
@@ -47,6 +93,22 @@ Maintain `mining_memory_{ETF}_{side}.json`: feature families that repeatedly lan
 `REJECTED_REDUNDANCY` (e.g. VWAP-deviation variants, `yesterday_*` timing variants once one is in
 pool). Agents check this before proposing new formulas in the same family — don't re-mine the same
 signal in new algebra.
+
+### 1d. Mining progress log (dedup guarantee)
+`mining/mining_log.json` is the single source of truth for what has been generated and evaluated.
+
+**Structure:**
+- `generated_space.{ETF}_{side}`: ops used, top-K values, total generated count, SHA-256 hash of
+  candidate names, full list of candidate names ever generated.
+- `batches[]`: per-batch summary appended by `select_features.py` after each evaluation run —
+  batch_id, ETF/side, timestamp, candidate count, admitted/rejected breakdowns, admitted names.
+
+**Dedup logic:** On each `generate_combos.py` run, previously generated candidate names are loaded
+from the log and excluded from output. Re-running with expanded ops only emits the *delta* (new
+ops / new triples), never the same candidates twice. Use `--no-dedup` to override.
+
+This eliminates redundant digging: any agent or human can check `mining_log.json` to see exactly
+what combination space has been explored and what the results were.
 
 ---
 
@@ -118,3 +180,9 @@ preemptively complicate the model in anticipation of that.
 - [ ] Run batch 1 (50-100 candidates, mixed sources) across all ETFs — 588000ETF included, now
       protected by the universal split-half gate rather than excluded.
 - [ ] Compare post-batch OOS/lockbox CI vs. current baseline before accepting the batch.
+- [x] Expand 2-way ops from 5 to 11 (added mean, product, abs_diff, rank_min, rank_max, clamp_diff).
+- [x] Add 3-way combo generation (tri_mean, tri_min, tri_max, tri_median, tri_ifelse).
+- [x] Implement mining_log.json dedup — no combination space explored twice.
+- [x] Integrate batch summary logging into select_features.py.
+- [x] Set aggressive defaults: top-50 (2-way), top-25 (3-way), 3-way enabled by default.
+- [ ] Run aggressive mining across all 5 ETFs x 3 sides.
