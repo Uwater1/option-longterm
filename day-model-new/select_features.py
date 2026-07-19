@@ -781,6 +781,50 @@ def main():
     with open(attempts_path, "w") as f:
         json.dump(attempts_log, f, indent=2)
     print(f"Saved attempts log to {attempts_path}")
+
+    # ── Append batch summary to mining_log.json ──────────────────────────────
+    mining_log_path = HERE / "mining" / "mining_log.json"
+    try:
+        if mining_log_path.exists():
+            with open(mining_log_path, "r") as f:
+                mining_log = json.load(f)
+        else:
+            mining_log = {"generated_space": {}, "batches": []}
+
+        # Count verdicts
+        n_admitted = sum(1 for a in attempts_log
+                         if a.get("verdict", "").startswith("ADMITTED"))
+        n_rej_rolling = sum(1 for a in attempts_log
+                            if a.get("verdict") == "REJECTED_ROLLING_GUARD")
+        n_rej_fdr = sum(1 for a in attempts_log
+                        if a.get("verdict") == "REJECTED_FDR")
+        n_rej_corr = sum(1 for a in attempts_log
+                         if a.get("verdict") == "REJECTED_REDUNDANCY")
+        admitted_names = [a["feature_name"] for a in attempts_log
+                          if a.get("verdict", "").startswith("ADMITTED")]
+
+        batch_id = len(mining_log.get("batches", [])) + 1
+        from datetime import datetime, timezone
+        mining_log.setdefault("batches", []).append({
+            "batch_id": batch_id,
+            "etf": args.etf,
+            "side": args.side,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "n_candidates": len(attempts_log),
+            "n_admitted": n_admitted,
+            "n_rejected_rolling": n_rej_rolling,
+            "n_rejected_fdr": n_rej_fdr,
+            "n_rejected_corr": n_rej_corr,
+            "admitted_names": admitted_names
+        })
+
+        mining_log_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(mining_log_path, "w") as f:
+            json.dump(mining_log, f, indent=2)
+        print(f"Appended batch #{batch_id} to mining_log.json")
+    except Exception as e:
+        print(f"WARNING: Could not update mining_log.json: {e}")
+
     print(f"================================================================================")
 
 if __name__ == "__main__":
