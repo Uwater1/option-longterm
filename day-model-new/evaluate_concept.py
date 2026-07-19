@@ -275,7 +275,42 @@ def main():
     lockbox_df = df[lockbox_mask].reset_index(drop=True)
 
     # Standardize and prepare feature values based on selection pool
-    # Fill NaNs defensively
+    # Fill base features NaNs defensively across all three datasets using training median
+    col_med_train = train_df[FEATURES].median().fillna(0.0)
+    for col in FEATURES:
+        train_df[col] = train_df[col].ffill().fillna(col_med_train[col])
+        oos_df[col] = oos_df[col].ffill().fillna(col_med_train[col])
+        lockbox_df[col] = lockbox_df[col].ffill().fillna(col_med_train[col])
+
+    # Import recipe utils
+    import sys
+    sys.path.append(str(HERE / "mining"))
+    from recipe_utils import compute_recipe
+
+    # Build reference statistics for any base features used in recipes to prevent OOS leakage
+    train_means = {}
+    train_stds = {}
+    train_medians = {}
+    for item in selected_pool:
+        if "recipe" in item:
+            r = item["recipe"]
+            for key in ["feature_a", "feature_b", "feature_cond"]:
+                if key in r:
+                    col = r[key]
+                    if col not in train_means:
+                        train_means[col] = train_df[col].mean()
+                        train_stds[col] = train_df[col].std()
+                        train_medians[col] = train_df[col].median()
+
+    # Compute recipe features dynamically for train, OOS, and lockbox
+    for item in selected_pool:
+        if "recipe" in item:
+            feat_name = item["feature_name"]
+            recipe = item["recipe"]
+            train_df[feat_name] = compute_recipe(train_df, recipe, train_means, train_stds, train_medians)
+            oos_df[feat_name] = compute_recipe(oos_df, recipe, train_means, train_stds, train_medians)
+            lockbox_df[feat_name] = compute_recipe(lockbox_df, recipe, train_means, train_stds, train_medians)
+
     all_selected_features = [item["feature_name"] for item in selected_pool]
     
     # Train standardization parameters
@@ -283,24 +318,17 @@ def main():
     stds = {}
     
     if all_selected_features:
-        # Standardize train set
-        train_features_df = train_df[all_selected_features].ffill()
-        col_med_train = train_features_df.median().fillna(0.0)
-        train_features_df = train_features_df.fillna(col_med_train)
-        
         for feat in all_selected_features:
-            means[feat] = train_features_df[feat].mean()
-            stds[feat] = train_features_df[feat].std()
+            means[feat] = train_df[feat].mean()
+            stds[feat] = train_df[feat].std()
             if stds[feat] < 1e-12:
                 stds[feat] = 1.0
 
         # Create standardized arrays for train, OOS, and lockbox
         def get_standardized_x(data_df):
-            X_raw = data_df[all_selected_features].ffill()
-            X_raw = X_raw.fillna(col_med_train)
-            X_std = np.zeros(X_raw.shape)
+            X_std = np.zeros((len(data_df), len(all_selected_features)))
             for i, feat in enumerate(all_selected_features):
-                X_std[:, i] = (X_raw[feat].values - means[feat]) / stds[feat]
+                X_std[:, i] = (data_df[feat].values - means[feat]) / stds[feat]
             return X_std
 
         X_train_std = get_standardized_x(train_df)

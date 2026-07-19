@@ -28,6 +28,8 @@ sys.path.append(str(REPO_ROOT / "day-model"))
 
 from build_features import FEATURES
 
+FDR_THRESHOLD = 0.30
+
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
     if a.shape[0] < 5:
@@ -306,7 +308,7 @@ def numba_multi_trial_empirical_sim(X: np.ndarray, y: np.ndarray, n_trials: int,
         
     return max_ics
 
-def benjamini_hochberg_fdr(p_values: np.ndarray, fdr_threshold=0.20) -> np.ndarray:
+def benjamini_hochberg_fdr(p_values: np.ndarray, fdr_threshold=FDR_THRESHOLD) -> np.ndarray:
     """
     Apply Benjamini-Hochberg procedure.
     Returns a boolean mask of kept indices.
@@ -455,7 +457,44 @@ def main():
     X_df = train_df[FEATURES].ffill()
     col_med = X_df.median().fillna(0.0)
     X_df = X_df.fillna(col_med)
-    X_train = X_df.values.astype(np.float64)
+
+    # Load and compute candidate recipes dynamically
+    import sys
+    sys.path.append(str(HERE / "mining"))
+    from recipe_utils import compute_recipe
+    
+    suffix = "_early" if args.early else ""
+    candidates_path = HERE / "mining" / f"candidates_{args.etf}_{args.side}{suffix}.json"
+    candidate_recipes = {}
+    features_to_eval = list(FEATURES)
+    
+    if candidates_path.exists():
+        try:
+            with open(candidates_path, "r") as f:
+                cands = json.load(f)
+            print(f"Loaded {len(cands)} candidate combinations from {candidates_path.name}")
+            
+            # Use X_df to preserve NaN filled base features
+            base_filled_df = train_df.copy()
+            for col in FEATURES:
+                base_filled_df[col] = X_df[col]
+                
+            for item in cands:
+                feat_name = item["feature_name"]
+                recipe = item["recipe"]
+                try:
+                    candidate_values = compute_recipe(base_filled_df, recipe)
+                    X_df[feat_name] = candidate_values
+                    features_to_eval.append(feat_name)
+                    candidate_recipes[feat_name] = recipe
+                except Exception as e:
+                    print(f"WARNING: Failed to compute recipe for {feat_name}: {e}")
+        except Exception as e:
+            print(f"WARNING: Failed to load candidate recipes: {e}")
+    else:
+        print(f"No candidate combinations file found at {candidates_path}. Evaluating base features only.")
+
+    X_train = X_df[features_to_eval].values.astype(np.float64)
 
     # Precompute rolling window indices (90 calendar days)
     window_starts = np.zeros(len(dates_train), dtype=np.int32)
@@ -466,11 +505,11 @@ def main():
         window_ends[t] = t + 1
 
     # 2. Evaluate all features in parallel
-    print(f"Evaluating {len(FEATURES)} features on training set...")
+    print(f"Evaluating {len(features_to_eval)} features on training set...")
     eval_results = Parallel(n_jobs=args.n_jobs)(
         delayed(evaluate_single_feature)(
-            FEATURES[i], X_train[:, i], y_train, dates_train, window_starts, window_ends, args.side
-        ) for i in range(len(FEATURES))
+            features_to_eval[i], X_train[:, i], y_train, dates_train, window_starts, window_ends, args.side
+        ) for i in range(len(features_to_eval))
     )
 
     # Sort results by overall IC descending (strongest candidate first)
@@ -497,14 +536,14 @@ def main():
                 print(f"Seeded ledger with {len(trial_ledger)} unique features from attempts log: {attempts_path.name}")
             except Exception as e:
                 print(f"WARNING: failed to parse attempts log: {e}")
-                trial_ledger = list(FEATURES)
+                trial_ledger = list(features_to_eval)
         else:
-            trial_ledger = list(FEATURES)
-            print(f"Initialized ledger with {len(trial_ledger)} features from FEATURES.")
+            trial_ledger = list(features_to_eval)
+            print(f"Initialized ledger with {len(trial_ledger)} features from features_to_eval.")
         
     ledger_set = set(trial_ledger)
     updated_ledger = list(trial_ledger)
-    for feat in FEATURES:
+    for feat in features_to_eval:
         if feat not in ledger_set:
             updated_ledger.append(feat)
             ledger_set.add(feat)
@@ -571,7 +610,7 @@ def main():
         else:
             surviving_candidates.append(item)
             
-    print(f"{len(surviving_candidates)} features survived rolling guard + FDR filter out of {len(FEATURES)}.")
+    print(f"{len(surviving_candidates)} features survived rolling guard + FDR filter out of {len(features_to_eval)}.")
 
     # 6. Compute Data-Adaptive Simulation Threshold (empirical 95th percentile)
     print(f"Running multi-trial empirical null simulation for N={n_trials} trials...")
@@ -714,20 +753,29 @@ def main():
     # Format the selected pool output
     selected_output = []
     for item in admitted_pool:
-        selected_output.append({
+        record = {
             "feature_name": item["feature_name"],
             "sign": item["sign"],
             "overall_ic": item["overall_ic"],
             "deflated_ic": item["deflated_ic"],
             "ic_ir": item["ic_ir"],
             "monotonicity": item["monotonicity"]
-        })
+        }
+        if item["feature_name"] in candidate_recipes:
+            record["recipe"] = candidate_recipes[item["feature_name"]]
+        selected_output.append(record)
 
     # Save selected pool and attempts log to json files
     selected_path = data_out_dir / f"selected_pool_{args.etf}_{args.side}{suffix}.json"
     with open(selected_path, "w") as f:
         json.dump(selected_output, f, indent=2)
     print(f"Saved selected pool to {selected_path}")
+
+    # Inject recipes into attempts log
+    for att in attempts_log:
+        feat_name = att.get("feature_name")
+        if feat_name in candidate_recipes:
+            att["recipe"] = candidate_recipes[feat_name]
 
     attempts_path = data_out_dir / f"mining_attempts_{args.etf}_{args.side}{suffix}.json"
     with open(attempts_path, "w") as f:
