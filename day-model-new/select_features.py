@@ -4,6 +4,7 @@ Stage A Feature Selection for Day-Model Rewrite v3.
 Implements:
 1. Flipping features to have positive overall training IC (date ranges adjusted dynamically per ETF).
 2. A3 Rolling pre-filter (90-calendar-day rolling tail IC monotonicity & IR check).
+2b. Split-half sign stability gate — reject if IC sign disagrees across training halves (cheapest universal guard).
 3. Light Benjamini-Hochberg FDR pre-filter gate at q = 0.20 using single-feature block-shuffled empirical null simulation.
 4. Cumulative persistent ledger tracking of trial count N per (ETF, side).
 5. Data-adaptive empirical 95th-percentile tail IC admission floor via multi-trial block-shuffled empirical null simulation.
@@ -365,6 +366,26 @@ def compute_rolling_tail_ic_series(x_flipped: np.ndarray, y: np.ndarray, window_
         pct = 0.10
     return numba_rolling_tail_ic(x_flipped, y, window_starts, window_ends, tail_def, pct)
 
+def split_half_sign_check(x_flipped: np.ndarray, y: np.ndarray, side: str) -> tuple:
+    """Split training period in half, compute tail-IC on each half independently.
+
+    Returns (passes: bool, ic_first: float, ic_second: float).
+    Rejects if sign disagrees between halves (one positive, one negative).
+    This is the cheapest possible stability check — two IC computations, no resampling.
+    """
+    n = len(y)
+    mid = n // 2
+    if mid < 10 or (n - mid) < 10:
+        return True, 0.0, 0.0  # Too short to split, pass through
+
+    ic_first = compute_side_tail_ic(y[:mid], x_flipped[:mid], side)
+    ic_second = compute_side_tail_ic(y[mid:], x_flipped[mid:], side)
+
+    # Reject if signs disagree (one positive, one negative)
+    passes = (ic_first >= 0) == (ic_second >= 0)
+    return passes, ic_first, ic_second
+
+
 def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, dates: pd.Series, window_starts: np.ndarray, window_ends: np.ndarray, side: str):
     """Evaluate a single candidate feature: compute overall IC, flip if needed, and run rolling tail IC pre-filter."""
     # Compute overall raw IC for flipping
@@ -372,6 +393,9 @@ def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, dat
     sign_flip = -1.0 if raw_ic < 0 else 1.0
     x_flipped = x * sign_flip
     overall_ic = compute_side_tail_ic(y, x_flipped, side)
+    
+    # Split-half sign stability (Step 2.2 — cheapest universal gate)
+    sh_passes, sh_ic_first, sh_ic_second = split_half_sign_check(x_flipped, y, side)
     
     # Compute rolling tail IC series
     rolling_tail_ics = compute_rolling_tail_ic_series(x_flipped, y, window_starts, window_ends, side)
@@ -390,6 +414,9 @@ def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, dat
         "std_tail_ic": std_tail_ic,
         "ic_ir": ic_ir,
         "monotonicity": monotonicity,
+        "split_half_passes": sh_passes,
+        "split_half_ic_first": sh_ic_first,
+        "split_half_ic_second": sh_ic_second,
         "x_flipped": x_flipped,  # Keep for correlation gate
     }
 
@@ -554,6 +581,20 @@ def main():
     n_trials = len(updated_ledger)
     print(f"Cumulative ledger size: {n_trials} (added {len(updated_ledger) - len(trial_ledger)} new features)")
 
+    # 3b. Split-half sign stability gate (Step 2.2 — before expensive simulation)
+    stable_results = []
+    split_half_rejects = []
+    for item in eval_results:
+        if item["split_half_passes"]:
+            stable_results.append(item)
+        else:
+            split_half_rejects.append(item)
+
+    if split_half_rejects:
+        print(f"Split-half sign stability: rejected {len(split_half_rejects)} / {len(eval_results)} features (sign disagrees across halves).")
+    else:
+        print(f"Split-half sign stability: all {len(eval_results)} features passed.")
+
     # 4. Light Benjamini-Hochberg FDR Pre-Filter Gate
     if args.side == "long":
         tail_def = 1
@@ -566,25 +607,40 @@ def main():
         pct = 0.10
     n_tail = max(5, int(len(y_train) * pct))
     
-    print("Running single-trial empirical null simulation for BH-FDR pre-filter...")
+    print(f"Running single-trial empirical null simulation for BH-FDR pre-filter ({len(stable_results)} candidates)...")
     # Use actual design matrix X_train to preserve real candidate distributions
     null_single_ics = numba_single_trial_empirical_sim(X_train, y_train, tail_def, n_tail, 5000, block_size=10)
     
-    # Compute empirical p-value for each candidate
-    for item in eval_results:
+    # Compute empirical p-value for each stable candidate
+    for item in stable_results:
         item["p_value"] = float(np.mean(null_single_ics >= item["overall_ic"]))
         
     # Apply Benjamini-Hochberg FDR procedure
-    p_values = np.array([item["p_value"] for item in eval_results])
+    p_values = np.array([item["p_value"] for item in stable_results])
     bh_mask = benjamini_hochberg_fdr(p_values, fdr_threshold=0.20)
-    for idx, item in enumerate(eval_results):
+    for idx, item in enumerate(stable_results):
         item["passes_fdr"] = bool(bh_mask[idx])
 
     # 5. Log all attempts and identify surviving candidates
     attempts_log = []
     surviving_candidates = []
-    
-    for item in eval_results:
+
+    # Log split-half rejects first
+    for item in split_half_rejects:
+        attempts_log.append({
+            "feature_name": item["feature_name"],
+            "sign": item["sign"],
+            "raw_ic": item["raw_ic"],
+            "overall_ic": item["overall_ic"],
+            "split_half_ic_first": item["split_half_ic_first"],
+            "split_half_ic_second": item["split_half_ic_second"],
+            "ic_ir": item["ic_ir"],
+            "monotonicity": item["monotonicity"],
+            "passes_split_half": False,
+            "verdict": "REJECTED_SPLIT_HALF"
+        })
+
+    for item in stable_results:
         passes_guard = (item["monotonicity"] >= args.mono_thr) and (item["ic_ir"] >= args.ir_thr)
         passes_fdr = item["passes_fdr"]
         
@@ -596,6 +652,9 @@ def main():
             "p_value": item["p_value"],
             "ic_ir": item["ic_ir"],
             "monotonicity": item["monotonicity"],
+            "split_half_ic_first": item["split_half_ic_first"],
+            "split_half_ic_second": item["split_half_ic_second"],
+            "passes_split_half": True,
             "passes_rolling_guard": bool(passes_guard),
             "passes_fdr": bool(passes_fdr),
             "verdict": "PENDING_ADMISSION"
@@ -610,7 +669,7 @@ def main():
         else:
             surviving_candidates.append(item)
             
-    print(f"{len(surviving_candidates)} features survived rolling guard + FDR filter out of {len(features_to_eval)}.")
+    print(f"{len(surviving_candidates)} features survived split-half + rolling guard + FDR out of {len(features_to_eval)}.")
 
     # 6. Compute Data-Adaptive Simulation Threshold (empirical 95th percentile)
     print(f"Running multi-trial empirical null simulation for N={n_trials} trials...")
@@ -794,10 +853,12 @@ def main():
         # Count verdicts
         n_admitted = sum(1 for a in attempts_log
                          if a.get("verdict", "").startswith("ADMITTED"))
+        n_rej_split_half = sum(1 for a in attempts_log
+                               if a.get("verdict") == "REJECTED_SPLIT_HALF")
         n_rej_rolling = sum(1 for a in attempts_log
                             if a.get("verdict") == "REJECTED_ROLLING_GUARD")
         n_rej_fdr = sum(1 for a in attempts_log
-                        if a.get("verdict") == "REJECTED_FDR")
+                        if a.get("verdict") == "REJECTED_FDR_GATE")
         n_rej_corr = sum(1 for a in attempts_log
                          if a.get("verdict") == "REJECTED_REDUNDANCY")
         admitted_names = [a["feature_name"] for a in attempts_log
@@ -812,6 +873,7 @@ def main():
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "n_candidates": len(attempts_log),
             "n_admitted": n_admitted,
+            "n_rejected_split_half": n_rej_split_half,
             "n_rejected_rolling": n_rej_rolling,
             "n_rejected_fdr": n_rej_fdr,
             "n_rejected_corr": n_rej_corr,

@@ -173,7 +173,7 @@ preemptively complicate the model in anticipation of that.
 ---
 
 ## Checklist
-- [ ] Implement split-half sign-stability as Step 2.2 (universal, pre-simulation).
+- [x] Implement split-half sign-stability as Step 2.2 (universal, pre-simulation).
 - [ ] Implement pool-size loop gating combo-generation (1b) per batch.
 - [ ] Confirm ledger seeding covers all historical `mining_attempts_*.json` before batch 1.
 - [ ] Stand up `mining_memory_{ETF}_{side}.json` forbidden-directions tracking.
