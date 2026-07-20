@@ -34,6 +34,11 @@ python3 day-model-new/evaluate_concept.py -e 588000ETF -s long
 python3 day-model-new/run_baseline.py
 python3 day-model-new/run_baseline.py --skip-existing
 python3 day-model-new/run_baseline.py --max-parallel 2 -e 300ETF
+
+# 3b. Recompile BASELINE_REPORT.md from existing JSON outputs (no pipeline run, <1s)
+# Supports -e/-s filters and custom -o output path
+python3 day-model-new/compile_report.py
+python3 day-model-new/compile_report.py -e 588000ETF -s long -o custom_report.md
 ```
 
 ## Architecture
