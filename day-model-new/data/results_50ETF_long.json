@@ -21,6 +21,8 @@
       0.6366666666666664
     ],
     "ann_ret": 0.0,
+    "raw_ann_ret": 0.0,
+    "raw_sharpe": 0.0,
     "sharpe": 0.0,
     "sortino": 0.0,
     "max_dd": 0.0
@@ -42,6 +44,8 @@
       0.6484848484848484
     ],
     "ann_ret": 0.0,
+    "raw_ann_ret": 0.0,
+    "raw_sharpe": 0.0,
     "sharpe": 0.0,
     "sortino": 0.0,
     "max_dd": 0.0
@@ -63,6 +67,8 @@
       0.5884848484848479
     ],
     "ann_ret": 0.0,
+    "raw_ann_ret": 0.0,
+    "raw_sharpe": 0.0,
     "sharpe": 0.0,
     "sortino": 0.0,
     "max_dd": 0.0

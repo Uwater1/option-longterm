@@ -68,13 +68,21 @@ def _metrics_row(etf, side, n_feats, metrics):
     o_ic, o_ci = _fmt_metric_with_ci(metrics["overall_ic"], metrics["overall_ic_ci"])
     t_ic, t_ci = _fmt_metric_with_ci(metrics["tail_ic"], metrics["tail_ic_ci"])
     mono = metrics["monotonicity"]
+    raw_ann = metrics.get("raw_ann_ret")
+    raw_ann_str = f"{raw_ann * 100:.2f}%" if raw_ann is not None else "N/A"
+    raw_sharpe = metrics.get("raw_sharpe")
+    raw_sharpe_str = f"{raw_sharpe:.4f}" if raw_sharpe is not None else "N/A"
+    cost_ann_str = f"{metrics['ann_ret'] * 100:.2f}%"
+    cost_sharpe_str = f"{metrics['sharpe']:.4f}"
     return (
         f"| {etf} | {side} | {n_feats} | "
         f"{o_ic} | {o_ci} | "
         f"{t_ic} | {t_ci} | "
         f"{mono:+.4f} | "
-        f"{metrics['ann_ret']*100:.2f}% | "
-        f"{metrics['sharpe']:.4f} | "
+        f"{raw_ann_str} | "
+        f"{raw_sharpe_str} | "
+        f"{cost_ann_str} | "
+        f"{cost_sharpe_str} | "
         f"{metrics['sortino']:.4f} | "
         f"{metrics['max_dd']*100:.2f}% |"
     )
@@ -96,7 +104,11 @@ def build_report(etfs, sides, suffix):
     for etf in etfs:
         train_start, train_end, oos_start, lock_start = ADAPTIVE_DATES.get(etf, ADAPTIVE_DATES["_default"])
         lines.append(f"- **{etf}**: Train `{train_start}` → `{train_end}` | Holdout OOS from `{oos_start}` | Lockbox from `{lock_start}`")
-    lines.extend(["", "_\\* indicates the 95% circular block-bootstrap CI spans zero (statistically indistinguishable from noise)._"])
+    lines.extend([
+        "",
+        "_\\* indicates the 95% circular block-bootstrap CI spans zero (statistically indistinguishable from noise)._",
+        "_Note: Cost metrics incorporate 15 bps (0.0015) transaction cost per position state transition (entry/turnover). Raw metrics represent pre-cost performance. Absolute-sign kill switches enforce mean return positivity on traded legs._",
+    ])
 
     # ── Section 1: Filter Funnel ───────────────────────────────────────
     lines.extend([
@@ -134,8 +146,8 @@ def build_report(etfs, sides, suffix):
         "",
         "IC-weighted combination model on the training window. Useful for sanity-checking fit.",
         "",
-        "| ETF | Side | Features | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Ann. Return | Sharpe | Sortino | Max DD |",
-        "| :--- | :--- | ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
+        "| ETF | Side | Features | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Raw Ann. Ret | Raw Sharpe | Cost Ann. Ret | Cost Sharpe | Sortino | Max DD |",
+        "| :--- | :--- | ---: | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ])
     for etf in etfs:
         for side in sides:
@@ -152,8 +164,8 @@ def build_report(etfs, sides, suffix):
         "",
         "Out-of-sample from holdout start to present.",
         "",
-        "| ETF | Side | Features | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Ann. Return | Sharpe | Sortino | Max DD |",
-        "| :--- | :--- | ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
+        "| ETF | Side | Features | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Raw Ann. Ret | Raw Sharpe | Cost Ann. Ret | Cost Sharpe | Sortino | Max DD |",
+        "| :--- | :--- | ---: | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ])
     for etf in etfs:
         for side in sides:
@@ -170,8 +182,8 @@ def build_report(etfs, sides, suffix):
         "",
         "Most recent OOS window (lockbox start to present). Strictest generalization test.",
         "",
-        "| ETF | Side | Features | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Ann. Return | Sharpe | Sortino | Max DD |",
-        "| :--- | :--- | ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
+        "| ETF | Side | Features | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Raw Ann. Ret | Raw Sharpe | Cost Ann. Ret | Cost Sharpe | Sortino | Max DD |",
+        "| :--- | :--- | ---: | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ])
     for etf in etfs:
         for side in sides:

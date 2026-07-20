@@ -298,6 +298,8 @@ def main():
     parser.add_argument("-s", "--side", required=True, choices=["single", "long", "short"])
     parser.add_argument("-k", type=float, default=1.0, help="Exponent for weighting overall IC")
     parser.add_argument("--early", action="store_true", help="Use early window return dataset")
+    parser.add_argument("--position-mode", choices=["binary", "score_weighted"], default="binary", help="Position sizing mode (default: binary)")
+    parser.add_argument("--no-abs-sign", action="store_true", help="Disable absolute sign kill switch")
     args = parser.parse_args()
 
     # Determine dynamic date ranges
@@ -313,7 +315,7 @@ def main():
         lockbox_start = pd.Timestamp("2024-03-01")
 
     print(f"================================================================================")
-    print(f"Stage B Evaluation: ETF={args.etf}, Side={args.side}, Early={args.early}, k={args.k}")
+    print(f"Stage B Evaluation: ETF={args.etf}, Side={args.side}, Early={args.early}, k={args.k}, mode={args.position_mode}")
     print(f"================================================================================")
 
     # 1. Load selected feature pool
@@ -470,14 +472,18 @@ def main():
         mono = compute_decile_monotonicity(y_true, y_pred)
         
         ci_overall, ci_tail, ci_mono = block_bootstrap_ci(y_true, y_pred, args.side)
-        ann_ret, sharpe, sortino, max_dd = simulate_returns(y_true, y_pred, args.side)
+        enforce_abs = not args.no_abs_sign
+        ann_ret, sharpe, sortino, max_dd, raw_ann_ret, raw_sharpe = simulate_returns(
+            y_true, y_pred, args.side, position_mode=args.position_mode, enforce_absolute_sign=enforce_abs
+        )
         
         print(f"\n--- {label} Results ---")
         print(f"Overall IC:          {overall_ic:+.4f} (95% CI: [{ci_overall[0]:+.4f}, {ci_overall[1]:+.4f}])")
         print(f"Tail IC:             {tail_ic:+.4f} (95% CI: [{ci_tail[0]:+.4f}, {ci_tail[1]:+.4f}])")
         print(f"Decile Monotonicity: {mono:+.4f} (95% CI: [{ci_mono[0]:+.4f}, {ci_mono[1]:+.4f}])")
-        print(f"Simulated Ann. Ret:  {ann_ret * 100:.2f}%")
-        print(f"Simulated Sharpe:    {sharpe:.4f}")
+        print(f"Simulated Ann. Ret:  {ann_ret * 100:.2f}% (Raw: {raw_ann_ret * 100:.2f}%)")
+        print(f"Raw Sharpe:          {raw_sharpe:.4f}")
+        print(f"Cost-Adjusted Sharpe:{sharpe:.4f}")
         print(f"Simulated Sortino:   {sortino:.4f}")
         print(f"Simulated Max DD:    {max_dd * 100:.2f}%")
         
@@ -489,6 +495,8 @@ def main():
             "monotonicity": mono,
             "monotonicity_ci": ci_mono,
             "ann_ret": ann_ret,
+            "raw_ann_ret": raw_ann_ret,
+            "raw_sharpe": raw_sharpe,
             "sharpe": sharpe,
             "sortino": sortino,
             "max_dd": max_dd

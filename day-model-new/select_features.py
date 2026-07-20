@@ -434,13 +434,55 @@ def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, win
             "sortino": 0.0,
             "composite_score": 0.0,
             "split_half_passes": True,
+            "passes_rolling_guard": False,
+            "passes_abs_sign": False,
+            "split_half_ic_first": sh_ic_first,
+            "split_half_ic_second": sh_ic_second,
+            "x_flipped": x_flipped,
+        }
+
+    # Absolute Sign Check on Traded Tail Buckets
+    n_obs = len(y)
+    order = np.argsort(x_flipped)
+    if side == "long":
+        pct = 0.15
+        n_tail = max(5, int(n_obs * pct))
+        long_mean = float(np.mean(y[order[-n_tail:]]))
+        passes_abs_sign = (long_mean > 0.0)
+    elif side == "short":
+        pct = 0.15
+        n_tail = max(5, int(n_obs * pct))
+        short_mean = float(np.mean(-y[order[:n_tail]]))
+        passes_abs_sign = (short_mean > 0.0)
+    else:  # single (two-sided)
+        pct = 0.10
+        n_tail = max(5, int(n_obs * pct))
+        long_mean = float(np.mean(y[order[-n_tail:]]))
+        short_mean = float(np.mean(-y[order[:n_tail]]))
+        passes_abs_sign = (long_mean > 0.0) and (short_mean > 0.0)
+
+    if not passes_abs_sign:
+        return {
+            "feature_name": feature_name,
+            "sign": int(locked_sign),
+            "raw_ic": float(raw_ic),
+            "overall_ic": float(overall_ic),
+            "mean_tail_ic": mean_tail_ic,
+            "std_tail_ic": std_tail_ic,
+            "ic_ir": ic_ir,
+            "monotonicity": monotonicity,
+            "sortino": 0.0,
+            "composite_score": 0.0,
+            "split_half_passes": True,
+            "passes_rolling_guard": True,
+            "passes_abs_sign": False,
             "split_half_ic_first": sh_ic_first,
             "split_half_ic_second": sh_ic_second,
             "x_flipped": x_flipped,
         }
         
-    # Per-candidate Sortino trade simulation using locked sign (only for B1 + B2 survivors!)
-    ann_ret, sharpe, sortino, max_dd = simulate_returns(y, x_flipped, side)
+    # Per-candidate Sortino trade simulation using locked sign (only for B1 + B2 + Absolute-Sign survivors!)
+    ann_ret, sharpe, sortino, max_dd, raw_ann_ret, raw_sharpe = simulate_returns(y, x_flipped, side)
     
     # Rank-normalized Composite Score
     composite_score = 0.4 * mean_tail_ic + 0.3 * sortino + 0.2 * abs(overall_ic) + 0.1 * abs(raw_ic)
@@ -457,6 +499,8 @@ def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, win
         "sortino": float(sortino),
         "composite_score": float(composite_score),
         "split_half_passes": True,
+        "passes_rolling_guard": True,
+        "passes_abs_sign": True,
         "split_half_ic_first": sh_ic_first,
         "split_half_ic_second": sh_ic_second,
         "x_flipped": x_flipped,  # Keep for correlation gate
@@ -1082,19 +1126,26 @@ def main():
     else:
         print(f"Split-half sign stability: all {len(eval_results)} features passed.")
 
-    # 3c. B2 Rolling Guard filter (instant check on pre-computed monotonicity & IR)
+    # 3c. B2 Rolling Guard & Absolute-Sign filter (instant check on pre-computed monotonicity, IR, & absolute tail sign)
     guard_survivors = []
     guard_rejects = []
+    abs_sign_rejects = []
     for item in stable_results:
         passes_guard = (item["monotonicity"] >= args.mono_thr) and (item["ic_ir"] >= args.ir_thr)
-        if passes_guard:
-            item["passes_rolling_guard"] = True
-            guard_survivors.append(item)
-        else:
+        passes_abs_sign = item.get("passes_abs_sign", True)
+        if not passes_guard:
             item["passes_rolling_guard"] = False
             guard_rejects.append(item)
+        elif not passes_abs_sign:
+            item["passes_rolling_guard"] = True
+            item["passes_abs_sign"] = False
+            abs_sign_rejects.append(item)
+        else:
+            item["passes_rolling_guard"] = True
+            item["passes_abs_sign"] = True
+            guard_survivors.append(item)
 
-    print(f"B2 Rolling Guard: {len(guard_survivors)} / {len(stable_results)} candidates passed (dropped {len(guard_rejects)}).")
+    print(f"B2 Rolling Guard & Absolute Sign: {len(guard_survivors)} / {len(stable_results)} candidates passed (dropped {len(guard_rejects)} guard, {len(abs_sign_rejects)} absolute-sign).")
 
     # 4. Light Benjamini-Hochberg FDR Pre-Filter Gate (runs ONLY on B2 survivors)
     if args.side == "long":
@@ -1190,6 +1241,27 @@ def main():
             "passes_rolling_guard": False,
             "passes_fdr": False,
             "verdict": "REJECTED_ROLLING_GUARD"
+        })
+
+    # Log absolute sign rejects
+    for item in abs_sign_rejects:
+        attempts_log.append({
+            "feature_name": item["feature_name"],
+            "sign": item["sign"],
+            "raw_ic": item["raw_ic"],
+            "overall_ic": item["overall_ic"],
+            "mean_tail_ic": item["mean_tail_ic"],
+            "sortino": item["sortino"],
+            "composite_score": item["composite_score"],
+            "ic_ir": item["ic_ir"],
+            "monotonicity": item["monotonicity"],
+            "split_half_ic_first": item["split_half_ic_first"],
+            "split_half_ic_second": item["split_half_ic_second"],
+            "passes_split_half": True,
+            "passes_rolling_guard": True,
+            "passes_abs_sign": False,
+            "passes_fdr": False,
+            "verdict": "REJECTED_ABSOLUTE_SIGN"
         })
 
     # Log FDR rejects
