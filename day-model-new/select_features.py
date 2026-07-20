@@ -369,14 +369,33 @@ def split_half_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str) -> tuple:
 
 
 def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str):
-    """Evaluate a single candidate feature using B1 locked sign."""
-    # B1 Split-half sign stability & sign locking (single source of truth)
+    """Evaluate a single candidate feature: cheap gates first to avoid wasting compute on rejected signals."""
+    # B1 Split-half sign stability & sign locking (cheapest gate: 2 half-IC calculations)
     sh_passes, locked_sign, sh_ic_first, sh_ic_second = split_half_sign_check(x, y, side)
     
     x_flipped = x * locked_sign
     raw_ic = _spearman_from_arrays(x_flipped, y)
     overall_ic = compute_side_tail_ic(y, x_flipped, side)
     
+    if not sh_passes:
+        # B1 Fail: Return immediately! No rolling tail IC or Sortino simulation needed.
+        return {
+            "feature_name": feature_name,
+            "sign": int(locked_sign),
+            "raw_ic": float(raw_ic),
+            "overall_ic": float(overall_ic),
+            "mean_tail_ic": 0.0,
+            "std_tail_ic": 0.0,
+            "ic_ir": 0.0,
+            "monotonicity": 0.0,
+            "sortino": 0.0,
+            "composite_score": 0.0,
+            "split_half_passes": False,
+            "split_half_ic_first": sh_ic_first,
+            "split_half_ic_second": sh_ic_second,
+            "x_flipped": x_flipped,
+        }
+        
     # B2 Compute rolling tail IC series using locked sign
     rolling_tail_ics = compute_rolling_tail_ic_series(x_flipped, y, window_starts, window_ends, side)
     
@@ -385,11 +404,34 @@ def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, win
     ic_ir = mean_tail_ic / (std_tail_ic + 1e-10)
     monotonicity = float(np.mean(rolling_tail_ics > 0))
     
-    # Per-candidate Sortino trade simulation using locked sign
+    # Check B2 Rolling Guard thresholds
+    mono_thr = 0.55 if side in ["long", "short"] else 0.70
+    ir_thr = 0.15 if side in ["long", "short"] else 0.30
+    passes_guard = (monotonicity >= mono_thr) and (ic_ir >= ir_thr)
+    
+    if not passes_guard:
+        # B2 Fail: Return immediately! No single-candidate Sortino trade simulation needed.
+        return {
+            "feature_name": feature_name,
+            "sign": int(locked_sign),
+            "raw_ic": float(raw_ic),
+            "overall_ic": float(overall_ic),
+            "mean_tail_ic": mean_tail_ic,
+            "std_tail_ic": std_tail_ic,
+            "ic_ir": ic_ir,
+            "monotonicity": monotonicity,
+            "sortino": 0.0,
+            "composite_score": 0.0,
+            "split_half_passes": True,
+            "split_half_ic_first": sh_ic_first,
+            "split_half_ic_second": sh_ic_second,
+            "x_flipped": x_flipped,
+        }
+        
+    # Per-candidate Sortino trade simulation using locked sign (only for B1 + B2 survivors!)
     ann_ret, sharpe, sortino, max_dd = simulate_returns(y, x_flipped, side)
     
     # Rank-normalized Composite Score
-    # score = 0.4*RollingMono(90d) + 0.3*Sortino + 0.2*|Tail IC| + 0.1*|Overall IC|
     composite_score = 0.4 * mean_tail_ic + 0.3 * sortino + 0.2 * abs(overall_ic) + 0.1 * abs(raw_ic)
     
     return {
@@ -403,25 +445,49 @@ def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, win
         "monotonicity": monotonicity,
         "sortino": float(sortino),
         "composite_score": float(composite_score),
-        "split_half_passes": sh_passes,
+        "split_half_passes": True,
         "split_half_ic_first": sh_ic_first,
         "split_half_ic_second": sh_ic_second,
         "x_flipped": x_flipped,  # Keep for correlation gate
     }
 
 
-def compute_candidate_null_composite(x_flipped: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str, n_sims: int = 1000, block_size: int = 10):
-    """Multi-trial block-shuffled empirical null simulation for a candidate's composite score."""
-    n = len(y)
-    num_blocks = int(np.ceil(n / block_size))
-    possible_starts = max(1, n - block_size + 1)
-    rng = np.random.default_rng(42)
-    all_starts = rng.integers(0, possible_starts, size=(n_sims, num_blocks))
+@njit(cache=True)
+def numba_fast_rolling_tail_ic(x: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, window_offsets: np.ndarray, window_sorted_idx: np.ndarray, tail_def: int, pct: float) -> float:
+    n_days = len(window_starts)
+    pos_count = 0
+    valid_count = 0
     
+    for t in range(n_days):
+        start = window_starts[t]
+        end = window_ends[t]
+        n_win = end - start
+        if n_win < 15:
+            continue
+        n_tail = max(5, int(n_win * pct))
+        
+        offset = window_offsets[t]
+        ix_win = window_sorted_idx[offset:offset + n_win]
+        x_win = x[start:end]
+        y_win = y[start:end]
+        
+        ic = _tail_ic_from_sorted(ix_win, x_win, y_win, n_win, n_tail, tail_def)
+        valid_count += 1
+        if ic > 0:
+            pos_count += 1
+            
+    return pos_count / (valid_count + 1e-10)
+
+@njit(parallel=True, cache=True)
+def numba_fast_null_composite_kernel(x_flipped: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, window_offsets: np.ndarray, window_sorted_idx: np.ndarray, ix_overall: np.ndarray, tail_idx: np.ndarray, is_two_sided: bool, long_idx: np.ndarray, short_idx: np.ndarray, tail_def: int, pct: float, all_starts: np.ndarray, block_size: int, n_sims: int) -> np.ndarray:
+    n = len(y)
     null_scores = np.empty(n_sims, dtype=np.float64)
-    for s in range(n_sims):
+    n_tail = len(tail_idx) if not is_two_sided else len(long_idx)
+    
+    for s in prange(n_sims):
+        # Block shuffle
         starts_s = all_starts[s]
-        y_null = np.empty(n, dtype=np.float64)
+        y_null = np.empty(n, dtype=np.float32)
         pos = 0
         for i in range(len(starts_s)):
             st = starts_s[i]
@@ -432,14 +498,106 @@ def compute_candidate_null_composite(x_flipped: np.ndarray, y: np.ndarray, windo
                 else:
                     break
                     
-        raw_ic_null = _spearman_from_arrays(x_flipped, y_null)
-        tail_ic_null = compute_side_tail_ic(y_null, x_flipped, side)
-        rolling_null = compute_rolling_tail_ic_series(x_flipped, y_null, window_starts, window_ends, side)
-        mono_null = float(np.mean(rolling_null))
-        _, sortino_null, _, _ = simulate_returns(y_null, x_flipped, side)
+        # Spearman overall IC
+        raw_ic_null = fast_spearman(y_null, x_flipped)
         
+        # Overall Tail IC
+        tail_ic_null = _tail_ic_from_sorted(ix_overall, x_flipped, y_null, n, n_tail, tail_def)
+        
+        # Rolling Mono
+        mono_null = numba_fast_rolling_tail_ic(x_flipped, y_null, window_starts, window_ends, window_offsets, window_sorted_idx, tail_def, pct)
+        
+        # Sortino
+        if not is_two_sided:
+            ret = np.empty(n_tail, dtype=np.float32)
+            for k in range(n_tail):
+                idx = tail_idx[k]
+                ret[k] = y_null[idx] - 0.0015 if tail_def == 1 else -y_null[idx] - 0.0015
+            
+            sum_ret = 0.0
+            sum_sq_down = 0.0
+            for k in range(n_tail):
+                r = ret[k]
+                sum_ret += r
+                if r < 0:
+                    sum_sq_down += r * r
+            ann_ret = (sum_ret / n_tail) * 244.0
+            down_std = np.sqrt(sum_sq_down / n_tail) * 15.620499351813308
+            sortino_null = ann_ret / (down_std + 1e-10)
+        else:
+            n_l = len(long_idx)
+            n_s = len(short_idx)
+            total_cnt = n_l + n_s
+            sum_ret = 0.0
+            sum_sq_down = 0.0
+            for k in range(n_l):
+                r = y_null[long_idx[k]] - 0.0015
+                sum_ret += r
+                if r < 0:
+                    sum_sq_down += r * r
+            for k in range(n_s):
+                r = -y_null[short_idx[k]] - 0.0015
+                sum_ret += r
+                if r < 0:
+                    sum_sq_down += r * r
+            ann_ret = (sum_ret / total_cnt) * 244.0
+            down_std = np.sqrt(sum_sq_down / total_cnt) * 15.620499351813308
+            sortino_null = ann_ret / (down_std + 1e-10)
+            
         null_scores[s] = 0.4 * mono_null + 0.3 * sortino_null + 0.2 * abs(tail_ic_null) + 0.1 * abs(raw_ic_null)
         
+    return null_scores
+
+
+def compute_candidate_null_composite(x_flipped: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str, n_sims: int = 1000, block_size: int = 10):
+    """Multi-trial block-shuffled empirical null simulation for a candidate's composite score (Numba parallel kernel)."""
+    n = len(y)
+    x32 = x_flipped.astype(np.float32)
+    y32 = y.astype(np.float32)
+
+    if side == "long":
+        tail_def = 1
+        pct = 0.15
+    elif side == "short":
+        tail_def = 2
+        pct = 0.15
+    else:  # single / two-sided
+        tail_def = 3
+        pct = 0.10
+
+    # Precompute window indices once for candidate
+    n_days = len(window_starts)
+    window_offsets = np.zeros(n_days, dtype=np.int32)
+    flat_indices = []
+    curr_offset = 0
+    for t in range(n_days):
+        st = window_starts[t]
+        en = window_ends[t]
+        window_offsets[t] = curr_offset
+        x_win = x32[st:en]
+        ix = np.argsort(x_win).astype(np.int32)
+        flat_indices.extend(ix)
+        curr_offset += len(ix)
+    window_sorted_idx = np.array(flat_indices, dtype=np.int32)
+
+    ix_overall = np.argsort(x32).astype(np.int32)
+    n_tail = max(5, int(n * pct))
+    long_idx = ix_overall[-n_tail:]
+    short_idx = ix_overall[:n_tail]
+    tail_idx = long_idx if side == "long" else short_idx
+    is_two_sided = (side not in ["long", "short"])
+
+    num_blocks = int(np.ceil(n / block_size))
+    possible_starts = max(1, n - block_size + 1)
+    rng = np.random.default_rng(42)
+    all_starts = rng.integers(0, possible_starts, size=(n_sims, num_blocks)).astype(np.int32)
+
+    null_scores = numba_fast_null_composite_kernel(
+        x32, y32, window_starts, window_ends, window_offsets, window_sorted_idx,
+        ix_overall, tail_idx, is_two_sided, long_idx, short_idx, tail_def, pct,
+        all_starts, block_size, n_sims
+    )
+
     return float(np.percentile(null_scores, 95)), float(np.mean(null_scores))
 
 def main():

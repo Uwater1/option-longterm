@@ -3,7 +3,7 @@
     "feature_name": "sma100_dist",
     "sign": -1,
     "overall_ic": 0.13533247452524316,
-    "deflated_ic": 0.38691086866300767,
+    "deflated_ic": 0.7845098800218098,
     "ic_ir": 0.4190050813389092,
     "monotonicity": 0.6475073313782991
   },
@@ -11,8 +11,16 @@
     "feature_name": "early_vwap_dev",
     "sign": -1,
     "overall_ic": 0.13415571445113478,
-    "deflated_ic": 0.384775131080832,
+    "deflated_ic": 0.7736493223905034,
     "ic_ir": 0.1667991225357781,
     "monotonicity": 0.5653958944281525
+  },
+  {
+    "feature_name": "cvd_divergence_day",
+    "sign": -1,
+    "overall_ic": 0.07117011477574275,
+    "deflated_ic": 0.7110857160459029,
+    "ic_ir": 0.28283587596096943,
+    "monotonicity": 0.6211143695014663
   }
 ]
