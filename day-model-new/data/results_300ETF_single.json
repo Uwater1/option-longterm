@@ -7,69 +7,86 @@
     "combo_mean__max_up_ret__gap_pct",
     "combo_ifelse__gap_pct__max_up_ret__option_oi_growth",
     "combo_ifelse__gap_pct__first_bar_return__short_sell_cover_spread",
-    "combo_ifelse__macd_hist__max_up_ret__option_oi_growth"
+    "combo_ifelse__macd_hist__max_up_ret__option_oi_growth",
+    "combo_ifelse__gap_pct__first_bar_return__growth_momentum_ratio",
+    "combo_ifelse__macd_hist__bar_ret_0__bar_body_rng_0",
+    "combo_ifelse__macd_hist__bar_body_rng_0__short_sell_cover_spread",
+    "combo_max__max_up_ret__yesterday_gap_pct",
+    "combo_ifelse__macd_hist__max_up_ret__growth_momentum_ratio",
+    "combo_clamp_diff__max_up_ret__willr14",
+    "combo_ifelse__macd_hist__first_bar_return__yesterday_northbound_net_ratio",
+    "combo_rank_max__early_range__margin_extreme_rank_252d",
+    "combo_diff__short_sell_quantity__roc60",
+    "combo_rank_min__yesterday_day_skew__sma100_dist",
+    "combo_rank_min__roc60__twenty_gap_bars_regime",
+    "combo_rank_max__first_30min_return__bar_vwap_dev_2",
+    "first_bar_volume",
+    "combo_product__short_sell_quantity__wavetrend_osc_day",
+    "combo_abs_diff__short_sell_quantity__early_range",
+    "combo_diff__max_up_ret__total_balance",
+    "combo_rank_min__early_range__twenty_gap_bars_regime"
   ],
   "training_metrics": {
-    "overall_ic": 0.151885679679352,
+    "overall_ic": 0.1609367343151609,
     "overall_ic_ci": [
-      0.09820459026864393,
-      0.20186248797512568
+      0.11722795154828473,
+      0.20299149838298822
     ],
-    "tail_ic": 0.2817575767752927,
+    "tail_ic": 0.29519665307480253,
     "tail_ic_ci": [
-      0.16822705824343076,
-      0.3827755964711683
+      0.2037255461705093,
+      0.39254757190551715
     ],
-    "monotonicity": 0.9515151515151515,
+    "monotonicity": 0.9636363636363636,
     "monotonicity_ci": [
-      0.7572727272727273,
-      0.9878787878787879
+      0.696969696969697,
+      0.9757575757575757
     ],
-    "ann_ret": 0.08818371799953442,
-    "sharpe": 1.081950244736147,
-    "sortino": 2.0454765173527365,
-    "max_dd": 0.13349798516721356
+    "ann_ret": 0.09372720798952218,
+    "sharpe": 1.0601263951308277,
+    "sortino": 1.901445544940039,
+    "max_dd": 0.08670442146077151
   },
   "oos_metrics": {
-    "overall_ic": 0.05646462393887947,
+    "overall_ic": 0.05156403648898602,
     "overall_ic_ci": [
-      -0.009517700463317385,
-      0.11836990070363976
+      -0.008340031679677931,
+      0.11352413996634626
     ],
-    "tail_ic": 0.12529395770432625,
+    "tail_ic": 0.14396415273899993,
     "tail_ic_ci": [
-      -0.0362490436788985,
-      0.2698425986683029
+      0.011254646953179792,
+      0.2868709636878869
     ],
-    "monotonicity": 0.8303030303030303,
+    "monotonicity": 0.6121212121212121,
     "monotonicity_ci": [
-      -0.006666666666666632,
-      0.8787878787878788
+      0.05454545454545454,
+      0.8424242424242424
     ],
-    "ann_ret": -0.013905368629795939,
-    "sharpe": -0.20280871787648896,
-    "sortino": -0.2998343625786414,
-    "max_dd": 0.1931218973302702
+    "ann_ret": 0.008465303571983024,
+    "sharpe": 0.12302050478333461,
+    "sortino": 0.21278655499414106,
+    "max_dd": 0.16387222546761207
   },
   "lockbox_metrics": {
-    "overall_ic": 0.022800181742038485,
+    "overall_ic": 0.03387057190167048,
     "overall_ic_ci": [
-      -0.07512997557188304,
-      0.10681967220875623
+      -0.051697417612676634,
+      0.11538309874235145
     ],
-    "tail_ic": 0.07867717052161173,
+    "tail_ic": 0.07677913998866737,
     "tail_ic_ci": [
-      -0.1449715477612847,
-      0.280950365525202
+      -0.11853405155829165,
+      0.27450638909702113
     ],
-    "monotonicity": 0.41818181818181815,
+    "monotonicity": 0.5878787878787879,
     "monotonicity_ci": [
-      -0.24848484848484848,
-      0.7212121212121212
+      -0.12757575757575754,
+      0.7818181818181819
     ],
-    "ann_ret": -0.03351365402921304,
-    "sharpe": -0.4513513638990703,
-    "sortino": -0.6673399385654087,
-    "max_dd": 0.2197013424345149
+    "ann_ret": -0.0075200350200028245,
+    "sharpe": -0.10005314456580774,
+    "sortino": -0.19027595247465245,
+    "max_dd": 0.1563260507327306
   }
 }

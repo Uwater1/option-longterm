@@ -733,7 +733,21 @@ def main():
     else:
         print(f"Split-half sign stability: all {len(eval_results)} features passed.")
 
-    # 4. Light Benjamini-Hochberg FDR Pre-Filter Gate
+    # 3c. B2 Rolling Guard filter (instant check on pre-computed monotonicity & IR)
+    guard_survivors = []
+    guard_rejects = []
+    for item in stable_results:
+        passes_guard = (item["monotonicity"] >= args.mono_thr) and (item["ic_ir"] >= args.ir_thr)
+        if passes_guard:
+            item["passes_rolling_guard"] = True
+            guard_survivors.append(item)
+        else:
+            item["passes_rolling_guard"] = False
+            guard_rejects.append(item)
+
+    print(f"B2 Rolling Guard: {len(guard_survivors)} / {len(stable_results)} candidates passed (dropped {len(guard_rejects)}).")
+
+    # 4. Light Benjamini-Hochberg FDR Pre-Filter Gate (runs ONLY on B2 survivors)
     if args.side == "long":
         tail_def = 1
         pct = 0.15
@@ -745,25 +759,55 @@ def main():
         pct = 0.10
     n_tail = max(5, int(len(y_train) * pct))
     
-    print(f"Running single-trial empirical null simulation for BH-FDR pre-filter ({len(stable_results)} candidates)...")
-    # Use actual design matrix X_train to preserve real candidate distributions
-    null_single_ics = numba_single_trial_empirical_sim(X_train, y_train, tail_def, n_tail, 5000, block_size=10)
-    
-    # Compute empirical p-value for each stable candidate
-    for item in stable_results:
+    # Pre-cache BH-FDR single-feature empirical null distribution
+    fdr_cache_path = data_out_dir / f"fdr_null_{args.etf}_{args.side}{suffix}.json"
+    fdr_cache_valid = False
+    if fdr_cache_path.exists():
+        try:
+            with open(fdr_cache_path, "r") as f:
+                fdr_cache = json.load(f)
+            if fdr_cache.get("n_rows") == len(y_train):
+                null_single_ics = np.array(fdr_cache["null_single_ics"], dtype=np.float64)
+                fdr_cache_valid = True
+                print(f"BH-FDR single-trial null cache hit (shape: {null_single_ics.shape})")
+        except Exception:
+            pass
+
+    if not fdr_cache_valid:
+        print(f"Running single-trial empirical null simulation for BH-FDR pre-filter ({len(guard_survivors)} candidates)...")
+        if guard_survivors:
+            X_survivors = np.column_stack([item["x_flipped"] for item in guard_survivors])
+        else:
+            X_survivors = X_train
+        null_single_ics = numba_single_trial_empirical_sim(X_survivors, y_train, tail_def, n_tail, 5000, block_size=10)
+        try:
+            with open(fdr_cache_path, "w") as f:
+                json.dump({"n_rows": len(y_train), "null_single_ics": null_single_ics.tolist()}, f)
+        except Exception:
+            pass
+
+    # Compute empirical p-value for each B2 survivor
+    for item in guard_survivors:
         item["p_value"] = float(np.mean(null_single_ics >= item["overall_ic"]))
         
     # Apply Benjamini-Hochberg FDR procedure
-    p_values = np.array([item["p_value"] for item in stable_results])
-    bh_mask = benjamini_hochberg_fdr(p_values, fdr_threshold=FDR_THRESHOLD)
-    for idx, item in enumerate(stable_results):
-        item["passes_fdr"] = bool(bh_mask[idx])
-
-    # 5. Log all attempts and identify surviving candidates
-    attempts_log = []
+    p_values = np.array([item["p_value"] for item in guard_survivors]) if guard_survivors else np.array([])
+    bh_mask = benjamini_hochberg_fdr(p_values, fdr_threshold=FDR_THRESHOLD) if len(p_values) > 0 else np.array([])
+    
     surviving_candidates = []
+    fdr_rejects = []
+    for idx, item in enumerate(guard_survivors):
+        passes_fdr = bool(bh_mask[idx])
+        item["passes_fdr"] = passes_fdr
+        if passes_fdr:
+            surviving_candidates.append(item)
+        else:
+            fdr_rejects.append(item)
 
-    # Log split-half rejects first
+    # 5. Log all attempts
+    attempts_log = []
+
+    # Log split-half rejects
     for item in split_half_rejects:
         attempts_log.append({
             "feature_name": item["feature_name"],
@@ -778,11 +822,29 @@ def main():
             "verdict": "REJECTED_SPLIT_HALF"
         })
 
-    for item in stable_results:
-        passes_guard = (item["monotonicity"] >= args.mono_thr) and (item["ic_ir"] >= args.ir_thr)
-        passes_fdr = item["passes_fdr"]
-        
-        attempt_record = {
+    # Log rolling guard rejects
+    for item in guard_rejects:
+        attempts_log.append({
+            "feature_name": item["feature_name"],
+            "sign": item["sign"],
+            "raw_ic": item["raw_ic"],
+            "overall_ic": item["overall_ic"],
+            "mean_tail_ic": item["mean_tail_ic"],
+            "sortino": item["sortino"],
+            "composite_score": item["composite_score"],
+            "ic_ir": item["ic_ir"],
+            "monotonicity": item["monotonicity"],
+            "split_half_ic_first": item["split_half_ic_first"],
+            "split_half_ic_second": item["split_half_ic_second"],
+            "passes_split_half": True,
+            "passes_rolling_guard": False,
+            "passes_fdr": False,
+            "verdict": "REJECTED_ROLLING_GUARD"
+        })
+
+    # Log FDR rejects
+    for item in fdr_rejects:
+        attempts_log.append({
             "feature_name": item["feature_name"],
             "sign": item["sign"],
             "raw_ic": item["raw_ic"],
@@ -796,20 +858,11 @@ def main():
             "split_half_ic_first": item["split_half_ic_first"],
             "split_half_ic_second": item["split_half_ic_second"],
             "passes_split_half": True,
-            "passes_rolling_guard": bool(passes_guard),
-            "passes_fdr": bool(passes_fdr),
-            "verdict": "PENDING_ADMISSION"
-        }
-        
-        if not passes_guard:
-            attempt_record["verdict"] = "REJECTED_ROLLING_GUARD"
-            attempts_log.append(attempt_record)
-        elif not passes_fdr:
-            attempt_record["verdict"] = "REJECTED_FDR_GATE"
-            attempts_log.append(attempt_record)
-        else:
-            surviving_candidates.append(item)
-            
+            "passes_rolling_guard": True,
+            "passes_fdr": False,
+            "verdict": "REJECTED_FDR_GATE"
+        })
+
     print(f"{len(surviving_candidates)} features survived split-half + rolling guard + FDR out of {len(features_to_eval)}.")
 
     # 6. Compute Data-Adaptive Composite Score Threshold (empirical 95th percentile)

@@ -26,17 +26,15 @@ Goal: Produce aggressive candidate recipes and combinations to find weak/joint s
 
 Goal: Apply strict statistical guards, correlation filters, and trial-count tracking to build a robust pool.
 
-### B1. Pre-filters (Cheap gates)
+### B1. Pre-filters (Cheap gates & order of operations)
 1. **Split-half sign stability**: Reject candidate if training IC sign disagrees between first/second halves of train set.
    - **Sign locking**: Split-half check outputs a locked `sign` (+1 or -1) value. This sign is the pipeline's single source of truth, locked here and carried forward to B2 and B3.
-2. **BH-FDR pre-filter**: Reject if empirical $p$-value fails Benjamini-Hochberg FDR at $q=0.30$ (via 5000-trial single-feature block-shuffled simulation).
-
-### B2. Rolling Guard (Pre-filter check)
-- 90-calendar-date rolling tail IC. Drop if monotonicity < `mono_thr` or `IC_IR` < `ir_thr`:
-  - `long`/`short`: `mono_thr = 0.55`, `ir_thr = 0.15`
-  - `single`: `mono_thr = 0.70`, `ir_thr = 0.30`
-- **Pass-forward cached values**: Rolling mono average from this step is cached and passed forward to B3, not just its pass/fail verdict (uses locked `sign` from B1).
-- **Lesson from v2**: Do not use as sole final filter, only to thin herd before correlation gate.
+2. **Rolling Guard (Pre-filter check)**: 90-calendar-date rolling tail IC evaluated instantly on pre-computed values. Drop if monotonicity < `mono_thr` or `IC_IR` < `ir_thr`:
+   - `long`/`short`: `mono_thr = 0.55`, `ir_thr = 0.15`
+   - `single`: `mono_thr = 0.70`, `ir_thr = 0.30`
+   - **Pass-forward cached values**: Rolling mono average from this step is cached and passed forward to B3, not just its pass/fail verdict (uses locked `sign` from B1).
+   - **Cheap-first ordering**: Executed before BH-FDR simulation to thin pool by ~98% instantly.
+3. **BH-FDR pre-filter**: Reject if empirical $p$-value fails Benjamini-Hochberg FDR at $q=0.30$ (via 5,000-trial single-feature block-shuffled simulation on compact survivor matrix `X_survivors`, cached per ETF/side).
 
 ### B3. Admission Floor (Composite score gate)
 - **Rank-normalized Composite Score**:
