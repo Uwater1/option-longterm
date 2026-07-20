@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "feature_name": "combo_tri_ifelse__macd_hist__vol_pk20__total_balance__yesterday_early_vwap_dev__body_to_range_ratio",
+    "sign": 1,
+    "overall_ic": 0.32324570417404175,
+    "deflated_ic": 0.10107219647371751,
+    "ic_ir": 0.2820848380151715,
+    "monotonicity": 0.6228739002932552,
+    "recipe": {
+      "op": "tri_ifelse",
+      "feature_cond": "macd_hist",
+      "feature_cond2": "vol_pk20",
+      "feature_a": "total_balance",
+      "feature_b": "yesterday_early_vwap_dev",
+      "feature_c": "body_to_range_ratio"
+    }
+  }
+]

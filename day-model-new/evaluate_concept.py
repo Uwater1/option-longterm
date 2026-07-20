@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from scipy.stats import rankdata
+from numba import njit, prange
 
 # Set up paths to import from day-model
 HERE = Path(__file__).resolve().parent
@@ -89,23 +90,157 @@ def compute_side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str) -> f
     return _spearman_from_arrays(y_true[idx], y_pred[idx])
 
 def _spearman_rows(y_true_matrix: np.ndarray, y_pred_matrix: np.ndarray) -> np.ndarray:
-    """Compute Spearman correlation for multiple rows in parallel."""
+    """Compute Spearman correlation for multiple rows using Numba parallel."""
     B, n = y_true_matrix.shape
-    out = np.zeros(B)
-    for b in range(B):
-        out[b] = _spearman_from_arrays(y_true_matrix[b], y_pred_matrix[b])
-    return out
+    yt = y_true_matrix.astype(np.float32)
+    yp = y_pred_matrix.astype(np.float32)
+
+    @njit(parallel=True, cache=True)
+    def _kernel(yt, yp, B, n):
+        out = np.empty(B, dtype=np.float64)
+        for b in prange(B):
+            a = yt[b]
+            b_arr = yp[b]
+            # Rank both
+            ix_a = np.argsort(a)
+            ix_b = np.argsort(b_arr)
+            ra = np.empty(n, dtype=np.float32)
+            rb = np.empty(n, dtype=np.float32)
+            for i in range(n):
+                ra[ix_a[i]] = np.float32(i + 1)
+                rb[ix_b[i]] = np.float32(i + 1)
+            mean_ra = ra.sum() / n
+            mean_rb = rb.sum() / n
+            cov = np.float32(0.0)
+            var_a = np.float32(0.0)
+            var_b = np.float32(0.0)
+            for i in range(n):
+                da = ra[i] - mean_ra
+                db = rb[i] - mean_rb
+                cov += da * db
+                var_a += da * da
+                var_b += db * db
+            denom = np.sqrt(var_a * var_b)
+            out[b] = 0.0 if denom < 1e-12 else float(cov / denom)
+        return out
+
+    return _kernel(yt, yp, B, n)
+
+
+def _tail_ic_rows(y_true_matrix: np.ndarray, y_pred_matrix: np.ndarray, side: str) -> np.ndarray:
+    """Compute side-aware tail IC for multiple rows using Numba parallel."""
+    B, n = y_true_matrix.shape
+    if side in ["long", "short"]:
+        pct = 0.15
+    else:
+        pct = 0.10
+    n_tail = max(5, int(n * pct))
+    tail_def = 1 if side == "long" else (2 if side == "short" else 3)
+
+    yt = y_true_matrix.astype(np.float32)
+    yp = y_pred_matrix.astype(np.float32)
+
+    @njit(parallel=True, cache=True)
+    def _kernel(yt, yp, B, n, n_tail, tail_def):
+        out = np.empty(B, dtype=np.float64)
+        for b in prange(B):
+            pred = yp[b]
+            truth = yt[b]
+            order = np.argsort(pred)
+            if tail_def == 1:  # long
+                idx = order[n - n_tail:]
+            elif tail_def == 2:  # short
+                idx = order[:n_tail]
+            else:  # two-sided
+                idx = np.empty(n_tail * 2, dtype=np.int64)
+                for i in range(n_tail):
+                    idx[i] = order[i]
+                    idx[n_tail + i] = order[n - n_tail + i]
+            m = len(idx)
+            y_tail = np.empty(m, dtype=np.float32)
+            p_tail = np.empty(m, dtype=np.float32)
+            for i in range(m):
+                y_tail[i] = truth[idx[i]]
+                p_tail[i] = pred[idx[i]]
+            # Spearman on tail
+            ix_a = np.argsort(y_tail)
+            ix_b = np.argsort(p_tail)
+            ra = np.empty(m, dtype=np.float32)
+            rb = np.empty(m, dtype=np.float32)
+            for i in range(m):
+                ra[ix_a[i]] = np.float32(i + 1)
+                rb[ix_b[i]] = np.float32(i + 1)
+            mean_ra = ra.sum() / m
+            mean_rb = rb.sum() / m
+            cov = np.float32(0.0)
+            var_a = np.float32(0.0)
+            var_b = np.float32(0.0)
+            for i in range(m):
+                da = ra[i] - mean_ra
+                db = rb[i] - mean_rb
+                cov += da * db
+                var_a += da * da
+                var_b += db * db
+            denom = np.sqrt(var_a * var_b)
+            out[b] = 0.0 if denom < 1e-12 else float(cov / denom)
+        return out
+
+    return _kernel(yt, yp, B, n, n_tail, tail_def)
+
 
 def _decile_mono_rows(y_true_matrix: np.ndarray, y_pred_matrix: np.ndarray) -> np.ndarray:
-    """Compute decile monotonicity for multiple rows in parallel."""
+    """Compute decile monotonicity for multiple rows using Numba parallel."""
     B, n = y_true_matrix.shape
-    out = np.zeros(B)
-    for b in range(B):
-        out[b] = compute_decile_monotonicity(y_true_matrix[b], y_pred_matrix[b])
-    return out
+    yt = y_true_matrix.astype(np.float32)
+    yp = y_pred_matrix.astype(np.float32)
+
+    @njit(parallel=True, cache=True)
+    def _kernel(yt, yp, B, n):
+        out = np.empty(B, dtype=np.float64)
+        for b in prange(B):
+            pred = yp[b]
+            truth = yt[b]
+            if n < 20:
+                out[b] = 0.0
+                continue
+            order = np.argsort(pred)
+            # Compute decile means
+            chunk_size = n // 10
+            means = np.empty(10, dtype=np.float32)
+            for d in range(10):
+                start = d * chunk_size
+                end = start + chunk_size if d < 9 else n
+                s = np.float32(0.0)
+                cnt = 0
+                for i in range(start, end):
+                    s += truth[order[i]]
+                    cnt += 1
+                means[d] = s / cnt if cnt > 0 else np.float32(0.0)
+            # Spearman of means vs rank 1..10
+            ix = np.argsort(means)
+            ranks = np.empty(10, dtype=np.float32)
+            for i in range(10):
+                ranks[ix[i]] = np.float32(i + 1)
+            expected = np.arange(1, 11, dtype=np.float32)
+            mean_e = expected.sum() / 10
+            mean_r = ranks.sum() / 10
+            cov = np.float32(0.0)
+            var_e = np.float32(0.0)
+            var_r = np.float32(0.0)
+            for i in range(10):
+                de = expected[i] - mean_e
+                dr = ranks[i] - mean_r
+                cov += de * dr
+                var_e += de * de
+                var_r += dr * dr
+            denom = np.sqrt(var_e * var_r)
+            out[b] = 0.0 if denom < 1e-12 else float(cov / denom)
+        return out
+
+    return _kernel(yt, yp, B, n)
 
 def block_bootstrap_ci(y_true: np.ndarray, y_pred: np.ndarray, side: str, block_size=10, n_bootstraps=1000):
-    """Vectorized block-bootstrap CIs for Spearman IC, Tail IC, and decile monotonicity."""
+    """Vectorized block-bootstrap CIs using Numba-parallel kernels."""
     y_true = np.asarray(y_true, dtype=np.float64)
     y_pred = np.asarray(y_pred, dtype=np.float64)
     n = len(y_true)
@@ -128,10 +263,7 @@ def block_bootstrap_ci(y_true: np.ndarray, y_pred: np.ndarray, side: str, block_
     
     boot_overall_ics = _spearman_rows(y_b, p_b)
     boot_monos = _decile_mono_rows(y_b, p_b)
-    
-    boot_tail_ics = np.zeros(n_bootstraps)
-    for b in range(n_bootstraps):
-        boot_tail_ics[b] = compute_side_tail_ic(y_b[b], p_b[b], side)
+    boot_tail_ics = _tail_ic_rows(y_b, p_b, side)
         
     ci_overall = (float(np.percentile(boot_overall_ics, 2.5)), float(np.percentile(boot_overall_ics, 97.5)))
     ci_tail = (float(np.percentile(boot_tail_ics, 2.5)), float(np.percentile(boot_tail_ics, 97.5)))

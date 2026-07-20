@@ -1,4 +1,4 @@
-# Day-Model Rewrite v3 â€” Baseline Performance Report
+# Day-Model Rewrite v3 ¡ª Baseline Performance Report
 
 This report summarizes the baseline performance of the simple IC-weighted combination model
 evaluated on existing candidate features.
@@ -9,21 +9,21 @@ Holdout OOS starts `2022-01-01` (`2025-01-01` for `588000ETF`), and OOS Lockbox 
 
 | ETF | Side | Features Admitted | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Ann. Return | Sharpe | Sortino | Max DD |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 300ETF | single | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 300ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 300ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 50ETF | single | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 50ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 50ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 500ETF | single | 2 | +0.1016 | [+0.0397, +0.1610] | +0.0579* | [-0.0904, +0.1960] | +0.7576 | 1.55% | 0.1783 | 0.2914 | 11.49% |
-| 500ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 500ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 588000ETF | single | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 588000ETF | long | 1 | -0.0495* | [-0.1610, +0.0774] | -0.0972* | [-0.4453, +0.1298] | -0.3939 | -18.07% | -1.8571 | -2.1939 | 26.56% |
-| 588000ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 159915ETF | single | 2 | +0.1162 | [+0.0537, +0.1679] | +0.1944 | [+0.0309, +0.3380] | +0.8667 | 9.06% | 0.8748 | 1.5872 | 10.86% |
-| 159915ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 159915ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 300ETF | single | 4 | +0.0565* | [-0.0095, +0.1184] | +0.1253* | [-0.0362, +0.2698] | +0.8303 | -1.39% | -0.2028 | -0.2998 | 19.31% |
+| 300ETF | long | 0 | +0.0000* | [-0.0537, +0.0496] | +0.0000* | [-0.1414, +0.1441] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 300ETF | short | 0 | +0.0000* | [-0.0537, +0.0496] | +0.0000* | [-0.1344, +0.1381] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 50ETF | single | 2 | +0.0221* | [-0.0328, +0.0763] | +0.0425* | [-0.0666, +0.1536] | +0.2970 | -2.25% | -0.3719 | -0.5267 | 19.22% |
+| 50ETF | long | 1 | +0.0505* | [-0.0100, +0.1055] | -0.0708* | [-0.2182, +0.0708] | +0.6485 | -4.63% | -1.0480 | -1.5026 | 26.80% |
+| 50ETF | short | 0 | +0.0000* | [-0.0542, +0.0515] | +0.0000* | [-0.1425, +0.1298] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 500ETF | single | 8 | +0.0798 | [+0.0169, +0.1356] | +0.0315* | [-0.1128, +0.1615] | +0.7333 | 1.37% | 0.1674 | 0.2881 | 17.89% |
+| 500ETF | long | 1 | -0.0195* | [-0.0841, +0.0318] | -0.0620* | [-0.2075, +0.0986] | +0.0182 | -5.68% | -0.7528 | -1.0614 | 28.55% |
+| 500ETF | short | 1 | +0.0005* | [-0.0569, +0.0709] | -0.0444* | [-0.1830, +0.1334] | -0.1636 | -4.77% | -0.6948 | -0.8928 | 31.85% |
+| 588000ETF | single | 9 | +0.0191* | [-0.0853, +0.1234] | +0.0756* | [-0.1280, +0.3027] | +0.1394 | 2.39% | 0.1923 | 0.3056 | 17.85% |
+| 588000ETF | long | 1 | -0.0181* | [-0.1124, +0.0691] | -0.1163* | [-0.3387, +0.2895] | -0.2727 | -11.95% | -0.8304 | -1.1066 | 22.94% |
+| 588000ETF | short | 0 | +0.0000* | [-0.0849, +0.0809] | +0.0000* | [-0.2334, +0.2385] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 159915ETF | single | 5 | +0.0828 | [+0.0119, +0.1394] | +0.0769* | [-0.0788, +0.2088] | +0.7939 | 3.65% | 0.3566 | 0.5880 | 17.09% |
+| 159915ETF | long | 0 | +0.0000* | [-0.0556, +0.0505] | +0.0000* | [-0.1442, +0.1478] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 159915ETF | short | 0 | +0.0000* | [-0.0556, +0.0505] | +0.0000* | [-0.1416, +0.1372] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 
 \* indicates that the 95% circular block-bootstrap confidence interval spans zero (statistically indistinguishable from noise).
 
@@ -31,28 +31,31 @@ Holdout OOS starts `2022-01-01` (`2025-01-01` for `588000ETF`), and OOS Lockbox 
 
 | ETF | Side | Features Admitted | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Ann. Return | Sharpe | Sortino | Max DD |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 300ETF | single | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 300ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 300ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 50ETF | single | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 50ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 50ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 500ETF | single | 2 | +0.0839* | [-0.0023, +0.1736] | +0.0542* | [-0.1473, +0.2446] | +0.5879 | -1.63% | -0.1815 | -0.2901 | 20.66% |
-| 500ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 500ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 588000ETF | single | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 588000ETF | long | 1 | -0.0589* | [-0.2117, +0.0834] | -0.0811* | [-0.4476, +0.2880] | -0.4545 | -21.52% | -1.9254 | -2.3070 | 24.98% |
-| 588000ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 159915ETF | single | 2 | +0.1133 | [+0.0274, +0.1953] | +0.2091* | [-0.0063, +0.4163] | +0.7212 | 15.41% | 1.3627 | 2.7937 | 7.07% |
-| 159915ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 159915ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 300ETF | single | 4 | +0.0228* | [-0.0751, +0.1068] | +0.0787* | [-0.1450, +0.2810] | +0.4182 | -3.35% | -0.4514 | -0.6673 | 21.97% |
+| 300ETF | long | 0 | +0.0000* | [-0.0648, +0.0680] | +0.0000* | [-0.1984, +0.2066] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 300ETF | short | 0 | +0.0000* | [-0.0648, +0.0680] | +0.0000* | [-0.1942, +0.1901] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 50ETF | single | 2 | +0.0802 | [+0.0175, +0.1530] | +0.0315* | [-0.0932, +0.1876] | +0.5515 | -3.77% | -0.5844 | -0.8219 | 10.49% |
+| 50ETF | long | 1 | +0.0993 | [+0.0221, +0.1688] | -0.1023* | [-0.3240, +0.1281] | +0.7818 | -3.91% | -0.8583 | -1.3868 | 11.59% |
+| 50ETF | short | 0 | +0.0000* | [-0.0658, +0.0757] | +0.0000* | [-0.2169, +0.2037] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 500ETF | single | 8 | +0.0816* | [-0.0085, +0.1705] | +0.0140* | [-0.1993, +0.2286] | +0.6242 | -1.19% | -0.1379 | -0.2403 | 17.69% |
+| 500ETF | long | 1 | -0.0347* | [-0.1109, +0.0388] | -0.0919* | [-0.2972, +0.1042] | +0.0303 | -6.42% | -0.8172 | -1.1857 | 19.21% |
+| 500ETF | short | 1 | +0.0406* | [-0.0502, +0.1431] | +0.0202* | [-0.2397, +0.2491] | +0.2000 | -3.48% | -0.5423 | -0.7343 | 17.69% |
+| 588000ETF | single | 9 | -0.0184* | [-0.1426, +0.1207] | +0.0788* | [-0.1992, +0.3468] | +0.0788 | -5.74% | -0.4366 | -0.6448 | 16.54% |
+| 588000ETF | long | 1 | -0.0604* | [-0.1729, +0.0510] | -0.1437* | [-0.4768, +0.4132] | -0.3212 | -10.39% | -0.6965 | -0.9296 | 15.89% |
+| 588000ETF | short | 0 | +0.0000* | [-0.0955, +0.1009] | +0.0000* | [-0.2812, +0.2753] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 159915ETF | single | 5 | +0.1041 | [+0.0126, +0.1866] | +0.0961* | [-0.1329, +0.2737] | +0.8788 | 4.02% | 0.3608 | 0.6095 | 19.53% |
+| 159915ETF | long | 0 | +0.0000* | [-0.0726, +0.0701] | +0.0000* | [-0.2072, +0.1920] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 159915ETF | short | 0 | +0.0000* | [-0.0726, +0.0701] | +0.0000* | [-0.1827, +0.2133] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 
 \* indicates that the 95% circular block-bootstrap confidence interval spans zero (statistically indistinguishable from noise).
 
 ## Admitted Features Details
 
 ### 300ETF (single)
-No features admitted.
+- `combo_mean__max_up_ret__gap_pct` (sign=+1, overall_ic=0.2638, deflated_ic=0.0902)
+- `combo_ifelse__gap_pct__max_up_ret__option_oi_growth` (sign=+1, overall_ic=0.2475, deflated_ic=0.0740)
+- `combo_ifelse__gap_pct__first_bar_return__short_sell_cover_spread` (sign=+1, overall_ic=0.2403, deflated_ic=0.0667)
+- `combo_ifelse__macd_hist__max_up_ret__option_oi_growth` (sign=+1, overall_ic=0.2143, deflated_ic=0.0408)
 
 ### 300ETF (long)
 No features admitted.
@@ -61,36 +64,54 @@ No features admitted.
 No features admitted.
 
 ### 50ETF (single)
-No features admitted.
+- `combo_tri_mean__iv_corridor_width__capital_buy_value__rsi21` (sign=-1, overall_ic=0.2312, deflated_ic=0.0560)
+- `combo_tri_median__bar_vol_4__bar_vol_0__wavetrend_osc_day` (sign=-1, overall_ic=0.2148, deflated_ic=0.0395)
 
 ### 50ETF (long)
-No features admitted.
+- `combo_tri_mean__margin_net_buy__early_range__roc5` (sign=-1, overall_ic=0.2542, deflated_ic=0.0438)
 
 ### 50ETF (short)
 No features admitted.
 
 ### 500ETF (single)
-- `max_up_ret` (sign=+1, overall_ic=0.2500, deflated_ic=0.1143)
-- `total_balance` (sign=-1, overall_ic=0.1773, deflated_ic=0.0417)
+- `combo_diff__max_up_ret__willr14` (sign=+1, overall_ic=0.3162, deflated_ic=0.1357)
+- `combo_mean__max_up_ret__gap_pct` (sign=+1, overall_ic=0.2997, deflated_ic=0.1192)
+- `combo_ifelse__gap_pct__max_up_ret__max_down_ret` (sign=+1, overall_ic=0.2898, deflated_ic=0.1093)
+- `combo_tri_median__num_up_bars__bar_body_rng_0__body_to_range_ratio` (sign=+1, overall_ic=0.2844, deflated_ic=0.1039)
+- `combo_tri_median__max_up_ret__bar_vwap_dev_2__bar_body_rng_1` (sign=+1, overall_ic=0.2597, deflated_ic=0.0792)
+- `combo_diff__yesterday_afternoon_momentum__bar_vol_4` (sign=-1, overall_ic=0.2422, deflated_ic=0.0617)
+- `combo_ratio__max_down_ret__vix_realized_spread` (sign=+1, overall_ic=0.2353, deflated_ic=0.0548)
+- `combo_mean__max_up_ret__vix_realized_spread` (sign=+1, overall_ic=0.2294, deflated_ic=0.0489)
 
 ### 500ETF (long)
-No features admitted.
+- `combo_abs_diff__willr14__max_up_ret` (sign=+1, overall_ic=0.3177, deflated_ic=0.1044)
 
 ### 500ETF (short)
-No features admitted.
+- `combo_tri_ifelse__macd_hist__vol_pk20__total_balance__yesterday_early_vwap_dev__body_to_range_ratio` (sign=+1, overall_ic=0.3232, deflated_ic=0.1011)
 
 ### 588000ETF (single)
-No features admitted.
+- `combo_tri_ifelse__atr14_norm__vol20__vix_skew_proxy__bar_ret_0__max_down_ret` (sign=+1, overall_ic=0.3841, deflated_ic=0.1397)
+- `combo_tri_ifelse__vix__vol20__first_30min_return__vol5__first_bar_return` (sign=+1, overall_ic=0.3522, deflated_ic=0.1077)
+- `combo_tri_ifelse__atr14_norm__vol20__short_sell_cover_spread__bar_ret_0__max_down_ret` (sign=+1, overall_ic=0.3311, deflated_ic=0.0867)
+- `combo_tri_max__max_up_ret__vol5__max_down_ret` (sign=+1, overall_ic=0.3161, deflated_ic=0.0717)
+- `combo_tri_ifelse__vix__vol20__bar_vwap_dev_1__vol5__bar_body_rng_1` (sign=+1, overall_ic=0.3094, deflated_ic=0.0649)
+- `combo_rank_max__first_bar_return__num_up_bars` (sign=+1, overall_ic=0.3055, deflated_ic=0.0611)
+- `combo_tri_ifelse__atr14_norm__vol20__short_sell_cover_spread__bar_ret_0__early_momentum` (sign=+1, overall_ic=0.3039, deflated_ic=0.0595)
+- `combo_rank_max__max_down_ret__bar_rng_3` (sign=+1, overall_ic=0.3023, deflated_ic=0.0579)
+- `combo_diff__vix_skew_proxy__gap_pct` (sign=+1, overall_ic=0.2978, deflated_ic=0.0534)
 
 ### 588000ETF (long)
-- `body_to_range_ratio` (sign=+1, overall_ic=0.2756, deflated_ic=0.0686)
+- `combo_max__vol5__bar_rng_3` (sign=+1, overall_ic=0.3428, deflated_ic=0.0540)
 
 ### 588000ETF (short)
 No features admitted.
 
 ### 159915ETF (single)
-- `yesterday_afternoon_momentum` (sign=-1, overall_ic=0.2229, deflated_ic=0.0880)
-- `max_up_ret` (sign=+1, overall_ic=0.2065, deflated_ic=0.0716)
+- `combo_tri_ifelse__gap_pct__bb_width__max_up_ret__yesterday_early_vwap_dev__margin_buy_repayment_spread` (sign=+1, overall_ic=0.2707, deflated_ic=0.0881)
+- `combo_tri_mean__max_up_ret__early_range__gap_pct` (sign=+1, overall_ic=0.2636, deflated_ic=0.0809)
+- `combo_diff__max_up_ret__bar_body_rng_1` (sign=+1, overall_ic=0.2322, deflated_ic=0.0496)
+- `combo_tri_mean__yesterday_afternoon_momentum__yesterday_afternoon_reversal__yesterday_day_vwap_dev` (sign=-1, overall_ic=0.2284, deflated_ic=0.0457)
+- `combo_tri_ifelse__gap_pct__bb_width__bar_body_rng_0__yesterday_early_vwap_dev__max_down_ret` (sign=+1, overall_ic=0.2202, deflated_ic=0.0375)
 
 ### 159915ETF (long)
 No features admitted.

@@ -1,10 +1,15 @@
 [
   {
-    "feature_name": "body_to_range_ratio",
+    "feature_name": "combo_max__vol5__bar_rng_3",
     "sign": 1,
-    "overall_ic": 0.2756258937138496,
-    "deflated_ic": 0.06860857757582242,
-    "ic_ir": 0.32148686110927105,
-    "monotonicity": 0.6377097729516288
+    "overall_ic": 0.3428058624267578,
+    "deflated_ic": 0.05395249888545417,
+    "ic_ir": 0.3000181477228422,
+    "monotonicity": 0.5913129318854886,
+    "recipe": {
+      "op": "max",
+      "feature_a": "vol5",
+      "feature_b": "bar_rng_3"
+    }
   }
 ]

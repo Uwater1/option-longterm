@@ -3,68 +3,78 @@
   "side": "single",
   "early": false,
   "k": 1.0,
-  "features_selected": [],
+  "features_selected": [
+    "combo_tri_ifelse__atr14_norm__vol20__vix_skew_proxy__bar_ret_0__max_down_ret",
+    "combo_tri_ifelse__vix__vol20__first_30min_return__vol5__first_bar_return",
+    "combo_tri_ifelse__atr14_norm__vol20__short_sell_cover_spread__bar_ret_0__max_down_ret",
+    "combo_tri_max__max_up_ret__vol5__max_down_ret",
+    "combo_tri_ifelse__vix__vol20__bar_vwap_dev_1__vol5__bar_body_rng_1",
+    "combo_rank_max__first_bar_return__num_up_bars",
+    "combo_tri_ifelse__atr14_norm__vol20__short_sell_cover_spread__bar_ret_0__early_momentum",
+    "combo_rank_max__max_down_ret__bar_rng_3",
+    "combo_diff__vix_skew_proxy__gap_pct"
+  ],
   "training_metrics": {
-    "overall_ic": 0.0,
+    "overall_ic": 0.20613750121302796,
     "overall_ic_ci": [
-      0.0,
-      0.0
+      0.14004015171851691,
+      0.2647375711281557
     ],
-    "tail_ic": 0.0,
+    "tail_ic": 0.442920896900156,
     "tail_ic_ci": [
-      0.0,
-      0.0
+      0.31355564274904074,
+      0.5642864422461655
     ],
-    "monotonicity": 0.0,
+    "monotonicity": 0.8424242424242424,
     "monotonicity_ci": [
-      0.0,
-      0.0
+      0.5878787878787879,
+      0.9393939393939394
     ],
-    "ann_ret": 0.0,
-    "sharpe": 0.0,
-    "sortino": 0.0,
-    "max_dd": 0.0
+    "ann_ret": 0.18430603488482897,
+    "sharpe": 1.9381043869303234,
+    "sortino": 4.596788099595301,
+    "max_dd": 0.07099178267125239
   },
   "oos_metrics": {
-    "overall_ic": 0.0,
+    "overall_ic": 0.01911934612965703,
     "overall_ic_ci": [
-      0.0,
-      0.0
+      -0.08534437797208161,
+      0.12341654717632625
     ],
-    "tail_ic": 0.0,
+    "tail_ic": 0.07557256995816183,
     "tail_ic_ci": [
-      0.0,
-      0.0
+      -0.12803109959274342,
+      0.302686412439837
     ],
-    "monotonicity": 0.0,
+    "monotonicity": 0.1393939393939394,
     "monotonicity_ci": [
-      0.0,
-      0.0
+      -0.2609090909090909,
+      0.503030303030303
     ],
-    "ann_ret": 0.0,
-    "sharpe": 0.0,
-    "sortino": 0.0,
-    "max_dd": 0.0
+    "ann_ret": 0.02386469669963576,
+    "sharpe": 0.19227641584359795,
+    "sortino": 0.3056259280384183,
+    "max_dd": 0.1785145571570607
   },
   "lockbox_metrics": {
-    "overall_ic": 0.0,
+    "overall_ic": -0.01840847670376567,
     "overall_ic_ci": [
-      0.0,
-      0.0
+      -0.1425951758500543,
+      0.12074835754226375
     ],
-    "tail_ic": 0.0,
+    "tail_ic": 0.07875339146066992,
     "tail_ic_ci": [
-      0.0,
-      0.0
+      -0.19923649459783913,
+      0.3468475390156062
     ],
-    "monotonicity": 0.0,
+    "monotonicity": 0.07878787878787878,
     "monotonicity_ci": [
-      0.0,
-      0.0
+      -0.4303030303030303,
+      0.44242424242424244
     ],
-    "ann_ret": 0.0,
-    "sharpe": 0.0,
-    "sortino": 0.0,
-    "max_dd": 0.0
+    "ann_ret": -0.05735001785289098,
+    "sharpe": -0.4365981556946581,
+    "sortino": -0.6447849885401717,
+    "max_dd": 0.1653739109588484
   }
 }

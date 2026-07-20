@@ -9,35 +9,61 @@ import os
 import sys
 import json
 import argparse
-import subprocess
 from pathlib import Path
 from joblib import Parallel, delayed
 
 HERE = Path(__file__).resolve().parent
 
+# Ensure day-model-new is importable
+sys.path.insert(0, str(HERE))
+
 ETFS = ["300ETF", "50ETF", "500ETF", "588000ETF", "159915ETF"]
 SIDES = ["single", "long", "short"]
 
-def run_combination(etf, side, early, python_exe):
-    """Run select_features and evaluate_concept for a single combination."""
+def run_combination(etf, side, early):
+    """Run select_features and evaluate_concept in-process for a single combination."""
+    import importlib
+    
     suffix = "_early" if early else ""
-    select_cmd = f'"{python_exe}" "{HERE}/select_features.py" -e {etf} -s {side} --n-jobs 1'
-    if early:
-        select_cmd += " --early"
-        
+    
+    # --- Stage A: Feature Selection ---
     print(f"Starting feature selection: ETF={etf}, Side={side}")
-    res_select = subprocess.run(select_cmd, shell=True, capture_output=True, text=True)
-    if res_select.returncode != 0:
-        return False, f"select_features failed for {etf} {side}:\n{res_select.stderr}"
-        
-    eval_cmd = f'"{python_exe}" "{HERE}/evaluate_concept.py" -e {etf} -s {side}'
+    select_argv = ["select_features.py", "-e", etf, "-s", side, "--n-jobs", "1"]
     if early:
-        eval_cmd += " --early"
+        select_argv.append("--early")
+    
+    old_argv = sys.argv
+    try:
+        sys.argv = select_argv
+        import select_features
+        importlib.reload(select_features)
+        select_features.main()
+    except SystemExit as e:
+        if e.code not in (None, 0):
+            return False, f"select_features failed for {etf} {side} (exit code {e.code})"
+    except Exception as e:
+        return False, f"select_features failed for {etf} {side}: {e}"
+    finally:
+        sys.argv = old_argv
         
+    # --- Stage B: Evaluation ---
     print(f"Starting evaluation: ETF={etf}, Side={side}")
-    res_eval = subprocess.run(eval_cmd, shell=True, capture_output=True, text=True)
-    if res_eval.returncode != 0:
-        return False, f"evaluate_concept failed for {etf} {side}:\n{res_eval.stderr}"
+    eval_argv = ["evaluate_concept.py", "-e", etf, "-s", side]
+    if early:
+        eval_argv.append("--early")
+    
+    try:
+        sys.argv = eval_argv
+        import evaluate_concept
+        importlib.reload(evaluate_concept)
+        evaluate_concept.main()
+    except SystemExit as e:
+        if e.code not in (None, 0):
+            return False, f"evaluate_concept failed for {etf} {side} (exit code {e.code})"
+    except Exception as e:
+        return False, f"evaluate_concept failed for {etf} {side}: {e}"
+    finally:
+        sys.argv = old_argv
         
     return True, f"Success {etf} {side}"
 
@@ -60,12 +86,12 @@ def main():
         tasks = []
         for etf in etfs_to_run:
             for side in sides_to_run:
-                tasks.append((etf, side, args.early, sys.executable))
+                tasks.append((etf, side, args.early))
                 
-        # Run in parallel
-        results = Parallel(n_jobs=args.n_jobs)(
-            delayed(run_combination)(etf, side, early, python_exe)
-            for etf, side, early, python_exe in tasks
+        # Run in parallel (in-process, no subprocess overhead)
+        results = Parallel(n_jobs=args.n_jobs, prefer="processes")(
+            delayed(run_combination)(etf, side, early)
+            for etf, side, early in tasks
         )
         
         # Report status
