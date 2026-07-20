@@ -12,6 +12,10 @@ venv/
 
 # Temp / research artifacts
 
+# day-model-new caches (large, regenerable)
+day-model-new/data/recipe_cache_*.parquet
+day-model-new/data/recipe_cache_*.meta.json
+
 # OS / editor
 .DS_Store
 Thumbs.db

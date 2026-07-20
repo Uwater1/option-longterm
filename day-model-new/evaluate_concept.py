@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from scipy.stats import rankdata
+from numba import njit, prange
 
 # Set up paths to import from day-model
 HERE = Path(__file__).resolve().parent
@@ -89,23 +90,157 @@ def compute_side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str) -> f
     return _spearman_from_arrays(y_true[idx], y_pred[idx])
 
 def _spearman_rows(y_true_matrix: np.ndarray, y_pred_matrix: np.ndarray) -> np.ndarray:
-    """Compute Spearman correlation for multiple rows in parallel."""
+    """Compute Spearman correlation for multiple rows using Numba parallel."""
     B, n = y_true_matrix.shape
-    out = np.zeros(B)
-    for b in range(B):
-        out[b] = _spearman_from_arrays(y_true_matrix[b], y_pred_matrix[b])
-    return out
+    yt = y_true_matrix.astype(np.float32)
+    yp = y_pred_matrix.astype(np.float32)
+
+    @njit(parallel=True, cache=True)
+    def _kernel(yt, yp, B, n):
+        out = np.empty(B, dtype=np.float64)
+        for b in prange(B):
+            a = yt[b]
+            b_arr = yp[b]
+            # Rank both
+            ix_a = np.argsort(a)
+            ix_b = np.argsort(b_arr)
+            ra = np.empty(n, dtype=np.float32)
+            rb = np.empty(n, dtype=np.float32)
+            for i in range(n):
+                ra[ix_a[i]] = np.float32(i + 1)
+                rb[ix_b[i]] = np.float32(i + 1)
+            mean_ra = ra.sum() / n
+            mean_rb = rb.sum() / n
+            cov = np.float32(0.0)
+            var_a = np.float32(0.0)
+            var_b = np.float32(0.0)
+            for i in range(n):
+                da = ra[i] - mean_ra
+                db = rb[i] - mean_rb
+                cov += da * db
+                var_a += da * da
+                var_b += db * db
+            denom = np.sqrt(var_a * var_b)
+            out[b] = 0.0 if denom < 1e-12 else float(cov / denom)
+        return out
+
+    return _kernel(yt, yp, B, n)
+
+
+def _tail_ic_rows(y_true_matrix: np.ndarray, y_pred_matrix: np.ndarray, side: str) -> np.ndarray:
+    """Compute side-aware tail IC for multiple rows using Numba parallel."""
+    B, n = y_true_matrix.shape
+    if side in ["long", "short"]:
+        pct = 0.15
+    else:
+        pct = 0.10
+    n_tail = max(5, int(n * pct))
+    tail_def = 1 if side == "long" else (2 if side == "short" else 3)
+
+    yt = y_true_matrix.astype(np.float32)
+    yp = y_pred_matrix.astype(np.float32)
+
+    @njit(parallel=True, cache=True)
+    def _kernel(yt, yp, B, n, n_tail, tail_def):
+        out = np.empty(B, dtype=np.float64)
+        for b in prange(B):
+            pred = yp[b]
+            truth = yt[b]
+            order = np.argsort(pred)
+            if tail_def == 1:  # long
+                idx = order[n - n_tail:]
+            elif tail_def == 2:  # short
+                idx = order[:n_tail]
+            else:  # two-sided
+                idx = np.empty(n_tail * 2, dtype=np.int64)
+                for i in range(n_tail):
+                    idx[i] = order[i]
+                    idx[n_tail + i] = order[n - n_tail + i]
+            m = len(idx)
+            y_tail = np.empty(m, dtype=np.float32)
+            p_tail = np.empty(m, dtype=np.float32)
+            for i in range(m):
+                y_tail[i] = truth[idx[i]]
+                p_tail[i] = pred[idx[i]]
+            # Spearman on tail
+            ix_a = np.argsort(y_tail)
+            ix_b = np.argsort(p_tail)
+            ra = np.empty(m, dtype=np.float32)
+            rb = np.empty(m, dtype=np.float32)
+            for i in range(m):
+                ra[ix_a[i]] = np.float32(i + 1)
+                rb[ix_b[i]] = np.float32(i + 1)
+            mean_ra = ra.sum() / m
+            mean_rb = rb.sum() / m
+            cov = np.float32(0.0)
+            var_a = np.float32(0.0)
+            var_b = np.float32(0.0)
+            for i in range(m):
+                da = ra[i] - mean_ra
+                db = rb[i] - mean_rb
+                cov += da * db
+                var_a += da * da
+                var_b += db * db
+            denom = np.sqrt(var_a * var_b)
+            out[b] = 0.0 if denom < 1e-12 else float(cov / denom)
+        return out
+
+    return _kernel(yt, yp, B, n, n_tail, tail_def)
+
 
 def _decile_mono_rows(y_true_matrix: np.ndarray, y_pred_matrix: np.ndarray) -> np.ndarray:
-    """Compute decile monotonicity for multiple rows in parallel."""
+    """Compute decile monotonicity for multiple rows using Numba parallel."""
     B, n = y_true_matrix.shape
-    out = np.zeros(B)
-    for b in range(B):
-        out[b] = compute_decile_monotonicity(y_true_matrix[b], y_pred_matrix[b])
-    return out
+    yt = y_true_matrix.astype(np.float32)
+    yp = y_pred_matrix.astype(np.float32)
+
+    @njit(parallel=True, cache=True)
+    def _kernel(yt, yp, B, n):
+        out = np.empty(B, dtype=np.float64)
+        for b in prange(B):
+            pred = yp[b]
+            truth = yt[b]
+            if n < 20:
+                out[b] = 0.0
+                continue
+            order = np.argsort(pred)
+            # Compute decile means
+            chunk_size = n // 10
+            means = np.empty(10, dtype=np.float32)
+            for d in range(10):
+                start = d * chunk_size
+                end = start + chunk_size if d < 9 else n
+                s = np.float32(0.0)
+                cnt = 0
+                for i in range(start, end):
+                    s += truth[order[i]]
+                    cnt += 1
+                means[d] = s / cnt if cnt > 0 else np.float32(0.0)
+            # Spearman of means vs rank 1..10
+            ix = np.argsort(means)
+            ranks = np.empty(10, dtype=np.float32)
+            for i in range(10):
+                ranks[ix[i]] = np.float32(i + 1)
+            expected = np.arange(1, 11, dtype=np.float32)
+            mean_e = expected.sum() / 10
+            mean_r = ranks.sum() / 10
+            cov = np.float32(0.0)
+            var_e = np.float32(0.0)
+            var_r = np.float32(0.0)
+            for i in range(10):
+                de = expected[i] - mean_e
+                dr = ranks[i] - mean_r
+                cov += de * dr
+                var_e += de * de
+                var_r += dr * dr
+            denom = np.sqrt(var_e * var_r)
+            out[b] = 0.0 if denom < 1e-12 else float(cov / denom)
+        return out
+
+    return _kernel(yt, yp, B, n)
 
 def block_bootstrap_ci(y_true: np.ndarray, y_pred: np.ndarray, side: str, block_size=10, n_bootstraps=1000):
-    """Vectorized block-bootstrap CIs for Spearman IC, Tail IC, and decile monotonicity."""
+    """Vectorized block-bootstrap CIs using Numba-parallel kernels."""
     y_true = np.asarray(y_true, dtype=np.float64)
     y_pred = np.asarray(y_pred, dtype=np.float64)
     n = len(y_true)
@@ -128,10 +263,7 @@ def block_bootstrap_ci(y_true: np.ndarray, y_pred: np.ndarray, side: str, block_
     
     boot_overall_ics = _spearman_rows(y_b, p_b)
     boot_monos = _decile_mono_rows(y_b, p_b)
-    
-    boot_tail_ics = np.zeros(n_bootstraps)
-    for b in range(n_bootstraps):
-        boot_tail_ics[b] = compute_side_tail_ic(y_b[b], p_b[b], side)
+    boot_tail_ics = _tail_ic_rows(y_b, p_b, side)
         
     ci_overall = (float(np.percentile(boot_overall_ics, 2.5)), float(np.percentile(boot_overall_ics, 97.5)))
     ci_tail = (float(np.percentile(boot_tail_ics, 2.5)), float(np.percentile(boot_tail_ics, 97.5)))
@@ -158,58 +290,7 @@ def compute_vif(X: np.ndarray) -> np.ndarray:
             vifs[i] = 999.0
     return vifs
 
-def simulate_returns(y_true: np.ndarray, y_pred: np.ndarray, side: str):
-    """Simulate strategy daily returns based on tail signals."""
-    n = len(y_pred)
-    if n < 10:
-        return 0.0, 0.0, 0.0, 0.0
-        
-    if np.max(y_pred) - np.min(y_pred) < 1e-12:
-        return 0.0, 0.0, 0.0, 0.0
-        
-    order = np.argsort(y_pred, kind="quicksort")
-    strat_returns = np.zeros(n)
-    
-    if side == "long":
-        pct = 0.15
-        n_tail = max(5, int(n * pct))
-        long_idx = order[-n_tail:]
-        strat_returns[long_idx] = y_true[long_idx]
-    elif side == "short":
-        pct = 0.15
-        n_tail = max(5, int(n * pct))
-        short_idx = order[:n_tail]
-        strat_returns[short_idx] = -y_true[short_idx]
-    else:  # single (two-sided)
-        pct = 0.10
-        n_tail = max(5, int(n * pct))
-        long_idx = order[-n_tail:]
-        short_idx = order[:n_tail]
-        strat_returns[long_idx] = y_true[long_idx]
-        strat_returns[short_idx] = -y_true[short_idx]
-        
-    # Transaction cost = 15 bps (0.0015) per active day
-    active_days = np.abs(strat_returns) > 1e-12
-    strat_returns[active_days] -= 0.0015
-    
-    ann_return = float(np.mean(strat_returns) * 244)
-    ann_vol = float(np.std(strat_returns) * np.sqrt(244))
-    
-    # Sharpe
-    sharpe = ann_return / (ann_vol + 1e-10)
-    
-    # Sortino
-    downside_returns = np.minimum(strat_returns, 0.0)
-    downside_vol = float(np.std(downside_returns) * np.sqrt(244))
-    sortino = ann_return / (downside_vol + 1e-10)
-    
-    # Max DD
-    cum_returns = np.cumsum(strat_returns)
-    running_max = np.maximum.accumulate(cum_returns)
-    drawdowns = running_max - cum_returns
-    max_dd = float(np.max(drawdowns))
-    
-    return ann_return, sharpe, sortino, max_dd
+from mining.recipe_utils import simulate_returns
 
 def main():
     parser = argparse.ArgumentParser()
@@ -217,6 +298,8 @@ def main():
     parser.add_argument("-s", "--side", required=True, choices=["single", "long", "short"])
     parser.add_argument("-k", type=float, default=1.0, help="Exponent for weighting overall IC")
     parser.add_argument("--early", action="store_true", help="Use early window return dataset")
+    parser.add_argument("--position-mode", choices=["binary", "score_weighted"], default="binary", help="Position sizing mode (default: binary)")
+    parser.add_argument("--no-abs-sign", action="store_true", help="Disable absolute sign kill switch")
     args = parser.parse_args()
 
     # Determine dynamic date ranges
@@ -232,7 +315,7 @@ def main():
         lockbox_start = pd.Timestamp("2024-03-01")
 
     print(f"================================================================================")
-    print(f"Stage B Evaluation: ETF={args.etf}, Side={args.side}, Early={args.early}, k={args.k}")
+    print(f"Stage B Evaluation: ETF={args.etf}, Side={args.side}, Early={args.early}, k={args.k}, mode={args.position_mode}")
     print(f"================================================================================")
 
     # 1. Load selected feature pool
@@ -294,7 +377,7 @@ def main():
     for item in selected_pool:
         if "recipe" in item:
             r = item["recipe"]
-            for key in ["feature_a", "feature_b", "feature_cond"]:
+            for key in ["feature_a", "feature_b", "feature_c", "feature_cond", "feature_cond2"]:
                 if key in r:
                     col = r[key]
                     if col not in train_means:
@@ -347,7 +430,7 @@ def main():
         clean_selected_pool = []
         clean_indices = []
         for i, (feat, vif) in enumerate(zip(selected_pool, vifs)):
-            if vif > 12.0:
+            if vif > 5.0:
                 print(f"  [SAFETY NET] Dropping collinear feature: {feat['feature_name']} (VIF = {vif:.2f})")
             else:
                 clean_selected_pool.append(feat)
@@ -389,14 +472,18 @@ def main():
         mono = compute_decile_monotonicity(y_true, y_pred)
         
         ci_overall, ci_tail, ci_mono = block_bootstrap_ci(y_true, y_pred, args.side)
-        ann_ret, sharpe, sortino, max_dd = simulate_returns(y_true, y_pred, args.side)
+        enforce_abs = not args.no_abs_sign
+        ann_ret, sharpe, sortino, max_dd, raw_ann_ret, raw_sharpe = simulate_returns(
+            y_true, y_pred, args.side, position_mode=args.position_mode, enforce_absolute_sign=enforce_abs
+        )
         
         print(f"\n--- {label} Results ---")
         print(f"Overall IC:          {overall_ic:+.4f} (95% CI: [{ci_overall[0]:+.4f}, {ci_overall[1]:+.4f}])")
         print(f"Tail IC:             {tail_ic:+.4f} (95% CI: [{ci_tail[0]:+.4f}, {ci_tail[1]:+.4f}])")
         print(f"Decile Monotonicity: {mono:+.4f} (95% CI: [{ci_mono[0]:+.4f}, {ci_mono[1]:+.4f}])")
-        print(f"Simulated Ann. Ret:  {ann_ret * 100:.2f}%")
-        print(f"Simulated Sharpe:    {sharpe:.4f}")
+        print(f"Simulated Ann. Ret:  {ann_ret * 100:.2f}% (Raw: {raw_ann_ret * 100:.2f}%)")
+        print(f"Raw Sharpe:          {raw_sharpe:.4f}")
+        print(f"Cost-Adjusted Sharpe:{sharpe:.4f}")
         print(f"Simulated Sortino:   {sortino:.4f}")
         print(f"Simulated Max DD:    {max_dd * 100:.2f}%")
         
@@ -408,6 +495,8 @@ def main():
             "monotonicity": mono,
             "monotonicity_ci": ci_mono,
             "ann_ret": ann_ret,
+            "raw_ann_ret": raw_ann_ret,
+            "raw_sharpe": raw_sharpe,
             "sharpe": sharpe,
             "sortino": sortino,
             "max_dd": max_dd

@@ -15,21 +15,24 @@ import os
 import sys
 import json
 import argparse
+import hashlib
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from numba import njit
+from numba import njit, prange
 from scipy.stats import rankdata
 from joblib import Parallel, delayed
 
-# Set up paths to import existing features list
+# Set up paths to import existing features list and recipe_utils
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
 sys.path.append(str(REPO_ROOT / "day-model"))
+sys.path.append(str(HERE / "mining"))
 
 from build_features import FEATURES
+from mining.recipe_utils import simulate_returns
 
-FDR_THRESHOLD = 0.30
+FDR_THRESHOLD = 0.20
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
@@ -50,9 +53,9 @@ def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
 def fast_rankdata(a: np.ndarray) -> np.ndarray:
     n = len(a)
     ix = np.argsort(a)
-    ranks = np.empty(n, dtype=np.float64)
+    ranks = np.empty(n, dtype=np.float32)
     for i in range(n):
-        ranks[ix[i]] = i + 1.0
+        ranks[ix[i]] = np.float32(i + 1.0)
     return ranks
 
 @njit(cache=True)
@@ -60,36 +63,23 @@ def fast_spearman(a: np.ndarray, b: np.ndarray) -> float:
     n = len(a)
     if n < 5:
         return 0.0
-    mean_a = a.sum() / n
-    mean_b = b.sum() / n
-    var_a = 0.0
-    var_b = 0.0
-    for i in range(n):
-        var_a += (a[i] - mean_a) ** 2
-        var_b += (b[i] - mean_b) ** 2
-    if var_a < 1e-24 or var_b < 1e-24:
-        return 0.0
-        
     ra = fast_rankdata(a)
     rb = fast_rankdata(b)
-    
     mean_ra = ra.sum() / n
     mean_rb = rb.sum() / n
-    
-    cov = 0.0
-    var_ra = 0.0
-    var_rb = 0.0
+    cov = np.float32(0.0)
+    var_ra = np.float32(0.0)
+    var_rb = np.float32(0.0)
     for i in range(n):
         diff_a = ra[i] - mean_ra
         diff_b = rb[i] - mean_rb
         cov += diff_a * diff_b
-        var_ra += diff_a ** 2
-        var_rb += diff_b ** 2
-        
+        var_ra += diff_a * diff_a
+        var_rb += diff_b * diff_b
     denom = np.sqrt(var_ra * var_rb)
     if denom < 1e-12:
         return 0.0
-    return cov / denom
+    return float(cov / denom)
 
 @njit(cache=True)
 def numba_rolling_tail_ic(x: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, tail_def: int, pct: float) -> np.ndarray:
@@ -112,155 +102,100 @@ def numba_rolling_tail_ic(x: np.ndarray, y: np.ndarray, window_starts: np.ndarra
         y_win = y[start:end]
         
         ix = np.argsort(x_win)
-        
-        if tail_def == 1:  # top
-            x_tail = np.empty(n_tail)
-            y_tail = np.empty(n_tail)
-            for i in range(n_tail):
-                idx = ix[n_win - n_tail + i]
-                x_tail[i] = x_win[idx]
-                y_tail[i] = y_win[idx]
-        elif tail_def == 2:  # bot
-            x_tail = np.empty(n_tail)
-            y_tail = np.empty(n_tail)
-            for i in range(n_tail):
-                idx = ix[i]
-                x_tail[i] = x_win[idx]
-                y_tail[i] = y_win[idx]
-        else:  # two-sided
-            x_tail = np.empty(n_tail * 2)
-            y_tail = np.empty(n_tail * 2)
-            for i in range(n_tail):
-                idx_bot = ix[i]
-                x_tail[i] = x_win[idx_bot]
-                y_tail[i] = y_win[idx_bot]
-                
-                idx_top = ix[n_win - n_tail + i]
-                x_tail[n_tail + i] = x_win[idx_top]
-                y_tail[n_tail + i] = y_win[idx_top]
-                
-        out[t] = fast_spearman(y_tail, x_tail)
+        out[t] = _tail_ic_from_sorted(ix, x_win, y_win, n_win, n_tail, tail_def)
         
     return out
 
 @njit(cache=True)
-def numba_block_shuffle(y: np.ndarray, block_size=10) -> np.ndarray:
-    """Generate block-shuffled target preserving serial structure (circular block-bootstrap)."""
+def numba_block_shuffle_from_starts(y: np.ndarray, starts: np.ndarray, block_size: int) -> np.ndarray:
+    """Block-shuffle target using pre-generated random starts (thread-safe)."""
     n = len(y)
-    num_blocks = int(np.ceil(n / block_size))
-    possible_starts = n - block_size + 1
-    if possible_starts <= 0:
-        # Fallback: simple bootstrap
-        idx = np.empty(n, dtype=np.int32)
-        for i in range(n):
-            idx[i] = np.random.randint(0, n)
-        out = np.empty(n)
-        for i in range(n):
-            out[i] = y[idx[i]]
-        return out
-        
-    starts = np.empty(num_blocks, dtype=np.int32)
-    for i in range(num_blocks):
-        starts[i] = np.random.randint(0, possible_starts)
-        
-    idx = np.empty(n, dtype=np.int32)
+    num_blocks = len(starts)
+    out = np.empty(n, dtype=y.dtype)
     pos = 0
     for i in range(num_blocks):
         start = starts[i]
         for offset in range(block_size):
             if pos < n:
-                idx[pos] = start + offset
+                out[pos] = y[start + offset]
                 pos += 1
             else:
                 break
-    
-    out = np.empty(n)
-    for i in range(n):
-        out[i] = y[idx[i]]
     return out
 
 @njit(cache=True)
-def numba_single_trial_empirical_sim(X: np.ndarray, y: np.ndarray, tail_def: int, n_tail: int, n_sims: int, block_size=10) -> np.ndarray:
-    """Generate empirical single-trial null tail IC distribution by block-permuting the target."""
-    n, n_features = X.shape
-    null_ics = np.empty(n_sims)
-    
-    for s in range(n_sims):
-        y_null = numba_block_shuffle(y, block_size)
-        j = np.random.randint(0, n_features)
-        x = X[:, j]
-        
-        # Pearson correlation for sign flip
-        mean_x = x.mean()
-        mean_y = y_null.mean()
-        cov_xy = 0.0
-        var_x = 0.0
-        var_y = 0.0
-        for k in range(n):
-            dx = x[k] - mean_x
-            dy = y_null[k] - mean_y
-            cov_xy += dx * dy
-            var_x += dx * dx
-            var_y += dy * dy
-        if var_x < 1e-24 or var_y < 1e-24:
-            null_ics[s] = 0.0
-            continue
-        
-        raw_corr = cov_xy / np.sqrt(var_x * var_y)
-        sign = 1.0 if raw_corr >= 0.0 else -1.0
-        x_flipped = x * sign
-        
-        ix = np.argsort(x_flipped)
-        if tail_def == 1:  # top
-            x_tail = np.empty(n_tail)
-            y_tail = np.empty(n_tail)
-            for t in range(n_tail):
-                idx = ix[n - n_tail + t]
-                x_tail[t] = x_flipped[idx]
-                y_tail[t] = y_null[idx]
-        elif tail_def == 2:  # bot
-            x_tail = np.empty(n_tail)
-            y_tail = np.empty(n_tail)
-            for t in range(n_tail):
-                idx = ix[t]
-                x_tail[t] = x_flipped[idx]
-                y_tail[t] = y_null[idx]
-        else:  # two-sided
-            x_tail = np.empty(n_tail * 2)
-            y_tail = np.empty(n_tail * 2)
-            for t in range(n_tail):
-                idx_bot = ix[t]
-                x_tail[t] = x_flipped[idx_bot]
-                y_tail[t] = y_null[idx_bot]
-                
-                idx_top = ix[n - n_tail + t]
-                x_tail[n_tail + t] = x_flipped[idx_top]
-                y_tail[n_tail + t] = y_null[idx_top]
-                
-        null_ics[s] = fast_spearman(y_tail, x_tail)
-        
-    return null_ics
+def _tail_ic_from_sorted(ix: np.ndarray, x_flipped: np.ndarray, y_arr: np.ndarray, n: int, n_tail: int, tail_def: int) -> float:
+    """Compute tail IC from pre-sorted indices. Shared helper."""
+    if tail_def == 1:  # top
+        x_tail = np.empty(n_tail, dtype=np.float32)
+        y_tail = np.empty(n_tail, dtype=np.float32)
+        for t in range(n_tail):
+            idx = ix[n - n_tail + t]
+            x_tail[t] = x_flipped[idx]
+            y_tail[t] = y_arr[idx]
+    elif tail_def == 2:  # bot
+        x_tail = np.empty(n_tail, dtype=np.float32)
+        y_tail = np.empty(n_tail, dtype=np.float32)
+        for t in range(n_tail):
+            idx = ix[t]
+            x_tail[t] = x_flipped[idx]
+            y_tail[t] = y_arr[idx]
+    else:  # two-sided
+        x_tail = np.empty(n_tail * 2, dtype=np.float32)
+        y_tail = np.empty(n_tail * 2, dtype=np.float32)
+        for t in range(n_tail):
+            idx_bot = ix[t]
+            x_tail[t] = x_flipped[idx_bot]
+            y_tail[t] = y_arr[idx_bot]
+            idx_top = ix[n - n_tail + t]
+            x_tail[n_tail + t] = x_flipped[idx_top]
+            y_tail[n_tail + t] = y_arr[idx_top]
+    return fast_spearman(y_tail, x_tail)
 
-@njit(cache=True)
-def numba_multi_trial_empirical_sim(X: np.ndarray, y: np.ndarray, n_trials: int, tail_def: int, n_tail: int, n_sims: int, block_size=10) -> np.ndarray:
-    """Generate empirical max tail IC distribution across n_trials features by block-permuting the target."""
+
+def numba_single_trial_empirical_sim(X: np.ndarray, y: np.ndarray, tail_def: int, n_tail: int, n_sims: int, block_size=10) -> np.ndarray:
+    """Parallel empirical single-trial null tail IC distribution (fp32, pre-generated RNG)."""
     n, n_features = X.shape
-    max_ics = np.empty(n_sims)
-    
-    for s in range(n_sims):
-        y_null = numba_block_shuffle(y, block_size)
-        
-        max_ic = -1e10
-        for i in range(n_trials):
-            # Select random feature column with replacement
-            j = np.random.randint(0, n_features)
-            x = X[:, j]
-            
-            mean_x = x.mean()
-            mean_y = y_null.mean()
-            cov_xy = 0.0
-            var_x = 0.0
-            var_y = 0.0
+    X32 = X.astype(np.float32)
+    y32 = y.astype(np.float32)
+
+    # Pre-compute column means for sign-flip
+    col_means = X32.mean(axis=0)
+
+    # Pre-generate all random numbers (thread-safe: no RNG inside prange)
+    num_blocks = int(np.ceil(n / block_size))
+    possible_starts = n - block_size + 1
+    rng = np.random.default_rng(12345)
+    all_starts = rng.integers(0, max(1, possible_starts), size=(n_sims, num_blocks)).astype(np.int32)
+    all_feat_idx = rng.integers(0, n_features, size=n_sims).astype(np.int32)
+
+    @njit(parallel=True, cache=True)
+    def _kernel(X32, y32, col_means, all_starts, all_feat_idx, n_sims, n, n_features, n_tail, tail_def, block_size):
+        null_ics = np.empty(n_sims, dtype=np.float64)
+        y_mean = y32.sum() / n
+        for s in prange(n_sims):
+            # Block shuffle
+            starts_s = all_starts[s]
+            y_null = np.empty(n, dtype=np.float32)
+            pos = 0
+            for i in range(len(starts_s)):
+                st = starts_s[i]
+                for offset in range(block_size):
+                    if pos < n:
+                        y_null[pos] = y32[st + offset]
+                        pos += 1
+                    else:
+                        break
+
+            j = all_feat_idx[s]
+            x = X32[:, j]
+
+            # Pearson correlation for sign flip (using precomputed mean)
+            mean_x = col_means[j]
+            mean_y = y_null.sum() / n
+            cov_xy = np.float32(0.0)
+            var_x = np.float32(0.0)
+            var_y = np.float32(0.0)
             for k in range(n):
                 dx = x[k] - mean_x
                 dy = y_null[k] - mean_y
@@ -268,60 +203,104 @@ def numba_multi_trial_empirical_sim(X: np.ndarray, y: np.ndarray, n_trials: int,
                 var_x += dx * dx
                 var_y += dy * dy
             if var_x < 1e-24 or var_y < 1e-24:
+                null_ics[s] = 0.0
                 continue
-            
-            raw_corr = cov_xy / np.sqrt(var_x * var_y)
-            sign = 1.0 if raw_corr >= 0.0 else -1.0
-            x_flipped = x * sign
-            
-            ix = np.argsort(x_flipped)
-            if tail_def == 1:
-                x_tail = np.empty(n_tail)
-                y_tail = np.empty(n_tail)
-                for t in range(n_tail):
-                    idx = ix[n - n_tail + t]
-                    x_tail[t] = x_flipped[idx]
-                    y_tail[t] = y_null[idx]
-            elif tail_def == 2:
-                x_tail = np.empty(n_tail)
-                y_tail = np.empty(n_tail)
-                for t in range(n_tail):
-                    idx = ix[t]
-                    x_tail[t] = x_flipped[idx]
-                    y_tail[t] = y_null[idx]
-            else:
-                x_tail = np.empty(n_tail * 2)
-                y_tail = np.empty(n_tail * 2)
-                for t in range(n_tail):
-                    idx_bot = ix[t]
-                    x_tail[t] = x_flipped[idx_bot]
-                    y_tail[t] = y_null[idx_bot]
-                    
-                    idx_top = ix[n - n_tail + t]
-                    x_tail[n_tail + t] = x_flipped[idx_top]
-                    y_tail[n_tail + t] = y_null[idx_top]
-                    
-            tail_ic = fast_spearman(y_tail, x_tail)
-            if tail_ic > max_ic:
-                max_ic = tail_ic
-                
-        max_ics[s] = max_ic
-        
-    return max_ics
 
-def benjamini_hochberg_fdr(p_values: np.ndarray, fdr_threshold=FDR_THRESHOLD) -> np.ndarray:
-    """
-    Apply Benjamini-Hochberg procedure.
+            raw_corr = cov_xy / np.sqrt(var_x * var_y)
+            sign = np.float32(1.0) if raw_corr >= 0.0 else np.float32(-1.0)
+            x_flipped = x * sign
+
+            ix = np.argsort(x_flipped)
+            null_ics[s] = _tail_ic_from_sorted(ix, x_flipped, y_null, n, n_tail, tail_def)
+        return null_ics
+
+    return _kernel(X32, y32, col_means, all_starts, all_feat_idx, n_sims, n, n_features, n_tail, tail_def, block_size)
+
+def numba_multi_trial_empirical_sim(X: np.ndarray, y: np.ndarray, n_trials: int, tail_def: int, n_tail: int, n_sims: int, block_size=10) -> np.ndarray:
+    """Parallel empirical max tail IC distribution (fp32, pre-generated RNG, prange)."""
+    n, n_features = X.shape
+    X32 = X.astype(np.float32)
+    y32 = y.astype(np.float32)
+
+    # Pre-compute column means for sign-flip
+    col_means = X32.mean(axis=0)
+
+    # Pre-generate all random numbers outside parallel region (thread-safe)
+    num_blocks = int(np.ceil(n / block_size))
+    possible_starts = n - block_size + 1
+    rng = np.random.default_rng(54321)
+    all_starts = rng.integers(0, max(1, possible_starts), size=(n_sims, num_blocks)).astype(np.int32)
+    all_feat_idx = rng.integers(0, n_features, size=(n_sims, n_trials)).astype(np.int32)
+
+    @njit(parallel=True, cache=True)
+    def _kernel(X32, y32, col_means, all_starts, all_feat_idx, n_sims, n_trials, n, n_features, n_tail, tail_def, block_size):
+        max_ics = np.empty(n_sims, dtype=np.float64)
+        for s in prange(n_sims):
+            # Block shuffle target
+            starts_s = all_starts[s]
+            y_null = np.empty(n, dtype=np.float32)
+            pos = 0
+            for i in range(len(starts_s)):
+                st = starts_s[i]
+                for offset in range(block_size):
+                    if pos < n:
+                        y_null[pos] = y32[st + offset]
+                        pos += 1
+                    else:
+                        break
+
+            mean_y = y_null.sum() / n
+            max_ic = np.float64(-1e10)
+
+            for i in range(n_trials):
+                j = all_feat_idx[s, i]
+                x = X32[:, j]
+
+                # Pearson sign-flip with precomputed mean
+                mean_x = col_means[j]
+                cov_xy = np.float32(0.0)
+                var_x = np.float32(0.0)
+                var_y = np.float32(0.0)
+                for k in range(n):
+                    dx = x[k] - mean_x
+                    dy = y_null[k] - mean_y
+                    cov_xy += dx * dy
+                    var_x += dx * dx
+                    var_y += dy * dy
+                if var_x < 1e-24 or var_y < 1e-24:
+                    continue
+
+                raw_corr = cov_xy / np.sqrt(var_x * var_y)
+                sign = np.float32(1.0) if raw_corr >= 0.0 else np.float32(-1.0)
+                x_flipped = x * sign
+
+                ix = np.argsort(x_flipped)
+                tail_ic = _tail_ic_from_sorted(ix, x_flipped, y_null, n, n_tail, tail_def)
+                if tail_ic > max_ic:
+                    max_ic = tail_ic
+
+            max_ics[s] = max_ic
+        return max_ics
+
+    return _kernel(X32, y32, col_means, all_starts, all_feat_idx, n_sims, n_trials, n, n_features, n_tail, tail_def, block_size)
+
+def benjamini_yekutieli_fdr(p_values: np.ndarray, fdr_threshold=FDR_THRESHOLD) -> np.ndarray:
+    """Apply Benjamini-Yekutieli procedure (robust to arbitrary dependence/correlation).
     Returns a boolean mask of kept indices.
     """
     m = len(p_values)
     if m == 0:
         return np.array([], dtype=bool)
+    
+    # Harmonic constant for m tests: c(m) = sum(1/i)
+    cm = float(np.sum(1.0 / np.arange(1, m + 1)))
+    fdr_adj = fdr_threshold / cm
+    
     sorted_indices = np.argsort(p_values)
     sorted_p = p_values[sorted_indices]
     
-    bh_val = (np.arange(1, m + 1) / m) * fdr_threshold
-    eligible = sorted_p <= bh_val
+    by_val = (np.arange(1, m + 1) / m) * fdr_adj
+    eligible = sorted_p <= by_val
     
     mask = np.zeros(m, dtype=bool)
     if np.any(eligible):
@@ -329,6 +308,9 @@ def benjamini_hochberg_fdr(p_values: np.ndarray, fdr_threshold=FDR_THRESHOLD) ->
         keep_indices = sorted_indices[:max_eligible_idx + 1]
         mask[keep_indices] = True
     return mask
+
+def benjamini_hochberg_fdr(p_values: np.ndarray, fdr_threshold=FDR_THRESHOLD) -> np.ndarray:
+    return benjamini_yekutieli_fdr(p_values, fdr_threshold=fdr_threshold)
 
 def compute_side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str) -> float:
     """Compute tail-specific Spearman correlation on the active strategy tail."""
@@ -366,66 +348,493 @@ def compute_rolling_tail_ic_series(x_flipped: np.ndarray, y: np.ndarray, window_
         pct = 0.10
     return numba_rolling_tail_ic(x_flipped, y, window_starts, window_ends, tail_def, pct)
 
-def split_half_sign_check(x_flipped: np.ndarray, y: np.ndarray, side: str) -> tuple:
-    """Split training period in half, compute tail-IC on each half independently.
-
-    Returns (passes: bool, ic_first: float, ic_second: float).
-    Rejects if sign disagrees between halves (one positive, one negative).
-    This is the cheapest possible stability check — two IC computations, no resampling.
+def expanding_wf_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str) -> tuple:
+    """3-fold expanding walk-forward sign check on RAW x.
+    Folds: fold1 (0..40%), fold2 (40%..70%), fold3 (70%..100%).
+    Returns (passes: bool, locked_sign: float, ic_fold1, ic_fold2, ic_fold3).
+    Rejects if IC sign flips across folds or if fold 3 IC is opposite sign of locked_sign.
     """
     n = len(y)
-    mid = n // 2
-    if mid < 10 or (n - mid) < 10:
-        return True, 0.0, 0.0  # Too short to split, pass through
+    f1_end = int(0.40 * n)
+    f2_end = int(0.70 * n)
+    
+    if f1_end < 10 or (f2_end - f1_end) < 10 or (n - f2_end) < 10:
+        raw_ic = _spearman_from_arrays(x_raw, y)
+        locked_sign = -1.0 if raw_ic < 0 else 1.0
+        return True, locked_sign, 0.0, 0.0, 0.0
 
-    ic_first = compute_side_tail_ic(y[:mid], x_flipped[:mid], side)
-    ic_second = compute_side_tail_ic(y[mid:], x_flipped[mid:], side)
+    ic_f1 = compute_side_tail_ic(y[:f1_end], x_raw[:f1_end], side)
+    ic_f2 = compute_side_tail_ic(y[f1_end:f2_end], x_raw[f1_end:f2_end], side)
+    ic_f3 = compute_side_tail_ic(y[f2_end:], x_raw[f2_end:], side)
 
-    # Reject if signs disagree (one positive, one negative)
-    passes = (ic_first >= 0) == (ic_second >= 0)
-    return passes, ic_first, ic_second
+    full_ic = compute_side_tail_ic(y, x_raw, side)
+    locked_sign = 1.0 if full_ic >= 0 else -1.0
 
+    if locked_sign > 0:
+        passes = (ic_f1 >= 0) and (ic_f2 >= 0) and (ic_f3 >= 0)
+    else:
+        passes = (ic_f1 <= 0) and (ic_f2 <= 0) and (ic_f3 <= 0)
 
-def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, dates: pd.Series, window_starts: np.ndarray, window_ends: np.ndarray, side: str):
-    """Evaluate a single candidate feature: compute overall IC, flip if needed, and run rolling tail IC pre-filter."""
-    # Compute overall raw IC for flipping
-    raw_ic = _spearman_from_arrays(x, y)
-    sign_flip = -1.0 if raw_ic < 0 else 1.0
-    x_flipped = x * sign_flip
+    return passes, locked_sign, ic_f1, ic_f2, ic_f3
+
+def split_half_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str) -> tuple:
+    passes, locked_sign, ic_f1, ic_f2, _ = expanding_wf_sign_check(x_raw, y, side)
+    return passes, locked_sign, ic_f1, ic_f2
+
+def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str):
+    """Evaluate a single candidate feature: cheap gates first to avoid wasting compute on rejected signals."""
+    sh_passes, locked_sign, sh_ic_first, sh_ic_second, _ = expanding_wf_sign_check(x, y, side)
+    
+    x_flipped = x * locked_sign
+    raw_ic = _spearman_from_arrays(x_flipped, y)
     overall_ic = compute_side_tail_ic(y, x_flipped, side)
     
-    # Split-half sign stability (Step 2.2 — cheapest universal gate)
-    sh_passes, sh_ic_first, sh_ic_second = split_half_sign_check(x_flipped, y, side)
-    
-    # Compute rolling tail IC series
+    if not sh_passes:
+        return {
+            "feature_name": feature_name,
+            "sign": int(locked_sign),
+            "raw_ic": float(raw_ic),
+            "overall_ic": float(overall_ic),
+            "mean_tail_ic": 0.0,
+            "std_tail_ic": 0.0,
+            "ic_ir": 0.0,
+            "monotonicity": 0.0,
+            "sortino": 0.0,
+            "composite_score": 0.0,
+            "split_half_passes": False,
+            "split_half_ic_first": sh_ic_first,
+            "split_half_ic_second": sh_ic_second,
+            "x_flipped": x_flipped,
+        }
+        
+    # B2 Compute rolling tail IC series using locked sign
     rolling_tail_ics = compute_rolling_tail_ic_series(x_flipped, y, window_starts, window_ends, side)
     
-    mean_tail_ic = float(np.mean(rolling_tail_ics))
+    mean_tail_ic = float(np.mean(rolling_tail_ics))  # RollingMono(90d)
     std_tail_ic = float(np.std(rolling_tail_ics))
     ic_ir = mean_tail_ic / (std_tail_ic + 1e-10)
     monotonicity = float(np.mean(rolling_tail_ics > 0))
     
+    # Check B2 Rolling Guard thresholds
+    mono_thr = 0.55 if side in ["long", "short"] else 0.70
+    ir_thr = 0.15 if side in ["long", "short"] else 0.30
+    passes_guard = (monotonicity >= mono_thr) and (ic_ir >= ir_thr)
+    
+    if not passes_guard:
+        # B2 Fail: Return immediately! No single-candidate Sortino trade simulation needed.
+        return {
+            "feature_name": feature_name,
+            "sign": int(locked_sign),
+            "raw_ic": float(raw_ic),
+            "overall_ic": float(overall_ic),
+            "mean_tail_ic": mean_tail_ic,
+            "std_tail_ic": std_tail_ic,
+            "ic_ir": ic_ir,
+            "monotonicity": monotonicity,
+            "sortino": 0.0,
+            "composite_score": 0.0,
+            "split_half_passes": True,
+            "passes_rolling_guard": False,
+            "passes_abs_sign": False,
+            "split_half_ic_first": sh_ic_first,
+            "split_half_ic_second": sh_ic_second,
+            "x_flipped": x_flipped,
+        }
+
+    # Absolute Sign Check on Traded Tail Buckets
+    n_obs = len(y)
+    order = np.argsort(x_flipped)
+    if side == "long":
+        pct = 0.15
+        n_tail = max(5, int(n_obs * pct))
+        long_mean = float(np.mean(y[order[-n_tail:]]))
+        passes_abs_sign = (long_mean > 0.0)
+    elif side == "short":
+        pct = 0.15
+        n_tail = max(5, int(n_obs * pct))
+        short_mean = float(np.mean(-y[order[:n_tail]]))
+        passes_abs_sign = (short_mean > 0.0)
+    else:  # single (two-sided)
+        pct = 0.10
+        n_tail = max(5, int(n_obs * pct))
+        long_mean = float(np.mean(y[order[-n_tail:]]))
+        short_mean = float(np.mean(-y[order[:n_tail]]))
+        passes_abs_sign = (long_mean > 0.0) and (short_mean > 0.0)
+
+    if not passes_abs_sign:
+        return {
+            "feature_name": feature_name,
+            "sign": int(locked_sign),
+            "raw_ic": float(raw_ic),
+            "overall_ic": float(overall_ic),
+            "mean_tail_ic": mean_tail_ic,
+            "std_tail_ic": std_tail_ic,
+            "ic_ir": ic_ir,
+            "monotonicity": monotonicity,
+            "sortino": 0.0,
+            "composite_score": 0.0,
+            "split_half_passes": True,
+            "passes_rolling_guard": True,
+            "passes_abs_sign": False,
+            "split_half_ic_first": sh_ic_first,
+            "split_half_ic_second": sh_ic_second,
+            "x_flipped": x_flipped,
+        }
+        
+    # Per-candidate Sortino trade simulation using locked sign (only for B1 + B2 + Absolute-Sign survivors!)
+    ann_ret, sharpe, sortino, max_dd, raw_ann_ret, raw_sharpe = simulate_returns(y, x_flipped, side)
+    
+    # Rank-normalized Composite Score
+    composite_score = 0.4 * mean_tail_ic + 0.3 * sortino + 0.2 * abs(overall_ic) + 0.1 * abs(raw_ic)
+    
     return {
         "feature_name": feature_name,
-        "sign": int(sign_flip),
+        "sign": int(locked_sign),
         "raw_ic": float(raw_ic),
         "overall_ic": float(overall_ic),
         "mean_tail_ic": mean_tail_ic,
         "std_tail_ic": std_tail_ic,
         "ic_ir": ic_ir,
         "monotonicity": monotonicity,
-        "split_half_passes": sh_passes,
+        "sortino": float(sortino),
+        "composite_score": float(composite_score),
+        "split_half_passes": True,
+        "passes_rolling_guard": True,
+        "passes_abs_sign": True,
         "split_half_ic_first": sh_ic_first,
         "split_half_ic_second": sh_ic_second,
         "x_flipped": x_flipped,  # Keep for correlation gate
     }
+
+
+@njit(cache=True)
+def numba_fast_rolling_tail_ic(x: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, window_offsets: np.ndarray, window_sorted_idx: np.ndarray, tail_def: int, pct: float) -> float:
+    n_days = len(window_starts)
+    pos_count = 0
+    valid_count = 0
+    
+    for t in range(n_days):
+        start = window_starts[t]
+        end = window_ends[t]
+        n_win = end - start
+        if n_win < 15:
+            continue
+        n_tail = max(5, int(n_win * pct))
+        
+        offset = window_offsets[t]
+        ix_win = window_sorted_idx[offset:offset + n_win]
+        x_win = x[start:end]
+        y_win = y[start:end]
+        
+        ic = _tail_ic_from_sorted(ix_win, x_win, y_win, n_win, n_tail, tail_def)
+        valid_count += 1
+        if ic > 0:
+            pos_count += 1
+            
+    return pos_count / (valid_count + 1e-10)
+
+@njit(parallel=True, cache=True)
+def numba_fast_null_composite_kernel(x_flipped: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, window_offsets: np.ndarray, window_sorted_idx: np.ndarray, ix_overall: np.ndarray, tail_idx: np.ndarray, is_two_sided: bool, long_idx: np.ndarray, short_idx: np.ndarray, tail_def: int, pct: float, all_starts: np.ndarray, block_size: int, n_sims: int) -> np.ndarray:
+    n = len(y)
+    null_scores = np.empty(n_sims, dtype=np.float64)
+    n_tail = len(tail_idx) if not is_two_sided else len(long_idx)
+    
+    for s in prange(n_sims):
+        # Block shuffle
+        starts_s = all_starts[s]
+        y_null = np.empty(n, dtype=np.float32)
+        pos = 0
+        for i in range(len(starts_s)):
+            st = starts_s[i]
+            for offset in range(block_size):
+                if pos < n:
+                    y_null[pos] = y[st + offset]
+                    pos += 1
+                else:
+                    break
+                    
+        # Spearman overall IC
+        raw_ic_null = fast_spearman(y_null, x_flipped)
+        
+        # Overall Tail IC
+        tail_ic_null = _tail_ic_from_sorted(ix_overall, x_flipped, y_null, n, n_tail, tail_def)
+        
+        # Rolling Mono
+        mono_null = numba_fast_rolling_tail_ic(x_flipped, y_null, window_starts, window_ends, window_offsets, window_sorted_idx, tail_def, pct)
+        
+        # Sortino
+        if not is_two_sided:
+            ret = np.empty(n_tail, dtype=np.float32)
+            for k in range(n_tail):
+                idx = tail_idx[k]
+                ret[k] = y_null[idx] - 0.0015 if tail_def == 1 else -y_null[idx] - 0.0015
+            
+            sum_ret = 0.0
+            sum_sq_down = 0.0
+            for k in range(n_tail):
+                r = ret[k]
+                sum_ret += r
+                if r < 0:
+                    sum_sq_down += r * r
+            ann_ret = (sum_ret / n_tail) * 244.0
+            down_std = np.sqrt(sum_sq_down / n_tail) * 15.620499351813308
+            sortino_null = ann_ret / (down_std + 1e-10)
+        else:
+            n_l = len(long_idx)
+            n_s = len(short_idx)
+            total_cnt = n_l + n_s
+            sum_ret = 0.0
+            sum_sq_down = 0.0
+            for k in range(n_l):
+                r = y_null[long_idx[k]] - 0.0015
+                sum_ret += r
+                if r < 0:
+                    sum_sq_down += r * r
+            for k in range(n_s):
+                r = -y_null[short_idx[k]] - 0.0015
+                sum_ret += r
+                if r < 0:
+                    sum_sq_down += r * r
+            ann_ret = (sum_ret / total_cnt) * 244.0
+            down_std = np.sqrt(sum_sq_down / total_cnt) * 15.620499351813308
+            sortino_null = ann_ret / (down_std + 1e-10)
+            
+        null_scores[s] = 0.4 * mono_null + 0.3 * sortino_null + 0.2 * abs(tail_ic_null) + 0.1 * abs(raw_ic_null)
+        
+    return null_scores
+
+
+@njit(parallel=True, cache=True)
+def numba_batched_b3_null_kernel(X: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, all_starts: np.ndarray, tail_def: int, pct: float, n_tail: int, block_size: int, n_sims: int):
+    """Batched B3 composite null over all candidates. prange over candidates.
+
+    Returns (out_95, out_mean): each shape (n_cands,).
+    Shared y-shuffle starts across candidates for efficiency.
+    """
+    n, n_cands = X.shape
+    n_days = len(window_starts)
+    num_blocks = all_starts.shape[1]
+    y32 = y.astype(np.float32)
+    is_two_sided = (tail_def == 3)
+
+    out_95 = np.empty(n_cands, dtype=np.float64)
+    out_mean = np.empty(n_cands, dtype=np.float64)
+    out_ic_mean = np.empty(n_cands, dtype=np.float64)
+
+    for c in prange(n_cands):
+        x = X[:, c]
+
+        # Per-candidate precompute: overall sorted index, window sorted indices
+        ix_overall = np.argsort(x)
+        if tail_def == 1:  # long
+            long_idx = ix_overall[n - n_tail:]
+            short_idx = np.empty(0, dtype=np.int64)
+        elif tail_def == 2:  # short
+            short_idx = ix_overall[:n_tail]
+            long_idx = np.empty(0, dtype=np.int64)
+        else:  # single (two-sided)
+            long_idx = ix_overall[n - n_tail:]
+            short_idx = ix_overall[:n_tail]
+
+        # Rolling window offsets and packed sorted indices
+        window_offsets = np.empty(n_days, dtype=np.int32)
+        total_size = 0
+        for t in range(n_days):
+            window_offsets[t] = total_size
+            total_size += window_ends[t] - window_starts[t]
+        window_sorted_idx = np.empty(total_size, dtype=np.int32)
+        for t in range(n_days):
+            st = window_starts[t]
+            en = window_ends[t]
+            offset = window_offsets[t]
+            x_win = x[st:en]
+            ix = np.argsort(x_win)
+            for k in range(len(ix)):
+                window_sorted_idx[offset + k] = ix[k]
+
+        # Sortino tail indices (which to use depends on side)
+        if tail_def == 1:
+            tail_idx_local = long_idx
+        elif tail_def == 2:
+            tail_idx_local = short_idx
+        else:
+            tail_idx_local = long_idx  # placeholder, two-sided uses both below
+
+        null_scores_local = np.empty(n_sims, dtype=np.float64)
+        raw_ic_sum = 0.0
+
+        for s in range(n_sims):
+            # Block shuffle (shared starts across candidates)
+            y_null = np.empty(n, dtype=np.float32)
+            pos = 0
+            starts_s = all_starts[s]
+            for i in range(num_blocks):
+                st = starts_s[i]
+                for offset in range(block_size):
+                    if pos < n:
+                        y_null[pos] = y32[st + offset]
+                        pos += 1
+                    else:
+                        break
+
+            # Composite components
+            raw_ic_null = fast_spearman(y_null, x)
+            raw_ic_sum += raw_ic_null
+            tail_ic_null = _tail_ic_from_sorted(ix_overall, x, y_null, n, n_tail, tail_def)
+            mono_null = numba_fast_rolling_tail_ic(x, y_null, window_starts, window_ends, window_offsets, window_sorted_idx, tail_def, pct)
+
+            # Sortino
+            if not is_two_sided:
+                m = n_tail
+                sum_ret = 0.0
+                sum_sq_down = 0.0
+                if tail_def == 1:
+                    for k in range(m):
+                        r = y_null[tail_idx_local[k]] - 0.0015
+                        sum_ret += r
+                        if r < 0:
+                            sum_sq_down += r * r
+                else:
+                    for k in range(m):
+                        r = -y_null[tail_idx_local[k]] - 0.0015
+                        sum_ret += r
+                        if r < 0:
+                            sum_sq_down += r * r
+                ann_ret = (sum_ret / m) * 244.0
+                down_std = np.sqrt(sum_sq_down / m) * 15.620499351813308
+                sortino_null = ann_ret / (down_std + 1e-10)
+            else:
+                n_l = len(long_idx)
+                n_s_ = len(short_idx)
+                total_cnt = n_l + n_s_
+                sum_ret = 0.0
+                sum_sq_down = 0.0
+                for k in range(n_l):
+                    r = y_null[long_idx[k]] - 0.0015
+                    sum_ret += r
+                    if r < 0:
+                        sum_sq_down += r * r
+                for k in range(n_s_):
+                    r = -y_null[short_idx[k]] - 0.0015
+                    sum_ret += r
+                    if r < 0:
+                        sum_sq_down += r * r
+                ann_ret = (sum_ret / total_cnt) * 244.0
+                down_std = np.sqrt(sum_sq_down / total_cnt) * 15.620499351813308
+                sortino_null = ann_ret / (down_std + 1e-10)
+
+            null_scores_local[s] = 0.4 * mono_null + 0.3 * sortino_null + 0.2 * abs(tail_ic_null) + 0.1 * abs(raw_ic_null)
+
+        # 95th percentile via partial sort
+        null_scores_local.sort()
+        idx_95 = int(0.95 * n_sims)
+        if idx_95 >= n_sims:
+            idx_95 = n_sims - 1
+        out_95[c] = null_scores_local[idx_95]
+        s_sum = 0.0
+        for k in range(n_sims):
+            s_sum += null_scores_local[k]
+        out_mean[c] = s_sum / n_sims
+        out_ic_mean[c] = raw_ic_sum / n_sims
+
+    return out_95, out_mean, out_ic_mean
+
+
+def compute_candidate_null_composite(x_flipped: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str, n_sims: int = 500, block_size: int = 10):
+    """Multi-trial block-shuffled empirical null simulation for a candidate's composite score (Numba parallel kernel)."""
+    n = len(y)
+    x32 = x_flipped.astype(np.float32)
+    y32 = y.astype(np.float32)
+
+    if side == "long":
+        tail_def = 1
+        pct = 0.15
+    elif side == "short":
+        tail_def = 2
+        pct = 0.15
+    else:  # single / two-sided
+        tail_def = 3
+        pct = 0.10
+
+    # Precompute window indices once for candidate
+    n_days = len(window_starts)
+    window_offsets = np.zeros(n_days, dtype=np.int32)
+    flat_indices = []
+    curr_offset = 0
+    for t in range(n_days):
+        st = window_starts[t]
+        en = window_ends[t]
+        window_offsets[t] = curr_offset
+        x_win = x32[st:en]
+        ix = np.argsort(x_win).astype(np.int32)
+        flat_indices.extend(ix)
+        curr_offset += len(ix)
+    window_sorted_idx = np.array(flat_indices, dtype=np.int32)
+
+    ix_overall = np.argsort(x32).astype(np.int32)
+    n_tail = max(5, int(n * pct))
+    long_idx = ix_overall[-n_tail:]
+    short_idx = ix_overall[:n_tail]
+    tail_idx = long_idx if side == "long" else short_idx
+    is_two_sided = (side not in ["long", "short"])
+
+    num_blocks = int(np.ceil(n / block_size))
+    possible_starts = max(1, n - block_size + 1)
+    rng = np.random.default_rng(42)
+    all_starts = rng.integers(0, possible_starts, size=(n_sims, num_blocks)).astype(np.int32)
+
+    null_scores = numba_fast_null_composite_kernel(
+        x32, y32, window_starts, window_ends, window_offsets, window_sorted_idx,
+        ix_overall, tail_idx, is_two_sided, long_idx, short_idx, tail_def, pct,
+        all_starts, block_size, n_sims
+    )
+
+    return float(np.percentile(null_scores, 95)), float(np.mean(null_scores))
+
+
+def compute_batched_candidate_nulls(X_survivors_flipped: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str, n_sims: int = 500, block_size: int = 10):
+    """Run B3 composite null simulation for ALL surviving candidates in a single batched kernel call.
+
+    Replaces the Parallel(n_jobs)(delayed(compute_candidate_null_composite)...) pattern.
+    Uses shared y-shuffle indices across candidates and a single prange over candidates.
+    """
+    n = len(y)
+    n_cands = X_survivors_flipped.shape[1]
+    if n_cands == 0:
+        return np.array([]), np.array([])
+
+    X32 = X_survivors_flipped.astype(np.float32, copy=False)
+    y32 = y.astype(np.float32, copy=False)
+
+    if side == "long":
+        tail_def = 1
+        pct = 0.15
+    elif side == "short":
+        tail_def = 2
+        pct = 0.15
+    else:
+        tail_def = 3
+        pct = 0.10
+    n_tail = max(5, int(n * pct))
+
+    # Shared y-shuffle starts across all candidates (deterministic seed for reproducibility)
+    num_blocks = int(np.ceil(n / block_size))
+    possible_starts = max(1, n - block_size + 1)
+    rng = np.random.default_rng(42)
+    all_starts = rng.integers(0, possible_starts, size=(n_sims, num_blocks)).astype(np.int32)
+
+    out_95, out_mean, out_ic_mean = numba_batched_b3_null_kernel(
+        X32, y32, window_starts, window_ends, all_starts,
+        tail_def, pct, n_tail, block_size, n_sims,
+    )
+    return out_95, out_mean, out_ic_mean
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-e", "--etf", required=True, choices=["300ETF", "50ETF", "500ETF", "588000ETF", "159915ETF"])
     parser.add_argument("-s", "--side", required=True, choices=["single", "long", "short"])
     parser.add_argument("--tau", type=float, default=0.03, help="Overall IC threshold (obsolete, replaced by simulation gate)")
-    parser.add_argument("--theta", type=float, default=0.50, help="Max absolute correlation threshold")
+    parser.add_argument("--theta", type=float, default=0.35, help="Max absolute correlation threshold")
     parser.add_argument("--mono-thr", type=float, default=None, help="Rolling tail IC positivity threshold (monotonicity)")
     parser.add_argument("--ir-thr", type=float, default=None, help="Rolling tail IC Information Ratio threshold")
     parser.add_argument("--early", action="store_true", help="Use early window return dataset")
@@ -485,9 +894,7 @@ def main():
     col_med = X_df.median().fillna(0.0)
     X_df = X_df.fillna(col_med)
 
-    # Load and compute candidate recipes dynamically
-    import sys
-    sys.path.append(str(HERE / "mining"))
+    # Load and compute candidate recipes dynamically (vectorized batch + parquet cache)
     from recipe_utils import compute_recipe
     
     suffix = "_early" if args.early else ""
@@ -495,47 +902,171 @@ def main():
     candidate_recipes = {}
     features_to_eval = list(FEATURES)
     
+    # Recipe parquet cache: skip recomputation if candidates file unchanged
+    data_out_dir = HERE / "data"
+    recipe_cache_path = data_out_dir / f"recipe_cache_{args.etf}_{args.side}{suffix}.parquet"
+    recipe_meta_path = data_out_dir / f"recipe_cache_{args.etf}_{args.side}{suffix}.meta.json"
+    
     if candidates_path.exists():
-        try:
+        # Compute hash of candidates file for cache invalidation
+        cand_hash = hashlib.md5(candidates_path.read_bytes()).hexdigest()
+        
+        # Check if cache is valid
+        cache_valid = False
+        if recipe_cache_path.exists() and recipe_meta_path.exists():
+            try:
+                with open(recipe_meta_path, "r") as f:
+                    meta = json.load(f)
+                if meta.get("hash") == cand_hash and meta.get("n_rows") == len(X_df):
+                    cache_valid = True
+            except Exception:
+                pass
+        
+        if cache_valid:
+            # Load cached recipe columns
+            print(f"Loading cached recipe columns from {recipe_cache_path.name}")
+            cached_df = pd.read_parquet(recipe_cache_path)
+            recipe_feature_names = [c for c in cached_df.columns if c.startswith("combo_")]
+            # Fast path: pd.concat is O(1) vs O(N_cols) for column-by-column assignment
+            cached_subset = cached_df[recipe_feature_names]
+            X_df = pd.concat([X_df, cached_subset], axis=1, copy=False)
+            features_to_eval.extend(recipe_feature_names)
+            # Reload candidate_recipes from candidates file (needed for output)
             with open(candidates_path, "r") as f:
                 cands = json.load(f)
-            print(f"Loaded {len(cands)} candidate combinations from {candidates_path.name}")
-            
-            # Use X_df to preserve NaN filled base features
-            base_filled_df = train_df.copy()
-            for col in FEATURES:
-                base_filled_df[col] = X_df[col]
-                
+            cand_set = set(recipe_feature_names)
             for item in cands:
-                feat_name = item["feature_name"]
-                recipe = item["recipe"]
-                try:
-                    candidate_values = compute_recipe(base_filled_df, recipe)
-                    X_df[feat_name] = candidate_values
-                    features_to_eval.append(feat_name)
-                    candidate_recipes[feat_name] = recipe
-                except Exception as e:
-                    print(f"WARNING: Failed to compute recipe for {feat_name}: {e}")
-        except Exception as e:
-            print(f"WARNING: Failed to load candidate recipes: {e}")
+                if item["feature_name"] in cand_set:
+                    candidate_recipes[item["feature_name"]] = item["recipe"]
+            print(f"Cache hit: {len(recipe_feature_names)} recipe columns loaded.")
+        else:
+            # Compute recipes from scratch
+            try:
+                with open(candidates_path, "r") as f:
+                    cands = json.load(f)
+                print(f"Loaded {len(cands)} candidate combinations from {candidates_path.name}")
+                
+                # Pre-extract standardized columns once for batch recipe computation
+                from scipy.stats import rankdata as _rankdata
+                _std_cache = {}  # col_name -> standardized numpy array
+                _rank_cache = {}  # col_name -> rank array
+                n_rows = len(X_df)
+                
+                def _get_std_col_fast(col_name):
+                    if col_name not in _std_cache:
+                        val = X_df[col_name].values.astype(np.float64)
+                        mean = np.nanmean(val)
+                        std = np.nanstd(val)
+                        if std < 1e-12:
+                            std = 1.0
+                        _std_cache[col_name] = (val - mean) / std
+                    return _std_cache[col_name]
+                
+                def _get_rank_col_fast(col_name):
+                    if col_name not in _rank_cache:
+                        val = X_df[col_name].values.astype(np.float64)
+                        med = np.nanmedian(val)
+                        val_filled = np.where(np.isnan(val), med, val)
+                        _rank_cache[col_name] = _rankdata(val_filled) / n_rows
+                    return _rank_cache[col_name]
+                
+                def _compute_recipe_fast(recipe):
+                    """Vectorized recipe computation using cached standardized columns."""
+                    op = recipe["op"]
+                    if op == "min":
+                        return np.minimum(_get_std_col_fast(recipe["feature_a"]), _get_std_col_fast(recipe["feature_b"]))
+                    elif op == "max":
+                        return np.maximum(_get_std_col_fast(recipe["feature_a"]), _get_std_col_fast(recipe["feature_b"]))
+                    elif op == "diff":
+                        return _get_std_col_fast(recipe["feature_a"]) - _get_std_col_fast(recipe["feature_b"])
+                    elif op == "ratio":
+                        a_val = X_df[recipe["feature_a"]].values.astype(np.float64)
+                        b_val = X_df[recipe["feature_b"]].values.astype(np.float64)
+                        return a_val / (np.abs(b_val) + 1e-5)
+                    elif op == "ifelse":
+                        cond_val = X_df[recipe["feature_cond"]].values.astype(np.float64)
+                        thresh = np.nanmedian(cond_val)
+                        return np.where(cond_val > thresh, _get_std_col_fast(recipe["feature_a"]), _get_std_col_fast(recipe["feature_b"]))
+                    elif op == "mean":
+                        return (_get_std_col_fast(recipe["feature_a"]) + _get_std_col_fast(recipe["feature_b"])) / 2.0
+                    elif op == "product":
+                        return _get_std_col_fast(recipe["feature_a"]) * _get_std_col_fast(recipe["feature_b"])
+                    elif op == "abs_diff":
+                        return np.abs(_get_std_col_fast(recipe["feature_a"]) - _get_std_col_fast(recipe["feature_b"]))
+                    elif op == "rank_min":
+                        return np.minimum(_get_rank_col_fast(recipe["feature_a"]), _get_rank_col_fast(recipe["feature_b"]))
+                    elif op == "rank_max":
+                        return np.maximum(_get_rank_col_fast(recipe["feature_a"]), _get_rank_col_fast(recipe["feature_b"]))
+                    elif op == "clamp_diff":
+                        return np.clip(_get_std_col_fast(recipe["feature_a"]) - _get_std_col_fast(recipe["feature_b"]), -2.0, 2.0)
+                    elif op == "tri_mean":
+                        return (_get_std_col_fast(recipe["feature_a"]) + _get_std_col_fast(recipe["feature_b"]) + _get_std_col_fast(recipe["feature_c"])) / 3.0
+                    elif op == "tri_min":
+                        return np.minimum(np.minimum(_get_std_col_fast(recipe["feature_a"]), _get_std_col_fast(recipe["feature_b"])), _get_std_col_fast(recipe["feature_c"]))
+                    elif op == "tri_max":
+                        return np.maximum(np.maximum(_get_std_col_fast(recipe["feature_a"]), _get_std_col_fast(recipe["feature_b"])), _get_std_col_fast(recipe["feature_c"]))
+                    elif op == "tri_median":
+                        return np.median(np.stack([_get_std_col_fast(recipe["feature_a"]), _get_std_col_fast(recipe["feature_b"]), _get_std_col_fast(recipe["feature_c"])]), axis=0)
+                    elif op == "tri_ifelse":
+                        cond1_val = X_df[recipe["feature_cond"]].values.astype(np.float64)
+                        cond2_val = X_df[recipe["feature_cond2"]].values.astype(np.float64)
+                        thresh1 = np.nanmedian(cond1_val)
+                        thresh2 = np.nanmedian(cond2_val)
+                        inner = np.where(cond2_val > thresh2, _get_std_col_fast(recipe["feature_b"]), _get_std_col_fast(recipe["feature_c"]))
+                        return np.where(cond1_val > thresh1, _get_std_col_fast(recipe["feature_a"]), inner)
+                    else:
+                        raise ValueError(f"Unknown op: {op}")
+                
+                n_failed = 0
+                batch_values = {}  # feat_name -> numpy array (collected, then assigned in one shot)
+                for item in cands:
+                    feat_name = item["feature_name"]
+                    recipe = item["recipe"]
+                    try:
+                        candidate_values = _compute_recipe_fast(recipe)
+                        batch_values[feat_name] = candidate_values
+                        features_to_eval.append(feat_name)
+                        candidate_recipes[feat_name] = recipe
+                    except Exception as e:
+                        n_failed += 1
+                        if n_failed <= 3:
+                            print(f"WARNING: Failed to compute recipe for {feat_name}: {e}")
+                if n_failed > 3:
+                    print(f"WARNING: {n_failed} recipes failed total.")
+                # Batch-assign all recipe columns at once (much faster than per-column X_df[c] = ...)
+                if batch_values:
+                    X_df = pd.concat([X_df, pd.DataFrame(batch_values, index=X_df.index)], axis=1, copy=False)
+                
+                # Save recipe cache for future runs
+                recipe_cols = [c for c in X_df.columns if c.startswith("combo_")]
+                if recipe_cols:
+                    try:
+                        X_df[recipe_cols].to_parquet(recipe_cache_path, index=False)
+                        with open(recipe_meta_path, "w") as f:
+                            json.dump({"hash": cand_hash, "n_rows": len(X_df), "n_recipes": len(recipe_cols)}, f)
+                        print(f"Saved recipe cache ({len(recipe_cols)} columns) to {recipe_cache_path.name}")
+                    except Exception as e:
+                        print(f"WARNING: Could not save recipe cache: {e}")
+            except Exception as e:
+                print(f"WARNING: Failed to load candidate recipes: {e}")
     else:
         print(f"No candidate combinations file found at {candidates_path}. Evaluating base features only.")
 
     X_train = X_df[features_to_eval].values.astype(np.float64)
 
-    # Precompute rolling window indices (90 calendar days)
-    window_starts = np.zeros(len(dates_train), dtype=np.int32)
-    window_ends = np.zeros(len(dates_train), dtype=np.int32)
-    for t in range(len(dates_train)):
-        start_date = dates_train.iloc[t] - pd.Timedelta(days=90)
-        window_starts[t] = np.searchsorted(dates_train, start_date)
-        window_ends[t] = t + 1
+    # Precompute rolling window indices (90 calendar days) — vectorized
+    dates_np = dates_train.values.astype('datetime64[D]')
+    start_dates = dates_np - np.timedelta64(90, 'D')
+    window_starts = np.searchsorted(dates_np, start_dates).astype(np.int32)
+    window_ends = np.arange(1, len(dates_train) + 1, dtype=np.int32)
 
-    # 2. Evaluate all features in parallel
+    # 2. Evaluate all features in parallel (fp32 for speed)
     print(f"Evaluating {len(features_to_eval)} features on training set...")
+    X_train_f32 = X_train.astype(np.float32)
+    y_train_f32 = y_train.astype(np.float32)
     eval_results = Parallel(n_jobs=args.n_jobs)(
         delayed(evaluate_single_feature)(
-            features_to_eval[i], X_train[:, i], y_train, dates_train, window_starts, window_ends, args.side
+            features_to_eval[i], X_train_f32[:, i], y_train_f32, window_starts, window_ends, args.side
         ) for i in range(len(features_to_eval))
     )
 
@@ -595,7 +1126,28 @@ def main():
     else:
         print(f"Split-half sign stability: all {len(eval_results)} features passed.")
 
-    # 4. Light Benjamini-Hochberg FDR Pre-Filter Gate
+    # 3c. B2 Rolling Guard & Absolute-Sign filter (instant check on pre-computed monotonicity, IR, & absolute tail sign)
+    guard_survivors = []
+    guard_rejects = []
+    abs_sign_rejects = []
+    for item in stable_results:
+        passes_guard = (item["monotonicity"] >= args.mono_thr) and (item["ic_ir"] >= args.ir_thr)
+        passes_abs_sign = item.get("passes_abs_sign", True)
+        if not passes_guard:
+            item["passes_rolling_guard"] = False
+            guard_rejects.append(item)
+        elif not passes_abs_sign:
+            item["passes_rolling_guard"] = True
+            item["passes_abs_sign"] = False
+            abs_sign_rejects.append(item)
+        else:
+            item["passes_rolling_guard"] = True
+            item["passes_abs_sign"] = True
+            guard_survivors.append(item)
+
+    print(f"B2 Rolling Guard & Absolute Sign: {len(guard_survivors)} / {len(stable_results)} candidates passed (dropped {len(guard_rejects)} guard, {len(abs_sign_rejects)} absolute-sign).")
+
+    # 4. Light Benjamini-Hochberg FDR Pre-Filter Gate (runs ONLY on B2 survivors)
     if args.side == "long":
         tail_def = 1
         pct = 0.15
@@ -607,25 +1159,56 @@ def main():
         pct = 0.10
     n_tail = max(5, int(len(y_train) * pct))
     
-    print(f"Running single-trial empirical null simulation for BH-FDR pre-filter ({len(stable_results)} candidates)...")
-    # Use actual design matrix X_train to preserve real candidate distributions
-    null_single_ics = numba_single_trial_empirical_sim(X_train, y_train, tail_def, n_tail, 5000, block_size=10)
-    
-    # Compute empirical p-value for each stable candidate
-    for item in stable_results:
+    # Pre-cache BH-FDR single-feature empirical null distribution
+    fdr_cache_path = data_out_dir / f"fdr_null_{args.etf}_{args.side}{suffix}.json"
+    fdr_cache_valid = False
+    if fdr_cache_path.exists():
+        try:
+            with open(fdr_cache_path, "r") as f:
+                fdr_cache = json.load(f)
+            if fdr_cache.get("n_rows") == len(y_train):
+                null_single_ics = np.array(fdr_cache["null_single_ics"], dtype=np.float64)
+                fdr_cache_valid = True
+                print(f"BH-FDR single-trial null cache hit (shape: {null_single_ics.shape})")
+        except Exception:
+            pass
+
+    if not fdr_cache_valid:
+        print(f"Running single-trial empirical null simulation for BH-FDR pre-filter ({len(guard_survivors)} candidates)...")
+        if guard_survivors:
+            X_survivors = np.column_stack([item["x_flipped"] for item in guard_survivors])
+        else:
+            X_survivors = X_train
+        null_single_ics = numba_single_trial_empirical_sim(X_survivors, y_train, tail_def, n_tail, 5000, block_size=10)
+        try:
+            with open(fdr_cache_path, "w") as f:
+                json.dump({"n_rows": len(y_train), "null_single_ics": null_single_ics.tolist()}, f)
+            print(f"Saved BH-FDR null cache to {fdr_cache_path.name}")
+        except Exception as e:
+            print(f"WARNING: Could not save FDR null cache to {fdr_cache_path}: {e}")
+
+    # Compute empirical p-value for each B2 survivor
+    for item in guard_survivors:
         item["p_value"] = float(np.mean(null_single_ics >= item["overall_ic"]))
         
     # Apply Benjamini-Hochberg FDR procedure
-    p_values = np.array([item["p_value"] for item in stable_results])
-    bh_mask = benjamini_hochberg_fdr(p_values, fdr_threshold=0.20)
-    for idx, item in enumerate(stable_results):
-        item["passes_fdr"] = bool(bh_mask[idx])
-
-    # 5. Log all attempts and identify surviving candidates
-    attempts_log = []
+    p_values = np.array([item["p_value"] for item in guard_survivors]) if guard_survivors else np.array([])
+    bh_mask = benjamini_hochberg_fdr(p_values, fdr_threshold=FDR_THRESHOLD) if len(p_values) > 0 else np.array([])
+    
     surviving_candidates = []
+    fdr_rejects = []
+    for idx, item in enumerate(guard_survivors):
+        passes_fdr = bool(bh_mask[idx])
+        item["passes_fdr"] = passes_fdr
+        if passes_fdr:
+            surviving_candidates.append(item)
+        else:
+            fdr_rejects.append(item)
 
-    # Log split-half rejects first
+    # 5. Log all attempts
+    attempts_log = []
+
+    # Log split-half rejects
     for item in split_half_rejects:
         attempts_log.append({
             "feature_name": item["feature_name"],
@@ -640,68 +1223,124 @@ def main():
             "verdict": "REJECTED_SPLIT_HALF"
         })
 
-    for item in stable_results:
-        passes_guard = (item["monotonicity"] >= args.mono_thr) and (item["ic_ir"] >= args.ir_thr)
-        passes_fdr = item["passes_fdr"]
-        
-        attempt_record = {
+    # Log rolling guard rejects
+    for item in guard_rejects:
+        attempts_log.append({
             "feature_name": item["feature_name"],
             "sign": item["sign"],
             "raw_ic": item["raw_ic"],
             "overall_ic": item["overall_ic"],
+            "mean_tail_ic": item["mean_tail_ic"],
+            "sortino": item["sortino"],
+            "composite_score": item["composite_score"],
+            "ic_ir": item["ic_ir"],
+            "monotonicity": item["monotonicity"],
+            "split_half_ic_first": item["split_half_ic_first"],
+            "split_half_ic_second": item["split_half_ic_second"],
+            "passes_split_half": True,
+            "passes_rolling_guard": False,
+            "passes_fdr": False,
+            "verdict": "REJECTED_ROLLING_GUARD"
+        })
+
+    # Log absolute sign rejects
+    for item in abs_sign_rejects:
+        attempts_log.append({
+            "feature_name": item["feature_name"],
+            "sign": item["sign"],
+            "raw_ic": item["raw_ic"],
+            "overall_ic": item["overall_ic"],
+            "mean_tail_ic": item["mean_tail_ic"],
+            "sortino": item["sortino"],
+            "composite_score": item["composite_score"],
+            "ic_ir": item["ic_ir"],
+            "monotonicity": item["monotonicity"],
+            "split_half_ic_first": item["split_half_ic_first"],
+            "split_half_ic_second": item["split_half_ic_second"],
+            "passes_split_half": True,
+            "passes_rolling_guard": True,
+            "passes_abs_sign": False,
+            "passes_fdr": False,
+            "verdict": "REJECTED_ABSOLUTE_SIGN"
+        })
+
+    # Log FDR rejects
+    for item in fdr_rejects:
+        attempts_log.append({
+            "feature_name": item["feature_name"],
+            "sign": item["sign"],
+            "raw_ic": item["raw_ic"],
+            "overall_ic": item["overall_ic"],
+            "mean_tail_ic": item["mean_tail_ic"],
+            "sortino": item["sortino"],
+            "composite_score": item["composite_score"],
             "p_value": item["p_value"],
             "ic_ir": item["ic_ir"],
             "monotonicity": item["monotonicity"],
             "split_half_ic_first": item["split_half_ic_first"],
             "split_half_ic_second": item["split_half_ic_second"],
             "passes_split_half": True,
-            "passes_rolling_guard": bool(passes_guard),
-            "passes_fdr": bool(passes_fdr),
-            "verdict": "PENDING_ADMISSION"
-        }
-        
-        if not passes_guard:
-            attempt_record["verdict"] = "REJECTED_ROLLING_GUARD"
-            attempts_log.append(attempt_record)
-        elif not passes_fdr:
-            attempt_record["verdict"] = "REJECTED_FDR_GATE"
-            attempts_log.append(attempt_record)
-        else:
-            surviving_candidates.append(item)
-            
+            "passes_rolling_guard": True,
+            "passes_fdr": False,
+            "verdict": "REJECTED_FDR_GATE"
+        })
+
     print(f"{len(surviving_candidates)} features survived split-half + rolling guard + FDR out of {len(features_to_eval)}.")
 
-    # 6. Compute Data-Adaptive Simulation Threshold (empirical 95th percentile)
-    print(f"Running multi-trial empirical null simulation for N={n_trials} trials...")
-    max_ics = numba_multi_trial_empirical_sim(X_train, y_train, n_trials, tail_def, n_tail, 1000, block_size=10)
-    empirical_95th = float(np.percentile(max_ics, 95))
-    empirical_mean = float(np.mean(max_ics))
-    print(f"Empirical 95th-percentile tail IC threshold: {empirical_95th:.4f}")
-    print(f"Empirical mean max tail IC: {empirical_mean:.4f}")
+    # 6. Compute Data-Adaptive Composite Score Threshold (empirical 95th percentile)
+    if surviving_candidates:
+        print(f"Running batched composite null simulations for {len(surviving_candidates)} candidates (n_sims=500)...")
+        X_survivors_batch = np.column_stack([cand["x_flipped"] for cand in surviving_candidates]).astype(np.float32)
+        emp_95_arr, emp_mean_arr, ic_null_mean_arr = compute_batched_candidate_nulls(
+            X_survivors_batch, y_train, window_starts, window_ends, args.side, n_sims=500, block_size=10
+        )
+        for idx, cand in enumerate(surviving_candidates):
+            cand["empirical_95th"] = float(emp_95_arr[idx])
+            cand["empirical_mean"] = float(emp_mean_arr[idx])
+            cand["ic_null_mean"] = float(ic_null_mean_arr[idx])
 
-    # 7. Admission Gate (A2)
+    # Helper to extract primitive component set for cluster pruning
+    def get_primitive_cluster(cand_dict):
+        if "recipe" in cand_dict:
+            r = cand_dict["recipe"]
+            prims = []
+            for k in ["feature_a", "feature_b", "feature_c", "feature_cond", "feature_cond2"]:
+                if k in r:
+                    prims.append(r[k])
+            if prims:
+                return tuple(sorted(set(prims)))
+        return (cand_dict["feature_name"],)
+
+    # 7. Admission Gate (B3 Composite Floor + B4 Correlation Gate & Replacement Rule)
     admitted_pool = []  # list of dicts
 
     for cand in surviving_candidates:
         cand_name = cand["feature_name"]
         cand_ic = cand["overall_ic"]
+        cand_comp = cand["composite_score"]
+        emp_95th = cand["empirical_95th"]
+        emp_mean = cand["empirical_mean"]
+        ic_null_mean = cand.get("ic_null_mean", 0.0)
         x_cand = cand["x_flipped"]
-        deflated_ic = max(0.0, cand_ic - empirical_mean)
+        deflated_ic = max(0.0, cand_ic - ic_null_mean)
         cand["deflated_ic"] = deflated_ic
         
-        # Check overall IC >= empirical_95th admission gate
-        if cand_ic < empirical_95th:
+        # Check composite_score >= empirical_95th admission gate
+        if cand_comp < emp_95th:
             attempts_log.append({
                 "feature_name": cand_name,
                 "sign": cand["sign"],
                 "raw_ic": cand["raw_ic"],
                 "overall_ic": cand_ic,
+                "mean_tail_ic": cand["mean_tail_ic"],
+                "sortino": cand["sortino"],
+                "composite_score": cand_comp,
+                "empirical_95th": emp_95th,
                 "p_value": cand["p_value"],
                 "deflated_ic": deflated_ic,
                 "ic_ir": cand["ic_ir"],
                 "monotonicity": cand["monotonicity"],
                 "passes_rolling_guard": True,
-                "passes_fdr": True,
                 "verdict": "REJECTED_ADMISSION_FLOOR"
             })
             continue
@@ -808,6 +1447,12 @@ def main():
                 })
 
     print(f"Final admitted pool size: {len(admitted_pool)}")
+
+    # Free x_flipped arrays from non-admitted results to reclaim memory
+    admitted_names_set = {item["feature_name"] for item in admitted_pool}
+    for item in eval_results:
+        if item["feature_name"] not in admitted_names_set and "x_flipped" in item:
+            del item["x_flipped"]
 
     # Format the selected pool output
     selected_output = []

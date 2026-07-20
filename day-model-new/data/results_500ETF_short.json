@@ -7,20 +7,22 @@
   "training_metrics": {
     "overall_ic": 0.0,
     "overall_ic_ci": [
-      0.0,
-      0.0
+      -0.043185026408844134,
+      0.04181863552763916
     ],
     "tail_ic": 0.0,
     "tail_ic_ci": [
-      0.0,
-      0.0
+      -0.11942077495368227,
+      0.11293099018642891
     ],
     "monotonicity": 0.0,
     "monotonicity_ci": [
-      0.0,
-      0.0
+      -0.6366666666666666,
+      0.6245454545454543
     ],
     "ann_ret": 0.0,
+    "raw_ann_ret": 0.0,
+    "raw_sharpe": 0.0,
     "sharpe": 0.0,
     "sortino": 0.0,
     "max_dd": 0.0
@@ -28,20 +30,22 @@
   "oos_metrics": {
     "overall_ic": 0.0,
     "overall_ic_ci": [
-      0.0,
-      0.0
+      -0.05631487363675513,
+      0.06096579545807313
     ],
     "tail_ic": 0.0,
     "tail_ic_ci": [
-      0.0,
-      0.0
+      -0.14333961340171128,
+      0.1413028988070137
     ],
     "monotonicity": 0.0,
     "monotonicity_ci": [
-      0.0,
-      0.0
+      -0.6366666666666666,
+      0.6727272727272727
     ],
     "ann_ret": 0.0,
+    "raw_ann_ret": 0.0,
+    "raw_sharpe": 0.0,
     "sharpe": 0.0,
     "sortino": 0.0,
     "max_dd": 0.0
@@ -49,20 +53,22 @@
   "lockbox_metrics": {
     "overall_ic": 0.0,
     "overall_ic_ci": [
-      0.0,
-      0.0
+      -0.07577247485802353,
+      0.07476103159813215
     ],
     "tail_ic": 0.0,
     "tail_ic_ci": [
-      0.0,
-      0.0
+      -0.1924430397660267,
+      0.1892867588093778
     ],
     "monotonicity": 0.0,
     "monotonicity_ci": [
-      0.0,
-      0.0
+      -0.5878787878787879,
+      0.6484848484848484
     ],
     "ann_ret": 0.0,
+    "raw_ann_ret": 0.0,
+    "raw_sharpe": 0.0,
     "sharpe": 0.0,
     "sortino": 0.0,
     "max_dd": 0.0

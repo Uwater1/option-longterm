@@ -401,9 +401,15 @@ def run_one(etf: str, side: str, args):
     sorted_idx = np.argsort(tail_ics)[::-1]
     feature_ics = [(FEATURES[i], float(tail_ics[i])) for i in sorted_idx]
 
-    top_k_features = [FEATURES[i] for i in sorted_idx[:args.top_k]]
-    top_k_3_features = [FEATURES[i] for i in sorted_idx[:args.top_k_3]]
-    print(f"  Selected Top {args.top_k} (2-way), Top {args.top_k_3} (3-way).")
+    # Sample-size scaling relative to ~3400 trading days base
+    n_days = len(train_df)
+    sample_ratio = min(1.0, max(0.40, n_days / 3400.0))
+    eff_top_k = max(15, int(args.top_k * sample_ratio))
+    eff_top_k_3 = max(10, int(args.top_k_3 * sample_ratio))
+
+    top_k_features = [FEATURES[i] for i in sorted_idx[:eff_top_k]]
+    top_k_3_features = [FEATURES[i] for i in sorted_idx[:eff_top_k_3]]
+    print(f"  Sample size: {n_days} days (ratio {sample_ratio:.2f}). Selected Top {eff_top_k} (2-way), Top {eff_top_k_3} (3-way).")
     print(f"  Best: {feature_ics[0][0]} (IC={feature_ics[0][1]:.4f})")
 
     # 4. Compute pairwise correlation matrix (numpy, fp32)

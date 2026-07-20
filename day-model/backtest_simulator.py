@@ -140,8 +140,13 @@ def load_predictions(etf: str, target_transform: str = "gauss", early: bool = Fa
     return long_scores, short_scores
 
 
-def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform: str = "gauss", early: bool = False, sharpe_objective: bool = False) -> tuple[pd.Series, pd.Series]:
-    """Load rolling model predictions, auto-selecting the best model per date."""
+def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform: str = "gauss", early: bool = False, sharpe_objective: bool = False) -> tuple[pd.Series, pd.Series, pd.Timestamp | None]:
+    """Load rolling model predictions, auto-selecting the best model per date.
+    
+    Returns (long_scores, short_scores, earliest_rolling_lockbox).
+    earliest_rolling_lockbox is the lockbox date of the oldest rolling model found,
+    or None if no rolling models are available (static fallback).
+    """
     # Load features
     feat_path = FEATURES_DIR / (f"features_{etf}_early.parquet" if early else f"features_{etf}.parquet")
     if not feat_path.exists():
@@ -196,7 +201,8 @@ def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform
 
     if not rolling_models:
         print(f"  [WARNING] No rolling models found for {etf} (transform: {target_transform}), falling back to static.")
-        return load_predictions(etf, target_transform=target_transform, early=early, sharpe_objective=sharpe_objective)
+        long_s, short_s = load_predictions(etf, target_transform=target_transform, early=early, sharpe_objective=sharpe_objective)
+        return long_s, short_s, None
 
     # Sort by lockbox date descending (most recent first)
     rolling_models.sort(key=lambda m: m["lockbox"], reverse=True)
@@ -249,7 +255,9 @@ def load_predictions_rolling(etf: str, max_age_months: int = 6, target_transform
 
     long_scores = long_scores.sort_index()
     short_scores = short_scores.sort_index()
-    return long_scores, short_scores
+    # Earliest lockbox = the oldest rolling model (list is sorted descending)
+    earliest_lockbox = rolling_models[-1]["lockbox"]
+    return long_scores, short_scores, earliest_lockbox
 
 
 def get_option_price(
@@ -789,7 +797,10 @@ def main():
 
     print("=" * 80)
     print(f"DAY-MODEL WALK-FORWARD OOS SIMULATOR")
-    print(f"OOS Period : {LOCKBOX_DATE} onwards")
+    if args.rolling:
+        print(f"OOS Period : ROLLING (from earliest rolling model, typically 2017)")
+    else:
+        print(f"OOS Period : {LOCKBOX_DATE} onwards (static)")
     print(f"Asset Type : {args.type}")
     print(f"Models     : {'ROLLING (auto-select per date)' if args.rolling else 'STATIC'} (Early: {args.early})")
     print(f"Thresholds : Long={args.long_thr}%, Short={args.short_thr}%")
@@ -800,6 +811,7 @@ def main():
 
     all_trades = {}
     combined_df_list = []
+    oos_start_label = LOCKBOX_DATE  # updated per-ETF when rolling
 
     for etf in etfs:
         if args.type == "Future" and etf not in ["50ETF", "300ETF", "500ETF"]:
@@ -816,8 +828,9 @@ def main():
 
         try:
             # 1. Predictions
+            rolling_earliest_lockbox = None
             if args.rolling:
-                long_scores, short_scores = load_predictions_rolling(
+                long_scores, short_scores, rolling_earliest_lockbox = load_predictions_rolling(
                     etf, max_age_months=args.max_age_months, target_transform=args.target_transform, early=args.early, sharpe_objective=args.sharpe_objective
                 )
             else:
@@ -971,8 +984,13 @@ def main():
                 "size": size
             })
             
-            # Filter strictly for OOS period
-            signals_oos = signals[signals.index >= pd.Timestamp(LOCKBOX_DATE)]
+            # Filter for OOS period: rolling models use earliest lockbox, static uses LOCKBOX_DATE
+            if args.rolling and rolling_earliest_lockbox is not None:
+                oos_start = rolling_earliest_lockbox
+                oos_start_label = rolling_earliest_lockbox.strftime("%Y-%m-%d")
+            else:
+                oos_start = pd.Timestamp(LOCKBOX_DATE)
+            signals_oos = signals[signals.index >= oos_start]
             
             # 3. Simulate execution on ETF 5m or Future 5m, or Options
             if args.option:
@@ -1096,7 +1114,7 @@ def main():
         for col in merged.columns:
             plt.plot(np.cumsum(merged[col]) * 100, label=col.replace("_net", ""), alpha=0.5)
         plt.plot(np.cumsum(portfolio_rets) * 100, label="COMBINED PORTFOLIO", color="black", linewidth=2.5)
-        plt.title(f"Out-of-Sample Walk-Forward Cumulative Net P&L (from {LOCKBOX_DATE}) ({'Option' if is_option else args.type})")
+        plt.title(f"Out-of-Sample Walk-Forward Cumulative Net P&L (from {oos_start_label}) ({'Option' if is_option else args.type})")
         plt.xlabel("Date")
         plt.ylabel("Net Return (%)")
         plt.grid(True, linestyle="--", alpha=0.6)

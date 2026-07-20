@@ -158,3 +158,106 @@ def compute_recipe(df: pd.DataFrame, recipe: dict, train_means: dict = None, tra
 
     else:
         raise ValueError(f"Unknown operation in recipe: {op}")
+
+
+def simulate_returns(y_true: np.ndarray, y_pred: np.ndarray, side: str, position_mode: str = "binary", enforce_absolute_sign: bool = True):
+    """Simulate strategy daily returns based on tail signals.
+    
+    Supports binary vs score-weighted position sizing, absolute sign leg checks,
+    and per-entry transition cost calculation (15 bps on position state changes).
+    
+    Returns (ann_return, sharpe, sortino, max_dd, raw_ann_return, raw_sharpe).
+    """
+    n = len(y_pred)
+    if n < 10:
+        return 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+        
+    if np.max(y_pred) - np.min(y_pred) < 1e-12:
+        return 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+        
+    order = np.argsort(y_pred, kind="quicksort")
+    pos = np.zeros(n, dtype=np.float64)
+    
+    std_pred = np.std(y_pred)
+    mean_pred = np.mean(y_pred)
+    
+    if side == "long":
+        pct = 0.15
+        n_tail = max(5, int(n * pct))
+        long_idx = order[-n_tail:]
+        long_mean = float(np.mean(y_true[long_idx]))
+        if not enforce_absolute_sign or long_mean > 0.0:
+            if position_mode == "score_weighted" and std_pred > 1e-12:
+                z = (y_pred[long_idx] - mean_pred) / std_pred
+                pos[long_idx] = np.clip(z / 2.0, 0.0, 1.0)
+            else:
+                pos[long_idx] = 1.0
+
+    elif side == "short":
+        pct = 0.15
+        n_tail = max(5, int(n * pct))
+        short_idx = order[:n_tail]
+        short_mean = float(np.mean(-y_true[short_idx]))  # expected short return
+        if not enforce_absolute_sign or short_mean > 0.0:
+            if position_mode == "score_weighted" and std_pred > 1e-12:
+                z = (y_pred[short_idx] - mean_pred) / std_pred
+                pos[short_idx] = -np.clip(-z / 2.0, 0.0, 1.0)
+            else:
+                pos[short_idx] = -1.0
+
+    else:  # single (two-sided)
+        pct = 0.10
+        n_tail = max(5, int(n * pct))
+        long_idx = order[-n_tail:]
+        short_idx = order[:n_tail]
+        long_mean = float(np.mean(y_true[long_idx]))
+        short_mean = float(np.mean(-y_true[short_idx]))
+        
+        if not enforce_absolute_sign or long_mean > 0.0:
+            if position_mode == "score_weighted" and std_pred > 1e-12:
+                z = (y_pred[long_idx] - mean_pred) / std_pred
+                pos[long_idx] = np.clip(z / 2.0, 0.0, 1.0)
+            else:
+                pos[long_idx] = 1.0
+                
+        if not enforce_absolute_sign or short_mean > 0.0:
+            if position_mode == "score_weighted" and std_pred > 1e-12:
+                z = (y_pred[short_idx] - mean_pred) / std_pred
+                pos[short_idx] = -np.clip(-z / 2.0, 0.0, 1.0)
+            else:
+                pos[short_idx] = -1.0
+        
+    # Raw daily returns (pre-cost)
+    raw_returns = pos * y_true
+    raw_ann_return = float(np.mean(raw_returns) * 244)
+    raw_ann_vol = float(np.std(raw_returns) * np.sqrt(244))
+    raw_sharpe = float(raw_ann_return / (raw_ann_vol + 1e-10))
+
+    # Per-entry transaction cost (15 bps = 0.0015 per position state transition)
+    pos_prev = np.roll(pos, 1)
+    pos_prev[0] = 0.0
+    transitions = np.abs(pos - pos_prev)
+    cost = transitions * 0.0015
+    cost_returns = raw_returns - cost
+    
+    ann_return = float(np.mean(cost_returns) * 244)
+    ann_vol = float(np.std(cost_returns) * np.sqrt(244))
+    
+    # Sharpe
+    sharpe = float(ann_return / (ann_vol + 1e-10))
+    
+    # Sortino
+    downside_returns = np.minimum(cost_returns, 0.0)
+    downside_vol = float(np.std(downside_returns) * np.sqrt(244))
+    sortino = float(ann_return / (downside_vol + 1e-10))
+    
+    # Max DD
+    cum_returns = np.cumsum(cost_returns)
+    running_max = np.maximum.accumulate(cum_returns)
+    drawdowns = running_max - cum_returns
+    max_dd = float(np.max(drawdowns)) if len(drawdowns) > 0 else 0.0
+    
+    return float(ann_return), float(sharpe), float(sortino), float(max_dd), float(raw_ann_return), float(raw_sharpe)
+
+
+
