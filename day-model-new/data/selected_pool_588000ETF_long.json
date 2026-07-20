@@ -2,8 +2,8 @@
   {
     "feature_name": "combo_max__vol5__bar_rng_3",
     "sign": 1,
-    "overall_ic": 0.34280585569884975,
-    "deflated_ic": 0.3431544185188227,
+    "overall_ic": 0.3428058624267578,
+    "deflated_ic": 0.3431544252467308,
     "ic_ir": 0.3000181477228422,
     "monotonicity": 0.5913129318854886,
     "recipe": {
@@ -15,8 +15,8 @@
   {
     "feature_name": "combo_abs_diff__growth_momentum_ratio__bar_vol_5",
     "sign": 1,
-    "overall_ic": 0.2896766266808016,
-    "deflated_ic": 0.2905582386489475,
+    "overall_ic": 0.28967663645744324,
+    "deflated_ic": 0.29055824842558914,
     "ic_ir": 0.35418107296306317,
     "monotonicity": 0.5824284304047384,
     "recipe": {
@@ -26,24 +26,24 @@
     }
   },
   {
-    "feature_name": "combo_tri_min__bar_vol_4__yesterday_day_realized_vol__vix_diff_1d",
+    "feature_name": "combo_tri_min__vix_rolling_percentile_60d__yesterday_day_realized_vol__vix_skew_proxy",
     "sign": 1,
-    "overall_ic": 0.2733662896887553,
-    "deflated_ic": 0.2713770935055726,
-    "ic_ir": 0.1570089709183584,
-    "monotonicity": 0.5567620927936822,
+    "overall_ic": 0.28841230273246765,
+    "deflated_ic": 0.28867055704554767,
+    "ic_ir": 0.292225194088487,
+    "monotonicity": 0.6041461006910168,
     "recipe": {
       "op": "tri_min",
-      "feature_a": "bar_vol_4",
+      "feature_a": "vix_rolling_percentile_60d",
       "feature_b": "yesterday_day_realized_vol",
-      "feature_c": "vix_diff_1d"
+      "feature_c": "vix_skew_proxy"
     }
   },
   {
     "feature_name": "combo_rank_max__bar_vol_4__vix_skew_proxy",
     "sign": 1,
-    "overall_ic": 0.2534423211664345,
-    "deflated_ic": 0.2529529979193171,
+    "overall_ic": 0.25344231724739075,
+    "deflated_ic": 0.2529529940002733,
     "ic_ir": 0.42497506396965223,
     "monotonicity": 0.6307996051332675,
     "recipe": {
@@ -55,8 +55,8 @@
   {
     "feature_name": "first_30min_return",
     "sign": 1,
-    "overall_ic": 0.2184438989578199,
-    "deflated_ic": 0.21757637632174992,
+    "overall_ic": 0.21844390034675598,
+    "deflated_ic": 0.217576377710686,
     "ic_ir": 0.27490812127860814,
     "monotonicity": 0.6238894373149062
   }

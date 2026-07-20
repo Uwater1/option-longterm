@@ -1,26 +1,18 @@
 [
   {
+    "feature_name": "option_oi_growth",
+    "sign": 1,
+    "overall_ic": 0.14860904216766357,
+    "deflated_ic": 0.14938195540316257,
+    "ic_ir": 0.15716725934549863,
+    "monotonicity": 0.5577712609970674
+  },
+  {
     "feature_name": "sma100_dist",
     "sign": -1,
     "overall_ic": 0.13533248007297516,
-    "deflated_ic": 0.7852382262523973,
+    "deflated_ic": 0.13603351213851578,
     "ic_ir": 0.4190050813389092,
     "monotonicity": 0.6475073313782991
-  },
-  {
-    "feature_name": "early_vwap_dev",
-    "sign": -1,
-    "overall_ic": 0.13415572047233582,
-    "deflated_ic": 0.7834764184493995,
-    "ic_ir": 0.1667991225357781,
-    "monotonicity": 0.5653958944281525
-  },
-  {
-    "feature_name": "cvd_divergence_day",
-    "sign": -1,
-    "overall_ic": 0.07117011398077011,
-    "deflated_ic": 0.7151927010712513,
-    "ic_ir": 0.28283587596096943,
-    "monotonicity": 0.6211143695014663
   }
 ]
