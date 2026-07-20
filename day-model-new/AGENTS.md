@@ -28,8 +28,12 @@ python3 day-model-new/evaluate_concept.py -e 300ETF -s single
 python3 day-model-new/evaluate_concept.py -e 588000ETF -s long
 
 # 3. Run baseline loop across ETFs and sides (runs select_features + evaluate_concept, saves BASELINE_REPORT.md)
-# Supports -e all (default) or specific ETF, and -s all (default) or specific side
-python3 day-model-new/run_baseline.py --n-jobs 4
+# Default = sequential (each combo uses ALL cores internally via numba/joblib, no oversubscription).
+# Pass --skip-existing to skip combos with valid (non-empty) results JSON.
+# Use --max-parallel N to run N combos concurrently (inner n_jobs auto-capped to cpu_count // N).
+python3 day-model-new/run_baseline.py
+python3 day-model-new/run_baseline.py --skip-existing
+python3 day-model-new/run_baseline.py --max-parallel 2 -e 300ETF
 ```
 
 ## Architecture

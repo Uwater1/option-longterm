@@ -4,69 +4,99 @@
   "early": false,
   "k": 1.0,
   "features_selected": [
-    "combo_abs_diff__willr14__max_up_ret"
+    "combo_abs_diff__willr14__max_up_ret",
+    "combo_rank_min__yearly_low_distance__max_up_ret",
+    "combo_min__first_30min_return__bar_body_rng_2",
+    "combo_diff__willr14__max_up_ret",
+    "combo_diff__vol60__max_up_ret",
+    "combo_tri_max__rsi21__stoch_k__yesterday_day_vwap_dev",
+    "combo_product__body_to_range_ratio__max_up_ret",
+    "combo_product__limit_up_proximity_day__rsi21",
+    "combo_product__limit_up_proximity_day__bar_vol_5",
+    "combo_max__yearly_low_distance__bar_vol_4",
+    "combo_ifelse__vol60__bar_ret_2__northbound_volume_share",
+    "combo_product__stoch_k__sma200_dist",
+    "volume_percentile_20d",
+    "combo_product__bar_vwap_dev_5__bar_body_rng_2",
+    "combo_product__bar_vol_4__bar_vol_5",
+    "combo_product__yesterday_illiquidity_amihud__vol_gk10",
+    "combo_rank_min__limit_up_proximity_day__max_up_ret",
+    "combo_product__yesterday_first_bar_volume__sma50_dist",
+    "combo_abs_diff__sma50_dist__bar_vol_4",
+    "combo_rank_min__yesterday_illiquidity_amihud__vol_gk10",
+    "combo_ifelse__vol60__margin_balance__sma100_dist",
+    "combo_abs_diff__yesterday_first_bar_volume__bar_vol_5",
+    "combo_abs_diff__bar_vwap_dev_5__max_up_ret",
+    "combo_mean__stoch_k__max_up_ret",
+    "combo_tri_min__sma100_dist__stoch_k__vol60",
+    "combo_clamp_diff__body_to_range_ratio__max_up_ret",
+    "combo_tri_max__yesterday_illiquidity_amihud__stoch_k__sma200_dist",
+    "combo_clamp_diff__yesterday_illiquidity_amihud__short_sell_quantity",
+    "combo_product__volume_percentile_20d__yesterday_wavetrend_osc",
+    "combo_clamp_diff__first_30min_return__bar_vwap_dev_5",
+    "combo_diff__yesterday_day_vwap_dev__bar_vol_5"
   ],
   "training_metrics": {
-    "overall_ic": 0.02244455049573481,
+    "overall_ic": 0.19359730007525186,
     "overall_ic_ci": [
-      -0.021707655083291515,
-      0.07552102896123825
+      0.14288660125277075,
+      0.24198204410927512
     ],
-    "tail_ic": 0.31771659291711685,
+    "tail_ic": 0.20058620889300602,
     "tail_ic_ci": [
-      0.18010638605836035,
-      0.41598944462135246
+      0.07269625332908754,
+      0.3277078508568782
     ],
-    "monotonicity": -0.04242424242424243,
+    "monotonicity": 0.9757575757575757,
     "monotonicity_ci": [
-      -0.3090909090909091,
-      0.297272727272727
+      0.5515151515151515,
+      0.9757575757575757
     ],
-    "ann_ret": 0.021361456535624598,
-    "sharpe": 0.2219163931631213,
-    "sortino": 0.3288104845428937,
-    "max_dd": 0.1180808414180799
+    "ann_ret": 0.13206790015692516,
+    "sharpe": 1.3729997079830332,
+    "sortino": 2.3154784306877683,
+    "max_dd": 0.08958459433981386
   },
   "oos_metrics": {
-    "overall_ic": -0.019498926040327547,
+    "overall_ic": 0.06058741992308149,
     "overall_ic_ci": [
-      -0.08412070962457081,
-      0.03183834601954571
+      -5.044547260976787e-05,
+      0.11152991331925324
     ],
-    "tail_ic": -0.061953668058710706,
+    "tail_ic": -0.012294424115462572,
     "tail_ic_ci": [
-      -0.2075071075864133,
-      0.09864568171615905
+      -0.10943649422551113,
+      0.16245147116836475
     ],
-    "monotonicity": 0.01818181818181818,
+    "monotonicity": 0.7333333333333333,
     "monotonicity_ci": [
-      -0.6003030303030302,
-      0.5393939393939394
+      0.04242424242424243,
+      0.8303030303030303
     ],
-    "ann_ret": -0.05684502833842991,
-    "sharpe": -0.7527849030452813,
-    "sortino": -1.0613772242523065,
-    "max_dd": 0.28546692554266667
+    "ann_ret": -0.0367582708897739,
+    "sharpe": -0.4359838951873583,
+    "sortino": -0.6496521405113838,
+    "max_dd": 0.1965285307728427
   },
   "lockbox_metrics": {
-    "overall_ic": -0.034747830805170424,
+    "overall_ic": 0.05377508536672298,
     "overall_ic_ci": [
-      -0.11086856947179721,
-      0.03880256148058372
+      -0.031191925395145315,
+      0.1314334737106179
     ],
-    "tail_ic": -0.09188169253266663,
+    "tail_ic": 0.010311807160715128,
     "tail_ic_ci": [
-      -0.2971838294259163,
-      0.10420444360583038
+      -0.26908250389169297,
+      0.20424501155714883
     ],
-    "monotonicity": 0.030303030303030304,
+    "monotonicity": 0.5878787878787879,
     "monotonicity_ci": [
-      -0.6003030303030302,
-      0.45454545454545453
+      -0.16363636363636364,
+      0.7575757575757576
     ],
-    "ann_ret": -0.06418635619688431,
-    "sharpe": -0.8172376406009828,
-    "sortino": -1.185657788200672,
-    "max_dd": 0.19208474090082905
+    "ann_ret": -0.0428413790584902,
+    "sharpe": -0.47052518161261736,
+    "sortino": -0.6967700089646154,
+    "max_dd": 0.16602742399177625
   }
 }

@@ -549,7 +549,139 @@ def numba_fast_null_composite_kernel(x_flipped: np.ndarray, y: np.ndarray, windo
     return null_scores
 
 
-def compute_candidate_null_composite(x_flipped: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str, n_sims: int = 1000, block_size: int = 10):
+@njit(parallel=True, cache=True)
+def numba_batched_b3_null_kernel(X: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, all_starts: np.ndarray, tail_def: int, pct: float, n_tail: int, block_size: int, n_sims: int):
+    """Batched B3 composite null over all candidates. prange over candidates.
+
+    Returns (out_95, out_mean): each shape (n_cands,).
+    Shared y-shuffle starts across candidates for efficiency.
+    """
+    n, n_cands = X.shape
+    n_days = len(window_starts)
+    num_blocks = all_starts.shape[1]
+    y32 = y.astype(np.float32)
+    is_two_sided = (tail_def == 3)
+
+    out_95 = np.empty(n_cands, dtype=np.float64)
+    out_mean = np.empty(n_cands, dtype=np.float64)
+
+    for c in prange(n_cands):
+        x = X[:, c]
+
+        # Per-candidate precompute: overall sorted index, window sorted indices
+        ix_overall = np.argsort(x)
+        if tail_def == 1:  # long
+            long_idx = ix_overall[n - n_tail:]
+            short_idx = np.empty(0, dtype=np.int64)
+        elif tail_def == 2:  # short
+            short_idx = ix_overall[:n_tail]
+            long_idx = np.empty(0, dtype=np.int64)
+        else:  # single (two-sided)
+            long_idx = ix_overall[n - n_tail:]
+            short_idx = ix_overall[:n_tail]
+
+        # Rolling window offsets and packed sorted indices
+        window_offsets = np.empty(n_days, dtype=np.int32)
+        total_size = 0
+        for t in range(n_days):
+            window_offsets[t] = total_size
+            total_size += window_ends[t] - window_starts[t]
+        window_sorted_idx = np.empty(total_size, dtype=np.int32)
+        for t in range(n_days):
+            st = window_starts[t]
+            en = window_ends[t]
+            offset = window_offsets[t]
+            x_win = x[st:en]
+            ix = np.argsort(x_win)
+            for k in range(len(ix)):
+                window_sorted_idx[offset + k] = ix[k]
+
+        # Sortino tail indices (which to use depends on side)
+        if tail_def == 1:
+            tail_idx_local = long_idx
+        elif tail_def == 2:
+            tail_idx_local = short_idx
+        else:
+            tail_idx_local = long_idx  # placeholder, two-sided uses both below
+
+        null_scores_local = np.empty(n_sims, dtype=np.float64)
+
+        for s in range(n_sims):
+            # Block shuffle (shared starts across candidates)
+            y_null = np.empty(n, dtype=np.float32)
+            pos = 0
+            starts_s = all_starts[s]
+            for i in range(num_blocks):
+                st = starts_s[i]
+                for offset in range(block_size):
+                    if pos < n:
+                        y_null[pos] = y32[st + offset]
+                        pos += 1
+                    else:
+                        break
+
+            # Composite components
+            raw_ic_null = fast_spearman(y_null, x)
+            tail_ic_null = _tail_ic_from_sorted(ix_overall, x, y_null, n, n_tail, tail_def)
+            mono_null = numba_fast_rolling_tail_ic(x, y_null, window_starts, window_ends, window_offsets, window_sorted_idx, tail_def, pct)
+
+            # Sortino
+            if not is_two_sided:
+                m = n_tail
+                sum_ret = 0.0
+                sum_sq_down = 0.0
+                if tail_def == 1:
+                    for k in range(m):
+                        r = y_null[tail_idx_local[k]] - 0.0015
+                        sum_ret += r
+                        if r < 0:
+                            sum_sq_down += r * r
+                else:
+                    for k in range(m):
+                        r = -y_null[tail_idx_local[k]] - 0.0015
+                        sum_ret += r
+                        if r < 0:
+                            sum_sq_down += r * r
+                ann_ret = (sum_ret / m) * 244.0
+                down_std = np.sqrt(sum_sq_down / m) * 15.620499351813308
+                sortino_null = ann_ret / (down_std + 1e-10)
+            else:
+                n_l = len(long_idx)
+                n_s_ = len(short_idx)
+                total_cnt = n_l + n_s_
+                sum_ret = 0.0
+                sum_sq_down = 0.0
+                for k in range(n_l):
+                    r = y_null[long_idx[k]] - 0.0015
+                    sum_ret += r
+                    if r < 0:
+                        sum_sq_down += r * r
+                for k in range(n_s_):
+                    r = -y_null[short_idx[k]] - 0.0015
+                    sum_ret += r
+                    if r < 0:
+                        sum_sq_down += r * r
+                ann_ret = (sum_ret / total_cnt) * 244.0
+                down_std = np.sqrt(sum_sq_down / total_cnt) * 15.620499351813308
+                sortino_null = ann_ret / (down_std + 1e-10)
+
+            null_scores_local[s] = 0.4 * mono_null + 0.3 * sortino_null + 0.2 * abs(tail_ic_null) + 0.1 * abs(raw_ic_null)
+
+        # 95th percentile via partial sort
+        null_scores_local.sort()
+        idx_95 = int(0.95 * n_sims)
+        if idx_95 >= n_sims:
+            idx_95 = n_sims - 1
+        out_95[c] = null_scores_local[idx_95]
+        s_sum = 0.0
+        for k in range(n_sims):
+            s_sum += null_scores_local[k]
+        out_mean[c] = s_sum / n_sims
+
+    return out_95, out_mean
+
+
+def compute_candidate_null_composite(x_flipped: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str, n_sims: int = 500, block_size: int = 10):
     """Multi-trial block-shuffled empirical null simulation for a candidate's composite score (Numba parallel kernel)."""
     n = len(y)
     x32 = x_flipped.astype(np.float32)
@@ -599,6 +731,44 @@ def compute_candidate_null_composite(x_flipped: np.ndarray, y: np.ndarray, windo
     )
 
     return float(np.percentile(null_scores, 95)), float(np.mean(null_scores))
+
+
+def compute_batched_candidate_nulls(X_survivors_flipped: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str, n_sims: int = 500, block_size: int = 10):
+    """Run B3 composite null simulation for ALL surviving candidates in a single batched kernel call.
+
+    Replaces the Parallel(n_jobs)(delayed(compute_candidate_null_composite)...) pattern.
+    Uses shared y-shuffle indices across candidates and a single prange over candidates.
+    """
+    n = len(y)
+    n_cands = X_survivors_flipped.shape[1]
+    if n_cands == 0:
+        return np.array([]), np.array([])
+
+    X32 = X_survivors_flipped.astype(np.float32, copy=False)
+    y32 = y.astype(np.float32, copy=False)
+
+    if side == "long":
+        tail_def = 1
+        pct = 0.15
+    elif side == "short":
+        tail_def = 2
+        pct = 0.15
+    else:
+        tail_def = 3
+        pct = 0.10
+    n_tail = max(5, int(n * pct))
+
+    # Shared y-shuffle starts across all candidates (deterministic seed for reproducibility)
+    num_blocks = int(np.ceil(n / block_size))
+    possible_starts = max(1, n - block_size + 1)
+    rng = np.random.default_rng(42)
+    all_starts = rng.integers(0, possible_starts, size=(n_sims, num_blocks)).astype(np.int32)
+
+    out_95, out_mean = numba_batched_b3_null_kernel(
+        X32, y32, window_starts, window_ends, all_starts,
+        tail_def, pct, n_tail, block_size, n_sims,
+    )
+    return out_95, out_mean
 
 def main():
     parser = argparse.ArgumentParser()
@@ -698,14 +868,16 @@ def main():
             print(f"Loading cached recipe columns from {recipe_cache_path.name}")
             cached_df = pd.read_parquet(recipe_cache_path)
             recipe_feature_names = [c for c in cached_df.columns if c.startswith("combo_")]
-            for feat_name in recipe_feature_names:
-                X_df[feat_name] = cached_df[feat_name].values
-                features_to_eval.append(feat_name)
+            # Fast path: pd.concat is O(1) vs O(N_cols) for column-by-column assignment
+            cached_subset = cached_df[recipe_feature_names]
+            X_df = pd.concat([X_df, cached_subset], axis=1, copy=False)
+            features_to_eval.extend(recipe_feature_names)
             # Reload candidate_recipes from candidates file (needed for output)
             with open(candidates_path, "r") as f:
                 cands = json.load(f)
+            cand_set = set(recipe_feature_names)
             for item in cands:
-                if item["feature_name"] in recipe_feature_names:
+                if item["feature_name"] in cand_set:
                     candidate_recipes[item["feature_name"]] = item["recipe"]
             print(f"Cache hit: {len(recipe_feature_names)} recipe columns loaded.")
         else:
@@ -787,12 +959,13 @@ def main():
                         raise ValueError(f"Unknown op: {op}")
                 
                 n_failed = 0
+                batch_values = {}  # feat_name -> numpy array (collected, then assigned in one shot)
                 for item in cands:
                     feat_name = item["feature_name"]
                     recipe = item["recipe"]
                     try:
                         candidate_values = _compute_recipe_fast(recipe)
-                        X_df[feat_name] = candidate_values
+                        batch_values[feat_name] = candidate_values
                         features_to_eval.append(feat_name)
                         candidate_recipes[feat_name] = recipe
                     except Exception as e:
@@ -801,6 +974,9 @@ def main():
                             print(f"WARNING: Failed to compute recipe for {feat_name}: {e}")
                 if n_failed > 3:
                     print(f"WARNING: {n_failed} recipes failed total.")
+                # Batch-assign all recipe columns at once (much faster than per-column X_df[c] = ...)
+                if batch_values:
+                    X_df = pd.concat([X_df, pd.DataFrame(batch_values, index=X_df.index)], axis=1, copy=False)
                 
                 # Save recipe cache for future runs
                 recipe_cols = [c for c in X_df.columns if c.startswith("combo_")]
@@ -941,8 +1117,9 @@ def main():
         try:
             with open(fdr_cache_path, "w") as f:
                 json.dump({"n_rows": len(y_train), "null_single_ics": null_single_ics.tolist()}, f)
-        except Exception:
-            pass
+            print(f"Saved BH-FDR null cache to {fdr_cache_path.name}")
+        except Exception as e:
+            print(f"WARNING: Could not save FDR null cache to {fdr_cache_path}: {e}")
 
     # Compute empirical p-value for each B2 survivor
     for item in guard_survivors:
@@ -1025,16 +1202,14 @@ def main():
 
     # 6. Compute Data-Adaptive Composite Score Threshold (empirical 95th percentile)
     if surviving_candidates:
-        print(f"Running multi-trial composite score null simulations for {len(surviving_candidates)} candidates...")
-        null_comp_results = Parallel(n_jobs=args.n_jobs)(
-            delayed(compute_candidate_null_composite)(
-                cand["x_flipped"], y_train, window_starts, window_ends, args.side, n_sims=1000, block_size=10
-            ) for cand in surviving_candidates
+        print(f"Running batched composite null simulations for {len(surviving_candidates)} candidates (n_sims=500)...")
+        X_survivors_batch = np.column_stack([cand["x_flipped"] for cand in surviving_candidates]).astype(np.float32)
+        emp_95_arr, emp_mean_arr = compute_batched_candidate_nulls(
+            X_survivors_batch, y_train, window_starts, window_ends, args.side, n_sims=500, block_size=10
         )
-        
-        for cand, (emp_95th, emp_mean) in zip(surviving_candidates, null_comp_results):
-            cand["empirical_95th"] = emp_95th
-            cand["empirical_mean"] = emp_mean
+        for idx, cand in enumerate(surviving_candidates):
+            cand["empirical_95th"] = float(emp_95_arr[idx])
+            cand["empirical_mean"] = float(emp_mean_arr[idx])
 
     # 7. Admission Gate (B3 Composite Floor + B4 Correlation Gate & Replacement Rule)
     admitted_pool = []  # list of dicts

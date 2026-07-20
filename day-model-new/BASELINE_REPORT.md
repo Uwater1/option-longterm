@@ -10,113 +10,343 @@ Holdout OOS starts `2022-01-01` (`2025-01-01` for `588000ETF`), and OOS Lockbox 
 ## Performance Table (Holdout OOS)
 
 | ETF | Side | Features Admitted | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Ann. Return | Sharpe | Sortino | Max DD |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 300ETF | single | 4 | +0.0565* | [-0.0095, +0.1184] | +0.1253* | [-0.0362, +0.2698] | +0.8303 | -1.39% | -0.2028 | -0.2998 | 19.31% |
-| 300ETF | long | 0 | +0.0000* | [-0.0537, +0.0496] | +0.0000* | [-0.1414, +0.1441] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 300ETF | short | 0 | +0.0000* | [-0.0537, +0.0496] | +0.0000* | [-0.1344, +0.1381] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 50ETF | single | 2 | +0.0221* | [-0.0328, +0.0763] | +0.0425* | [-0.0666, +0.1536] | +0.2970 | -2.25% | -0.3719 | -0.5267 | 19.22% |
-| 50ETF | long | 1 | +0.0505* | [-0.0100, +0.1055] | -0.0708* | [-0.2182, +0.0708] | +0.6485 | -4.63% | -1.0480 | -1.5026 | 26.80% |
-| 50ETF | short | 0 | +0.0000* | [-0.0542, +0.0515] | +0.0000* | [-0.1425, +0.1298] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 500ETF | single | 8 | +0.0798 | [+0.0169, +0.1356] | +0.0315* | [-0.1128, +0.1615] | +0.7333 | 1.37% | 0.1674 | 0.2881 | 17.89% |
-| 500ETF | long | 1 | -0.0195* | [-0.0841, +0.0318] | -0.0620* | [-0.2075, +0.0986] | +0.0182 | -5.68% | -0.7528 | -1.0614 | 28.55% |
-| 500ETF | short | 1 | +0.0005* | [-0.0569, +0.0709] | -0.0444* | [-0.1830, +0.1334] | -0.1636 | -4.77% | -0.6948 | -0.8928 | 31.85% |
-| 588000ETF | single | 9 | +0.0191* | [-0.0853, +0.1234] | +0.0756* | [-0.1280, +0.3027] | +0.1394 | 2.39% | 0.1923 | 0.3056 | 17.85% |
-| 588000ETF | long | 1 | -0.0181* | [-0.1124, +0.0691] | -0.1163* | [-0.3387, +0.2895] | -0.2727 | -11.95% | -0.8304 | -1.1066 | 22.94% |
-| 588000ETF | short | 0 | +0.0000* | [-0.0849, +0.0809] | +0.0000* | [-0.2334, +0.2385] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 159915ETF | single | 5 | +0.0828 | [+0.0119, +0.1394] | +0.0769* | [-0.0788, +0.2088] | +0.7939 | 3.65% | 0.3566 | 0.5880 | 17.09% |
-| 159915ETF | long | 0 | +0.0000* | [-0.0556, +0.0505] | +0.0000* | [-0.1442, +0.1478] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 159915ETF | short | 0 | +0.0000* | [-0.0556, +0.0505] | +0.0000* | [-0.1416, +0.1372] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 300ETF | single | 21 | +0.0506* | [-0.0084, +0.1129] | +0.1446 | [+0.0064, +0.2838] | +0.6848 | -0.50% | -0.0798 | -0.1264 | 15.61% |
+| 300ETF | long | 3 | +0.0021* | [-0.0597, +0.0631] | +0.0332* | [-0.1144, +0.1943] | +0.2242 | -6.50% | -1.1045 | -1.5071 | 32.02% |
+| 300ETF | short | 9 | +0.0457* | [-0.0145, +0.1024] | +0.1062* | [-0.0581, +0.2662] | +0.5152 | -1.44% | -0.2999 | -0.4373 | 18.19% |
+| 50ETF | single | 25 | +0.0329* | [-0.0216, +0.0864] | +0.0951* | [-0.0458, +0.2100] | +0.4909 | -3.44% | -0.5059 | -0.7272 | 24.46% |
+| 50ETF | long | 18 | +0.0507* | [-0.0104, +0.1085] | +0.1300* | [-0.0314, +0.2650] | +0.7333 | -3.72% | -0.6765 | -0.9755 | 18.71% |
+| 50ETF | short | 19 | +0.0456* | [-0.0140, +0.0913] | +0.0427* | [-0.1036, +0.1612] | +0.7212 | -3.10% | -0.5310 | -0.7065 | 23.29% |
+| 500ETF | single | 32 | +0.0965 | [+0.0463, +0.1493] | +0.1138* | [-0.0226, +0.2374] | +0.7455 | 4.46% | 0.5555 | 0.9647 | 8.18% |
+| 500ETF | long | 31 | +0.0606* | [-0.0001, +0.1115] | -0.0123* | [-0.1094, +0.1625] | +0.7333 | -3.68% | -0.4360 | -0.6497 | 19.65% |
+| 500ETF | short | 3 | +0.0493* | [-0.0043, +0.1074] | +0.0155* | [-0.1777, +0.1628] | +0.5273 | -1.70% | -0.3129 | -0.4404 | 23.85% |
+| 588000ETF | single | 40 | +0.0178* | [-0.0734, +0.1167] | -0.0483* | [-0.2534, +0.2341] | +0.2727 | -7.98% | -0.6150 | -0.8363 | 26.54% |
+| 588000ETF | long | 37 | -0.0026* | [-0.0816, +0.1171] | -0.0902* | [-0.4033, +0.1976] | -0.2242 | -16.53% | -1.1870 | -1.5086 | 25.22% |
+| 588000ETF | short | 0 | +0.0000* | [-0.0848, +0.0901] | +0.0000* | [-0.2363, +0.2478] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 159915ETF | single | 22 | +0.0915 | [+0.0342, +0.1472] | +0.0889* | [-0.0429, +0.2233] | +0.7939 | 7.21% | 0.6771 | 1.1989 | 10.25% |
+| 159915ETF | long | 6 | +0.0667 | [+0.0077, +0.1196] | -0.0877* | [-0.2048, +0.0658] | +0.8424 | -2.68% | -0.3460 | -0.5364 | 22.07% |
+| 159915ETF | short | 0 | +0.0000* | [-0.0519, +0.0538] | +0.0000* | [-0.1421, +0.1378] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 
 \* indicates that the 95% circular block-bootstrap confidence interval spans zero (statistically indistinguishable from noise).
 
 ## Performance Table (OOS Lockbox)
 
 | ETF | Side | Features Admitted | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Ann. Return | Sharpe | Sortino | Max DD |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 300ETF | single | 4 | +0.0228* | [-0.0751, +0.1068] | +0.0787* | [-0.1450, +0.2810] | +0.4182 | -3.35% | -0.4514 | -0.6673 | 21.97% |
-| 300ETF | long | 0 | +0.0000* | [-0.0648, +0.0680] | +0.0000* | [-0.1984, +0.2066] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 300ETF | short | 0 | +0.0000* | [-0.0648, +0.0680] | +0.0000* | [-0.1942, +0.1901] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 50ETF | single | 2 | +0.0802 | [+0.0175, +0.1530] | +0.0315* | [-0.0932, +0.1876] | +0.5515 | -3.77% | -0.5844 | -0.8219 | 10.49% |
-| 50ETF | long | 1 | +0.0993 | [+0.0221, +0.1688] | -0.1023* | [-0.3240, +0.1281] | +0.7818 | -3.91% | -0.8583 | -1.3868 | 11.59% |
-| 50ETF | short | 0 | +0.0000* | [-0.0658, +0.0757] | +0.0000* | [-0.2169, +0.2037] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 500ETF | single | 8 | +0.0816* | [-0.0085, +0.1705] | +0.0140* | [-0.1993, +0.2286] | +0.6242 | -1.19% | -0.1379 | -0.2403 | 17.69% |
-| 500ETF | long | 1 | -0.0347* | [-0.1109, +0.0388] | -0.0919* | [-0.2972, +0.1042] | +0.0303 | -6.42% | -0.8172 | -1.1857 | 19.21% |
-| 500ETF | short | 1 | +0.0406* | [-0.0502, +0.1431] | +0.0202* | [-0.2397, +0.2491] | +0.2000 | -3.48% | -0.5423 | -0.7343 | 17.69% |
-| 588000ETF | single | 9 | -0.0184* | [-0.1426, +0.1207] | +0.0788* | [-0.1992, +0.3468] | +0.0788 | -5.74% | -0.4366 | -0.6448 | 16.54% |
-| 588000ETF | long | 1 | -0.0604* | [-0.1729, +0.0510] | -0.1437* | [-0.4768, +0.4132] | -0.3212 | -10.39% | -0.6965 | -0.9296 | 15.89% |
-| 588000ETF | short | 0 | +0.0000* | [-0.0955, +0.1009] | +0.0000* | [-0.2812, +0.2753] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 159915ETF | single | 5 | +0.1041 | [+0.0126, +0.1866] | +0.0961* | [-0.1329, +0.2737] | +0.8788 | 4.02% | 0.3608 | 0.6095 | 19.53% |
-| 159915ETF | long | 0 | +0.0000* | [-0.0726, +0.0701] | +0.0000* | [-0.2072, +0.1920] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 159915ETF | short | 0 | +0.0000* | [-0.0726, +0.0701] | +0.0000* | [-0.1827, +0.2133] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 300ETF | single | 21 | +0.0335* | [-0.0511, +0.1143] | +0.0768* | [-0.1187, +0.2813] | +0.4667 | -0.29% | -0.0391 | -0.0748 | 15.23% |
+| 300ETF | long | 3 | +0.0321* | [-0.0688, +0.1374] | -0.0397* | [-0.2551, +0.1686] | +0.5758 | -3.56% | -0.5909 | -0.8880 | 12.56% |
+| 300ETF | short | 9 | +0.0522* | [-0.0339, +0.1322] | +0.0402* | [-0.2062, +0.2690] | +0.3818 | 0.75% | 0.1447 | 0.2301 | 11.03% |
+| 50ETF | single | 25 | +0.0608* | [-0.0111, +0.1422] | +0.1006* | [-0.0653, +0.2383] | +0.4303 | -3.15% | -0.4406 | -0.6559 | 13.80% |
+| 50ETF | long | 18 | +0.0507* | [-0.0184, +0.1300] | +0.0014* | [-0.2875, +0.1692] | +0.5152 | -4.67% | -1.0400 | -1.5223 | 13.60% |
+| 50ETF | short | 19 | +0.0661* | [-0.0133, +0.1355] | +0.0004* | [-0.2037, +0.2478] | +0.4545 | 0.18% | 0.0296 | 0.0423 | 7.57% |
+| 500ETF | single | 32 | +0.0958 | [+0.0187, +0.1747] | +0.1208* | [-0.0849, +0.2711] | +0.7939 | 1.65% | 0.1974 | 0.3322 | 11.95% |
+| 500ETF | long | 31 | +0.0538* | [-0.0312, +0.1314] | +0.0103* | [-0.2691, +0.2042] | +0.5879 | -4.28% | -0.4705 | -0.6968 | 16.60% |
+| 500ETF | short | 3 | +0.0924 | [+0.0184, +0.1880] | +0.0919* | [-0.1844, +0.3045] | +0.5394 | -0.18% | -0.0317 | -0.0465 | 13.25% |
+| 588000ETF | single | 40 | -0.0120* | [-0.1286, +0.1261] | -0.1708* | [-0.4127, +0.1909] | -0.0788 | -24.49% | -1.7864 | -2.1745 | 33.19% |
+| 588000ETF | long | 37 | -0.0355* | [-0.1357, +0.1047] | -0.2546* | [-0.4297, +0.3459] | -0.2364 | -13.76% | -1.0243 | -1.2476 | 23.36% |
+| 588000ETF | short | 0 | +0.0000* | [-0.0980, +0.0973] | +0.0000* | [-0.2835, +0.2820] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 159915ETF | single | 22 | +0.1186 | [+0.0320, +0.1967] | +0.1196* | [-0.0386, +0.3470] | +0.8303 | 15.25% | 1.2795 | 2.5114 | 8.97% |
+| 159915ETF | long | 6 | +0.0741* | [-0.0073, +0.1489] | -0.1969* | [-0.3644, +0.0502] | +0.6000 | -0.61% | -0.0837 | -0.1386 | 10.96% |
+| 159915ETF | short | 0 | +0.0000* | [-0.0778, +0.0773] | +0.0000* | [-0.2026, +0.1923] | +0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 
 \* indicates that the 95% circular block-bootstrap confidence interval spans zero (statistically indistinguishable from noise).
 
 ## Admitted Features Details
 
 ### 300ETF (single)
-- `combo_mean__max_up_ret__gap_pct` (sign=+1, overall_ic=0.2638, deflated_ic=0.0902)
-- `combo_ifelse__gap_pct__max_up_ret__option_oi_growth` (sign=+1, overall_ic=0.2475, deflated_ic=0.0740)
-- `combo_ifelse__gap_pct__first_bar_return__short_sell_cover_spread` (sign=+1, overall_ic=0.2403, deflated_ic=0.0667)
-- `combo_ifelse__macd_hist__max_up_ret__option_oi_growth` (sign=+1, overall_ic=0.2143, deflated_ic=0.0408)
+- `combo_mean__max_up_ret__gap_pct` (sign=+1, overall_ic=0.2638, deflated_ic=0.9365)
+- `combo_ifelse__gap_pct__max_up_ret__option_oi_growth` (sign=+1, overall_ic=0.2474, deflated_ic=0.8949)
+- `combo_ifelse__gap_pct__first_bar_return__short_sell_cover_spread` (sign=+1, overall_ic=0.2403, deflated_ic=0.8979)
+- `combo_ifelse__macd_hist__max_up_ret__option_oi_growth` (sign=+1, overall_ic=0.2144, deflated_ic=0.8660)
+- `combo_ifelse__gap_pct__first_bar_return__growth_momentum_ratio` (sign=+1, overall_ic=0.2104, deflated_ic=0.8527)
+- `combo_ifelse__macd_hist__bar_ret_0__bar_body_rng_0` (sign=+1, overall_ic=0.1992, deflated_ic=0.8556)
+- `combo_ifelse__macd_hist__bar_body_rng_0__short_sell_cover_spread` (sign=+1, overall_ic=0.1986, deflated_ic=0.8660)
+- `combo_max__max_up_ret__yesterday_gap_pct` (sign=+1, overall_ic=0.1927, deflated_ic=0.8612)
+- `combo_ifelse__macd_hist__max_up_ret__growth_momentum_ratio` (sign=+1, overall_ic=0.1915, deflated_ic=0.8578)
+- `combo_clamp_diff__max_up_ret__willr14` (sign=+1, overall_ic=0.1769, deflated_ic=0.8349)
+- `combo_ifelse__macd_hist__first_bar_return__yesterday_northbound_net_ratio` (sign=+1, overall_ic=0.1749, deflated_ic=0.8482)
+- `combo_rank_max__early_range__margin_extreme_rank_252d` (sign=+1, overall_ic=0.1633, deflated_ic=0.8247)
+- `combo_diff__short_sell_quantity__roc60` (sign=+1, overall_ic=0.1514, deflated_ic=0.8175)
+- `combo_rank_min__yesterday_day_skew__sma100_dist` (sign=-1, overall_ic=0.1478, deflated_ic=0.7952)
+- `combo_rank_min__roc60__twenty_gap_bars_regime` (sign=-1, overall_ic=0.1329, deflated_ic=0.8116)
+- `combo_rank_max__first_30min_return__bar_vwap_dev_2` (sign=+1, overall_ic=0.1286, deflated_ic=0.7666)
+- `first_bar_volume` (sign=-1, overall_ic=0.1238, deflated_ic=0.7846)
+- `combo_product__short_sell_quantity__wavetrend_osc_day` (sign=+1, overall_ic=0.1090, deflated_ic=0.7930)
+- `combo_abs_diff__short_sell_quantity__early_range` (sign=+1, overall_ic=0.1054, deflated_ic=0.7874)
+- `combo_diff__max_up_ret__total_balance` (sign=+1, overall_ic=0.0823, deflated_ic=0.7545)
+- `combo_rank_min__early_range__twenty_gap_bars_regime` (sign=-1, overall_ic=0.0738, deflated_ic=0.7518)
 
 ### 300ETF (long)
-No features admitted.
+- `sma100_dist` (sign=-1, overall_ic=0.1353, deflated_ic=0.7852)
+- `early_vwap_dev` (sign=-1, overall_ic=0.1342, deflated_ic=0.7835)
+- `cvd_divergence_day` (sign=-1, overall_ic=0.0712, deflated_ic=0.7152)
 
 ### 300ETF (short)
-No features admitted.
+- `combo_tri_min__gap_pct__total_path_length__atr14_norm` (sign=+1, overall_ic=0.2088, deflated_ic=0.9005)
+- `combo_abs_diff__bar_vol_4__volume_sma_ratio` (sign=+1, overall_ic=0.1737, deflated_ic=0.8649)
+- `combo_tri_ifelse__gap_pct__atr14_norm__total_balance__yesterday_day_skew__margin_balance` (sign=+1, overall_ic=0.1394, deflated_ic=0.8303)
+- `combo_ifelse__sma20_dist__total_balance__short_sell_cover_spread` (sign=+1, overall_ic=0.1133, deflated_ic=0.8011)
+- `combo_rank_min__short_sell_cover_spread__yesterday_gap` (sign=+1, overall_ic=0.1092, deflated_ic=0.8057)
+- `combo_diff__max_down_ret__sma20_dist` (sign=+1, overall_ic=0.1063, deflated_ic=0.8009)
+- `combo_max__gap_pct__first_bar_return` (sign=+1, overall_ic=0.1054, deflated_ic=0.7964)
+- `combo_tri_ifelse__gap_pct__atr14_norm__northbound_net__yesterday_day_skew__mfi14` (sign=+1, overall_ic=0.0989, deflated_ic=0.8146)
+- `yesterday_lunch_gap` (sign=-1, overall_ic=0.0974, deflated_ic=0.7850)
 
 ### 50ETF (single)
-- `combo_tri_mean__iv_corridor_width__capital_buy_value__rsi21` (sign=-1, overall_ic=0.2312, deflated_ic=0.0560)
-- `combo_tri_median__bar_vol_4__bar_vol_0__wavetrend_osc_day` (sign=-1, overall_ic=0.2148, deflated_ic=0.0395)
+- `combo_tri_mean__iv_corridor_width__capital_buy_value__rsi21` (sign=-1, overall_ic=0.2312, deflated_ic=0.8763)
+- `combo_tri_median__bar_vol_4__bar_vol_0__wavetrend_osc_day` (sign=-1, overall_ic=0.2148, deflated_ic=0.8575)
+- `combo_ifelse__macd_hist__yesterday_body_ratio__sma100_dist` (sign=-1, overall_ic=0.2041, deflated_ic=0.8523)
+- `combo_ifelse__macd_hist__yesterday_lunch_gap__capital_buy_volume` (sign=-1, overall_ic=0.1927, deflated_ic=0.8510)
+- `combo_min__iv_corridor_width__margin_net_buy` (sign=-1, overall_ic=0.1829, deflated_ic=0.8377)
+- `combo_ifelse__gap_pct__capital_buy_value__bar_vol_0` (sign=-1, overall_ic=0.1751, deflated_ic=0.8265)
+- `combo_tri_min__bar_vol_4__sma100_dist__yearly_low_distance` (sign=-1, overall_ic=0.1704, deflated_ic=0.8206)
+- `combo_clamp_diff__willr14__yesterday_stoch_rsi_cross` (sign=-1, overall_ic=0.1699, deflated_ic=0.8307)
+- `combo_ifelse__macd_hist__yesterday_lunch_gap__sma_distance_60d` (sign=-1, overall_ic=0.1682, deflated_ic=0.8517)
+- `combo_diff__sma100_dist__short_balance_quantity` (sign=-1, overall_ic=0.1618, deflated_ic=0.7946)
+- `combo_product__roc60__capital_sell_value` (sign=-1, overall_ic=0.1593, deflated_ic=0.8122)
+- `combo_ifelse__macd_hist__margin_extreme_rank_252d__sma100_dist` (sign=-1, overall_ic=0.1568, deflated_ic=0.8209)
+- `combo_product__bar_vol_4__coppock_curve_day` (sign=-1, overall_ic=0.1552, deflated_ic=0.8199)
+- `combo_diff__roc10__yearly_low_distance` (sign=-1, overall_ic=0.1495, deflated_ic=0.8305)
+- `combo_max__short_balance_quantity__sma20_dist` (sign=-1, overall_ic=0.1483, deflated_ic=0.7994)
+- `combo_rank_min__roc60__margin_buy_repayment_spread` (sign=-1, overall_ic=0.1441, deflated_ic=0.7837)
+- `combo_min__willr14__sma10_dist` (sign=-1, overall_ic=0.1427, deflated_ic=0.7949)
+- `combo_mean__roc10__bar_rng_5` (sign=-1, overall_ic=0.1324, deflated_ic=0.7689)
+- `combo_ifelse__macd_hist__iv_corridor_width__margin_extreme_rank_252d` (sign=-1, overall_ic=0.1265, deflated_ic=0.7794)
+- `combo_ratio__yesterday_body_ratio__bar_vol_5` (sign=-1, overall_ic=0.1212, deflated_ic=0.7792)
+- `combo_rank_max__roc10__margin_buy_repayment_spread` (sign=-1, overall_ic=0.1161, deflated_ic=0.7528)
+- `combo_ratio__roc20__bar_vol_4` (sign=-1, overall_ic=0.1037, deflated_ic=0.7620)
+- `combo_ifelse__sma20_dist__iv_corridor_width__yesterday_body_ratio` (sign=-1, overall_ic=0.0990, deflated_ic=0.7390)
+- `combo_mean__sma200_dist__vix_rolling_percentile_60d` (sign=-1, overall_ic=0.0989, deflated_ic=0.7464)
+- `combo_clamp_diff__sma_distance_60d__sma200_dist` (sign=-1, overall_ic=0.0532, deflated_ic=0.6962)
 
 ### 50ETF (long)
-- `combo_tri_mean__margin_net_buy__early_range__roc5` (sign=-1, overall_ic=0.2542, deflated_ic=0.0438)
+- `combo_tri_median__tech_value_rotation__rsi21__iv_corridor_width` (sign=-1, overall_ic=0.2002, deflated_ic=0.8708)
+- `combo_tri_min__margin_net_buy__tech_value_rotation__sma100_dist` (sign=-1, overall_ic=0.1887, deflated_ic=0.8335)
+- `combo_product__yesterday_day_realized_vol__iv_corridor_width` (sign=-1, overall_ic=0.1846, deflated_ic=0.8652)
+- `combo_rank_max__margin_net_buy__iv_corridor_width` (sign=-1, overall_ic=0.1840, deflated_ic=0.8321)
+- `combo_rank_min__sma_distance_60d__total_balance` (sign=-1, overall_ic=0.1801, deflated_ic=0.8440)
+- `combo_tri_min__yearly_low_distance__roc10__bar_vol_4` (sign=-1, overall_ic=0.1477, deflated_ic=0.8074)
+- `combo_mean__max_down_ret__num_up_bars` (sign=+1, overall_ic=0.1477, deflated_ic=0.8095)
+- `combo_clamp_diff__capital_buy_value__yesterday_day_realized_vol` (sign=-1, overall_ic=0.1416, deflated_ic=0.7986)
+- `combo_ifelse__vol60__yesterday_wavetrend_osc__yesterday_lunch_gap` (sign=-1, overall_ic=0.1353, deflated_ic=0.8058)
+- `combo_ratio__yearly_low_distance__yesterday_day_realized_vol` (sign=-1, overall_ic=0.1166, deflated_ic=0.7890)
+- `combo_tri_mean__yesterday_wavetrend_osc__max_down_ret__yesterday_early_range` (sign=+1, overall_ic=0.1163, deflated_ic=0.7817)
+- `combo_min__roc5__yesterday_day_realized_vol` (sign=-1, overall_ic=0.0977, deflated_ic=0.7632)
+- `combo_abs_diff__max_up_ret__num_up_bars` (sign=+1, overall_ic=0.0966, deflated_ic=0.7500)
+- `combo_abs_diff__yesterday_early_trend__limit_up_proximity_day` (sign=+1, overall_ic=0.0921, deflated_ic=0.7494)
+- `combo_rank_min__margin_net_buy__margin_repayment` (sign=-1, overall_ic=0.0911, deflated_ic=0.7757)
+- `combo_tri_mean__margin_net_buy__early_range__roc10` (sign=-1, overall_ic=0.0896, deflated_ic=0.7349)
+- `combo_min__yearly_low_distance__capital_buy_volume` (sign=-1, overall_ic=0.0873, deflated_ic=0.7480)
+- `combo_product__tech_value_rotation__yesterday_day_realized_vol` (sign=+1, overall_ic=0.0798, deflated_ic=0.7480)
 
 ### 50ETF (short)
-No features admitted.
+- `combo_product__gap_pct__bar_rng_0` (sign=+1, overall_ic=0.2233, deflated_ic=0.8642)
+- `combo_tri_median__bar_vol_4__rsi21__bar_vol_0` (sign=-1, overall_ic=0.2134, deflated_ic=0.8605)
+- `combo_tri_mean__gap_pct__vol10__iv_vol_ratio` (sign=+1, overall_ic=0.1851, deflated_ic=0.8409)
+- `combo_tri_ifelse__gap_pct__vol10__mfi14__bar_rng_0__bar_vol_5` (sign=-1, overall_ic=0.1754, deflated_ic=0.8239)
+- `combo_diff__rsi21__yearly_low_distance` (sign=-1, overall_ic=0.1676, deflated_ic=0.8282)
+- `combo_tri_ifelse__gap_pct__vix__sma50_dist__bar_body_rng_1__bar_rng_0` (sign=-1, overall_ic=0.1592, deflated_ic=0.8080)
+- `combo_tri_ifelse__gap_pct__vol10__northbound_net__max_up_ret__bar_vol_5` (sign=+1, overall_ic=0.1478, deflated_ic=0.8066)
+- `combo_tri_ifelse__vol10__vix__yesterday_lunch_gap__bar_vol_5__rsi21` (sign=-1, overall_ic=0.1463, deflated_ic=0.8047)
+- `combo_tri_mean__sma_distance_60d__rsi21__capital_buy_value` (sign=-1, overall_ic=0.1390, deflated_ic=0.7844)
+- `combo_clamp_diff__gap_pct__bar_rng_0` (sign=+1, overall_ic=0.1307, deflated_ic=0.7902)
+- `combo_tri_ifelse__gap_pct__vix__yesterday_lunch_gap__sma_distance_60d__bar_rng_0` (sign=-1, overall_ic=0.1171, deflated_ic=0.7581)
+- `combo_clamp_diff__northbound_net__bar_vol_0` (sign=+1, overall_ic=0.1166, deflated_ic=0.7784)
+- `combo_tri_ifelse__gap_pct__vol10__bar_vol_4__yesterday_lunch_gap__growth_momentum_ratio` (sign=-1, overall_ic=0.1149, deflated_ic=0.7496)
+- `combo_tri_ifelse__gap_pct__vix__mfi14__yesterday_afternoon_momentum__bar_rng_0` (sign=-1, overall_ic=0.1105, deflated_ic=0.7510)
+- `combo_diff__sma50_dist__bar_vol_4` (sign=-1, overall_ic=0.1093, deflated_ic=0.7868)
+- `combo_tri_ifelse__gap_pct__vix__yesterday_early_realized_vol__vix_skew_proxy__bar_body_rng_1` (sign=+1, overall_ic=0.1040, deflated_ic=0.7172)
+- `combo_tri_mean__gap_pct__yesterday_afternoon_reversal__northbound_net` (sign=+1, overall_ic=0.1024, deflated_ic=0.7570)
+- `combo_max__bar_rng_0__yearly_low_distance` (sign=-1, overall_ic=0.0975, deflated_ic=0.7348)
+- `combo_tri_ifelse__gap_pct__vol10__capital_net_value__sma50_dist__yesterday_afternoon_momentum` (sign=+1, overall_ic=0.0916, deflated_ic=0.7466)
 
 ### 500ETF (single)
-- `combo_diff__max_up_ret__willr14` (sign=+1, overall_ic=0.3162, deflated_ic=0.1357)
-- `combo_mean__max_up_ret__gap_pct` (sign=+1, overall_ic=0.2997, deflated_ic=0.1192)
-- `combo_ifelse__gap_pct__max_up_ret__max_down_ret` (sign=+1, overall_ic=0.2898, deflated_ic=0.1093)
-- `combo_tri_median__num_up_bars__bar_body_rng_0__body_to_range_ratio` (sign=+1, overall_ic=0.2844, deflated_ic=0.1039)
-- `combo_tri_median__max_up_ret__bar_vwap_dev_2__bar_body_rng_1` (sign=+1, overall_ic=0.2597, deflated_ic=0.0792)
-- `combo_diff__yesterday_afternoon_momentum__bar_vol_4` (sign=-1, overall_ic=0.2422, deflated_ic=0.0617)
-- `combo_ratio__max_down_ret__vix_realized_spread` (sign=+1, overall_ic=0.2353, deflated_ic=0.0548)
-- `combo_mean__max_up_ret__vix_realized_spread` (sign=+1, overall_ic=0.2294, deflated_ic=0.0489)
+- `combo_diff__max_up_ret__willr14` (sign=+1, overall_ic=0.3162, deflated_ic=0.8557)
+- `combo_mean__max_up_ret__gap_pct` (sign=+1, overall_ic=0.2997, deflated_ic=0.8686)
+- `combo_ifelse__gap_pct__max_up_ret__max_down_ret` (sign=+1, overall_ic=0.2898, deflated_ic=0.8350)
+- `combo_tri_median__num_up_bars__bar_body_rng_0__body_to_range_ratio` (sign=+1, overall_ic=0.2844, deflated_ic=0.8379)
+- `combo_tri_median__max_up_ret__bar_vwap_dev_2__bar_body_rng_1` (sign=+1, overall_ic=0.2597, deflated_ic=0.8101)
+- `combo_diff__yesterday_afternoon_momentum__bar_vol_4` (sign=-1, overall_ic=0.2422, deflated_ic=0.8169)
+- `combo_diff__max_up_ret__vol20` (sign=+1, overall_ic=0.2294, deflated_ic=0.8142)
+- `combo_tri_min__max_up_ret__bar_body_rng_0__northbound_volume_share` (sign=+1, overall_ic=0.2133, deflated_ic=0.7717)
+- `combo_clamp_diff__max_up_ret__first_30min_return` (sign=+1, overall_ic=0.2114, deflated_ic=0.7688)
+- `combo_ifelse__gap_pct__total_balance__short_balance` (sign=-1, overall_ic=0.2025, deflated_ic=0.7475)
+- `combo_product__yesterday_illiquidity_amihud__early_range` (sign=+1, overall_ic=0.1970, deflated_ic=0.7607)
+- `combo_abs_diff__num_up_bars__body_to_range_ratio` (sign=-1, overall_ic=0.1897, deflated_ic=0.7492)
+- `combo_ifelse__vol20__first_bar_return__yesterday_early_vwap_dev` (sign=+1, overall_ic=0.1804, deflated_ic=0.7305)
+- `combo_rank_min__body_to_range_ratio__early_range` (sign=+1, overall_ic=0.1799, deflated_ic=0.7342)
+- `combo_ifelse__gap_pct__total_balance__yesterday_afternoon_momentum` (sign=-1, overall_ic=0.1796, deflated_ic=0.7280)
+- `combo_ifelse__gap_pct__bar_ret_0__yesterday_early_vwap_dev` (sign=+1, overall_ic=0.1777, deflated_ic=0.7220)
+- `combo_ratio__vix_realized_spread__total_balance` (sign=+1, overall_ic=0.1773, deflated_ic=0.7244)
+- `combo_clamp_diff__yesterday_early_vwap_dev__yesterday_day_skew` (sign=+1, overall_ic=0.1637, deflated_ic=0.7313)
+- `combo_rank_min__early_range__volatility_percentile_20d` (sign=+1, overall_ic=0.1567, deflated_ic=0.7102)
+- `combo_ifelse__gap_pct__first_30min_return__yesterday_illiquidity_amihud` (sign=+1, overall_ic=0.1565, deflated_ic=0.7029)
+- `combo_rank_min__yesterday_illiquidity_amihud__atr14_norm` (sign=+1, overall_ic=0.1528, deflated_ic=0.6993)
+- `combo_ifelse__gap_pct__max_up_ret__total_balance` (sign=+1, overall_ic=0.1494, deflated_ic=0.6987)
+- `combo_rank_max__max_down_ret__atr14_norm` (sign=+1, overall_ic=0.1481, deflated_ic=0.6835)
+- `combo_ratio__bar_body_rng_0__northbound_volume_share` (sign=+1, overall_ic=0.1429, deflated_ic=0.7084)
+- `combo_diff__bar_vol_5__willr14` (sign=+1, overall_ic=0.1394, deflated_ic=0.7059)
+- `combo_rank_min__yesterday_lunch_gap__yesterday_afternoon_reversal` (sign=-1, overall_ic=0.1233, deflated_ic=0.6879)
+- `combo_clamp_diff__max_up_ret__bar_ret_2` (sign=+1, overall_ic=0.1227, deflated_ic=0.6919)
+- `combo_rank_max__bar_body_rng_0__northbound_volume_share` (sign=+1, overall_ic=0.1222, deflated_ic=0.6766)
+- `combo_min__yesterday_illiquidity_amihud__vol_ratio_10_60` (sign=+1, overall_ic=0.1115, deflated_ic=0.6737)
+- `yesterday_lunch_gap` (sign=-1, overall_ic=0.1099, deflated_ic=0.6782)
+- `combo_ifelse__gap_pct__first_bar_return__margin_balance` (sign=+1, overall_ic=0.0863, deflated_ic=0.6507)
+- `combo_rank_max__yesterday_day_vwap_dev__macd_hist` (sign=-1, overall_ic=0.0859, deflated_ic=0.6647)
 
 ### 500ETF (long)
-- `combo_abs_diff__willr14__max_up_ret` (sign=+1, overall_ic=0.3177, deflated_ic=0.1044)
+- `combo_abs_diff__willr14__max_up_ret` (sign=+1, overall_ic=0.3177, deflated_ic=0.8245)
+- `combo_rank_min__yearly_low_distance__max_up_ret` (sign=+1, overall_ic=0.2313, deflated_ic=0.7106)
+- `combo_min__first_30min_return__bar_body_rng_2` (sign=+1, overall_ic=0.2273, deflated_ic=0.7213)
+- `combo_diff__willr14__max_up_ret` (sign=-1, overall_ic=0.2179, deflated_ic=0.7112)
+- `combo_diff__vol60__max_up_ret` (sign=-1, overall_ic=0.2139, deflated_ic=0.7118)
+- `combo_tri_max__rsi21__stoch_k__yesterday_day_vwap_dev` (sign=-1, overall_ic=0.2073, deflated_ic=0.7091)
+- `combo_product__body_to_range_ratio__max_up_ret` (sign=+1, overall_ic=0.2011, deflated_ic=0.6903)
+- `combo_product__limit_up_proximity_day__rsi21` (sign=+1, overall_ic=0.1947, deflated_ic=0.6901)
+- `combo_product__limit_up_proximity_day__bar_vol_5` (sign=+1, overall_ic=0.1775, deflated_ic=0.6649)
+- `combo_max__yearly_low_distance__bar_vol_4` (sign=+1, overall_ic=0.1740, deflated_ic=0.6768)
+- `combo_ifelse__vol60__bar_ret_2__northbound_volume_share` (sign=+1, overall_ic=0.1659, deflated_ic=0.6545)
+- `combo_product__stoch_k__sma200_dist` (sign=+1, overall_ic=0.1641, deflated_ic=0.6514)
+- `volume_percentile_20d` (sign=+1, overall_ic=0.1622, deflated_ic=0.6615)
+- `combo_product__bar_vwap_dev_5__bar_body_rng_2` (sign=+1, overall_ic=0.1539, deflated_ic=0.6436)
+- `combo_product__bar_vol_4__bar_vol_5` (sign=+1, overall_ic=0.1538, deflated_ic=0.6490)
+- `combo_product__yesterday_illiquidity_amihud__vol_gk10` (sign=+1, overall_ic=0.1515, deflated_ic=0.6221)
+- `combo_rank_min__limit_up_proximity_day__max_up_ret` (sign=+1, overall_ic=0.1509, deflated_ic=0.6316)
+- `combo_product__yesterday_first_bar_volume__sma50_dist` (sign=+1, overall_ic=0.1457, deflated_ic=0.6230)
+- `combo_abs_diff__sma50_dist__bar_vol_4` (sign=+1, overall_ic=0.1372, deflated_ic=0.6400)
+- `combo_rank_min__yesterday_illiquidity_amihud__vol_gk10` (sign=+1, overall_ic=0.1309, deflated_ic=0.6049)
+- `combo_ifelse__vol60__margin_balance__sma100_dist` (sign=-1, overall_ic=0.1224, deflated_ic=0.6053)
+- `combo_abs_diff__yesterday_first_bar_volume__bar_vol_5` (sign=+1, overall_ic=0.1213, deflated_ic=0.6211)
+- `combo_abs_diff__bar_vwap_dev_5__max_up_ret` (sign=+1, overall_ic=0.1208, deflated_ic=0.5983)
+- `combo_mean__stoch_k__max_up_ret` (sign=+1, overall_ic=0.1072, deflated_ic=0.5958)
+- `combo_tri_min__sma100_dist__stoch_k__vol60` (sign=-1, overall_ic=0.1064, deflated_ic=0.5921)
+- `combo_clamp_diff__body_to_range_ratio__max_up_ret` (sign=-1, overall_ic=0.1010, deflated_ic=0.5718)
+- `combo_tri_max__yesterday_illiquidity_amihud__stoch_k__sma200_dist` (sign=+1, overall_ic=0.0942, deflated_ic=0.5757)
+- `combo_clamp_diff__yesterday_illiquidity_amihud__short_sell_quantity` (sign=+1, overall_ic=0.0837, deflated_ic=0.5506)
+- `combo_product__volume_percentile_20d__yesterday_wavetrend_osc` (sign=+1, overall_ic=0.0820, deflated_ic=0.5593)
+- `combo_clamp_diff__first_30min_return__bar_vwap_dev_5` (sign=+1, overall_ic=0.0809, deflated_ic=0.5631)
+- `combo_diff__yesterday_day_vwap_dev__bar_vol_5` (sign=-1, overall_ic=0.0720, deflated_ic=0.5793)
 
 ### 500ETF (short)
-- `combo_tri_ifelse__macd_hist__vol_pk20__total_balance__yesterday_early_vwap_dev__body_to_range_ratio` (sign=+1, overall_ic=0.3232, deflated_ic=0.1011)
+- `combo_tri_ifelse__macd_hist__vol_pk20__rsi5__yesterday_early_vwap_dev__body_to_range_ratio` (sign=+1, overall_ic=0.2082, deflated_ic=0.8567)
+- `combo_diff__gap_pct__yesterday_day_vwap_dev` (sign=+1, overall_ic=0.1488, deflated_ic=0.8092)
+- `combo_abs_diff__macd_hist__early_range` (sign=+1, overall_ic=0.1289, deflated_ic=0.7667)
 
 ### 588000ETF (single)
-- `combo_tri_ifelse__atr14_norm__vol20__vix_skew_proxy__bar_ret_0__max_down_ret` (sign=+1, overall_ic=0.3841, deflated_ic=0.1397)
-- `combo_tri_ifelse__vix__vol20__first_30min_return__vol5__first_bar_return` (sign=+1, overall_ic=0.3522, deflated_ic=0.1077)
-- `combo_tri_ifelse__atr14_norm__vol20__short_sell_cover_spread__bar_ret_0__max_down_ret` (sign=+1, overall_ic=0.3311, deflated_ic=0.0867)
-- `combo_tri_max__max_up_ret__vol5__max_down_ret` (sign=+1, overall_ic=0.3161, deflated_ic=0.0717)
-- `combo_tri_ifelse__vix__vol20__bar_vwap_dev_1__vol5__bar_body_rng_1` (sign=+1, overall_ic=0.3094, deflated_ic=0.0649)
-- `combo_rank_max__first_bar_return__num_up_bars` (sign=+1, overall_ic=0.3055, deflated_ic=0.0611)
-- `combo_tri_ifelse__atr14_norm__vol20__short_sell_cover_spread__bar_ret_0__early_momentum` (sign=+1, overall_ic=0.3039, deflated_ic=0.0595)
-- `combo_rank_max__max_down_ret__bar_rng_3` (sign=+1, overall_ic=0.3023, deflated_ic=0.0579)
-- `combo_diff__vix_skew_proxy__gap_pct` (sign=+1, overall_ic=0.2978, deflated_ic=0.0534)
+- `combo_tri_ifelse__vix__vol20__vix_skew_proxy__vol_gk10__max_down_ret` (sign=+1, overall_ic=0.4122, deflated_ic=0.8756)
+- `combo_tri_ifelse__vix__vol20__max_up_ret__vol5__bar_body_rng_1` (sign=+1, overall_ic=0.3585, deflated_ic=0.8205)
+- `combo_tri_ifelse__vix__vol20__bar_vwap_dev_1__vol_gk10__max_down_ret` (sign=+1, overall_ic=0.3468, deflated_ic=0.8353)
+- `combo_tri_ifelse__vix__vol20__vix_rolling_percentile_60d__short_sell_cover_spread__max_down_ret` (sign=+1, overall_ic=0.3375, deflated_ic=0.7989)
+- `combo_tri_max__max_up_ret__vol5__max_down_ret` (sign=+1, overall_ic=0.3161, deflated_ic=0.7879)
+- `combo_rank_max__first_bar_return__num_up_bars` (sign=+1, overall_ic=0.3055, deflated_ic=0.7739)
+- `combo_tri_ifelse__atr14_norm__vol20__short_sell_cover_spread__bar_ret_0__early_momentum` (sign=+1, overall_ic=0.3039, deflated_ic=0.7711)
+- `combo_rank_max__max_down_ret__bar_rng_3` (sign=+1, overall_ic=0.3023, deflated_ic=0.7902)
+- `combo_tri_ifelse__vix__vol20__first_30min_return__vol5__first_bar_return` (sign=+1, overall_ic=0.3000, deflated_ic=0.7381)
+- `combo_tri_ifelse__vix__atr14_norm__short_sell_cover_spread__yesterday_day_realized_vol__max_down_ret` (sign=+1, overall_ic=0.2924, deflated_ic=0.7726)
+- `combo_min__max_up_ret__early_skew` (sign=+1, overall_ic=0.2878, deflated_ic=0.8236)
+- `combo_tri_ifelse__vix__vol20__vix_rolling_percentile_60d__vol5__early_skew` (sign=+1, overall_ic=0.2780, deflated_ic=0.7541)
+- `combo_tri_ifelse__atr14_norm__vol20__bar_vwap_dev_1__max_up_ret__early_momentum` (sign=+1, overall_ic=0.2754, deflated_ic=0.7973)
+- `combo_ifelse__gap_pct__vol5__bar_body_rng_1` (sign=+1, overall_ic=0.2579, deflated_ic=0.7399)
+- `combo_rank_max__max_down_ret__bar_vol_4` (sign=+1, overall_ic=0.2533, deflated_ic=0.7140)
+- `combo_tri_ifelse__vix__atr14_norm__max_up_ret__vol_gk10__num_up_bars` (sign=+1, overall_ic=0.2504, deflated_ic=0.7452)
+- `combo_ifelse__vol10__vix_rolling_percentile_60d__bar_body_rng_1` (sign=+1, overall_ic=0.2454, deflated_ic=0.7232)
+- `combo_ifelse__gap_pct__vix_rolling_percentile_60d__first_bar_return` (sign=+1, overall_ic=0.2378, deflated_ic=0.7200)
+- `combo_rank_max__vix_diff_1d__max_up_ret` (sign=+1, overall_ic=0.2345, deflated_ic=0.7237)
+- `combo_ifelse__vol10__short_sell_cover_spread__first_bar_return` (sign=+1, overall_ic=0.2303, deflated_ic=0.7063)
+- `combo_tri_ifelse__vix__atr14_norm__bar_vwap_dev_1__bar_ret_0__early_momentum` (sign=+1, overall_ic=0.2273, deflated_ic=0.7671)
+- `combo_tri_median__vix_skew_proxy__vix_rolling_percentile_60d__max_down_ret` (sign=+1, overall_ic=0.2126, deflated_ic=0.6988)
+- `combo_tri_ifelse__vix__vol20__max_up_ret__bar_body_rng_1__max_down_ret` (sign=+1, overall_ic=0.2102, deflated_ic=0.6973)
+- `combo_min__max_up_ret__bar_rng_5` (sign=+1, overall_ic=0.2101, deflated_ic=0.7139)
+- `combo_tri_min__vix_diff_1d__vix__max_down_ret` (sign=+1, overall_ic=0.2093, deflated_ic=0.6924)
+- `combo_clamp_diff__yesterday_range_ratio__outside_bar_reversal_day` (sign=+1, overall_ic=0.2078, deflated_ic=0.7244)
+- `combo_rank_max__yesterday_day_realized_vol__bar_vol_4` (sign=+1, overall_ic=0.2058, deflated_ic=0.7001)
+- `combo_rank_max__yesterday_day_realized_vol__vol_ratio_5_20` (sign=+1, overall_ic=0.2029, deflated_ic=0.6746)
+- `yesterday_close_position` (sign=-1, overall_ic=0.1959, deflated_ic=0.7119)
+- `combo_tri_mean__vix_rolling_percentile_60d__atr14_norm__max_down_ret` (sign=+1, overall_ic=0.1894, deflated_ic=0.6961)
+- `combo_product__yesterday_day_realized_vol__total_path_length` (sign=+1, overall_ic=0.1842, deflated_ic=0.7161)
+- `combo_clamp_diff__vol_gk10__stoch_d` (sign=+1, overall_ic=0.1761, deflated_ic=0.6915)
+- `combo_ratio__yesterday_range_ratio__vol5` (sign=-1, overall_ic=0.1759, deflated_ic=0.7028)
+- `combo_ifelse__vol10__bar_ret_0__bar_body_rng_1` (sign=+1, overall_ic=0.1729, deflated_ic=0.6358)
+- `combo_product__max_up_ret__vol10` (sign=-1, overall_ic=0.1725, deflated_ic=0.6738)
+- `combo_rank_max__yesterday_day_range__vol_pk20` (sign=+1, overall_ic=0.1668, deflated_ic=0.6687)
+- `combo_mean__first_30min_return__gap_pct` (sign=+1, overall_ic=0.1663, deflated_ic=0.6390)
+- `combo_abs_diff__yesterday_range_ratio__early_range` (sign=+1, overall_ic=0.1544, deflated_ic=0.6425)
+- `combo_abs_diff__yesterday_day_realized_vol__vol10` (sign=+1, overall_ic=0.1389, deflated_ic=0.6612)
+- `capital_sell_volume` (sign=+1, overall_ic=0.0728, deflated_ic=0.5877)
 
 ### 588000ETF (long)
-- `combo_max__vol5__bar_rng_3` (sign=+1, overall_ic=0.3428, deflated_ic=0.0540)
+- `combo_max__vol5__bar_rng_3` (sign=+1, overall_ic=0.3428, deflated_ic=1.2026)
+- `combo_rank_max__bar_vol_4__vol5` (sign=+1, overall_ic=0.2977, deflated_ic=1.1103)
+- `combo_abs_diff__growth_momentum_ratio__bar_vol_5` (sign=+1, overall_ic=0.2897, deflated_ic=1.1369)
+- `combo_tri_min__vix_rolling_percentile_60d__yesterday_day_realized_vol__vix_skew_proxy` (sign=+1, overall_ic=0.2884, deflated_ic=1.1445)
+- `combo_rank_max__bar_vol_4__vix_diff_1d` (sign=+1, overall_ic=0.2574, deflated_ic=1.0661)
+- `combo_diff__bar_vol_4__sma_distance_60d` (sign=+1, overall_ic=0.2512, deflated_ic=1.0620)
+- `combo_ifelse__gap_pct__vol5__vix_skew_proxy` (sign=+1, overall_ic=0.2482, deflated_ic=1.0463)
+- `first_30min_return` (sign=+1, overall_ic=0.2184, deflated_ic=1.0654)
+- `combo_abs_diff__bar_vol_4__buy_on_margin_value` (sign=+1, overall_ic=0.2172, deflated_ic=1.0881)
+- `combo_mean__early_range__volume_slope` (sign=+1, overall_ic=0.2126, deflated_ic=1.0897)
+- `combo_product__yesterday_day_realized_vol__bar_rng_0` (sign=+1, overall_ic=0.2106, deflated_ic=1.0790)
+- `combo_rank_max__vix_rolling_percentile_60d__max_down_ret` (sign=+1, overall_ic=0.2056, deflated_ic=1.0164)
+- `combo_product__bar_vol_4__capital_net_value` (sign=+1, overall_ic=0.2024, deflated_ic=1.0503)
+- `combo_abs_diff__buy_on_margin_value__growth_momentum_ratio` (sign=+1, overall_ic=0.1981, deflated_ic=1.0341)
+- `combo_rank_min__vol_gk10__bar_rng_0` (sign=+1, overall_ic=0.1862, deflated_ic=1.0567)
+- `combo_clamp_diff__vix_diff_1d__capital_buy_value` (sign=+1, overall_ic=0.1859, deflated_ic=1.0305)
+- `combo_rank_max__bar_vol_4__max_down_ret` (sign=+1, overall_ic=0.1832, deflated_ic=0.9784)
+- `combo_product__capital_net_accel__capital_large_order_ratio` (sign=+1, overall_ic=0.1824, deflated_ic=1.0360)
+- `combo_rank_max__bar_rng_3__yesterday_volume_ratio` (sign=+1, overall_ic=0.1803, deflated_ic=1.0699)
+- `combo_tri_max__body_to_range_ratio__early_range__bar_vol_4` (sign=+1, overall_ic=0.1739, deflated_ic=0.9928)
+- `combo_tri_median__iv_envelope_deviation__vix_diff_1d__gap_pct` (sign=+1, overall_ic=0.1707, deflated_ic=1.0187)
+- `combo_ratio__vix_skew_proxy__capital_net_value` (sign=+1, overall_ic=0.1674, deflated_ic=0.9624)
+- `combo_rank_max__bar_rng_3__capital_sell_volume` (sign=+1, overall_ic=0.1594, deflated_ic=1.0483)
+- `combo_clamp_diff__vix_skew_proxy__gap_pct` (sign=+1, overall_ic=0.1495, deflated_ic=0.9797)
+- `combo_rank_max__vol5__capital_net_value` (sign=+1, overall_ic=0.1422, deflated_ic=0.9760)
+- `combo_abs_diff__early_range__buy_on_margin_value` (sign=+1, overall_ic=0.1315, deflated_ic=1.0102)
+- `combo_tri_min__vol5__yesterday_day_realized_vol__gap_pct` (sign=+1, overall_ic=0.1314, deflated_ic=0.9644)
+- `combo_mean__vix_skew_proxy__yesterday_pm_am_vol_ratio` (sign=+1, overall_ic=0.1224, deflated_ic=0.9642)
+- `combo_clamp_diff__bar_vol_5__yesterday_day_close_pos` (sign=+1, overall_ic=0.1219, deflated_ic=0.9484)
+- `combo_max__vix_rolling_percentile_60d__capital_sell_volume` (sign=+1, overall_ic=0.1184, deflated_ic=0.9750)
+- `combo_rank_max__bar_vol_5__capital_buy_value` (sign=+1, overall_ic=0.1161, deflated_ic=0.9688)
+- `combo_rank_max__vix_rolling_percentile_60d__vol_ratio_10_60` (sign=+1, overall_ic=0.1133, deflated_ic=0.9723)
+- `combo_abs_diff__yesterday_day_realized_vol__yesterday_volume_ratio` (sign=+1, overall_ic=0.1057, deflated_ic=0.9421)
+- `combo_abs_diff__total_path_length__vol_ratio_10_60` (sign=+1, overall_ic=0.1002, deflated_ic=0.9462)
+- `combo_abs_diff__early_realized_vol__growth_momentum_ratio` (sign=+1, overall_ic=0.0982, deflated_ic=0.9565)
+- `combo_rank_max__early_range__short_balance` (sign=+1, overall_ic=0.0954, deflated_ic=0.9584)
+- `combo_tri_min__sma_distance_60d__bar_vol_5__yesterday_day_close_pos` (sign=-1, overall_ic=0.0852, deflated_ic=0.9229)
 
 ### 588000ETF (short)
 No features admitted.
 
 ### 159915ETF (single)
-- `combo_tri_ifelse__gap_pct__bb_width__max_up_ret__yesterday_early_vwap_dev__margin_buy_repayment_spread` (sign=+1, overall_ic=0.2707, deflated_ic=0.0881)
-- `combo_tri_mean__max_up_ret__early_range__gap_pct` (sign=+1, overall_ic=0.2636, deflated_ic=0.0809)
-- `combo_diff__max_up_ret__bar_body_rng_1` (sign=+1, overall_ic=0.2322, deflated_ic=0.0496)
-- `combo_tri_mean__yesterday_afternoon_momentum__yesterday_afternoon_reversal__yesterday_day_vwap_dev` (sign=-1, overall_ic=0.2284, deflated_ic=0.0457)
-- `combo_tri_ifelse__gap_pct__bb_width__bar_body_rng_0__yesterday_early_vwap_dev__max_down_ret` (sign=+1, overall_ic=0.2202, deflated_ic=0.0375)
+- `combo_tri_ifelse__gap_pct__bb_width__max_up_ret__yesterday_early_vwap_dev__margin_buy_repayment_spread` (sign=+1, overall_ic=0.2707, deflated_ic=0.6731)
+- `combo_tri_mean__max_up_ret__early_range__gap_pct` (sign=+1, overall_ic=0.2636, deflated_ic=0.6755)
+- `combo_diff__max_up_ret__bar_body_rng_1` (sign=+1, overall_ic=0.2322, deflated_ic=0.6521)
+- `combo_tri_mean__yesterday_afternoon_momentum__yesterday_afternoon_reversal__yesterday_day_vwap_dev` (sign=-1, overall_ic=0.2284, deflated_ic=0.6567)
+- `combo_tri_ifelse__gap_pct__bb_width__bar_body_rng_0__yesterday_early_vwap_dev__max_down_ret` (sign=+1, overall_ic=0.2202, deflated_ic=0.6356)
+- `combo_abs_diff__early_range__bar_rng_5` (sign=+1, overall_ic=0.1975, deflated_ic=0.6207)
+- `combo_tri_max__yesterday_first_30min_return__yesterday_early_trend__gap_pct` (sign=+1, overall_ic=0.1953, deflated_ic=0.6082)
+- `combo_tri_ifelse__gap_pct__bb_width__bar_body_rng_0__yesterday_early_vwap_dev__early_range` (sign=+1, overall_ic=0.1891, deflated_ic=0.6064)
+- `combo_clamp_diff__yesterday_day_vwap_dev__limit_up_proximity_day` (sign=-1, overall_ic=0.1746, deflated_ic=0.6202)
+- `combo_rank_max__max_up_ret__bb_width` (sign=+1, overall_ic=0.1711, deflated_ic=0.5963)
+- `combo_rank_max__willr14__roc10` (sign=-1, overall_ic=0.1677, deflated_ic=0.5895)
+- `combo_tri_ifelse__gap_pct__bb_width__first_bar_return__early_range__keltner_squeeze_width` (sign=+1, overall_ic=0.1615, deflated_ic=0.5701)
+- `combo_tri_ifelse__gap_pct__bb_width__yesterday_afternoon_momentum__keltner_squeeze_width__stoch_k` (sign=-1, overall_ic=0.1519, deflated_ic=0.5805)
+- `combo_diff__bar_vol_4__limit_up_proximity_day` (sign=+1, overall_ic=0.1506, deflated_ic=0.6039)
+- `combo_ratio__yesterday_day_vwap_dev__bar_vol_4` (sign=-1, overall_ic=0.1434, deflated_ic=0.5954)
+- `combo_product__willr14__roc10` (sign=+1, overall_ic=0.1339, deflated_ic=0.5643)
+- `combo_diff__coppock_curve_day__roc10` (sign=+1, overall_ic=0.1311, deflated_ic=0.5599)
+- `combo_tri_ifelse__gap_pct__bb_width__yearly_high_distance__margin_buy_repayment_spread__stoch_k` (sign=-1, overall_ic=0.1248, deflated_ic=0.5622)
+- `combo_tri_max__early_range__keltner_squeeze_width__bb_width` (sign=+1, overall_ic=0.1148, deflated_ic=0.5517)
+- `combo_clamp_diff__bar_vol_4__roc10` (sign=+1, overall_ic=0.1027, deflated_ic=0.5566)
+- `combo_rank_min__keltner_squeeze_width__sma100_dist` (sign=-1, overall_ic=0.0902, deflated_ic=0.5234)
+- `combo_diff__yesterday_afternoon_momentum__yesterday_afternoon_reversal` (sign=-1, overall_ic=0.0841, deflated_ic=0.5131)
 
 ### 159915ETF (long)
-No features admitted.
+- `combo_rank_max__yesterday_afternoon_momentum__roc10` (sign=-1, overall_ic=0.1964, deflated_ic=0.6186)
+- `combo_min__early_realized_vol__max_down_ret` (sign=+1, overall_ic=0.1745, deflated_ic=0.5740)
+- `combo_product__bar_rng_0__yearly_high_distance` (sign=-1, overall_ic=0.1512, deflated_ic=0.5958)
+- `combo_diff__early_trend__max_down_ret` (sign=-1, overall_ic=0.1042, deflated_ic=0.5050)
+- `combo_min__yesterday_afternoon_momentum__early_realized_vol` (sign=-1, overall_ic=0.0867, deflated_ic=0.5024)
+- `combo_rank_min__bar_body_rng_1__max_down_ret` (sign=+1, overall_ic=0.0784, deflated_ic=0.4800)
 
 ### 159915ETF (short)
 No features admitted.

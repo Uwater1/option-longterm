@@ -1,1 +1,80 @@
-[]
+[
+  {
+    "feature_name": "combo_rank_max__yesterday_afternoon_momentum__roc10",
+    "sign": -1,
+    "overall_ic": 0.1963500678539276,
+    "deflated_ic": 0.6185828883306063,
+    "ic_ir": 0.3615832896808563,
+    "monotonicity": 0.6152492668621701,
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "yesterday_afternoon_momentum",
+      "feature_b": "roc10"
+    }
+  },
+  {
+    "feature_name": "combo_min__early_realized_vol__max_down_ret",
+    "sign": 1,
+    "overall_ic": 0.17452245950698853,
+    "deflated_ic": 0.5740047139401481,
+    "ic_ir": 0.15962752683431314,
+    "monotonicity": 0.5612903225806452,
+    "recipe": {
+      "op": "min",
+      "feature_a": "early_realized_vol",
+      "feature_b": "max_down_ret"
+    }
+  },
+  {
+    "feature_name": "combo_product__bar_rng_0__yearly_high_distance",
+    "sign": -1,
+    "overall_ic": 0.1511615663766861,
+    "deflated_ic": 0.5958169490351789,
+    "ic_ir": 0.16493197185866063,
+    "monotonicity": 0.575366568914956,
+    "recipe": {
+      "op": "product",
+      "feature_a": "bar_rng_0",
+      "feature_b": "yearly_high_distance"
+    }
+  },
+  {
+    "feature_name": "combo_diff__early_trend__max_down_ret",
+    "sign": -1,
+    "overall_ic": 0.10421998053789139,
+    "deflated_ic": 0.5050201212356742,
+    "ic_ir": 0.26456309922104815,
+    "monotonicity": 0.6146627565982404,
+    "recipe": {
+      "op": "diff",
+      "feature_a": "early_trend",
+      "feature_b": "max_down_ret"
+    }
+  },
+  {
+    "feature_name": "combo_min__yesterday_afternoon_momentum__early_realized_vol",
+    "sign": -1,
+    "overall_ic": 0.08671911060810089,
+    "deflated_ic": 0.5023570688557313,
+    "ic_ir": 0.3582918187056694,
+    "monotonicity": 0.6240469208211143,
+    "recipe": {
+      "op": "min",
+      "feature_a": "yesterday_afternoon_momentum",
+      "feature_b": "early_realized_vol"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__bar_body_rng_1__max_down_ret",
+    "sign": 1,
+    "overall_ic": 0.07840897142887115,
+    "deflated_ic": 0.47998202807068624,
+    "ic_ir": 0.2539836586496575,
+    "monotonicity": 0.5794721407624633,
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "bar_body_rng_1",
+      "feature_b": "max_down_ret"
+    }
+  }
+]
