@@ -107,7 +107,7 @@ def build_report(etfs, sides, suffix):
     lines.extend([
         "",
         "_\\* indicates the 95% circular block-bootstrap CI spans zero (statistically indistinguishable from noise)._",
-        "_Note: Cost metrics incorporate 15 bps (0.0015) transaction cost per position state transition (entry/turnover). Raw metrics represent pre-cost performance. Absolute-sign kill switches enforce mean return positivity on traded legs._",
+        "_Note: Cost metrics incorporate 8 bps (0.0008) transaction cost per position state transition (realistic for liquid ETFs). Raw metrics represent pre-cost performance. Absolute-sign kill switches enforce mean return positivity on traded legs._",
     ])
 
     # ── Section 1: Filter Funnel ───────────────────────────────────────

@@ -75,6 +75,8 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 
 Goal: Combine surviving features and evaluate performance under strict cross-validation.
 
+> **Strategy**: Entry at 10:00 (open of bar 6), exit at 14:35 (close of bar 42). Binary position: long top-10% / short bottom-10% predicted days (`single`), or top/bottom-15% for directional sides. 8 bps cost per position state transition (realistic for liquid ETFs).
+
 ### C1. Baseline Model: IC-weighted Linear Sum (with Empirical Bayes Shrinkage)
 ```
 signal = sum_i( sign(IC_i) * max(0, deflated_ic_i - SE_IC)^k * z(feature_i) )

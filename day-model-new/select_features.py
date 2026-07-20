@@ -579,7 +579,7 @@ def numba_fast_null_composite_kernel(x_flipped: np.ndarray, y: np.ndarray, windo
             ret = np.empty(n_tail, dtype=np.float32)
             for k in range(n_tail):
                 idx = tail_idx[k]
-                ret[k] = y_null[idx] - 0.0015 if tail_def == 1 else -y_null[idx] - 0.0015
+                ret[k] = y_null[idx] - 0.0008 if tail_def == 1 else -y_null[idx] - 0.0008
             
             sum_ret = 0.0
             sum_sq_down = 0.0
@@ -598,12 +598,12 @@ def numba_fast_null_composite_kernel(x_flipped: np.ndarray, y: np.ndarray, windo
             sum_ret = 0.0
             sum_sq_down = 0.0
             for k in range(n_l):
-                r = y_null[long_idx[k]] - 0.0015
+                r = y_null[long_idx[k]] - 0.0008
                 sum_ret += r
                 if r < 0:
                     sum_sq_down += r * r
             for k in range(n_s):
-                r = -y_null[short_idx[k]] - 0.0015
+                r = -y_null[short_idx[k]] - 0.0008
                 sum_ret += r
                 if r < 0:
                     sum_sq_down += r * r
@@ -703,13 +703,13 @@ def numba_batched_b3_null_kernel(X: np.ndarray, y: np.ndarray, window_starts: np
                 sum_sq_down = 0.0
                 if tail_def == 1:
                     for k in range(m):
-                        r = y_null[tail_idx_local[k]] - 0.0015
+                        r = y_null[tail_idx_local[k]] - 0.0008
                         sum_ret += r
                         if r < 0:
                             sum_sq_down += r * r
                 else:
                     for k in range(m):
-                        r = -y_null[tail_idx_local[k]] - 0.0015
+                        r = -y_null[tail_idx_local[k]] - 0.0008
                         sum_ret += r
                         if r < 0:
                             sum_sq_down += r * r
@@ -723,12 +723,12 @@ def numba_batched_b3_null_kernel(X: np.ndarray, y: np.ndarray, window_starts: np
                 sum_ret = 0.0
                 sum_sq_down = 0.0
                 for k in range(n_l):
-                    r = y_null[long_idx[k]] - 0.0015
+                    r = y_null[long_idx[k]] - 0.0008
                     sum_ret += r
                     if r < 0:
                         sum_sq_down += r * r
                 for k in range(n_s_):
-                    r = -y_null[short_idx[k]] - 0.0015
+                    r = -y_null[short_idx[k]] - 0.0008
                     sum_ret += r
                     if r < 0:
                         sum_sq_down += r * r

@@ -233,11 +233,12 @@ def simulate_returns(y_true: np.ndarray, y_pred: np.ndarray, side: str, position
     raw_ann_vol = float(np.std(raw_returns) * np.sqrt(244))
     raw_sharpe = float(raw_ann_return / (raw_ann_vol + 1e-10))
 
-    # Per-entry transaction cost (15 bps = 0.0015 per position state transition)
+    # Per-entry transaction cost (8 bps = 0.0008 per position state transition)
+    # Realistic for liquid ETFs: ~2-3 bps commission + ~1-2 bps spread + ~1-2 bps slippage
     pos_prev = np.roll(pos, 1)
     pos_prev[0] = 0.0
     transitions = np.abs(pos - pos_prev)
-    cost = transitions * 0.0015
+    cost = transitions * 0.0008
     cost_returns = raw_returns - cost
     
     ann_return = float(np.mean(cost_returns) * 244)

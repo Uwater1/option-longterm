@@ -6,83 +6,78 @@
   "features_selected": [
     "combo_diff__max_up_ret__willr14",
     "combo_ifelse__gap_pct__max_up_ret__max_down_ret",
-    "combo_diff__yesterday_afternoon_momentum__bar_vol_4",
     "combo_mean__gap_pct__early_range",
-    "combo_ifelse__gap_pct__total_balance__short_balance",
     "combo_product__yesterday_illiquidity_amihud__early_range",
     "combo_ifelse__gap_pct__bar_ret_0__yesterday_early_vwap_dev",
-    "combo_clamp_diff__yesterday_early_vwap_dev__yesterday_day_skew",
-    "combo_max__vol_ratio_10_60__volatility_percentile_20d",
-    "combo_ratio__bar_body_rng_0__northbound_volume_share",
-    "combo_tri_min__max_up_ret__yesterday_illiquidity_amihud__northbound_volume_share"
+    "combo_ratio__vix_realized_spread__total_balance"
   ],
   "training_metrics": {
-    "overall_ic": 0.19581754691547054,
+    "overall_ic": 0.1835215775647307,
     "overall_ic_ci": [
-      0.15088004926693965,
-      0.24639244770102706
+      0.13811074691955733,
+      0.23096569037704515
     ],
-    "tail_ic": 0.3762284733788151,
+    "tail_ic": 0.3604525380079107,
     "tail_ic_ci": [
-      0.2746937689772403,
-      0.47536171440522335
+      0.25890923898690354,
+      0.4476742929284448
     ],
-    "monotonicity": 0.806060606060606,
+    "monotonicity": 0.8666666666666667,
     "monotonicity_ci": [
-      0.6121212121212121,
-      0.9272727272727272
+      0.5027272727272728,
+      0.9275757575757573
     ],
-    "ann_ret": 0.10241994177646004,
-    "raw_ann_ret": 0.21318592418115215,
-    "raw_sharpe": 2.0946403566227665,
-    "sharpe": 1.0174273185991398,
-    "sortino": 1.754526762994178,
-    "max_dd": 0.20120114466570826
+    "ann_ret": 0.06916527848174524,
+    "raw_ann_ret": 0.1786432843468479,
+    "raw_sharpe": 1.9167592828282987,
+    "sharpe": 0.7464456718602057,
+    "sortino": 1.301657647577431,
+    "max_dd": 0.20299616422536554
   },
   "oos_metrics": {
-    "overall_ic": 0.08620404818190511,
+    "overall_ic": 0.08071227972581516,
     "overall_ic_ci": [
-      0.03228672331754589,
-      0.14251989557192724
+      0.02677958120759732,
+      0.13612339192265707
     ],
-    "tail_ic": 0.061573468916161694,
+    "tail_ic": 0.06917830492651311,
     "tail_ic_ci": [
-      -0.06417440169482395,
-      0.1862909741241662
+      -0.05780523076513217,
+      0.19096870911564404
     ],
-    "monotonicity": 0.9151515151515152,
+    "monotonicity": 0.8424242424242424,
     "monotonicity_ci": [
-      0.41818181818181815,
-      0.9515151515151515
+      0.3333333333333333,
+      0.9272727272727272
     ],
-    "ann_ret": 0.0011725200314353832,
-    "raw_ann_ret": 0.10883918669810204,
-    "raw_sharpe": 1.1716929377704335,
-    "sharpe": 0.012544032320160914,
-    "sortino": 0.021966168850020368,
-    "max_dd": 0.20647146541635514
+    "ann_ret": -0.05265434953455761,
+    "raw_ann_ret": 0.07134565046544242,
+    "raw_sharpe": 0.8077690540607685,
+    "sharpe": -0.5948811041786508,
+    "sortino": -0.9491076028110308,
+    "max_dd": 0.2970938750264505
   },
   "lockbox_metrics": {
-    "overall_ic": 0.08461667385148722,
+    "overall_ic": 0.07529456462143654,
     "overall_ic_ci": [
-      0.010942883149028805,
-      0.1610119177016305
+      -0.006723278279351296,
+      0.15531150957553985
     ],
-    "tail_ic": 0.11644559648447783,
+    "tail_ic": 0.08717927947996193,
     "tail_ic_ci": [
-      -0.05221380692979081,
-      0.2815700370587878
+      -0.10264028674996455,
+      0.2705629695631923
     ],
-    "monotonicity": 0.6848484848484848,
+    "monotonicity": 0.6121212121212121,
     "monotonicity_ci": [
-      0.16333333333333336,
-      0.8909090909090909
+      0.07878787878787878,
+      0.8424242424242424
     ],
-    "ann_ret": 0.019747987114184826,
-    "raw_ann_ret": 0.13202181727016402,
-    "raw_sharpe": 1.2481808551605225,
-    "sharpe": 0.18674395926111922,
-    "sortino": 0.34206119875345287,
-    "max_dd": 0.1641673104977176
+    "ann_ret": -0.07096314410748271,
+    "raw_ann_ret": 0.05970583336218801,
+    "raw_sharpe": 0.6220220573617153,
+    "sharpe": -0.7376737106749804,
+    "sortino": -1.1587808618252564,
+    "max_dd": 0.24490852854243103
   }
 }

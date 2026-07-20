@@ -107027,6 +107027,232 @@
       "n_rejected_fdr": 278,
       "n_rejected_corr": 0,
       "admitted_names": []
+    },
+    {
+      "batch_id": 91,
+      "etf": "300ETF",
+      "side": "single",
+      "timestamp": "2026-07-20T15:16:41.691972+00:00",
+      "n_candidates": 2356,
+      "n_admitted": 4,
+      "n_rejected_split_half": 1344,
+      "n_rejected_rolling": 848,
+      "n_rejected_fdr": 54,
+      "n_rejected_corr": 18,
+      "admitted_names": [
+        "combo_mean__max_up_ret__gap_pct",
+        "combo_ifelse__gap_pct__first_bar_return__short_sell_cover_spread",
+        "combo_ifelse__macd_hist__max_up_ret__option_oi_growth",
+        "combo_ifelse__gap_pct__max_up_ret__growth_momentum_ratio"
+      ]
+    },
+    {
+      "batch_id": 92,
+      "etf": "300ETF",
+      "side": "long",
+      "timestamp": "2026-07-20T15:17:12.727709+00:00",
+      "n_candidates": 218,
+      "n_admitted": 0,
+      "n_rejected_split_half": 117,
+      "n_rejected_rolling": 100,
+      "n_rejected_fdr": 1,
+      "n_rejected_corr": 0,
+      "admitted_names": []
+    },
+    {
+      "batch_id": 93,
+      "etf": "300ETF",
+      "side": "short",
+      "timestamp": "2026-07-20T15:17:39.698847+00:00",
+      "n_candidates": 11750,
+      "n_admitted": 0,
+      "n_rejected_split_half": 8890,
+      "n_rejected_rolling": 2541,
+      "n_rejected_fdr": 142,
+      "n_rejected_corr": 0,
+      "admitted_names": []
+    },
+    {
+      "batch_id": 94,
+      "etf": "50ETF",
+      "side": "single",
+      "timestamp": "2026-07-20T15:18:03.294470+00:00",
+      "n_candidates": 2725,
+      "n_admitted": 0,
+      "n_rejected_split_half": 1666,
+      "n_rejected_rolling": 892,
+      "n_rejected_fdr": 22,
+      "n_rejected_corr": 0,
+      "admitted_names": []
+    },
+    {
+      "batch_id": 95,
+      "etf": "50ETF",
+      "side": "long",
+      "timestamp": "2026-07-20T15:18:28.786475+00:00",
+      "n_candidates": 4089,
+      "n_admitted": 1,
+      "n_rejected_split_half": 3195,
+      "n_rejected_rolling": 817,
+      "n_rejected_fdr": 37,
+      "n_rejected_corr": 3,
+      "admitted_names": [
+        "combo_diff__yearly_low_distance__yesterday_wavetrend_osc"
+      ]
+    },
+    {
+      "batch_id": 96,
+      "etf": "50ETF",
+      "side": "short",
+      "timestamp": "2026-07-20T15:18:56.380280+00:00",
+      "n_candidates": 9086,
+      "n_admitted": 0,
+      "n_rejected_split_half": 6951,
+      "n_rejected_rolling": 1745,
+      "n_rejected_fdr": 149,
+      "n_rejected_corr": 0,
+      "admitted_names": []
+    },
+    {
+      "batch_id": 97,
+      "etf": "500ETF",
+      "side": "single",
+      "timestamp": "2026-07-20T15:20:10.822855+00:00",
+      "n_candidates": 3796,
+      "n_admitted": 6,
+      "n_rejected_split_half": 1620,
+      "n_rejected_rolling": 1589,
+      "n_rejected_fdr": 122,
+      "n_rejected_corr": 311,
+      "admitted_names": [
+        "combo_diff__max_up_ret__willr14",
+        "combo_ifelse__gap_pct__max_up_ret__max_down_ret",
+        "combo_mean__gap_pct__early_range",
+        "combo_product__yesterday_illiquidity_amihud__early_range",
+        "combo_ifelse__gap_pct__bar_ret_0__yesterday_early_vwap_dev",
+        "combo_ratio__vix_realized_spread__total_balance"
+      ]
+    },
+    {
+      "batch_id": 98,
+      "etf": "500ETF",
+      "side": "long",
+      "timestamp": "2026-07-20T15:20:35.951291+00:00",
+      "n_candidates": 5116,
+      "n_admitted": 3,
+      "n_rejected_split_half": 3601,
+      "n_rejected_rolling": 1025,
+      "n_rejected_fdr": 432,
+      "n_rejected_corr": 3,
+      "admitted_names": [
+        "combo_abs_diff__willr14__max_up_ret",
+        "combo_rank_min__yearly_low_distance__max_up_ret",
+        "combo_min__first_30min_return__bar_body_rng_2"
+      ]
+    },
+    {
+      "batch_id": 99,
+      "etf": "500ETF",
+      "side": "short",
+      "timestamp": "2026-07-20T15:21:05.055217+00:00",
+      "n_candidates": 12191,
+      "n_admitted": 0,
+      "n_rejected_split_half": 9310,
+      "n_rejected_rolling": 2432,
+      "n_rejected_fdr": 120,
+      "n_rejected_corr": 0,
+      "admitted_names": []
+    },
+    {
+      "batch_id": 100,
+      "etf": "588000ETF",
+      "side": "single",
+      "timestamp": "2026-07-20T15:23:58.099131+00:00",
+      "n_candidates": 9719,
+      "n_admitted": 8,
+      "n_rejected_split_half": 3976,
+      "n_rejected_rolling": 2654,
+      "n_rejected_fdr": 789,
+      "n_rejected_corr": 588,
+      "admitted_names": [
+        "combo_tri_ifelse__vix__vol20__vix_skew_proxy__vol_gk10__max_down_ret",
+        "combo_tri_ifelse__vix__vol20__vix_rolling_percentile_60d__vol5__bar_body_rng_1",
+        "combo_tri_median__first_30min_return__max_up_ret__early_skew",
+        "combo_tri_ifelse__atr14_norm__vol20__vix_rolling_percentile_60d__num_up_bars__early_skew",
+        "combo_rank_max__vix_diff_1d__bar_vol_4",
+        "combo_max__yesterday_day_realized_vol__max_down_ret",
+        "combo_clamp_diff__yesterday_range_ratio__outside_bar_reversal_day",
+        "combo_rank_max__yesterday_day_realized_vol__vol_ratio_5_20"
+      ]
+    },
+    {
+      "batch_id": 101,
+      "etf": "588000ETF",
+      "side": "long",
+      "timestamp": "2026-07-20T15:24:25.855428+00:00",
+      "n_candidates": 7445,
+      "n_admitted": 1,
+      "n_rejected_split_half": 4743,
+      "n_rejected_rolling": 1797,
+      "n_rejected_fdr": 767,
+      "n_rejected_corr": 1,
+      "admitted_names": [
+        "combo_max__vol5__bar_rng_3"
+      ]
+    },
+    {
+      "batch_id": 102,
+      "etf": "588000ETF",
+      "side": "short",
+      "timestamp": "2026-07-20T15:24:54.147335+00:00",
+      "n_candidates": 9908,
+      "n_admitted": 0,
+      "n_rejected_split_half": 7441,
+      "n_rejected_rolling": 2074,
+      "n_rejected_fdr": 188,
+      "n_rejected_corr": 0,
+      "admitted_names": []
+    },
+    {
+      "batch_id": 103,
+      "etf": "159915ETF",
+      "side": "single",
+      "timestamp": "2026-07-20T15:25:27.960420+00:00",
+      "n_candidates": 5236,
+      "n_admitted": 1,
+      "n_rejected_split_half": 2377,
+      "n_rejected_rolling": 2675,
+      "n_rejected_fdr": 85,
+      "n_rejected_corr": 20,
+      "admitted_names": [
+        "combo_tri_mean__max_up_ret__bar_ret_0__gap_pct"
+      ]
+    },
+    {
+      "batch_id": 104,
+      "etf": "159915ETF",
+      "side": "long",
+      "timestamp": "2026-07-20T15:25:53.129273+00:00",
+      "n_candidates": 3578,
+      "n_admitted": 0,
+      "n_rejected_split_half": 2808,
+      "n_rejected_rolling": 627,
+      "n_rejected_fdr": 105,
+      "n_rejected_corr": 0,
+      "admitted_names": []
+    },
+    {
+      "batch_id": 105,
+      "etf": "159915ETF",
+      "side": "short",
+      "timestamp": "2026-07-20T15:26:23.925982+00:00",
+      "n_candidates": 12244,
+      "n_admitted": 0,
+      "n_rejected_split_half": 7467,
+      "n_rejected_rolling": 3396,
+      "n_rejected_fdr": 47,
+      "n_rejected_corr": 0,
+      "admitted_names": []
     }
   ]
 }

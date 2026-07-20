@@ -2,8 +2,8 @@
   {
     "feature_name": "combo_diff__max_up_ret__willr14",
     "sign": 1,
-    "overall_ic": 0.3162121020952334,
-    "deflated_ic": 0.31642134997714383,
+    "overall_ic": 0.31621208786964417,
+    "deflated_ic": 0.31642133575155457,
     "ic_ir": 1.2688026958260321,
     "monotonicity": 0.8991202346041056,
     "recipe": {
@@ -15,8 +15,8 @@
   {
     "feature_name": "combo_ifelse__gap_pct__max_up_ret__max_down_ret",
     "sign": 1,
-    "overall_ic": 0.2898125719257757,
-    "deflated_ic": 0.29012980199515936,
+    "overall_ic": 0.2898125648498535,
+    "deflated_ic": 0.2901297949192372,
     "ic_ir": 0.6922354546149463,
     "monotonicity": 0.7319648093841642,
     "recipe": {
@@ -27,23 +27,10 @@
     }
   },
   {
-    "feature_name": "combo_diff__yesterday_afternoon_momentum__bar_vol_4",
-    "sign": -1,
-    "overall_ic": 0.24219057461824167,
-    "deflated_ic": 0.24345191701814584,
-    "ic_ir": 0.6801136901611403,
-    "monotonicity": 0.7173020527859237,
-    "recipe": {
-      "op": "diff",
-      "feature_a": "yesterday_afternoon_momentum",
-      "feature_b": "bar_vol_4"
-    }
-  },
-  {
     "feature_name": "combo_mean__gap_pct__early_range",
     "sign": 1,
-    "overall_ic": 0.20900343632119756,
-    "deflated_ic": 0.20915802281296447,
+    "overall_ic": 0.20900343358516693,
+    "deflated_ic": 0.20915802007693385,
     "ic_ir": 0.5516627530982807,
     "monotonicity": 0.7038123167155426,
     "recipe": {
@@ -53,24 +40,10 @@
     }
   },
   {
-    "feature_name": "combo_ifelse__gap_pct__total_balance__short_balance",
-    "sign": -1,
-    "overall_ic": 0.20254296928072346,
-    "deflated_ic": 0.2007582424726489,
-    "ic_ir": 0.5574962668138718,
-    "monotonicity": 0.7167155425219941,
-    "recipe": {
-      "op": "ifelse",
-      "feature_cond": "gap_pct",
-      "feature_a": "total_balance",
-      "feature_b": "short_balance"
-    }
-  },
-  {
     "feature_name": "combo_product__yesterday_illiquidity_amihud__early_range",
     "sign": 1,
-    "overall_ic": 0.1969963102672881,
-    "deflated_ic": 0.19656462515017367,
+    "overall_ic": 0.1969963163137436,
+    "deflated_ic": 0.19656463119662917,
     "ic_ir": 0.5070183361488976,
     "monotonicity": 0.7049853372434017,
     "recipe": {
@@ -82,8 +55,8 @@
   {
     "feature_name": "combo_ifelse__gap_pct__bar_ret_0__yesterday_early_vwap_dev",
     "sign": 1,
-    "overall_ic": 0.17767261369551843,
-    "deflated_ic": 0.1770356725165527,
+    "overall_ic": 0.1776726096868515,
+    "deflated_ic": 0.17703566850788577,
     "ic_ir": 0.44796507558650117,
     "monotonicity": 0.7032258064516129,
     "recipe": {
@@ -94,56 +67,16 @@
     }
   },
   {
-    "feature_name": "combo_clamp_diff__yesterday_early_vwap_dev__yesterday_day_skew",
+    "feature_name": "combo_ratio__vix_realized_spread__total_balance",
     "sign": 1,
-    "overall_ic": 0.16370185478008506,
-    "deflated_ic": 0.1655096591395986,
-    "ic_ir": 0.5923445920714723,
-    "monotonicity": 0.7038123167155426,
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "yesterday_early_vwap_dev",
-      "feature_b": "yesterday_day_skew"
-    }
-  },
-  {
-    "feature_name": "combo_max__vol_ratio_10_60__volatility_percentile_20d",
-    "sign": 1,
-    "overall_ic": 0.15134616853358315,
-    "deflated_ic": 0.14935401914531377,
-    "ic_ir": 0.5479718640954458,
-    "monotonicity": 0.7096774193548387,
-    "recipe": {
-      "op": "max",
-      "feature_a": "vol_ratio_10_60",
-      "feature_b": "volatility_percentile_20d"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__bar_body_rng_0__northbound_volume_share",
-    "sign": 1,
-    "overall_ic": 0.14290302735165122,
-    "deflated_ic": 0.14213359458095798,
-    "ic_ir": 0.6979928462641269,
-    "monotonicity": 0.7249266862170088,
+    "overall_ic": 0.17731478810310364,
+    "deflated_ic": 0.175413766462712,
+    "ic_ir": 0.6015474514944631,
+    "monotonicity": 0.7225806451612903,
     "recipe": {
       "op": "ratio",
-      "feature_a": "bar_body_rng_0",
-      "feature_b": "northbound_volume_share"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__max_up_ret__yesterday_illiquidity_amihud__northbound_volume_share",
-    "sign": 1,
-    "overall_ic": 0.12800015021502997,
-    "deflated_ic": 0.12968266384580335,
-    "ic_ir": 0.608909676823106,
-    "monotonicity": 0.7390029325513197,
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "max_up_ret",
-      "feature_b": "yesterday_illiquidity_amihud",
-      "feature_c": "northbound_volume_share"
+      "feature_a": "vix_realized_spread",
+      "feature_b": "total_balance"
     }
   }
 ]
