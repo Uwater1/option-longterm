@@ -105379,6 +105379,48 @@
       "n_rejected_fdr": 645,
       "n_rejected_corr": 0,
       "admitted_names": []
+    },
+    {
+      "batch_id": 21,
+      "etf": "300ETF",
+      "side": "long",
+      "timestamp": "2026-07-20T06:39:08.010105+00:00",
+      "n_candidates": 221,
+      "n_admitted": 2,
+      "n_rejected_split_half": 76,
+      "n_rejected_rolling": 132,
+      "n_rejected_fdr": 9,
+      "n_rejected_corr": 1,
+      "admitted_names": [
+        "sma100_dist",
+        "early_vwap_dev"
+      ]
+    },
+    {
+      "batch_id": 22,
+      "etf": "50ETF",
+      "side": "long",
+      "timestamp": "2026-07-20T06:40:10.369864+00:00",
+      "n_candidates": 4610,
+      "n_admitted": 0,
+      "n_rejected_split_half": 2082,
+      "n_rejected_rolling": 1552,
+      "n_rejected_fdr": 972,
+      "n_rejected_corr": 0,
+      "admitted_names": []
+    },
+    {
+      "batch_id": 23,
+      "etf": "300ETF",
+      "side": "short",
+      "timestamp": "2026-07-20T06:40:20.274269+00:00",
+      "n_candidates": 11803,
+      "n_admitted": 0,
+      "n_rejected_split_half": 5637,
+      "n_rejected_rolling": 5444,
+      "n_rejected_fdr": 722,
+      "n_rejected_corr": 0,
+      "admitted_names": []
     }
   ]
 }
