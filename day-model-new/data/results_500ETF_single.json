@@ -7,7 +7,6 @@
     "combo_diff__max_up_ret__willr14",
     "combo_ifelse__gap_pct__max_up_ret__max_down_ret",
     "combo_diff__yesterday_afternoon_momentum__bar_vol_4",
-    "combo_rank_min__num_up_bars__bar_body_rng_1",
     "combo_mean__gap_pct__early_range",
     "combo_ifelse__gap_pct__total_balance__short_balance",
     "combo_product__yesterday_illiquidity_amihud__early_range",
@@ -15,77 +14,75 @@
     "combo_clamp_diff__yesterday_early_vwap_dev__yesterday_day_skew",
     "combo_max__vol_ratio_10_60__volatility_percentile_20d",
     "combo_ratio__bar_body_rng_0__northbound_volume_share",
-    "combo_rank_max__yesterday_early_momentum__yesterday_illiquidity_amihud",
-    "combo_tri_min__max_up_ret__yesterday_illiquidity_amihud__northbound_volume_share",
-    "combo_rank_min__yesterday_lunch_gap__yesterday_afternoon_reversal"
+    "combo_tri_min__max_up_ret__yesterday_illiquidity_amihud__northbound_volume_share"
   ],
   "training_metrics": {
-    "overall_ic": 0.20333294144199132,
+    "overall_ic": 0.19581754691547054,
     "overall_ic_ci": [
-      0.15778327358443014,
-      0.2508943995838075
+      0.15088004926693965,
+      0.24639244770102706
     ],
-    "tail_ic": 0.3714307522505538,
+    "tail_ic": 0.3762284733788151,
     "tail_ic_ci": [
-      0.2671175279859433,
-      0.4722965647474052
+      0.2746937689772403,
+      0.47536171440522335
     ],
-    "monotonicity": 0.8666666666666667,
+    "monotonicity": 0.806060606060606,
     "monotonicity_ci": [
-      0.6363636363636364,
-      0.9515151515151515
+      0.6121212121212121,
+      0.9272727272727272
     ],
-    "ann_ret": 0.13172072740729235,
-    "raw_ann_ret": 0.2044914018940959,
-    "raw_sharpe": 2.094806871766618,
-    "sharpe": 1.3788945500171814,
-    "sortino": 2.2364477864182053,
-    "max_dd": 0.15463526553743234
+    "ann_ret": 0.10241994177646004,
+    "raw_ann_ret": 0.21318592418115215,
+    "raw_sharpe": 2.0946403566227665,
+    "sharpe": 1.0174273185991398,
+    "sortino": 1.754526762994178,
+    "max_dd": 0.20120114466570826
   },
   "oos_metrics": {
-    "overall_ic": 0.10347380463595794,
+    "overall_ic": 0.08620404818190511,
     "overall_ic_ci": [
-      0.04973133028335742,
-      0.15854296914902555
+      0.03228672331754589,
+      0.14251989557192724
     ],
-    "tail_ic": 0.07566304707591844,
+    "tail_ic": 0.061573468916161694,
     "tail_ic_ci": [
-      -0.05478409585160792,
-      0.198091643505501
+      -0.06417440169482395,
+      0.1862909741241662
     ],
-    "monotonicity": 0.8303030303030303,
+    "monotonicity": 0.9151515151515152,
     "monotonicity_ci": [
-      0.47878787878787876,
-      0.9393939393939394
+      0.41818181818181815,
+      0.9515151515151515
     ],
-    "ann_ret": 0.03299165971570698,
-    "raw_ann_ret": 0.10499165971570698,
-    "raw_sharpe": 1.178178958618318,
-    "sharpe": 0.37415807261831785,
-    "sortino": 0.6564592099565504,
-    "max_dd": 0.09571551036592373
+    "ann_ret": 0.0011725200314353832,
+    "raw_ann_ret": 0.10883918669810204,
+    "raw_sharpe": 1.1716929377704335,
+    "sharpe": 0.012544032320160914,
+    "sortino": 0.021966168850020368,
+    "max_dd": 0.20647146541635514
   },
   "lockbox_metrics": {
-    "overall_ic": 0.09672658917222081,
+    "overall_ic": 0.08461667385148722,
     "overall_ic_ci": [
-      0.021536700239276056,
-      0.1738893362613166
+      0.010942883149028805,
+      0.1610119177016305
     ],
-    "tail_ic": 0.0669447763309775,
+    "tail_ic": 0.11644559648447783,
     "tail_ic_ci": [
-      -0.11818796703185436,
-      0.22646989732893205
+      -0.05221380692979081,
+      0.2815700370587878
     ],
-    "monotonicity": 0.7454545454545455,
+    "monotonicity": 0.6848484848484848,
     "monotonicity_ci": [
-      0.2606060606060606,
-      0.8666666666666667
+      0.16333333333333336,
+      0.8909090909090909
     ],
-    "ann_ret": 0.06700935313579898,
-    "raw_ann_ret": 0.1393213115413449,
-    "raw_sharpe": 1.3957687472292508,
-    "sharpe": 0.6798491299207564,
-    "sortino": 1.256837742393761,
-    "max_dd": 0.0628198836854208
+    "ann_ret": 0.019747987114184826,
+    "raw_ann_ret": 0.13202181727016402,
+    "raw_sharpe": 1.2481808551605225,
+    "sharpe": 0.18674395926111922,
+    "sortino": 0.34206119875345287,
+    "max_dd": 0.1641673104977176
   }
 }
