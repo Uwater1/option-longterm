@@ -105421,6 +105421,27 @@
       "n_rejected_fdr": 722,
       "n_rejected_corr": 0,
       "admitted_names": []
+    },
+    {
+      "batch_id": 24,
+      "etf": "50ETF",
+      "side": "short",
+      "timestamp": "2026-07-20T07:00:11.164444+00:00",
+      "n_candidates": 9413,
+      "n_admitted": 7,
+      "n_rejected_split_half": 4144,
+      "n_rejected_rolling": 3861,
+      "n_rejected_fdr": 1233,
+      "n_rejected_corr": 21,
+      "admitted_names": [
+        "combo_product__gap_pct__bar_rng_0",
+        "combo_tri_median__bar_vol_4__rsi21__bar_vol_0",
+        "combo_tri_mean__gap_pct__vol10__iv_vol_ratio",
+        "combo_tri_ifelse__gap_pct__vol10__mfi14__bar_rng_0__bar_vol_5",
+        "combo_tri_ifelse__gap_pct__vix__sma50_dist__bar_body_rng_1__bar_rng_0",
+        "combo_tri_ifelse__gap_pct__vol10__northbound_net__max_up_ret__bar_vol_5",
+        "combo_tri_ifelse__vol10__vix__yesterday_lunch_gap__bar_vol_5__rsi21"
+      ]
     }
   ]
 }
