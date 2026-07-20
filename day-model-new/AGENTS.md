@@ -7,13 +7,10 @@ Simplified feature selection & IC-weighted return combination pipeline.
 ```bash
 # 0. Generate aggressive feature combination recipes (2-way + 3-way by default)
 # Defaults: top-50 for 2-way, top-25 for 3-way, 11 + 5 ops, dedup via mining_log.json
-python3 day-model-new/mining/generate_combos.py -e 300ETF -s single
-
-# 2-way only (skip 3-way combos)
-python3 day-model-new/mining/generate_combos.py -e 300ETF -s single --two-only
+python3 day-model-new/mining/generate_combos.py -e 300ETF -s single [--two-only]
 
 # Custom top-K for broader search
-python3 day-model-new/mining/generate_combos.py -e 300ETF -s single -k 60 --top-k-3 30
+python3 day-model-new/mining/generate_combos.py -e 300ETF -s single [-k 60 (optional)] [--top-k-3 30 (optional)]
 
 # Regenerate everything (ignore mining log dedup)
 python3 day-model-new/mining/generate_combos.py -e 300ETF -s single --no-dedup
