@@ -23,12 +23,14 @@ from numba import njit, prange
 from scipy.stats import rankdata
 from joblib import Parallel, delayed
 
-# Set up paths to import existing features list
+# Set up paths to import existing features list and recipe_utils
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
 sys.path.append(str(REPO_ROOT / "day-model"))
+sys.path.append(str(HERE / "mining"))
 
 from build_features import FEATURES
+from mining.recipe_utils import simulate_returns
 
 FDR_THRESHOLD = 0.30
 
@@ -339,59 +341,106 @@ def compute_rolling_tail_ic_series(x_flipped: np.ndarray, y: np.ndarray, window_
         pct = 0.10
     return numba_rolling_tail_ic(x_flipped, y, window_starts, window_ends, tail_def, pct)
 
-def split_half_sign_check(x_flipped: np.ndarray, y: np.ndarray, side: str) -> tuple:
-    """Split training period in half, compute tail-IC on each half independently.
+def split_half_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str) -> tuple:
+    """Split training period in half, compute tail-IC on each half independently on RAW x.
 
-    Returns (passes: bool, ic_first: float, ic_second: float).
+    Returns (passes: bool, locked_sign: float, ic_first: float, ic_second: float).
     Rejects if sign disagrees between halves (one positive, one negative).
-    This is the cheapest possible stability check — two IC computations, no resampling.
+    Locking sign here makes B1 the single source of truth for pipeline direction.
     """
     n = len(y)
     mid = n // 2
     if mid < 10 or (n - mid) < 10:
-        return True, 0.0, 0.0  # Too short to split, pass through
+        raw_ic = _spearman_from_arrays(x_raw, y)
+        locked_sign = -1.0 if raw_ic < 0 else 1.0
+        return True, locked_sign, 0.0, 0.0
 
-    ic_first = compute_side_tail_ic(y[:mid], x_flipped[:mid], side)
-    ic_second = compute_side_tail_ic(y[mid:], x_flipped[mid:], side)
+    ic_first = compute_side_tail_ic(y[:mid], x_raw[:mid], side)
+    ic_second = compute_side_tail_ic(y[mid:], x_raw[mid:], side)
 
-    # Reject if signs disagree (one positive, one negative)
+    # Both positive -> sign = +1. Both negative -> sign = -1. Disagree -> fails B1.
     passes = (ic_first >= 0) == (ic_second >= 0)
-    return passes, ic_first, ic_second
+    if passes:
+        locked_sign = 1.0 if ic_first >= 0 else -1.0
+    else:
+        locked_sign = 1.0 if (ic_first + ic_second) >= 0 else -1.0
+
+    return passes, locked_sign, ic_first, ic_second
 
 
 def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str):
-    """Evaluate a single candidate feature: compute overall IC, flip if needed, and run rolling tail IC pre-filter."""
-    # Compute overall raw IC for flipping
-    raw_ic = _spearman_from_arrays(x, y)
-    sign_flip = -1.0 if raw_ic < 0 else 1.0
-    x_flipped = x * sign_flip
+    """Evaluate a single candidate feature using B1 locked sign."""
+    # B1 Split-half sign stability & sign locking (single source of truth)
+    sh_passes, locked_sign, sh_ic_first, sh_ic_second = split_half_sign_check(x, y, side)
+    
+    x_flipped = x * locked_sign
+    raw_ic = _spearman_from_arrays(x_flipped, y)
     overall_ic = compute_side_tail_ic(y, x_flipped, side)
     
-    # Split-half sign stability (Step 2.2 — cheapest universal gate)
-    sh_passes, sh_ic_first, sh_ic_second = split_half_sign_check(x_flipped, y, side)
-    
-    # Compute rolling tail IC series
+    # B2 Compute rolling tail IC series using locked sign
     rolling_tail_ics = compute_rolling_tail_ic_series(x_flipped, y, window_starts, window_ends, side)
     
-    mean_tail_ic = float(np.mean(rolling_tail_ics))
+    mean_tail_ic = float(np.mean(rolling_tail_ics))  # RollingMono(90d)
     std_tail_ic = float(np.std(rolling_tail_ics))
     ic_ir = mean_tail_ic / (std_tail_ic + 1e-10)
     monotonicity = float(np.mean(rolling_tail_ics > 0))
     
+    # Per-candidate Sortino trade simulation using locked sign
+    ann_ret, sharpe, sortino, max_dd = simulate_returns(y, x_flipped, side)
+    
+    # Rank-normalized Composite Score
+    # score = 0.4*RollingMono(90d) + 0.3*Sortino + 0.2*|Tail IC| + 0.1*|Overall IC|
+    composite_score = 0.4 * mean_tail_ic + 0.3 * sortino + 0.2 * abs(overall_ic) + 0.1 * abs(raw_ic)
+    
     return {
         "feature_name": feature_name,
-        "sign": int(sign_flip),
+        "sign": int(locked_sign),
         "raw_ic": float(raw_ic),
         "overall_ic": float(overall_ic),
         "mean_tail_ic": mean_tail_ic,
         "std_tail_ic": std_tail_ic,
         "ic_ir": ic_ir,
         "monotonicity": monotonicity,
+        "sortino": float(sortino),
+        "composite_score": float(composite_score),
         "split_half_passes": sh_passes,
         "split_half_ic_first": sh_ic_first,
         "split_half_ic_second": sh_ic_second,
         "x_flipped": x_flipped,  # Keep for correlation gate
     }
+
+
+def compute_candidate_null_composite(x_flipped: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str, n_sims: int = 1000, block_size: int = 10):
+    """Multi-trial block-shuffled empirical null simulation for a candidate's composite score."""
+    n = len(y)
+    num_blocks = int(np.ceil(n / block_size))
+    possible_starts = max(1, n - block_size + 1)
+    rng = np.random.default_rng(42)
+    all_starts = rng.integers(0, possible_starts, size=(n_sims, num_blocks))
+    
+    null_scores = np.empty(n_sims, dtype=np.float64)
+    for s in range(n_sims):
+        starts_s = all_starts[s]
+        y_null = np.empty(n, dtype=np.float64)
+        pos = 0
+        for i in range(len(starts_s)):
+            st = starts_s[i]
+            for offset in range(block_size):
+                if pos < n:
+                    y_null[pos] = y[st + offset]
+                    pos += 1
+                else:
+                    break
+                    
+        raw_ic_null = _spearman_from_arrays(x_flipped, y_null)
+        tail_ic_null = compute_side_tail_ic(y_null, x_flipped, side)
+        rolling_null = compute_rolling_tail_ic_series(x_flipped, y_null, window_starts, window_ends, side)
+        mono_null = float(np.mean(rolling_null))
+        _, sortino_null, _, _ = simulate_returns(y_null, x_flipped, side)
+        
+        null_scores[s] = 0.4 * mono_null + 0.3 * sortino_null + 0.2 * abs(tail_ic_null) + 0.1 * abs(raw_ic_null)
+        
+    return float(np.percentile(null_scores, 95)), float(np.mean(null_scores))
 
 def main():
     parser = argparse.ArgumentParser()
@@ -459,8 +508,6 @@ def main():
     X_df = X_df.fillna(col_med)
 
     # Load and compute candidate recipes dynamically (vectorized batch + parquet cache)
-    import sys
-    sys.path.append(str(HERE / "mining"))
     from recipe_utils import compute_recipe
     
     suffix = "_early" if args.early else ""
@@ -708,7 +755,7 @@ def main():
         
     # Apply Benjamini-Hochberg FDR procedure
     p_values = np.array([item["p_value"] for item in stable_results])
-    bh_mask = benjamini_hochberg_fdr(p_values, fdr_threshold=0.20)
+    bh_mask = benjamini_hochberg_fdr(p_values, fdr_threshold=FDR_THRESHOLD)
     for idx, item in enumerate(stable_results):
         item["passes_fdr"] = bool(bh_mask[idx])
 
@@ -740,6 +787,9 @@ def main():
             "sign": item["sign"],
             "raw_ic": item["raw_ic"],
             "overall_ic": item["overall_ic"],
+            "mean_tail_ic": item["mean_tail_ic"],
+            "sortino": item["sortino"],
+            "composite_score": item["composite_score"],
             "p_value": item["p_value"],
             "ic_ir": item["ic_ir"],
             "monotonicity": item["monotonicity"],
@@ -762,63 +812,48 @@ def main():
             
     print(f"{len(surviving_candidates)} features survived split-half + rolling guard + FDR out of {len(features_to_eval)}.")
 
-    # 6. Compute Data-Adaptive Simulation Threshold (empirical 95th percentile)
-    # Cache the simulation result keyed by (etf, side, n_trials, n_rows)
-    sim_cache_path = data_out_dir / f"sim_threshold_{args.etf}_{args.side}{suffix}.json"
-    sim_cache_key = {"etf": args.etf, "side": args.side, "n_trials": n_trials, "n_rows": len(y_train)}
-    
-    sim_cache_valid = False
-    if sim_cache_path.exists():
-        try:
-            with open(sim_cache_path, "r") as f:
-                sim_cache = json.load(f)
-            if (sim_cache.get("n_trials") == n_trials and 
-                sim_cache.get("n_rows") == len(y_train)):
-                sim_cache_valid = True
-                empirical_95th = sim_cache["empirical_95th"]
-                empirical_mean = sim_cache["empirical_mean"]
-                print(f"Multi-trial simulation cache hit (N={n_trials}, 95th={empirical_95th:.4f})")
-        except Exception:
-            pass
-    
-    if not sim_cache_valid:
-        print(f"Running multi-trial empirical null simulation for N={n_trials} trials...")
-        max_ics = numba_multi_trial_empirical_sim(X_train, y_train, n_trials, tail_def, n_tail, 1000, block_size=10)
-        empirical_95th = float(np.percentile(max_ics, 95))
-        empirical_mean = float(np.mean(max_ics))
-        print(f"Empirical 95th-percentile tail IC threshold: {empirical_95th:.4f}")
-        print(f"Empirical mean max tail IC: {empirical_mean:.4f}")
-        # Save cache
-        try:
-            with open(sim_cache_path, "w") as f:
-                json.dump({"n_trials": n_trials, "n_rows": len(y_train), 
-                          "empirical_95th": empirical_95th, "empirical_mean": empirical_mean}, f)
-        except Exception:
-            pass
+    # 6. Compute Data-Adaptive Composite Score Threshold (empirical 95th percentile)
+    if surviving_candidates:
+        print(f"Running multi-trial composite score null simulations for {len(surviving_candidates)} candidates...")
+        null_comp_results = Parallel(n_jobs=args.n_jobs)(
+            delayed(compute_candidate_null_composite)(
+                cand["x_flipped"], y_train, window_starts, window_ends, args.side, n_sims=1000, block_size=10
+            ) for cand in surviving_candidates
+        )
+        
+        for cand, (emp_95th, emp_mean) in zip(surviving_candidates, null_comp_results):
+            cand["empirical_95th"] = emp_95th
+            cand["empirical_mean"] = emp_mean
 
-    # 7. Admission Gate (A2)
+    # 7. Admission Gate (B3 Composite Floor + B4 Correlation Gate & Replacement Rule)
     admitted_pool = []  # list of dicts
 
     for cand in surviving_candidates:
         cand_name = cand["feature_name"]
         cand_ic = cand["overall_ic"]
+        cand_comp = cand["composite_score"]
+        emp_95th = cand["empirical_95th"]
+        emp_mean = cand["empirical_mean"]
         x_cand = cand["x_flipped"]
-        deflated_ic = max(0.0, cand_ic - empirical_mean)
+        deflated_ic = max(0.0, cand_ic - emp_mean)
         cand["deflated_ic"] = deflated_ic
         
-        # Check overall IC >= empirical_95th admission gate
-        if cand_ic < empirical_95th:
+        # Check composite_score >= empirical_95th admission gate
+        if cand_comp < emp_95th:
             attempts_log.append({
                 "feature_name": cand_name,
                 "sign": cand["sign"],
                 "raw_ic": cand["raw_ic"],
                 "overall_ic": cand_ic,
+                "mean_tail_ic": cand["mean_tail_ic"],
+                "sortino": cand["sortino"],
+                "composite_score": cand_comp,
+                "empirical_95th": emp_95th,
                 "p_value": cand["p_value"],
                 "deflated_ic": deflated_ic,
                 "ic_ir": cand["ic_ir"],
                 "monotonicity": cand["monotonicity"],
                 "passes_rolling_guard": True,
-                "passes_fdr": True,
                 "verdict": "REJECTED_ADMISSION_FLOOR"
             })
             continue

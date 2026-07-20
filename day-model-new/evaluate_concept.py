@@ -290,58 +290,7 @@ def compute_vif(X: np.ndarray) -> np.ndarray:
             vifs[i] = 999.0
     return vifs
 
-def simulate_returns(y_true: np.ndarray, y_pred: np.ndarray, side: str):
-    """Simulate strategy daily returns based on tail signals."""
-    n = len(y_pred)
-    if n < 10:
-        return 0.0, 0.0, 0.0, 0.0
-        
-    if np.max(y_pred) - np.min(y_pred) < 1e-12:
-        return 0.0, 0.0, 0.0, 0.0
-        
-    order = np.argsort(y_pred, kind="quicksort")
-    strat_returns = np.zeros(n)
-    
-    if side == "long":
-        pct = 0.15
-        n_tail = max(5, int(n * pct))
-        long_idx = order[-n_tail:]
-        strat_returns[long_idx] = y_true[long_idx]
-    elif side == "short":
-        pct = 0.15
-        n_tail = max(5, int(n * pct))
-        short_idx = order[:n_tail]
-        strat_returns[short_idx] = -y_true[short_idx]
-    else:  # single (two-sided)
-        pct = 0.10
-        n_tail = max(5, int(n * pct))
-        long_idx = order[-n_tail:]
-        short_idx = order[:n_tail]
-        strat_returns[long_idx] = y_true[long_idx]
-        strat_returns[short_idx] = -y_true[short_idx]
-        
-    # Transaction cost = 15 bps (0.0015) per active day
-    active_days = np.abs(strat_returns) > 1e-12
-    strat_returns[active_days] -= 0.0015
-    
-    ann_return = float(np.mean(strat_returns) * 244)
-    ann_vol = float(np.std(strat_returns) * np.sqrt(244))
-    
-    # Sharpe
-    sharpe = ann_return / (ann_vol + 1e-10)
-    
-    # Sortino
-    downside_returns = np.minimum(strat_returns, 0.0)
-    downside_vol = float(np.std(downside_returns) * np.sqrt(244))
-    sortino = ann_return / (downside_vol + 1e-10)
-    
-    # Max DD
-    cum_returns = np.cumsum(strat_returns)
-    running_max = np.maximum.accumulate(cum_returns)
-    drawdowns = running_max - cum_returns
-    max_dd = float(np.max(drawdowns))
-    
-    return ann_return, sharpe, sortino, max_dd
+from mining.recipe_utils import simulate_returns
 
 def main():
     parser = argparse.ArgumentParser()

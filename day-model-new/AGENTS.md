@@ -45,8 +45,9 @@ python3 day-model-new/run_baseline.py --n-jobs 4
   - **3-way ops (5)**: `tri_mean`, `tri_min`, `tri_max`, `tri_median`, `tri_ifelse`. Correlation bounds: [0.10, 0.90] (relaxed for broader exploration).
   - `recipe_utils.py` handles on-the-fly execution of combinations. Aligns scale via standardization, isolates parameters to training sets to prevent lookahead leakage.
   - **Mining Log** (`mining_log.json`): Persistent dedup guarantee — tracks all generated candidate names per ETF/side. Re-runs emit only the delta (new ops/combos), never duplicates. Batch summaries appended by `select_features.py`.
-- **BH-FDR Pre-Filter**: Runs 5,000 single-trial empirical null simulations (block-shuffled target, block size 10) to compute empirical p-values. Filters at $q = 0.20$ before sorting/correlation.
+- **BH-FDR Pre-Filter**: Runs 5,000 single-trial empirical null simulations (block-shuffled target, block size 10) to compute empirical p-values. Filters at $q = 0.30$ before sorting/correlation.
+- **B1 Sign Locking**: Split-half check outputs locked `sign` (+1 or -1) as single source of truth passed to B2 and B3.
 - **Cumulative Ledger**: Saves unique tried feature names to `data/trial_ledger_{ETF}_{side}{suffix}.json` to track overall unique trials $N$ across sequential mining rounds (prevents under-deflation). Seeds from existing attempts JSON logs.
-- **Empirical Null Simulation Gate**: Runs 1,000 multi-trial simulations with actual feature matrix columns and block-shuffled targets. Set 95th-percentile max tail IC as admission floor. Deflation haircut: `overall_ic - empirical_mean`.
+- **B3 Composite Score Admission Floor**: Runs 1,000 multi-trial block-shuffled target simulations per candidate on full composite score ($0.4 \times \text{RollingMono} + 0.3 \times \text{Sortino} + 0.2 \times |\text{Tail IC}| + 0.1 \times |\text{Overall IC}|$). Per-candidate Sortino calculated via `simulate_returns()`. Set 95th-percentile composite score as admission floor. Deflation haircut: `overall_ic - empirical_mean`.
 - **Z-Score Blending**: IC-weighted combination on standardized features.
 - **Parallel baseline runner**: Optimized using `joblib.Parallel` and `sys.executable` for safe execution.

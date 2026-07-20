@@ -7,78 +7,102 @@
 
 ---
 
-## Stage A — Feature Mining (messy zone, agents + human OK)
+## Stage A — Feature Mining (`mining/generate_combos.py`)
 
-Goal: produce a pool of features/combos, each with a defensible standalone IC, low redundancy with the rest of the pool, and no exploding trial-count debt.
+Goal: Produce aggressive candidate recipes and combinations to find weak/joint signals, avoiding redundant evaluations.
 
 ### A1. Sources
 1. Existing survivor list (already pruned 317→210, keep as base).
-2. Mine repo of 1000+ trading ideas / AL Brooks book (already downloaded) → candidate formulas.
-3. Combine existing features: `min(A,B)`, `max(A,B)`, `IfElse(regime_cond, A, B)`, ratio/diff combos etc.
+2. Mine repo of 1000+ trading ideas / AL Brooks book → candidate formulas.
+3. Combine existing features: `min(A,B)`, `max(A,B)`, `IfElse(regime_cond, A, B)`, ratio/diff combos etc. (2-way and 3-way ops).
 
-### A2. Admission gate (per candidate, run at mining time, not after)
-Based on FactorMiner (Wang et al. 2026, arXiv:2602.14670) admission protocol:
-```
-admit(candidate) iff:
-  rolling_IC(candidate) >= tau_IC          # e.g. 0.03-0.04, tune per ETF
-  AND max_corr(candidate, current_pool) < theta   # e.g. 0.5
-```
-Replacement rule (lets a better candidate bump a redundant old one instead of just getting rejected):
-```
-if IC(new) >= 0.10 and IC(new) >= 1.3 * IC(old)
-   and exactly one existing pool member g has corr(new, g) > theta:
-     replace g with new
-```
-Notes:
-- Don't orthogonalize the pool (Gram-Schmidt tested worse than plain IC-weighted / equal-weight in the same paper — correlated features carry noise-cancelling info, don't throw it away).
-- Complexity penalty = the correlation gate itself, not a separate fudge factor. A combo only survives if it's *both* predictive *and* not a repackaging of something already in the pool. That's a real anti-overfit constraint, not a vague "soft penalize complexity."
-
-### A3. Rolling guard (pre-filter only — do NOT use as sole/final filter)
-- 90-calendar-date rolling tail IC: drop if monotonicity < 70-90% or IC_IR < 0.3.
-- **Lesson from v2** (its own pipeline note): pure univariate/marginal screening was ripped out of v2 because it kills features with weak solo signal but strong joint value. Same trap applies here if this guard is the only gate — use it to thin the herd before the correlation-gate above, never as the final word.
-
-### A4. Trial-count / selection-bias tracking (new, was missing in v1/v2 — this is what actually burned v2's Sharpe-objective result)
-- Every combo *attempted* (admitted or not) gets logged: formula, IC, ICIR, max_corr, verdict.
-- Maintain running trial count `N`. Before anything from this batch reaches Stage B, compute a **deflated IC** (Bailey & López de Prado 2014, Deflated Sharpe Ratio methodology, adapted to IC) using `N` and the IC distribution across trials. Raw best-of-N IC is optimistic; deflated IC is the number that matters.
-- Keep a memory file of "forbidden directions" — feature families that reliably end up correlated with the existing pool (e.g. v2 already knows VWAP-deviation variants are a dense cluster) so agents/humans stop rediscovering the same signal in new algebra.
-
-### A5. Output
-`feature-mining.md` — final pool with: formula, standalone IC, ICIR, max_corr to nearest pool neighbor, deflated IC, source (hand-picked / mined / combo).
+### A2. Deduplication & Verification
+- **Mining Log (`mining_log.json`)**: Persistent ledger tracking all generated candidates per ETF/side. Only delta is sent to evaluation.
+- Scales combinations dynamically on training sets to prevent lookahead leakage.
 
 ---
 
-## Stage B — Model Training (must be simple, must resist overfit)
+## Stage B — Feature Filtering / Admission Gate (`select_features.py`)
 
-**No feature selection happens here.** Selection already happened in Stage A via the admission gate. Model stage only combines what survived.
+Goal: Apply strict statistical guards, correlation filters, and trial-count tracking to build a robust pool.
 
-### B1. Baseline model: IC-weighted linear sum
+### B1. Pre-filters (Cheap gates)
+1. **Split-half sign stability**: Reject candidate if training IC sign disagrees between first/second halves of train set.
+   - **Sign locking**: Split-half check outputs a locked `sign` (+1 or -1) value. This sign is the pipeline's single source of truth, locked here and carried forward to B2 and B3.
+2. **BH-FDR pre-filter**: Reject if empirical $p$-value fails Benjamini-Hochberg FDR at $q=0.30$ (via 5000-trial single-feature block-shuffled simulation).
+
+### B2. Rolling Guard (Pre-filter check)
+- 90-calendar-date rolling tail IC. Drop if monotonicity < `mono_thr` or `IC_IR` < `ir_thr`:
+  - `long`/`short`: `mono_thr = 0.55`, `ir_thr = 0.15`
+  - `single`: `mono_thr = 0.70`, `ir_thr = 0.30`
+- **Pass-forward cached values**: Rolling mono average from this step is cached and passed forward to B3, not just its pass/fail verdict (uses locked `sign` from B1).
+- **Lesson from v2**: Do not use as sole final filter, only to thin herd before correlation gate.
+
+### B3. Admission Floor (Composite score gate)
+- **Rank-normalized Composite Score**:
+  $$\text{score} = 0.4 \times \text{RollingMono}_{90\text{d}} + 0.3 \times \text{Sortino} + 0.2 \times |\text{Tail IC}| + 0.1 \times |\text{Overall IC}|$$
+  - `RollingMono` (cached from B2) and `Sortino` consume locked `sign` from B1 (computed post sign-resolution, no $|\text{abs}|$ needed).
+  - `Tail IC` and `Overall IC` use absolute values $|\text{IC}|$.
+- **Per-candidate trade simulation**: Runs `simulate_returns()` (ported to shared module `recipe_utils.py`) per candidate using B1 locked sign to compute candidate Sortino.
+- **Null-permutation-wrapped threshold**: Block-permute target $y$ (1000 trials), recompute entire composite score per permutation, and take 95th percentile as `empirical_95th` admission floor.
+- Candidate must satisfy: $\text{composite\_score}(\text{candidate}) \ge \text{empirical\_95th}$.
+- *Compute note*: Heavier compute per survivor, but B1 + B2 thin pool first (cheap-first order preserved).
+
+### B4. Correlation Gate & Replacement Rule
+- Admit if `max_corr(candidate, current_pool) < theta` (theta = 0.50).
+- **Replacement rule**:
+  ```
+  if IC(new) >= 0.10 and IC(new) >= 1.3 * IC(old)
+     and exactly one existing pool member g has corr(new, g) > theta:
+       replace g with new
+  ```
+
+### B5. Trial Ledger & Deflated IC
+- Save unique attempted candidate formulas to `trial_ledger_{ETF}_{side}.json` to track cumulative unique trials $N$.
+- Compute deflated IC: `deflated_ic = max(0.0, overall_ic - empirical_mean)` where `empirical_mean` is simulation average max IC.
+
+### B6. Outputs
+- Version-controlled admitted pools registry in [admitted_pools.py](file:///home/hallo/Documents/option-longterm/day-model-new/admitted_pools.py).
+- Detailed log of attempts in `data/mining_attempts_{ETF}_{side}.json`.
+
+---
+
+## Stage C — Model Training & Evaluation (`evaluate_concept.py`)
+
+Goal: Combine surviving features and evaluate performance under strict cross-validation.
+
+### C1. Baseline Model: IC-weighted Linear Sum
 ```
 signal = sum_i( sign(IC_i) * |IC_i|^k * z(feature_i) )
 ```
-- `k` optional mild tilt toward higher-IC features (k=1 default = plain IC-weighting, don't overfit this exponent — if tuned, tune on inner validation blocks only, same chronological split discipline as v2 §Step 0).
-- This is deliberately close to FactorMiner's IC-weighted combination result, which beat learned selection (Lasso/XGBoost) on their best (low-redundancy) library — because Stage A's correlation gate is doing the redundancy-control job that Lasso/XGBoost would otherwise be needed for.
+- `k` optional mild tilt toward higher-IC features (k=1 default).
+- Avoids orthogonalization (retains noise-canceling properties).
 
-### B2. Light sanity check only (not a selection step)
-- One VIF pass on the final pool, drop only if VIF > 12 (rare if A2's correlation gate worked). This is a safety net, not a selection mechanism.
+### C2. Light VIF Sanity Check
+- One VIF pass on the final pool, drop only if VIF > 12.
 
-### B3. Guardrails carried over from v2 (proven, keep as-is)
-- Chronological split: selection train / inner validation (tuned) / outer validation (untouched holdout) / OOS lockbox — reuse v2's exact block structure (`Step 0` in `day-model_plan.md`), don't rebuild.
-- Report OOS metrics via block-bootstrap CI (v2's `generate_report.py` machinery), not raw point estimates. A result only counts if the CI excludes zero — this is the check that caught v2's false-positive Sharpe objective.
-- Kill switches stay two-sided: Overall IC > 0, Hit Rate ≥ 60%, Monotonicity ≥ 0.25, Spread > 0.
+### C3. Guardrails & Validation
+- **Chronological split**: Train / inner validation / outer validation / OOS lockbox.
+- **Block-bootstrap CI**: Report OOS metrics via CI (block size 10) instead of point estimates.
+- **Kill switches**: Overall IC > 0, Hit Rate ≥ 60%, Monotonicity ≥ 0.25, Spread > 0.
 
-### B4. Escalation rule
-Only reach for anything more complex than the weighted sum (e.g. ElasticNet/MCP on the Stage-A pool) if it beats the weighted-sum baseline by a margin that survives the block-bootstrap CI. Default assumption: it won't need to, if Stage A did its job.
+### C4. Escalation Rule
+- Only use more complex models (e.g. ElasticNet, LightGBM) if they statistically outperform the baseline weighted sum within the block-bootstrap CI.
 
 ---
 
 ## Checklist
-- [ ] Build admission-gate mining harness (A2) — IC threshold + max-corr + replacement rule.
-- [ ] Add trial-count logging + deflated-IC calc (A4) before anything leaves Stage A.
-- [ ] Port v2's chronological split + block-bootstrap CI report code as-is for Stage B eval.
-- [ ] Run Stage A on existing 210-feature pool first (no new mining yet) → get IC-weighted baseline OOS number. This is the new benchmark to beat.
-- [ ] Write `feature-mining.md`, hand to mining agents (repo of 1000+ ideas, AL Brooks book) with the A2/A3/A4 rules baked in.
-- [ ] Re-run Stage A admission + Stage B weighted-sum on old+mined pool, compare vs baseline via CI, not raw IC.
-- [ ] Only then consider B4 escalation.
+- [ ] Replace B3 IC-threshold with rank-normalized composite (Mono 0.4 / Sortino 0.3 / TailIC 0.2 / OverallIC 0.1), sign locked from B1, null-permutation-wrapped.
+- [ ] Port `simulate_returns()` to shared module (`recipe_utils.py`) and run per-candidate Sortino in B3 using B1 locked sign.
+- [ ] Reconcile `feature-mining.md` step numbering with new A/B/C stage names — still on old "Step 1/Step 2" scheme, will confuse anyone cross-referencing.
+- [ ] Build admission-gate mining harness (`select_features.py`) — IC threshold + max-corr + replacement rule.
+- [ ] Add trial-count logging + deflated-IC calc (`select_features.py`) before anything leaves Stage B.
+- [ ] Port v2's chronological split + block-bootstrap CI report code (`evaluate_concept.py`) for Stage C eval.
+- [ ] Run Stage B filtering on existing 210-feature pool first (no new mining yet) → get baseline pool in `admitted_pools.py`.
+- [ ] Run Stage C weighted-sum evaluation on baseline pool → get baseline OOS benchmark.
+- [ ] Generate recipe combos (`mining/generate_combos.py`) and write `feature-mining.md`.
+- [ ] Re-run Stage B admission + Stage C evaluation on old+mined pool, compare vs baseline via CI.
+- [ ] Only then consider C4 escalation.
 
 ## References
 - Wang et al. 2026, *FactorMiner: A Self-Evolving Agent with Skills and Experience Memory for Financial Alpha Discovery*, arXiv:2602.14670 — admission gate, replacement rule, IC-weighted vs orthogonal vs learned-selection comparison.
