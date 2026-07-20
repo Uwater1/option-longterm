@@ -35,7 +35,9 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
    - `single`: `mono_thr = 0.70`, `ir_thr = 0.30`
    - **Pass-forward cached values**: Rolling mono average from this step is cached and passed forward to B3, not just its pass/fail verdict (uses locked `sign` from B1).
    - **Cheap-first ordering**: Executed before simulation to thin pool by ~98% instantly.
-3. **Benjamini-Yekutieli (BY-FDR) pre-filter**: Reject if empirical $p$-value fails Benjamini-Yekutieli FDR at $q=0.20$ (robust under candidate correlation by adjusting threshold with harmonic constant $c(m) = \sum_{i=1}^m \frac{1}{i}$, via 5,000-trial single-feature block-shuffled simulation on compact survivor matrix `X_survivors`, cached per ETF/side).
+3. **Temporal Validation Gate**: Require positive tail IC in the most recent 30% of training (fold 3 from walk-forward). Rejects features whose signal decayed over time (regime-specific overfit). Uses `ic_f3` already computed in step 1 — zero additional compute.
+4. **Benjamini-Yekutieli (BY-FDR) pre-filter**: Reject if empirical $p$-value fails Benjamini-Yekutieli FDR at $q=0.20$ (robust under candidate correlation by adjusting threshold with harmonic constant $c(m) = \sum_{i=1}^m \frac{1}{i}$, via 5,000-trial single-feature block-shuffled simulation on compact survivor matrix `X_survivors`, cached per ETF/side).
+   - **Full search-space correction**: Uses `m_total = len(eval_results)` (total candidates before any filtering) for the harmonic correction and rank denominator, properly accounting for pre-filter selection bias. This does NOT increase computation — FDR still runs only on survivors.
 
 ### B3. Admission Floor (Composite score gate)
 - **Rank-normalized Composite Score**:
@@ -43,9 +45,11 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
   - `RollingMono` (cached from B2) and `Sortino` consume locked `sign` from B1 (computed post sign-resolution, no $|\text{abs}|$ needed).
   - `Tail IC` and `Overall IC` use absolute values $|\text{IC}|$.
 - **Per-candidate trade simulation**: Runs `simulate_returns()` (ported to shared module `recipe_utils.py`) per candidate using B1 locked sign to compute candidate Sortino.
-- **Null-permutation-wrapped threshold**: Block-permute target $y$ (500 trials), recompute entire composite score per permutation, and take 95th percentile as `empirical_95th` admission floor.
-- Candidate must satisfy: $\text{composite\_score}(\text{candidate}) \ge \text{empirical\_95th}$.
-- *Compute note*: Heavier compute per survivor, but B1 + B2 thin pool first (cheap-first order preserved).
+- **Null-permutation-wrapped threshold**: Block-permute target $y$ (500 trials), recompute entire composite score per permutation, and take percentile as admission floor.
+- **Tiered admission floor by combo complexity**:
+  - 2-way combos and base features: $\text{composite\_score} \ge \text{empirical\_95th}$
+  - 3-way combos (`combo_tri_*`): $\text{composite\_score} \ge \text{empirical\_99th}$ (stricter — more degrees of freedom = higher overfit risk)
+- *Compute note*: Heavier compute per survivor, but B1 + B2 thin pool first (cheap-first order preserved). 99th percentile computed in same kernel pass as 95th — no additional simulation cost.
 
 ### B4. Correlation Gate, Primitive Cluster Cap & Replacement Rule
 - Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.35$).
@@ -71,11 +75,13 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 
 Goal: Combine surviving features and evaluate performance under strict cross-validation.
 
-### C1. Baseline Model: IC-weighted Linear Sum
+### C1. Baseline Model: IC-weighted Linear Sum (with Empirical Bayes Shrinkage)
 ```
-signal = sum_i( sign(IC_i) * |deflated_ic_i|^k * z(feature_i) )
+signal = sum_i( sign(IC_i) * max(0, deflated_ic_i - SE_IC)^k * z(feature_i) )
+SE_IC ≈ 1/√n_train
 ```
 - `k` optional mild tilt toward higher-IC features (k=1 default).
+- **Empirical Bayes shrinkage**: Subtract $SE_{IC} \approx 1/\sqrt{n}$ from `deflated_ic` before weighting. This penalizes features with marginal IC estimates that are likely noise. If all weights shrink to zero, fall back to equal weighting.
 - Avoids orthogonalization (retains noise-canceling properties).
 
 ### C2. VIF Safety Net & Data Leakage Prevention
@@ -101,6 +107,10 @@ signal = sum_i( sign(IC_i) * |deflated_ic_i|^k * z(feature_i) )
 - [x] Upgrade split-half sign check to 3-fold expanding walk-forward guard (`expanding_wf_sign_check`).
 - [x] Scale candidate generation space by sample size ratio in `generate_combos.py`.
 - [x] Reconcile `feature-mining.md` and `AGENTS.md` step numbering with new A/B/C stage names.
+- [x] **Anti-overfit: Full search-space FDR correction** — BY-FDR uses `m_total = len(eval_results)` (total candidates before filtering) for harmonic correction, not just survivor count.
+- [x] **Anti-overfit: Temporal validation gate** — Require positive tail IC in most recent 30% of training (fold 3). Zero additional compute (reuses `ic_f3` from walk-forward).
+- [x] **Anti-overfit: IC shrinkage weighting** — Subtract $SE_{IC} \approx 1/\sqrt{n}$ from `deflated_ic` before IC-weighting in `evaluate_concept.py`.
+- [x] **Anti-overfit: Tiered B3 admission floor** — 3-way combos (`combo_tri_*`) require 99th percentile vs 95th for 2-way/base features. Computed in same kernel pass.
 
 ## References
 - Wang et al. 2026, *FactorMiner: A Self-Evolving Agent with Skills and Experience Memory for Financial Alpha Discovery*, arXiv:2602.14670 — admission gate, replacement rule, IC-weighted vs orthogonal vs learned-selection comparison.

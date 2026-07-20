@@ -244,6 +244,11 @@ def block_bootstrap_ci(y_true: np.ndarray, y_pred: np.ndarray, side: str, block_
     y_true = np.asarray(y_true, dtype=np.float64)
     y_pred = np.asarray(y_pred, dtype=np.float64)
     n = len(y_true)
+
+    # Degenerate case: constant predictions (e.g. 0 features selected) → no signal, CI is [0, 0]
+    if np.std(y_pred) < 1e-12:
+        return (0.0, 0.0), (0.0, 0.0), (0.0, 0.0)
+
     if n < block_size:
         block_size = max(1, n // 5)
         
@@ -446,12 +451,17 @@ def main():
     y_oos = oos_df["trade_return"].values.astype(np.float64)
     y_lock = lockbox_df["trade_return"].values.astype(np.float64)
 
-    # 3. IC-weighted combination predictions (B1)
+    # 3. IC-weighted combination predictions (B1) with empirical Bayes shrinkage
     if selected_pool:
-        weights = np.array([max(0.0, item.get("deflated_ic", 0.0))**args.k for item in selected_pool])
+        # Shrink deflated_ic by SE(IC) ≈ 1/√n to reduce estimation-error bias in weights
+        se_ic = 1.0 / np.sqrt(len(y_train))
+        weights = np.array([max(0.0, item.get("deflated_ic", 0.0) - se_ic)**args.k for item in selected_pool])
         # Normalize weights so they sum to 1.0 (or just scale predictions)
         if sum(weights) > 1e-12:
             weights = weights / sum(weights)
+        else:
+            # All weights shrunk to zero — fall back to equal weight
+            weights = np.ones(len(selected_pool)) / len(selected_pool)
             
         pred_train = X_train_std @ weights
         pred_oos = X_oos_std @ weights
