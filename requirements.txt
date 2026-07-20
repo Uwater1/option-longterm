@@ -13,5 +13,6 @@ optuna
 skglm
 hmmlearn
 arch
+scipy
 
 # Don't add torch here, it's not needed most of the time
