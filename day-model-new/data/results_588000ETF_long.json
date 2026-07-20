@@ -5,104 +5,72 @@
   "k": 1.0,
   "features_selected": [
     "combo_max__vol5__bar_rng_3",
-    "combo_rank_max__bar_vol_4__vol5",
     "combo_abs_diff__growth_momentum_ratio__bar_vol_5",
-    "combo_tri_min__vix_rolling_percentile_60d__yesterday_day_realized_vol__vix_skew_proxy",
-    "combo_rank_max__bar_vol_4__vix_diff_1d",
-    "combo_diff__bar_vol_4__sma_distance_60d",
-    "combo_ifelse__gap_pct__vol5__vix_skew_proxy",
-    "first_30min_return",
-    "combo_abs_diff__bar_vol_4__buy_on_margin_value",
-    "combo_mean__early_range__volume_slope",
-    "combo_product__yesterday_day_realized_vol__bar_rng_0",
-    "combo_rank_max__vix_rolling_percentile_60d__max_down_ret",
-    "combo_product__bar_vol_4__capital_net_value",
-    "combo_abs_diff__buy_on_margin_value__growth_momentum_ratio",
-    "combo_rank_min__vol_gk10__bar_rng_0",
-    "combo_clamp_diff__vix_diff_1d__capital_buy_value",
-    "combo_rank_max__bar_vol_4__max_down_ret",
-    "combo_product__capital_net_accel__capital_large_order_ratio",
-    "combo_rank_max__bar_rng_3__yesterday_volume_ratio",
-    "combo_tri_max__body_to_range_ratio__early_range__bar_vol_4",
-    "combo_tri_median__iv_envelope_deviation__vix_diff_1d__gap_pct",
-    "combo_ratio__vix_skew_proxy__capital_net_value",
-    "combo_rank_max__bar_rng_3__capital_sell_volume",
-    "combo_clamp_diff__vix_skew_proxy__gap_pct",
-    "combo_rank_max__vol5__capital_net_value",
-    "combo_abs_diff__early_range__buy_on_margin_value",
-    "combo_tri_min__vol5__yesterday_day_realized_vol__gap_pct",
-    "combo_mean__vix_skew_proxy__yesterday_pm_am_vol_ratio",
-    "combo_clamp_diff__bar_vol_5__yesterday_day_close_pos",
-    "combo_max__vix_rolling_percentile_60d__capital_sell_volume",
-    "combo_rank_max__bar_vol_5__capital_buy_value",
-    "combo_rank_max__vix_rolling_percentile_60d__vol_ratio_10_60",
-    "combo_abs_diff__yesterday_day_realized_vol__yesterday_volume_ratio",
-    "combo_abs_diff__total_path_length__vol_ratio_10_60",
-    "combo_abs_diff__early_realized_vol__growth_momentum_ratio",
-    "combo_rank_max__early_range__short_balance",
-    "combo_tri_min__sma_distance_60d__bar_vol_5__yesterday_day_close_pos"
+    "combo_tri_min__bar_vol_4__yesterday_day_realized_vol__vix_diff_1d",
+    "combo_rank_max__bar_vol_4__vix_skew_proxy",
+    "first_30min_return"
   ],
   "training_metrics": {
-    "overall_ic": 0.12044484149480524,
+    "overall_ic": 0.12680593805176713,
     "overall_ic_ci": [
-      0.06663056661418262,
-      0.17508600451769027
+      0.06977373349857148,
+      0.18900955954378512
     ],
-    "tail_ic": 0.20067708592289688,
+    "tail_ic": 0.185995768546855,
     "tail_ic_ci": [
-      0.05191573719065877,
-      0.3716699198326943
+      0.08432084349947716,
+      0.3826123213663298
     ],
-    "monotonicity": 0.6363636363636364,
+    "monotonicity": 0.6727272727272727,
     "monotonicity_ci": [
-      0.24848484848484848,
-      0.8909090909090909
+      0.22424242424242424,
+      0.8666666666666667
     ],
-    "ann_ret": 0.12785997551455594,
-    "sharpe": 1.0057526916648174,
-    "sortino": 2.6072241012077586,
-    "max_dd": 0.06727859364037977
+    "ann_ret": 0.13912508482241454,
+    "sharpe": 1.1283891223769973,
+    "sortino": 3.0609302383420083,
+    "max_dd": 0.05704188366107574
   },
   "oos_metrics": {
-    "overall_ic": -0.002554909129687855,
+    "overall_ic": -0.03245457242358871,
     "overall_ic_ci": [
-      -0.08157504313064745,
-      0.11712344398074255
+      -0.13301111711232477,
+      0.07740516444193102
     ],
-    "tail_ic": -0.09018759018759019,
+    "tail_ic": 0.09365079365079365,
     "tail_ic_ci": [
-      -0.4032792207792208,
-      0.1975649350649348
+      -0.29912698412698413,
+      0.34172258297258296
     ],
-    "monotonicity": -0.22424242424242424,
+    "monotonicity": -0.07878787878787878,
     "monotonicity_ci": [
-      -0.49151515151515146,
-      0.5154545454545452
+      -0.5396969696969697,
+      0.3696969696969697
     ],
-    "ann_ret": -0.16528939227794565,
-    "sharpe": -1.1869585205203472,
-    "sortino": -1.5086091782264324,
-    "max_dd": 0.25222420763712466
+    "ann_ret": -0.12918072398947553,
+    "sharpe": -0.9653854958201847,
+    "sortino": -1.2127822949959295,
+    "max_dd": 0.26747811629068097
   },
   "lockbox_metrics": {
-    "overall_ic": -0.035515236170850346,
+    "overall_ic": -0.07728922486152857,
     "overall_ic_ci": [
-      -0.13571629660722556,
-      0.10465601841130151
+      -0.19788798344140807,
+      0.04867987204724406
     ],
-    "tail_ic": -0.2546230440967283,
+    "tail_ic": 0.08348834664624138,
     "tail_ic_ci": [
-      -0.42973520078783234,
-      0.3459350038297406
+      -0.3570959623591202,
+      0.4489550279023961
     ],
-    "monotonicity": -0.23636363636363636,
+    "monotonicity": -0.4909090909090909,
     "monotonicity_ci": [
-      -0.6851515151515151,
-      0.3939393939393939
+      -0.7333333333333333,
+      0.16363636363636364
     ],
-    "ann_ret": -0.1376218956586027,
-    "sharpe": -1.0243022689412657,
-    "sortino": -1.247566253353418,
-    "max_dd": 0.23359542498107633
+    "ann_ret": -0.0541320198383851,
+    "sharpe": -0.38702842792555175,
+    "sortino": -0.5075630797012606,
+    "max_dd": 0.190573509934468
   }
 }

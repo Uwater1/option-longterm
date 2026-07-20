@@ -106432,6 +106432,48 @@
       "n_rejected_fdr": 2131,
       "n_rejected_corr": 0,
       "admitted_names": []
+    },
+    {
+      "batch_id": 59,
+      "etf": "588000ETF",
+      "side": "long",
+      "timestamp": "2026-07-20T08:56:15.536158+00:00",
+      "n_candidates": 7477,
+      "n_admitted": 5,
+      "n_rejected_split_half": 4776,
+      "n_rejected_rolling": 1765,
+      "n_rejected_fdr": 773,
+      "n_rejected_corr": 65,
+      "admitted_names": [
+        "combo_max__vol5__bar_rng_3",
+        "combo_abs_diff__growth_momentum_ratio__bar_vol_5",
+        "combo_tri_min__bar_vol_4__yesterday_day_realized_vol__vix_diff_1d",
+        "combo_rank_max__bar_vol_4__vix_skew_proxy",
+        "first_30min_return"
+      ]
+    },
+    {
+      "batch_id": 60,
+      "etf": "300ETF",
+      "side": "single",
+      "timestamp": "2026-07-20T08:56:48.879030+00:00",
+      "n_candidates": 2528,
+      "n_admitted": 9,
+      "n_rejected_split_half": 1336,
+      "n_rejected_rolling": 857,
+      "n_rejected_fdr": 269,
+      "n_rejected_corr": 57,
+      "admitted_names": [
+        "combo_mean__max_up_ret__gap_pct",
+        "combo_ifelse__gap_pct__first_bar_return__short_sell_cover_spread",
+        "combo_ifelse__macd_hist__max_up_ret__option_oi_growth",
+        "combo_ifelse__gap_pct__max_up_ret__growth_momentum_ratio",
+        "combo_ifelse__macd_hist__first_bar_return__yesterday_northbound_net_ratio",
+        "combo_rank_max__early_range__margin_extreme_rank_252d",
+        "combo_rank_max__max_up_ret__yesterday_gap_pct",
+        "combo_diff__short_sell_quantity__roc60",
+        "combo_min__yesterday_day_skew__rsi21"
+      ]
     }
   ]
 }

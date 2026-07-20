@@ -375,7 +375,7 @@ def main():
     for item in selected_pool:
         if "recipe" in item:
             r = item["recipe"]
-            for key in ["feature_a", "feature_b", "feature_cond"]:
+            for key in ["feature_a", "feature_b", "feature_c", "feature_cond", "feature_cond2"]:
                 if key in r:
                     col = r[key]
                     if col not in train_means:
@@ -428,7 +428,7 @@ def main():
         clean_selected_pool = []
         clean_indices = []
         for i, (feat, vif) in enumerate(zip(selected_pool, vifs)):
-            if vif > 12.0:
+            if vif > 5.0:
                 print(f"  [SAFETY NET] Dropping collinear feature: {feat['feature_name']} (VIF = {vif:.2f})")
             else:
                 clean_selected_pool.append(feat)

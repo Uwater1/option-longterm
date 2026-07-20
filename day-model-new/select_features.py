@@ -32,7 +32,7 @@ sys.path.append(str(HERE / "mining"))
 from build_features import FEATURES
 from mining.recipe_utils import simulate_returns
 
-FDR_THRESHOLD = 0.30
+FDR_THRESHOLD = 0.20
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
@@ -284,19 +284,23 @@ def numba_multi_trial_empirical_sim(X: np.ndarray, y: np.ndarray, n_trials: int,
 
     return _kernel(X32, y32, col_means, all_starts, all_feat_idx, n_sims, n_trials, n, n_features, n_tail, tail_def, block_size)
 
-def benjamini_hochberg_fdr(p_values: np.ndarray, fdr_threshold=FDR_THRESHOLD) -> np.ndarray:
-    """
-    Apply Benjamini-Hochberg procedure.
+def benjamini_yekutieli_fdr(p_values: np.ndarray, fdr_threshold=FDR_THRESHOLD) -> np.ndarray:
+    """Apply Benjamini-Yekutieli procedure (robust to arbitrary dependence/correlation).
     Returns a boolean mask of kept indices.
     """
     m = len(p_values)
     if m == 0:
         return np.array([], dtype=bool)
+    
+    # Harmonic constant for m tests: c(m) = sum(1/i)
+    cm = float(np.sum(1.0 / np.arange(1, m + 1)))
+    fdr_adj = fdr_threshold / cm
+    
     sorted_indices = np.argsort(p_values)
     sorted_p = p_values[sorted_indices]
     
-    bh_val = (np.arange(1, m + 1) / m) * fdr_threshold
-    eligible = sorted_p <= bh_val
+    by_val = (np.arange(1, m + 1) / m) * fdr_adj
+    eligible = sorted_p <= by_val
     
     mask = np.zeros(m, dtype=bool)
     if np.any(eligible):
@@ -304,6 +308,9 @@ def benjamini_hochberg_fdr(p_values: np.ndarray, fdr_threshold=FDR_THRESHOLD) ->
         keep_indices = sorted_indices[:max_eligible_idx + 1]
         mask[keep_indices] = True
     return mask
+
+def benjamini_hochberg_fdr(p_values: np.ndarray, fdr_threshold=FDR_THRESHOLD) -> np.ndarray:
+    return benjamini_yekutieli_fdr(p_values, fdr_threshold=fdr_threshold)
 
 def compute_side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str) -> float:
     """Compute tail-specific Spearman correlation on the active strategy tail."""
@@ -341,44 +348,48 @@ def compute_rolling_tail_ic_series(x_flipped: np.ndarray, y: np.ndarray, window_
         pct = 0.10
     return numba_rolling_tail_ic(x_flipped, y, window_starts, window_ends, tail_def, pct)
 
-def split_half_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str) -> tuple:
-    """Split training period in half, compute tail-IC on each half independently on RAW x.
-
-    Returns (passes: bool, locked_sign: float, ic_first: float, ic_second: float).
-    Rejects if sign disagrees between halves (one positive, one negative).
-    Locking sign here makes B1 the single source of truth for pipeline direction.
+def expanding_wf_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str) -> tuple:
+    """3-fold expanding walk-forward sign check on RAW x.
+    Folds: fold1 (0..40%), fold2 (40%..70%), fold3 (70%..100%).
+    Returns (passes: bool, locked_sign: float, ic_fold1, ic_fold2, ic_fold3).
+    Rejects if IC sign flips across folds or if fold 3 IC is opposite sign of locked_sign.
     """
     n = len(y)
-    mid = n // 2
-    if mid < 10 or (n - mid) < 10:
+    f1_end = int(0.40 * n)
+    f2_end = int(0.70 * n)
+    
+    if f1_end < 10 or (f2_end - f1_end) < 10 or (n - f2_end) < 10:
         raw_ic = _spearman_from_arrays(x_raw, y)
         locked_sign = -1.0 if raw_ic < 0 else 1.0
-        return True, locked_sign, 0.0, 0.0
+        return True, locked_sign, 0.0, 0.0, 0.0
 
-    ic_first = compute_side_tail_ic(y[:mid], x_raw[:mid], side)
-    ic_second = compute_side_tail_ic(y[mid:], x_raw[mid:], side)
+    ic_f1 = compute_side_tail_ic(y[:f1_end], x_raw[:f1_end], side)
+    ic_f2 = compute_side_tail_ic(y[f1_end:f2_end], x_raw[f1_end:f2_end], side)
+    ic_f3 = compute_side_tail_ic(y[f2_end:], x_raw[f2_end:], side)
 
-    # Both positive -> sign = +1. Both negative -> sign = -1. Disagree -> fails B1.
-    passes = (ic_first >= 0) == (ic_second >= 0)
-    if passes:
-        locked_sign = 1.0 if ic_first >= 0 else -1.0
+    full_ic = compute_side_tail_ic(y, x_raw, side)
+    locked_sign = 1.0 if full_ic >= 0 else -1.0
+
+    if locked_sign > 0:
+        passes = (ic_f1 >= 0) and (ic_f2 >= 0) and (ic_f3 >= 0)
     else:
-        locked_sign = 1.0 if (ic_first + ic_second) >= 0 else -1.0
+        passes = (ic_f1 <= 0) and (ic_f2 <= 0) and (ic_f3 <= 0)
 
-    return passes, locked_sign, ic_first, ic_second
+    return passes, locked_sign, ic_f1, ic_f2, ic_f3
 
+def split_half_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str) -> tuple:
+    passes, locked_sign, ic_f1, ic_f2, _ = expanding_wf_sign_check(x_raw, y, side)
+    return passes, locked_sign, ic_f1, ic_f2
 
 def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str):
     """Evaluate a single candidate feature: cheap gates first to avoid wasting compute on rejected signals."""
-    # B1 Split-half sign stability & sign locking (cheapest gate: 2 half-IC calculations)
-    sh_passes, locked_sign, sh_ic_first, sh_ic_second = split_half_sign_check(x, y, side)
+    sh_passes, locked_sign, sh_ic_first, sh_ic_second, _ = expanding_wf_sign_check(x, y, side)
     
     x_flipped = x * locked_sign
     raw_ic = _spearman_from_arrays(x_flipped, y)
     overall_ic = compute_side_tail_ic(y, x_flipped, side)
     
     if not sh_passes:
-        # B1 Fail: Return immediately! No rolling tail IC or Sortino simulation needed.
         return {
             "feature_name": feature_name,
             "sign": int(locked_sign),
@@ -564,6 +575,7 @@ def numba_batched_b3_null_kernel(X: np.ndarray, y: np.ndarray, window_starts: np
 
     out_95 = np.empty(n_cands, dtype=np.float64)
     out_mean = np.empty(n_cands, dtype=np.float64)
+    out_ic_mean = np.empty(n_cands, dtype=np.float64)
 
     for c in prange(n_cands):
         x = X[:, c]
@@ -605,6 +617,7 @@ def numba_batched_b3_null_kernel(X: np.ndarray, y: np.ndarray, window_starts: np
             tail_idx_local = long_idx  # placeholder, two-sided uses both below
 
         null_scores_local = np.empty(n_sims, dtype=np.float64)
+        raw_ic_sum = 0.0
 
         for s in range(n_sims):
             # Block shuffle (shared starts across candidates)
@@ -622,6 +635,7 @@ def numba_batched_b3_null_kernel(X: np.ndarray, y: np.ndarray, window_starts: np
 
             # Composite components
             raw_ic_null = fast_spearman(y_null, x)
+            raw_ic_sum += raw_ic_null
             tail_ic_null = _tail_ic_from_sorted(ix_overall, x, y_null, n, n_tail, tail_def)
             mono_null = numba_fast_rolling_tail_ic(x, y_null, window_starts, window_ends, window_offsets, window_sorted_idx, tail_def, pct)
 
@@ -677,8 +691,9 @@ def numba_batched_b3_null_kernel(X: np.ndarray, y: np.ndarray, window_starts: np
         for k in range(n_sims):
             s_sum += null_scores_local[k]
         out_mean[c] = s_sum / n_sims
+        out_ic_mean[c] = raw_ic_sum / n_sims
 
-    return out_95, out_mean
+    return out_95, out_mean, out_ic_mean
 
 
 def compute_candidate_null_composite(x_flipped: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str, n_sims: int = 500, block_size: int = 10):
@@ -764,18 +779,18 @@ def compute_batched_candidate_nulls(X_survivors_flipped: np.ndarray, y: np.ndarr
     rng = np.random.default_rng(42)
     all_starts = rng.integers(0, possible_starts, size=(n_sims, num_blocks)).astype(np.int32)
 
-    out_95, out_mean = numba_batched_b3_null_kernel(
+    out_95, out_mean, out_ic_mean = numba_batched_b3_null_kernel(
         X32, y32, window_starts, window_ends, all_starts,
         tail_def, pct, n_tail, block_size, n_sims,
     )
-    return out_95, out_mean
+    return out_95, out_mean, out_ic_mean
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-e", "--etf", required=True, choices=["300ETF", "50ETF", "500ETF", "588000ETF", "159915ETF"])
     parser.add_argument("-s", "--side", required=True, choices=["single", "long", "short"])
     parser.add_argument("--tau", type=float, default=0.03, help="Overall IC threshold (obsolete, replaced by simulation gate)")
-    parser.add_argument("--theta", type=float, default=0.50, help="Max absolute correlation threshold")
+    parser.add_argument("--theta", type=float, default=0.35, help="Max absolute correlation threshold")
     parser.add_argument("--mono-thr", type=float, default=None, help="Rolling tail IC positivity threshold (monotonicity)")
     parser.add_argument("--ir-thr", type=float, default=None, help="Rolling tail IC Information Ratio threshold")
     parser.add_argument("--early", action="store_true", help="Use early window return dataset")
@@ -1204,12 +1219,25 @@ def main():
     if surviving_candidates:
         print(f"Running batched composite null simulations for {len(surviving_candidates)} candidates (n_sims=500)...")
         X_survivors_batch = np.column_stack([cand["x_flipped"] for cand in surviving_candidates]).astype(np.float32)
-        emp_95_arr, emp_mean_arr = compute_batched_candidate_nulls(
+        emp_95_arr, emp_mean_arr, ic_null_mean_arr = compute_batched_candidate_nulls(
             X_survivors_batch, y_train, window_starts, window_ends, args.side, n_sims=500, block_size=10
         )
         for idx, cand in enumerate(surviving_candidates):
             cand["empirical_95th"] = float(emp_95_arr[idx])
             cand["empirical_mean"] = float(emp_mean_arr[idx])
+            cand["ic_null_mean"] = float(ic_null_mean_arr[idx])
+
+    # Helper to extract primitive component set for cluster pruning
+    def get_primitive_cluster(cand_dict):
+        if "recipe" in cand_dict:
+            r = cand_dict["recipe"]
+            prims = []
+            for k in ["feature_a", "feature_b", "feature_c", "feature_cond", "feature_cond2"]:
+                if k in r:
+                    prims.append(r[k])
+            if prims:
+                return tuple(sorted(set(prims)))
+        return (cand_dict["feature_name"],)
 
     # 7. Admission Gate (B3 Composite Floor + B4 Correlation Gate & Replacement Rule)
     admitted_pool = []  # list of dicts
@@ -1220,8 +1248,9 @@ def main():
         cand_comp = cand["composite_score"]
         emp_95th = cand["empirical_95th"]
         emp_mean = cand["empirical_mean"]
+        ic_null_mean = cand.get("ic_null_mean", 0.0)
         x_cand = cand["x_flipped"]
-        deflated_ic = max(0.0, cand_ic - emp_mean)
+        deflated_ic = max(0.0, cand_ic - ic_null_mean)
         cand["deflated_ic"] = deflated_ic
         
         # Check composite_score >= empirical_95th admission gate
