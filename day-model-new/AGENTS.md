@@ -19,16 +19,19 @@ python3 day-model-new/mining/generate_combos.py -e 300ETF -s single -k 60 --top-
 python3 day-model-new/mining/generate_combos.py -e 300ETF -s single --no-dedup
 
 # 1. Run Stage A feature selection (saves selected_pool & mining_attempts JSONs to data/)
+# Note: select_features.py processes ONE ETF/side combination. For all combinations, use run_baseline.py.
 # Automatically loads and evaluates candidate recipes from mining/candidates_*.json if present
 python3 day-model-new/select_features.py -e 300ETF -s single
 python3 day-model-new/select_features.py -e 588000ETF -s long
 
 # 2. Run Stage B evaluation (saves results JSONs to data/)
+# Note: evaluate_concept.py processes ONE ETF/side combination. For all combinations, use run_baseline.py.
 # Resolves recipes dynamically using training set statistics (means, stds, medians)
 python3 day-model-new/evaluate_concept.py -e 300ETF -s single
 python3 day-model-new/evaluate_concept.py -e 588000ETF -s long
 
-# 3. Run full baseline loop across all 5 ETFs and 3 sides in parallel (saves BASELINE_REPORT.md)
+# 3. Run baseline loop across ETFs and sides (runs select_features + evaluate_concept, saves BASELINE_REPORT.md)
+# Supports -e all (default) or specific ETF, and -s all (default) or specific side
 python3 day-model-new/run_baseline.py --n-jobs 4
 ```
 
