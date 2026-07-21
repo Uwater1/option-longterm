@@ -39,6 +39,7 @@ python3 day-model-new/run_baseline.py --max-parallel 2 -e 300ETF
 # Supports -e/-s filters and custom -o output path
 python3 day-model-new/compile_report.py
 python3 day-model-new/compile_report.py -e 588000ETF -s long -o custom_report.md
+python3 day-model-new/analyze_admitted_features.py # Run standalone & LOO feature diagnostics
 ```
 
 ## Architecture

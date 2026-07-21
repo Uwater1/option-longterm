@@ -27,16 +27,18 @@ Goal: Produce aggressive candidate recipes and combinations to find weak/joint s
 
 Goal: Apply strict statistical guards, correlation filters, and trial-count tracking to build a robust pool.
 
-### B1. Pre-filters (Cheap gates & order of operations)
+### B1. Walk-Forward Sign & Temporal Validation Pre-filters
 1. **3-Fold Expanding Walk-Forward Sign Guard**: Test candidate tail IC across 3 expanding folds (0-40%, 40-70%, 70-100% of training set). Reject candidate if IC sign flips across folds or if the final fold IC degrades to negative.
    - **Sign locking**: Outputs a locked `sign` (+1 or -1) value from full train set. This sign is the pipeline's single source of truth carried forward to B2 and B3.
-2. **Rolling Guard (Pre-filter check)**: 90-calendar-date rolling tail IC evaluated instantly on pre-computed values. Drop if monotonicity < `mono_thr` or `IC_IR` < `ir_thr`:
+2. **Temporal Validation Gate**: Require positive tail IC in the most recent 30% of training (fold 3 from walk-forward). Rejects features whose signal decayed over time (regime-specific overfit). Uses `ic_f3` already computed in step 1 — zero additional compute.
+
+### B2. Rolling Guard & FDR Pre-filter
+1. **Rolling Guard (Pre-filter check)**: 90-calendar-date rolling tail IC evaluated instantly on pre-computed values. Drop if monotonicity < `mono_thr` or `IC_IR` < `ir_thr`:
    - `long`/`short`: `mono_thr = 0.55`, `ir_thr = 0.15`
    - `single`: `mono_thr = 0.70`, `ir_thr = 0.30`
    - **Pass-forward cached values**: Rolling mono average from this step is cached and passed forward to B3, not just its pass/fail verdict (uses locked `sign` from B1).
    - **Cheap-first ordering**: Executed before simulation to thin pool by ~98% instantly.
-3. **Temporal Validation Gate**: Require positive tail IC in the most recent 30% of training (fold 3 from walk-forward). Rejects features whose signal decayed over time (regime-specific overfit). Uses `ic_f3` already computed in step 1 — zero additional compute.
-4. **Benjamini-Yekutieli (BY-FDR) pre-filter**: Reject if empirical $p$-value fails Benjamini-Yekutieli FDR at $q=0.20$ (robust under candidate correlation by adjusting threshold with harmonic constant $c(m) = \sum_{i=1}^m \frac{1}{i}$, via 5,000-trial single-feature block-shuffled simulation on compact survivor matrix `X_survivors`, cached per ETF/side).
+2. **Benjamini-Yekutieli (BY-FDR) pre-filter**: Reject if empirical $p$-value fails Benjamini-Yekutieli FDR at $q=0.20$ (robust under candidate correlation by adjusting threshold with harmonic constant $c(m) = \sum_{i=1}^m \frac{1}{i}$, via 5,000-trial single-feature block-shuffled simulation on compact survivor matrix `X_survivors`, cached per ETF/side).
    - **Full search-space correction**: Uses `m_total = len(eval_results)` (total candidates before any filtering) for the harmonic correction and rank denominator, properly accounting for pre-filter selection bias. This does NOT increase computation — FDR still runs only on survivors.
 
 ### B3. Admission Floor (Composite score gate)

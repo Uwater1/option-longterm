@@ -1,0 +1,582 @@
+{
+  "300ETF": {
+    "single": {
+      "full_model": {
+        "train_ic": 0.12073664643340569,
+        "oos_ic": 0.05005453693939272,
+        "lock_ic": 0.025267872920875917,
+        "train_sharpe": 0.6255128202713205,
+        "oos_sharpe": -0.17247117774503284,
+        "lock_sharpe": -0.5815308237412893
+      },
+      "features": [
+        {
+          "feature_name": "combo_ifelse__gap_pct__max_up_ret__option_oi_growth",
+          "sign": 1,
+          "family": "Gap / Overnight Reversal",
+          "recipe": {
+            "op": "ifelse",
+            "feature_cond": "gap_pct",
+            "feature_a": "max_up_ret",
+            "feature_b": "option_oi_growth"
+          },
+          "train": {
+            "overall_ic": 0.08032676889782768,
+            "tail_ic": 0.24739361210401586,
+            "mono": 0.503030303030303,
+            "raw_ann_ret": 0.11368596105047551,
+            "raw_sharpe": 1.6958739901383129,
+            "cost_ann_ret": 0.045680799760152914,
+            "cost_sharpe": 0.6858177475114232,
+            "sortino": 1.2715533037824567,
+            "max_dd": 0.1441045203155542,
+            "annual_turnover": 85.00645161290322,
+            "avg_trade_ret_bps": 23.364822033637985,
+            "friction_eff": 2.9206027542047477,
+            "win_rate": 0.6029411764705882
+          },
+          "oos": {
+            "overall_ic": -0.006117781025302885,
+            "tail_ic": 0.09912520952120576,
+            "mono": 0.22424242424242424,
+            "raw_ann_ret": 0.06718088821238272,
+            "raw_sharpe": 0.9847286828284366,
+            "cost_ann_ret": 0.0019364437679382938,
+            "cost_sharpe": 0.02847240069985215,
+            "sortino": 0.05021411977286367,
+            "max_dd": 0.21990797603198436,
+            "annual_turnover": 81.55555555555556,
+            "avg_trade_ret_bps": 13.86761453925332,
+            "friction_eff": 1.7334518174066649,
+            "win_rate": 0.5321100917431193
+          },
+          "lockbox": {
+            "overall_ic": -0.024085529256887915,
+            "tail_ic": 0.12478531438841044,
+            "mono": 0.2606060606060606,
+            "raw_ann_ret": 0.06634658134407309,
+            "raw_sharpe": 0.8775715087090711,
+            "cost_ann_ret": 0.0010543803042117438,
+            "cost_sharpe": 0.01397371697659994,
+            "sortino": 0.02562781381244147,
+            "max_dd": 0.21707416958305592,
+            "annual_turnover": 81.6152512998267,
+            "avg_trade_ret_bps": 13.762574574176796,
+            "friction_eff": 1.7203218217720995,
+            "win_rate": 0.5
+          },
+          "loo": {
+            "delta_oos_ic": -0.011244738895546197,
+            "delta_lock_ic": -0.013307014487235012,
+            "delta_lock_sharpe": -0.16682980379985168
+          }
+        },
+        {
+          "feature_name": "combo_ifelse__gap_pct__first_bar_return__short_sell_cover_spread",
+          "sign": 1,
+          "family": "Gap / Overnight Reversal",
+          "recipe": {
+            "op": "ifelse",
+            "feature_cond": "gap_pct",
+            "feature_a": "first_bar_return",
+            "feature_b": "short_sell_cover_spread"
+          },
+          "train": {
+            "overall_ic": 0.08479867109031534,
+            "tail_ic": 0.24026403647904546,
+            "mono": 0.7696969696969697,
+            "raw_ann_ret": 0.09859544564567288,
+            "raw_sharpe": 1.308375575167604,
+            "cost_ann_ret": 0.028300548284969036,
+            "cost_sharpe": 0.3773655527861864,
+            "sortino": 0.6181171258194136,
+            "max_dd": 0.1685335163199556,
+            "annual_turnover": 87.86862170087976,
+            "avg_trade_ret_bps": 20.263408248055956,
+            "friction_eff": 2.532926031006994,
+            "win_rate": 0.5617647058823529
+          },
+          "oos": {
+            "overall_ic": 0.04813850898244227,
+            "tail_ic": 0.05461356295689043,
+            "mono": 0.7090909090909091,
+            "raw_ann_ret": 0.018080965072764764,
+            "raw_sharpe": 0.30075955420108424,
+            "cost_ann_ret": -0.05480792381612414,
+            "cost_sharpe": -0.9084127921210524,
+            "sortino": -1.4114766195720987,
+            "max_dd": 0.26438376033850586,
+            "annual_turnover": 91.11111111111111,
+            "avg_trade_ret_bps": 3.732309304011075,
+            "friction_eff": 0.46653866300138436,
+            "win_rate": 0.4908256880733945
+          },
+          "lockbox": {
+            "overall_ic": 0.03739588989822228,
+            "tail_ic": 0.07525718916083476,
+            "mono": 0.41818181818181815,
+            "raw_ann_ret": 0.006732421776581394,
+            "raw_sharpe": 0.09346654417630308,
+            "cost_ann_ret": -0.06092789018182415,
+            "cost_sharpe": -0.8458203983460187,
+            "sortino": -1.1951366304132063,
+            "max_dd": 0.19695210435461535,
+            "annual_turnover": 84.57538994800694,
+            "avg_trade_ret_bps": 1.39653701649679,
+            "friction_eff": 0.17456712706209876,
+            "win_rate": 0.5
+          },
+          "loo": {
+            "delta_oos_ic": 0.012492640445827784,
+            "delta_lock_ic": 0.018073142166349136,
+            "delta_lock_sharpe": -0.0637536851518653
+          }
+        },
+        {
+          "feature_name": "combo_ifelse__gap_pct__first_bar_return__growth_momentum_ratio",
+          "sign": 1,
+          "family": "Gap / Overnight Reversal",
+          "recipe": {
+            "op": "ifelse",
+            "feature_cond": "gap_pct",
+            "feature_a": "first_bar_return",
+            "feature_b": "growth_momentum_ratio"
+          },
+          "train": {
+            "overall_ic": 0.06884881913657537,
+            "tail_ic": 0.21042209889018784,
+            "mono": 0.7333333333333333,
+            "raw_ann_ret": 0.11916000799160822,
+            "raw_sharpe": 1.5880056140461425,
+            "cost_ann_ret": 0.06122968541096307,
+            "cost_sharpe": 0.8216164863204509,
+            "sortino": 1.622785537465287,
+            "max_dd": 0.1049012732814314,
+            "annual_turnover": 72.41290322580645,
+            "avg_trade_ret_bps": 24.489852172817262,
+            "friction_eff": 3.0612315216021577,
+            "win_rate": 0.5588235294117647
+          },
+          "oos": {
+            "overall_ic": 0.049884809854887364,
+            "tail_ic": 0.0819775191358422,
+            "mono": 0.3939393939393939,
+            "raw_ann_ret": 0.01724971580091079,
+            "raw_sharpe": 0.23722038632938405,
+            "cost_ann_ret": -0.03448361753242254,
+            "cost_sharpe": -0.47217524463319205,
+            "sortino": -0.7155662888223611,
+            "max_dd": 0.21036288587480778,
+            "annual_turnover": 64.66666666666667,
+            "avg_trade_ret_bps": 3.5607211515641546,
+            "friction_eff": 0.4450901439455193,
+            "win_rate": 0.5321100917431193
+          },
+          "lockbox": {
+            "overall_ic": 0.03036836103883375,
+            "tail_ic": 0.06506564278914698,
+            "mono": 0.15151515151515152,
+            "raw_ann_ret": 0.03566040169570167,
+            "raw_sharpe": 0.4375504559154281,
+            "cost_ann_ret": -0.014069927593726403,
+            "cost_sharpe": -0.17208634847541235,
+            "sortino": -0.2908782953071624,
+            "max_dd": 0.09878976469929429,
+            "annual_turnover": 62.1629116117851,
+            "avg_trade_ret_bps": 7.397200092903316,
+            "friction_eff": 0.9246500116129144,
+            "win_rate": 0.5175438596491229
+          },
+          "loo": {
+            "delta_oos_ic": 0.014693748629623235,
+            "delta_lock_ic": 0.011822803960059476,
+            "delta_lock_sharpe": -0.42746370087585495
+          }
+        },
+        {
+          "feature_name": "combo_max__max_up_ret__first_bar_return",
+          "sign": 1,
+          "family": "Gap / Overnight Reversal",
+          "recipe": {
+            "op": "max",
+            "feature_a": "max_up_ret",
+            "feature_b": "first_bar_return"
+          },
+          "train": {
+            "overall_ic": 0.09850178962524102,
+            "tail_ic": 0.1950445128779248,
+            "mono": 0.9151515151515152,
+            "raw_ann_ret": 0.11458134800583647,
+            "raw_sharpe": 1.1667602734165707,
+            "cost_ann_ret": 0.0458892658943995,
+            "cost_sharpe": 0.46932162167861163,
+            "sortino": 0.7352442646400024,
+            "max_dd": 0.13826877269422683,
+            "annual_turnover": 85.8651026392962,
+            "avg_trade_ret_bps": 23.548842616917927,
+            "friction_eff": 2.9436053271147404,
+            "win_rate": 0.6058823529411764
+          },
+          "oos": {
+            "overall_ic": 0.043052334613560096,
+            "tail_ic": 0.11057047305629718,
+            "mono": 0.45454545454545453,
+            "raw_ann_ret": 0.0697490757671781,
+            "raw_sharpe": 0.970413358711466,
+            "cost_ann_ret": -0.00011759089948856462,
+            "cost_sharpe": -0.0016384536960111782,
+            "sortino": -0.002866223766889663,
+            "max_dd": 0.16625306944341212,
+            "annual_turnover": 87.33333333333333,
+            "avg_trade_ret_bps": 14.397744997811992,
+            "friction_eff": 1.799718124726499,
+            "win_rate": 0.5229357798165137
+          },
+          "lockbox": {
+            "overall_ic": 0.0059873587780174325,
+            "tail_ic": -0.021937021302933096,
+            "mono": 0.793939393939394,
+            "raw_ann_ret": 0.04866392239540848,
+            "raw_sharpe": 0.6100902911049729,
+            "cost_ann_ret": -0.021364500481541277,
+            "cost_sharpe": -0.2687392501648231,
+            "sortino": -0.5024352467242272,
+            "max_dd": 0.18663444553386488,
+            "annual_turnover": 87.53552859618718,
+            "avg_trade_ret_bps": 10.094579818144481,
+            "friction_eff": 1.2618224772680602,
+            "win_rate": 0.4649122807017544
+          },
+          "loo": {
+            "delta_oos_ic": 0.004897904122987733,
+            "delta_lock_ic": -0.0030810197822381917,
+            "delta_lock_sharpe": -0.08267628227466645
+          }
+        }
+      ]
+    }
+  },
+  "50ETF": {},
+  "500ETF": {
+    "single": {
+      "full_model": {
+        "train_ic": 0.1558598779594192,
+        "oos_ic": 0.09972130189418801,
+        "lock_ic": 0.08003504684792337,
+        "train_sharpe": 1.0032992893012307,
+        "oos_sharpe": 0.4039056768578929,
+        "lock_sharpe": -0.08102686999384819
+      },
+      "features": [
+        {
+          "feature_name": "max_up_ret",
+          "sign": 1,
+          "family": "Intraday Range Momentum",
+          "recipe": null,
+          "train": {
+            "overall_ic": 0.17094963046395117,
+            "tail_ic": 0.24996371957717006,
+            "mono": 0.8666666666666667,
+            "raw_ann_ret": 0.18880706172164843,
+            "raw_sharpe": 1.7552402737792367,
+            "cost_ann_ret": 0.12561034617912648,
+            "cost_sharpe": 1.1749649245845606,
+            "sortino": 2.144395907832513,
+            "max_dd": 0.11575765190548548,
+            "annual_turnover": 78.99589442815248,
+            "avg_trade_ret_bps": 38.803765698578914,
+            "friction_eff": 4.850470712322364,
+            "win_rate": 0.6529411764705882
+          },
+          "oos": {
+            "overall_ic": 0.09360179383284534,
+            "tail_ic": 0.04692910431303554,
+            "mono": 0.806060606060606,
+            "raw_ann_ret": 0.0716673506778837,
+            "raw_sharpe": 0.8325802576013692,
+            "cost_ann_ret": 0.003400684011217016,
+            "cost_sharpe": 0.03950706835274464,
+            "sortino": 0.0684341994455314,
+            "max_dd": 0.1931915893775833,
+            "annual_turnover": 85.33333333333333,
+            "avg_trade_ret_bps": 14.793719176627368,
+            "friction_eff": 1.8492148970784208,
+            "win_rate": 0.5275229357798165
+          },
+          "lockbox": {
+            "overall_ic": 0.07775949812295448,
+            "tail_ic": 0.011835976135781445,
+            "mono": 0.6121212121212121,
+            "raw_ann_ret": 0.05017600615109001,
+            "raw_sharpe": 0.5661331511883442,
+            "cost_ann_ret": -0.018837512046483654,
+            "cost_sharpe": -0.21201038222556226,
+            "sortino": -0.3590853806158317,
+            "max_dd": 0.212237668406857,
+            "annual_turnover": 86.26689774696708,
+            "avg_trade_ret_bps": 10.408238261856097,
+            "friction_eff": 1.301029782732012,
+            "win_rate": 0.5263157894736842
+          },
+          "loo": {
+            "delta_oos_ic": 0.05605520651954082,
+            "delta_lock_ic": 0.035080279843693114,
+            "delta_lock_sharpe": -0.8957067346607591
+          }
+        },
+        {
+          "feature_name": "total_balance",
+          "sign": -1,
+          "family": "Volatility & Oscillators",
+          "recipe": null,
+          "train": {
+            "overall_ic": 0.042694674889089346,
+            "tail_ic": 0.17731478442465665,
+            "mono": 0.47878787878787876,
+            "raw_ann_ret": 0.052427859185412505,
+            "raw_sharpe": 0.5607312049595952,
+            "cost_ann_ret": 0.04658903220594037,
+            "cost_sharpe": 0.4979046154126614,
+            "sortino": 0.7371736542489359,
+            "max_dd": 0.17135665441632067,
+            "annual_turnover": 7.298533724340175,
+            "avg_trade_ret_bps": 10.775012043289335,
+            "friction_eff": 1.3468765054111669,
+            "win_rate": 0.5323529411764706
+          },
+          "oos": {
+            "overall_ic": 0.04366609537464719,
+            "tail_ic": 0.08648270166430277,
+            "mono": 0.34545454545454546,
+            "raw_ann_ret": 0.0363840846038173,
+            "raw_sharpe": 0.6059486384213597,
+            "cost_ann_ret": 0.02820630682603953,
+            "cost_sharpe": 0.46935262866549765,
+            "sortino": 0.7292085952745372,
+            "max_dd": 0.13711629043122958,
+            "annual_turnover": 10.222222222222223,
+            "avg_trade_ret_bps": 7.510476179687059,
+            "friction_eff": 0.9388095224608822,
+            "win_rate": 0.5458715596330275
+          },
+          "lockbox": {
+            "overall_ic": 0.044954767004230255,
+            "tail_ic": -0.002074416416719741,
+            "mono": 0.4666666666666667,
+            "raw_ann_ret": 0.024831177067290367,
+            "raw_sharpe": 0.35690847043587387,
+            "cost_ann_ret": 0.008931003757065063,
+            "cost_sharpe": 0.1277483151070039,
+            "sortino": 0.1981164196172492,
+            "max_dd": 0.1089090319500279,
+            "annual_turnover": 19.87521663778163,
+            "avg_trade_ret_bps": 5.150844538332806,
+            "friction_eff": 0.6438555672916008,
+            "win_rate": 0.5175438596491229
+          },
+          "loo": {
+            "delta_oos_ic": 0.006119508061342677,
+            "delta_lock_ic": 0.0022755487249688927,
+            "delta_lock_sharpe": 0.13098351223171406
+          }
+        }
+      ]
+    }
+  },
+  "588000ETF": {
+    "long": {
+      "full_model": {
+        "train_ic": 0.010354384309905163,
+        "oos_ic": -0.0453475390426376,
+        "lock_ic": -0.052986621991984124,
+        "train_sharpe": 0.0,
+        "oos_sharpe": 0.0,
+        "lock_sharpe": 0.0
+      },
+      "features": [
+        {
+          "feature_name": "body_to_range_ratio",
+          "sign": 1,
+          "family": "Volatility & Oscillators",
+          "recipe": null,
+          "train": {
+            "overall_ic": 0.010354384309905163,
+            "tail_ic": 0.2756258937138496,
+            "mono": -0.24848484848484848,
+            "raw_ann_ret": -0.041486662198941135,
+            "raw_sharpe": -0.5942982810495134,
+            "cost_ann_ret": -0.09139465825027382,
+            "cost_sharpe": -1.2975380997284172,
+            "sortino": -1.8185961370033001,
+            "max_dd": 0.4317815205499457,
+            "annual_turnover": 62.38499506416585,
+            "avg_trade_ret_bps": -11.406467486572405,
+            "friction_eff": -1.4258084358215506,
+            "win_rate": 0.3841059602649007
+          },
+          "oos": {
+            "overall_ic": -0.0453475390426376,
+            "tail_ic": -0.09578094844538755,
+            "mono": -0.28484848484848485,
+            "raw_ann_ret": -0.12637103144390704,
+            "raw_sharpe": -1.330717652929376,
+            "cost_ann_ret": -0.1746463002611113,
+            "cost_sharpe": -1.8279360757292993,
+            "sortino": -2.2129257885980778,
+            "max_dd": 0.25999493441391697,
+            "annual_turnover": 60.344086021505376,
+            "avg_trade_ret_bps": -35.029823917387056,
+            "friction_eff": -4.378727989673381,
+            "win_rate": 0.4
+          },
+          "lockbox": {
+            "overall_ic": -0.052986621991984124,
+            "tail_ic": -0.10800459610191271,
+            "mono": -0.3333333333333333,
+            "raw_ann_ret": -0.15713725237390133,
+            "raw_sharpe": -1.4388860639992802,
+            "cost_ann_ret": -0.20612862492292094,
+            "cost_sharpe": -1.8790091074666486,
+            "sortino": -2.3073319712503357,
+            "max_dd": 0.2442531833573438,
+            "annual_turnover": 61.239215686274505,
+            "avg_trade_ret_bps": -43.21613390352118,
+            "friction_eff": -5.402016737940147,
+            "win_rate": 0.3157894736842105
+          },
+          "loo": {
+            "delta_oos_ic": -0.0453475390426376,
+            "delta_lock_ic": -0.052986621991984124,
+            "delta_lock_sharpe": 0.0
+          }
+        }
+      ]
+    }
+  },
+  "159915ETF": {
+    "single": {
+      "full_model": {
+        "train_ic": 0.16638060858368903,
+        "oos_ic": 0.10846163311080277,
+        "lock_ic": 0.10313952363104126,
+        "train_sharpe": 1.1986223573255081,
+        "oos_sharpe": 0.7547954107163499,
+        "lock_sharpe": 1.1577538707862274
+      },
+      "features": [
+        {
+          "feature_name": "yesterday_afternoon_momentum",
+          "sign": -1,
+          "family": "Intraday Range Momentum",
+          "recipe": null,
+          "train": {
+            "overall_ic": 0.1063088953733886,
+            "tail_ic": 0.22286535147108438,
+            "mono": 0.7575757575757576,
+            "raw_ann_ret": 0.1609754917526016,
+            "raw_sharpe": 1.2598776308804838,
+            "cost_ann_ret": 0.09365725128339336,
+            "cost_sharpe": 0.7347549160140896,
+            "sortino": 1.1313731131843163,
+            "max_dd": 0.1801259433624641,
+            "annual_turnover": 84.14780058651026,
+            "avg_trade_ret_bps": 33.08380104124706,
+            "friction_eff": 4.135475130155882,
+            "win_rate": 0.5794117647058824
+          },
+          "oos": {
+            "overall_ic": 0.056438289875837815,
+            "tail_ic": 0.07071729068337092,
+            "mono": 0.6,
+            "raw_ann_ret": 0.09689390696116716,
+            "raw_sharpe": 0.9304156840725961,
+            "cost_ann_ret": 0.030938351405611603,
+            "cost_sharpe": 0.298495179167547,
+            "sortino": 0.49109968390094977,
+            "max_dd": 0.19306743521529643,
+            "annual_turnover": 82.44444444444446,
+            "avg_trade_ret_bps": 20.0010358406079,
+            "friction_eff": 2.5001294800759877,
+            "win_rate": 0.536697247706422
+          },
+          "lockbox": {
+            "overall_ic": 0.07550805381732091,
+            "tail_ic": 0.09310133939544742,
+            "mono": 0.696969696969697,
+            "raw_ann_ret": 0.1439327915244291,
+            "raw_sharpe": 1.304426296290393,
+            "cost_ann_ret": 0.07593417800623149,
+            "cost_sharpe": 0.6927282484573316,
+            "sortino": 1.181699657512517,
+            "max_dd": 0.10170341251610204,
+            "annual_turnover": 84.99826689774697,
+            "avg_trade_ret_bps": 29.856636723323113,
+            "friction_eff": 3.7320795904153887,
+            "win_rate": 0.5526315789473685
+          },
+          "loo": {
+            "delta_oos_ic": 0.0047196544921640216,
+            "delta_lock_ic": 0.017666355245105334,
+            "delta_lock_sharpe": 1.1979208764657738
+          }
+        },
+        {
+          "feature_name": "max_up_ret",
+          "sign": 1,
+          "family": "Intraday Range Momentum",
+          "recipe": null,
+          "train": {
+            "overall_ic": 0.13125146406781815,
+            "tail_ic": 0.20650868962298052,
+            "mono": 0.9030303030303031,
+            "raw_ann_ret": 0.15762604276582304,
+            "raw_sharpe": 1.2358086633270167,
+            "cost_ann_ret": 0.0919106175458817,
+            "cost_sharpe": 0.7221238742881224,
+            "sortino": 1.2294227307662509,
+            "max_dd": 0.22265614628342445,
+            "annual_turnover": 82.14428152492668,
+            "avg_trade_ret_bps": 32.39541983072906,
+            "friction_eff": 4.049427478841133,
+            "win_rate": 0.5911764705882353
+          },
+          "oos": {
+            "overall_ic": 0.10374197861863875,
+            "tail_ic": 0.1590966333434137,
+            "mono": 0.8424242424242424,
+            "raw_ann_ret": 0.11990746853821985,
+            "raw_sharpe": 1.228537756353846,
+            "cost_ann_ret": 0.05181857964933096,
+            "cost_sharpe": 0.5312869936602933,
+            "sortino": 0.931069230753823,
+            "max_dd": 0.20426307600969626,
+            "annual_turnover": 85.1111111111111,
+            "avg_trade_ret_bps": 24.75154167073346,
+            "friction_eff": 3.093942708841682,
+            "win_rate": 0.5779816513761468
+          },
+          "lockbox": {
+            "overall_ic": 0.08547316838593592,
+            "tail_ic": 0.05642304482774844,
+            "mono": 0.7090909090909091,
+            "raw_ann_ret": 0.06362369209999787,
+            "raw_sharpe": 0.5864610703905095,
+            "cost_ann_ret": -0.0043749214181997105,
+            "cost_sharpe": -0.04016700567954656,
+            "sortino": -0.0697884144862502,
+            "max_dd": 0.24612257703397367,
+            "annual_turnover": 84.99826689774697,
+            "avg_trade_ret_bps": 13.197753214588285,
+            "friction_eff": 1.6497191518235357,
+            "win_rate": 0.5
+          },
+          "loo": {
+            "delta_oos_ic": 0.05202334323496496,
+            "delta_lock_ic": 0.027631469813720347,
+            "delta_lock_sharpe": 0.46502562232889577
+          }
+        }
+      ]
+    }
+  }
+}
