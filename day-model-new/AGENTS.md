@@ -62,6 +62,6 @@ python3 day-model-new/compile_report.py -e 588000ETF -s long -o custom_report.md
 - **Sample-Size Scaled Mining**: `generate_combos.py` scales `top_k` / `top_k_3` proportionally to training sample size relative to ~3400 trading day baseline.
 - **Z-Score Blending**: IC-weighted combination on standardized features (`weights = max(0.0, deflated_ic)**k`).
 - **Absolute-Sign Kill Switch**: `select_features.py` rejects candidate features where `mean(y_true[long_idx]) <= 0` or `mean(-y_true[short_idx]) <= 0` on training set (`REJECTED_ABSOLUTE_SIGN`), eliminating false signals with negative return expectation under market drift.
-- **Per-Entry Transaction Cost**: `simulate_returns` computes 15 bps friction per position state transition (`np.abs(pos - pos_prev) * 0.0015`), charging per-entry/turnover event rather than flat-fee per active day.
+- **Per-Entry Transaction Cost**: `simulate_returns` computes 8 bps friction per position state transition (`np.abs(pos - pos_prev) * 0.0008`), charging per-entry/turnover event rather than flat-fee per active day.
 - **Raw vs Cost Sharpe Reporting**: `simulate_returns` computes both raw Sharpe (pre-cost) and cost-adjusted Sharpe. `compile_report.py` displays both side-by-side to distinguish raw signal quality from transaction cost drag.
 - **Parallel baseline runner**: Optimized using `joblib.Parallel` and `sys.executable` for safe execution.

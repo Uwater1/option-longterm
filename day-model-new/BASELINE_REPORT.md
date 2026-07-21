@@ -11,7 +11,7 @@ Pipeline: select_features.py (Stage A: filter funnel) → evaluate_concept.py (S
 - **159915ETF**: Train `2015-01-01` → `2022-01-01` | Holdout OOS from `2022-01-01` | Lockbox from `2024-03-01`
 
 _\* indicates the 95% circular block-bootstrap CI spans zero (statistically indistinguishable from noise)._
-_Note: Cost metrics incorporate 15 bps (0.0015) transaction cost per position state transition (entry/turnover). Raw metrics represent pre-cost performance. Absolute-sign kill switches enforce mean return positivity on traded legs._
+_Note: Cost metrics incorporate 8 bps (0.0008) transaction cost per position state transition (realistic for liquid ETFs). Raw metrics represent pre-cost performance. Absolute-sign kill switches enforce mean return positivity on traded legs._
 
 ## 1. Filter Funnel
 

@@ -164,7 +164,7 @@ def simulate_returns(y_true: np.ndarray, y_pred: np.ndarray, side: str, position
     """Simulate strategy daily returns based on tail signals.
     
     Supports binary vs score-weighted position sizing, absolute sign leg checks,
-    and per-entry transition cost calculation (15 bps on position state changes).
+    and per-entry transition cost calculation (8 bps on position state changes).
     
     Returns (ann_return, sharpe, sortino, max_dd, raw_ann_return, raw_sharpe).
     """
