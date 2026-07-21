@@ -62,7 +62,7 @@ python3 day-model-new/analyze_admitted_features.py
 
 | # | Gate | Key Parameters | Purpose |
 |---|------|---------------|---------|
-| 1 | Split-Half Sign Stability | 3-fold expanding WF (40/70/100%) | Reject sign-flipping features |
+| 1 | 7-Year Jackknife Sign Stability | max_flips=1, last 2 chunks must not flip | Reject sign-flipping features |
 | 2 | B2 Rolling Guard | mono_thr=0.60 (single) / 0.55 (L/S), ir_thr=0.30 / 0.15 | Reject unstable rolling IC |
 | 3 | Absolute Sign Check | mean(tail returns) > 0 | Require profitable tail buckets |
 | 4 | Temporal Validation | recent 30% IC > 0 | Reject decayed signals |

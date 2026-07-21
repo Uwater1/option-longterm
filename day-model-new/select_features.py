@@ -356,42 +356,76 @@ def compute_rolling_tail_ic_series(x_flipped: np.ndarray, y: np.ndarray, window_
         pct = 0.10
     return numba_rolling_tail_ic(x_flipped, y, window_starts, window_ends, tail_def, pct)
 
-def expanding_wf_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str) -> tuple:
-    """3-fold expanding walk-forward sign check on RAW x.
-    Folds: fold1 (0..40%), fold2 (40%..70%), fold3 (70%..100%).
-    Returns (passes: bool, locked_sign: float, ic_fold1, ic_fold2, ic_fold3).
-    Rejects if IC sign flips across folds or if fold 3 IC is opposite sign of locked_sign.
+def expanding_wf_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str, max_flips: int = 2) -> tuple:
+    """7-year Jackknife sign stability check on RAW x.
+    Splits training data into 7 equal chunks (approximating calendar years).
+    Computes tail IC per chunk, locks sign from full-sample IC.
+    Counts 'flip chunks' where chunk IC sign disagrees with locked sign.
+    Passes if flip_count <= max_flips.
+    
+    Returns (passes: bool, locked_sign: float, ic_first_half, ic_second_half, ic_recent).
     """
     n = len(y)
-    f1_end = int(0.40 * n)
-    f2_end = int(0.70 * n)
+    n_chunks = 7
+    chunk_size = n // n_chunks
     
-    if f1_end < 10 or (f2_end - f1_end) < 10 or (n - f2_end) < 10:
+    if chunk_size < 10:
+        # Too few samples for 7 chunks, fall back to simple sign lock
         raw_ic = _spearman_from_arrays(x_raw, y)
         locked_sign = -1.0 if raw_ic < 0 else 1.0
         return True, locked_sign, 0.0, 0.0, 0.0
 
-    ic_f1 = compute_side_tail_ic(y[:f1_end], x_raw[:f1_end], side)
-    ic_f2 = compute_side_tail_ic(y[f1_end:f2_end], x_raw[f1_end:f2_end], side)
-    ic_f3 = compute_side_tail_ic(y[f2_end:], x_raw[f2_end:], side)
-
+    # Lock sign from full-sample tail IC
     full_ic = compute_side_tail_ic(y, x_raw, side)
     locked_sign = 1.0 if full_ic >= 0 else -1.0
 
-    if locked_sign > 0:
-        passes = (ic_f1 >= 0) and (ic_f2 >= 0) and (ic_f3 >= 0)
-    else:
-        passes = (ic_f1 <= 0) and (ic_f2 <= 0) and (ic_f3 <= 0)
+    # Compute per-chunk tail IC and count flips
+    flip_count = 0
+    chunk_ics = []
+    for i in range(n_chunks):
+        start = i * chunk_size
+        end = start + chunk_size if i < n_chunks - 1 else n
+        if end - start < 10:
+            continue
+        chunk_ic = compute_side_tail_ic(y[start:end], x_raw[start:end], side)
+        chunk_ics.append(chunk_ic)
+        # Flip = chunk IC sign disagrees with locked sign
+        if locked_sign > 0 and chunk_ic < 0:
+            flip_count += 1
+        elif locked_sign < 0 and chunk_ic > 0:
+            flip_count += 1
 
-    return passes, locked_sign, ic_f1, ic_f2, ic_f3
+    # Hard rule: last 2 chunks must NOT be flips (recent signal must be intact)
+    n_valid = len(chunk_ics)
+    recent_flips = 0
+    if n_valid >= 2:
+        for ic in chunk_ics[-2:]:
+            if (locked_sign > 0 and ic < 0) or (locked_sign < 0 and ic > 0):
+                recent_flips += 1
+    
+    passes = (flip_count <= max_flips) and (recent_flips == 0)
+    
+    # Return compatible interface: first-half IC, second-half IC, recent IC
+    if n_valid >= 3:
+        ic_first = float(np.mean(chunk_ics[:n_valid//2]))
+        ic_second = float(np.mean(chunk_ics[n_valid//2:]))
+        ic_recent = float(chunk_ics[-1])
+    elif n_valid > 0:
+        ic_first = float(chunk_ics[0])
+        ic_second = float(chunk_ics[-1])
+        ic_recent = float(chunk_ics[-1])
+    else:
+        ic_first = ic_second = ic_recent = 0.0
+
+    return passes, locked_sign, ic_first, ic_second, ic_recent
 
 def split_half_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str) -> tuple:
     passes, locked_sign, ic_f1, ic_f2, _ = expanding_wf_sign_check(x_raw, y, side)
     return passes, locked_sign, ic_f1, ic_f2
 
-def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str):
+def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str, max_flips: int = 2):
     """Evaluate a single candidate feature: cheap gates first to avoid wasting compute on rejected signals."""
-    sh_passes, locked_sign, sh_ic_first, sh_ic_second, ic_f3 = expanding_wf_sign_check(x, y, side)
+    sh_passes, locked_sign, sh_ic_first, sh_ic_second, ic_f3 = expanding_wf_sign_check(x, y, side, max_flips=max_flips)
     
     x_flipped = x * locked_sign
     raw_ic = _spearman_from_arrays(x_flipped, y)
@@ -872,6 +906,10 @@ def main():
         train_start = pd.Timestamp("2015-01-01")
         train_end = pd.Timestamp("2022-01-01")
 
+    # Short-history ETFs (<=5 years): always use max_flips=1 (less data = less tolerance)
+    # Long-history ETFs: also use max_flips=1 (experimentally proven superior)
+    args.max_flips = 1
+
     print(f"================================================================================")
     print(f"Stage A Feature Selection: ETF={args.etf}, Side={args.side}, Early={args.early}")
     print(f"Training Range: {train_start.date()} to {train_end.date()}")
@@ -1083,7 +1121,7 @@ def main():
     y_train_f32 = y_train.astype(np.float32)
     eval_results = Parallel(n_jobs=args.n_jobs)(
         delayed(evaluate_single_feature)(
-            features_to_eval[i], X_train_f32[:, i], y_train_f32, window_starts, window_ends, args.side
+            features_to_eval[i], X_train_f32[:, i], y_train_f32, window_starts, window_ends, args.side, args.max_flips
         ) for i in range(len(features_to_eval))
     )
 

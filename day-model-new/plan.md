@@ -27,10 +27,10 @@ Goal: Produce aggressive candidate recipes and combinations to find weak/joint s
 
 Goal: Apply strict statistical guards, correlation filters, and trial-count tracking to build a robust pool.
 
-### B1. Walk-Forward Sign & Temporal Validation Pre-filters
-1. **3-Fold Expanding Walk-Forward Sign Guard**: Test candidate tail IC across 3 expanding folds (0-40%, 40-70%, 70-100% of training set). Reject candidate if IC sign flips across folds or if the final fold IC degrades to negative.
+### B1. 7-Year Jackknife Sign Stability & Temporal Validation Pre-filters
+1. **7-Year Jackknife Sign Guard**: Split training data into 7 equal chunks (approximating calendar years). Compute tail IC per chunk, lock sign from full-sample IC. Count "flip chunks" where chunk IC sign disagrees with locked sign. Reject if flip_count > 1 OR if either of the last 2 chunks is a flip (recent signal must be intact).
    - **Sign locking**: Outputs a locked `sign` (+1 or -1) value from full train set. This sign is the pipeline's single source of truth carried forward to B2 and B3.
-2. **Temporal Validation Gate**: Require positive tail IC in the most recent 30% of training (fold 3 from walk-forward). Rejects features whose signal decayed over time (regime-specific overfit). Uses `ic_f3` already computed in step 1 — zero additional compute.
+2. **Temporal Validation Gate**: Require positive tail IC in the most recent 30% of training (last chunk from jackknife). Rejects features whose signal decayed over time (regime-specific overfit). Uses `ic_recent` already computed in step 1 — zero additional compute.
 
 ### B2. Rolling Guard & FDR Pre-filter
 1. **Rolling Guard (Pre-filter check)**: 90-calendar-date rolling tail IC evaluated instantly on pre-computed values. Drop if monotonicity < `mono_thr` or `IC_IR` < `ir_thr`:
@@ -115,7 +115,7 @@ SE_IC ≈ 1/√n_train
 - [x] Upgrade BH-FDR to Benjamini-Yekutieli (BY-FDR) at $q=0.30$ to handle correlated candidate feature spaces.
 - [x] Fix `deflated_ic` calculation using standalone raw IC null mean (`ic_null_mean`).
 - [x] Prebuild 3-way recipe statistics (`feature_c`, `feature_cond2`) in `evaluate_concept.py` to eliminate OOS lookahead leakage.
-- [x] Upgrade split-half sign check to 3-fold expanding walk-forward guard (`expanding_wf_sign_check`).
+- [x] Upgrade split-half sign check to 7-year jackknife guard (`expanding_wf_sign_check`, max_flips=1, last 2 chunks must not flip).
 - [x] Scale candidate generation space by sample size ratio in `generate_combos.py`.
 - [x] Reconcile `feature-mining.md` and `AGENTS.md` step numbering with new A/B/C stage names.
 - [x] **Anti-overfit: Full search-space FDR correction** — BY-FDR uses `m_total = len(eval_results)` (total candidates before filtering) for harmonic correction, not just survivor count.

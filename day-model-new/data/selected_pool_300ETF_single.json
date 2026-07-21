@@ -95,31 +95,5 @@
       "feature_a": "max_up_ret",
       "feature_b": "growth_momentum_ratio"
     }
-  },
-  {
-    "feature_name": "combo_min__first_bar_return__gap_pct",
-    "sign": 1,
-    "overall_ic": 0.18955856561660767,
-    "deflated_ic": 0.18949858486318558,
-    "ic_ir": 0.43790972735802636,
-    "monotonicity": 0.6580645161290323,
-    "recipe": {
-      "op": "min",
-      "feature_a": "first_bar_return",
-      "feature_b": "gap_pct"
-    }
-  },
-  {
-    "feature_name": "combo_diff__max_up_ret__willr14",
-    "sign": 1,
-    "overall_ic": 0.18892669677734375,
-    "deflated_ic": 0.18879651552065765,
-    "ic_ir": 0.695522795486079,
-    "monotonicity": 0.7589442815249267,
-    "recipe": {
-      "op": "diff",
-      "feature_a": "max_up_ret",
-      "feature_b": "willr14"
-    }
   }
 ]
