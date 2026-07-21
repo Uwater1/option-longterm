@@ -303,7 +303,8 @@ def main():
     parser.add_argument("-s", "--side", required=True, choices=["single", "long", "short"])
     parser.add_argument("-k", type=float, default=1.0, help="Exponent for weighting overall IC")
     parser.add_argument("--early", action="store_true", help="Use early window return dataset")
-    parser.add_argument("--position-mode", choices=["binary", "score_weighted"], default="binary", help="Position sizing mode (default: binary)")
+    parser.add_argument("--position-mode", choices=["binary", "score_weighted", "conviction_weighted"], default="conviction_weighted", help="Position sizing mode (default: conviction_weighted)")
+    parser.add_argument("--conviction-z", type=float, default=0.5, help="Min z-score to trade in conviction_weighted mode (default: 0.5)")
     parser.add_argument("--no-abs-sign", action="store_true", help="Disable absolute sign kill switch")
     args = parser.parse_args()
 
@@ -484,7 +485,8 @@ def main():
         ci_overall, ci_tail, ci_mono = block_bootstrap_ci(y_true, y_pred, args.side)
         enforce_abs = not args.no_abs_sign
         ann_ret, sharpe, sortino, max_dd, raw_ann_ret, raw_sharpe = simulate_returns(
-            y_true, y_pred, args.side, position_mode=args.position_mode, enforce_absolute_sign=enforce_abs
+            y_true, y_pred, args.side, position_mode=args.position_mode, enforce_absolute_sign=enforce_abs,
+            conviction_z=args.conviction_z
         )
         
         print(f"\n--- {label} Results ---")

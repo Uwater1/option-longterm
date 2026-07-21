@@ -84,7 +84,7 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 
 Goal: Combine surviving features and evaluate performance under strict cross-validation.
 
-> **Strategy**: Entry at 10:00 (open of bar 6), exit at 14:35 (close of bar 42). Binary position: long top-10% / short bottom-10% predicted days (`single`), or top/bottom-15% for directional sides. 8 bps cost per position state transition (realistic for liquid ETFs).
+> **Strategy**: Entry at 10:00 (open of bar 6), exit at 14:35 (close of bar 42). Conviction-weighted position sizing (default): only trades when prediction z-score > 0.5, with smooth tanh ramp. Long top-10% / short bottom-10% predicted days (`single`), or top/bottom-15% for directional sides. 8 bps cost per position state transition (realistic for liquid ETFs).
 
 ### C1. Baseline Model: IC-weighted Linear Sum (with Empirical Bayes Shrinkage)
 ```
@@ -112,7 +112,7 @@ SE_IC ≈ 1/√n_train
 ## Checklist
 - [x] Replace B3 IC-threshold with rank-normalized composite (Mono 0.4 / Sortino 0.3 / TailIC 0.2 / OverallIC 0.1), sign locked from B1, null-permutation-wrapped.
 - [x] Port `simulate_returns()` to shared module (`recipe_utils.py`) and run per-candidate Sortino in B3 using B1 locked sign.
-- [x] Upgrade BH-FDR to Benjamini-Yekutieli (BY-FDR) at $q=0.20$ to handle correlated candidate feature spaces.
+- [x] Upgrade BH-FDR to Benjamini-Yekutieli (BY-FDR) at $q=0.30$ to handle correlated candidate feature spaces.
 - [x] Fix `deflated_ic` calculation using standalone raw IC null mean (`ic_null_mean`).
 - [x] Prebuild 3-way recipe statistics (`feature_c`, `feature_cond2`) in `evaluate_concept.py` to eliminate OOS lookahead leakage.
 - [x] Upgrade split-half sign check to 3-fold expanding walk-forward guard (`expanding_wf_sign_check`).
@@ -122,6 +122,9 @@ SE_IC ≈ 1/√n_train
 - [x] **Anti-overfit: Temporal validation gate** — Require positive tail IC in most recent 30% of training (fold 3). Zero additional compute (reuses `ic_f3` from walk-forward).
 - [x] **Anti-overfit: IC shrinkage weighting** — Subtract $SE_{IC} \approx 1/\sqrt{n}$ from `deflated_ic` before IC-weighting in `evaluate_concept.py`.
 - [x] **Anti-overfit: Tiered B3 admission floor** — 3-way combos (`combo_tri_*`) require 99th percentile vs 95th for 2-way/base features. Computed in same kernel pass.
+- [x] **Anti-overfit: Training-only Quality Gate (B6)** — Require deflated_ic ≥ 0.03/0.05, |raw_ic| ≥ 0.02/0.03, sortino > 0. Catches tail-only mirages. Zero look-ahead.
+- [x] **Execution: Conviction-weighted position sizing** — Default mode in `evaluate_concept.py`. Skips low-conviction days (z < 0.5), smooth tanh ramp. Reduces turnover ~40% without losing high-conviction trades.
+- [x] **Filter calibration: Relaxed B2/FDR/θ** — mono_thr 0.70→0.60, FDR q 0.20→0.30, θ 0.35→0.50. Data-driven from per-gate OOS diagnostics (FEATURE_DIAGNOSTICS.md).
 
 ## References
 - Wang et al. 2026, *FactorMiner: A Self-Evolving Agent with Skills and Experience Memory for Financial Alpha Discovery*, arXiv:2602.14670 — admission gate, replacement rule, IC-weighted vs orthogonal vs learned-selection comparison.

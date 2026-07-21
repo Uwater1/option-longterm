@@ -160,11 +160,21 @@ def compute_recipe(df: pd.DataFrame, recipe: dict, train_means: dict = None, tra
         raise ValueError(f"Unknown operation in recipe: {op}")
 
 
-def simulate_returns(y_true: np.ndarray, y_pred: np.ndarray, side: str, position_mode: str = "binary", enforce_absolute_sign: bool = True):
+def simulate_returns(y_true: np.ndarray, y_pred: np.ndarray, side: str, position_mode: str = "binary", enforce_absolute_sign: bool = True, conviction_z: float = 0.5):
     """Simulate strategy daily returns based on tail signals.
     
-    Supports binary vs score-weighted position sizing, absolute sign leg checks,
-    and per-entry transition cost calculation (8 bps on position state changes).
+    Position modes:
+      - "binary": Full position (1.0) on all tail-selected days.
+      - "score_weighted": Scale position by z-score (legacy z/2 clip).
+      - "conviction_weighted": Conviction gate + smooth tanh sizing.
+        Only trades when prediction z-score > conviction_z threshold.
+        Position size = tanh((z - conviction_z) / 1.5), giving smooth
+        ramp from 0 at threshold to ~1.0 for strong signals.
+        Reduces turnover by skipping low-conviction days.
+    
+    Args:
+        conviction_z: Minimum z-score threshold for taking a position.
+            Only used in "conviction_weighted" mode. Default 0.5.
     
     Returns (ann_return, sharpe, sortino, max_dd, raw_ann_return, raw_sharpe).
     """
@@ -181,29 +191,40 @@ def simulate_returns(y_true: np.ndarray, y_pred: np.ndarray, side: str, position
     std_pred = np.std(y_pred)
     mean_pred = np.mean(y_pred)
     
+    def _assign_positions(idx, direction, y_check_mean):
+        """Assign positions to tail indices based on mode."""
+        if enforce_absolute_sign and y_check_mean <= 0.0:
+            return
+        if position_mode == "conviction_weighted" and std_pred > 1e-12:
+            z = direction * (y_pred[idx] - mean_pred) / std_pred
+            # Conviction gate: only trade when z > threshold
+            mask = z > conviction_z
+            if np.any(mask):
+                # Smooth tanh sizing: 0 at threshold, ~1.0 for strong signals
+                sizes = np.tanh((z[mask] - conviction_z) / 1.5)
+                pos[idx[mask]] = direction * sizes
+        elif position_mode == "score_weighted" and std_pred > 1e-12:
+            z = (y_pred[idx] - mean_pred) / std_pred
+            if direction > 0:
+                pos[idx] = np.clip(z / 2.0, 0.0, 1.0)
+            else:
+                pos[idx] = -np.clip(-z / 2.0, 0.0, 1.0)
+        else:  # binary
+            pos[idx] = direction * 1.0
+    
     if side == "long":
         pct = 0.15
         n_tail = max(5, int(n * pct))
         long_idx = order[-n_tail:]
         long_mean = float(np.mean(y_true[long_idx]))
-        if not enforce_absolute_sign or long_mean > 0.0:
-            if position_mode == "score_weighted" and std_pred > 1e-12:
-                z = (y_pred[long_idx] - mean_pred) / std_pred
-                pos[long_idx] = np.clip(z / 2.0, 0.0, 1.0)
-            else:
-                pos[long_idx] = 1.0
+        _assign_positions(long_idx, 1.0, long_mean)
 
     elif side == "short":
         pct = 0.15
         n_tail = max(5, int(n * pct))
         short_idx = order[:n_tail]
-        short_mean = float(np.mean(-y_true[short_idx]))  # expected short return
-        if not enforce_absolute_sign or short_mean > 0.0:
-            if position_mode == "score_weighted" and std_pred > 1e-12:
-                z = (y_pred[short_idx] - mean_pred) / std_pred
-                pos[short_idx] = -np.clip(-z / 2.0, 0.0, 1.0)
-            else:
-                pos[short_idx] = -1.0
+        short_mean = float(np.mean(-y_true[short_idx]))
+        _assign_positions(short_idx, -1.0, short_mean)
 
     else:  # single (two-sided)
         pct = 0.10
@@ -212,20 +233,8 @@ def simulate_returns(y_true: np.ndarray, y_pred: np.ndarray, side: str, position
         short_idx = order[:n_tail]
         long_mean = float(np.mean(y_true[long_idx]))
         short_mean = float(np.mean(-y_true[short_idx]))
-        
-        if not enforce_absolute_sign or long_mean > 0.0:
-            if position_mode == "score_weighted" and std_pred > 1e-12:
-                z = (y_pred[long_idx] - mean_pred) / std_pred
-                pos[long_idx] = np.clip(z / 2.0, 0.0, 1.0)
-            else:
-                pos[long_idx] = 1.0
-                
-        if not enforce_absolute_sign or short_mean > 0.0:
-            if position_mode == "score_weighted" and std_pred > 1e-12:
-                z = (y_pred[short_idx] - mean_pred) / std_pred
-                pos[short_idx] = -np.clip(-z / 2.0, 0.0, 1.0)
-            else:
-                pos[short_idx] = -1.0
+        _assign_positions(long_idx, 1.0, long_mean)
+        _assign_positions(short_idx, -1.0, short_mean)
         
     # Raw daily returns (pre-cost)
     raw_returns = pos * y_true
