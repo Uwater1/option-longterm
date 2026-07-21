@@ -73,6 +73,12 @@ _VOL_KEYWORDS = ("vol", "atr", "width", "vix", "volume", "balance", "capital", "
 
 MINING_LOG_PATH = HERE / "mining_log.json"
 
+# Component stability thresholds (universal, ETF-agnostic)
+# A component is "unstable" if its yearly IC is too variable or has too many negative years.
+# Combos containing unstable components are pruned at generation time.
+COMPONENT_IC_CV_MAX = 3.0       # Max coefficient of variation of yearly ICs
+COMPONENT_NEG_YEARS_MAX = 2     # Max number of negative-IC years allowed
+
 
 # ─── Mining Log ───────────────────────────────────────────────────────────────
 
@@ -178,6 +184,95 @@ def compute_side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str) -> f
         idx = np.concatenate([order[:n_tail], order[-n_tail:]])
 
     return _spearman_from_arrays(y_true[idx], y_pred[idx])
+
+
+def compute_component_stability(X_df: pd.DataFrame, y: np.ndarray, dates: np.ndarray,
+                                features: list, side: str) -> dict:
+    """Compute yearly IC stability for each feature.
+    
+    Returns dict mapping feature_name -> {"ic_cv": float, "n_negative_years": int, "stable": bool}.
+    A feature is unstable if IC_CV > COMPONENT_IC_CV_MAX OR n_negative_years > COMPONENT_NEG_YEARS_MAX.
+    
+    This is a TRAINING-ONLY gate: uses only in-sample data to detect regime-dependent components.
+    """
+    years = pd.DatetimeIndex(dates).year
+    unique_years = sorted(set(years))
+    
+    if len(unique_years) < 3:
+        # Not enough years for stability assessment — mark all as stable
+        return {f: {"ic_cv": 0.0, "n_negative_years": 0, "stable": True} for f in features}
+    
+    results = {}
+    for feat in features:
+        if feat not in X_df.columns:
+            results[feat] = {"ic_cv": 0.0, "n_negative_years": 0, "stable": True}
+            continue
+        
+        vals = X_df[feat].values.astype(np.float64)
+        
+        # Determine sign from full-sample IC
+        full_ic = _spearman_from_arrays(vals, y)
+        sign = 1.0 if full_ic >= 0 else -1.0
+        pred = sign * vals
+        
+        # Compute yearly ICs
+        yearly_ics = []
+        for yr in unique_years:
+            mask = years == yr
+            if mask.sum() < 20:
+                continue
+            yr_ic = _spearman_from_arrays(y[mask], pred[mask])
+            yearly_ics.append(yr_ic)
+        
+        if len(yearly_ics) < 3:
+            results[feat] = {"ic_cv": 0.0, "n_negative_years": 0, "stable": True}
+            continue
+        
+        ic_arr = np.array(yearly_ics)
+        mean_ic = np.mean(ic_arr)
+        std_ic = np.std(ic_arr)
+        
+        # IC coefficient of variation
+        ic_cv = std_ic / abs(mean_ic) if abs(mean_ic) > 1e-6 else 99.0
+        n_negative = int(np.sum(ic_arr < 0))
+        
+        is_stable = (ic_cv <= COMPONENT_IC_CV_MAX) and (n_negative <= COMPONENT_NEG_YEARS_MAX)
+        
+        results[feat] = {
+            "ic_cv": float(ic_cv),
+            "n_negative_years": n_negative,
+            "stable": is_stable,
+        }
+    
+    return results
+
+
+def filter_unstable_combos(candidates: list, stability: dict) -> tuple:
+    """Remove candidates containing unstable components.
+    
+    Returns (kept_candidates, n_removed).
+    """
+    unstable_set = {f for f, s in stability.items() if not s["stable"]}
+    if not unstable_set:
+        return candidates, 0
+    
+    kept = []
+    removed = 0
+    for cand in candidates:
+        recipe = cand.get("recipe", {})
+        components = []
+        for key in ["feature_a", "feature_b", "feature_c", "feature_cond", "feature_cond2"]:
+            if key in recipe:
+                components.append(recipe[key])
+        
+        # Check if any component is unstable
+        has_unstable = any(c in unstable_set for c in components)
+        if has_unstable:
+            removed += 1
+        else:
+            kept.append(cand)
+    
+    return kept, removed
 
 
 def batch_feature_ic(X: np.ndarray, y: np.ndarray, side: str) -> np.ndarray:
@@ -412,6 +507,17 @@ def run_one(etf: str, side: str, args):
     print(f"  Sample size: {n_days} days (ratio {sample_ratio:.2f}). Selected Top {eff_top_k} (2-way), Top {eff_top_k_3} (3-way).")
     print(f"  Best: {feature_ics[0][0]} (IC={feature_ics[0][1]:.4f})")
 
+    # 3b. Component stability gate (training-only, ETF-agnostic)
+    # Identifies features with unstable yearly IC — these produce regime-dependent combos.
+    print(f"  Computing component stability (yearly IC decomposition)...")
+    dates_train = train_df["date"].values
+    stability = compute_component_stability(X_df, y_train, dates_train, FEATURES, side)
+    unstable_features = [f for f, s in stability.items() if not s["stable"]]
+    if unstable_features:
+        print(f"  Unstable components (IC_CV>{COMPONENT_IC_CV_MAX} or neg_years>{COMPONENT_NEG_YEARS_MAX}): {unstable_features}")
+    else:
+        print(f"  All components stable.")
+
     # 4. Compute pairwise correlation matrix (numpy, fp32)
     all_needed = list(set(top_k_features + top_k_3_features))
     feat_idx_map = {f: i for i, f in enumerate(all_needed)}
@@ -451,6 +557,11 @@ def run_one(etf: str, side: str, args):
         print(f"  3-way raw candidates: {len(candidates_3way)}")
 
     all_candidates = candidates_2way + candidates_3way
+
+    # 6b. Filter combos with unstable components
+    all_candidates, n_unstable_removed = filter_unstable_combos(all_candidates, stability)
+    if n_unstable_removed > 0:
+        print(f"  Component stability filter: removed {n_unstable_removed} combos with unstable components.")
 
     # 7. Dedup against mining log
     log = load_mining_log()

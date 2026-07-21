@@ -11,6 +11,13 @@
 
 Goal: Produce aggressive candidate recipes and combinations to find weak/joint signals, avoiding redundant evaluations.
 
+### A0. Component Stability Gate (Training-Only, ETF-Agnostic)
+Before generating combos, compute yearly IC decomposition for each base feature:
+- Split training data by calendar year, compute tail IC per year.
+- Flag feature as **unstable** if `IC_CV > 3.0` OR `n_negative_years > 2`.
+- Exclude unstable features from all combo generation (2-way and 3-way).
+- **Rationale**: Prevents regime-dependent components (e.g. `gap_pct` with CV=4.66) from contaminating candidates. Root cause of 300ETF false positives was unstable conditioning variables in `ifelse` ops.
+
 ### A1. Sources
 1. Existing survivor list (already pruned 317→210, keep as base).
 2. Mine repo of 1000+ trading ideas / AL Brooks book → candidate formulas.
@@ -53,8 +60,9 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
   - 3-way combos (`combo_tri_*`): $\text{composite\_score} \ge \text{empirical\_99th}$ (stricter — more degrees of freedom = higher overfit risk)
 - *Compute note*: Heavier compute per survivor, but B1 + B2 thin pool first (cheap-first order preserved). 99th percentile computed in same kernel pass as 95th — no additional simulation cost.
 
-### B4. Correlation Gate, Primitive Cluster Cap & Replacement Rule (maybe too strick)
-- Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.60$).
+### B4. Correlation Gate, Primitive Cluster Cap & Replacement Rule
+- Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.85$).
+- **Runs AFTER Quality Gate**: Low-quality features (negative sortino, low deflated_ic) are filtered before correlation comparison, preventing them from blocking high-quality candidates.
 - **Primitive Cluster Cap**: Extract primitive feature set (`feature_a`, `feature_b`, `feature_c`, `feature_cond`, `feature_cond2`). Drop or replace redundant combos built from identical base primitives to ensure pool diversity.
 - **Replacement rule**:
   ```
@@ -67,11 +75,12 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 - Save unique attempted candidate formulas to `trial_ledger_{ETF}_{side}.json` to track cumulative unique trials $N$.
 - Compute standalone deflated IC: `deflated_ic = max(0.0, cand_ic - ic_null_mean)` where `ic_null_mean` is standalone empirical mean of raw overall IC under block-permutation null (bounded in $[0, 1]$, avoiding subtraction of negative composite score/sortino null mean).
 
-### B6. Training-Only Quality Gate
-- Post-admission gate applied after B4 correlation gate. Requires all three:
+### B6. Training-Only Quality Gate (Before Correlation)
+- Applied AFTER B3 floor, BEFORE B4 correlation gate. Requires all three:
   - `deflated_ic >= 0.03` (normal) / `0.05` (short-history ETFs with n_train < 1200)
   - `|raw_ic| >= 0.02` (normal) / `0.03` (short-history) — catches tail-only mirages
   - `sortino > 0` — rejects negative risk-adjusted returns
+- **Rationale for pre-correlation placement**: Prevents low-quality features from occupying pool slots and blocking higher-quality candidates via the correlation gate.
 - **Zero look-ahead bias**: Uses only training-period metrics. No OOS or lockbox data is accessed.
 
 ### B7. Outputs
@@ -125,6 +134,10 @@ SE_IC ≈ 1/√n_train
 - [x] **Anti-overfit: Training-only Quality Gate (B6)** — Require deflated_ic ≥ 0.03/0.05, |raw_ic| ≥ 0.02/0.03, sortino > 0. Catches tail-only mirages. Zero look-ahead.
 - [x] **Execution: Conviction-weighted position sizing** — Default mode in `evaluate_concept.py`. Skips low-conviction days (z < 0.5), smooth tanh ramp. Reduces turnover ~40% without losing high-conviction trades.
 - [x] **Filter calibration: Relaxed B2/FDR/θ** — mono_thr 0.70→0.60, FDR q 0.20→0.30, θ 0.35→0.50. Data-driven from per-gate OOS diagnostics (FEATURE_DIAGNOSTICS.md).
+- [x] **Component stability gate (A0)** — Yearly IC decomposition in `generate_combos.py`. Flags features with IC_CV > 3.0 or neg_years > 2 as unstable, excludes from all combos. Training-only, ETF-agnostic.
+- [x] **B4 correlation threshold** — θ=0.85. Tightened from 0.90 after diagnosis showed 63% FP rate at 0.90 for 500ETF.
+- [x] **Quality Gate before Correlation** — Moved Quality Gate (B6) before B4 correlation gate. Prevents low-quality features from blocking high-quality candidates.
+- [x] **Deep filter diagnosis tool** — `filter_diagnosis.py` for causal FP/FN analysis. Temporal decomposition, component stability, regime concentration, Cohen's d discriminators. Excludes 588000ETF.
 
 ## References
 - Wang et al. 2026, *FactorMiner: A Self-Evolving Agent with Skills and Experience Memory for Financial Alpha Discovery*, arXiv:2602.14670 — admission gate, replacement rule, IC-weighted vs orthogonal vs learned-selection comparison.

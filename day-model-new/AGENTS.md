@@ -42,6 +42,10 @@ python3 day-model-new/compile_report.py -e 588000ETF -s long -o custom_report.md
 
 # 4. Run filter effectiveness diagnostics (standalone & LOO feature analysis + gate evaluation)
 python3 day-model-new/analyze_admitted_features.py
+
+# 5. Run deep filter diagnosis (FP/FN causal analysis, training-only discriminators)
+# Excludes 588000ETF (insufficient history). Uses lockbox as ground truth for labeling only.
+python3 day-model-new/filter_diagnosis.py
 ```
 
 ## Architecture
@@ -53,6 +57,7 @@ python3 day-model-new/analyze_admitted_features.py
   - `admitted_pools.py` acts as the central, version-controlled Python registry of approved feature pools (and recipes) across all ETFs and sides, protecting them from volatile `data/` overwrites and providing a quick import for downstream strategies.
 - **Aggressive Feature Mining** (`mining/`):
   - `generate_combos.py` exhaustively combines top-performing indicators (default: top-50 for 2-way, top-25 for 3-way) within correlation sweet-spots.
+  - **Component Stability Gate** (training-only, ETF-agnostic): Before candidate generation, computes yearly IC decomposition for each base feature. Features with `IC_CV > 3.0` OR `n_negative_years > 2` are flagged unstable and excluded from all combos. Prevents regime-dependent components (e.g. `gap_pct`) from contaminating candidates.
   - **2-way ops (11)**: `min`, `max`, `diff`, `ratio`, `ifelse`, `mean`, `product`, `abs_diff`, `rank_min`, `rank_max`, `clamp_diff`. Correlation bounds: [0.15, 0.85].
   - **3-way ops (5)**: `tri_mean`, `tri_min`, `tri_max`, `tri_median`, `tri_ifelse`. Correlation bounds: [0.10, 0.90] (relaxed for broader exploration).
   - `recipe_utils.py` handles on-the-fly execution of combinations. Aligns scale via standardization, isolates parameters to training sets to prevent lookahead leakage.
@@ -67,10 +72,10 @@ python3 day-model-new/analyze_admitted_features.py
 | 3 | Temporal Validation | recent 30% IC > 0 | Reject decayed signals |
 | 4 | BH-FDR | q=0.30, 5000 block-shuffled sims | Multiple-testing correction |
 | 5 | B3 Composite Floor | 95th-pct (2-way) / 99th-pct (3-way) | Beat empirical null |
-| 6 | B4 Correlation Gate | θ=0.60, replacement rule (IC≥1.3×) | Reject redundancy |
-| 7 | Quality Gate | deflated_ic≥0.03/0.05, raw_ic≥0.02/0.03, sortino>0 | Kill tail-only mirages |
+| 6 | Quality Gate | deflated_ic≥0.03/0.05, raw_ic≥0.02/0.03, sortino>0 | Kill tail-only mirages |
+| 7 | B4 Correlation Gate | θ=0.85, replacement rule (IC≥1.3×) | Reject redundancy |
 
-- **Quality Gate (Step 8)**: Training-only post-admission gate. Stricter thresholds for short-history ETFs (n_train < 1200, i.e. 588000ETF). Catches features with high tail IC but near-zero full Spearman (tail-only mirages) and features with negative risk-adjusted returns. **No OOS/lockbox data is used — zero look-ahead bias.**
+- **Quality Gate (Step 6)**: Training-only gate applied BEFORE correlation gate. Stricter thresholds for short-history ETFs (n_train < 1200, i.e. 588000ETF). Catches features with high tail IC but near-zero full Spearman (tail-only mirages) and features with negative risk-adjusted returns. Running before B4 prevents low-quality features from blocking high-quality ones in correlation comparison. **No OOS/lockbox data is used — zero look-ahead bias.**
 - **Cumulative Ledger**: Saves unique tried feature names to `data/trial_ledger_{ETF}_{side}{suffix}.json` to track overall unique trials $N$ across sequential mining rounds (prevents under-deflation). Seeds from existing attempts JSON logs.
 - **B3 Composite Score**: $0.4 \times \text{RollingMono} + 0.3 \times \text{Sortino} + 0.2 \times |\text{Tail IC}| + 0.1 \times |\text{Overall IC}|$. Deflation haircut: `cand_ic - ic_null_mean` using standalone raw IC null mean.
 - **VIF Safety Net & Leakage Prevention**: Dropped collinear features if VIF > 5.0 in `evaluate_concept.py`. Stats prebuilding includes `feature_c` and `feature_cond2` for 3-way recipes (`tri_*`), preventing OOS lookahead leakage.
@@ -81,3 +86,4 @@ python3 day-model-new/analyze_admitted_features.py
 - **Raw vs Cost Sharpe Reporting**: `simulate_returns` computes both raw Sharpe (pre-cost) and cost-adjusted Sharpe. `compile_report.py` displays both side-by-side to distinguish raw signal quality from transaction cost drag.
 - **Parallel baseline runner**: Optimized using `joblib.Parallel` and `sys.executable` for safe execution.
 - **Filter Effectiveness Diagnostics** (`analyze_admitted_features.py`): Evaluates each gate's false positive/negative rate against lockbox performance (read-only, never fed back into selection). Outputs: per-gate FN rate, threshold sensitivity sweep (mono_thr × ir_thr grid), IC decay curves (rolling 126-day IC across train→OOS→lockbox), and data-driven filter tuning recommendations. Results saved to `data/filter_effectiveness.json` and appended to `FEATURE_DIAGNOSTICS.md`.
+- **Deep Filter Diagnosis** (`filter_diagnosis.py`): Causal analysis of false acceptance/rejection. Computes temporal IC decomposition, component stability, regime concentration, and training-only discriminators (Cohen's d) to identify WHY filters fail. Excludes 588000ETF (insufficient history). Outputs `FILTER_DIAGNOSIS.md` and `data/filter_diagnosis.json`. Lockbox used for labeling only — never fed back into selection logic.

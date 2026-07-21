@@ -11801,5 +11801,21 @@
   "combo_tri_ifelse__vix__atr14_norm__margin_short_ratio__margin_lever_ratio__margin_balance",
   "combo_tri_ifelse__vix__atr14_norm__margin_short_ratio__margin_lever_ratio__mfi14",
   "combo_tri_ifelse__vix__atr14_norm__margin_short_ratio__margin_balance__mfi14",
-  "combo_tri_ifelse__vix__atr14_norm__margin_lever_ratio__margin_balance__mfi14"
+  "combo_tri_ifelse__vix__atr14_norm__margin_lever_ratio__margin_balance__mfi14",
+  "combo_min__growth_momentum_ratio__vix",
+  "combo_max__growth_momentum_ratio__vix",
+  "combo_diff__growth_momentum_ratio__vix",
+  "combo_mean__growth_momentum_ratio__vix",
+  "combo_product__growth_momentum_ratio__vix",
+  "combo_abs_diff__growth_momentum_ratio__vix",
+  "combo_rank_min__growth_momentum_ratio__vix",
+  "combo_rank_max__growth_momentum_ratio__vix",
+  "combo_clamp_diff__growth_momentum_ratio__vix",
+  "combo_ifelse__vix__cci14__stoch_d",
+  "combo_ifelse__vix__total_path_length__stoch_d",
+  "combo_ifelse__vix__short_sell_cover_spread__stoch_d",
+  "combo_ifelse__vix__northbound_net__stoch_d",
+  "combo_ifelse__vix__growth_momentum_ratio__stoch_d",
+  "combo_ifelse__vix__yesterday_lunch_gap__stoch_d",
+  "combo_ifelse__vix__max_down_ret__stoch_d"
 ]

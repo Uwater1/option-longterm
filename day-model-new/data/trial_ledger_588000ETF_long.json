@@ -7475,5 +7475,18 @@
   "combo_tri_mean__sma_distance_60d__bar_vol_5__yesterday_day_close_pos",
   "combo_tri_min__sma_distance_60d__bar_vol_5__yesterday_day_close_pos",
   "combo_tri_max__sma_distance_60d__bar_vol_5__yesterday_day_close_pos",
-  "combo_tri_median__sma_distance_60d__bar_vol_5__yesterday_day_close_pos"
+  "combo_tri_median__sma_distance_60d__bar_vol_5__yesterday_day_close_pos",
+  "combo_min__vix_rolling_percentile_60d__vol5",
+  "combo_max__vix_rolling_percentile_60d__vol5",
+  "combo_diff__vix_rolling_percentile_60d__vol5",
+  "combo_mean__vix_rolling_percentile_60d__vol5",
+  "combo_product__vix_rolling_percentile_60d__vol5",
+  "combo_abs_diff__vix_rolling_percentile_60d__vol5",
+  "combo_rank_min__vix_rolling_percentile_60d__vol5",
+  "combo_rank_max__vix_rolling_percentile_60d__vol5",
+  "combo_clamp_diff__vix_rolling_percentile_60d__vol5",
+  "combo_tri_mean__vix_rolling_percentile_60d__vol5__yesterday_day_realized_vol",
+  "combo_tri_min__vix_rolling_percentile_60d__vol5__yesterday_day_realized_vol",
+  "combo_tri_max__vix_rolling_percentile_60d__vol5__yesterday_day_realized_vol",
+  "combo_tri_median__vix_rolling_percentile_60d__vol5__yesterday_day_realized_vol"
 ]

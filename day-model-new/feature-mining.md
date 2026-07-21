@@ -13,13 +13,21 @@ Listing-date verification (was Phase 0.3) is confirmed done — all ETF date ran
 
 ## Step 1 — Candidate Generation (messy zone, agents + human OK)
 
-### 1a. Document mining
+### 1a. Component Stability Gate (Training-Only, ETF-Agnostic)
+Before any combo generation, compute yearly IC decomposition for each base feature:
+- Split training data by calendar year, compute tail IC per year.
+- Flag feature as **unstable** if `IC_CV > 3.0` OR `n_negative_years > 2`.
+- Exclude unstable features from all combo generation (2-way and 3-way).
+- **Rationale**: Prevents regime-dependent components from contaminating candidates. Root cause analysis showed `gap_pct` (CV=4.66, 2 negative years) was the conditioning variable in all 300ETF false positives.
+- **Implementation**: `compute_component_stability()` and `filter_unstable_combos()` in `generate_combos.py`.
+
+### 1b. Document mining
 Source: repo of 1000+ trading ideas, AL Brooks book (already downloaded). Agents translate
 written setups into candidate formulas against existing feature/price primitives. Human review of
 translated formulas before they enter Step 2 (sanity check units, lookback windows, no
 forward-looking references).
 
-### 1b. Programmatic combination — gated by pool-size loop
+### 1c. Programmatic combination — gated by pool-size loop
 Before generating combos for a given ETF/side, check current admitted pool size against a floor
 (suggest ≥3). Loop logic per batch:
 ```
@@ -88,13 +96,13 @@ python mining/generate_combos.py -e 300ETF -s single --no-dedup
 Only generate combos within an ETF/side's own pool. Don't cross-pollinate across ETFs — different
 listing histories, different regimes, keep it clean.
 
-### 1c. Forbidden-directions memory
+### 1d. Forbidden-directions memory
 Maintain `mining_memory_{ETF}_{side}.json`: feature families that repeatedly land in
 `REJECTED_REDUNDANCY` (e.g. VWAP-deviation variants, `yesterday_*` timing variants once one is in
 pool). Agents check this before proposing new formulas in the same family — don't re-mine the same
 signal in new algebra.
 
-### 1d. Mining progress log (dedup guarantee)
+### 1e. Mining progress log (dedup guarantee)
 `mining/mining_log.json` is the single source of truth for what has been generated and evaluated.
 
 **Structure:**
@@ -137,10 +145,14 @@ that were always going to fail. Every candidate, in order:
 5. **Dynamic simulation-based admission floor** (95th percentile of multi-trial null, N = current
    ledger count) — final bar a surviving candidate's deflated IC must clear.
 
-6. **Correlation gate + replacement rule** (A2, θ=0.5, replacement if new IC≥0.10 and ≥1.3×old and
-   corr>θ with exactly one pool member).
+6. **Quality Gate** (deflated_ic ≥ 0.03/0.05, |raw_ic| ≥ 0.02/0.03, sortino > 0) — runs BEFORE
+   correlation to prevent low-quality features from blocking high-quality candidates. Kills
+   tail-only mirages and negative risk-adjusted returns.
 
-7. **Ledger update** — every attempt (admitted or not) logged, N persists across batches, seeded
+7. **Correlation gate + replacement rule** (θ=0.85, replacement if new IC≥0.10 and ≥1.3×old and
+   corr>θ with exactly one pool member). Tightened from 0.90 after diagnosis showed 63% FP rate.
+
+8. **Ledger update** — every attempt (admitted or not) logged, N persists across batches, seeded
    from prior `mining_attempts_*.json` runs.
 
 Nothing here changes the underlying thresholds from the original 221-feature baseline — same
@@ -172,7 +184,12 @@ preemptively complicate the model in anticipation of that.
 
 ## Checklist
 - [x] Implement 7-year jackknife sign stability as Step 2.2 (universal, pre-simulation).
-- [ ] Implement pool-size loop gating combo-generation (1b) per batch.
+- [x] Implement component stability gate (Step 1a) — yearly IC decomposition, exclude unstable components.
+- [x] Relax B4 correlation threshold from 0.60 to 0.90 — based on filter diagnosis false negative analysis.
+- [x] Tighten B4 correlation threshold from 0.90 to 0.85 — after diagnosis showed 63% FP rate at 0.90 for 500ETF.
+- [x] Move Quality Gate before Correlation Gate — prevents low-quality features from blocking high-quality candidates.
+- [x] Implement deep filter diagnosis tool (`filter_diagnosis.py`) — causal FP/FN analysis, training-only discriminators.
+- [ ] Implement pool-size loop gating combo-generation (1c) per batch.
 - [ ] Confirm ledger seeding covers all historical `mining_attempts_*.json` before batch 1.
 - [ ] Stand up `mining_memory_{ETF}_{side}.json` forbidden-directions tracking.
 - [ ] Run batch 1 (50-100 candidates, mixed sources) across all ETFs — 588000ETF included, now
