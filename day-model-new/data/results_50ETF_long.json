@@ -3,76 +3,74 @@
   "side": "long",
   "early": false,
   "k": 1.0,
-  "features_selected": [
-    "combo_diff__yearly_low_distance__yesterday_wavetrend_osc"
-  ],
+  "features_selected": [],
   "training_metrics": {
-    "overall_ic": 0.05515740980144065,
+    "overall_ic": 0.0,
     "overall_ic_ci": [
-      0.011560481504366917,
-      0.09871418388732936
+      0.0,
+      0.0
     ],
-    "tail_ic": 0.21020037034891131,
+    "tail_ic": 0.0,
     "tail_ic_ci": [
-      0.006757342085456232,
-      0.31918402978809635
+      0.0,
+      0.0
     ],
-    "monotonicity": 0.4303030303030303,
+    "monotonicity": 0.0,
     "monotonicity_ci": [
-      -0.16363636363636364,
-      0.7333333333333333
+      0.0,
+      0.0
     ],
-    "ann_ret": -0.005988274988967131,
-    "raw_ann_ret": 0.009038117972909704,
-    "raw_sharpe": 0.16881944508107996,
-    "sharpe": -0.11101587984515884,
-    "sortino": -0.16418444986356712,
-    "max_dd": 0.2045100238070689
+    "ann_ret": 0.0,
+    "raw_ann_ret": 0.0,
+    "raw_sharpe": 0.0,
+    "sharpe": 0.0,
+    "sortino": 0.0,
+    "max_dd": 0.0
   },
   "oos_metrics": {
-    "overall_ic": 0.04501981351070788,
+    "overall_ic": 0.0,
     "overall_ic_ci": [
-      -0.01454524158055836,
-      0.10538775170390778
+      0.0,
+      0.0
     ],
-    "tail_ic": -0.046859770965534606,
+    "tail_ic": 0.0,
     "tail_ic_ci": [
-      -0.20504482200427135,
-      0.13521145919769292
+      0.0,
+      0.0
     ],
-    "monotonicity": 0.38181818181818183,
+    "monotonicity": 0.0,
     "monotonicity_ci": [
-      -0.13969696969696968,
-      0.6848484848484848
+      0.0,
+      0.0
     ],
-    "ann_ret": -0.007731055336468137,
-    "raw_ann_ret": 0.006268944663531864,
-    "raw_sharpe": 0.18224011399311865,
-    "sharpe": -0.22285151199818612,
-    "sortino": -0.3150169700924599,
-    "max_dd": 0.08210437531855158
+    "ann_ret": 0.0,
+    "raw_ann_ret": 0.0,
+    "raw_sharpe": 0.0,
+    "sharpe": 0.0,
+    "sortino": 0.0,
+    "max_dd": 0.0
   },
   "lockbox_metrics": {
-    "overall_ic": 0.08355717379040582,
+    "overall_ic": 0.0,
     "overall_ic_ci": [
-      0.024455891223346307,
-      0.15644499742883186
+      0.0,
+      0.0
     ],
-    "tail_ic": -0.06769187225812538,
+    "tail_ic": 0.0,
     "tail_ic_ci": [
-      -0.2274640313222322,
-      0.17953960092457188
+      0.0,
+      0.0
     ],
-    "monotonicity": 0.6848484848484848,
+    "monotonicity": 0.0,
     "monotonicity_ci": [
-      0.09060606060606062,
-      0.8545454545454545
+      0.0,
+      0.0
     ],
-    "ann_ret": 0.0013465576323504677,
-    "raw_ann_ret": 0.0102269735768912,
-    "raw_sharpe": 0.2720930768140937,
-    "sharpe": 0.03549457353528225,
-    "sortino": 0.05006104976854734,
-    "max_dd": 0.04432639293416213
+    "ann_ret": 0.0,
+    "raw_ann_ret": 0.0,
+    "raw_sharpe": 0.0,
+    "sharpe": 0.0,
+    "sortino": 0.0,
+    "max_dd": 0.0
   }
 }

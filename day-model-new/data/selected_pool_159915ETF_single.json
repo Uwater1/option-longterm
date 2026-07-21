@@ -1,16 +1,127 @@
 [
   {
-    "feature_name": "combo_tri_mean__max_up_ret__bar_ret_0__gap_pct",
+    "feature_name": "combo_tri_min__max_up_ret__bar_ret_0__gap_pct",
     "sign": 1,
-    "overall_ic": 0.26081204414367676,
-    "deflated_ic": 0.25886935717264836,
-    "ic_ir": 0.6199195413327406,
-    "monotonicity": 0.7208211143695015,
+    "overall_ic": 0.27143028378486633,
+    "deflated_ic": 0.2685922679100712,
+    "ic_ir": 0.530049417166964,
+    "monotonicity": 0.6656891495601173,
     "recipe": {
-      "op": "tri_mean",
+      "op": "tri_min",
       "feature_a": "max_up_ret",
       "feature_b": "bar_ret_0",
       "feature_c": "gap_pct"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__bb_width__yesterday_early_momentum__bar_body_rng_0",
+    "sign": 1,
+    "overall_ic": 0.26992592215538025,
+    "deflated_ic": 0.2681580204531563,
+    "ic_ir": 0.45220723481176983,
+    "monotonicity": 0.6703812316715543,
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "bb_width",
+      "feature_a": "yesterday_early_momentum",
+      "feature_b": "bar_body_rng_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__max_up_ret__max_down_ret__yearly_high_distance",
+    "sign": 1,
+    "overall_ic": 0.2462683767080307,
+    "deflated_ic": 0.24548269738609826,
+    "ic_ir": 0.41183268739983164,
+    "monotonicity": 0.6697947214076246,
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "max_up_ret",
+      "feature_b": "max_down_ret",
+      "feature_c": "yearly_high_distance"
+    }
+  },
+  {
+    "feature_name": "combo_tri_ifelse__gap_pct__bb_width__bar_body_rng_0__capital_sell_volume__margin_buy_repayment_spread",
+    "sign": 1,
+    "overall_ic": 0.23728513717651367,
+    "deflated_ic": 0.23510660991838064,
+    "ic_ir": 0.42750826321807855,
+    "monotonicity": 0.6416422287390029,
+    "recipe": {
+      "op": "tri_ifelse",
+      "feature_cond": "gap_pct",
+      "feature_cond2": "bb_width",
+      "feature_a": "bar_body_rng_0",
+      "feature_b": "capital_sell_volume",
+      "feature_c": "margin_buy_repayment_spread"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__max_up_ret__yesterday_early_momentum",
+    "sign": 1,
+    "overall_ic": 0.21904711425304413,
+    "deflated_ic": 0.21816965719238318,
+    "ic_ir": 0.4880068183920705,
+    "monotonicity": 0.6991202346041056,
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "max_up_ret",
+      "feature_b": "yesterday_early_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__max_up_ret__capital_sell_volume",
+    "sign": 1,
+    "overall_ic": 0.2037474811077118,
+    "deflated_ic": 0.20279117642258784,
+    "ic_ir": 0.4723562301512197,
+    "monotonicity": 0.6609970674486804,
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "max_up_ret",
+      "feature_b": "capital_sell_volume"
+    }
+  },
+  {
+    "feature_name": "combo_max__max_up_ret__vol_ratio_10_60",
+    "sign": 1,
+    "overall_ic": 0.20315580070018768,
+    "deflated_ic": 0.20142950423267655,
+    "ic_ir": 0.6927466394758643,
+    "monotonicity": 0.7782991202346041,
+    "recipe": {
+      "op": "max",
+      "feature_a": "max_up_ret",
+      "feature_b": "vol_ratio_10_60"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__max_up_ret__bar_vol_5",
+    "sign": 1,
+    "overall_ic": 0.18848206102848053,
+    "deflated_ic": 0.18860826707852424,
+    "ic_ir": 0.5958251783507345,
+    "monotonicity": 0.6956011730205278,
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "max_up_ret",
+      "feature_b": "bar_vol_5"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__early_range__yesterday_day_vwap_dev",
+    "sign": 1,
+    "overall_ic": 0.182506263256073,
+    "deflated_ic": 0.18260986915193297,
+    "ic_ir": 0.6161636891712773,
+    "monotonicity": 0.7120234604105572,
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "early_range",
+      "feature_b": "yesterday_day_vwap_dev"
     }
   }
 ]

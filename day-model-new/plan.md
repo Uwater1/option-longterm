@@ -35,10 +35,10 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 ### B2. Rolling Guard & FDR Pre-filter
 1. **Rolling Guard (Pre-filter check)**: 90-calendar-date rolling tail IC evaluated instantly on pre-computed values. Drop if monotonicity < `mono_thr` or `IC_IR` < `ir_thr`:
    - `long`/`short`: `mono_thr = 0.55`, `ir_thr = 0.15`
-   - `single`: `mono_thr = 0.70`, `ir_thr = 0.30`
+   - `single`: `mono_thr = 0.60`, `ir_thr = 0.30`
    - **Pass-forward cached values**: Rolling mono average from this step is cached and passed forward to B3, not just its pass/fail verdict (uses locked `sign` from B1).
    - **Cheap-first ordering**: Executed before simulation to thin pool by ~98% instantly.
-2. **Benjamini-Yekutieli (BY-FDR) pre-filter**: Reject if empirical $p$-value fails Benjamini-Yekutieli FDR at $q=0.20$ (robust under candidate correlation by adjusting threshold with harmonic constant $c(m) = \sum_{i=1}^m \frac{1}{i}$, via 5,000-trial single-feature block-shuffled simulation on compact survivor matrix `X_survivors`, cached per ETF/side).
+2. **Benjamini-Yekutieli (BY-FDR) pre-filter**: Reject if empirical $p$-value fails Benjamini-Yekutieli FDR at $q=0.30$ (robust under candidate correlation by adjusting threshold with harmonic constant $c(m) = \sum_{i=1}^m \frac{1}{i}$, via 5,000-trial single-feature block-shuffled simulation on compact survivor matrix `X_survivors`, cached per ETF/side).
    - **Full search-space correction**: Uses `m_total = len(eval_results)` (total candidates before any filtering) for the harmonic correction and rank denominator, properly accounting for pre-filter selection bias. This does NOT increase computation — FDR still runs only on survivors.
 
 ### B3. Admission Floor (Composite score gate)
@@ -54,7 +54,7 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 - *Compute note*: Heavier compute per survivor, but B1 + B2 thin pool first (cheap-first order preserved). 99th percentile computed in same kernel pass as 95th — no additional simulation cost.
 
 ### B4. Correlation Gate, Primitive Cluster Cap & Replacement Rule
-- Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.35$).
+- Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.50$).
 - **Primitive Cluster Cap**: Extract primitive feature set (`feature_a`, `feature_b`, `feature_c`, `feature_cond`, `feature_cond2`). Drop or replace redundant combos built from identical base primitives to ensure pool diversity.
 - **Replacement rule**:
   ```
@@ -67,7 +67,14 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 - Save unique attempted candidate formulas to `trial_ledger_{ETF}_{side}.json` to track cumulative unique trials $N$.
 - Compute standalone deflated IC: `deflated_ic = max(0.0, cand_ic - ic_null_mean)` where `ic_null_mean` is standalone empirical mean of raw overall IC under block-permutation null (bounded in $[0, 1]$, avoiding subtraction of negative composite score/sortino null mean).
 
-### B6. Outputs
+### B6. Training-Only Quality Gate
+- Post-admission gate applied after B4 correlation gate. Requires all three:
+  - `deflated_ic >= 0.03` (normal) / `0.05` (short-history ETFs with n_train < 1200)
+  - `|raw_ic| >= 0.02` (normal) / `0.03` (short-history) — catches tail-only mirages
+  - `sortino > 0` — rejects negative risk-adjusted returns
+- **Zero look-ahead bias**: Uses only training-period metrics. No OOS or lockbox data is accessed.
+
+### B7. Outputs
 - Version-controlled admitted pools registry in [admitted_pools.py](file:///home/hallo/Documents/option-longterm/day-model-new/admitted_pools.py).
 - Detailed log of attempts in `data/mining_attempts_{ETF}_{side}.json`.
 

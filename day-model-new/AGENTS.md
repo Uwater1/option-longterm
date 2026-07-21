@@ -39,7 +39,9 @@ python3 day-model-new/run_baseline.py --max-parallel 2 -e 300ETF
 # Supports -e/-s filters and custom -o output path
 python3 day-model-new/compile_report.py
 python3 day-model-new/compile_report.py -e 588000ETF -s long -o custom_report.md
-python3 day-model-new/analyze_admitted_features.py # Run standalone & LOO feature diagnostics
+
+# 4. Run filter effectiveness diagnostics (standalone & LOO feature analysis + gate evaluation)
+python3 day-model-new/analyze_admitted_features.py
 ```
 
 ## Architecture
@@ -55,14 +57,27 @@ python3 day-model-new/analyze_admitted_features.py # Run standalone & LOO featur
   - **3-way ops (5)**: `tri_mean`, `tri_min`, `tri_max`, `tri_median`, `tri_ifelse`. Correlation bounds: [0.10, 0.90] (relaxed for broader exploration).
   - `recipe_utils.py` handles on-the-fly execution of combinations. Aligns scale via standardization, isolates parameters to training sets to prevent lookahead leakage.
   - **Mining Log** (`mining_log.json`): Persistent dedup guarantee — tracks all generated candidate names per ETF/side. Re-runs emit only the delta (new ops/combos), never duplicates. Batch summaries appended by `select_features.py`.
-- **BY-FDR Pre-Filter**: Runs 5,000 single-trial empirical null simulations (block-shuffled target, block size 10) to compute empirical p-values. Filters via Benjamini-Yekutieli (BY-FDR) at $q = 0.20$ (robust to candidate correlation).
-- **3-Fold Expanding Walk-Forward Guard**: `expanding_wf_sign_check` tests IC sign across 40%, 70%, 100% training folds. Rejects features whose IC sign flips or degrades to negative in recent train periods.
+
+### Feature Selection Pipeline (8 Gates, All Training-Only)
+
+| # | Gate | Key Parameters | Purpose |
+|---|------|---------------|---------|
+| 1 | Split-Half Sign Stability | 3-fold expanding WF (40/70/100%) | Reject sign-flipping features |
+| 2 | B2 Rolling Guard | mono_thr=0.60 (single) / 0.55 (L/S), ir_thr=0.30 / 0.15 | Reject unstable rolling IC |
+| 3 | Absolute Sign Check | mean(tail returns) > 0 | Require profitable tail buckets |
+| 4 | Temporal Validation | recent 30% IC > 0 | Reject decayed signals |
+| 5 | BH-FDR | q=0.30, 5000 block-shuffled sims | Multiple-testing correction |
+| 6 | B3 Composite Floor | 95th-pct (2-way) / 99th-pct (3-way) | Beat empirical null |
+| 7 | B4 Correlation Gate | θ=0.50, replacement rule (IC≥1.3×) | Reject redundancy |
+| 8 | Quality Gate | deflated_ic≥0.03/0.05, raw_ic≥0.02/0.03, sortino>0 | Kill tail-only mirages |
+
+- **Quality Gate (Step 8)**: Training-only post-admission gate. Stricter thresholds for short-history ETFs (n_train < 1200, i.e. 588000ETF). Catches features with high tail IC but near-zero full Spearman (tail-only mirages) and features with negative risk-adjusted returns. **No OOS/lockbox data is used — zero look-ahead bias.**
 - **Cumulative Ledger**: Saves unique tried feature names to `data/trial_ledger_{ETF}_{side}{suffix}.json` to track overall unique trials $N$ across sequential mining rounds (prevents under-deflation). Seeds from existing attempts JSON logs.
-- **B3 Composite Score Admission Floor**: Runs 500 multi-trial block-shuffled target simulations per candidate on full composite score ($0.4 \times \text{RollingMono} + 0.3 \times \text{Sortino} + 0.2 \times |\text{Tail IC}| + 0.1 \times |\text{Overall IC}|$). Set 95th-percentile composite score as admission floor. Deflation haircut: `cand_ic - ic_null_mean` using standalone raw IC null mean.
+- **B3 Composite Score**: $0.4 \times \text{RollingMono} + 0.3 \times \text{Sortino} + 0.2 \times |\text{Tail IC}| + 0.1 \times |\text{Overall IC}|$. Deflation haircut: `cand_ic - ic_null_mean` using standalone raw IC null mean.
 - **VIF Safety Net & Leakage Prevention**: Dropped collinear features if VIF > 5.0 in `evaluate_concept.py`. Stats prebuilding includes `feature_c` and `feature_cond2` for 3-way recipes (`tri_*`), preventing OOS lookahead leakage.
 - **Sample-Size Scaled Mining**: `generate_combos.py` scales `top_k` / `top_k_3` proportionally to training sample size relative to ~3400 trading day baseline.
 - **Z-Score Blending**: IC-weighted combination on standardized features (`weights = max(0.0, deflated_ic)**k`).
-- **Absolute-Sign Kill Switch**: `select_features.py` rejects candidate features where `mean(y_true[long_idx]) <= 0` or `mean(-y_true[short_idx]) <= 0` on training set (`REJECTED_ABSOLUTE_SIGN`), eliminating false signals with negative return expectation under market drift.
 - **Per-Entry Transaction Cost**: `simulate_returns` computes 8 bps friction per position state transition (`np.abs(pos - pos_prev) * 0.0008`), charging per-entry/turnover event rather than flat-fee per active day.
 - **Raw vs Cost Sharpe Reporting**: `simulate_returns` computes both raw Sharpe (pre-cost) and cost-adjusted Sharpe. `compile_report.py` displays both side-by-side to distinguish raw signal quality from transaction cost drag.
 - **Parallel baseline runner**: Optimized using `joblib.Parallel` and `sys.executable` for safe execution.
+- **Filter Effectiveness Diagnostics** (`analyze_admitted_features.py`): Evaluates each gate's false positive/negative rate against lockbox performance (read-only, never fed back into selection). Outputs: per-gate FN rate, threshold sensitivity sweep (mono_thr × ir_thr grid), IC decay curves (rolling 126-day IC across train→OOS→lockbox), and data-driven filter tuning recommendations. Results saved to `data/filter_effectiveness.json` and appended to `FEATURE_DIAGNOSTICS.md`.

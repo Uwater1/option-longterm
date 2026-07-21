@@ -32,7 +32,7 @@ sys.path.append(str(HERE / "mining"))
 from build_features import FEATURES
 from mining.recipe_utils import simulate_returns
 
-FDR_THRESHOLD = 0.20
+FDR_THRESHOLD = 0.30
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
@@ -425,7 +425,7 @@ def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, win
     monotonicity = float(np.mean(rolling_tail_ics > 0))
     
     # Check B2 Rolling Guard thresholds
-    mono_thr = 0.55 if side in ["long", "short"] else 0.70
+    mono_thr = 0.55 if side in ["long", "short"] else 0.60
     ir_thr = 0.15 if side in ["long", "short"] else 0.30
     passes_guard = (monotonicity >= mono_thr) and (ic_ir >= ir_thr)
     
@@ -851,7 +851,7 @@ def main():
     parser.add_argument("-e", "--etf", required=True, choices=["300ETF", "50ETF", "500ETF", "588000ETF", "159915ETF"])
     parser.add_argument("-s", "--side", required=True, choices=["single", "long", "short"])
     parser.add_argument("--tau", type=float, default=0.03, help="Overall IC threshold (obsolete, replaced by simulation gate)")
-    parser.add_argument("--theta", type=float, default=0.35, help="Max absolute correlation threshold")
+    parser.add_argument("--theta", type=float, default=0.50, help="Max absolute correlation threshold")
     parser.add_argument("--mono-thr", type=float, default=None, help="Rolling tail IC positivity threshold (monotonicity)")
     parser.add_argument("--ir-thr", type=float, default=None, help="Rolling tail IC Information Ratio threshold")
     parser.add_argument("--early", action="store_true", help="Use early window return dataset")
@@ -860,7 +860,7 @@ def main():
 
     # Dynamic defaults based on side
     if args.mono_thr is None:
-        args.mono_thr = 0.55 if args.side in ["long", "short"] else 0.70
+        args.mono_thr = 0.55 if args.side in ["long", "short"] else 0.60
     if args.ir_thr is None:
         args.ir_thr = 0.15 if args.side in ["long", "short"] else 0.30
 
@@ -1491,6 +1491,49 @@ def main():
                 })
 
     print(f"Final admitted pool size: {len(admitted_pool)}")
+
+    # 8. Training-Only Quality Gate: minimum deflated IC + positive Sortino + minimum raw IC
+    # Prevents admitting features with negligible real signal, negative risk-adjusted returns,
+    # or tail-only mirages (high tail IC but near-zero full Spearman).
+    # Stricter for short-history ETFs where statistical power is low.
+    n_train = len(y_train)
+    min_deflated_ic = 0.05 if n_train < 1200 else 0.03  # stricter for 588000ETF (~1000 rows)
+    min_raw_ic = 0.03 if n_train < 1200 else 0.02  # catch tail-only mirages
+    
+    quality_pool = []
+    quality_rejects = []
+    for cand in admitted_pool:
+        deflated = cand.get("deflated_ic", 0.0)
+        sortino = cand.get("sortino", 0.0)
+        raw_ic = abs(cand.get("raw_ic", 0.0))
+        
+        passes_quality = (deflated >= min_deflated_ic) and (sortino > 0.0) and (raw_ic >= min_raw_ic)
+        
+        if passes_quality:
+            quality_pool.append(cand)
+        else:
+            quality_rejects.append(cand)
+            attempts_log.append({
+                "feature_name": cand["feature_name"],
+                "sign": cand["sign"],
+                "raw_ic": cand["raw_ic"],
+                "overall_ic": cand["overall_ic"],
+                "deflated_ic": deflated,
+                "sortino": sortino,
+                "min_deflated_ic": min_deflated_ic,
+                "min_raw_ic": min_raw_ic,
+                "ic_ir": cand["ic_ir"],
+                "monotonicity": cand["monotonicity"],
+                "passes_rolling_guard": True,
+                "passes_fdr": True,
+                "verdict": "REJECTED_QUALITY_GATE"
+            })
+    
+    if quality_rejects:
+        print(f"Quality Gate (deflated_ic >= {min_deflated_ic}, raw_ic >= {min_raw_ic}, sortino > 0): rejected {len(quality_rejects)} / {len(admitted_pool)} candidates.")
+        admitted_pool = quality_pool
+    else:
+        print(f"Quality Gate: all {len(admitted_pool)} candidates passed.")
 
     # Free x_flipped arrays from non-admitted results to reclaim memory
     admitted_names_set = {item["feature_name"] for item in admitted_pool}

@@ -1,15 +1,15 @@
 [
   {
-    "feature_name": "combo_max__vol5__bar_rng_3",
+    "feature_name": "combo_max__bar_vol_4__vol5",
     "sign": 1,
-    "overall_ic": 0.3428058624267578,
-    "deflated_ic": 0.3431544252467308,
-    "ic_ir": 0.3000181477228422,
-    "monotonicity": 0.5913129318854886,
+    "overall_ic": 0.3152572810649872,
+    "deflated_ic": 0.31378726724160394,
+    "ic_ir": 0.27512724700174945,
+    "monotonicity": 0.5972359328726555,
     "recipe": {
       "op": "max",
-      "feature_a": "vol5",
-      "feature_b": "bar_rng_3"
+      "feature_a": "bar_vol_4",
+      "feature_b": "vol5"
     }
   }
 ]
