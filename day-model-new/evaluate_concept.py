@@ -304,7 +304,7 @@ def main():
     parser.add_argument("-k", type=float, default=1.0, help="Exponent for weighting overall IC")
     parser.add_argument("--early", action="store_true", help="Use early window return dataset")
     parser.add_argument("--position-mode", choices=["binary", "score_weighted", "conviction_weighted"], default="conviction_weighted", help="Position sizing mode (default: conviction_weighted)")
-    parser.add_argument("--conviction-z", type=float, default=0.5, help="Min z-score to trade in conviction_weighted mode (default: 0.5)")
+    parser.add_argument("--conviction-z", type=float, default=1.0, help="Min z-score to trade in conviction_weighted mode (default: 1.0)")
     parser.add_argument("--no-abs-sign", action="store_true", help="Disable absolute sign kill switch")
     args = parser.parse_args()
 

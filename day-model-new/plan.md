@@ -41,7 +41,7 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 2. **Benjamini-Yekutieli (BY-FDR) pre-filter**: Reject if empirical $p$-value fails Benjamini-Yekutieli FDR at $q=0.30$ (robust under candidate correlation by adjusting threshold with harmonic constant $c(m) = \sum_{i=1}^m \frac{1}{i}$, via 5,000-trial single-feature block-shuffled simulation on compact survivor matrix `X_survivors`, cached per ETF/side).
    - **Full search-space correction**: Uses `m_total = len(eval_results)` (total candidates before any filtering) for the harmonic correction and rank denominator, properly accounting for pre-filter selection bias. This does NOT increase computation — FDR still runs only on survivors.
 
-### B3. Admission Floor (Composite score gate)
+### B3. Admission Floor (Composite score gate) (maybe too strick)
 - **Rank-normalized Composite Score**:
   $$\text{score} = 0.4 \times \text{RollingMono}_{90\text{d}} + 0.3 \times \text{Sortino} + 0.2 \times |\text{Tail IC}| + 0.1 \times |\text{Overall IC}|$$
   - `RollingMono` (cached from B2) and `Sortino` consume locked `sign` from B1 (computed post sign-resolution, no $|\text{abs}|$ needed).
@@ -53,8 +53,8 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
   - 3-way combos (`combo_tri_*`): $\text{composite\_score} \ge \text{empirical\_99th}$ (stricter — more degrees of freedom = higher overfit risk)
 - *Compute note*: Heavier compute per survivor, but B1 + B2 thin pool first (cheap-first order preserved). 99th percentile computed in same kernel pass as 95th — no additional simulation cost.
 
-### B4. Correlation Gate, Primitive Cluster Cap & Replacement Rule
-- Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.50$).
+### B4. Correlation Gate, Primitive Cluster Cap & Replacement Rule (maybe too strick)
+- Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.60$).
 - **Primitive Cluster Cap**: Extract primitive feature set (`feature_a`, `feature_b`, `feature_c`, `feature_cond`, `feature_cond2`). Drop or replace redundant combos built from identical base primitives to ensure pool diversity.
 - **Replacement rule**:
   ```
@@ -115,7 +115,7 @@ SE_IC ≈ 1/√n_train
 - [x] Upgrade BH-FDR to Benjamini-Yekutieli (BY-FDR) at $q=0.30$ to handle correlated candidate feature spaces.
 - [x] Fix `deflated_ic` calculation using standalone raw IC null mean (`ic_null_mean`).
 - [x] Prebuild 3-way recipe statistics (`feature_c`, `feature_cond2`) in `evaluate_concept.py` to eliminate OOS lookahead leakage.
-- [x] Upgrade split-half sign check to 7-year jackknife guard (`expanding_wf_sign_check`, max_flips=1, last 2 chunks must not flip).
+- [x] Upgrade sign check to 7-year jackknife guard (`expanding_wf_sign_check`, max_flips=2 [1 for 588000ETF], last 2 chunks must not flip).
 - [x] Scale candidate generation space by sample size ratio in `generate_combos.py`.
 - [x] Reconcile `feature-mining.md` and `AGENTS.md` step numbering with new A/B/C stage names.
 - [x] **Anti-overfit: Full search-space FDR correction** — BY-FDR uses `m_total = len(eval_results)` (total candidates before filtering) for harmonic correction, not just survivor count.

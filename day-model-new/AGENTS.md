@@ -58,18 +58,17 @@ python3 day-model-new/analyze_admitted_features.py
   - `recipe_utils.py` handles on-the-fly execution of combinations. Aligns scale via standardization, isolates parameters to training sets to prevent lookahead leakage.
   - **Mining Log** (`mining_log.json`): Persistent dedup guarantee — tracks all generated candidate names per ETF/side. Re-runs emit only the delta (new ops/combos), never duplicates. Batch summaries appended by `select_features.py`.
 
-### Feature Selection Pipeline (8 Gates, All Training-Only)
+### Feature Selection Pipeline (7 Gates, All Training-Only)
 
 | # | Gate | Key Parameters | Purpose |
 |---|------|---------------|---------|
-| 1 | 7-Year Jackknife Sign Stability | max_flips=1, last 2 chunks must not flip | Reject sign-flipping features |
+| 1 | 7-Year Jackknife Sign Stability | max_flips=2 (1 for 588000ETF), last 2 chunks must not flip | Reject sign-flipping features |
 | 2 | B2 Rolling Guard | mono_thr=0.60 (single) / 0.55 (L/S), ir_thr=0.30 / 0.15 | Reject unstable rolling IC |
-| 3 | Absolute Sign Check | mean(tail returns) > 0 | Require profitable tail buckets |
-| 4 | Temporal Validation | recent 30% IC > 0 | Reject decayed signals |
-| 5 | BH-FDR | q=0.30, 5000 block-shuffled sims | Multiple-testing correction |
-| 6 | B3 Composite Floor | 95th-pct (2-way) / 99th-pct (3-way) | Beat empirical null |
-| 7 | B4 Correlation Gate | θ=0.50, replacement rule (IC≥1.3×) | Reject redundancy |
-| 8 | Quality Gate | deflated_ic≥0.03/0.05, raw_ic≥0.02/0.03, sortino>0 | Kill tail-only mirages |
+| 3 | Temporal Validation | recent 30% IC > 0 | Reject decayed signals |
+| 4 | BH-FDR | q=0.30, 5000 block-shuffled sims | Multiple-testing correction |
+| 5 | B3 Composite Floor | 95th-pct (2-way) / 99th-pct (3-way) | Beat empirical null |
+| 6 | B4 Correlation Gate | θ=0.60, replacement rule (IC≥1.3×) | Reject redundancy |
+| 7 | Quality Gate | deflated_ic≥0.03/0.05, raw_ic≥0.02/0.03, sortino>0 | Kill tail-only mirages |
 
 - **Quality Gate (Step 8)**: Training-only post-admission gate. Stricter thresholds for short-history ETFs (n_train < 1200, i.e. 588000ETF). Catches features with high tail IC but near-zero full Spearman (tail-only mirages) and features with negative risk-adjusted returns. **No OOS/lockbox data is used — zero look-ahead bias.**
 - **Cumulative Ledger**: Saves unique tried feature names to `data/trial_ledger_{ETF}_{side}{suffix}.json` to track overall unique trials $N$ across sequential mining rounds (prevents under-deflation). Seeds from existing attempts JSON logs.

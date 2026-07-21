@@ -164,9 +164,8 @@ def analyze_feature_standalone(y_true: np.ndarray, feat_val: np.ndarray, sign: i
 # ─── Filter Effectiveness Diagnostics ─────────────────────────────────────────
 
 GATE_ORDER = [
-    ("REJECTED_SPLIT_HALF", "Split-Half Sign Stability"),
+    ("REJECTED_SPLIT_HALF", "7-Year Jackknife Sign Stability"),
     ("REJECTED_ROLLING_GUARD", "B2 Rolling Guard"),
-    ("REJECTED_ABSOLUTE_SIGN", "Absolute Sign Check"),
     ("REJECTED_FDR_GATE", "BH-FDR Gate"),
     ("REJECTED_ADMISSION_FLOOR", "B3 Composite Floor"),
     ("REJECTED_REDUNDANCY", "B4 Correlation Gate"),
@@ -206,6 +205,37 @@ def analyze_gate_effectiveness(etf, side, train_df, oos_df, lockbox_df, train_me
         attempts = json.load(f)
     
     gate_results = {}
+
+    # Null baseline: sample un-gated candidate attempts to establish candidate pool lockbox baseline
+    rng = np.random.default_rng(42)
+    sample_size = min(100, len(attempts))
+    null_indices = rng.choice(len(attempts), size=sample_size, replace=False) if attempts else []
+    null_metrics = []
+    for idx in null_indices:
+        item = attempts[idx]
+        feat_name = item["feature_name"]
+        sign = item.get("sign", 1)
+        recipe = item.get("recipe", None)
+        res = _compute_feature_on_split(lockbox_df, feat_name, recipe, train_means, train_stds, train_medians, sign, side)
+        if res:
+            null_metrics.append(res)
+    
+    if null_metrics:
+        null_n = len(null_metrics)
+        null_ic_pos = sum(1 for m in null_metrics if m["ic"] > 0)
+        null_fn_pos = sum(1 for m in null_metrics if m["ic"] > 0 and m["sharpe"] > 0)
+        gate_results["_null_baseline"] = {
+            "n_sampled": null_n,
+            "pct_positive_lock_ic": float(null_ic_pos / null_n),
+            "false_negative_rate": float(null_fn_pos / null_n),
+            "mean_lock_ic": float(np.mean([m["ic"] for m in null_metrics])),
+            "mean_lock_sharpe": float(np.mean([m["sharpe"] for m in null_metrics])),
+        }
+    else:
+        gate_results["_null_baseline"] = {
+            "n_sampled": 0, "pct_positive_lock_ic": 0.0, "false_negative_rate": 0.0,
+            "mean_lock_ic": 0.0, "mean_lock_sharpe": 0.0
+        }
     
     for verdict_key, gate_label in GATE_ORDER:
         rejects = [a for a in attempts if a.get("verdict") == verdict_key]
@@ -255,16 +285,20 @@ def analyze_gate_effectiveness(etf, side, train_df, oos_df, lockbox_df, train_me
         
         lock_ics = [m["ic"] for m in lock_metrics]
         lock_sharpes = [m["sharpe"] for m in lock_metrics]
-        n_positive = sum(1 for ic in lock_ics if ic > 0)
+        n_ic_positive = sum(1 for ic in lock_ics if ic > 0)
+        n_fn_positive = sum(1 for m in lock_metrics if m["ic"] > 0 and m["sharpe"] > 0)
         
         gate_results[gate_label] = {
             "n_rejected": len(rejects),
             "n_sampled": n_sampled,
-            "pct_positive_lock_ic": float(n_positive / n_sampled),
+            "pct_positive_lock_ic": float(n_ic_positive / n_sampled),
             "mean_lock_ic": float(np.mean(lock_ics)),
             "mean_lock_sharpe": float(np.mean(lock_sharpes)),
-            "false_negative_rate": float(n_positive / n_sampled),  # rejected but would have worked OOS
-            "top_rejects": sorted(top_reject_details, key=lambda x: x["lock_ic"], reverse=True)[:10]
+            "false_negative_rate": float(n_fn_positive / n_sampled),  # FN = lock_ic > 0 AND lock_sharpe > 0 (profitable post-friction)
+            "top_rejects": sorted(
+                [r for r in top_reject_details if r["lock_ic"] > 0 and r["lock_sharpe"] > 0],
+                key=lambda x: x["lock_sharpe"], reverse=True
+            )[:10]
         }
     
     # Also compute admitted features' lockbox performance (false positive rate)
@@ -281,7 +315,7 @@ def analyze_gate_effectiveness(etf, side, train_df, oos_df, lockbox_df, train_me
             admitted_lock.append(lock_result)
     
     if admitted_lock:
-        n_adm_negative = sum(1 for m in admitted_lock if m["ic"] <= 0)
+        n_adm_negative = sum(1 for m in admitted_lock if m["ic"] <= 0 or m["sharpe"] <= 0)
         gate_results["_admitted_summary"] = {
             "n_admitted": len(admitted_lock),
             "pct_negative_lock_ic": float(n_adm_negative / len(admitted_lock)),
@@ -306,7 +340,7 @@ def analyze_threshold_sensitivity(etf, side, lockbox_df, train_means, train_stds
     with open(attempts_path, "r", encoding="utf-8") as f:
         attempts = json.load(f)
     
-    # Collect all features that passed split-half (have monotonicity and ic_ir)
+    # Collect all features that passed 7-year jackknife (have monotonicity and ic_ir)
     candidates_with_metrics = []
     for a in attempts:
         if a.get("verdict") == "REJECTED_SPLIT_HALF":
@@ -733,8 +767,9 @@ def main():
         "## Filter Gate Effectiveness Analysis",
         "",
         "Per-gate false positive/negative rates evaluated against lockbox (OOS) performance.",
-        "**False Negative Rate** = % of rejected features that would have had positive lockbox IC (gate too strict).",
-        "**False Positive Rate** = % of admitted features with negative lockbox IC (gate too loose).",
+        "**True False Negative (FN) Rate** = % of rejected features with lockbox IC > 0 AND lockbox Sharpe > 0 (profitable post-friction).",
+        "**Null Baseline Rate** = % of un-gated candidate features with lockbox IC > 0 AND lockbox Sharpe > 0 (random noise benchmark).",
+        "**False Positive Rate** = % of admitted features with negative lockbox IC or Sharpe (gate too loose).",
         ""
     ])
     
@@ -746,11 +781,17 @@ def main():
             if not gate_eff:
                 continue
             
+            null_base = gate_eff.get("_null_baseline", {})
+            null_fn_str = f"{null_base.get('false_negative_rate', 0.0):.1%}" if null_base else "N/A"
+            null_ic_str = f"{null_base.get('pct_positive_lock_ic', 0.0):.1%}" if null_base else "N/A"
+            
             report_lines.extend([
                 f"### {etf} — `{side}` Gate Effectiveness",
                 "",
-                "| Gate | N Rejected | N Sampled | % Positive Lock IC (FN Rate) | Mean Lock IC | Mean Lock Sharpe |",
-                "| :--- | ---: | ---: | ---: | ---: | ---: |"
+                f"_Null Baseline (un-gated candidate pool): {null_ic_str} lock IC > 0, {null_fn_str} true FN rate (IC>0 & Sharpe>0), Mean Lock Sharpe = {null_base.get('mean_lock_sharpe', 0.0):+.4f}_",
+                "",
+                "| Gate | N Rejected | N Sampled | % Lock IC > 0 | True FN Rate (IC>0 & Sharpe>0) | Mean Lock IC | Mean Lock Sharpe |",
+                "| :--- | ---: | ---: | ---: | ---: | ---: | ---: |"
             ])
             
             for gate_label in [g[1] for g in GATE_ORDER]:
@@ -759,7 +800,8 @@ def main():
                     continue
                 report_lines.append(
                     f"| {gate_label} | {g['n_rejected']} | {g['n_sampled']} | "
-                    f"{g['pct_positive_lock_ic']:.1%} | {g['mean_lock_ic']:+.4f} | {g['mean_lock_sharpe']:+.4f} |"
+                    f"{g['pct_positive_lock_ic']:.1%} | {g['false_negative_rate']:.1%} | "
+                    f"{g['mean_lock_ic']:+.4f} | {g['mean_lock_sharpe']:+.4f} |"
                 )
             
             # Admitted summary (false positive rate)
@@ -769,7 +811,7 @@ def main():
                     "",
                     f"**Admitted Pool Summary**: {adm['n_admitted']} features, "
                     f"False Positive Rate = {adm['false_positive_rate']:.1%} "
-                    f"(admitted but negative lock IC), "
+                    f"(admitted but negative lock IC/Sharpe), "
                     f"Mean Lock IC = {adm['mean_lock_ic']:+.4f}, "
                     f"Mean Lock Sharpe = {adm['mean_lock_sharpe']:+.4f}",
                 ])
@@ -779,11 +821,11 @@ def main():
                 g = gate_eff.get(gate_label)
                 if not g or not g.get("top_rejects"):
                     continue
-                positive_rejects = [r for r in g["top_rejects"] if r["lock_ic"] > 0]
+                positive_rejects = [r for r in g["top_rejects"] if r["lock_ic"] > 0 and r["lock_sharpe"] > 0]
                 if positive_rejects:
                     report_lines.extend([
                         "",
-                        f"**Top False Negatives from {gate_label}** (rejected but positive lockbox IC):",
+                        f"**Top True False Negatives from {gate_label}** (rejected but lockbox IC > 0 AND Sharpe > 0):",
                         ""
                     ])
                     for r in positive_rejects[:5]:
@@ -889,14 +931,17 @@ def main():
             if not gate_eff:
                 continue
             
-            # Check for high false-negative gates
+            null_base = gate_eff.get("_null_baseline", {})
+            null_fn = null_base.get("false_negative_rate", 0.0)
+            
+            # Check for high false-negative gates relative to null baseline
             for gate_label in [g[1] for g in GATE_ORDER]:
                 g = gate_eff.get(gate_label)
-                if g and g["n_sampled"] >= 5 and g["false_negative_rate"] > 0.5:
+                if g and g["n_sampled"] >= 5 and g["false_negative_rate"] > max(0.15, null_fn * 1.5):
                     report_lines.append(
                         f"{rec_idx}. **{etf} `{side}` — {gate_label} too strict**: "
-                        f"{g['false_negative_rate']:.0%} of top rejects have positive lockbox IC "
-                        f"(mean lock IC={g['mean_lock_ic']:+.4f}). Consider relaxing this gate."
+                        f"{g['false_negative_rate']:.1%} of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline {null_fn:.1%}, "
+                        f"mean lock Sharpe={g['mean_lock_sharpe']:+.4f}). Consider relaxing this gate."
                     )
                     rec_idx += 1
             
@@ -905,7 +950,7 @@ def main():
             if adm and adm["false_positive_rate"] > 0.5:
                 report_lines.append(
                     f"{rec_idx}. **{etf} `{side}` — Admission too loose**: "
-                    f"{adm['false_positive_rate']:.0%} of admitted features have negative lockbox IC. "
+                    f"{adm['false_positive_rate']:.0%} of admitted features have negative lockbox IC or Sharpe. "
                     f"Tighten B3 composite floor or add OOS validation gate."
                 )
                 rec_idx += 1

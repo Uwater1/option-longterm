@@ -121,13 +121,11 @@ that were always going to fail. Every candidate, in order:
 1. **Rolling tail-IC pre-filter** (A3) — monotonicity/IC_IR thresholds, side-aware. Cheap, thins the
    herd first, not a final filter.
 
-2. **Split-half sign stability — universal cheap block, runs before any simulation.** Split training
-   period in half, compute sign + IC independently on each half, reject if sign disagrees. This is
-   the single cheapest check available (two IC computations, no resampling) and catches the failure
-   mode that got past three progressively-stricter statistical gates for 588000ETF in baseline
-   testing — a feature whose in-sample IC is real-looking but internally unstable. Running this
-   *before* the null-simulation step is the point: it's the guard that keeps a 10,000+ candidate
-   flood from reaching the expensive stage at all. Applies to every ETF/side, not just 588000ETF.
+2. **7-Year Jackknife sign stability — universal cheap block, runs before any simulation.** Split training
+   data into 7 equal chunks, compute tail IC per chunk, lock sign from full sample, reject if flip_count > 1
+   or recent 2 chunks flip. This is a very cheap check (no resampling) and catches features whose in-sample
+   IC is real-looking but internally unstable. Running this *before* the null-simulation step keeps a 10,000+ candidate
+   flood from reaching the expensive stage at all. Applies to every ETF/side.
 
 3. **Empirical null via block-permutation** — shuffle `y_train` in blocks of 10, pair with real
    (resampled) `x`, generate tail-IC null distribution per ETF/side. Only candidates that survived
@@ -173,12 +171,12 @@ preemptively complicate the model in anticipation of that.
 ---
 
 ## Checklist
-- [x] Implement split-half sign-stability as Step 2.2 (universal, pre-simulation).
+- [x] Implement 7-year jackknife sign stability as Step 2.2 (universal, pre-simulation).
 - [ ] Implement pool-size loop gating combo-generation (1b) per batch.
 - [ ] Confirm ledger seeding covers all historical `mining_attempts_*.json` before batch 1.
 - [ ] Stand up `mining_memory_{ETF}_{side}.json` forbidden-directions tracking.
 - [ ] Run batch 1 (50-100 candidates, mixed sources) across all ETFs — 588000ETF included, now
-      protected by the universal split-half gate rather than excluded.
+      protected by the universal 7-year jackknife gate rather than excluded.
 - [ ] Compare post-batch OOS/lockbox CI vs. current baseline before accepting the batch.
 - [x] Expand 2-way ops from 5 to 11 (added mean, product, abs_diff, rank_min, rank_max, clamp_diff).
 - [x] Add 3-way combo generation (tri_mean, tri_min, tri_max, tri_median, tri_ifelse).

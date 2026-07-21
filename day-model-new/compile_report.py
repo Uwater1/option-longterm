@@ -117,7 +117,7 @@ def build_report(etfs, sides, suffix):
         "",
         "Candidate counts at each admission gate. Shows where features get pruned.",
         "",
-        "| ETF | Side | Total Candidates | Split-Half Pass | B2 Rolling Guard | BH-FDR Pass | Final Admitted |",
+        "| ETF | Side | Total Candidates | 7Y-Jackknife Pass | B2 Rolling Guard | BH-FDR Pass | Final Admitted |",
         "| :--- | :--- | ---: | ---: | ---: | ---: | ---: |",
     ])
     for etf in etfs:
@@ -129,7 +129,7 @@ def build_report(etfs, sides, suffix):
             counts = _verdict_counts(attempts)
             total = len(attempts)
             sh_pass = total - counts.get("REJECTED_SPLIT_HALF", 0)
-            rg_pass = counts.get("REJECTED_ROLLING_GUARD", 0)  # these passed split-half but failed rolling
+            rg_pass = counts.get("REJECTED_ROLLING_GUARD", 0)  # these passed jackknife but failed rolling
             # rolling-guard survivors = sh_pass - rg_rejects
             rg_survivors = sh_pass - counts.get("REJECTED_ROLLING_GUARD", 0)
             # FDR rejects are subset of rolling-guard survivors

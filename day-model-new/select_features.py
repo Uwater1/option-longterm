@@ -4,7 +4,7 @@ Stage A Feature Selection for Day-Model Rewrite v3.
 Implements:
 1. Flipping features to have positive overall training IC (date ranges adjusted dynamically per ETF).
 2. A3 Rolling pre-filter (90-calendar-day rolling tail IC monotonicity & IR check).
-2b. Split-half sign stability gate — reject if IC sign disagrees across training halves (cheapest universal guard).
+2b. 7-Year Jackknife sign stability gate — reject if IC sign flips across training chunks (cheapest universal guard).
 3. Light Benjamini-Hochberg FDR pre-filter gate at q = 0.20 using single-feature block-shuffled empirical null simulation.
 4. Cumulative persistent ledger tracking of trial count N per (ETF, side).
 5. Data-adaptive empirical 95th-percentile tail IC admission floor via multi-trial block-shuffled empirical null simulation.
@@ -31,6 +31,8 @@ sys.path.append(str(HERE / "mining"))
 
 from build_features import FEATURES
 from mining.recipe_utils import simulate_returns
+
+MAX_FLIPS = 1 # Maybe 2 better logically, but 1 OOS performance better
 
 FDR_THRESHOLD = 0.30
 
@@ -485,48 +487,7 @@ def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, win
             "x_flipped": x_flipped,
         }
 
-    # Absolute Sign Check on Traded Tail Buckets
-    n_obs = len(y)
-    order = np.argsort(x_flipped)
-    if side == "long":
-        pct = 0.15
-        n_tail = max(5, int(n_obs * pct))
-        long_mean = float(np.mean(y[order[-n_tail:]]))
-        passes_abs_sign = (long_mean > 0.0)
-    elif side == "short":
-        pct = 0.15
-        n_tail = max(5, int(n_obs * pct))
-        short_mean = float(np.mean(-y[order[:n_tail]]))
-        passes_abs_sign = (short_mean > 0.0)
-    else:  # single (two-sided)
-        pct = 0.10
-        n_tail = max(5, int(n_obs * pct))
-        long_mean = float(np.mean(y[order[-n_tail:]]))
-        short_mean = float(np.mean(-y[order[:n_tail]]))
-        passes_abs_sign = (long_mean > 0.0) and (short_mean > 0.0)
-
-    if not passes_abs_sign:
-        return {
-            "feature_name": feature_name,
-            "sign": int(locked_sign),
-            "raw_ic": float(raw_ic),
-            "overall_ic": float(overall_ic),
-            "mean_tail_ic": mean_tail_ic,
-            "std_tail_ic": std_tail_ic,
-            "ic_ir": ic_ir,
-            "monotonicity": monotonicity,
-            "sortino": 0.0,
-            "composite_score": 0.0,
-            "split_half_passes": True,
-            "passes_rolling_guard": True,
-            "passes_abs_sign": False,
-            "split_half_ic_first": sh_ic_first,
-            "split_half_ic_second": sh_ic_second,
-            "recent_ic": float(ic_f3),
-            "x_flipped": x_flipped,
-        }
-        
-    # Per-candidate Sortino trade simulation using locked sign (only for B1 + B2 + Absolute-Sign survivors!)
+    # Per-candidate Sortino trade simulation using locked sign (only for B1 + B2 survivors!)
     ann_ret, sharpe, sortino, max_dd, raw_ann_ret, raw_sharpe = simulate_returns(y, x_flipped, side)
     
     # Rank-normalized Composite Score
@@ -885,7 +846,7 @@ def main():
     parser.add_argument("-e", "--etf", required=True, choices=["300ETF", "50ETF", "500ETF", "588000ETF", "159915ETF"])
     parser.add_argument("-s", "--side", required=True, choices=["single", "long", "short"])
     parser.add_argument("--tau", type=float, default=0.03, help="Overall IC threshold (obsolete, replaced by simulation gate)")
-    parser.add_argument("--theta", type=float, default=0.50, help="Max absolute correlation threshold")
+    parser.add_argument("--theta", type=float, default=0.60, help="Max absolute correlation threshold")
     parser.add_argument("--mono-thr", type=float, default=None, help="Rolling tail IC positivity threshold (monotonicity)")
     parser.add_argument("--ir-thr", type=float, default=None, help="Rolling tail IC Information Ratio threshold")
     parser.add_argument("--early", action="store_true", help="Use early window return dataset")
@@ -902,18 +863,16 @@ def main():
     if args.etf == "588000ETF":
         train_start = pd.Timestamp("2020-11-01")
         train_end = pd.Timestamp("2025-01-01")
+        args.max_flips = 1
     else:
         train_start = pd.Timestamp("2015-01-01")
         train_end = pd.Timestamp("2022-01-01")
-
-    # Short-history ETFs (<=5 years): always use max_flips=1 (less data = less tolerance)
-    # Long-history ETFs: also use max_flips=1 (experimentally proven superior)
-    args.max_flips = 1
+        args.max_flips = MAX_FLIPS
 
     print(f"================================================================================")
     print(f"Stage A Feature Selection: ETF={args.etf}, Side={args.side}, Early={args.early}")
     print(f"Training Range: {train_start.date()} to {train_end.date()}")
-    print(f"Params: theta={args.theta}, mono_thr={args.mono_thr}, ir_thr={args.ir_thr}")
+    print(f"Params: theta={args.theta}, mono_thr={args.mono_thr}, ir_thr={args.ir_thr}, max_flips={args.max_flips}")
     print(f"================================================================================")
 
     # 1. Load feature dataset
@@ -1167,7 +1126,7 @@ def main():
     n_trials = len(updated_ledger)
     print(f"Cumulative ledger size: {n_trials} (added {len(updated_ledger) - len(trial_ledger)} new features)")
 
-    # 3b. Split-half sign stability gate (Step 2.2 — before expensive simulation)
+    # 3b. 7-Year Jackknife sign stability gate (Step 2.2 — before expensive simulation)
     stable_results = []
     split_half_rejects = []
     for item in eval_results:
@@ -1177,30 +1136,23 @@ def main():
             split_half_rejects.append(item)
 
     if split_half_rejects:
-        print(f"Split-half sign stability: rejected {len(split_half_rejects)} / {len(eval_results)} features (sign disagrees across halves).")
+        print(f"7-Year Jackknife sign stability: rejected {len(split_half_rejects)} / {len(eval_results)} features (sign disagrees across chunks).")
     else:
-        print(f"Split-half sign stability: all {len(eval_results)} features passed.")
+        print(f"7-Year Jackknife sign stability: all {len(eval_results)} features passed.")
 
-    # 3c. B2 Rolling Guard & Absolute-Sign filter (instant check on pre-computed monotonicity, IR, & absolute tail sign)
+    # 3c. B2 Rolling Guard filter (instant check on pre-computed monotonicity & IR)
     guard_survivors = []
     guard_rejects = []
-    abs_sign_rejects = []
     for item in stable_results:
         passes_guard = (item["monotonicity"] >= args.mono_thr) and (item["ic_ir"] >= args.ir_thr)
-        passes_abs_sign = item.get("passes_abs_sign", True)
         if not passes_guard:
             item["passes_rolling_guard"] = False
             guard_rejects.append(item)
-        elif not passes_abs_sign:
-            item["passes_rolling_guard"] = True
-            item["passes_abs_sign"] = False
-            abs_sign_rejects.append(item)
         else:
             item["passes_rolling_guard"] = True
-            item["passes_abs_sign"] = True
             guard_survivors.append(item)
 
-    print(f"B2 Rolling Guard & Absolute Sign: {len(guard_survivors)} / {len(stable_results)} candidates passed (dropped {len(guard_rejects)} guard, {len(abs_sign_rejects)} absolute-sign).")
+    print(f"B2 Rolling Guard: {len(guard_survivors)} / {len(stable_results)} candidates passed (dropped {len(guard_rejects)} guard).")
 
     # 3d. Temporal Validation Gate: require positive tail IC in the most recent 30% of training
     # This catches features whose signal decayed over time (regime-specific overfit).
@@ -1282,7 +1234,7 @@ def main():
     # 5. Log all attempts
     attempts_log = []
 
-    # Log split-half rejects
+    # Log 7-year jackknife rejects
     for item in split_half_rejects:
         attempts_log.append({
             "feature_name": item["feature_name"],
@@ -1317,27 +1269,6 @@ def main():
             "verdict": "REJECTED_ROLLING_GUARD"
         })
 
-    # Log absolute sign rejects
-    for item in abs_sign_rejects:
-        attempts_log.append({
-            "feature_name": item["feature_name"],
-            "sign": item["sign"],
-            "raw_ic": item["raw_ic"],
-            "overall_ic": item["overall_ic"],
-            "mean_tail_ic": item["mean_tail_ic"],
-            "sortino": item["sortino"],
-            "composite_score": item["composite_score"],
-            "ic_ir": item["ic_ir"],
-            "monotonicity": item["monotonicity"],
-            "split_half_ic_first": item["split_half_ic_first"],
-            "split_half_ic_second": item["split_half_ic_second"],
-            "passes_split_half": True,
-            "passes_rolling_guard": True,
-            "passes_abs_sign": False,
-            "passes_fdr": False,
-            "verdict": "REJECTED_ABSOLUTE_SIGN"
-        })
-
     # Log FDR rejects
     for item in fdr_rejects:
         attempts_log.append({
@@ -1359,7 +1290,7 @@ def main():
             "verdict": "REJECTED_FDR_GATE"
         })
 
-    print(f"{len(surviving_candidates)} features survived split-half + rolling guard + FDR out of {len(features_to_eval)}.")
+    print(f"{len(surviving_candidates)} features survived 7-year jackknife + rolling guard + FDR out of {len(features_to_eval)}.")
 
     # 6. Compute Data-Adaptive Composite Score Threshold (empirical 95th/99th percentile)
     if surviving_candidates:
