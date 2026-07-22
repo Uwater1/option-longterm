@@ -11476,5 +11476,9 @@
   "combo_tri_mean__high_low_sequence_momentum__early_vwap_acceleration__first_30min_return",
   "combo_tri_min__high_low_sequence_momentum__early_vwap_acceleration__first_30min_return",
   "combo_tri_max__high_low_sequence_momentum__early_vwap_acceleration__first_30min_return",
-  "combo_tri_median__high_low_sequence_momentum__early_vwap_acceleration__first_30min_return"
+  "combo_tri_median__high_low_sequence_momentum__early_vwap_acceleration__first_30min_return",
+  "h2_l2_pullback_continuation",
+  "shaved_bar_trend_conviction",
+  "morning_volume_weighted_momentum",
+  "lunch_transition_volume_skew"
 ]

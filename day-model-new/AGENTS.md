@@ -38,7 +38,7 @@ python3 day-model-new/evaluate_concept.py -e 588000ETF -s long
 # Use --max-parallel N to run N combos concurrently (inner n_jobs auto-capped to cpu_count // N).
 python3 day-model-new/run_baseline.py
 python3 day-model-new/run_baseline.py --skip-existing
-python3 day-model-new/run_baseline.py --max-parallel 2 -e 300ETF
+python3 day-model-new/run_baseline.py --max-parallel 6 -e 300ETF
 
 # 3b. Recompile BASELINE_REPORT.md from existing JSON outputs (no pipeline run, <1s)
 # Supports -e/-s filters and custom -o output path
