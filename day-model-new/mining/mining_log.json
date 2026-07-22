@@ -109532,6 +109532,21 @@
       "n_rejected_fdr": 0,
       "n_rejected_corr": 0,
       "admitted_names": []
+    },
+    {
+      "batch_id": 228,
+      "etf": "300ETF",
+      "side": "single",
+      "timestamp": "2026-07-22T02:29:01.850172+00:00",
+      "n_candidates": 344,
+      "n_admitted": 1,
+      "n_rejected_split_half": 222,
+      "n_rejected_rolling": 91,
+      "n_rejected_fdr": 2,
+      "n_rejected_corr": 2,
+      "admitted_names": [
+        "combo_diff__short_sell_quantity__roc60"
+      ]
     }
   ]
 }

@@ -260,6 +260,15 @@ def main():
 
     compile_report(etfs_to_run, sides_to_run, suffix)
 
+    # Run filter diagnosis
+    if not args.early:
+        print("\nRunning filter deep diagnosis (filter_diagnosis.py)...")
+        cmd_diag = [sys.executable, str(HERE / "filter_diagnosis.py")]
+        try:
+            subprocess.run(cmd_diag, cwd=str(REPO_ROOT), check=False)
+        except Exception as e:
+            print(f"WARNING: filter_diagnosis subprocess failed: {e}")
+
 
 if __name__ == "__main__":
     main()

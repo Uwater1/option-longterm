@@ -900,6 +900,92 @@ def generate_report(results):
             lines.append(f"- Regime-dependent (≥2 negative regimes): {n_regime_dep}/{len(fp_features)}")
             lines.append("")
 
+    # ─── Section 8: Primitive Component Toxicity ──────────────────────────────
+    lines.extend([
+        "---",
+        "",
+        "## 8. Primitive Component FP Rate (Cross-ETF)",
+        "",
+        "Per-primitive FP rate across all combo features. Flag primitives with FP rate ≥ 80% AND n ≥ 5.",
+        "",
+    ])
+
+    # Collect all primitives from FP and TP combo features
+    prim_fp_counts = defaultdict(int)
+    prim_tp_counts = defaultdict(int)
+    for etf, sides in results.items():
+        for side, data in sides.items():
+            for f in data.get("fp_features", []):
+                fn = f.get("feature_name", "")
+                if fn.startswith("combo_"):
+                    parts = fn.split("__")[1:]
+                    for p in parts:
+                        prim_fp_counts[p] += 1
+            for f in data.get("tp_features", []):
+                fn = f.get("feature_name", "")
+                if fn.startswith("combo_"):
+                    parts = fn.split("__")[1:]
+                    for p in parts:
+                        prim_tp_counts[p] += 1
+
+    all_prims = set(list(prim_fp_counts.keys()) + list(prim_tp_counts.keys()))
+    prim_table = []
+    for p in all_prims:
+        fp_n = prim_fp_counts.get(p, 0)
+        tp_n = prim_tp_counts.get(p, 0)
+        total = fp_n + tp_n
+        if total >= 2:
+            prim_table.append((p, fp_n, tp_n, total, fp_n / total))
+    prim_table.sort(key=lambda x: -x[4])
+
+    if prim_table:
+        lines.extend([
+            "| Primitive | FP | TP | Total | FP Rate | Flag |",
+            "| :--- | ---: | ---: | ---: | ---: | :--- |",
+        ])
+        for p, fp_n, tp_n, total, rate in prim_table:
+            flag = "⚠ TOXIC" if rate >= 0.80 and total >= 5 else ""
+            lines.append(f"| `{p}` | {fp_n} | {tp_n} | {total} | {rate:.0%} | {flag} |")
+        lines.append("")
+    else:
+        lines.append("_No combo features with sufficient data for primitive analysis._")
+        lines.append("")
+
+    # ─── Section 9: Operator Class FP Rate ────────────────────────────────────
+    lines.extend([
+        "---",
+        "",
+        "## 9. Operator Class FP Rate",
+        "",
+    ])
+
+    op_fp = defaultdict(int)
+    op_tp = defaultdict(int)
+    for etf, sides in results.items():
+        for side, data in sides.items():
+            for f in data.get("fp_features", []):
+                fn = f.get("feature_name", "")
+                if fn.startswith("combo_"):
+                    op = fn.split("__")[0].replace("combo_", "")
+                    op_fp[op] += 1
+            for f in data.get("tp_features", []):
+                fn = f.get("feature_name", "")
+                if fn.startswith("combo_"):
+                    op = fn.split("__")[0].replace("combo_", "")
+                    op_tp[op] += 1
+
+    sym_ops = {"max", "min", "mean", "rank_max", "rank_min"}
+    cond_ops = {"ifelse", "diff", "clamp_diff", "ratio", "product", "abs_diff"}
+    tri_ops = {"tri_max", "tri_min", "tri_mean", "tri_median", "tri_ifelse"}
+
+    for label, ops in [("Symmetric", sym_ops), ("Conditional", cond_ops), ("3-way", tri_ops)]:
+        fp_n = sum(op_fp.get(op, 0) for op in ops)
+        tp_n = sum(op_tp.get(op, 0) for op in ops)
+        total = fp_n + tp_n
+        if total > 0:
+            lines.append(f"- **{label}** (`{', '.join(sorted(ops))}`): FP={fp_n}, TP={tp_n}, FP rate={fp_n/total:.0%}")
+    lines.append("")
+
     # Write report
     report_path = HERE / "FILTER_DIAGNOSIS.md"
     with open(report_path, "w", encoding="utf-8") as f:

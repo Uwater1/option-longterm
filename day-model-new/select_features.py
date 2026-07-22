@@ -1317,12 +1317,64 @@ def main():
                 return tuple(sorted(set(prims)))
         return (cand_dict["feature_name"],)
 
-    # 7. Admission Gate (B3 Composite Floor + Quality Gate + B4 Correlation Gate & Replacement Rule)
+    # 7. Admission Gate (B3 Composite Floor + Stability Gate + Quality Gate + B4 Correlation Gate & Replacement Rule)
     # Quality Gate runs BEFORE correlation to prevent low-quality features from blocking high-quality ones.
+    SYMMETRIC_OPS = {"max", "min", "mean", "rank_max", "rank_min"}
     n_train = len(y_train)
     min_deflated_ic = 0.05 if n_train < 1200 else 0.03  # stricter for 588000ETF (~1000 rows)
     min_raw_ic = 0.03 if n_train < 1200 else 0.02  # catch tail-only mirages
     admitted_pool = []  # list of dicts
+
+    # Pre-compute yearly IC decomposition for temporal stability gate (P1)
+    dates_years = pd.DatetimeIndex(dates_train.values).year.values
+    unique_years = sorted(set(dates_years))
+
+    def _compute_yearly_ic_cv(x_flipped_arr):
+        """Compute coefficient of variation of yearly ICs (training-only)."""
+        yearly_ics = []
+        for yr in unique_years:
+            mask = dates_years == yr
+            if mask.sum() < 20:
+                continue
+            ic = _spearman_from_arrays(x_flipped_arr[mask], y_train[mask])
+            yearly_ics.append(ic)
+        if len(yearly_ics) < 3:
+            return None
+        mean_ic = np.mean(yearly_ics)
+        std_ic = np.std(yearly_ics)
+        return float(std_ic / abs(mean_ic)) if abs(mean_ic) > 1e-6 else None
+
+    def _compute_weak_link_cv(cand_dict):
+        """Compute weak link component IC CV for combo features (training-only)."""
+        recipe = candidate_recipes.get(cand_dict["feature_name"])
+        if not recipe:
+            return None
+        components = []
+        for key in ["feature_a", "feature_b", "feature_c", "feature_cond"]:
+            if key in recipe and recipe[key] in X_df.columns:
+                components.append(recipe[key])
+        if not components:
+            return None
+        max_cv = 0.0
+        for comp in components:
+            comp_vals = X_df[comp].values.astype(np.float64)
+            comp_ic = _spearman_from_arrays(comp_vals, y_train)
+            comp_sign = 1.0 if comp_ic >= 0 else -1.0
+            comp_pred = comp_sign * comp_vals
+            yearly_ics = []
+            for yr in unique_years:
+                mask = dates_years == yr
+                if mask.sum() < 20:
+                    continue
+                yearly_ics.append(_spearman_from_arrays(comp_pred[mask], y_train[mask]))
+            if len(yearly_ics) < 3:
+                continue
+            mean_ic = np.mean(yearly_ics)
+            std_ic = np.std(yearly_ics)
+            cv = float(std_ic / abs(mean_ic)) if abs(mean_ic) > 1e-6 else 99.0
+            if cv > max_cv:
+                max_cv = cv
+        return max_cv if max_cv > 0 else None
 
     for cand in surviving_candidates:
         cand_name = cand["feature_name"]
@@ -1330,15 +1382,30 @@ def main():
         cand_comp = cand["composite_score"]
         emp_95th = cand["empirical_95th"]
         emp_99th = cand.get("empirical_99th", emp_95th)
+        emp_97th = 0.5 * (emp_95th + emp_99th)  # interpolate 97th from 95th and 99th
         emp_mean = cand["empirical_mean"]
         ic_null_mean = cand.get("ic_null_mean", 0.0)
         x_cand = cand["x_flipped"]
         deflated_ic = max(0.0, cand_ic - ic_null_mean)
         cand["deflated_ic"] = deflated_ic
         
-        # 3-way combos require stricter 99th percentile floor (more degrees of freedom = more overfit risk)
+        # Operator-class-aware B3 floor (P2):
+        # - 3-way combos (tri_*): 99th percentile
+        # - Symmetric 2-way ops (max/min/mean/rank_max/rank_min): 97th percentile
+        # - Conditional 2-way ops + base features: 95th percentile
         is_tri_combo = cand_name.startswith("combo_tri_")
-        admission_floor = emp_99th if is_tri_combo else emp_95th
+        is_combo = cand_name.startswith("combo_")
+        is_symmetric = False
+        if is_combo and not is_tri_combo:
+            op_part = cand_name.split("__")[0].replace("combo_", "")
+            is_symmetric = op_part in SYMMETRIC_OPS
+        
+        if is_tri_combo:
+            admission_floor = emp_99th
+        elif is_symmetric:
+            admission_floor = emp_97th
+        else:
+            admission_floor = emp_95th
         
         # Check composite_score >= admission floor
         if cand_comp < admission_floor:
@@ -1353,6 +1420,7 @@ def main():
                 "empirical_95th": emp_95th,
                 "admission_floor": admission_floor,
                 "is_tri_combo": is_tri_combo,
+                "is_symmetric_op": is_symmetric,
                 "p_value": cand["p_value"],
                 "deflated_ic": deflated_ic,
                 "ic_ir": cand["ic_ir"],
@@ -1361,6 +1429,35 @@ def main():
                 "verdict": "REJECTED_ADMISSION_FLOOR"
             })
             continue
+
+        # Temporal Stability Gate (P1): for combo features, require ic_cv * weak_link_cv >= 0.15
+        # FP features are suspiciously "too smooth" — real signals have natural temporal variance.
+        # Only applies to combo features (base features have no weak_link_cv).
+        if is_combo:
+            ic_cv = _compute_yearly_ic_cv(x_cand)
+            wl_cv = _compute_weak_link_cv(cand)
+            cand["ic_cv"] = ic_cv
+            cand["weak_link_cv"] = wl_cv
+            if ic_cv is not None and wl_cv is not None:
+                stability_product = ic_cv * wl_cv
+                cand["stability_product"] = stability_product
+                if stability_product < 0.15:
+                    attempts_log.append({
+                        "feature_name": cand_name,
+                        "sign": cand["sign"],
+                        "raw_ic": cand["raw_ic"],
+                        "overall_ic": cand_ic,
+                        "deflated_ic": deflated_ic,
+                        "ic_cv": ic_cv,
+                        "weak_link_cv": wl_cv,
+                        "stability_product": stability_product,
+                        "ic_ir": cand["ic_ir"],
+                        "monotonicity": cand["monotonicity"],
+                        "passes_rolling_guard": True,
+                        "passes_fdr": True,
+                        "verdict": "REJECTED_STABILITY_GATE"
+                    })
+                    continue
 
         # Quality Gate (before correlation): minimum deflated IC + positive Sortino + minimum raw IC
         # Prevents low-quality features from entering correlation comparison.
@@ -1436,6 +1533,8 @@ def main():
             high_corr_members = [item for item in corrs if item[1] >= args.theta]
             
             replaced = False
+            # P3: Relax replacement multiplier for small pools (< 10 features)
+            replacement_mult = 1.15 if len(admitted_pool) < 10 else 1.30
             if cand_ic >= 0.10 and len(high_corr_members) == 1:
                 old_feature_name, _ = high_corr_members[0]
                 old_idx = -1
@@ -1446,7 +1545,7 @@ def main():
                 
                 if old_idx != -1:
                     old_ic = admitted_pool[old_idx]["overall_ic"]
-                    if cand_ic >= 1.3 * old_ic:
+                    if cand_ic >= replacement_mult * old_ic:
                         admitted_pool[old_idx] = cand
                         replaced = True
                         attempts_log.append({
@@ -1487,7 +1586,8 @@ def main():
                 })
 
     n_quality_rejects = sum(1 for a in attempts_log if a.get("verdict") == "REJECTED_QUALITY_GATE")
-    print(f"Final admitted pool size: {len(admitted_pool)} (Quality Gate rejected {n_quality_rejects} pre-correlation)")
+    n_stability_rejects = sum(1 for a in attempts_log if a.get("verdict") == "REJECTED_STABILITY_GATE")
+    print(f"Final admitted pool size: {len(admitted_pool)} (Quality Gate rejected {n_quality_rejects}, Stability Gate rejected {n_stability_rejects} pre-correlation)")
 
     # Free x_flipped arrays from non-admitted results to reclaim memory
     admitted_names_set = {item["feature_name"] for item in admitted_pool}

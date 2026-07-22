@@ -55,18 +55,20 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
   - `Tail IC` and `Overall IC` use absolute values $|\text{IC}|$.
 - **Per-candidate trade simulation**: Runs `simulate_returns()` (ported to shared module `recipe_utils.py`) per candidate using B1 locked sign to compute candidate Sortino.
 - **Null-permutation-wrapped threshold**: Block-permute target $y$ (500 trials), recompute entire composite score per permutation, and take percentile as admission floor.
-- **Tiered admission floor by combo complexity**:
-  - 2-way combos and base features: $\text{composite\_score} \ge \text{empirical\_95th}$
+- **Tiered admission floor by combo complexity & operator class**:
+  - Conditional 2-way combos & base features: $\text{composite\_score} \ge \text{empirical\_95th}$
+  - Symmetric 2-way combos (`max`, `min`, `mean`, `rank_max`, `rank_min`): $\text{composite\_score} \ge \text{empirical\_97th}$ (symmetric ops destroy regime conditioning, 67% FP rate)
   - 3-way combos (`combo_tri_*`): $\text{composite\_score} \ge \text{empirical\_99th}$ (stricter — more degrees of freedom = higher overfit risk)
 - *Compute note*: Heavier compute per survivor, but B1 + B2 thin pool first (cheap-first order preserved). 99th percentile computed in same kernel pass as 95th — no additional simulation cost.
 
 ### B4. Correlation Gate, Primitive Cluster Cap & Replacement Rule
 - Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.85$).
-- **Runs AFTER Quality Gate**: Low-quality features (negative sortino, low deflated_ic) are filtered before correlation comparison, preventing them from blocking high-quality candidates.
+- **Runs AFTER Quality & Stability Gates**: Low-quality or unstable features are filtered before correlation comparison, preventing them from blocking high-quality candidates.
 - **Primitive Cluster Cap**: Extract primitive feature set (`feature_a`, `feature_b`, `feature_c`, `feature_cond`, `feature_cond2`). Drop or replace redundant combos built from identical base primitives to ensure pool diversity.
 - **Replacement rule**:
   ```
-  if IC(new) >= 0.10 and IC(new) >= 1.3 * IC(old)
+  replacement_mult = 1.15 if len(admitted_pool) < 10 else 1.30
+  if IC(new) >= 0.10 and IC(new) >= replacement_mult * IC(old)
      and exactly one existing pool member g has corr(new, g) > theta:
        replace g with new
   ```
@@ -75,12 +77,14 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 - Save unique attempted candidate formulas to `trial_ledger_{ETF}_{side}.json` to track cumulative unique trials $N$.
 - Compute standalone deflated IC: `deflated_ic = max(0.0, cand_ic - ic_null_mean)` where `ic_null_mean` is standalone empirical mean of raw overall IC under block-permutation null (bounded in $[0, 1]$, avoiding subtraction of negative composite score/sortino null mean).
 
-### B6. Training-Only Quality Gate (Before Correlation)
-- Applied AFTER B3 floor, BEFORE B4 correlation gate. Requires all three:
+### B6. Training-Only Quality & Temporal Stability Gates (Before Correlation)
+- Applied AFTER B3 floor, BEFORE B4 correlation gate.
+- **Temporal Stability Gate**: For combo features, require `ic_cv * weak_link_cv >= 0.15`. Features with artificially low temporal variation (suspiciously "too smooth" in-sample) are fitting structural artifacts.
+- **Quality Gate**: Requires all three:
   - `deflated_ic >= 0.03` (normal) / `0.05` (short-history ETFs with n_train < 1200)
   - `|raw_ic| >= 0.02` (normal) / `0.03` (short-history) — catches tail-only mirages
   - `sortino > 0` — rejects negative risk-adjusted returns
-- **Rationale for pre-correlation placement**: Prevents low-quality features from occupying pool slots and blocking higher-quality candidates via the correlation gate.
+- **Rationale for pre-correlation placement**: Prevents low-quality/unstable features from occupying pool slots and blocking higher-quality candidates via the correlation gate.
 - **Zero look-ahead bias**: Uses only training-period metrics. No OOS or lockbox data is accessed.
 
 ### B7. Outputs
