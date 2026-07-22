@@ -30,6 +30,40 @@ from build_features import FEATURES
 
 # Date ranges will be set dynamically based on ETF
 
+
+def reconstruct_recipe_from_name(feature_name: str) -> dict | None:
+    """Reconstruct a recipe dict from a combo feature name.
+    
+    Naming conventions:
+      - combo_{op}__{a}__{b} for 2-way ops (min, max, diff, ratio, mean, product, abs_diff, rank_min, rank_max, clamp_diff)
+      - combo_ifelse__{cond}__{a}__{b} for ifelse
+      - combo_tri_{op}__{a}__{b}__{c} for 3-way ops (tri_mean, tri_min, tri_max, tri_median)
+      - combo_tri_ifelse__{cond1}__{cond2}__{a}__{b}__{c} for tri_ifelse
+    """
+    if not feature_name.startswith("combo_"):
+        return None
+    
+    parts = feature_name[6:].split("__")  # Remove "combo_" prefix
+    if len(parts) < 3:
+        return None
+    
+    op = parts[0]
+    
+    # 3-way operations
+    if op == "tri_ifelse" and len(parts) >= 6:
+        return {"op": op, "feature_cond": parts[1], "feature_cond2": parts[2], 
+                "feature_a": parts[3], "feature_b": parts[4], "feature_c": parts[5]}
+    elif op.startswith("tri_") and len(parts) >= 4:
+        return {"op": op, "feature_a": parts[1], "feature_b": parts[2], "feature_c": parts[3]}
+    
+    # 2-way operations
+    if op == "ifelse" and len(parts) >= 4:
+        return {"op": op, "feature_cond": parts[1], "feature_a": parts[2], "feature_b": parts[3]}
+    elif len(parts) >= 3:
+        return {"op": op, "feature_a": parts[1], "feature_b": parts[2]}
+    
+    return None
+
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
     if a.shape[0] < 5:
@@ -277,22 +311,22 @@ def block_bootstrap_ci(y_true: np.ndarray, y_pred: np.ndarray, side: str, block_
     return ci_overall, ci_tail, ci_mono
 
 def compute_vif(X: np.ndarray) -> np.ndarray:
-    """Calculate Variance Inflation Factor (VIF) for design matrix columns."""
+    """Calculate VIF using correlation matrix inverse (O(p^3) vs O(p^2 * n * p) for lstsq loop)."""
     n_features = X.shape[1]
-    vifs = np.zeros(n_features)
-    for i in range(n_features):
-        y_col = X[:, i]
-        X_other = np.delete(X, i, axis=1)
-        # Solve OLS: X_other * w = y_col
-        # Add intercept
-        X_other_int = np.column_stack([np.ones(len(X_other)), X_other])
-        try:
-            w, _, _, _ = np.linalg.lstsq(X_other_int, y_col, rcond=None)
-            y_pred = X_other_int @ w
-            r2 = 1.0 - np.sum((y_col - y_pred)**2) / (np.sum((y_col - y_col.mean())**2) + 1e-10)
-            vifs[i] = 1.0 / (1.0 - r2 + 1e-10)
-        except Exception:
-            vifs[i] = 999.0
+    if n_features <= 1:
+        return np.ones(n_features)
+    # Standardize columns for correlation matrix
+    X_std = (X - X.mean(axis=0)) / (X.std(axis=0) + 1e-10)
+    corr = np.corrcoef(X_std, rowvar=False)
+    # Regularize for numerical stability
+    corr += np.eye(n_features) * 1e-10
+    try:
+        inv_corr = np.linalg.inv(corr)
+        vifs = np.diag(inv_corr)
+        # Clip extreme values
+        vifs = np.clip(vifs, 1.0, 999.0)
+    except np.linalg.LinAlgError:
+        vifs = np.full(n_features, 999.0)
     return vifs
 
 from mining.recipe_utils import simulate_returns
@@ -364,12 +398,11 @@ def main():
     lockbox_df = df[lockbox_mask].reset_index(drop=True)
 
     # Standardize and prepare feature values based on selection pool
-    # Fill base features NaNs defensively across all three datasets using training median
+    # Fill base features NaNs defensively using vectorized DataFrame operations
     col_med_train = train_df[FEATURES].median().fillna(0.0)
-    for col in FEATURES:
-        train_df[col] = train_df[col].ffill().fillna(col_med_train[col])
-        oos_df[col] = oos_df[col].ffill().fillna(col_med_train[col])
-        lockbox_df[col] = lockbox_df[col].ffill().fillna(col_med_train[col])
+    train_df[FEATURES] = train_df[FEATURES].ffill().fillna(col_med_train)
+    oos_df[FEATURES] = oos_df[FEATURES].ffill().fillna(col_med_train)
+    lockbox_df[FEATURES] = lockbox_df[FEATURES].ffill().fillna(col_med_train)
 
     # Import recipe utils
     import sys
@@ -377,6 +410,19 @@ def main():
     from recipe_utils import compute_recipe
 
     # Build reference statistics for any base features used in recipes to prevent OOS leakage
+    # First, ensure all combo features have recipes (reconstruct from name if missing)
+    reconstructed_count = 0
+    for item in selected_pool:
+        if "recipe" not in item and item["feature_name"].startswith("combo_"):
+            recipe = reconstruct_recipe_from_name(item["feature_name"])
+            if recipe:
+                item["recipe"] = recipe
+                reconstructed_count += 1
+            else:
+                print(f"  [WARNING] Could not reconstruct recipe for {item['feature_name']}")
+    if reconstructed_count:
+        print(f"  [RECONSTRUCTED] {reconstructed_count} missing recipes from feature names")
+    
     train_means = {}
     train_stds = {}
     train_medians = {}
@@ -402,23 +448,16 @@ def main():
 
     all_selected_features = [item["feature_name"] for item in selected_pool]
     
-    # Train standardization parameters
-    means = {}
-    stds = {}
-    
+    # Train standardization parameters (vectorized)
     if all_selected_features:
-        for feat in all_selected_features:
-            means[feat] = train_df[feat].mean()
-            stds[feat] = train_df[feat].std()
-            if stds[feat] < 1e-12:
-                stds[feat] = 1.0
+        train_feat_df = train_df[all_selected_features]
+        means_arr = train_feat_df.mean().values
+        stds_arr = train_feat_df.std().values
+        stds_arr = np.where(stds_arr < 1e-12, 1.0, stds_arr)
 
-        # Create standardized arrays for train, OOS, and lockbox
+        # Create standardized arrays using vectorized numpy operations
         def get_standardized_x(data_df):
-            X_std = np.zeros((len(data_df), len(all_selected_features)))
-            for i, feat in enumerate(all_selected_features):
-                X_std[:, i] = (data_df[feat].values - means[feat]) / stds[feat]
-            return X_std
+            return (data_df[all_selected_features].values - means_arr) / stds_arr
 
         X_train_std = get_standardized_x(train_df)
         X_oos_std = get_standardized_x(oos_df)
