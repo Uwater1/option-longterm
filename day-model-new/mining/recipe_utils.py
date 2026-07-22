@@ -105,6 +105,26 @@ def compute_recipe(df: pd.DataFrame, recipe: dict, train_means: dict = None, tra
         b_std = get_std_col(recipe["feature_b"])
         return np.clip(a_std - b_std, -2.0, 2.0)
 
+    elif op == "z_sum":
+        a_std = get_std_col(recipe["feature_a"])
+        b_std = get_std_col(recipe["feature_b"])
+        return a_std + b_std
+
+    elif op == "z_diff":
+        a_std = get_std_col(recipe["feature_a"])
+        b_std = get_std_col(recipe["feature_b"])
+        return a_std - b_std
+
+    elif op == "sig_product":
+        a_std = get_std_col(recipe["feature_a"])
+        b_std = get_std_col(recipe["feature_b"])
+        return np.sign(a_std) * np.abs(b_std)
+
+    elif op == "rel_diff":
+        a_std = get_std_col(recipe["feature_a"])
+        b_std = get_std_col(recipe["feature_b"])
+        return (a_std - b_std) / (np.abs(a_std) + np.abs(b_std) + 1e-5)
+
     # ─── 3-way operations ───────────────────────────────────────────────
 
     elif op == "tri_mean":
@@ -112,6 +132,19 @@ def compute_recipe(df: pd.DataFrame, recipe: dict, train_means: dict = None, tra
         b_std = get_std_col(recipe["feature_b"])
         c_std = get_std_col(recipe["feature_c"])
         return (a_std + b_std + c_std) / 3.0
+
+    elif op == "tri_z_mean":
+        a_std = get_std_col(recipe["feature_a"])
+        b_std = get_std_col(recipe["feature_b"])
+        c_std = get_std_col(recipe["feature_c"])
+        return (a_std + b_std + c_std) / 3.0
+
+    elif op == "tri_sig_max":
+        a_std = get_std_col(recipe["feature_a"])
+        b_std = get_std_col(recipe["feature_b"])
+        c_std = get_std_col(recipe["feature_c"])
+        sig_c = np.sign(c_std)
+        return np.maximum(a_std * sig_c, b_std * sig_c)
 
     elif op == "tri_min":
         a_std = get_std_col(recipe["feature_a"])

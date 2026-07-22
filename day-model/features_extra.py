@@ -40,7 +40,7 @@ from deprecate_features import (
 )
 
 NaN32 = np.float32(np.nan)
-N_EARLY_EXTRA = 121  # MUST match len(FULL_EARLY_EXTRA); kept as int for use inside njit
+N_EARLY_EXTRA = 129  # MUST match len(FULL_EARLY_EXTRA); kept as int for use inside njit
 
 
 # ============================================================
@@ -125,7 +125,12 @@ FULL_EARLY_EXTRA: list[str] = [
     "early_vwap_acceleration", "early_order_flow_imbalance",
     "rbreaker_buy_break_dist_early", "rbreaker_sell_break_dist_early",
     "rbreaker_sell_setup_proximity_early", "rbreaker_buy_setup_proximity_early",
-    "skypark_gap_reversal_early", "turtle_breakout_strength_early"
+    "skypark_gap_reversal_early", "turtle_breakout_strength_early",
+    # --- Mined Base Primitives v2 (8) ---
+    "star50_limit_proximity_early", "double_bottom_bull_flag_early",
+    "moving_average_gap_bar_early", "tight_trading_range_breakout_thrust",
+    "h2_l2_pullback_continuation", "shaved_bar_trend_conviction",
+    "morning_volume_weighted_momentum", "lunch_transition_volume_skew"
 ]
 
 # Dynamically filter out deprecated early extra features by default to manage the
@@ -151,6 +156,8 @@ DAY_EXTRA: list[str] = [
     "twenty_gap_bars_regime",
     # Measured-move proximity (Brooks Ch7) — simplified pivot detection
     "measured_move_proximity",
+    # Lunch break momentum preservation
+    "lunch_break_momentum_preservation",
 ]
 
 # Yesterday mirrors (shift of early-frame columns produced upstream)
@@ -1234,7 +1241,7 @@ def _early_extras(op: np.ndarray, hi: np.ndarray, lo: np.ndarray,
     out[105] = np.float32((wt1_val - wt2_val) / 100.0)
 
     # ----- 106 atr_expansion_flag_early -----
-    out[106] = np.float32(atr_proxy / (atr14_prev / math.sqrt(48.0) + 1e-8))
+    out[106] = np.float32(atr_proxy / (atr_5m_prev / np.sqrt(48.0) + 1e-8))
 
     # ----- 107 volatility_breakout_squeeze -----
     out[107] = np.float32((hh - ll) / (bb_width_prev_price + 1e-8))
@@ -1292,16 +1299,16 @@ def _early_extras(op: np.ndarray, hi: np.ndarray, lo: np.ndarray,
     out[114] = np.float32(ofi / (total + 1e-8))
 
     # ----- 115 rbreaker_buy_break_dist_early -----
-    out[115] = np.float32((CD - buy_break) / (atr14_prev + 1e-8))
+    out[115] = np.float32((CD - buy_break) / (atr_5m_prev + 1e-8))
 
     # ----- 116 rbreaker_sell_break_dist_early -----
-    out[116] = np.float32((CD - sell_break) / (atr14_prev + 1e-8))
+    out[116] = np.float32((CD - sell_break) / (atr_5m_prev + 1e-8))
 
     # ----- 117 rbreaker_sell_setup_proximity_early -----
-    out[117] = np.float32((hh - sell_setup) / (atr14_prev + 1e-8))
+    out[117] = np.float32((hh - sell_setup) / (atr_5m_prev + 1e-8))
 
     # ----- 118 rbreaker_buy_setup_proximity_early -----
-    out[118] = np.float32((ll - buy_setup) / (atr14_prev + 1e-8))
+    out[118] = np.float32((ll - buy_setup) / (atr_5m_prev + 1e-8))
 
     # ----- 119 skypark_gap_reversal_early -----
     sky = 0.0
@@ -1323,6 +1330,104 @@ def _early_extras(op: np.ndarray, hi: np.ndarray, lo: np.ndarray,
     elif CD < low20:
         turtle = (CD - low20) / (atr20 + 1e-8)
     out[120] = np.float32(turtle)
+
+    # ----- 121 star50_limit_proximity_early -----
+    limit_pct = 0.20 if is_20pct else 0.10
+    upper_limit = prev_close * (1.0 + limit_pct)
+    lower_limit = prev_close * (1.0 - limit_pct)
+    dist_upper = (upper_limit - hh) / prev_close
+    dist_lower = (ll - lower_limit) / prev_close
+    out[121] = np.float32((dist_lower - dist_upper) / limit_pct)
+
+    # ----- 122 double_bottom_bull_flag_early -----
+    db_flag = 0.0
+    if n >= 4:
+        min_idx1 = 0
+        min_v1 = float(lo[0])
+        for i in range(1, n // 2):
+            if float(lo[i]) < min_v1:
+                min_v1 = float(lo[i])
+                min_idx1 = i
+        min_v2 = float(lo[n // 2])
+        for i in range(n // 2 + 1, n):
+            if float(lo[i]) < min_v2:
+                min_v2 = float(lo[i])
+        diff_v = abs(min_v2 - min_v1)
+        if diff_v <= 0.3 * (rng + 1e-8):
+            db_flag = (1.0 - diff_v / (rng + 1e-8)) * (CD - min_v2) / (rng + 1e-8)
+    out[122] = np.float32(min(max(db_flag, -1.0), 1.0))
+
+    # ----- 123 moving_average_gap_bar_early -----
+    gap_cnt = 0.0
+    for i in range(n):
+        sum_p = 0.0
+        cnt_p = 0
+        for j in range(max(0, i - 2), i + 1):
+            sum_p += float(cl[j])
+            cnt_p += 1
+        ma_i = sum_p / float(cnt_p)
+        if float(lo[i]) > ma_i:
+            gap_cnt += 1.0
+        elif float(hi[i]) < ma_i:
+            gap_cnt -= 1.0
+    out[123] = np.float32(gap_cnt / float(n))
+
+    # ----- 124 tight_trading_range_breakout_thrust -----
+    ttr_thrust = 0.0
+    if n >= 3:
+        hh_ttr = float(hi[0])
+        ll_ttr = float(lo[0])
+        for i in range(1, n - 1):
+            if float(hi[i]) > hh_ttr:
+                hh_ttr = float(hi[i])
+            if float(lo[i]) < ll_ttr:
+                ll_ttr = float(lo[i])
+        ttr_rng = hh_ttr - ll_ttr
+        ttr_thrust = (CD - OD) / (ttr_rng + 1e-8)
+    out[124] = np.float32(min(max(ttr_thrust, -2.0), 2.0) / 2.0)
+
+    # ----- 125 h2_l2_pullback_continuation -----
+    h_pullbacks = 0
+    l_pullbacks = 0
+    for i in range(1, n):
+        if float(hi[i]) < float(hi[i - 1]):
+            h_pullbacks += 1
+        if float(lo[i]) > float(lo[i - 1]):
+            l_pullbacks += 1
+    val_h2 = float(h_pullbacks - l_pullbacks) / float(n) if n > 0 else 0.0
+    out[125] = np.float32(min(max(val_h2, -1.0), 1.0))
+
+    # ----- 126 shaved_bar_trend_conviction -----
+    score_shaved = 0.0
+    for i in range(n):
+        rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+        body_i = float(cl[i]) - float(op[i])
+        upper_wick = float(hi[i]) - max(float(op[i]), float(cl[i]))
+        lower_wick = min(float(op[i]), float(cl[i])) - float(lo[i])
+        if body_i > 0 and lower_wick < 0.1 * rng_i:
+            score_shaved += abs(body_i) / rng_i
+        elif body_i < 0 and upper_wick < 0.1 * rng_i:
+            score_shaved -= abs(body_i) / rng_i
+    val_shaved = score_shaved / float(n) if n > 0 else 0.0
+    out[126] = np.float32(min(max(val_shaved, -1.0), 1.0))
+
+    # ----- 127 morning_volume_weighted_momentum -----
+    ret_mwm = (CD - O0) / (O0 + 1e-8)
+    tot_vol_mwm = 0.0
+    for i in range(n):
+        tot_vol_mwm += float(vol[i])
+    avg_vol_mwm = tot_vol_mwm / float(n) if n > 0 else 0.0
+    vol_ratio_mwm = avg_vol_mwm / (exp_bar_vol + 1e-8)
+    val_mwm = ret_mwm * min(vol_ratio_mwm, 3.0) / 0.02
+    out[127] = np.float32(min(max(val_mwm, -1.0), 1.0))
+
+    # ----- 128 lunch_transition_volume_skew -----
+    val_lvs = 0.0
+    if n >= 6:
+        v_early = float(vol[0]) + float(vol[1])
+        v_late = float(vol[4]) + float(vol[5])
+        val_lvs = (v_late - v_early) / (v_early + v_late + 1e-8)
+    out[128] = np.float32(min(max(val_lvs, -1.0), 1.0))
 
     return out
 
@@ -1434,6 +1539,10 @@ def compute_daylevel_extras(df_1d: pd.DataFrame) -> pd.DataFrame:
     # --- Brooks Ch7: measured-move proximity (simplified 2-bar pivots) ---
     out["measured_move_proximity"] = _measured_move_proximity(
         hi.values, lo.values, px.values, atr14.values)
+
+    # --- Market Microstructure: lunch break momentum preservation ---
+    out["lunch_break_momentum_preservation"] = np.clip(
+        ((px - op) / (hi - lo + 1e-8)).rolling(5).mean(), -1.0, 1.0)
 
     return out[DAY_EXTRA]
 

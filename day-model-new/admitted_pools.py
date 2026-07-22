@@ -93,7 +93,37 @@ POOLS = {
         "short": []
     },
     "588000ETF": {
-        "single": [],
+        "single": [
+            {
+                "feature_name": "combo_rank_max__first_30min_return__volume_weighted_price_position",
+                "sign": 1,
+                "overall_ic": 0.27963286649098,
+                "deflated_ic": 0.2795134452320513,
+                "ic_ir": 0.9316781821635415,
+                "monotonicity": 0.8193484698914116,
+                "recipe": {
+                    "op": "rank_max",
+                    "feature_a": "first_30min_return",
+                    "feature_b": "volume_weighted_price_position"
+                }
+            },
+            {
+                "feature_name": "max_up_ret",
+                "sign": 1,
+                "overall_ic": 0.1934996544494661,
+                "deflated_ic": 0.19338354973585473,
+                "ic_ir": 0.6050890044419849,
+                "monotonicity": 0.7265547877591313
+            },
+            {
+                "feature_name": "vix_rolling_percentile_60d",
+                "sign": 1,
+                "overall_ic": 0.19119057706837445,
+                "deflated_ic": 0.19232172124799546,
+                "ic_ir": 0.337899900519694,
+                "monotonicity": 0.6288252714708786
+            }
+        ],
         "long": [
             {
                 "feature_name": "body_to_range_ratio",

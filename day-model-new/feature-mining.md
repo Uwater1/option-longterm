@@ -21,11 +21,51 @@ Before any combo generation, compute yearly IC decomposition for each base featu
 - **Rationale**: Prevents regime-dependent components from contaminating candidates. Root cause analysis showed `gap_pct` (CV=4.66, 2 negative years) was the conditioning variable in all 300ETF false positives.
 - **Implementation**: `compute_component_stability()` and `filter_unstable_combos()` in `generate_combos.py`.
 
-### 1b. Document mining
-Source: ideas folder ( repo of 1000+ trading ideas, AL Brooks book (ideas/Albrooks.md), etc ). Agents translate
-written setups into candidate formulas against existing feature/price primitives. Human review of
-translated formulas before they enter Step 2 (sanity check units, lookback windows, no
-forward-looking references).
+### 1b. Document Mining Protocol (Base Feature Expansion & Agent Rules)
+
+Translates qualitative setups (`ideas/` repo, Al Brooks price action `ideas/Albrooks.md`, `ideas/feature.md`, market microstructure) into quantitative base primitives.
+
+#### Automated Candidate Screening Tooling
+- `dig_and_test_candidates.py`: Automated candidate evaluation harness. Computes candidate primitives across all 5 ETFs, verifies perturbation causality, computes 7-Year Jackknife sign stability, yearly IC CV, and exports evaluations to `mining/mined_candidates.csv`.
+- `test_feature_causality.py`: Dedicated unit test verifying early-bar feature invariance when scrambling post-decision bars (`[6..end]`).
+
+#### Mandatory Agent Mining Rules (Execution Order)
+
+1. **Check Explored Space & Forbidden Memory First**:
+   - Inspect `mining_log.json` to verify formula has never been generated/evaluated.
+   - Inspect `mining_memory_{ETF}_{side}.json` for `rejected_families`. Never re-mine in forbidden families.
+   - Inspect `admitted_pools.py` to target complementary mechanisms rather than redundant variants of existing admitted features.
+
+2. **Causality & Units Enforcement**:
+   - **Stationary Units**: Ratios in `[-1, 1]`, z-scores, or ATR/volume-normalized metrics. No raw unscaled prices or volume counts.
+   - **Strict Causality**: Early-bar features consume ONLY `bars[0..decision_bar]` (9:30–10:00). Daily/yesterday features shifted by $T-1$.
+   - **Perturbation Test**: Run `python3 day-model-new/test_feature_causality.py`. Feature value must be 100% invariant to scrambling post-decision bars (`[6..end]`).
+
+3. **Candidate Screening & CSV Logging**:
+   - Code candidate formula in `mining/dig_and_test_candidates.py`.
+   - Run `python3 day-model-new/mining/dig_and_test_candidates.py` across all 5 ETFs.
+   - Evaluations and gate verdicts are automatically saved to `mining/mined_candidates.csv`.
+
+4. **Base Primitive Integration**:
+   - Only features clearing **ALL 4 Screening Gates** (Causality PASS, `IC_CV <= 3.0`, `n_negative_years <= 2`, 7Y Jackknife PASS, $|IC| \ge 0.02$) get integrated into `day-model/build_features.py` / `day-model/features_extra.py` (`FULL_EARLY_EXTRA`, `DAY_EXTRA`).
+   - Makes approved concepts available both as standalone candidates and as input components for 1c combo generation.
+   - Rebuild dataset via `python3 day-model/build_features.py -e all`.
+
+5. **Guardrail Philosophy**:
+   - **0 features is better than admitting false positive mirages**.
+   - If a document-mined setup fails Step 2 admission (7Y-Jackknife or BH-FDR), log its mechanism family to `mining_memory_{ETF}_{side}.json`. Do NOT lower admission thresholds or force-fit parameters.
+
+#### CLI Usage (Single Primitive Screening)
+```bash
+# 1. Run causality perturbation test for early-bar features
+python3 day-model-new/test_feature_causality.py
+
+# 2. Mine, test stability/jackknife across all 5 ETFs, and log to mined_candidates.csv
+python3 day-model-new/mining/dig_and_test_candidates.py
+
+# 3. Rebuild feature parquets after adding gate-passing primitives to features_extra.py
+python3 day-model/build_features.py -e all
+```
 
 ### 1c. Programmatic combination — gated by pool-size loop
 Before generating combos for a given ETF/side, check current admitted pool size against a floor

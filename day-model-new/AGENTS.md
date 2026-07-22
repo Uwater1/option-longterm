@@ -5,7 +5,12 @@ Simplified feature selection & IC-weighted return combination pipeline. Check [p
 ## Commands
 
 ```bash
-# 0. Generate aggressive feature combination recipes (2-way + 3-way by default)
+# 0a. Single Base Primitive Digging & Screening (1b Document Protocol)
+# Tests causality, computes 7Y-Jackknife stability + IC CV across all 5 ETFs, logs to mining/mined_candidates.csv
+python3 day-model-new/test_feature_causality.py
+python3 day-model-new/mining/dig_and_test_candidates.py
+
+# 0b. Generate aggressive feature combination recipes (2-way + 3-way by default)
 # Defaults: top-50 for 2-way, top-25 for 3-way, 11 + 5 ops, dedup via mining_log.json
 python3 day-model-new/mining/generate_combos.py -e 300ETF -s single [--two-only]
 

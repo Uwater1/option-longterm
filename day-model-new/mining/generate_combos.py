@@ -43,6 +43,8 @@ REPO_ROOT = HERE.parent.parent
 sys.path.append(str(REPO_ROOT / "day-model"))
 
 from build_features import FEATURES
+sys.path.append(str(HERE.parent))
+from admitted_pools import get_admitted_pool
 
 ALL_ETFS = ["50ETF", "300ETF", "500ETF", "588000ETF", "159915ETF"]
 ALL_SIDES = ["long", "short", "single"]
@@ -57,10 +59,10 @@ REGIME_FEATURES = list(REGIME_SET)
 
 # 2-way ops applied to all qualifying pairs
 TWO_WAY_OPS = ["min", "max", "diff", "mean", "product", "abs_diff",
-               "rank_min", "rank_max", "clamp_diff"]
+               "rank_min", "rank_max", "clamp_diff", "z_sum", "z_diff", "sig_product", "rel_diff"]
 
 # 3-way ops applied to qualifying triples
-THREE_WAY_OPS = ["tri_mean", "tri_min", "tri_max", "tri_median"]
+THREE_WAY_OPS = ["tri_mean", "tri_min", "tri_max", "tri_median", "tri_z_mean", "tri_sig_max"]
 
 # Correlation boundaries
 CORR_LOW_2WAY = 0.15
@@ -448,7 +450,16 @@ def run_one(etf: str, side: str, args):
     suffix = "_early" if args.early else ""
     do_3way = not args.two_only
 
-    # 1. Train date range
+    # 1. Pool size gate check (1c)
+    if hasattr(args, "min_pool_floor") and args.min_pool_floor > 0 and not getattr(args, "ignore_pool_floor", False):
+        pool = get_admitted_pool(etf, side)
+        if len(pool) < args.min_pool_floor:
+            print(f"\n{'='*60}")
+            print(f"Generating combos for {etf} ({side})")
+            print(f"  SKIP: Admitted pool size is {len(pool)} < floor ({args.min_pool_floor}). Mine single features first.")
+            return
+
+    # 1b. Train date range
     if etf == "588000ETF":
         train_start = pd.Timestamp("2020-11-01")
         train_end = pd.Timestamp("2025-01-01")
@@ -609,6 +620,10 @@ def main():
                         help="Only generate 2-way combinations (skip 3-way)")
     parser.add_argument("--early", action="store_true",
                         help="Use early window return dataset")
+    parser.add_argument("--min-pool-floor", type=int, default=0,
+                        help="Minimum admitted pool size required before generating combos (default: 0)")
+    parser.add_argument("--ignore-pool-floor", action="store_true",
+                        help="Bypass the admitted pool size floor check")
     parser.add_argument("--no-dedup", action="store_true",
                         help="Disable dedup against mining log (regenerate everything)")
     args = parser.parse_args()

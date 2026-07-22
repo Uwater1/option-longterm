@@ -5,6 +5,8 @@
 - v2 (`day-model/day-model_plan.md`): elaborate model-side machinery (Huber+MCP manifold, CSS+VIF, HMM regimes, vol gating) worked numerically (condition numbers, ESS all fixed) but the *headline* Sharpe-objective search came back statistically indistinguishable from baseline once block-bootstrap CI was applied (§8.6 of that doc). Lesson: fancy model-side optimization can look good pre-CI and be noise post-CI.
 - Core decision for v3: **move weak/joint-signal capture to the feature-mining stage. Keep model training dumb and hard to overfit.** Mining can be messy, agentic, human-in-the-loop. Model stage cannot.
 
+> NOTE: This document must be updated if logical changes.
+
 ---
 
 ## Stage A — Feature Mining (`mining/generate_combos.py`)
@@ -33,6 +35,8 @@ Before generating combos, compute yearly IC decomposition for each base feature:
 ## Stage B — Feature Filtering / Admission Gate (`select_features.py`)
 
 Goal: Apply strict statistical guards, correlation filters, and trial-count tracking to build a robust pool.
+
+> Rules: 1. 0 feature better than many FP features. 2. Check logic before lowering threshold, TP still might be OOS lucky.
 
 ### B1. 7-Year Jackknife Sign Stability & Temporal Validation Pre-filters
 1. **7-Year Jackknife Sign Guard**: Split training data into 7 equal chunks (approximating calendar years). Compute tail IC per chunk, lock sign from full-sample IC. Count "flip chunks" where chunk IC sign disagrees with locked sign. Reject if flip_count > 1 OR if either of the last 2 chunks is a flip (recent signal must be intact).
@@ -91,6 +95,7 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 - Version-controlled admitted pools registry in [admitted_pools.py](file:///home/hallo/Documents/option-longterm/day-model-new/admitted_pools.py).
 - Detailed log of attempts in `data/mining_attempts_{ETF}_{side}.json`.
 
+> IMPORTANT: NO OOS data present in this stage. All metrics are computed using training-period data only.
 ---
 
 ## Stage C — Model Training & Evaluation (`evaluate_concept.py`)
