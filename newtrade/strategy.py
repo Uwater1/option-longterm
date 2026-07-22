@@ -3,8 +3,9 @@
 Strategy & Backtest Engine for NewTrade framework.
 Handles:
 1. Conviction thresholding and position sizing (binary or tanh).
-2. ETF Spot simulation with 8 bps transaction friction.
-3. Performance metric calculations (Sharpe, Max DD, Win Rate, Turnover).
+2. Train-optimized threshold sweep with production buffer.
+3. ETF Spot simulation with 8 bps transaction friction.
+4. Performance metric calculations (Sharpe, Max DD, Win Rate, Turnover).
 """
 
 import numpy as np
@@ -48,6 +49,84 @@ def generate_positions(Z_composite: np.ndarray, z_th: float = 0.5, mode: str = "
         positions = np.maximum(0.0, positions)
 
     return positions
+
+
+def sweep_optimal_threshold(Z_composite_train: np.ndarray, trade_returns_train: np.ndarray,
+                            mode: str = "binary", gamma: float = 1.5, long_only: bool = True,
+                            fee_bps: float = 0.0008, z_range: tuple = (0.2, 1.5), z_step: float = 0.1) -> dict:
+    """
+    Sweep conviction threshold on training data to find optimal Z_th that maximizes
+    cost-adjusted Sharpe ratio.
+    
+    Args:
+      - Z_composite_train: Composite signal for training period shape (T_train,)
+      - trade_returns_train: Intraday trade returns for training period shape (T_train,)
+      - mode: Position sizing mode ('binary' or 'tanh')
+      - gamma: Ramp parameter for tanh mode
+      - long_only: If True, clamp negative positions to 0.0
+      - fee_bps: Transaction fee per position change
+      - z_range: (min, max) threshold range to sweep
+      - z_step: Step size for sweep
+      
+    Returns:
+      - dict with 'optimal_z_th', 'best_sharpe', 'sweep_results' list
+    """
+    z_min, z_max = z_range
+    thresholds = np.arange(z_min, z_max + z_step * 0.5, z_step)
+    
+    sweep_results = []
+    best_sharpe = -np.inf
+    optimal_z_th = z_min
+    
+    for z_th in thresholds:
+        positions = generate_positions(Z_composite_train, z_th=z_th, mode=mode, gamma=gamma, long_only=long_only)
+        net_returns, _, _ = simulate_etf_spot(trade_returns_train, positions, fee_bps=fee_bps)
+        
+        # Cost-adjusted Sharpe
+        std_net = np.std(net_returns)
+        if std_net > 1e-12:
+            sharpe = float((np.mean(net_returns) / std_net) * np.sqrt(252))
+        else:
+            sharpe = 0.0
+        
+        # Count active days
+        n_active = int((np.abs(positions) > 1e-5).sum())
+        
+        sweep_results.append({
+            "z_th": round(float(z_th), 2),
+            "cost_sharpe": round(sharpe, 4),
+            "n_active_days": n_active,
+            "active_pct": round(n_active / len(positions) * 100, 1) if len(positions) > 0 else 0.0,
+        })
+        
+        if sharpe > best_sharpe:
+            best_sharpe = sharpe
+            optimal_z_th = float(z_th)
+    
+    return {
+        "optimal_z_th": round(optimal_z_th, 2),
+        "best_sharpe": round(best_sharpe, 4),
+        "sweep_results": sweep_results,
+    }
+
+
+def compute_production_threshold(train_sweep_result: dict, z_buffer: float = 0.2) -> float:
+    """
+    Compute production threshold = train-optimal + buffer.
+    
+    The buffer compensates for IC decay from train to OOS (~20-40% typical).
+    Higher threshold trades only highest-conviction days, reducing exposure to decayed signals.
+    
+    Args:
+      - train_sweep_result: Output from sweep_optimal_threshold()
+      - z_buffer: Conservative buffer added to train-optimal threshold (default 0.2)
+      
+    Returns:
+      - z_th_prod: Production conviction threshold
+    """
+    z_th_train = train_sweep_result["optimal_z_th"]
+    z_th_prod = z_th_train + z_buffer
+    return round(z_th_prod, 2)
 
 
 def simulate_etf_spot(trade_returns: np.ndarray, positions: np.ndarray, fee_bps: float = 0.0008) -> tuple[np.ndarray, np.ndarray, np.ndarray]:

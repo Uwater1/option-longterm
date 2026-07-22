@@ -23,25 +23,54 @@ $$z_{i,t} = \frac{x_{i,t} - \hat{\mu}_{i, 1:t-1}}{\hat{\sigma}_{i, 1:t-1} + \eps
 | Scheme | Formula / Logic | Description |
 |---|---|---|
 | **1. Equal Weight (EW)** | $w_i = \frac{1}{N} \cdot \text{sign}_i$ | Baseline. Simple, zero parameter risk. |
-| **2. IC Weight (ICW)** | $w_i \propto \max(0, \text{Deflated\_IC}_i)^k$ ($k=1$ or $2$) | Weights by factor historical predictive power. |
-| **3. Score Weighted** | $w_i \propto 0.4 \cdot \text{IC}_i + 0.3 \cdot \text{IR}_i + 0.3 \cdot \text{Mono}_i$ | Weights by composite factor quality score. |
-| **4. Rank Bounded Weight** | Rank factors by quality, map $w_i \in [0.10, 0.20]$ | Prevents single factor dominance, ensures diversification. |
+| **2. IC Weight (ICW)** | $w_i \propto \max(0, \text{Deflated\_IC}_i - SE_{IC})^k$, $SE_{IC} = 1/\sqrt{n_{\text{train}}}$ | Empirical Bayes shrinkage. Penalizes marginal IC estimates likely noise. Falls back to EW if all weights shrink to 0. |
+| **3. Score Weighted** | $w_i \propto \text{score}_i$ (see below) | Multi-dimensional quality score from pool metadata. |
+| **4. Rank Bounded Weight** | Rank factors by $\text{score}_i$, map linearly $w_i \in [w_{\min}, w_{\max}]$ | Prevents single factor dominance, ensures diversification. |
 | **5. Simple Linear GLM** | $y_t = \sum w_i z_{i,t} + c$ (Ridge / Non-negative L2) | Expanding linear combination baseline. |
+
+#### Scheme 3 — Score Definition (B3-Inspired, Pool-Metadata-Only)
+
+$$\text{score}_i = 0.40 \times \text{rank\_norm}(\text{deflated\_ic}_i) + 0.35 \times \text{rank\_norm}(\text{ic\_ir}_i) + 0.25 \times \text{rank\_norm}(\text{monotonicity}_i)$$
+
+- `rank_norm(x_i) = rank(x_i) / N` — maps each metric to $[1/N, 1.0]$ within the pool.
+- Uses only fields already stored in `admitted_pools.py`: `deflated_ic`, `ic_ir`, `monotonicity`.
+- **Why not B3 directly?** B3 (`0.4×Mono + 0.3×Sortino + 0.2×|TailIC| + 0.1×|OverallIC|`) is an *admission gate* that requires per-candidate `simulate_returns()` for Sortino — expensive and not stored per pool item. `ic_ir` (mean IC / std IC) is the information-ratio analog capturing the same "risk-adjusted predictive power" concept.
+- **Design principle**: Admission (B3) decides IF a feature enters the pool; weighting decides HOW MUCH influence it gets. Different objectives → different formulas.
+
+#### Scheme 4 — Rank Bounded Mapping
+
+$$w_i = w_{\min} + (w_{\max} - w_{\min}) \cdot \frac{\text{rank}(\text{score}_i) - 1}{N - 1}$$
+
+- Default: $w_{\min} = 0.5/N$, $w_{\max} = 1.5/N$ (i.e. top factor gets 3× weight of bottom factor).
+- Guarantees no single factor > $1.5/N$ weight → natural diversification.
+- Uses same `score_i` as Scheme 3 for ranking.
 
 ---
 
 ## 3. Threshold Tuning & Position Sizing
 
-### 3.1 Signal Thresholding
+### 3.1 Conviction Threshold Selection (Train-Optimized + Production Buffer)
+
+**Design**: Select optimal threshold on training set, then apply conservative buffer for production to combat IC decay.
+
+1. **Training Sweep**: On expanding-window training portion (pre-OOS), sweep $Z_{\text{th}} \in [0.2, 1.5]$ step $0.1$:
+   $$Z_{\text{th}}^{\text{train}*} = \arg\max_{Z_{\text{th}}} \text{CostAdjustedSharpe}(Z_{\text{th}})$$
+2. **Production Threshold**:
+   $$Z_{\text{th}}^{\text{prod}} = Z_{\text{th}}^{\text{train}*} + \Delta_{\text{buffer}}$$
+   - Default $\Delta_{\text{buffer}} = 0.2$ (user-configurable via `--z-buffer`).
+   - Rationale: IC decays ~20-40% from train to OOS; higher threshold trades only highest-conviction days, reducing exposure to decayed signals.
+3. **CLI**: `--z-th auto` (default) triggers train-sweep + buffer. `--z-th 0.7` overrides with fixed value.
+
+### 3.2 Signal Thresholding Modes
+
 Only trade when signal conviction is strong enough to cover transaction cost (8 bps friction):
 
 - **Binary Mode**:
-  $$S_t = \begin{cases} +1 & \text{if } Z_{\text{composite},t} > Z_{\text{th}} \\ -1 \text{ (or 0)} & \text{if } Z_{\text{composite},t} < -Z_{\text{th}} \\ 0 & \text{otherwise} \end{cases}$$
+  $$S_t = \begin{cases} +1 & \text{if } Z_{\text{composite},t} > Z_{\text{th}}^{\text{prod}} \\ -1 \text{ (or 0)} & \text{if } Z_{\text{composite},t} < -Z_{\text{th}}^{\text{prod}} \\ 0 & \text{otherwise} \end{cases}$$
 
 - **Smooth Conviction Mode (tanh)**:
-  $$S_t = \tanh\left(\frac{Z_{\text{composite},t} \pm Z_{\text{th}}}{\gamma}\right) \quad \text{for } |Z_{\text{composite},t}| > Z_{\text{th}}$$
-
-- **Threshold Sweep**: Evaluate $Z_{\text{th}} \in [0.2, 1.0]$ with step $0.1$.
+  $$S_t = \tanh\left(\frac{Z_{\text{composite},t} - Z_{\text{th}}^{\text{prod}}}{\gamma}\right) \quad \text{for } |Z_{\text{composite},t}| > Z_{\text{th}}^{\text{prod}}$$
+  - $\gamma = 1.5$ default (smooth ramp from 0 at threshold to ~1.0 for strong signals).
 
 ---
 
@@ -81,9 +110,11 @@ newtrade/
 - [ ] **Step 1: Data & Normalization (`newtrade/utils.py`)**
   - Load admitted pool features from `admitted_pools.py`.
   - Expanding-window z-score calculation ($\mu_{1:t-1}, \sigma_{1:t-1}$) + clamping ($\pm 3.0$).
-- [ ] **Step 2: Modular Weighting Schemes (`newtrade/weighting.py`)**
+- [x] **Step 2: Modular Weighting Schemes (`newtrade/weighting.py`)**
   - Implement 5 clean functions: `compute_ew()`, `compute_icw()`, `compute_score_w()`, `compute_rank_w()`, `compute_glm_w()`.
+  - Schemes 1-4 implemented. Scheme 5 (GLM) deferred.
 - [ ] **Step 3: Strategy & Backtest Runner (`newtrade/strategy.py` & `newtrade/run_backtest.py`)**
-  - Threshold gating ($Z_{\text{th}} \in [0.2, 1.0]$) & 8 bps friction simulation.
+  - Train-optimized threshold sweep (`--z-th auto`) + production buffer (`--z-buffer 0.2`).
+  - Threshold gating & 8 bps friction simulation.
   - `--scheme all` flag to run & compare all 5 schemes side-by-side in one pass.
 
