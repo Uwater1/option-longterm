@@ -226,7 +226,550 @@ def calc_intraday_range_expansion_velocity(op, hi, lo, cl, vol, prev_close, exp_
     val = float(exp_count) / float(n - 1)
     return np.float32(min(max(val, 0.0), 1.0))
 
+# --- Define New Candidate Primitives (Batch 2: Al Brooks / Microstructure) ---
+
+@njit(cache=True, fastmath=True)
+def calc_triangle_apex_compression(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Al Brooks Ch23 Triangles: rate of range contraction across bars.
+    Successively smaller ranges indicate coiling before breakout.
+    Returns slope of bar ranges normalized by mean range, in [-1, 1]."""
+    n = len(op)
+    if n < 3:
+        return np.float32(0.0)
+    # Compute range per bar
+    ranges = np.zeros(n, dtype=np.float32)
+    for i in range(n):
+        ranges[i] = float(hi[i]) - float(lo[i])
+    mean_r = 0.0
+    for i in range(n):
+        mean_r += ranges[i]
+    mean_r /= float(n)
+    if mean_r < 1e-8:
+        return np.float32(0.0)
+    # OLS slope of ranges
+    sx = 0.0
+    sy = 0.0
+    sxx = 0.0
+    sxy = 0.0
+    for i in range(n):
+        xi = float(i)
+        yi = float(ranges[i])
+        sx += xi
+        sy += yi
+        sxx += xi * xi
+        sxy += xi * yi
+    denom = float(n) * sxx - sx * sx
+    if abs(denom) < 1e-12:
+        return np.float32(0.0)
+    slope = (float(n) * sxy - sx * sy) / denom
+    # Normalize: negative slope = compression (triangle), positive = expansion
+    val = slope / (mean_r + 1e-8)
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_trap_bar_reversal_intensity(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Al Brooks Ch32 'Getting Trapped': bars that sweep prior bar extreme then close back.
+    Trapped traders' stops fuel reversal. Returns signed intensity in [-1, 1].
+    Positive = bull traps (sweep high then close below) => bearish.
+    Negative = bear traps (sweep low then close above) => bullish."""
+    n = len(op)
+    if n < 2:
+        return np.float32(0.0)
+    bull_traps = 0.0
+    bear_traps = 0.0
+    for i in range(1, n):
+        rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+        # Bull trap: high exceeds prior high but close below prior high
+        if float(hi[i]) > float(hi[i-1]) and float(cl[i]) < float(hi[i-1]):
+            penetration = (float(hi[i]) - float(hi[i-1])) / rng_i
+            bull_traps += penetration
+        # Bear trap: low breaks prior low but close above prior low
+        if float(lo[i]) < float(lo[i-1]) and float(cl[i]) > float(lo[i-1]):
+            penetration = (float(lo[i-1]) - float(lo[i])) / rng_i
+            bear_traps += penetration
+    val = (bear_traps - bull_traps) / float(n - 1)
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_two_leg_momentum_completion(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Al Brooks Ch16 'Counting Legs': detect 2-leg impulse-correction-impulse structure.
+    A completed 2-leg move often exhausts. Returns signed completion score in [-1, 1].
+    Positive = 2-leg up completed (potential exhaustion/reversal down).
+    Negative = 2-leg down completed (potential bounce)."""
+    n = len(op)
+    if n < 4:
+        return np.float32(0.0)
+    # Find swing points using simple pivot rule
+    # Split into segments and detect impulse-correction-impulse
+    CD = float(cl[n-1])
+    O0 = float(op[0])
+    # Detect leg structure: find max drawup and drawdown sequences
+    # Leg 1 up: find first significant high
+    leg1_high = float(hi[0])
+    leg1_high_idx = 0
+    for i in range(1, n//2 + 1):
+        if float(hi[i]) > leg1_high:
+            leg1_high = float(hi[i])
+            leg1_high_idx = i
+    # Correction: find low after leg1 high
+    corr_low = float(lo[min(leg1_high_idx + 1, n-1)])
+    corr_low_idx = min(leg1_high_idx + 1, n-1)
+    for i in range(leg1_high_idx + 1, min(leg1_high_idx + 3, n)):
+        if float(lo[i]) < corr_low:
+            corr_low = float(lo[i])
+            corr_low_idx = i
+    # Leg 2: check if price makes new high after correction
+    leg2_high = corr_low
+    for i in range(corr_low_idx, n):
+        if float(hi[i]) > leg2_high:
+            leg2_high = float(hi[i])
+    # Score: two legs up if leg2_high > leg1_high and correction was shallow
+    rng = float(max(hi[0], hi[n-1])) - float(min(lo[0], lo[n-1])) + 1e-8
+    corr_depth = (leg1_high - corr_low) / rng
+    up_completion = 0.0
+    if leg2_high > leg1_high and corr_depth < 0.5 and leg1_high_idx > 0:
+        up_completion = (1.0 - corr_depth) * (leg2_high - leg1_high) / rng
+    # Symmetric for down
+    leg1_low = float(lo[0])
+    leg1_low_idx = 0
+    for i in range(1, n//2 + 1):
+        if float(lo[i]) < leg1_low:
+            leg1_low = float(lo[i])
+            leg1_low_idx = i
+    corr_high = float(hi[min(leg1_low_idx + 1, n-1)])
+    corr_high_idx = min(leg1_low_idx + 1, n-1)
+    for i in range(leg1_low_idx + 1, min(leg1_low_idx + 3, n)):
+        if float(hi[i]) > corr_high:
+            corr_high = float(hi[i])
+            corr_high_idx = i
+    leg2_low = corr_high
+    for i in range(corr_high_idx, n):
+        if float(lo[i]) < leg2_low:
+            leg2_low = float(lo[i])
+    corr_depth_dn = (corr_high - leg1_low) / rng
+    dn_completion = 0.0
+    if leg2_low < leg1_low and corr_depth_dn < 0.5 and leg1_low_idx > 0:
+        dn_completion = (1.0 - corr_depth_dn) * (leg1_low - leg2_low) / rng
+    val = up_completion - dn_completion
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_micro_double_top_bottom(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Al Brooks Ch20 'Double Tops/Bottoms': micro double top/bottom at range extremes.
+    Two touches of the same level that fail to break => reversal signal.
+    Returns: positive = double bottom detected (bullish), negative = double top (bearish)."""
+    n = len(op)
+    if n < 4:
+        return np.float32(0.0)
+    hh = float(hi[0])
+    ll = float(lo[0])
+    for i in range(1, n):
+        if float(hi[i]) > hh:
+            hh = float(hi[i])
+        if float(lo[i]) < ll:
+            ll = float(lo[i])
+    rng = hh - ll + 1e-8
+    tolerance = 0.15 * rng  # within 15% of range counts as same level
+    # Double top: two bars with highs near hh that fail to break
+    dt_count = 0
+    dt_last_idx = -1
+    for i in range(n):
+        if abs(float(hi[i]) - hh) <= tolerance:
+            dt_count += 1
+            dt_last_idx = i
+    # Double bottom: two bars with lows near ll
+    db_count = 0
+    db_last_idx = -1
+    for i in range(n):
+        if abs(float(lo[i]) - ll) <= tolerance:
+            db_count += 1
+            db_last_idx = i
+    CD = float(cl[n-1])
+    # Double top is bearish if close is below midpoint after 2+ touches
+    dt_signal = 0.0
+    if dt_count >= 2 and CD < (hh + ll) / 2.0:
+        dt_signal = -float(dt_count - 1) * (hh - CD) / rng
+    # Double bottom is bullish if close is above midpoint after 2+ touches
+    db_signal = 0.0
+    if db_count >= 2 and CD > (hh + ll) / 2.0:
+        db_signal = float(db_count - 1) * (CD - ll) / rng
+    val = db_signal + dt_signal
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_opening_range_persistence(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Fraction of bars whose close stays within bar-0 range [L0, H0].
+    High persistence = coiling inside opening range => breakout mode (Brooks 'breakout mode').
+    Returns ratio in [0, 1]."""
+    n = len(op)
+    if n < 2:
+        return np.float32(0.0)
+    H0 = float(hi[0])
+    L0 = float(lo[0])
+    inside_count = 0
+    for i in range(1, n):
+        if float(cl[i]) <= H0 and float(cl[i]) >= L0:
+            inside_count += 1
+    val = float(inside_count) / float(n - 1)
+    return np.float32(val)
+
+@njit(cache=True, fastmath=True)
+def calc_volume_weighted_momentum_acceleration(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Second derivative of volume-weighted price: momentum building vs fading.
+    Compares volume-weighted return of last half vs first half of early bars.
+    Positive = accelerating momentum, Negative = decelerating/exhaustion."""
+    n = len(op)
+    if n < 4:
+        return np.float32(0.0)
+    mid = n // 2
+    # First half volume-weighted return
+    vw_ret_first = 0.0
+    vol_first = 0.0
+    for i in range(mid):
+        ret_i = (float(cl[i]) - float(op[i])) / (float(op[i]) + 1e-8)
+        vw_ret_first += ret_i * float(vol[i])
+        vol_first += float(vol[i])
+    if vol_first > 0:
+        vw_ret_first /= vol_first
+    # Second half volume-weighted return
+    vw_ret_second = 0.0
+    vol_second = 0.0
+    for i in range(mid, n):
+        ret_i = (float(cl[i]) - float(op[i])) / (float(op[i]) + 1e-8)
+        vw_ret_second += ret_i * float(vol[i])
+        vol_second += float(vol[i])
+    if vol_second > 0:
+        vw_ret_second /= vol_second
+    # Acceleration = second - first, normalized by ATR proxy
+    atr_proxy = 0.0
+    for i in range(n):
+        atr_proxy += float(hi[i]) - float(lo[i])
+    atr_proxy /= float(n)
+    val = (vw_ret_second - vw_ret_first) / (atr_proxy / (prev_close + 1e-8) + 1e-8)
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_price_memory_retest_proximity(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Proximity of decision-bar close to the early-session extreme (high or low).
+    Retests of extremes often trigger reversals (Brooks Ch9 'prior failed reversals').
+    Returns: positive = near high (potential resistance), negative = near low (support)."""
+    n = len(op)
+    if n < 2:
+        return np.float32(0.0)
+    hh = float(hi[0])
+    ll = float(lo[0])
+    for i in range(1, n):
+        if float(hi[i]) > hh:
+            hh = float(hi[i])
+        if float(lo[i]) < ll:
+            ll = float(lo[i])
+    rng = hh - ll + 1e-8
+    CD = float(cl[n-1])
+    # Distance to high (negative = close to high) and low (positive = close to low)
+    dist_to_high = (hh - CD) / rng
+    dist_to_low = (CD - ll) / rng
+    # If very close to high (< 10% of range), signal potential reversal down
+    # If very close to low (< 10% of range), signal potential reversal up
+    val = 0.0
+    if dist_to_high < 0.10:
+        val = -(1.0 - dist_to_high / 0.10)  # negative = at high, bearish
+    elif dist_to_low < 0.10:
+        val = (1.0 - dist_to_low / 0.10)   # positive = at low, bullish
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_bar_efficiency_decay(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Rate of decline in body-to-range ratio (efficiency) across bars.
+    Decaying efficiency = trend exhaustion (Brooks 'channel exhaustion').
+    Returns slope of efficiency, negative = decay/exhaustion."""
+    n = len(op)
+    if n < 3:
+        return np.float32(0.0)
+    eff = np.zeros(n, dtype=np.float32)
+    for i in range(n):
+        rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+        eff[i] = abs(float(cl[i]) - float(op[i])) / rng_i
+    # OLS slope of efficiency
+    sx = 0.0
+    sy = 0.0
+    sxx = 0.0
+    sxy = 0.0
+    for i in range(n):
+        xi = float(i)
+        yi = float(eff[i])
+        sx += xi
+        sy += yi
+        sxx += xi * xi
+        sxy += xi * yi
+    denom = float(n) * sxx - sx * sx
+    if abs(denom) < 1e-12:
+        return np.float32(0.0)
+    slope = (float(n) * sxy - sx * sy) / denom
+    # Normalize by mean efficiency
+    mean_eff = sy / float(n)
+    val = slope / (mean_eff + 1e-8)
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_cumulative_delta_divergence(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Divergence between cumulative volume delta and price.
+    Price rising but delta falling (or vice versa) => absorption/reversal.
+    Returns: positive = bullish divergence (price down, delta up), negative = bearish."""
+    n = len(op)
+    if n < 3:
+        return np.float32(0.0)
+    # Cumulative delta: sum of signed volume
+    cum_delta = 0.0
+    delta_arr = np.zeros(n, dtype=np.float32)
+    for i in range(n):
+        sign_i = 1.0 if float(cl[i]) > float(op[i]) else (-1.0 if float(cl[i]) < float(op[i]) else 0.0)
+        cum_delta += sign_i * float(vol[i])
+        delta_arr[i] = cum_delta
+    # Price trend (slope of closes)
+    sx = 0.0
+    sy_p = 0.0
+    sy_d = 0.0
+    sxx = 0.0
+    sxy_p = 0.0
+    sxy_d = 0.0
+    for i in range(n):
+        xi = float(i)
+        sx += xi
+        sxx += xi * xi
+        sy_p += float(cl[i])
+        sxy_p += xi * float(cl[i])
+        sy_d += float(delta_arr[i])
+        sxy_d += xi * float(delta_arr[i])
+    denom = float(n) * sxx - sx * sx
+    if abs(denom) < 1e-12:
+        return np.float32(0.0)
+    price_slope = (float(n) * sxy_p - sx * sy_p) / denom
+    delta_slope = (float(n) * sxy_d - sx * sy_d) / denom
+    # Normalize slopes
+    mean_price = sy_p / float(n)
+    mean_delta = abs(sy_d / float(n)) + 1e-8
+    norm_p = price_slope / (mean_price + 1e-8)
+    norm_d = delta_slope / mean_delta
+    # Divergence: delta slope opposes price slope
+    val = norm_d - norm_p  # positive = delta stronger than price (bullish divergence)
+    return np.float32(min(max(val * 5.0, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_false_breakout_accumulation(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Count of false breakouts (new extreme then close back inside prior range).
+    High false-breakout count = trap-filled regime => mean reversion expected.
+    Returns signed accumulation: positive = more false breakdowns (bullish), negative = false breakouts up (bearish)."""
+    n = len(op)
+    if n < 3:
+        return np.float32(0.0)
+    false_up = 0.0
+    false_dn = 0.0
+    # Running high/low excluding current bar
+    run_h = float(hi[0])
+    run_l = float(lo[0])
+    for i in range(1, n):
+        # False breakout up: makes new high but closes below prior running high
+        if float(hi[i]) > run_h and float(cl[i]) < run_h:
+            rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+            false_up += (float(hi[i]) - run_h) / rng_i
+        # False breakdown: makes new low but closes above prior running low
+        if float(lo[i]) < run_l and float(cl[i]) > run_l:
+            rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+            false_dn += (run_l - float(lo[i])) / rng_i
+        # Update running extremes
+        if float(hi[i]) > run_h:
+            run_h = float(hi[i])
+        if float(lo[i]) < run_l:
+            run_l = float(lo[i])
+    val = (false_dn - false_up) / float(n - 1)
+    return np.float32(min(max(val, -1.0), 1.0))
+
+
+# --- Batch 3: Refined near-misses + new concepts ---
+
+@njit(cache=True, fastmath=True)
+def calc_range_retention_ratio(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Fraction of range expansion that is retained (not filled back).
+    Measures trend follow-through vs mean reversion tendency.
+    High retention = trend persistence, Low retention = chop/reversal regime.
+    Returns ratio in [-1, 1], positive = upward retention, negative = downward."""
+    n = len(op)
+    if n < 3:
+        return np.float32(0.0)
+    # Track running high/low and measure how much expansion persists
+    run_h = float(hi[0])
+    run_l = float(lo[0])
+    up_expansion = 0.0
+    dn_expansion = 0.0
+    up_retained = 0.0
+    dn_retained = 0.0
+    for i in range(1, n):
+        # Upward expansion
+        if float(hi[i]) > run_h:
+            exp_amt = float(hi[i]) - run_h
+            up_expansion += exp_amt
+            # Check if close retains the expansion (closes above old high)
+            if float(cl[i]) > run_h:
+                up_retained += min(float(cl[i]) - run_h, exp_amt)
+            run_h = float(hi[i])
+        # Downward expansion
+        if float(lo[i]) < run_l:
+            exp_amt = run_l - float(lo[i])
+            dn_expansion += exp_amt
+            # Check if close retains (closes below old low)
+            if float(cl[i]) < run_l:
+                dn_retained += min(run_l - float(cl[i]), exp_amt)
+            run_l = float(lo[i])
+    # Net retention ratio
+    up_ratio = up_retained / (up_expansion + 1e-8) if up_expansion > 0 else 0.5
+    dn_ratio = dn_retained / (dn_expansion + 1e-8) if dn_expansion > 0 else 0.5
+    val = up_ratio - dn_ratio
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_volume_price_confirmation(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Do high-volume bars confirm the price direction?
+    Correlation between volume and absolute body direction.
+    Positive = volume confirms trend (healthy), Negative = volume opposes (divergence).
+    Returns correlation in [-1, 1]."""
+    n = len(op)
+    if n < 3:
+        return np.float32(0.0)
+    # Compute signed body and volume
+    sum_v = 0.0
+    sum_b = 0.0
+    sum_vv = 0.0
+    sum_bb = 0.0
+    sum_vb = 0.0
+    for i in range(n):
+        v = float(vol[i])
+        # Signed body normalized by range
+        rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+        b = (float(cl[i]) - float(op[i])) / rng_i
+        sum_v += v
+        sum_b += b
+        sum_vv += v * v
+        sum_bb += b * b
+        sum_vb += v * b
+    nf = float(n)
+    cov = sum_vb - (sum_v * sum_b) / nf
+    var_v = sum_vv - (sum_v * sum_v) / nf
+    var_b = sum_bb - (sum_b * sum_b) / nf
+    if var_v < 1e-8 or var_b < 1e-8:
+        return np.float32(0.0)
+    corr = cov / (np.sqrt(var_v) * np.sqrt(var_b) + 1e-8)
+    return np.float32(min(max(corr, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_early_late_momentum_divergence(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Compare momentum of first 2 bars vs last 2 bars.
+    Divergence indicates exhaustion (early strong, late weak) or building (early weak, late strong).
+    Returns: positive = late momentum > early (building), negative = early > late (exhaustion)."""
+    n = len(op)
+    if n < 4:
+        return np.float32(0.0)
+    # Early momentum: average body of first 2 bars
+    early_mom = 0.0
+    for i in range(2):
+        rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+        early_mom += (float(cl[i]) - float(op[i])) / rng_i
+    early_mom /= 2.0
+    # Late momentum: average body of last 2 bars
+    late_mom = 0.0
+    for i in range(n - 2, n):
+        rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+        late_mom += (float(cl[i]) - float(op[i])) / rng_i
+    late_mom /= 2.0
+    # Divergence: late - early
+    val = late_mom - early_mom
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_consecutive_compression_count(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Count consecutive bars with declining range (compression/coiling).
+    Brooks Ch22 'Tight Trading Ranges': compression precedes breakout.
+    Returns normalized count in [0, 1]."""
+    n = len(op)
+    if n < 2:
+        return np.float32(0.0)
+    max_compress = 0
+    cur_compress = 0
+    for i in range(1, n):
+        rng_cur = float(hi[i]) - float(lo[i])
+        rng_prev = float(hi[i-1]) - float(lo[i-1])
+        if rng_cur < rng_prev:
+            cur_compress += 1
+            if cur_compress > max_compress:
+                max_compress = cur_compress
+        else:
+            cur_compress = 0
+    val = float(max_compress) / float(n - 1)
+    return np.float32(val)
+
+@njit(cache=True, fastmath=True)
+def calc_smooth_momentum_structure(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Smoothed momentum structure using rolling 3-bar average.
+    Detects whether momentum is accelerating, decelerating, or reversing.
+    Returns: positive = accelerating up, negative = accelerating down."""
+    n = len(op)
+    if n < 4:
+        return np.float32(0.0)
+    # Compute bar returns
+    rets = np.zeros(n, dtype=np.float32)
+    for i in range(n):
+        rets[i] = (float(cl[i]) - float(op[i])) / (float(op[i]) + 1e-8)
+    # Rolling 3-bar momentum (if available)
+    if n < 3:
+        return np.float32(0.0)
+    # Compare first half momentum vs second half momentum
+    mid = n // 2
+    first_mom = 0.0
+    for i in range(mid):
+        first_mom += rets[i]
+    first_mom /= float(mid)
+    second_mom = 0.0
+    for i in range(mid, n):
+        second_mom += rets[i]
+    second_mom /= float(n - mid)
+    # Acceleration normalized by ATR proxy
+    atr_proxy = 0.0
+    for i in range(n):
+        atr_proxy += float(hi[i]) - float(lo[i])
+    atr_proxy /= float(n)
+    val = (second_mom - first_mom) / (atr_proxy / (prev_close + 1e-8) + 1e-8)
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_volume_confirmed_trap_intensity(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Volume-confirmed trap detection: traps with above-average volume are more significant.
+    Returns signed intensity: positive = bear traps with volume (bullish), negative = bull traps (bearish)."""
+    n = len(op)
+    if n < 2:
+        return np.float32(0.0)
+    # Compute average volume
+    avg_vol = 0.0
+    for i in range(n):
+        avg_vol += float(vol[i])
+    avg_vol /= float(n)
+    bull_traps = 0.0
+    bear_traps = 0.0
+    for i in range(1, n):
+        rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+        vol_factor = float(vol[i]) / (avg_vol + 1e-8)
+        # Bull trap: high exceeds prior high but close below prior high (with volume confirmation)
+        if float(hi[i]) > float(hi[i-1]) and float(cl[i]) < float(hi[i-1]):
+            penetration = (float(hi[i]) - float(hi[i-1])) / rng_i
+            bull_traps += penetration * min(vol_factor, 2.0)
+        # Bear trap: low breaks prior low but close above prior low
+        if float(lo[i]) < float(lo[i-1]) and float(cl[i]) > float(lo[i-1]):
+            penetration = (float(lo[i-1]) - float(lo[i])) / rng_i
+            bear_traps += penetration * min(vol_factor, 2.0)
+    val = (bear_traps - bull_traps) / float(n - 1)
+    return np.float32(min(max(val, -1.0), 1.0))
+
+
 CANDIDATES = {
+    # Batch 1 (original)
     "h2_l2_pullback_continuation": calc_h2_l2_pullback_continuation,
     "first_ma_gap_bar_reversal": calc_first_ma_gap_bar_reversal,
     "failed_breakout_reversal_thrust": calc_failed_breakout_reversal_thrust,
@@ -235,6 +778,24 @@ CANDIDATES = {
     "morning_volume_weighted_momentum": calc_morning_volume_weighted_momentum,
     "lunch_transition_volume_skew": calc_lunch_transition_volume_skew,
     "intraday_range_expansion_velocity": calc_intraday_range_expansion_velocity,
+    # Batch 2 (new: Al Brooks / Microstructure)
+    "triangle_apex_compression": calc_triangle_apex_compression,
+    "trap_bar_reversal_intensity": calc_trap_bar_reversal_intensity,
+    "two_leg_momentum_completion": calc_two_leg_momentum_completion,
+    "micro_double_top_bottom": calc_micro_double_top_bottom,
+    "opening_range_persistence": calc_opening_range_persistence,
+    "volume_weighted_momentum_acceleration": calc_volume_weighted_momentum_acceleration,
+    "price_memory_retest_proximity": calc_price_memory_retest_proximity,
+    "bar_efficiency_decay": calc_bar_efficiency_decay,
+    "cumulative_delta_divergence": calc_cumulative_delta_divergence,
+    "false_breakout_accumulation": calc_false_breakout_accumulation,
+    # Batch 3 (refined near-misses + new concepts)
+    "range_retention_ratio": calc_range_retention_ratio,
+    "volume_price_confirmation": calc_volume_price_confirmation,
+    "early_late_momentum_divergence": calc_early_late_momentum_divergence,
+    "consecutive_compression_count": calc_consecutive_compression_count,
+    "smooth_momentum_structure": calc_smooth_momentum_structure,
+    "volume_confirmed_trap_intensity": calc_volume_confirmed_trap_intensity,
 }
 
 def main():

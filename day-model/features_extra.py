@@ -40,7 +40,7 @@ from deprecate_features import (
 )
 
 NaN32 = np.float32(np.nan)
-N_EARLY_EXTRA = 129  # MUST match len(FULL_EARLY_EXTRA); kept as int for use inside njit
+N_EARLY_EXTRA = 131  # MUST match len(FULL_EARLY_EXTRA); kept as int for use inside njit
 
 
 # ============================================================
@@ -130,7 +130,9 @@ FULL_EARLY_EXTRA: list[str] = [
     "star50_limit_proximity_early", "double_bottom_bull_flag_early",
     "moving_average_gap_bar_early", "tight_trading_range_breakout_thrust",
     "h2_l2_pullback_continuation", "shaved_bar_trend_conviction",
-    "morning_volume_weighted_momentum", "lunch_transition_volume_skew"
+    "morning_volume_weighted_momentum", "lunch_transition_volume_skew",
+    # --- Mined Base Primitives v3 (2) ---
+    "volume_weighted_momentum_acceleration", "volume_price_confirmation"
 ]
 
 # Dynamically filter out deprecated early extra features by default to manage the
@@ -158,6 +160,8 @@ DAY_EXTRA: list[str] = [
     "measured_move_proximity",
     # Lunch break momentum preservation
     "lunch_break_momentum_preservation",
+    # --- Mined Multi-Day Primitives (Batch 4) ---
+    "dual_thrust_range_ratio", "close_location_in_range_3d",
 ]
 
 # Yesterday mirrors (shift of early-frame columns produced upstream)
@@ -1429,6 +1433,62 @@ def _early_extras(op: np.ndarray, hi: np.ndarray, lo: np.ndarray,
         val_lvs = (v_late - v_early) / (v_early + v_late + 1e-8)
     out[128] = np.float32(min(max(val_lvs, -1.0), 1.0))
 
+    # ----- 129 volume_weighted_momentum_acceleration -----
+    # Second derivative of volume-weighted price: momentum building vs fading.
+    # Compares volume-weighted return of last half vs first half of early bars.
+    if n >= 4:
+        mid_vwma = n // 2
+        vw_ret_first = 0.0
+        vol_first_vwma = 0.0
+        for i in range(mid_vwma):
+            ret_i = (float(cl[i]) - float(op[i])) / (float(op[i]) + 1e-8)
+            vw_ret_first += ret_i * float(vol[i])
+            vol_first_vwma += float(vol[i])
+        if vol_first_vwma > 0:
+            vw_ret_first /= vol_first_vwma
+        vw_ret_second = 0.0
+        vol_second_vwma = 0.0
+        for i in range(mid_vwma, n):
+            ret_i = (float(cl[i]) - float(op[i])) / (float(op[i]) + 1e-8)
+            vw_ret_second += ret_i * float(vol[i])
+            vol_second_vwma += float(vol[i])
+        if vol_second_vwma > 0:
+            vw_ret_second /= vol_second_vwma
+        val_vwma = (vw_ret_second - vw_ret_first) / (atr_proxy / (prev_close + 1e-8) + 1e-8)
+        out[129] = np.float32(min(max(val_vwma, -1.0), 1.0))
+    else:
+        out[129] = np.float32(0.0)
+
+    # ----- 130 volume_price_confirmation -----
+    # Correlation between volume and signed body direction.
+    # Positive = volume confirms trend (healthy), Negative = divergence.
+    if n >= 3:
+        sum_v_vpc = 0.0
+        sum_b_vpc = 0.0
+        sum_vv_vpc = 0.0
+        sum_bb_vpc = 0.0
+        sum_vb_vpc = 0.0
+        for i in range(n):
+            v_vpc = float(vol[i])
+            rng_i_vpc = float(hi[i]) - float(lo[i]) + 1e-8
+            b_vpc = (float(cl[i]) - float(op[i])) / rng_i_vpc
+            sum_v_vpc += v_vpc
+            sum_b_vpc += b_vpc
+            sum_vv_vpc += v_vpc * v_vpc
+            sum_bb_vpc += b_vpc * b_vpc
+            sum_vb_vpc += v_vpc * b_vpc
+        nf_vpc = float(n)
+        cov_vpc = sum_vb_vpc - (sum_v_vpc * sum_b_vpc) / nf_vpc
+        var_v_vpc = sum_vv_vpc - (sum_v_vpc * sum_v_vpc) / nf_vpc
+        var_b_vpc = sum_bb_vpc - (sum_b_vpc * sum_b_vpc) / nf_vpc
+        if var_v_vpc > 1e-8 and var_b_vpc > 1e-8:
+            corr_vpc = cov_vpc / (np.sqrt(var_v_vpc) * np.sqrt(var_b_vpc) + 1e-8)
+            out[130] = np.float32(min(max(corr_vpc, -1.0), 1.0))
+        else:
+            out[130] = np.float32(0.0)
+    else:
+        out[130] = np.float32(0.0)
+
     return out
 
 
@@ -1543,6 +1603,27 @@ def compute_daylevel_extras(df_1d: pd.DataFrame) -> pd.DataFrame:
     # --- Market Microstructure: lunch break momentum preservation ---
     out["lunch_break_momentum_preservation"] = np.clip(
         ((px - op) / (hi - lo + 1e-8)).rolling(5).mean(), -1.0, 1.0)
+
+    # --- Mined Multi-Day Primitives (Batch 4) ---
+    # Dual-Thrust range asymmetry (3-day): upside vs downside range dominance.
+    # From Dual-Thrust strategy: Range = max(HH-LC, HC-LL).
+    # Positive = upside range dominates (bullish bias), Negative = downside.
+    hh3 = hi.rolling(3).max()
+    ll3 = lo.rolling(3).min()
+    hc3 = px.rolling(3).max()
+    lc3 = px.rolling(3).min()
+    upside_range = hh3 - lc3
+    downside_range = hc3 - ll3
+    total_dt_range = np.maximum(upside_range, downside_range)
+    out["dual_thrust_range_ratio"] = np.clip(
+        (upside_range - downside_range) / (total_dt_range + 1e-8), -1.0, 1.0)
+
+    # Close location in range (3-day average): where closes sit within daily range.
+    # High = closes near highs (buyers in control), Low = closes near lows.
+    # Negative IC: overbought when high → predicts lower forward returns.
+    close_pos = (px - lo) / (hi - lo + 1e-8)
+    out["close_location_in_range_3d"] = np.clip(
+        (close_pos.rolling(3).mean() - 0.5) * 2.0, -1.0, 1.0)
 
     return out[DAY_EXTRA]
 
