@@ -1,6 +1,6 @@
 # Day-Model Rewrite v3 — Commands & Architecture
 
-Simplified feature selection & IC-weighted return combination pipeline.
+Simplified feature selection & IC-weighted return combination pipeline. Check [plan.md](day-model-new/plan.md) for detailed logic.
 
 ## Commands
 

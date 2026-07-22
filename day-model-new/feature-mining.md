@@ -22,7 +22,7 @@ Before any combo generation, compute yearly IC decomposition for each base featu
 - **Implementation**: `compute_component_stability()` and `filter_unstable_combos()` in `generate_combos.py`.
 
 ### 1b. Document mining
-Source: repo of 1000+ trading ideas, AL Brooks book (already downloaded). Agents translate
+Source: ideas folder ( repo of 1000+ trading ideas, AL Brooks book (ideas/Albrooks.md), etc ). Agents translate
 written setups into candidate formulas against existing feature/price primitives. Human review of
 translated formulas before they enter Step 2 (sanity check units, lookback windows, no
 forward-looking references).

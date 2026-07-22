@@ -45,8 +45,8 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
    - `single`: `mono_thr = 0.60`, `ir_thr = 0.30`
    - **Pass-forward cached values**: Rolling mono average from this step is cached and passed forward to B3, not just its pass/fail verdict (uses locked `sign` from B1).
    - **Cheap-first ordering**: Executed before simulation to thin pool by ~98% instantly.
-2. **Benjamini-Yekutieli (BY-FDR) pre-filter**: Reject if empirical $p$-value fails Benjamini-Yekutieli FDR at $q=0.30$ (robust under candidate correlation by adjusting threshold with harmonic constant $c(m) = \sum_{i=1}^m \frac{1}{i}$, via 5,000-trial single-feature block-shuffled simulation on compact survivor matrix `X_survivors`, cached per ETF/side).
-   - **Full search-space correction**: Uses `m_total = len(eval_results)` (total candidates before any filtering) for the harmonic correction and rank denominator, properly accounting for pre-filter selection bias. This does NOT increase computation — FDR still runs only on survivors.
+2. **Benjamini-Hochberg (BH-FDR) pre-filter**: Reject if empirical $p$-value fails Benjamini-Hochberg FDR at $q=0.20$ (standard screening threshold, via 5,000-trial single-feature block-shuffled simulation on compact survivor matrix `X_survivors`, cached per ETF/side).
+   - **Full search-space correction**: Uses `m_total = len(eval_results)` (total candidates before any filtering) for rank denominator, properly accounting for pre-filter selection bias. This does NOT increase computation — FDR still runs only on survivors.
 
 ### B3. Admission Floor (Composite score gate) (maybe too strick)
 - **Rank-normalized Composite Score**:

@@ -34,7 +34,7 @@ from mining.recipe_utils import simulate_returns
 
 MAX_FLIPS = 1 # Maybe 2 better logically, but 1 OOS performance better
 
-FDR_THRESHOLD = 0.30
+FDR_THRESHOLD = 0.20
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
@@ -320,7 +320,31 @@ def benjamini_yekutieli_fdr(p_values: np.ndarray, fdr_threshold=FDR_THRESHOLD, m
     return mask
 
 def benjamini_hochberg_fdr(p_values: np.ndarray, fdr_threshold=FDR_THRESHOLD, m_total: int = None) -> np.ndarray:
-    return benjamini_yekutieli_fdr(p_values, fdr_threshold=fdr_threshold, m_total=m_total)
+    """Apply standard Benjamini-Hochberg (BH-FDR) procedure.
+    Returns a boolean mask of kept indices.
+    
+    Args:
+        m_total: Total number of candidates tested (before pre-filtering).
+                 If provided, uses this as rank denominator to account for full search space.
+                 Defaults to len(p_values).
+    """
+    m_tested = len(p_values)
+    if m_tested == 0:
+        return np.array([], dtype=bool)
+    m = m_total if m_total is not None and m_total > m_tested else m_tested
+    
+    sorted_indices = np.argsort(p_values)
+    sorted_p = p_values[sorted_indices]
+    
+    bh_val = (np.arange(1, m_tested + 1) / m) * fdr_threshold
+    eligible = sorted_p <= bh_val
+    
+    mask = np.zeros(m_tested, dtype=bool)
+    if np.any(eligible):
+        max_eligible_idx = np.max(np.where(eligible)[0])
+        keep_indices = sorted_indices[:max_eligible_idx + 1]
+        mask[keep_indices] = True
+    return mask
 
 def compute_side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str) -> float:
     """Compute tail-specific Spearman correlation on the active strategy tail."""
