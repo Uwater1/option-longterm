@@ -219,5 +219,40 @@
       "feature_a": "first_bar_return",
       "feature_b": "early_range"
     }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__bar_body_rng_0__bar_ret_0",
+    "sign": 1,
+    "overall_ic": 0.16201309859752655,
+    "deflated_ic": 0.15984065363183003,
+    "ic_ir": 0.3950581572521522,
+    "monotonicity": 0.6416422287390029,
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "bar_body_rng_0",
+      "feature_b": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__max_up_ret__keltner_squeeze_width",
+    "sign": 1,
+    "overall_ic": 0.15203425288200378,
+    "deflated_ic": 0.15104598423971408,
+    "ic_ir": 0.4389881054777818,
+    "monotonicity": 0.6873900293255132,
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "max_up_ret",
+      "feature_b": "keltner_squeeze_width"
+    }
+  },
+  {
+    "feature_name": "combo_diff__coppock_curve_day__roc10",
+    "sign": 1,
+    "overall_ic": 0.13113251328468323,
+    "deflated_ic": 0.13050272697312176,
+    "ic_ir": 0.863359328484129,
+    "monotonicity": 0.839882697947214
   }
 ]

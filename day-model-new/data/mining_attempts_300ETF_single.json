@@ -4743,29 +4743,6 @@
     "verdict": "REJECTED_ROLLING_GUARD"
   },
   {
-    "feature_name": "combo_clamp_diff__short_sell_quantity__sma100_dist",
-    "sign": 1,
-    "raw_ic": 0.04392727091908455,
-    "overall_ic": 0.14347998797893524,
-    "mean_tail_ic": 0.27154112749420667,
-    "sortino": 1.0132936525756802,
-    "composite_score": 0.44569327145808224,
-    "p_value": 0.005,
-    "ic_ir": 0.9488466906056253,
-    "monotonicity": 0.819941348973607,
-    "split_half_ic_first": 0.19096111754576364,
-    "split_half_ic_second": 0.14375720731914043,
-    "passes_split_half": true,
-    "passes_rolling_guard": true,
-    "passes_fdr": false,
-    "verdict": "REJECTED_FDR_GATE",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "short_sell_quantity",
-      "feature_b": "sma100_dist"
-    }
-  },
-  {
     "feature_name": "combo_product__short_sell_quantity__sma100_dist",
     "sign": 1,
     "raw_ic": 0.034775082021951675,
@@ -5458,6 +5435,26 @@
     "verdict": "REJECTED_REDUNDANCY",
     "recipe": {
       "op": "diff",
+      "feature_a": "short_sell_quantity",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__short_sell_quantity__sma100_dist",
+    "sign": 1,
+    "raw_ic": 0.04392727091908455,
+    "overall_ic": 0.14347998797893524,
+    "p_value": 0.005,
+    "deflated_ic": 0.14314077192883487,
+    "ic_ir": 0.9488466906056253,
+    "monotonicity": 0.819941348973607,
+    "passes_rolling_guard": true,
+    "passes_fdr": true,
+    "max_corr": 0.9082929114821542,
+    "max_corr_feature": "combo_diff__short_sell_quantity__roc60",
+    "verdict": "REJECTED_REDUNDANCY",
+    "recipe": {
+      "op": "clamp_diff",
       "feature_a": "short_sell_quantity",
       "feature_b": "sma100_dist"
     }

@@ -10,8 +10,8 @@ Lockbox is used solely for labeling TP/FP — all proposed fixes are training-on
 | ETF | Side | Admitted | FP | TP | FP Rate |
 | :--- | :--- | ---: | ---: | ---: | ---: |
 | 300ETF | single | 1 | 1 | 0 | 100% |
-| 500ETF | single | 31 | 14 | 17 | 45% |
-| 159915ETF | single | 12 | 2 | 10 | 17% |
+| 500ETF | single | 32 | 14 | 18 | 44% |
+| 159915ETF | single | 14 | 3 | 11 | 21% |
 
 ---
 
@@ -22,29 +22,29 @@ Metrics computable at admission time that separate future FP from future TP.
 
 Positive Cohen's d means FP has HIGHER value (more unstable/concentrated).
 
-### 500ETF — `single` (FP=14, TP=17)
+### 500ETF — `single` (FP=14, TP=18)
 
 | Metric | FP Mean | TP Mean | FP Median | TP Median | Cohen's d | Best Threshold | Accuracy |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| ic_std_across_regimes | 0.067 | 0.059 | 0.068 | 0.058 | +0.47 | 0.057 | 65% |
-| recency_ratio | 0.698 | 0.769 | 0.580 | 0.748 | -0.35 | 0.803 | 58% |
-| ic_cv | 0.460 | 0.502 | 0.437 | 0.476 | -0.26 | 0.786 | 55% |
-| n_negative_regimes | 0.286 | 0.235 | 0.000 | 0.000 | +0.12 | 0.500 | 55% |
-| n_negative_years | 0.143 | 0.176 | 0.000 | 0.000 | -0.09 | 0.500 | 52% |
-| weak_link_cv | 1.112 | 1.133 | 1.291 | 1.291 | -0.05 | 1.811 | 58% |
-| half_ratio | 0.784 | 0.785 | 0.733 | 0.765 | -0.00 | 0.896 | 61% |
+| ic_std_across_regimes | 0.067 | 0.060 | 0.068 | 0.059 | +0.43 | 0.057 | 62% |
+| ic_cv | 0.460 | 0.527 | 0.437 | 0.489 | -0.38 | 0.786 | 53% |
+| recency_ratio | 0.698 | 0.756 | 0.580 | 0.739 | -0.28 | 0.803 | 59% |
+| n_negative_years | 0.143 | 0.222 | 0.000 | 0.000 | -0.21 | 1.000 | 53% |
+| n_negative_regimes | 0.286 | 0.222 | 0.000 | 0.000 | +0.15 | 0.500 | 56% |
+| half_ratio | 0.784 | 0.807 | 0.733 | 0.773 | -0.09 | 0.896 | 59% |
+| weak_link_cv | 1.112 | 1.142 | 1.291 | 1.291 | -0.08 | 1.811 | 59% |
 
-### 159915ETF — `single` (FP=2, TP=10)
+### 159915ETF — `single` (FP=3, TP=11)
 
 | Metric | FP Mean | TP Mean | FP Median | TP Median | Cohen's d | Best Threshold | Accuracy |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| ic_cv | 0.300 | 0.522 | 0.300 | 0.466 | -1.73 | 0.833 | 75% |
-| weak_link_cv | 1.370 | 1.172 | 1.370 | 1.311 | +1.06 | 1.370 | 75% |
-| n_negative_years | 0.000 | 0.200 | 0.000 | 0.000 | -0.71 | 1.000 | 75% |
-| recency_ratio | 0.886 | 0.755 | 0.886 | 0.741 | +0.67 | 0.790 | 75% |
-| n_negative_regimes | 0.000 | 0.100 | 0.000 | 0.000 | -0.47 | 0.500 | 75% |
-| half_ratio | 0.992 | 1.034 | 0.992 | 0.966 | -0.18 | 1.501 | 75% |
-| ic_std_across_regimes | 0.049 | 0.051 | 0.049 | 0.045 | -0.12 | 0.086 | 75% |
+| recency_ratio | 1.073 | 0.769 | 0.978 | 0.781 | +1.15 | 1.335 | 86% |
+| ic_cv | 0.371 | 0.505 | 0.366 | 0.446 | -0.92 | 0.833 | 71% |
+| n_negative_years | 0.000 | 0.182 | 0.000 | 0.000 | -0.67 | 1.000 | 71% |
+| n_negative_regimes | 0.000 | 0.091 | 0.000 | 0.000 | -0.45 | 0.500 | 71% |
+| half_ratio | 1.187 | 1.066 | 0.996 | 0.988 | +0.40 | 1.484 | 79% |
+| weak_link_cv | 1.123 | 1.190 | 1.370 | 1.370 | -0.22 | 1.370 | 71% |
+| ic_std_across_regimes | 0.050 | 0.052 | 0.050 | 0.049 | -0.17 | 0.086 | 71% |
 
 ---
 
@@ -157,6 +157,12 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `gap_pct` (CV=1.37, neg years=2)
 - Regime ICs: Q1_low_vol=+0.076, Q2=+0.185, Q3_mid=+0.112, Q4=+0.202, Q5_high_vol=+0.099
 
+**`combo_ratio__max_up_ret__keltner_squeeze_width`** (Lock IC=+0.0608, Sharpe=-0.1597)
+- Yearly ICs: 2015: +0.126 | 2016: +0.055 | 2017: +0.032 | 2018: +0.028 | 2019: +0.120 | 2020: +0.113 | 2021: +0.149
+- IC CV=0.51, Neg years=0/7, Half ratio=1.58, Recency ratio=1.45
+- Weak component: `keltner_squeeze_width` (CV=0.63, neg years=1)
+- Regime ICs: Q1_low_vol=+0.010, Q2=+0.070, Q3_mid=+0.139, Q4=+0.097, Q5_high_vol=+0.151
+
 **`combo_ifelse__gap_pct__max_up_ret__bar_vol_5`** (Lock IC=+0.0729, Sharpe=-0.0801)
 - Yearly ICs: 2015: +0.163 | 2016: +0.104 | 2017: +0.053 | 2018: +0.095 | 2019: +0.182 | 2020: +0.131 | 2021: +0.081
 - IC CV=0.37, Neg years=0/7, Half ratio=1.00, Recency ratio=0.79
@@ -241,6 +247,11 @@ What stable, persistent features look like in training.
 - IC CV=0.98, Neg years=1/7, Half ratio=0.67, Recency ratio=1.20
 - Weak component: `yesterday_illiquidity_amihud` (CV=1.29)
 
+**`combo_ifelse__gap_pct__first_bar_return__total_balance`** (Lock IC=+0.0471, Sharpe=+0.0458)
+- Yearly ICs: 2015: +0.231 | 2016: -0.006 | 2017: +0.010 | 2018: +0.145 | 2019: +0.109 | 2020: +0.115 | 2021: +0.003
+- IC CV=0.95, Neg years=1/7, Half ratio=1.17, Recency ratio=0.53
+- Weak component: `gap_pct` (CV=1.29)
+
 **`combo_ifelse__gap_pct__yesterday_early_vwap_dev__num_up_bars`** (Lock IC=+0.0861, Sharpe=+0.0453)
 - Yearly ICs: 2015: +0.084 | 2016: +0.081 | 2017: +0.035 | 2018: +0.142 | 2019: +0.106 | 2020: +0.139 | 2021: +0.020
 - IC CV=0.50, Neg years=0/7, Half ratio=1.16, Recency ratio=0.96
@@ -277,6 +288,11 @@ What stable, persistent features look like in training.
 - Yearly ICs: 2015: +0.204 | 2016: +0.121 | 2017: +0.020 | 2018: +0.129 | 2019: +0.200 | 2020: +0.120 | 2021: +0.134
 - IC CV=0.43, Neg years=0/7, Half ratio=1.38, Recency ratio=0.78
 - Weak component: `bb_width` (CV=1.25)
+
+**`combo_ifelse__gap_pct__bar_body_rng_0__bar_ret_0`** (Lock IC=+0.0798, Sharpe=+0.6001)
+- Yearly ICs: 2015: +0.164 | 2016: +0.136 | 2017: +0.038 | 2018: +0.132 | 2019: +0.193 | 2020: +0.135 | 2021: +0.137
+- IC CV=0.33, Neg years=0/7, Half ratio=1.39, Recency ratio=0.91
+- Weak component: `gap_pct` (CV=1.37)
 
 **`combo_ifelse__gap_pct__first_bar_return__yesterday_early_trend`** (Lock IC=+0.0784, Sharpe=+0.4088)
 - Yearly ICs: 2015: +0.214 | 2016: +0.160 | 2017: +0.012 | 2018: +0.144 | 2019: +0.182 | 2020: +0.124 | 2021: +0.039
@@ -318,25 +334,25 @@ How FP features' gate metrics compare to TP features. High overlap = gate cannot
 
 | Metric | FP Mean±Std | TP Mean±Std | Overlap | Verdict |
 | :--- | :--- | :--- | ---: | :--- |
-| monotonicity | 0.725±0.050 | 0.682±0.049 | 52% | WEAK |
-| ic_ir | 0.608±0.142 | 0.537±0.133 | 69% | WEAK |
-| p_value | 0.000±0.001 | 0.001±0.001 | 65% | WEAK |
-| max_corr | 0.767±0.110 | 0.661±0.128 | 87% | USELESS |
-| deflated_ic | 0.222±0.034 | 0.221±0.040 | 79% | WEAK |
-| overall_ic | 0.222±0.034 | 0.221±0.040 | 79% | WEAK |
-| raw_ic | 0.136±0.023 | 0.122±0.031 | 68% | WEAK |
+| monotonicity | 0.725±0.050 | 0.679±0.050 | 52% | WEAK |
+| ic_ir | 0.608±0.142 | 0.535±0.129 | 69% | WEAK |
+| p_value | 0.000±0.001 | 0.002±0.006 | 12% | USEFUL |
+| max_corr | 0.767±0.110 | 0.650±0.133 | 87% | USELESS |
+| deflated_ic | 0.222±0.034 | 0.216±0.045 | 62% | WEAK |
+| overall_ic | 0.222±0.034 | 0.216±0.045 | 63% | WEAK |
+| raw_ic | 0.136±0.023 | 0.121±0.031 | 68% | WEAK |
 
 ### 159915ETF — `single`
 
 | Metric | FP Mean±Std | TP Mean±Std | Overlap | Verdict |
 | :--- | :--- | :--- | ---: | :--- |
-| monotonicity | 0.753±0.058 | 0.685±0.034 | 26% | USEFUL |
-| ic_ir | 0.784±0.188 | 0.494±0.092 | 3% | USEFUL |
-| p_value | 0.000±0.000 | 0.000±0.000 | 0% | USEFUL |
-| max_corr | 0.656±0.046 | 0.670±0.185 | 17% | USEFUL |
-| deflated_ic | 0.190±0.001 | 0.206±0.029 | 3% | USEFUL |
-| overall_ic | 0.191±0.002 | 0.208±0.029 | 4% | USEFUL |
-| raw_ic | 0.133±0.001 | 0.131±0.011 | 5% | USEFUL |
+| monotonicity | 0.731±0.057 | 0.681±0.035 | 30% | USEFUL |
+| ic_ir | 0.669±0.224 | 0.485±0.092 | 28% | USEFUL |
+| p_value | 0.002±0.002 | 0.001±0.001 | 47% | USEFUL |
+| max_corr | 0.712±0.088 | 0.680±0.179 | 40% | USEFUL |
+| deflated_ic | 0.177±0.018 | 0.202±0.031 | 27% | USEFUL |
+| overall_ic | 0.178±0.018 | 0.204±0.031 | 26% | USEFUL |
+| raw_ic | 0.124±0.013 | 0.132±0.011 | 48% | USEFUL |
 
 ---
 
@@ -356,14 +372,14 @@ Top-20 rejects per gate evaluated on lockbox. High FN rate = gate too strict.
 - `combo_min__bar_ret_0__bar_body_rng_0`: Train IC=+0.1467, Lock IC=+0.0117, Sharpe=+0.2664
 - `combo_min__first_bar_return__bar_body_rng_0`: Train IC=+0.1464, Lock IC=+0.0116, Sharpe=+0.2664
 
-**BH-FDR Gate**: 2/2 top rejects are profitable (100%)
+**BH-FDR Gate**: 1/1 top rejects are profitable (100%)
 
-- `combo_clamp_diff__short_sell_quantity__sma100_dist`: Train IC=+0.1435, Lock IC=+0.0220, Sharpe=+0.8087
 - `combo_product__short_sell_quantity__sma100_dist`: Train IC=+0.1023, Lock IC=+0.0248, Sharpe=+0.8017
 
-**B4 Correlation Gate**: 1/2 top rejects are profitable (50%)
+**B4 Correlation Gate**: 2/3 top rejects are profitable (67%)
 
 - `combo_diff__short_sell_quantity__sma100_dist`: Train IC=+0.1484, Lock IC=+0.0220, Sharpe=+0.8087
+- `combo_clamp_diff__short_sell_quantity__sma100_dist`: Train IC=+0.1435, Lock IC=+0.0220, Sharpe=+0.8087
 
 ### 500ETF — `single`
 
@@ -375,11 +391,9 @@ Top-20 rejects per gate evaluated on lockbox. High FN rate = gate too strict.
 
 - `combo_mean__max_down_ret__num_up_bars`: Train IC=+0.1617, Lock IC=+0.0992, Sharpe=+0.1165
 
-**BH-FDR Gate**: 3/20 top rejects are profitable (15%)
+**BH-FDR Gate**: 1/20 top rejects are profitable (5%)
 
-- `combo_min__first_30min_return__gap_pct`: Train IC=+0.1475, Lock IC=+0.0989, Sharpe=+0.3067
-- `combo_rank_max__max_down_ret__bar_body_rng_1`: Train IC=+0.1453, Lock IC=+0.0913, Sharpe=+0.1859
-- `first_30min_return`: Train IC=+0.1461, Lock IC=+0.0708, Sharpe=+0.1356
+- `combo_ifelse__gap_pct__first_bar_return__short_balance`: Train IC=+0.1075, Lock IC=+0.0470, Sharpe=+0.0458
 
 **B4 Correlation Gate**: 3/20 top rejects are profitable (15%)
 
@@ -395,22 +409,20 @@ Top-20 rejects per gate evaluated on lockbox. High FN rate = gate too strict.
 - `combo_rank_min__max_up_ret__max_down_ret`: Train IC=+0.2204, Lock IC=+0.0988, Sharpe=+0.7200
 - `combo_rank_max__bar_body_rng_0__max_down_ret`: Train IC=+0.1938, Lock IC=+0.0875, Sharpe=+0.5045
 
-**BH-FDR Gate**: 7/20 top rejects are profitable (35%)
+**BH-FDR Gate**: 1/20 top rejects are profitable (5%)
 
-- `combo_ifelse__gap_pct__bar_body_rng_0__bar_ret_0`: Train IC=+0.1620, Lock IC=+0.0798, Sharpe=+0.6001
-- `combo_ifelse__gap_pct__bar_body_rng_0__first_bar_return`: Train IC=+0.1616, Lock IC=+0.0797, Sharpe=+0.6001
-- `combo_tri_median__max_up_ret__bar_body_rng_0__bar_ret_0`: Train IC=+0.1635, Lock IC=+0.0795, Sharpe=+0.3644
+- `combo_rank_max__max_up_ret__gap_pct`: Train IC=+0.1253, Lock IC=+0.1090, Sharpe=+0.2066
 
 **B3 Composite Floor**: 2/20 top rejects are profitable (10%)
 
 - `combo_mean__max_up_ret__gap_pct`: Train IC=+0.2287, Lock IC=+0.1505, Sharpe=+1.0973
 - `combo_rank_min__max_up_ret__gap_pct`: Train IC=+0.2544, Lock IC=+0.1252, Sharpe=+0.9217
 
-**B4 Correlation Gate**: 9/19 top rejects are profitable (47%)
+**B4 Correlation Gate**: 10/20 top rejects are profitable (50%)
 
 - `combo_ifelse__gap_pct__max_up_ret__yesterday_early_vwap_dev`: Train IC=+0.1943, Lock IC=+0.0837, Sharpe=+0.7716
+- `combo_ifelse__gap_pct__bar_body_rng_0__first_bar_return`: Train IC=+0.1616, Lock IC=+0.0797, Sharpe=+0.6001
 - `combo_ifelse__gap_pct__bar_body_rng_0__yesterday_early_vwap_dev`: Train IC=+0.1810, Lock IC=+0.0932, Sharpe=+0.5611
-- `combo_ifelse__gap_pct__max_up_ret__yesterday_early_trend`: Train IC=+0.1915, Lock IC=+0.0734, Sharpe=+0.4170
 
 ---
 
@@ -428,16 +440,15 @@ Top-20 rejects per gate evaluated on lockbox. High FN rate = gate too strict.
 
 **Strong training-only discriminators (Cohen's d > 0.5):**
 
-- `ic_cv`: FP is lower (d=-1.73). Threshold 0.833 → 75% accuracy.
-- `weak_link_cv`: FP is higher (d=+1.06). Threshold 1.370 → 75% accuracy.
-- `n_negative_years`: FP is lower (d=-0.71). Threshold 1.000 → 75% accuracy.
-- `recency_ratio`: FP is higher (d=+0.67). Threshold 0.790 → 75% accuracy.
+- `recency_ratio`: FP is higher (d=+1.15). Threshold 1.335 → 86% accuracy.
+- `ic_cv`: FP is lower (d=-0.92). Threshold 0.833 → 71% accuracy.
+- `n_negative_years`: FP is lower (d=-0.67). Threshold 1.000 → 71% accuracy.
 
 **Failure pattern counts:**
-- Era-concentrated (IC CV > 1.5): 0/2
-- Decaying signal (half ratio < 0.3): 0/2
-- Weak component (CV > 2.0): 0/2
-- Regime-dependent (≥2 negative regimes): 0/2
+- Era-concentrated (IC CV > 1.5): 0/3
+- Decaying signal (half ratio < 0.3): 0/3
+- Weak component (CV > 2.0): 0/3
+- Regime-dependent (≥2 negative regimes): 0/3
 
 ---
 
@@ -448,28 +459,29 @@ Per-primitive FP rate across all combo features. Flag primitives with FP rate �
 | Primitive | FP | TP | Total | FP Rate | Flag |
 | :--- | ---: | ---: | ---: | ---: | :--- |
 | `bar_vwap_dev_2` | 3 | 1 | 4 | 75% |  |
-| `bar_ret_0` | 2 | 1 | 3 | 67% |  |
 | `num_up_bars` | 3 | 2 | 5 | 60% |  |
+| `max_up_ret` | 11 | 10 | 21 | 52% |  |
 | `bar_vol_5` | 1 | 1 | 2 | 50% |  |
-| `max_up_ret` | 10 | 10 | 20 | 50% |  |
+| `keltner_squeeze_width` | 1 | 1 | 2 | 50% |  |
+| `bar_ret_0` | 2 | 2 | 4 | 50% |  |
 | `body_to_range_ratio` | 1 | 1 | 2 | 50% |  |
 | `max_down_ret` | 3 | 4 | 7 | 43% |  |
 | `first_30min_return` | 2 | 3 | 5 | 40% |  |
-| `gap_pct` | 9 | 18 | 27 | 33% |  |
 | `early_range` | 1 | 2 | 3 | 33% |  |
+| `gap_pct` | 9 | 20 | 29 | 31% |  |
 | `yesterday_illiquidity_amihud` | 1 | 3 | 4 | 25% |  |
-| `bar_body_rng_0` | 2 | 6 | 8 | 25% |  |
-| `first_bar_return` | 1 | 4 | 5 | 20% |  |
+| `bar_body_rng_0` | 2 | 7 | 9 | 22% |  |
 | `yesterday_early_momentum` | 1 | 4 | 5 | 20% |  |
-| `yesterday_day_vwap_dev` | 0 | 2 | 2 | 0% |  |
-| `bb_width` | 0 | 2 | 2 | 0% |  |
+| `first_bar_return` | 1 | 5 | 6 | 17% |  |
 | `yesterday_early_vwap_dev` | 0 | 4 | 4 | 0% |  |
+| `bb_width` | 0 | 2 | 2 | 0% |  |
+| `yesterday_day_vwap_dev` | 0 | 2 | 2 | 0% |  |
 
 ---
 
 ## 9. Operator Class FP Rate
 
 - **Symmetric** (`max, mean, min, rank_max, rank_min`): FP=6, TP=6, FP rate=50%
-- **Conditional** (`abs_diff, clamp_diff, diff, ifelse, product, ratio`): FP=10, TP=21, FP rate=32%
+- **Conditional** (`abs_diff, clamp_diff, diff, ifelse, product, ratio`): FP=11, TP=23, FP rate=32%
 - **3-way** (`tri_ifelse, tri_max, tri_mean, tri_median, tri_min`): FP=1, TP=0, FP rate=100%
 

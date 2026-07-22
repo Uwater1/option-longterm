@@ -882,5 +882,59 @@
     "deflated_ic": 0.1521716325420441,
     "ic_ir": 0.3534999705686537,
     "monotonicity": 0.624633431085044
+  },
+  {
+    "feature_name": "combo_ratio__bar_body_rng_0__northbound_volume_share",
+    "sign": 1,
+    "overall_ic": 0.14290302991867065,
+    "deflated_ic": 0.1421335971479774,
+    "ic_ir": 0.6979928462641269,
+    "monotonicity": 0.7249266862170088
+  },
+  {
+    "feature_name": "combo_clamp_diff__max_up_ret__bar_vwap_dev_3",
+    "sign": 1,
+    "overall_ic": 0.14169669151306152,
+    "deflated_ic": 0.14299413897367583,
+    "ic_ir": 0.7636173238756931,
+    "monotonicity": 0.7577712609970675
+  },
+  {
+    "feature_name": "combo_ifelse__macd_hist__max_down_ret__first_30min_return",
+    "sign": 1,
+    "overall_ic": 0.1251182109117508,
+    "deflated_ic": 0.12375916765667935,
+    "ic_ir": 0.5203911779505626,
+    "monotonicity": 0.7102639296187683
+  },
+  {
+    "feature_name": "combo_ifelse__atr14_norm__max_up_ret__margin_balance",
+    "sign": 1,
+    "overall_ic": 0.1239890605211258,
+    "deflated_ic": 0.12511149550957218,
+    "ic_ir": 0.8006364597213653,
+    "monotonicity": 0.78475073313783
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__first_bar_return__total_balance",
+    "sign": 1,
+    "overall_ic": 0.11846255511045456,
+    "deflated_ic": 0.11816393021811371,
+    "ic_ir": 0.5029613524254124,
+    "monotonicity": 0.6211143695014663,
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "first_bar_return",
+      "feature_b": "total_balance"
+    }
+  },
+  {
+    "feature_name": "combo_mean__vol_ratio_10_60__volatility_percentile_20d",
+    "sign": 1,
+    "overall_ic": 0.11193735897541046,
+    "deflated_ic": 0.11086432213434778,
+    "ic_ir": 0.41849180931628677,
+    "monotonicity": 0.6950146627565983
   }
 ]

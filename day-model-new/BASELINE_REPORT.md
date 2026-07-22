@@ -19,19 +19,19 @@ Candidate counts at each admission gate. Shows where features get pruned.
 
 | ETF | Side | Total Candidates | 7Y-Jackknife Pass | B2 Rolling Guard | BH-FDR Pass | Final Admitted |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: |
-| 300ETF | single | 344 | 121 | 31 | 29 | 1 |
+| 300ETF | single | 344 | 121 | 31 | 30 | 1 |
 | 300ETF | long | 626 | 113 | 4 | 0 | 0 |
 | 300ETF | short | 11,748 | 1,145 | 95 | 0 | 0 |
 | 50ETF | single | 2,681 | 304 | 51 | 0 | 0 |
 | 50ETF | long | 4,275 | 448 | 18 | 0 | 0 |
 | 50ETF | short | 9,209 | 813 | 75 | 0 | 0 |
-| 500ETF | single | 3,738 | 1,309 | 941 | 719 | 89 |
+| 500ETF | single | 3,738 | 1,309 | 941 | 839 | 95 |
 | 500ETF | long | 5,145 | 617 | 246 | 6 | 1 |
 | 500ETF | short | 12,090 | 1,222 | 133 | 2 | 0 |
-| 588000ETF | single | 9,676 | 4,467 | 3,701 | 2,618 | 90 |
-| 588000ETF | long | 7,442 | 1,921 | 637 | 6 | 0 |
+| 588000ETF | single | 9,676 | 4,467 | 3,701 | 3,470 | 95 |
+| 588000ETF | long | 7,442 | 1,921 | 637 | 25 | 1 |
 | 588000ETF | short | 9,881 | 1,161 | 122 | 0 | 0 |
-| 159915ETF | single | 5,138 | 1,221 | 503 | 305 | 19 |
+| 159915ETF | single | 5,138 | 1,221 | 503 | 406 | 22 |
 | 159915ETF | long | 3,590 | 360 | 71 | 0 | 0 |
 | 159915ETF | short | 11,853 | 1,525 | 20 | 0 | 0 |
 
@@ -47,13 +47,13 @@ IC-weighted combination model on the training window. Useful for sanity-checking
 | 50ETF | single | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 50ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 50ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 500ETF | single | 10 | +0.2158 | [+0.1655, +0.2660] | +0.3229 | [+0.2244, +0.4177] | +0.9636 | 10.11% | 1.4539 | 7.62% | 1.1005 | 1.7284 | 8.31% |
+| 500ETF | single | 13 | +0.2172 | [+0.1674, +0.2678] | +0.3249 | [+0.2243, +0.4210] | +0.8909 | 10.31% | 1.4898 | 7.83% | 1.1362 | 1.8021 | 8.18% |
 | 500ETF | long | 1 | +0.0353* | [-0.0096, +0.0847] | +0.2319 | [+0.1018, +0.3762] | -0.1273 | 6.41% | 1.2361 | 5.20% | 1.0156 | 2.0377 | 5.21% |
 | 500ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 588000ETF | single | 6 | +0.1609 | [+0.0986, +0.2159] | +0.3108 | [+0.1743, +0.4272] | +0.9636 | 12.53% | 1.8633 | 9.54% | 1.4301 | 5.3073 | 5.13% |
-| 588000ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 588000ETF | long | 1 | +0.0387* | [-0.0230, +0.0958] | +0.2897 | [+0.1173, +0.3996] | -0.0909 | 11.89% | 1.1787 | 10.96% | 1.0891 | 6.7283 | 3.50% |
 | 588000ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 159915ETF | single | 10 | +0.1857 | [+0.1338, +0.2275] | +0.3330 | [+0.2275, +0.4305] | +0.7333 | 12.14% | 2.0598 | 9.41% | 1.6053 | 3.0204 | 4.29% |
+| 159915ETF | single | 10 | +0.1914 | [+0.1406, +0.2325] | +0.3551 | [+0.2487, +0.4462] | +0.9515 | 12.46% | 2.0815 | 9.71% | 1.6331 | 3.1178 | 4.73% |
 | 159915ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 159915ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 
@@ -69,13 +69,13 @@ Out-of-sample from holdout start to present.
 | 50ETF | single | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 50ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 50ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 500ETF | single | 10 | +0.1156 | [+0.0557, +0.1754] | +0.1957 | [+0.0539, +0.3284] | +0.8303 | 6.36% | 1.1866 | 3.59% | 0.6742 | 1.2897 | 5.43% |
+| 500ETF | single | 13 | +0.1043 | [+0.0436, +0.1619] | +0.1309* | [-0.0084, +0.2589] | +0.8061 | 3.55% | 0.7562 | 1.51% | 0.3239 | 0.6091 | 6.68% |
 | 500ETF | long | 1 | -0.0263* | [-0.0823, +0.0316] | -0.0632* | [-0.1935, +0.1095] | -0.3697 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 500ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 588000ETF | single | 6 | -0.0053* | [-0.1122, +0.0845] | +0.0075* | [-0.2458, +0.1749] | +0.2727 | 1.76% | 0.3347 | -1.20% | -0.2289 | -0.3579 | 5.58% |
-| 588000ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 588000ETF | long | 1 | +0.0571* | [-0.0335, +0.1502] | +0.1662* | [-0.2126, +0.3929] | +0.4788 | 3.93% | 0.5737 | 2.82% | 0.4140 | 0.6142 | 7.75% |
 | 588000ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 159915ETF | single | 10 | +0.1130 | [+0.0470, +0.1683] | +0.1427* | [-0.0168, +0.2592] | +0.8061 | 7.50% | 1.1158 | 4.83% | 0.7182 | 1.6451 | 7.87% |
+| 159915ETF | single | 10 | +0.1156 | [+0.0517, +0.1699] | +0.1685 | [+0.0091, +0.2871] | +0.7333 | 8.82% | 1.2215 | 6.16% | 0.8541 | 2.1155 | 6.85% |
 | 159915ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 159915ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 
@@ -91,13 +91,13 @@ Most recent OOS window (lockbox start to present). Strictest generalization test
 | 50ETF | single | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 50ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 50ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 500ETF | single | 10 | +0.1308 | [+0.0486, +0.2172] | +0.2330 | [+0.0198, +0.4134] | +0.7939 | 9.95% | 1.5870 | 7.04% | 1.1305 | 2.8795 | 5.69% |
+| 500ETF | single | 13 | +0.1258 | [+0.0451, +0.2142] | +0.1796* | [-0.0281, +0.3496] | +0.8667 | 8.89% | 1.4048 | 5.95% | 0.9461 | 2.2941 | 6.70% |
 | 500ETF | long | 1 | -0.0481* | [-0.1274, +0.0273] | -0.0789* | [-0.3253, +0.1177] | -0.4303 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 500ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 588000ETF | single | 6 | -0.0495* | [-0.1743, +0.0617] | +0.0000* | [-0.2839, +0.2435] | -0.0667 | 2.81% | 0.6376 | 1.30% | 0.2957 | 0.4595 | 2.46% |
-| 588000ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 588000ETF | long | 1 | +0.0368* | [-0.0950, +0.1395] | +0.0831* | [-0.3098, +0.4763] | +0.3091 | 4.81% | 0.6038 | 3.67% | 0.4632 | 0.6747 | 7.70% |
 | 588000ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 159915ETF | single | 10 | +0.1117 | [+0.0203, +0.1929] | +0.0732* | [-0.1701, +0.2448] | +0.7576 | 7.16% | 0.8994 | 4.34% | 0.5451 | 1.2981 | 9.38% |
+| 159915ETF | single | 10 | +0.1179 | [+0.0274, +0.1984] | +0.1173* | [-0.1243, +0.2877] | +0.6485 | 9.42% | 1.1002 | 6.63% | 0.7726 | 2.0194 | 6.99% |
 | 159915ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 159915ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 
@@ -220,6 +220,12 @@ No features admitted.
 | `combo_ifelse__vol20__first_30min_return__yesterday_early_momentum` | +1 | +0.1070 | +0.1549 | +0.1555 | 0.0046 | +0.3568 | +0.6176 | 0.825 |
 | `combo_ifelse__gap_pct__yesterday_early_vwap_dev__bar_body_rng_0` | +1 | +0.1191 | +0.1549 | +0.1564 | 0.0046 | +0.3391 | +0.6070 | 0.739 |
 | `combo_ifelse__vol60__first_bar_return__yesterday_afternoon_momentum` | +1 | +0.1002 | +0.1525 | +0.1522 | 0.0054 | +0.3535 | +0.6246 | 0.843 |
+| `combo_ratio__bar_body_rng_0__northbound_volume_share` | +1 | +0.1390 | +0.1429 | +0.1421 | 0.0084 | +0.6980 | +0.7249 | 0.053 |
+| `combo_clamp_diff__max_up_ret__bar_vwap_dev_3` | +1 | +0.1098 | +0.1417 | +0.1430 | 0.0086 | +0.7636 | +0.7578 | 0.581 |
+| `combo_ifelse__macd_hist__max_down_ret__first_30min_return` | +1 | +0.1243 | +0.1251 | +0.1238 | 0.0178 | +0.5204 | +0.7103 | 0.795 |
+| `combo_ifelse__atr14_norm__max_up_ret__margin_balance` | +1 | +0.0942 | +0.1240 | +0.1251 | 0.0194 | +0.8006 | +0.7848 | 0.765 |
+| `combo_ifelse__gap_pct__first_bar_return__total_balance` | +1 | +0.0996 | +0.1185 | +0.1182 | 0.0260 | +0.5030 | +0.6211 | 0.462 |
+| `combo_mean__vol_ratio_10_60__volatility_percentile_20d` | +1 | +0.0531 | +0.1119 | +0.1109 | 0.0376 | +0.4185 | +0.6950 | 0.706 |
 
 ### 500ETF / long
 
@@ -324,9 +330,17 @@ No features admitted.
 | `combo_ifelse__vol10__vix_skew_proxy__vol5` | +1 | +0.0579 | +0.2025 | +0.2019 | 0.0038 | +0.6822 | +0.7838 | 0.831 |
 | `combo_ifelse__vol20__max_up_ret__vix_rolling_percentile_60d` | +1 | +0.0363 | +0.1887 | +0.1896 | 0.0074 | +0.3811 | +0.6683 | 0.673 |
 | `combo_ifelse__vix__vol5__bar_ret_0` | +1 | +0.1075 | +0.1869 | +0.1857 | 0.0082 | +0.7347 | +0.7394 | 0.773 |
+| `combo_tri_mean__vix_rolling_percentile_60d__vol_gk10__yesterday_day_realized_vol` | +1 | +0.0480 | +0.1851 | +0.1869 | 0.0090 | +0.5043 | +0.7216 | 0.811 |
+| `combo_rank_max__vix_rolling_percentile_60d__yesterday_day_realized_vol` | +1 | +0.0489 | +0.1843 | +0.1861 | 0.0090 | +0.3656 | +0.6328 | 0.748 |
+| `combo_rank_min__vol5__vol_gk10` | +1 | +0.0374 | +0.1784 | +0.1790 | 0.0112 | +0.4100 | +0.6101 | 0.752 |
+| `combo_mean__vix__atr14_norm` | +1 | +0.0411 | +0.1697 | +0.1713 | 0.0150 | +0.5610 | +0.7068 | 0.798 |
+| `combo_tri_max__vix_rolling_percentile_60d__vol_gk10__max_down_ret` | +1 | +0.1300 | +0.1637 | +0.1648 | 0.0192 | +0.7600 | +0.7887 | 0.820 |
 
 ### 588000ETF / long
-No features admitted.
+
+| Feature | Sign | Raw IC | Overall IC | Deflated IC | p-value | IC IR | Monotonicity | Max Corr |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `combo_abs_diff__growth_momentum_ratio__bar_vol_5` | +1 | +0.0387 | +0.2897 | +0.2906 | 0.0002 | +0.3542 | +0.5824 | 0.000 |
 
 ### 588000ETF / short
 No features admitted.
@@ -354,6 +368,9 @@ No features admitted.
 | `combo_clamp_diff__early_range__yesterday_day_vwap_dev` | +1 | +0.1122 | +0.1825 | +0.1826 | 0.0006 | +0.6162 | +0.7120 | 0.516 |
 | `combo_ifelse__gap_pct__first_bar_return__yesterday_early_trend` | +1 | +0.1410 | +0.1790 | +0.1770 | 0.0010 | +0.4642 | +0.6622 | 0.844 |
 | `combo_ifelse__gap_pct__first_bar_return__early_range` | +1 | +0.1267 | +0.1728 | +0.1708 | 0.0014 | +0.5853 | +0.7167 | 0.849 |
+| `combo_ifelse__gap_pct__bar_body_rng_0__bar_ret_0` | +1 | +0.1423 | +0.1620 | +0.1598 | 0.0022 | +0.3951 | +0.6416 | 0.787 |
+| `combo_ratio__max_up_ret__keltner_squeeze_width` | +1 | +0.1054 | +0.1520 | +0.1510 | 0.0038 | +0.4390 | +0.6874 | 0.825 |
+| `combo_diff__coppock_curve_day__roc10` | +1 | +0.0511 | +0.1311 | +0.1305 | 0.0128 | +0.8634 | +0.8399 | 0.235 |
 
 ### 159915ETF / long
 No features admitted.
@@ -400,6 +417,7 @@ Recipes are resolved using training-set statistics (mean/std/median) to prevent 
 | `combo_diff__yesterday_early_momentum__yesterday_day_skew` | `diff` | a=`yesterday_early_momentum`, b=`yesterday_day_skew` |
 | `combo_ifelse__gap_pct__yesterday_early_momentum__yesterday_illiquidity_amihud` | `ifelse` | a=`yesterday_early_momentum`, b=`yesterday_illiquidity_amihud`, cond=`gap_pct` |
 | `combo_ifelse__gap_pct__yesterday_early_vwap_dev__bar_body_rng_0` | `ifelse` | a=`yesterday_early_vwap_dev`, b=`bar_body_rng_0`, cond=`gap_pct` |
+| `combo_ifelse__gap_pct__first_bar_return__total_balance` | `ifelse` | a=`first_bar_return`, b=`total_balance`, cond=`gap_pct` |
 | `combo_rank_max__max_up_ret__vol5` | `rank_max` | a=`max_up_ret`, b=`vol5` |
 | `combo_abs_diff__max_up_ret__vol_gk10` | `abs_diff` | a=`max_up_ret`, b=`vol_gk10` |
 | `combo_ifelse__vix__vix_skew_proxy__bar_ret_0` | `ifelse` | a=`vix_skew_proxy`, b=`bar_ret_0`, cond=`vix` |
@@ -414,6 +432,8 @@ Recipes are resolved using training-set statistics (mean/std/median) to prevent 
 | `combo_max__max_up_ret__vix` | `max` | a=`max_up_ret`, b=`vix` |
 | `combo_rank_min__vix_diff_1d__max_up_ret` | `rank_min` | a=`vix_diff_1d`, b=`max_up_ret` |
 | `combo_ifelse__vix__vol5__bar_ret_0` | `ifelse` | a=`vol5`, b=`bar_ret_0`, cond=`vix` |
+| `combo_rank_max__vix_rolling_percentile_60d__yesterday_day_realized_vol` | `rank_max` | a=`vix_rolling_percentile_60d`, b=`yesterday_day_realized_vol` |
+| `combo_rank_min__vol5__vol_gk10` | `rank_min` | a=`vol5`, b=`vol_gk10` |
 | `combo_ifelse__bb_width__yesterday_early_momentum__bar_body_rng_0` | `ifelse` | a=`yesterday_early_momentum`, b=`bar_body_rng_0`, cond=`bb_width` |
 | `combo_ifelse__bb_width__max_up_ret__bar_body_rng_0` | `ifelse` | a=`max_up_ret`, b=`bar_body_rng_0`, cond=`bb_width` |
 | `combo_rank_max__max_up_ret__first_30min_return` | `rank_max` | a=`max_up_ret`, b=`first_30min_return` |
@@ -426,3 +446,5 @@ Recipes are resolved using training-set statistics (mean/std/median) to prevent 
 | `combo_clamp_diff__early_range__yesterday_day_vwap_dev` | `clamp_diff` | a=`early_range`, b=`yesterday_day_vwap_dev` |
 | `combo_ifelse__gap_pct__first_bar_return__yesterday_early_trend` | `ifelse` | a=`first_bar_return`, b=`yesterday_early_trend`, cond=`gap_pct` |
 | `combo_ifelse__gap_pct__first_bar_return__early_range` | `ifelse` | a=`first_bar_return`, b=`early_range`, cond=`gap_pct` |
+| `combo_ifelse__gap_pct__bar_body_rng_0__bar_ret_0` | `ifelse` | a=`bar_body_rng_0`, b=`bar_ret_0`, cond=`gap_pct` |
+| `combo_ratio__max_up_ret__keltner_squeeze_width` | `ratio` | a=`max_up_ret`, b=`keltner_squeeze_width` |
