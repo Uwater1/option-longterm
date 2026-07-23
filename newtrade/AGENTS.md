@@ -12,7 +12,7 @@ uv run python newtrade/run_backtest.py -e 300ETF --scheme ew
 uv run python newtrade/run_backtest.py -e 300ETF --scheme all
 
 # All ETFs, all schemes, tanh sizing, custom buffer
-uv run python newtrade/run_backtest.py -e all --scheme all --position-mode tanh --z-buffer 0.3
+uv run python newtrade/run_backtest.py -e all --scheme all --position-mode tanh --z-buffer 0.1
 
 # Fixed threshold override (skip train-sweep)
 uv run python newtrade/run_backtest.py -e 500ETF --scheme icw --z-th 0.7
