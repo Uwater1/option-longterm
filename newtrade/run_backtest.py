@@ -135,6 +135,8 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
         "z_th_train": sweep_info["optimal_z_th"] if sweep_info else None,
         "z_buffer": z_buffer if auto_threshold else 0.0,
         "position_mode": position_mode,
+        "dates": df_oos["date"].dt.strftime("%Y-%m-%d").tolist() if "date" in df_oos.columns else [],
+        "cum_pnl": np.cumsum(net_returns).tolist(),
     })
 
     print(f"    [RESULT] OOS ({metrics['period']}) | Cost Sharpe: {metrics['cost_sharpe']} | PnL: {metrics['total_pnl']} | WinRate: {metrics['win_rate_pct']}% | Intraday Trades: {metrics['n_trades']}/{metrics['n_days']}")
@@ -186,6 +188,39 @@ def main():
             )
             results.append(res)
 
+    # Generate Rank Bounded Weight plot artifact
+    rank_results = [r for r in results if r.get("scheme") == "rank" and r.get("status") == "SUCCESS"]
+    chart_rel_path = None
+    if rank_results:
+        try:
+            import matplotlib
+            matplotlib.use('Agg')
+            import matplotlib.pyplot as plt
+
+            fig, ax = plt.subplots(figsize=(10, 4.5), dpi=150)
+            for r in rank_results:
+                if r.get("dates") and r.get("cum_pnl"):
+                    dates = pd.to_datetime(r["dates"])
+                    cum_pnl = r["cum_pnl"]
+                    ax.plot(dates, cum_pnl, label=f"{r['etf']} (Sharpe: {r['cost_sharpe']:.3f}, PnL: {r['total_pnl']:+.4f})", linewidth=1.8)
+            
+            ax.set_title("Rank Bounded Weight — OOS Cumulative Net PnL (10:00 - 14:35 Intraday)", fontsize=11, fontweight='bold')
+            ax.set_xlabel("Date", fontsize=9)
+            ax.set_ylabel("Cumulative Net PnL", fontsize=9)
+            ax.grid(True, linestyle="--", alpha=0.5)
+            ax.legend(loc="upper left", frameon=True, fontsize=9)
+            fig.tight_layout()
+
+            artifacts_dir = HERE / "artifacts"
+            artifacts_dir.mkdir(parents=True, exist_ok=True)
+            chart_path = artifacts_dir / "rank_bounded_equity.png"
+            fig.savefig(chart_path)
+            plt.close(fig)
+            chart_rel_path = "artifacts/rank_bounded_equity.png"
+            print(f"Saved Rank Bounded equity chart to {chart_path}")
+        except Exception as e:
+            print(f"[WARNING] Failed to generate plot: {e}")
+
     # Print summary table
     print("\n================================================================================")
     print("NEWTRADE OOS BACKTEST PERFORMANCE SUMMARY (10:00 - 14:35 Intraday Trades)")
@@ -194,10 +229,10 @@ def main():
     headers = ["ETF", "Side", "OOS Period", "Z_th", "Features", "Trades", "Cost Sharpe", "Raw Sharpe", "Total PnL", "Max DD", "Win Rate", "Turnover"]
     
     SCHEME_TITLES = {
+        "rank": "Rank Bounded Weight (Primary)",
         "ew": "Equal Weight (EW)",
         "icw": "IC Weight (ICW)",
         "score": "Score Weighted",
-        "rank": "Rank Bounded Weight",
         "glm": "Linear GLM",
     }
     
@@ -238,28 +273,43 @@ def main():
             lines.append("| " + " | ".join(row) + " |")
         return "\n".join(lines)
     
-    # Group results by scheme
+    # Group results by scheme (ensure 'rank' is first)
     from collections import OrderedDict
     scheme_groups = OrderedDict()
+    # Put rank first if present
+    if "rank" in [r.get("scheme") for r in results]:
+        scheme_groups["rank"] = [r for r in results if r.get("scheme") == "rank"]
     for r in results:
         s = r.get("scheme", "?")
-        scheme_groups.setdefault(s, []).append(r)
+        if s != "rank":
+            scheme_groups.setdefault(s, []).append(r)
     
     # Build report sections
     report_sections = []
-    multi_scheme = len(scheme_groups) > 1
-    
     for scheme_key, scheme_results in scheme_groups.items():
         rows = [_format_row(r) for r in scheme_results]
-        if multi_scheme:
-            title = SCHEME_TITLES.get(scheme_key, scheme_key.upper())
-            section = f"## {title}\n\n{_render_table(rows)}"
+        title = SCHEME_TITLES.get(scheme_key, scheme_key.upper())
+        table_md = _render_table(rows)
+        
+        if scheme_key == "rank":
+            # Uncollapsed main section with chart
+            img_md = f"![Rank Bounded Weight Cumulative Equity]({chart_rel_path})\n\n" if chart_rel_path else ""
+            section = f"## {title}\n\n{img_md}{table_md}"
         else:
-            section = _render_table(rows)
+            # Collapsed details block for secondary schemes
+            section = f"<details>\n<summary><b>{title}</b> (click to expand)</summary>\n\n{table_md}\n\n</details>"
         report_sections.append(section)
     
     report_content = "\n\n".join(report_sections)
     print("\n" + report_content + "\n")
+
+    # Clean results before saving JSON (drop large arrays to keep JSON clean)
+    clean_results = []
+    for r in results:
+        r_copy = dict(r)
+        r_copy.pop("dates", None)
+        r_copy.pop("cum_pnl", None)
+        clean_results.append(r_copy)
 
     # Save markdown report (default: REPORT.md in newtrade/)
     out_path = Path(args.output) if args.output else HERE / "REPORT.md"
@@ -281,7 +331,7 @@ def main():
     scheme_label = args.scheme if args.scheme != "all" else "all_schemes"
     json_path = data_dir / f"backtest_results_{scheme_label}_{args.side}.json"
     with open(json_path, "w") as f:
-        json.dump(results, f, indent=2)
+        json.dump(clean_results, f, indent=2)
     print(f"Saved JSON results to {json_path}")
 
 

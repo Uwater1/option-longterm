@@ -7,7 +7,20 @@
 - **Position Mode**: `tanh`
 - **Transaction Friction**: `8.0 bps`
 
-## Equal Weight (EW)
+## Rank Bounded Weight (Primary)
+
+![Rank Bounded Weight Cumulative Equity](artifacts/rank_bounded_equity.png)
+
+| ETF | Side | OOS Period | Z_th | Features | Trades | Cost Sharpe | Raw Sharpe | Total PnL | Max DD | Win Rate | Turnover |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 300ETF | single | 2022-01 ~ 2025-12 | 1.10 (train:1.00) | 10 | 37 | 0.717 | 0.864 | +0.0483 | 0.0071 | 67.6% | 3.5x |
+| 500ETF | single | 2022-01 ~ 2025-12 | 0.40 (train:0.30) | 48 | 296 | 0.491 | 1.166 | +0.0708 | 0.0502 | 52.7% | 31.7x |
+| 50ETF | single | 2022-01 ~ 2026-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
+| 588000ETF | single | 2022-01 ~ 2026-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
+| 159915ETF | single | 2022-01 ~ 2025-12 | 0.40 (train:0.30) | 11 | 309 | 1.036 | 1.509 | +0.2499 | 0.0451 | 48.9% | 37.5x |
+
+<details>
+<summary><b>Equal Weight (EW)</b> (click to expand)</summary>
 
 | ETF | Side | OOS Period | Z_th | Features | Trades | Cost Sharpe | Raw Sharpe | Total PnL | Max DD | Win Rate | Turnover |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -17,7 +30,10 @@
 | 588000ETF | single | 2022-01 ~ 2026-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
 | 159915ETF | single | 2022-01 ~ 2025-12 | 0.30 (train:0.20) | 11 | 353 | 1.010 | 1.514 | +0.2629 | 0.0523 | 47.3% | 43.0x |
 
-## IC Weight (ICW)
+</details>
+
+<details>
+<summary><b>IC Weight (ICW)</b> (click to expand)</summary>
 
 | ETF | Side | OOS Period | Z_th | Features | Trades | Cost Sharpe | Raw Sharpe | Total PnL | Max DD | Win Rate | Turnover |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -27,7 +43,10 @@
 | 588000ETF | single | 2022-01 ~ 2026-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
 | 159915ETF | single | 2022-01 ~ 2025-12 | 0.30 (train:0.20) | 11 | 348 | 0.997 | 1.503 | +0.2575 | 0.0528 | 47.7% | 42.9x |
 
-## Score Weighted
+</details>
+
+<details>
+<summary><b>Score Weighted</b> (click to expand)</summary>
 
 | ETF | Side | OOS Period | Z_th | Features | Trades | Cost Sharpe | Raw Sharpe | Total PnL | Max DD | Win Rate | Turnover |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -37,12 +56,4 @@
 | 588000ETF | single | 2022-01 ~ 2026-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
 | 159915ETF | single | 2022-01 ~ 2025-12 | 0.40 (train:0.30) | 11 | 313 | 1.027 | 1.507 | +0.2481 | 0.0458 | 48.2% | 38.1x |
 
-## Rank Bounded Weight
-
-| ETF | Side | OOS Period | Z_th | Features | Trades | Cost Sharpe | Raw Sharpe | Total PnL | Max DD | Win Rate | Turnover |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 300ETF | single | 2022-01 ~ 2025-12 | 1.10 (train:1.00) | 10 | 37 | 0.717 | 0.864 | +0.0483 | 0.0071 | 67.6% | 3.5x |
-| 500ETF | single | 2022-01 ~ 2025-12 | 0.40 (train:0.30) | 48 | 296 | 0.491 | 1.166 | +0.0708 | 0.0502 | 52.7% | 31.7x |
-| 50ETF | single | 2022-01 ~ 2026-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
-| 588000ETF | single | 2022-01 ~ 2026-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
-| 159915ETF | single | 2022-01 ~ 2025-12 | 0.40 (train:0.30) | 11 | 309 | 1.036 | 1.509 | +0.2499 | 0.0451 | 48.9% | 37.5x |
+</details>
