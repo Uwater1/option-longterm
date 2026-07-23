@@ -768,6 +768,226 @@ def calc_volume_confirmed_trap_intensity(op, hi, lo, cl, vol, prev_close, exp_ba
     return np.float32(min(max(val, -1.0), 1.0))
 
 
+# --- Batch 4: Market Regime & Al Brooks Big Trend Factors ---
+
+@njit(cache=True, fastmath=True)
+def calc_trend_day_regime_conviction(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Al Brooks Trend Day vs Trading Range Day conviction.
+    Ratio of net displacement |Close - Open| to total path length sum(|Close_i - Open_i|).
+    High ratio (>0.6) = clean trend day. Signed by trend direction."""
+    n = len(op)
+    if n < 2:
+        return np.float32(0.0)
+    net_disp = float(cl[n-1]) - float(op[0])
+    path_len = 0.0
+    for i in range(n):
+        path_len += abs(float(cl[i]) - float(op[i]))
+    if path_len < 1e-8:
+        return np.float32(0.0)
+    eff = net_disp / path_len
+    return np.float32(min(max(eff, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_always_in_trend_persistence(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Al Brooks Always-In trend strength.
+    Bars closing in top 25% of bar range (bullish) or bottom 25% of bar range (bearish).
+    Returns signed persistence ratio in [-1, 1]."""
+    n = len(op)
+    if n < 1:
+        return np.float32(0.0)
+    score = 0.0
+    for i in range(n):
+        rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+        close_pos = (float(cl[i]) - float(lo[i])) / rng_i
+        if close_pos >= 0.75:
+            score += 1.0
+        elif close_pos <= 0.25:
+            score -= 1.0
+    val = score / float(n)
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_micro_gap_trend_continuation(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Al Brooks Micro Measuring Gap (bar_i low >= bar_{i-2} high for bull trend gap, or high <= low for bear).
+    Micro gaps indicate urgency and powerful trend momentum.
+    Returns signed gap count in [-1, 1]."""
+    n = len(op)
+    if n < 3:
+        return np.float32(0.0)
+    bull_gaps = 0.0
+    bear_gaps = 0.0
+    for i in range(2, n):
+        rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+        if float(lo[i]) >= float(hi[i-2]):
+            bull_gaps += (float(lo[i]) - float(hi[i-2]) + rng_i) / rng_i
+        if float(hi[i]) <= float(lo[i-2]):
+            bear_gaps += (float(lo[i-2]) - float(hi[i]) + rng_i) / rng_i
+    val = (bull_gaps - bear_gaps) / float(n - 2)
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_early_ema20_distance_trend(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Distance of decision bar close from early 5-bar EMA normalized by ATR proxy.
+    Al Brooks 20 EMA gap bars: large distance from EMA indicates strong trend impulse."""
+    n = len(op)
+    if n < 2:
+        return np.float32(0.0)
+    alpha = 2.0 / (float(n) + 1.0)
+    ema = float(cl[0])
+    atr_proxy = float(hi[0]) - float(lo[0])
+    for i in range(1, n):
+        ema = alpha * float(cl[i]) + (1.0 - alpha) * ema
+        atr_proxy += (float(hi[i]) - float(lo[i]))
+    atr_proxy = (atr_proxy / float(n)) + 1e-8
+    dist = (float(cl[n-1]) - ema) / atr_proxy
+    return np.float32(min(max(dist / 2.0, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_breakout_bar_followthrough(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Al Brooks Breakout Bar + Follow-Through Bar.
+    Find bar with largest body (Breakout Bar), measure if next bar continues in same direction.
+    Strong follow-through = high probability trend continuation."""
+    n = len(op)
+    if n < 3:
+        return np.float32(0.0)
+    max_body = 0.0
+    bo_idx = 0
+    bo_dir = 0.0
+    for i in range(n - 1):
+        body = abs(float(cl[i]) - float(op[i]))
+        if body > max_body:
+            max_body = body
+            bo_idx = i
+            bo_dir = 1.0 if float(cl[i]) > float(op[i]) else -1.0
+    if max_body < 1e-8 or bo_idx >= n - 1:
+        return np.float32(0.0)
+    ft_bar = bo_idx + 1
+    rng_ft = float(hi[ft_bar]) - float(lo[ft_bar]) + 1e-8
+    ft_move = (float(cl[ft_bar]) - float(cl[bo_idx])) / rng_ft
+    val = bo_dir * ft_move
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_consecutive_trend_bar_intensity(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Al Brooks Consecutive Trend Bars without countertrend bar.
+    Counts max consecutive bull trend bars (close > open) minus bear trend bars (close < open)."""
+    n = len(op)
+    if n < 2:
+        return np.float32(0.0)
+    max_bull = 0
+    max_bear = 0
+    cur_bull = 0
+    cur_bear = 0
+    for i in range(n):
+        if float(cl[i]) > float(op[i]):
+            cur_bull += 1
+            cur_bear = 0
+            if cur_bull > max_bull:
+                max_bull = cur_bull
+        elif float(cl[i]) < float(op[i]):
+            cur_bear += 1
+            cur_bull = 0
+            if cur_bear > max_bear:
+                max_bear = cur_bear
+        else:
+            cur_bull = 0
+            cur_bear = 0
+    val = float(max_bull - max_bear) / float(n)
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_vwap_trend_channel_slope(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Slope of VWAP across early 6 bars normalized by price.
+    Measures institutional order flow trend direction and speed."""
+    n = len(op)
+    if n < 3:
+        return np.float32(0.0)
+    vwaps = np.zeros(n, dtype=np.float32)
+    cum_pv = 0.0
+    cum_v = 0.0
+    for i in range(n):
+        p = (float(hi[i]) + float(lo[i]) + float(cl[i])) / 3.0
+        v = float(vol[i])
+        cum_pv += p * v
+        cum_v += v
+        vwaps[i] = cum_pv / (cum_v + 1e-8)
+    # Slope of vwaps
+    sx = 0.0
+    sy = 0.0
+    sxx = 0.0
+    sxy = 0.0
+    for i in range(n):
+        xi = float(i)
+        yi = float(vwaps[i])
+        sx += xi
+        sy += yi
+        sxx += xi * xi
+        sxy += xi * yi
+    denom = float(n) * sxx - sx * sx
+    if abs(denom) < 1e-12:
+        return np.float32(0.0)
+    slope = (float(n) * sxy - sx * sy) / denom
+    val = slope / (prev_close * 0.002 + 1e-8)
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_volatility_expansion_trend_vector(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Combination of directional momentum and range expansion.
+    Product of sign(Close - Open) and early session range relative to expected bar range.
+    High value = strong directional breakout accompanied by range expansion."""
+    n = len(op)
+    if n < 2:
+        return np.float32(0.0)
+    hh = float(hi[0])
+    ll = float(lo[0])
+    avg_r = 0.0
+    for i in range(n):
+        if float(hi[i]) > hh:
+            hh = float(hi[i])
+        if float(lo[i]) < ll:
+            ll = float(lo[i])
+        avg_r += float(hi[i]) - float(lo[i])
+    avg_r = (avg_r / float(n)) + 1e-8
+    total_r = hh - ll
+    expansion = total_r / (avg_r * float(n) * 0.5)
+    direction = (float(cl[n-1]) - float(op[0])) / (total_r + 1e-8)
+    val = direction * min(expansion, 2.0)
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_tight_channel_persistence(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Al Brooks Tight Bull/Bear Channel persistence.
+    In a tight bull channel, consecutive bars make higher lows or equal lows with minimal overlap.
+    Returns signed channel persistence score in [-1, 1]."""
+    n = len(op)
+    if n < 3:
+        return np.float32(0.0)
+    bull_channel_bars = 0
+    bear_channel_bars = 0
+    for i in range(1, n):
+        if float(lo[i]) >= float(lo[i-1]) - 1e-6 and float(cl[i]) >= float(op[i]):
+            bull_channel_bars += 1
+        if float(hi[i]) <= float(hi[i-1]) + 1e-6 and float(cl[i]) <= float(op[i]):
+            bear_channel_bars += 1
+    val = float(bull_channel_bars - bear_channel_bars) / float(n - 1)
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_opening_drive_thrust_ratio(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Opening drive thrust (first 15m return divided by first 15m range).
+    Measures whether opening move is a clean impulse or choppy wicks."""
+    n = len(op)
+    if n < 3:
+        return np.float32(0.0)
+    op0 = float(op[0])
+    cl2 = float(cl[2])
+    hi_15 = max(float(hi[0]), max(float(hi[1]), float(hi[2])))
+    lo_15 = min(float(lo[0]), min(float(lo[1]), float(lo[2])))
+    rng_15 = hi_15 - lo_15 + 1e-8
+    thrust = (cl2 - op0) / rng_15
+    return np.float32(min(max(thrust, -1.0), 1.0))
+
+
 CANDIDATES = {
     # Batch 1 (original)
     "h2_l2_pullback_continuation": calc_h2_l2_pullback_continuation,
@@ -796,6 +1016,17 @@ CANDIDATES = {
     "consecutive_compression_count": calc_consecutive_compression_count,
     "smooth_momentum_structure": calc_smooth_momentum_structure,
     "volume_confirmed_trap_intensity": calc_volume_confirmed_trap_intensity,
+    # Batch 4 (Al Brooks & Market Regime Big Trend Factors)
+    "trend_day_regime_conviction": calc_trend_day_regime_conviction,
+    "always_in_trend_persistence": calc_always_in_trend_persistence,
+    "micro_gap_trend_continuation": calc_micro_gap_trend_continuation,
+    "early_ema20_distance_trend": calc_early_ema20_distance_trend,
+    "breakout_bar_followthrough": calc_breakout_bar_followthrough,
+    "consecutive_trend_bar_intensity": calc_consecutive_trend_bar_intensity,
+    "vwap_trend_channel_slope": calc_vwap_trend_channel_slope,
+    "volatility_expansion_trend_vector": calc_volatility_expansion_trend_vector,
+    "tight_channel_persistence": calc_tight_channel_persistence,
+    "opening_drive_thrust_ratio": calc_opening_drive_thrust_ratio,
 }
 
 def main():

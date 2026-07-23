@@ -40,7 +40,7 @@ from deprecate_features import (
 )
 
 NaN32 = np.float32(np.nan)
-N_EARLY_EXTRA = 131  # MUST match len(FULL_EARLY_EXTRA); kept as int for use inside njit
+N_EARLY_EXTRA = 145  # MUST match len(FULL_EARLY_EXTRA); kept as int for use inside njit
 
 
 # ============================================================
@@ -132,7 +132,15 @@ FULL_EARLY_EXTRA: list[str] = [
     "h2_l2_pullback_continuation", "shaved_bar_trend_conviction",
     "morning_volume_weighted_momentum", "lunch_transition_volume_skew",
     # --- Mined Base Primitives v3 (2) ---
-    "volume_weighted_momentum_acceleration", "volume_price_confirmation"
+    "volume_weighted_momentum_acceleration", "volume_price_confirmation",
+    # --- Mined Base Primitives v4 (14 gate-passing / trend primitives) ---
+    "smooth_momentum_structure", "two_leg_momentum_completion",
+    "false_breakout_accumulation", "early_late_momentum_divergence",
+    "trend_day_regime_conviction", "always_in_trend_persistence",
+    "micro_gap_trend_continuation", "early_ema20_distance_trend",
+    "breakout_bar_followthrough", "consecutive_trend_bar_intensity",
+    "vwap_trend_channel_slope", "volatility_expansion_trend_vector",
+    "tight_channel_persistence", "opening_drive_thrust_ratio"
 ]
 
 # Dynamically filter out deprecated early extra features by default to manage the
@@ -162,6 +170,9 @@ DAY_EXTRA: list[str] = [
     "lunch_break_momentum_preservation",
     # --- Mined Multi-Day Primitives (Batch 4) ---
     "dual_thrust_range_ratio", "close_location_in_range_3d",
+    "multi_ema_alignment_5_20_50", "adx_trend_direction_14d",
+    "keltner_channel_position_20d", "donchian_breakout_ratio_20d",
+    "consecutive_up_days_count", "volume_weighted_trend_strength_10d"
 ]
 
 # Yesterday mirrors (shift of early-frame columns produced upstream)
@@ -1605,9 +1616,6 @@ def compute_daylevel_extras(df_1d: pd.DataFrame) -> pd.DataFrame:
         ((px - op) / (hi - lo + 1e-8)).rolling(5).mean(), -1.0, 1.0)
 
     # --- Mined Multi-Day Primitives (Batch 4) ---
-    # Dual-Thrust range asymmetry (3-day): upside vs downside range dominance.
-    # From Dual-Thrust strategy: Range = max(HH-LC, HC-LL).
-    # Positive = upside range dominates (bullish bias), Negative = downside.
     hh3 = hi.rolling(3).max()
     ll3 = lo.rolling(3).min()
     hc3 = px.rolling(3).max()
@@ -1618,12 +1626,43 @@ def compute_daylevel_extras(df_1d: pd.DataFrame) -> pd.DataFrame:
     out["dual_thrust_range_ratio"] = np.clip(
         (upside_range - downside_range) / (total_dt_range + 1e-8), -1.0, 1.0)
 
-    # Close location in range (3-day average): where closes sit within daily range.
-    # High = closes near highs (buyers in control), Low = closes near lows.
-    # Negative IC: overbought when high → predicts lower forward returns.
     close_pos = (px - lo) / (hi - lo + 1e-8)
     out["close_location_in_range_3d"] = np.clip(
         (close_pos.rolling(3).mean() - 0.5) * 2.0, -1.0, 1.0)
+
+    # New Market Regime & Trend Factors (Daily T-1)
+    sma20 = px.rolling(20).mean()
+    sma50 = px.rolling(50).mean()
+    out["multi_ema_alignment_5_20_50"] = np.clip(
+        np.sign(sma5 - sma20) * np.minimum((sma5 - sma20).abs() / (atr14 + 1e-8), 1.0) +
+        np.sign(sma20 - sma50) * np.minimum((sma20 - sma50).abs() / (atr14 + 1e-8), 1.0), -1.0, 1.0)
+
+    up_m = hi - hi.shift(1)
+    dn_m = lo.shift(1) - lo
+    up_m_clean = np.where((up_m > dn_m) & (up_m > 0), up_m, 0.0)
+    dn_m_clean = np.where((dn_m > up_m) & (dn_m > 0), dn_m, 0.0)
+    plus_di = 100.0 * pd.Series(up_m_clean, index=px.index).rolling(14).mean() / (atr14 + 1e-8)
+    minus_di = 100.0 * pd.Series(dn_m_clean, index=px.index).rolling(14).mean() / (atr14 + 1e-8)
+    dx = 100.0 * (plus_di - minus_di).abs() / (plus_di + minus_di + 1e-8)
+    adx14 = dx.rolling(14).mean()
+    out["adx_trend_direction_14d"] = np.clip(
+        np.sign(plus_di - minus_di) * (adx14 / 100.0), -1.0, 1.0)
+
+    out["keltner_channel_position_20d"] = np.clip(
+        (px - ema20) / (2.0 * atr14 + 1e-8), -1.0, 1.0)
+
+    high20 = hi.rolling(20).max()
+    low20 = lo.rolling(20).min()
+    out["donchian_breakout_ratio_20d"] = np.clip(
+        (px - low20) / (high20 - low20 + 1e-8) * 2.0 - 1.0, -1.0, 1.0)
+
+    up_day = (px > px.shift(1)).astype(int)
+    dn_day = (px < px.shift(1)).astype(int)
+    out["consecutive_up_days_count"] = np.clip(
+        (_consecutive_streak(up_day.values) - _consecutive_streak(dn_day.values)) / 10.0, -1.0, 1.0)
+
+    out["volume_weighted_trend_strength_10d"] = np.clip(
+        (px - px.rolling(10).mean()) / (px.rolling(10).std() + 1e-8), -1.0, 1.0)
 
     return out[DAY_EXTRA]
 
