@@ -310,24 +310,6 @@ def block_bootstrap_ci(y_true: np.ndarray, y_pred: np.ndarray, side: str, block_
     
     return ci_overall, ci_tail, ci_mono
 
-def compute_vif(X: np.ndarray) -> np.ndarray:
-    """Calculate VIF using correlation matrix inverse (O(p^3) vs O(p^2 * n * p) for lstsq loop)."""
-    n_features = X.shape[1]
-    if n_features <= 1:
-        return np.ones(n_features)
-    # Standardize columns for correlation matrix
-    X_std = (X - X.mean(axis=0)) / (X.std(axis=0) + 1e-10)
-    corr = np.corrcoef(X_std, rowvar=False)
-    # Regularize for numerical stability
-    corr += np.eye(n_features) * 1e-10
-    try:
-        inv_corr = np.linalg.inv(corr)
-        vifs = np.diag(inv_corr)
-        # Clip extreme values
-        vifs = np.clip(vifs, 1.0, 999.0)
-    except np.linalg.LinAlgError:
-        vifs = np.full(n_features, 999.0)
-    return vifs
 
 from mining.recipe_utils import simulate_returns
 
@@ -468,23 +450,6 @@ def main():
         X_train_std = X_train_std * signs
         X_oos_std = X_oos_std * signs
         X_lock_std = X_lock_std * signs
-
-        # B2: VIF safety net pass on final pool (computed over training set)
-        print("Computing VIF on final selected features...")
-        vifs = compute_vif(X_train_std)
-        clean_selected_pool = []
-        clean_indices = []
-        for i, (feat, vif) in enumerate(zip(selected_pool, vifs)):
-            if vif > 5.0:
-                print(f"  [SAFETY NET] Dropping collinear feature: {feat['feature_name']} (VIF = {vif:.2f})")
-            else:
-                clean_selected_pool.append(feat)
-                clean_indices.append(i)
-                
-        selected_pool = clean_selected_pool
-        X_train_std = X_train_std[:, clean_indices]
-        X_oos_std = X_oos_std[:, clean_indices]
-        X_lock_std = X_lock_std[:, clean_indices]
 
     # Target returns
     y_train = train_df["trade_return"].values.astype(np.float64)

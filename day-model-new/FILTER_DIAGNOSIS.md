@@ -733,17 +733,17 @@ Per-primitive FP rate across all combo features. Flag primitives with FP rate â‰
 | :--- | ---: | ---: | ---: | ---: | :--- |
 | `first_bar_sentiment` | 1 | 7 | 8 | 12% |  |
 | `max_up_ret` | 1 | 14 | 15 | 7% |  |
-| `star50_limit_proximity_early` | 0 | 13 | 13 | 0% |  |
-| `close_vs_open_range` | 0 | 6 | 6 | 0% |  |
-| `rbreaker_sell_setup_proximity_early` | 0 | 17 | 17 | 0% |  |
+| `limit_down_proximity_early` | 0 | 5 | 5 | 0% |  |
 | `bar_ret_0` | 0 | 9 | 9 | 0% |  |
+| `close_vs_open_range` | 0 | 6 | 6 | 0% |  |
 | `max_down_ret` | 0 | 6 | 6 | 0% |  |
+| `star50_limit_proximity_early` | 0 | 13 | 13 | 0% |  |
+| `rbreaker_sell_setup_proximity_early` | 0 | 17 | 17 | 0% |  |
 | `demark_setup_reversal_early` | 0 | 3 | 3 | 0% |  |
-| `early_body_momentum` | 0 | 2 | 2 | 0% |  |
-| `volume_weighted_momentum_acceleration` | 0 | 4 | 4 | 0% |  |
 | `bar_body_rng_0` | 0 | 3 | 3 | 0% |  |
 | `opening_auction_imbalance` | 0 | 4 | 4 | 0% |  |
-| `limit_down_proximity_early` | 0 | 5 | 5 | 0% |  |
+| `volume_weighted_momentum_acceleration` | 0 | 4 | 4 | 0% |  |
+| `early_body_momentum` | 0 | 2 | 2 | 0% |  |
 
 ---
 

@@ -40,10 +40,10 @@ def _verdict_counts(attempts):
     counts = Counter()
     for item in attempts:
         v = item.get("verdict", "UNKNOWN")
-        if v.startswith("ADMITTED"):
-            counts["ADMITTED"] += 1
-        elif v.startswith("ADMITTED_REPLACED"):
+        if v.startswith("ADMITTED_REPLACED"):
             counts["ADMITTED_REPLACED"] += 1
+        elif v.startswith("ADMITTED"):
+            counts["ADMITTED"] += 1
         elif v.startswith("DROPPED_REPLACED"):
             counts["DROPPED_REPLACED"] += 1
         else:
@@ -117,8 +117,8 @@ def build_report(etfs, sides, suffix):
         "",
         "Candidate counts at each admission gate. Shows where features get pruned.",
         "",
-        "| ETF | Side | Total Candidates | 7Y-Jackknife Pass | B2 Rolling Guard | BH-FDR Pass | Final Admitted |",
-        "| :--- | :--- | ---: | ---: | ---: | ---: | ---: |",
+        "| ETF | Side | Total Candidates | 7Y-Jackknife Pass | B2 Rolling Guard | BH-FDR Pass | B3 Composite Floor | Stability Gate | Quality Gate | B4 Correlation | Final Admitted |",
+        "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ])
     for etf in etfs:
         for side in sides:
@@ -129,14 +129,22 @@ def build_report(etfs, sides, suffix):
             counts = _verdict_counts(attempts)
             total = len(attempts)
             sh_pass = total - counts.get("REJECTED_SPLIT_HALF", 0)
-            rg_pass = counts.get("REJECTED_ROLLING_GUARD", 0)  # these passed jackknife but failed rolling
             # rolling-guard survivors = sh_pass - rg_rejects
             rg_survivors = sh_pass - counts.get("REJECTED_ROLLING_GUARD", 0)
             # FDR rejects are subset of rolling-guard survivors
             fdr_survivors = rg_survivors - counts.get("REJECTED_FDR_GATE", 0)
+            # B3 Composite Floor rejects
+            b3_survivors = fdr_survivors - counts.get("REJECTED_ADMISSION_FLOOR", 0)
+            # Stability Gate rejects
+            stab_survivors = b3_survivors - counts.get("REJECTED_STABILITY_GATE", 0)
+            # Quality Gate rejects
+            qual_survivors = stab_survivors - counts.get("REJECTED_QUALITY_GATE", 0)
+            # B4 Correlation Gate rejects
             admitted = counts.get("ADMITTED", 0) + counts.get("ADMITTED_REPLACED", 0)
+            final_pool = admitted - counts.get("DROPPED_REPLACED", 0)
             lines.append(
-                f"| {etf} | {side} | {total:,} | {sh_pass:,} | {rg_survivors:,} | {fdr_survivors:,} | {admitted} |"
+                f"| {etf} | {side} | {total:,} | {sh_pass:,} | {rg_survivors:,} | {fdr_survivors:,} "
+                f"| {b3_survivors:,} | {stab_survivors:,} | {qual_survivors:,} | {admitted:,} | {final_pool} |"
             )
 
     # ── Section 2: Training-Period Metrics ─────────────────────────────
