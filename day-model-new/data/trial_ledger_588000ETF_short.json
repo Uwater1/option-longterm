@@ -10805,5 +10805,10 @@
   "combo_ifelse__vix__bar_ret_1__rbreaker_buy_setup_proximity_early",
   "combo_ifelse__vix__limit_down_proximity_early__rbreaker_buy_setup_proximity_early",
   "combo_ifelse__vix__limit_down_proximity_early__capital_net_ratio",
-  "combo_ifelse__vix__rbreaker_buy_setup_proximity_early__capital_net_ratio"
+  "combo_ifelse__vix__rbreaker_buy_setup_proximity_early__capital_net_ratio",
+  "volume_weighted_momentum_acceleration",
+  "volume_price_confirmation",
+  "dual_thrust_range_ratio",
+  "close_location_in_range_3d",
+  "combo_ifelse__vix__rbreaker_buy_setup_proximity_early__limit_down_proximity_early"
 ]

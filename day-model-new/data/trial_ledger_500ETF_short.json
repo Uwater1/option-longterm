@@ -13427,5 +13427,13 @@
   "combo_ifelse__gap_pct__yesterday_early_vwap_dev__opening_auction_imbalance",
   "combo_ifelse__gap_pct__body_to_range_ratio__net_volume_flow",
   "combo_ifelse__gap_pct__body_to_range_ratio__opening_auction_imbalance",
-  "combo_ifelse__gap_pct__net_volume_flow__opening_auction_imbalance"
+  "combo_ifelse__gap_pct__net_volume_flow__opening_auction_imbalance",
+  "volume_weighted_momentum_acceleration",
+  "volume_price_confirmation",
+  "dual_thrust_range_ratio",
+  "close_location_in_range_3d",
+  "combo_z_sum__rsi5__sma100_dist",
+  "combo_z_diff__rsi5__sma100_dist",
+  "combo_sig_product__rsi5__sma100_dist",
+  "combo_rel_diff__rsi5__sma100_dist"
 ]

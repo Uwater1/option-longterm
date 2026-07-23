@@ -328,243 +328,107 @@
     }
   },
   {
-    "feature_name": "combo_min__short_balance__volume_trend_intraday",
+    "feature_name": "combo_min__rsi5__sma100_dist",
     "recipe": {
       "op": "min",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "rsi5",
+      "feature_b": "sma100_dist"
     }
   },
   {
-    "feature_name": "combo_max__short_balance__volume_trend_intraday",
+    "feature_name": "combo_max__rsi5__sma100_dist",
     "recipe": {
       "op": "max",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "rsi5",
+      "feature_b": "sma100_dist"
     }
   },
   {
-    "feature_name": "combo_diff__short_balance__volume_trend_intraday",
+    "feature_name": "combo_diff__rsi5__sma100_dist",
     "recipe": {
       "op": "diff",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "rsi5",
+      "feature_b": "sma100_dist"
     }
   },
   {
-    "feature_name": "combo_mean__short_balance__volume_trend_intraday",
+    "feature_name": "combo_mean__rsi5__sma100_dist",
     "recipe": {
       "op": "mean",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "rsi5",
+      "feature_b": "sma100_dist"
     }
   },
   {
-    "feature_name": "combo_product__short_balance__volume_trend_intraday",
+    "feature_name": "combo_product__rsi5__sma100_dist",
     "recipe": {
       "op": "product",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "rsi5",
+      "feature_b": "sma100_dist"
     }
   },
   {
-    "feature_name": "combo_abs_diff__short_balance__volume_trend_intraday",
+    "feature_name": "combo_abs_diff__rsi5__sma100_dist",
     "recipe": {
       "op": "abs_diff",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "rsi5",
+      "feature_b": "sma100_dist"
     }
   },
   {
-    "feature_name": "combo_rank_min__short_balance__volume_trend_intraday",
+    "feature_name": "combo_rank_min__rsi5__sma100_dist",
     "recipe": {
       "op": "rank_min",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "rsi5",
+      "feature_b": "sma100_dist"
     }
   },
   {
-    "feature_name": "combo_rank_max__short_balance__volume_trend_intraday",
+    "feature_name": "combo_rank_max__rsi5__sma100_dist",
     "recipe": {
       "op": "rank_max",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "rsi5",
+      "feature_b": "sma100_dist"
     }
   },
   {
-    "feature_name": "combo_clamp_diff__short_balance__volume_trend_intraday",
+    "feature_name": "combo_clamp_diff__rsi5__sma100_dist",
     "recipe": {
       "op": "clamp_diff",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "rsi5",
+      "feature_b": "sma100_dist"
     }
   },
   {
-    "feature_name": "combo_z_sum__short_balance__volume_trend_intraday",
+    "feature_name": "combo_z_sum__rsi5__sma100_dist",
     "recipe": {
       "op": "z_sum",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "rsi5",
+      "feature_b": "sma100_dist"
     }
   },
   {
-    "feature_name": "combo_z_diff__short_balance__volume_trend_intraday",
+    "feature_name": "combo_z_diff__rsi5__sma100_dist",
     "recipe": {
       "op": "z_diff",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "rsi5",
+      "feature_b": "sma100_dist"
     }
   },
   {
-    "feature_name": "combo_sig_product__short_balance__volume_trend_intraday",
+    "feature_name": "combo_sig_product__rsi5__sma100_dist",
     "recipe": {
       "op": "sig_product",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "rsi5",
+      "feature_b": "sma100_dist"
     }
   },
   {
-    "feature_name": "combo_rel_diff__short_balance__volume_trend_intraday",
+    "feature_name": "combo_rel_diff__rsi5__sma100_dist",
     "recipe": {
       "op": "rel_diff",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__short_balance__volume_trend_intraday",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__volume_trend_intraday__short_balance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "volume_trend_intraday",
-      "feature_b": "short_balance"
-    }
-  },
-  {
-    "feature_name": "combo_min__total_balance__volume_trend_intraday",
-    "recipe": {
-      "op": "min",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
-    }
-  },
-  {
-    "feature_name": "combo_max__total_balance__volume_trend_intraday",
-    "recipe": {
-      "op": "max",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
-    }
-  },
-  {
-    "feature_name": "combo_diff__total_balance__volume_trend_intraday",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
-    }
-  },
-  {
-    "feature_name": "combo_mean__total_balance__volume_trend_intraday",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
-    }
-  },
-  {
-    "feature_name": "combo_product__total_balance__volume_trend_intraday",
-    "recipe": {
-      "op": "product",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__total_balance__volume_trend_intraday",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__total_balance__volume_trend_intraday",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__total_balance__volume_trend_intraday",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__total_balance__volume_trend_intraday",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__total_balance__volume_trend_intraday",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__total_balance__volume_trend_intraday",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__total_balance__volume_trend_intraday",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__total_balance__volume_trend_intraday",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__total_balance__volume_trend_intraday",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__volume_trend_intraday__total_balance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "volume_trend_intraday",
-      "feature_b": "total_balance"
+      "feature_a": "rsi5",
+      "feature_b": "sma100_dist"
     }
   },
   {
@@ -1183,12 +1047,21 @@
     }
   },
   {
-    "feature_name": "combo_ifelse__gap_pct__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "feature_name": "combo_ifelse__gap_pct__rsi5__short_balance",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance"
+      "feature_a": "rsi5",
+      "feature_b": "short_balance"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__rsi5__total_balance",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "rsi5",
+      "feature_b": "total_balance"
     }
   },
   {
@@ -1201,6 +1074,24 @@
     }
   },
   {
+    "feature_name": "combo_ifelse__gap_pct__rsi5__yesterday_early_vwap_dev",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "rsi5",
+      "feature_b": "yesterday_early_vwap_dev"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__rsi5__body_to_range_ratio",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "rsi5",
+      "feature_b": "body_to_range_ratio"
+    }
+  },
+  {
     "feature_name": "combo_ifelse__gap_pct__rsi5__net_volume_flow",
     "recipe": {
       "op": "ifelse",
@@ -1210,12 +1101,12 @@
     }
   },
   {
-    "feature_name": "combo_ifelse__gap_pct__rsi5__opening_auction_imbalance",
+    "feature_name": "combo_ifelse__gap_pct__short_balance__total_balance",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
-      "feature_a": "rsi5",
-      "feature_b": "opening_auction_imbalance"
+      "feature_a": "short_balance",
+      "feature_b": "total_balance"
     }
   },
   {
@@ -1228,21 +1119,30 @@
     }
   },
   {
+    "feature_name": "combo_ifelse__gap_pct__short_balance__yesterday_early_vwap_dev",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "short_balance",
+      "feature_b": "yesterday_early_vwap_dev"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__short_balance__body_to_range_ratio",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "short_balance",
+      "feature_b": "body_to_range_ratio"
+    }
+  },
+  {
     "feature_name": "combo_ifelse__gap_pct__short_balance__net_volume_flow",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
       "feature_a": "short_balance",
       "feature_b": "net_volume_flow"
-    }
-  },
-  {
-    "feature_name": "combo_ifelse__gap_pct__short_balance__opening_auction_imbalance",
-    "recipe": {
-      "op": "ifelse",
-      "feature_cond": "gap_pct",
-      "feature_a": "short_balance",
-      "feature_b": "opening_auction_imbalance"
     }
   },
   {
@@ -1255,21 +1155,30 @@
     }
   },
   {
+    "feature_name": "combo_ifelse__gap_pct__total_balance__yesterday_early_vwap_dev",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "total_balance",
+      "feature_b": "yesterday_early_vwap_dev"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__total_balance__body_to_range_ratio",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "total_balance",
+      "feature_b": "body_to_range_ratio"
+    }
+  },
+  {
     "feature_name": "combo_ifelse__gap_pct__total_balance__net_volume_flow",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
       "feature_a": "total_balance",
       "feature_b": "net_volume_flow"
-    }
-  },
-  {
-    "feature_name": "combo_ifelse__gap_pct__total_balance__opening_auction_imbalance",
-    "recipe": {
-      "op": "ifelse",
-      "feature_cond": "gap_pct",
-      "feature_a": "total_balance",
-      "feature_b": "opening_auction_imbalance"
     }
   },
   {
@@ -1300,12 +1209,12 @@
     }
   },
   {
-    "feature_name": "combo_ifelse__gap_pct__failed_breakout_reversal_early__opening_auction_imbalance",
+    "feature_name": "combo_ifelse__gap_pct__yesterday_early_vwap_dev__body_to_range_ratio",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
-      "feature_a": "failed_breakout_reversal_early",
-      "feature_b": "opening_auction_imbalance"
+      "feature_a": "yesterday_early_vwap_dev",
+      "feature_b": "body_to_range_ratio"
     }
   },
   {
@@ -1318,39 +1227,12 @@
     }
   },
   {
-    "feature_name": "combo_ifelse__gap_pct__yesterday_early_vwap_dev__opening_auction_imbalance",
-    "recipe": {
-      "op": "ifelse",
-      "feature_cond": "gap_pct",
-      "feature_a": "yesterday_early_vwap_dev",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
     "feature_name": "combo_ifelse__gap_pct__body_to_range_ratio__net_volume_flow",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
       "feature_a": "body_to_range_ratio",
       "feature_b": "net_volume_flow"
-    }
-  },
-  {
-    "feature_name": "combo_ifelse__gap_pct__body_to_range_ratio__opening_auction_imbalance",
-    "recipe": {
-      "op": "ifelse",
-      "feature_cond": "gap_pct",
-      "feature_a": "body_to_range_ratio",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_ifelse__gap_pct__net_volume_flow__opening_auction_imbalance",
-    "recipe": {
-      "op": "ifelse",
-      "feature_cond": "gap_pct",
-      "feature_a": "net_volume_flow",
-      "feature_b": "opening_auction_imbalance"
     }
   }
 ]

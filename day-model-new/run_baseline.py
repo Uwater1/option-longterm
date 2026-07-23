@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""
-Baseline runner for Day-Model Rewrite v3.
-Runs select_features.py and evaluate_concept.py for each ETF/side combination,
-then compiles a baseline performance report.
+"""Baseline runner for Day-Model Rewrite v3.
+Runs generate_combos (--no-dedup), select_features.py, and evaluate_concept.py
+for each ETF/side combination, then compiles a baseline performance report.
 
 Execution strategy:
   - Each combination runs in its own subprocess (clean process isolation,
     no module-reload hacks, no shared-state pollution).
+  - Stage 0 regenerates the full candidate space (--no-dedup) so the pipeline
+    is self-contained and never starved by incremental dedup logic.
   - Default = sequential (one combo at a time). Each combo then uses ALL
     cores internally via joblib + numba prange. No oversubscription.
   - --max-parallel N runs up to N combos concurrently. When set, inner
@@ -53,8 +54,33 @@ def results_valid(etf: str, side: str, suffix: str) -> bool:
 
 
 def run_combination(etf: str, side: str, early: bool, inner_n_jobs: int, verbose: bool) -> tuple:
-    """Run select_features + evaluate_concept as subprocesses for one combo."""
+    """Run generate_combos + select_features + evaluate_concept as subprocesses for one combo."""
     suffix = "_early" if early else ""
+
+    # --- Stage 0: Candidate Generation (full space, no dedup) ---
+    cmd_gen = [
+        sys.executable,
+        str(HERE / "mining" / "generate_combos.py"),
+        "-e", etf,
+        "-s", side,
+        "--no-dedup",
+    ]
+    if early:
+        cmd_gen.append("--early")
+
+    print(f"\n>>> [Stage 0] generate_combos --no-dedup: ETF={etf}, Side={side}")
+    try:
+        result_gen = subprocess.run(
+            cmd_gen,
+            cwd=str(REPO_ROOT),
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except Exception as e:
+        return False, f"generate_combos failed to launch for {etf} {side}: {e}"
+    if result_gen.returncode not in (0, None):
+        print(f"WARNING: generate_combos exited {result_gen.returncode} for {etf} {side} (continuing with existing candidates)")
 
     # --- Stage A: Feature Selection ---
     cmd_a = [

@@ -343,6 +343,99 @@ def regime_concentration_analysis(train_df, feat_name, recipe, sign, side, train
     }
 
 
+def post_discovery_decay_analysis(df, train_end, feat_name, recipe, sign, side, train_means, train_stds, train_medians):
+    """Compute IC/Sharpe in successive 1-year windows AFTER training ends.
+
+    Reveals whether alpha decays immediately post-discovery or persists 1-2 years.
+    Windows: Y1 = [train_end, train_end+1y), Y2 = [train_end+1y, train_end+2y), etc.
+    Also includes a final 'remaining' window for any data beyond the last full year.
+
+    Returns list of dicts: [{window, start, end, n_days, ic, tail_ic, sharpe}, ...]
+    """
+    train_end_ts = pd.Timestamp(train_end)
+    post_df = df[df["date"] >= train_end_ts].reset_index(drop=True)
+    if len(post_df) < 30:
+        return None
+
+    windows = []
+    year_idx = 0
+    while True:
+        w_start = train_end_ts + pd.DateOffset(years=year_idx)
+        w_end = train_end_ts + pd.DateOffset(years=year_idx + 1)
+        w_df = post_df[(post_df["date"] >= w_start) & (post_df["date"] < w_end)]
+        if len(w_df) < 20:
+            # If we haven't started yet and no data, break
+            if year_idx == 0:
+                break
+            # For later windows, include remaining data if >= 20 rows
+            w_df = post_df[post_df["date"] >= w_start]
+            if len(w_df) < 20:
+                break
+            result = evaluate_feature(w_df, feat_name, recipe, sign, side, train_means, train_stds, train_medians)
+            if result:
+                windows.append({
+                    "window": f"Y{year_idx + 1}+",
+                    "start": str(w_start.date()),
+                    "end": str(post_df['date'].max().date()),
+                    "n_days": len(w_df),
+                    **result,
+                })
+            break
+        else:
+            result = evaluate_feature(w_df, feat_name, recipe, sign, side, train_means, train_stds, train_medians)
+            if result:
+                windows.append({
+                    "window": f"Y{year_idx + 1}",
+                    "start": str(w_start.date()),
+                    "end": str(w_end.date()),
+                    "n_days": len(w_df),
+                    **result,
+                })
+        year_idx += 1
+        if year_idx > 10:  # safety
+            break
+
+    if not windows:
+        return None
+
+    # Compute decay summary
+    ics = [w["ic"] for w in windows]
+    sharpes = [w["sharpe"] for w in windows]
+
+    # Decay classification
+    y1_ic = ics[0] if len(ics) >= 1 else 0.0
+    y2_ic = ics[1] if len(ics) >= 2 else None
+    last_ic = ics[-1]
+
+    if y1_ic <= 0:
+        decay_type = "immediate"  # Dead on arrival
+    elif y2_ic is not None and y2_ic <= 0:
+        decay_type = "fast"  # Dies within 1-2 years
+    elif last_ic <= 0:
+        decay_type = "gradual"  # Persists then decays
+    else:
+        decay_type = "persistent"  # Still alive
+
+    # Half-life estimate: first window where IC drops below 50% of Y1
+    half_life_years = None
+    if y1_ic > 0.01:
+        for i, ic in enumerate(ics[1:], 1):
+            if ic < y1_ic * 0.5:
+                half_life_years = i  # years to halve
+                break
+
+    return {
+        "windows": windows,
+        "decay_type": decay_type,
+        "y1_ic": float(y1_ic),
+        "y2_ic": float(y2_ic) if y2_ic is not None else None,
+        "last_ic": float(last_ic),
+        "half_life_years": half_life_years,
+        "ic_trajectory": [float(ic) for ic in ics],
+        "sharpe_trajectory": [float(s) for s in sharpes],
+    }
+
+
 def gate_mechanism_analysis(attempts, admitted_features_fp, admitted_features_tp):
     """Analyze HOW false positives game each gate vs true positives.
     
@@ -526,9 +619,13 @@ def main():
 
             print(f"    {len(attempts)} attempts, {len(admitted)} admitted")
 
-            # ─── Phase 1: Label each admitted feature as TP or FP using lockbox ───
-            fp_list = []  # False Positives (admitted but failed lockbox)
-            tp_list = []  # True Positives (admitted and succeeded in lockbox)
+            # ─── Phase 1: Label each admitted feature as TP / Median / FP using lockbox ───
+            # TP:      Lock IC > 0 AND Sharpe > 0  (profitable standalone)
+            # Median:  Lock IC > 0 AND Sharpe ≤ 0  (usable signal, contributes to ensemble)
+            # FP:      Lock IC ≤ 0                  (no predictive power, harmful)
+            fp_list = []
+            median_list = []
+            tp_list = []
 
             for item in admitted:
                 feat_name = item["feature_name"]
@@ -538,8 +635,6 @@ def main():
                 lock_result = evaluate_feature(lockbox_df, feat_name, recipe, sign, side, train_means, train_stds, train_medians)
                 if lock_result is None:
                     continue
-
-                is_fp = lock_result["ic"] <= 0 or lock_result["sharpe"] <= 0
 
                 entry = {
                     "feature_name": feat_name,
@@ -558,21 +653,26 @@ def main():
                     "deflated_ic": item.get("deflated_ic", 0),
                 }
 
-                if is_fp:
+                if lock_result["ic"] <= 0:
+                    entry["tier"] = "FP"
                     fp_list.append(entry)
+                elif lock_result["sharpe"] <= 0:
+                    entry["tier"] = "Median"
+                    median_list.append(entry)
                 else:
+                    entry["tier"] = "TP"
                     tp_list.append(entry)
 
-            print(f"    FP: {len(fp_list)}, TP: {len(tp_list)}")
+            print(f"    FP: {len(fp_list)}, Median: {len(median_list)}, TP: {len(tp_list)}")
 
-            if not fp_list:
-                print(f"    No false positives — pipeline working well!")
-                all_results[etf][side] = {"n_fp": 0, "n_tp": len(tp_list)}
+            all_features_for_analysis = fp_list + median_list + tp_list
+            if not all_features_for_analysis:
+                all_results[etf][side] = {"n_fp": 0, "n_median": 0, "n_tp": 0}
                 continue
 
-            # ─── Phase 2: Deep WHY analysis on each FP and TP ───────────────────
+            # ─── Phase 2: Deep WHY analysis on each FP, Median, and TP ─────────
             print(f"    Running temporal decomposition...")
-            for entry in fp_list + tp_list:
+            for entry in all_features_for_analysis:
                 temporal = temporal_ic_decomposition(
                     train_df, entry["feature_name"], entry["recipe"],
                     entry["sign"], side, train_means, train_stds, train_medians
@@ -581,7 +681,7 @@ def main():
                     entry.update(temporal)
 
             print(f"    Running component stability...")
-            for entry in fp_list + tp_list:
+            for entry in all_features_for_analysis:
                 comp = component_stability_analysis(
                     train_df, entry["recipe"], entry["sign"], side,
                     train_means, train_stds, train_medians
@@ -593,7 +693,7 @@ def main():
                     entry["component_details"] = comp["components"]
 
             print(f"    Running regime concentration...")
-            for entry in fp_list + tp_list:
+            for entry in all_features_for_analysis:
                 regime = regime_concentration_analysis(
                     train_df, entry["feature_name"], entry["recipe"],
                     entry["sign"], side, train_means, train_stds, train_medians
@@ -603,9 +703,20 @@ def main():
                     entry["n_negative_regimes"] = regime["n_negative_regimes"]
                     entry["regime_ics"] = regime["regime_ics"]
 
+            print(f"    Running post-discovery decay analysis...")
+            for entry in all_features_for_analysis:
+                decay = post_discovery_decay_analysis(
+                    df, train_end, entry["feature_name"], entry["recipe"],
+                    entry["sign"], side, train_means, train_stds, train_medians
+                )
+                if decay:
+                    entry["decay"] = decay
+
             # ─── Phase 3: Compute training-only discriminators ──────────────────
             print(f"    Computing training discriminators...")
             discriminators = compute_training_discriminators(fp_list, tp_list)
+            disc_fp_vs_median = compute_training_discriminators(fp_list, median_list)
+            disc_median_vs_tp = compute_training_discriminators(median_list, tp_list)
 
             # ─── Phase 4: Gate mechanism analysis ───────────────────────────────
             gate_mech = gate_mechanism_analysis(attempts, fp_list, tp_list)
@@ -642,11 +753,15 @@ def main():
 
             all_results[etf][side] = {
                 "n_fp": len(fp_list),
+                "n_median": len(median_list),
                 "n_tp": len(tp_list),
-                "fp_rate": len(fp_list) / (len(fp_list) + len(tp_list)) if (fp_list or tp_list) else 0,
+                "fp_rate": len(fp_list) / len(all_features_for_analysis) if all_features_for_analysis else 0,
                 "fp_features": fp_list,
+                "median_features": median_list,
                 "tp_features": tp_list,
                 "discriminators": discriminators,
+                "disc_fp_vs_median": disc_fp_vs_median,
+                "disc_median_vs_tp": disc_median_vs_tp,
                 "gate_mechanism": gate_mech,
                 "fn_analysis": fn_analysis,
             }
@@ -674,19 +789,43 @@ def generate_report(results):
     ]
 
     # ─── Section 1: Summary ───────────────────────────────────────────────────
-    lines.extend(["## 1. FP/TP Summary", ""])
+    lines.extend(["## 1. FP / Median / TP Summary", ""])
     lines.extend([
-        "| ETF | Side | Admitted | FP | TP | FP Rate |",
-        "| :--- | :--- | ---: | ---: | ---: | ---: |",
+        "**TP** = Lock IC > 0 AND Sharpe > 0 (profitable standalone).  ",
+        "**Median** = Lock IC > 0, Sharpe ≤ 0 (usable signal, contributes to IC-weighted ensemble).  ",
+        "**FP** = Lock IC ≤ 0 (no predictive power, harmful).",
+        "",
+        "**Decay multiplier** (assumes annual retraining): persistent=1.0, gradual=0.75, fast=0.25, immediate=0.0.  ",
+        "**Prod Score** = mean(tier_score × decay_mult) where TP=1.0, Median=0.5, FP=0.0.",
+        "",
+        "| ETF | Side | Admitted | FP | Median | TP | FP Rate | Prod Score |",
+        "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ])
+    # Decay multipliers (production retraining context)
+    DECAY_MULT = {"persistent": 1.0, "gradual": 0.75, "fast": 0.25, "immediate": 0.0}
+    TIER_SCORE = {"TP": 1.0, "Median": 0.5, "FP": 0.0}
+
     for etf, sides in results.items():
         for side, data in sides.items():
             n_fp = data.get("n_fp", 0)
+            n_median = data.get("n_median", 0)
             n_tp = data.get("n_tp", 0)
-            total = n_fp + n_tp
+            total = n_fp + n_median + n_tp
             if total == 0:
                 continue
-            lines.append(f"| {etf} | {side} | {total} | {n_fp} | {n_tp} | {n_fp/total:.0%} |")
+            fp_rate = n_fp / total
+
+            # Production score: per-feature tier_score * decay_multiplier
+            all_feats = data.get("fp_features", []) + data.get("median_features", []) + data.get("tp_features", [])
+            prod_scores = []
+            for f in all_feats:
+                tier_s = TIER_SCORE.get(f.get("tier", "FP"), 0.0)
+                decay_type = f.get("decay", {}).get("decay_type", "gradual") if f.get("decay") else "gradual"
+                decay_m = DECAY_MULT.get(decay_type, 0.5)
+                prod_scores.append(tier_s * decay_m)
+            prod_score = sum(prod_scores) / len(prod_scores) if prod_scores else 0.0
+
+            lines.append(f"| {etf} | {side} | {total} | {n_fp} | {n_median} | {n_tp} | {fp_rate:.0%} | {prod_score:.2f} |")
     lines.append("")
 
     # ─── Section 2: Training-Only Discriminators ──────────────────────────────
@@ -762,6 +901,43 @@ def generate_report(results):
                     lines.append(f"- Regime ICs: {regime_str}")
                 lines.append("")
 
+    # ─── Section 3b: Median Temporal Decomposition ─────────────────────────────
+    lines.extend([
+        "---",
+        "",
+        "## 3b. Median (Usable) Temporal Decomposition",
+        "",
+        "Features with positive lockbox IC but non-positive Sharpe.",
+        "These contribute signal to IC-weighted ensembles but aren't profitable standalone.",
+        "",
+    ])
+
+    for etf, sides in results.items():
+        for side, data in sides.items():
+            median_features = data.get("median_features", [])
+            if not median_features:
+                continue
+
+            lines.extend([f"### {etf} — `{side}` Median Features", ""])
+
+            for f in sorted(median_features, key=lambda x: -x["lock_ic"]):
+                yearly = f.get("yearly_ics", {})
+                if not yearly:
+                    continue
+                years_str = " | ".join(f"{yr}: {ic:+.3f}" for yr, ic in sorted(yearly.items()))
+                lines.extend([
+                    f"**`{f['feature_name']}`** (Lock IC={f['lock_ic']:+.4f}, Sharpe={f['lock_sharpe']:+.4f})",
+                    f"- Yearly ICs: {years_str}",
+                    f"- IC CV={f.get('ic_cv', 0):.2f}, Neg years={f.get('n_negative_years', 0)}/{f.get('n_years', 0)}, "
+                    f"Half ratio={f.get('half_ratio', 0):.2f}, Recency ratio={f.get('recency_ratio', 0):.2f}",
+                ])
+                if f.get("weak_link"):
+                    lines.append(f"- Weak component: `{f['weak_link']}` (CV={f.get('weak_link_cv', 0):.2f})")
+                if f.get("regime_ics"):
+                    regime_str = ", ".join(f"{k}={v:+.3f}" for k, v in f["regime_ics"].items())
+                    lines.append(f"- Regime ICs: {regime_str}")
+                lines.append("")
+
     # ─── Section 4: TP Temporal Decomposition (for comparison) ────────────────
     lines.extend([
         "---",
@@ -793,6 +969,65 @@ def generate_report(results):
                 ])
                 if f.get("weak_link"):
                     lines.append(f"- Weak component: `{f['weak_link']}` (CV={f.get('weak_link_cv', 0):.2f})")
+                lines.append("")
+
+    # ─── Section 4b: Post-Discovery Decay Curve ────────────────────────────────
+    lines.extend([
+        "---",
+        "",
+        "## 4b. Post-Discovery IC Decay Curve",
+        "",
+        "Year-by-year OOS IC after training ends. Reveals whether alpha decays",
+        "immediately (overfit), within 1-2 years (short-lived alpha), or persists.",
+        "",
+        "Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies later), **persistent** (still alive).",
+        "",
+    ])
+
+    for etf, sides in results.items():
+        for side, data in sides.items():
+            all_features = data.get("fp_features", []) + data.get("median_features", []) + data.get("tp_features", [])
+            features_with_decay = [f for f in all_features if f.get("decay")]
+            if not features_with_decay:
+                continue
+
+            lines.extend([f"### {etf} — `{side}`", ""])
+
+            # Summary table
+            lines.extend([
+                "| Feature | Tier | Decay | Y1 IC | Y2 IC | Y3+ IC | Half-life |",
+                "| :--- | :--- | :--- | ---: | ---: | ---: | ---: |",
+            ])
+            for f in sorted(features_with_decay, key=lambda x: x["decay"]["y1_ic"], reverse=True):
+                d = f["decay"]
+                label = f.get("tier", "?")
+                y1 = f"{d['y1_ic']:+.4f}"
+                y2 = f"{d['y2_ic']:+.4f}" if d['y2_ic'] is not None else "N/A"
+                last = f"{d['last_ic']:+.4f}"
+                hl = f"{d['half_life_years']}y" if d['half_life_years'] is not None else "∞"
+                lines.append(f"| `{f['feature_name']}` | {label} | {d['decay_type']} | {y1} | {y2} | {last} | {hl} |")
+            lines.append("")
+
+            # Decay type distribution
+            decay_types = [f["decay"]["decay_type"] for f in features_with_decay]
+            n_imm = decay_types.count("immediate")
+            n_fast = decay_types.count("fast")
+            n_grad = decay_types.count("gradual")
+            n_pers = decay_types.count("persistent")
+            lines.append(f"**Decay distribution**: immediate={n_imm}, fast(1-2y)={n_fast}, gradual={n_grad}, persistent={n_pers}")
+            lines.append("")
+
+            # Detailed trajectories for FP features
+            fp_with_decay = [f for f in data.get("fp_features", []) if f.get("decay")]
+            if fp_with_decay:
+                lines.append("**FP decay trajectories:**")
+                lines.append("")
+                for f in sorted(fp_with_decay, key=lambda x: x["decay"]["y1_ic"]):
+                    d = f["decay"]
+                    traj_str = " → ".join(
+                        f"{w['window']}:{w['ic']:+.3f}" for w in d["windows"]
+                    )
+                    lines.append(f"- `{f['feature_name']}`: {traj_str}")
                 lines.append("")
 
     # ─── Section 5: Gate Mechanism Failure ────────────────────────────────────
