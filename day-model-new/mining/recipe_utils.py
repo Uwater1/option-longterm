@@ -1,12 +1,66 @@
 import numpy as np
 import pandas as pd
 from scipy.stats import rankdata
+from numba import njit, prange
 
 
-def compute_recipe(df: pd.DataFrame, recipe: dict, train_means: dict = None, train_stds: dict = None, train_medians: dict = None) -> np.ndarray:
+@njit(cache=True)
+def build_ecdf_grid_float32(val: np.ndarray, n_knots: int = 128):
+    """Build 1D knots (xp, fp) for float32 linear interpolation from values."""
+    clean = val[~np.isnan(val)].astype(np.float32)
+    if len(clean) == 0:
+        return np.array([0.0, 1.0], dtype=np.float32), np.array([0.5, 0.5], dtype=np.float32)
+    clean.sort()
+    quantiles = np.linspace(0.0, 1.0, n_knots).astype(np.float32)
+    # Quantile interpolation over sorted clean array
+    n = len(clean)
+    xp = np.empty(n_knots, dtype=np.float32)
+    for i in range(n_knots):
+        q = quantiles[i]
+        idx = q * (n - 1)
+        i_low = int(idx)
+        i_high = min(i_low + 1, n - 1)
+        w = idx - i_low
+        xp[i] = clean[i_low] * (1.0 - w) + clean[i_high] * w
+    return xp, quantiles
+
+
+@njit(parallel=True, cache=True)
+def fast_ecdf_interp_float32(x: np.ndarray, xp: np.ndarray, fp: np.ndarray) -> np.ndarray:
+    """Numba-accelerated fast 1D linear interpolation for ECDF mapping (fp32)."""
+    n = len(x)
+    out = np.empty(n, dtype=np.float32)
+    n_knots = len(xp)
+    for i in prange(n):
+        v = x[i]
+        if np.isnan(v):
+            out[i] = np.float32(0.5)
+        elif v <= xp[0]:
+            out[i] = fp[0]
+        elif v >= xp[n_knots - 1]:
+            out[i] = fp[n_knots - 1]
+        else:
+            low = 0
+            high = n_knots - 1
+            while high - low > 1:
+                mid = (low + high) // 2
+                if xp[mid] <= v:
+                    low = mid
+                else:
+                    high = mid
+            denom = xp[high] - xp[low]
+            if denom < 1e-12:
+                out[i] = fp[low]
+            else:
+                t = (v - xp[low]) / denom
+                out[i] = fp[low] + t * (fp[high] - fp[low])
+    return out
+
+
+def compute_recipe(df: pd.DataFrame, recipe: dict, train_means: dict = None, train_stds: dict = None, train_medians: dict = None, train_ecdfs: dict = None) -> np.ndarray:
     """
     Dynamically compute feature values from a recipe dictionary.
-    Aligns scale by standardizing inputs for min/max/diff/ifelse using train_means/train_stds if provided.
+    Aligns scale by standardizing inputs for min/max/diff/ifelse using train_means/train_stds/train_ecdfs if provided.
 
     Supported 2-way ops: min, max, diff, ratio, ifelse, mean, product, abs_diff,
                          rank_min, rank_max, clamp_diff
@@ -28,15 +82,14 @@ def compute_recipe(df: pd.DataFrame, recipe: dict, train_means: dict = None, tra
         return (val - mean) / std
 
     def get_rank_col(col_name):
-        """Return percentile-ranked column in [0, 1]."""
-        val = df[col_name].values.astype(np.float64)
-        n = len(val)
-        if n < 2:
-            return np.zeros(n)
-        # Handle NaNs by filling with median before ranking
-        med = np.nanmedian(val)
-        val_filled = np.where(np.isnan(val), med, val)
-        return rankdata(val_filled) / n
+        """Return percentile-ranked column in [0, 1] via Numba fp32 ECDF mapping."""
+        val32 = df[col_name].values.astype(np.float32)
+        if train_ecdfs is not None and col_name in train_ecdfs:
+            xp, fp = train_ecdfs[col_name]
+        else:
+            xp, fp = build_ecdf_grid_float32(val32, n_knots=128)
+        return fast_ecdf_interp_float32(val32, xp, fp).astype(np.float64)
+
 
     # ─── 2-way operations ───────────────────────────────────────────────
 

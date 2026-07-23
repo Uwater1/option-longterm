@@ -93,6 +93,7 @@ DEPRECATED_YESTERDAY_EXTRA = [
 ]
 
 # Base/Standard features (from build_features.py) that are never stable or active across all 5 ETFs
+# NOTE: All northbound_* features deprecated due to HKEX Aug 2024 discontinuation of daily Northbound turnover disclosure.
 DEPRECATED_BASE_FEATURES = [
     "bar_ret_3",
     "bar_ret_4",
@@ -113,7 +114,12 @@ DEPRECATED_BASE_FEATURES = [
     "iv_term_structure",
     "iv_acceleration_1d",
     "option_volume_pc_ratio",
+    "northbound_buy",
+    "northbound_sell",
+    "northbound_net",
     "northbound_net_accel",
+    "northbound_volume_share",
+    "yesterday_northbound_net_ratio",
     "northbound_momentum_5d",
     "demark_setup_count_day",
     "wavetrend_cross_day",
@@ -131,3 +137,4 @@ DEPRECATED_BASE_FEATURES = [
 
 # Combined list of deprecated features
 DEPRECATED_FEATURES = DEPRECATED_EARLY_EXTRA + DEPRECATED_YESTERDAY_EXTRA + DEPRECATED_BASE_FEATURES
+

@@ -389,7 +389,7 @@ def main():
     # Import recipe utils
     import sys
     sys.path.append(str(HERE / "mining"))
-    from recipe_utils import compute_recipe
+    from recipe_utils import compute_recipe, build_ecdf_grid_float32
 
     # Build reference statistics for any base features used in recipes to prevent OOS leakage
     # First, ensure all combo features have recipes (reconstruct from name if missing)
@@ -408,6 +408,7 @@ def main():
     train_means = {}
     train_stds = {}
     train_medians = {}
+    train_ecdfs = {}
     for item in selected_pool:
         if "recipe" in item:
             r = item["recipe"]
@@ -418,15 +419,18 @@ def main():
                         train_means[col] = train_df[col].mean()
                         train_stds[col] = train_df[col].std()
                         train_medians[col] = train_df[col].median()
+                        val32 = train_df[col].values.astype(np.float32)
+                        train_ecdfs[col] = build_ecdf_grid_float32(val32, n_knots=128)
 
     # Compute recipe features dynamically for train, OOS, and lockbox
     for item in selected_pool:
         if "recipe" in item:
             feat_name = item["feature_name"]
             recipe = item["recipe"]
-            train_df[feat_name] = compute_recipe(train_df, recipe, train_means, train_stds, train_medians)
-            oos_df[feat_name] = compute_recipe(oos_df, recipe, train_means, train_stds, train_medians)
-            lockbox_df[feat_name] = compute_recipe(lockbox_df, recipe, train_means, train_stds, train_medians)
+            train_df[feat_name] = compute_recipe(train_df, recipe, train_means, train_stds, train_medians, train_ecdfs)
+            oos_df[feat_name] = compute_recipe(oos_df, recipe, train_means, train_stds, train_medians, train_ecdfs)
+            lockbox_df[feat_name] = compute_recipe(lockbox_df, recipe, train_means, train_stds, train_medians, train_ecdfs)
+
 
     all_selected_features = [item["feature_name"] for item in selected_pool]
     
