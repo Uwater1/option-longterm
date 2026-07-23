@@ -13456,5 +13456,8 @@
   "donchian_breakout_ratio_20d",
   "consecutive_up_days_count",
   "volume_weighted_trend_strength_10d",
-  "combo_ifelse__gap_pct__opening_auction_imbalance__net_volume_flow"
+  "combo_ifelse__gap_pct__opening_auction_imbalance__net_volume_flow",
+  "combo_ifelse__gap_pct__rbreaker_sell_setup_proximity_early__yesterday_day_kurtosis",
+  "combo_ifelse__gap_pct__net_volume_flow__yesterday_day_kurtosis",
+  "combo_ifelse__gap_pct__opening_auction_imbalance__yesterday_day_kurtosis"
 ]
