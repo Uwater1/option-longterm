@@ -1029,7 +1029,10 @@ def main():
     from recipe_utils import compute_recipe
     
     suffix = args.period_suffix or ("_early" if args.early else "")
+    cand_suffix = "_early" if args.early else ""
     candidates_path = HERE / "mining" / f"candidates_{args.etf}_{args.side}{suffix}.json"
+    if not candidates_path.exists():
+        candidates_path = HERE / "mining" / f"candidates_{args.etf}_{args.side}{cand_suffix}.json"
     candidate_recipes = {}
     features_to_eval = list(FEATURES)
     
