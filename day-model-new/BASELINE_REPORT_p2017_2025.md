@@ -19,18 +19,18 @@ Candidate counts at each admission gate. Shows where features get pruned.
 
 | ETF | Side | Total Candidates | 7Y-Jackknife Pass | B2 Rolling Guard | BH-FDR Pass | B3 Composite Floor | Stability Gate | Quality Gate | B4 Correlation | Final Admitted |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 300ETF | single | 219 | 40 | 20 | 7 | 5 | 5 | 5 | 3 | 3 |
-| 300ETF | long | 236 | 28 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 300ETF | short | 236 | 36 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 50ETF | single | 214 | 27 | 7 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 50ETF | long | 229 | 30 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 50ETF | short | 237 | 37 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 500ETF | single | 216 | 60 | 32 | 26 | 18 | 18 | 18 | 6 | 6 |
-| 500ETF | long | 235 | 27 | 5 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 500ETF | short | 236 | 37 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 159915ETF | single | 223 | 45 | 24 | 11 | 5 | 5 | 5 | 3 | 3 |
-| 159915ETF | long | 235 | 35 | 10 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 159915ETF | short | 232 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 300ETF | single | 1,431 | 488 | 436 | 433 | 142 | 142 | 141 | 19 | 19 |
+| 300ETF | long | 585 | 47 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 300ETF | short | 587 | 69 | 9 | 1 | 0 | 0 | 0 | 0 | 0 |
+| 50ETF | single | 719 | 58 | 7 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 50ETF | long | 363 | 42 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 50ETF | short | 320 | 42 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 500ETF | single | 2,786 | 1,105 | 992 | 981 | 500 | 273 | 273 | 32 | 32 |
+| 500ETF | long | 1,347 | 119 | 23 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 500ETF | short | 429 | 60 | 14 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 159915ETF | single | 1,816 | 740 | 651 | 638 | 283 | 282 | 282 | 27 | 27 |
+| 159915ETF | long | 1,118 | 180 | 117 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 159915ETF | short | 299 | 43 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 
 ## 2. Training-Period Performance (in-sample)
 
@@ -38,16 +38,16 @@ IC-weighted combination model on the training window. Useful for sanity-checking
 
 | ETF | Side | Features | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Raw Ann. Ret | Raw Sharpe | Cost Ann. Ret | Cost Sharpe | Sortino | Max DD |
 | :--- | :--- | ---: | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 300ETF | single | 3 | +0.0942 | [+0.0501, +0.1346] | +0.2201 | [+0.1185, +0.3147] | +0.8667 | 5.45% | 1.3788 | 2.69% | 0.6926 | 1.4382 | 4.51% |
+| 300ETF | single | 19 | +0.1062 | [+0.0628, +0.1485] | +0.2489 | [+0.1547, +0.3404] | +0.6606 | 5.72% | 1.6216 | 2.69% | 0.7742 | 1.6788 | 3.30% |
 | 300ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 300ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 50ETF | single | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 50ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 50ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 500ETF | single | 6 | +0.1264 | [+0.0844, +0.1660] | +0.2572 | [+0.1552, +0.3431] | +0.7818 | 6.83% | 1.5505 | 3.95% | 0.9090 | 1.7158 | 5.18% |
+| 500ETF | single | 32 | +0.1580 | [+0.1131, +0.2000] | +0.2564 | [+0.1586, +0.3384] | +0.9758 | 6.38% | 1.4520 | 3.46% | 0.7971 | 1.5471 | 4.84% |
 | 500ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 500ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 159915ETF | single | 3 | +0.1208 | [+0.0777, +0.1628] | +0.2655 | [+0.1747, +0.3462] | +0.7333 | 7.15% | 1.5392 | 4.53% | 0.9811 | 2.1201 | 5.37% |
+| 159915ETF | single | 27 | +0.1432 | [+0.1011, +0.1862] | +0.3205 | [+0.2251, +0.4107] | +0.8667 | 10.13% | 1.8943 | 7.30% | 1.3801 | 3.4283 | 2.60% |
 | 159915ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 159915ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 
@@ -57,16 +57,16 @@ Out-of-sample from holdout start to present.
 
 | ETF | Side | Features | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Raw Ann. Ret | Raw Sharpe | Cost Ann. Ret | Cost Sharpe | Sortino | Max DD |
 | :--- | :--- | ---: | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 300ETF | single | 3 | -0.0276* | [-0.1641, +0.0878] | -0.0717* | [-0.3437, +0.1711] | -0.2848 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
+| 300ETF | single | 19 | +0.0175* | [-0.1188, +0.1152] | +0.0274* | [-0.2827, +0.2550] | +0.1758 | 0.70% | 0.3766 | -0.83% | -0.4494 | -0.6001 | 3.06% |
 | 300ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 300ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 50ETF | single | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 50ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 50ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 500ETF | single | 6 | +0.0352* | [-0.0972, +0.1386] | -0.0971* | [-0.3340, +0.1181] | +0.1879 | -0.38% | -0.1794 | -1.92% | -0.9004 | -1.1647 | 4.20% |
+| 500ETF | single | 32 | +0.0802* | [-0.0415, +0.1636] | +0.0125* | [-0.2290, +0.1908] | +0.5030 | 1.50% | 0.3883 | -0.12% | -0.0320 | -0.0507 | 5.70% |
 | 500ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 500ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
-| 159915ETF | single | 3 | +0.0854* | [-0.0357, +0.1884] | -0.0470* | [-0.3351, +0.1761] | +0.5636 | 1.31% | 0.4830 | -0.17% | -0.0614 | -0.0903 | 2.86% |
+| 159915ETF | single | 27 | +0.1470 | [+0.0037, +0.2473] | +0.1802* | [-0.1440, +0.3743] | +0.6970 | 7.66% | 1.3392 | 5.02% | 0.8812 | 1.5902 | 7.60% |
 | 159915ETF | long | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 | 159915ETF | short | 0 | +0.0000* | [+0.0000, +0.0000] | +0.0000* | [+0.0000, +0.0000] | +0.0000 | 0.00% | 0.0000 | 0.00% | 0.0000 | 0.0000 | 0.00% |
 
@@ -86,9 +86,25 @@ BH-FDR pre-filter stage; `deflated_ic` is overall_ic adjusted for empirical null
 
 | Feature | Sign | Raw IC | Overall IC | Deflated IC | p-value | IC IR | Monotonicity | Max Corr |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `max_up_ret` | +1 | +0.0742 | +0.2051 | +0.2056 | 0.0002 | +0.6225 | +0.7216 | 0.000 |
-| `first_bar_return` | +1 | +0.0874 | +0.1925 | +0.1926 | 0.0002 | +0.6512 | +0.7524 | 0.661 |
-| `opening_drive_thrust_ratio` | +1 | +0.0880 | +0.1722 | +0.1727 | 0.0004 | +0.5638 | +0.7293 | 0.705 |
+| `combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__bar_body_rng_0` | +1 | +0.0954 | +0.2900 | +0.2899 | 0.0000 | +0.7713 | +0.7375 | 0.000 |
+| `combo_min__max_up_ret__bar_body_rng_0` | +1 | +0.0875 | +0.2655 | +0.2657 | 0.0000 | +0.8219 | +0.7566 | 0.762 |
+| `combo_rank_min__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio` | +1 | +0.0997 | +0.2648 | +0.2653 | 0.0000 | +0.7748 | +0.7838 | 0.762 |
+| `combo_mean__max_up_ret__opening_drive_thrust_ratio` | +1 | +0.0864 | +0.2523 | +0.2529 | 0.0000 | +0.8743 | +0.8003 | 0.827 |
+| `combo_min__bar_body_rng_0__volume_surge_direction` | +1 | +0.0875 | +0.2339 | +0.2334 | 0.0000 | +0.7192 | +0.7468 | 0.820 |
+| `combo_rank_min__bar_body_rng_0__limit_down_proximity_early` | +1 | +0.0853 | +0.2314 | +0.2314 | 0.0000 | +0.4875 | +0.6824 | 0.792 |
+| `combo_z_sum__rbreaker_sell_setup_proximity_early__max_up_ret` | +1 | +0.0858 | +0.2260 | +0.2253 | 0.0002 | +0.5785 | +0.7180 | 0.760 |
+| `combo_max__max_up_ret__first_bar_sentiment` | +1 | +0.0925 | +0.2232 | +0.2229 | 0.0002 | +0.6634 | +0.7344 | 0.842 |
+| `combo_z_sum__first_bar_return__volume_weighted_price_position` | +1 | +0.0924 | +0.2202 | +0.2207 | 0.0002 | +0.7464 | +0.7808 | 0.804 |
+| `combo_max__max_up_ret__volume_weighted_price_position` | +1 | +0.0834 | +0.2074 | +0.2081 | 0.0002 | +0.8331 | +0.8039 | 0.848 |
+| `combo_sig_product__star50_limit_proximity_early__opening_drive_thrust_ratio` | +1 | +0.0768 | +0.1986 | +0.1991 | 0.0002 | +0.5819 | +0.7210 | 0.714 |
+| `combo_rank_min__volume_weighted_price_position__opening_drive_thrust_ratio` | +1 | +0.0910 | +0.1915 | +0.1920 | 0.0002 | +0.5268 | +0.7010 | 0.824 |
+| `combo_min__max_up_ret__volume_surge_direction` | +1 | +0.0854 | +0.1881 | +0.1872 | 0.0002 | +0.4516 | +0.6526 | 0.850 |
+| `combo_sig_product__volume_weighted_price_position__opening_drive_thrust_ratio` | +1 | +0.0868 | +0.1766 | +0.1782 | 0.0002 | +0.5792 | +0.7123 | 0.825 |
+| `combo_z_sum__opening_drive_thrust_ratio__first_bar_sentiment` | +1 | +0.0904 | +0.1731 | +0.1727 | 0.0002 | +0.5593 | +0.7344 | 0.847 |
+| `combo_diff__max_up_ret__early_vwap_acceleration` | +1 | +0.0964 | +0.1614 | +0.1623 | 0.0014 | +0.5990 | +0.7174 | 0.841 |
+| `morning_volume_weighted_momentum` | +1 | +0.0585 | +0.1340 | +0.1348 | 0.0088 | +0.4580 | +0.6788 | 0.788 |
+| `combo_z_sum__volume_weighted_price_position__double_bottom_bull_flag_early` | +1 | +0.0424 | +0.1200 | +0.1215 | 0.0164 | +0.4051 | +0.6372 | 0.592 |
+| `combo_sig_product__rbreaker_sell_setup_proximity_early__max_up_ret` | +1 | +0.0566 | +0.1162 | +0.1159 | 0.0206 | +0.3553 | +0.6238 | 0.806 |
 
 ### 300ETF / long
 No features admitted.
@@ -109,12 +125,38 @@ No features admitted.
 
 | Feature | Sign | Raw IC | Overall IC | Deflated IC | p-value | IC IR | Monotonicity | Max Corr |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `volatility_expansion_trend_vector` | +1 | +0.1070 | +0.2577 | +0.2575 | 0.0000 | +0.6551 | +0.7452 | 0.000 |
-| `early_order_flow_imbalance` | +1 | +0.0995 | +0.2348 | +0.2351 | 0.0000 | +0.5819 | +0.7334 | 0.786 |
-| `max_up_ret` | +1 | +0.1323 | +0.2006 | +0.1991 | 0.0000 | +0.6170 | +0.7216 | 0.638 |
-| `first_bar_return` | +1 | +0.1160 | +0.1983 | +0.1986 | 0.0000 | +0.6758 | +0.7463 | 0.704 |
-| `vwap_close_divergence_trend` | +1 | +0.0926 | +0.1534 | +0.1529 | 0.0022 | +0.5998 | +0.7046 | 0.815 |
-| `num_up_bars` | +1 | +0.0907 | +0.1213 | +0.1198 | 0.0150 | +0.3576 | +0.6531 | 0.788 |
+| `combo_diff__opening_auction_imbalance__volume_weighted_momentum_acceleration` | +1 | +0.1462 | +0.2982 | +0.2978 | 0.0000 | +1.0529 | +0.8466 | 0.000 |
+| `combo_tri_min__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio__max_up_ret` | +1 | +0.1453 | +0.2689 | +0.2675 | 0.0000 | +1.0684 | +0.8286 | 0.706 |
+| `combo_tri_mean__opening_drive_thrust_ratio__star50_limit_proximity_early__volatility_expansion_trend_vector` | +1 | +0.1382 | +0.2668 | +0.2654 | 0.0000 | +0.8524 | +0.8209 | 0.843 |
+| `combo_mean__close_vs_open_range__bar_ret_0` | +1 | +0.1292 | +0.2594 | +0.2588 | 0.0000 | +0.9535 | +0.8183 | 0.811 |
+| `combo_tri_median__rbreaker_sell_setup_proximity_early__max_up_ret__trend_bar_close_consistency` | +1 | +0.1364 | +0.2577 | +0.2564 | 0.0000 | +0.8679 | +0.8080 | 0.786 |
+| `combo_rel_diff__max_up_ret__volume_weighted_momentum_acceleration` | +1 | +0.1473 | +0.2524 | +0.2516 | 0.0000 | +0.9968 | +0.8224 | 0.831 |
+| `combo_rel_diff__star50_limit_proximity_early__volume_weighted_momentum_acceleration` | +1 | +0.1414 | +0.2469 | +0.2455 | 0.0000 | +0.6286 | +0.7087 | 0.786 |
+| `combo_clamp_diff__max_up_ret__late_bar_momentum` | +1 | +0.1334 | +0.2463 | +0.2457 | 0.0000 | +0.7197 | +0.7427 | 0.815 |
+| `combo_rank_max__early_body_momentum__bar_ret_0` | +1 | +0.1224 | +0.2451 | +0.2448 | 0.0000 | +0.7995 | +0.7787 | 0.850 |
+| `early_order_flow_imbalance` | +1 | +0.0995 | +0.2348 | +0.2351 | 0.0000 | +0.5819 | +0.7334 | 0.748 |
+| `combo_min__rbreaker_sell_setup_proximity_early__bar_ret_0` | +1 | +0.1207 | +0.2329 | +0.2322 | 0.0000 | +0.6705 | +0.7303 | 0.769 |
+| `combo_min__star50_limit_proximity_early__volatility_expansion_trend_vector` | +1 | +0.1076 | +0.2309 | +0.2298 | 0.0000 | +0.6110 | +0.7488 | 0.844 |
+| `combo_sig_product__opening_drive_thrust_ratio__trend_bar_close_consistency` | +1 | +0.1239 | +0.2273 | +0.2272 | 0.0000 | +0.5862 | +0.7169 | 0.746 |
+| `combo_rank_min__rbreaker_sell_setup_proximity_early__bar_ret_0` | +1 | +0.1227 | +0.2266 | +0.2259 | 0.0000 | +0.6986 | +0.7777 | 0.826 |
+| `combo_rank_min__early_body_momentum__bar_ret_0` | +1 | +0.1015 | +0.2247 | +0.2246 | 0.0000 | +0.6351 | +0.7308 | 0.846 |
+| `combo_diff__star50_limit_proximity_early__volume_weighted_momentum_acceleration` | +1 | +0.1329 | +0.2181 | +0.2169 | 0.0000 | +0.5428 | +0.6943 | 0.828 |
+| `combo_max__max_up_ret__bar_ret_0` | +1 | +0.1331 | +0.2171 | +0.2168 | 0.0000 | +0.7488 | +0.7658 | 0.825 |
+| `combo_min__first_bar_sentiment__first_bar_return` | +1 | +0.1139 | +0.2157 | +0.2159 | 0.0000 | +0.6470 | +0.7262 | 0.763 |
+| `combo_rel_diff__star50_limit_proximity_early__body_size_progression` | +1 | +0.1203 | +0.2114 | +0.2098 | 0.0000 | +0.6243 | +0.7164 | 0.805 |
+| `combo_rel_diff__opening_drive_thrust_ratio__smooth_momentum_structure` | +1 | +0.1399 | +0.2092 | +0.2085 | 0.0000 | +0.6924 | +0.7380 | 0.827 |
+| `combo_z_sum__close_vs_open_range__rsi_opening` | +1 | +0.1019 | +0.1903 | +0.1897 | 0.0004 | +0.4913 | +0.6876 | 0.850 |
+| `combo_sig_product__star50_limit_proximity_early__max_down_ret` | +1 | +0.1205 | +0.1888 | +0.1873 | 0.0004 | +0.4556 | +0.6752 | 0.651 |
+| `combo_z_sum__star50_limit_proximity_early__max_down_ret` | +1 | +0.0954 | +0.1833 | +0.1822 | 0.0006 | +0.6465 | +0.7169 | 0.820 |
+| `combo_sig_product__star50_limit_proximity_early__first_bar_return` | +1 | +0.1186 | +0.1819 | +0.1803 | 0.0006 | +0.4240 | +0.6696 | 0.680 |
+| `combo_sig_product__opening_auction_imbalance__bar_ret_0` | +1 | +0.0903 | +0.1810 | +0.1810 | 0.0006 | +0.5385 | +0.6650 | 0.799 |
+| `combo_sig_product__max_up_ret__bar_ret_0` | +1 | +0.1154 | +0.1743 | +0.1739 | 0.0006 | +0.6045 | +0.7679 | 0.849 |
+| `combo_max__star50_limit_proximity_early__trend_bar_close_consistency` | +1 | +0.0937 | +0.1682 | +0.1672 | 0.0006 | +0.4859 | +0.6588 | 0.771 |
+| `combo_sig_product__rsi_opening__first_bar_return` | +1 | +0.1024 | +0.1638 | +0.1646 | 0.0008 | +0.4435 | +0.6747 | 0.841 |
+| `combo_sig_product__volatility_expansion_trend_vector__max_down_ret` | +1 | +0.1155 | +0.1543 | +0.1543 | 0.0022 | +0.5723 | +0.7051 | 0.721 |
+| `vwap_close_divergence_trend` | +1 | +0.0926 | +0.1534 | +0.1529 | 0.0022 | +0.5998 | +0.7046 | 0.813 |
+| `num_up_bars` | +1 | +0.0907 | +0.1213 | +0.1198 | 0.0150 | +0.3576 | +0.6531 | 0.796 |
+| `vol_pk20` | +1 | +0.0355 | +0.1051 | +0.1044 | 0.0368 | +0.4584 | +0.6845 | 0.274 |
 
 ### 500ETF / long
 No features admitted.
@@ -126,9 +168,33 @@ No features admitted.
 
 | Feature | Sign | Raw IC | Overall IC | Deflated IC | p-value | IC IR | Monotonicity | Max Corr |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `opening_drive_thrust_ratio` | +1 | +0.1150 | +0.2357 | +0.2357 | 0.0000 | +0.7774 | +0.7545 | 0.000 |
-| `max_up_ret` | +1 | +0.1114 | +0.2091 | +0.2080 | 0.0002 | +0.9114 | +0.8132 | 0.703 |
-| `bar_body_rng_0` | +1 | +0.1039 | +0.1685 | +0.1695 | 0.0004 | +0.4113 | +0.6562 | 0.685 |
+| `combo_tri_min__opening_drive_thrust_ratio__star50_limit_proximity_early__bar_body_rng_0` | +1 | +0.1386 | +0.3801 | +0.3803 | 0.0000 | +1.2371 | +0.8770 | 0.000 |
+| `combo_rank_min__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early` | +1 | +0.1412 | +0.3376 | +0.3367 | 0.0000 | +1.0504 | +0.8296 | 0.835 |
+| `combo_min__star50_limit_proximity_early__volume_weighted_price_position` | +1 | +0.1167 | +0.3282 | +0.3282 | 0.0000 | +1.0927 | +0.8677 | 0.798 |
+| `combo_tri_mean__opening_drive_thrust_ratio__star50_limit_proximity_early__first_bar_return` | +1 | +0.1374 | +0.3173 | +0.3166 | 0.0000 | +0.7698 | +0.7674 | 0.845 |
+| `combo_rank_min__rbreaker_sell_setup_proximity_early__first_bar_return` | +1 | +0.1287 | +0.2944 | +0.2939 | 0.0000 | +0.7760 | +0.8008 | 0.847 |
+| `combo_min__star50_limit_proximity_early__volatility_expansion_trend_vector` | +1 | +0.1048 | +0.2913 | +0.2898 | 0.0000 | +0.9921 | +0.8137 | 0.820 |
+| `combo_min__rbreaker_sell_setup_proximity_early__max_up_ret` | +1 | +0.1385 | +0.2890 | +0.2872 | 0.0000 | +0.8075 | +0.7818 | 0.840 |
+| `combo_rel_diff__first_bar_return__demark_setup_reversal_early` | +1 | +0.1274 | +0.2782 | +0.2779 | 0.0000 | +0.7446 | +0.7864 | 0.805 |
+| `combo_min__rbreaker_sell_setup_proximity_early__impulse_bar_dominance` | +1 | +0.1126 | +0.2653 | +0.2632 | 0.0000 | +0.6774 | +0.7288 | 0.824 |
+| `combo_rank_min__opening_drive_thrust_ratio__max_up_ret` | +1 | +0.1143 | +0.2633 | +0.2626 | 0.0000 | +0.9153 | +0.8163 | 0.836 |
+| `combo_mean__star50_limit_proximity_early__volume_weighted_price_position` | +1 | +0.1260 | +0.2625 | +0.2627 | 0.0000 | +0.7900 | +0.7607 | 0.848 |
+| `combo_tri_mean__max_up_ret__first_bar_sentiment__bar_body_rng_0` | +1 | +0.1149 | +0.2511 | +0.2513 | 0.0000 | +0.7559 | +0.7560 | 0.818 |
+| `combo_rank_min__bar_body_rng_0__rbreaker_buy_setup_proximity_early` | +1 | +0.0998 | +0.2493 | +0.2497 | 0.0000 | +0.7204 | +0.7828 | 0.849 |
+| `combo_rank_min__opening_drive_thrust_ratio__volume_weighted_price_position` | +1 | +0.1064 | +0.2482 | +0.2491 | 0.0000 | +0.6414 | +0.7247 | 0.811 |
+| `combo_min__first_bar_return__rbreaker_buy_setup_proximity_early` | +1 | +0.1017 | +0.2472 | +0.2474 | 0.0000 | +0.6892 | +0.7447 | 0.840 |
+| `combo_min__star50_limit_proximity_early__yesterday_first_30min_return` | +1 | +0.0918 | +0.2467 | +0.2465 | 0.0000 | +0.7058 | +0.7648 | 0.500 |
+| `combo_mean__rbreaker_sell_setup_proximity_early__max_up_ret` | +1 | +0.1313 | +0.2442 | +0.2420 | 0.0000 | +0.7174 | +0.7458 | 0.849 |
+| `combo_mean__star50_limit_proximity_early__first_bar_sentiment` | +1 | +0.1233 | +0.2422 | +0.2410 | 0.0000 | +0.6208 | +0.7082 | 0.850 |
+| `combo_rank_max__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early` | +1 | +0.1229 | +0.2092 | +0.2076 | 0.0002 | +0.5859 | +0.6969 | 0.808 |
+| `combo_rank_max__rbreaker_sell_setup_proximity_early__impulse_bar_dominance` | +1 | +0.1151 | +0.2091 | +0.2080 | 0.0002 | +0.6228 | +0.7288 | 0.839 |
+| `max_up_ret` | +1 | +0.1114 | +0.2091 | +0.2080 | 0.0002 | +0.9114 | +0.8132 | 0.839 |
+| `combo_sig_product__star50_limit_proximity_early__yesterday_first_30min_return` | +1 | +0.0864 | +0.2028 | +0.2020 | 0.0002 | +0.4631 | +0.6778 | 0.526 |
+| `combo_max__rbreaker_sell_setup_proximity_early__first_bar_return` | +1 | +0.1240 | +0.1924 | +0.1914 | 0.0002 | +0.6358 | +0.7092 | 0.850 |
+| `combo_sig_product__rbreaker_sell_setup_proximity_early__bar_ret_0` | +1 | +0.1429 | +0.1853 | +0.1840 | 0.0004 | +0.5204 | +0.6758 | 0.653 |
+| `combo_sig_product__star50_limit_proximity_early__bar_ret_0` | +1 | +0.1071 | +0.1836 | +0.1830 | 0.0004 | +0.3939 | +0.6418 | 0.786 |
+| `combo_ratio__star50_limit_proximity_early__volume_weighted_price_position` | +1 | +0.1120 | +0.1819 | +0.1803 | 0.0004 | +0.4602 | +0.6799 | 0.733 |
+| `combo_ratio__bar_ret_0__volume_weighted_price_position` | +1 | +0.1064 | +0.1602 | +0.1611 | 0.0010 | +0.5019 | +0.7298 | 0.833 |
 
 ### 159915ETF / long
 No features admitted.
@@ -140,3 +206,78 @@ No features admitted.
 
 For each admitted combo feature, shows the operation and component base features.
 Recipes are resolved using training-set statistics (mean/std/median) to prevent lookahead leakage.
+
+| Feature | Op | Components |
+| :--- | :--- | :--- |
+| `combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__bar_body_rng_0` | `tri_min` | a=`rbreaker_sell_setup_proximity_early`, b=`max_up_ret`, c=`bar_body_rng_0` |
+| `combo_min__max_up_ret__bar_body_rng_0` | `min` | a=`max_up_ret`, b=`bar_body_rng_0` |
+| `combo_rank_min__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio` | `rank_min` | a=`rbreaker_sell_setup_proximity_early`, b=`opening_drive_thrust_ratio` |
+| `combo_mean__max_up_ret__opening_drive_thrust_ratio` | `mean` | a=`max_up_ret`, b=`opening_drive_thrust_ratio` |
+| `combo_min__bar_body_rng_0__volume_surge_direction` | `min` | a=`bar_body_rng_0`, b=`volume_surge_direction` |
+| `combo_rank_min__bar_body_rng_0__limit_down_proximity_early` | `rank_min` | a=`bar_body_rng_0`, b=`limit_down_proximity_early` |
+| `combo_z_sum__rbreaker_sell_setup_proximity_early__max_up_ret` | `z_sum` | a=`rbreaker_sell_setup_proximity_early`, b=`max_up_ret` |
+| `combo_max__max_up_ret__first_bar_sentiment` | `max` | a=`max_up_ret`, b=`first_bar_sentiment` |
+| `combo_z_sum__first_bar_return__volume_weighted_price_position` | `z_sum` | a=`first_bar_return`, b=`volume_weighted_price_position` |
+| `combo_max__max_up_ret__volume_weighted_price_position` | `max` | a=`max_up_ret`, b=`volume_weighted_price_position` |
+| `combo_sig_product__star50_limit_proximity_early__opening_drive_thrust_ratio` | `sig_product` | a=`star50_limit_proximity_early`, b=`opening_drive_thrust_ratio` |
+| `combo_rank_min__volume_weighted_price_position__opening_drive_thrust_ratio` | `rank_min` | a=`volume_weighted_price_position`, b=`opening_drive_thrust_ratio` |
+| `combo_min__max_up_ret__volume_surge_direction` | `min` | a=`max_up_ret`, b=`volume_surge_direction` |
+| `combo_sig_product__volume_weighted_price_position__opening_drive_thrust_ratio` | `sig_product` | a=`volume_weighted_price_position`, b=`opening_drive_thrust_ratio` |
+| `combo_z_sum__opening_drive_thrust_ratio__first_bar_sentiment` | `z_sum` | a=`opening_drive_thrust_ratio`, b=`first_bar_sentiment` |
+| `combo_diff__max_up_ret__early_vwap_acceleration` | `diff` | a=`max_up_ret`, b=`early_vwap_acceleration` |
+| `combo_z_sum__volume_weighted_price_position__double_bottom_bull_flag_early` | `z_sum` | a=`volume_weighted_price_position`, b=`double_bottom_bull_flag_early` |
+| `combo_sig_product__rbreaker_sell_setup_proximity_early__max_up_ret` | `sig_product` | a=`rbreaker_sell_setup_proximity_early`, b=`max_up_ret` |
+| `combo_diff__opening_auction_imbalance__volume_weighted_momentum_acceleration` | `diff` | a=`opening_auction_imbalance`, b=`volume_weighted_momentum_acceleration` |
+| `combo_tri_min__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio__max_up_ret` | `tri_min` | a=`rbreaker_sell_setup_proximity_early`, b=`opening_drive_thrust_ratio`, c=`max_up_ret` |
+| `combo_tri_mean__opening_drive_thrust_ratio__star50_limit_proximity_early__volatility_expansion_trend_vector` | `tri_mean` | a=`opening_drive_thrust_ratio`, b=`star50_limit_proximity_early`, c=`volatility_expansion_trend_vector` |
+| `combo_mean__close_vs_open_range__bar_ret_0` | `mean` | a=`close_vs_open_range`, b=`bar_ret_0` |
+| `combo_tri_median__rbreaker_sell_setup_proximity_early__max_up_ret__trend_bar_close_consistency` | `tri_median` | a=`rbreaker_sell_setup_proximity_early`, b=`max_up_ret`, c=`trend_bar_close_consistency` |
+| `combo_rel_diff__max_up_ret__volume_weighted_momentum_acceleration` | `rel_diff` | a=`max_up_ret`, b=`volume_weighted_momentum_acceleration` |
+| `combo_rel_diff__star50_limit_proximity_early__volume_weighted_momentum_acceleration` | `rel_diff` | a=`star50_limit_proximity_early`, b=`volume_weighted_momentum_acceleration` |
+| `combo_clamp_diff__max_up_ret__late_bar_momentum` | `clamp_diff` | a=`max_up_ret`, b=`late_bar_momentum` |
+| `combo_rank_max__early_body_momentum__bar_ret_0` | `rank_max` | a=`early_body_momentum`, b=`bar_ret_0` |
+| `combo_min__rbreaker_sell_setup_proximity_early__bar_ret_0` | `min` | a=`rbreaker_sell_setup_proximity_early`, b=`bar_ret_0` |
+| `combo_min__star50_limit_proximity_early__volatility_expansion_trend_vector` | `min` | a=`star50_limit_proximity_early`, b=`volatility_expansion_trend_vector` |
+| `combo_sig_product__opening_drive_thrust_ratio__trend_bar_close_consistency` | `sig_product` | a=`opening_drive_thrust_ratio`, b=`trend_bar_close_consistency` |
+| `combo_rank_min__rbreaker_sell_setup_proximity_early__bar_ret_0` | `rank_min` | a=`rbreaker_sell_setup_proximity_early`, b=`bar_ret_0` |
+| `combo_rank_min__early_body_momentum__bar_ret_0` | `rank_min` | a=`early_body_momentum`, b=`bar_ret_0` |
+| `combo_diff__star50_limit_proximity_early__volume_weighted_momentum_acceleration` | `diff` | a=`star50_limit_proximity_early`, b=`volume_weighted_momentum_acceleration` |
+| `combo_max__max_up_ret__bar_ret_0` | `max` | a=`max_up_ret`, b=`bar_ret_0` |
+| `combo_min__first_bar_sentiment__first_bar_return` | `min` | a=`first_bar_sentiment`, b=`first_bar_return` |
+| `combo_rel_diff__star50_limit_proximity_early__body_size_progression` | `rel_diff` | a=`star50_limit_proximity_early`, b=`body_size_progression` |
+| `combo_rel_diff__opening_drive_thrust_ratio__smooth_momentum_structure` | `rel_diff` | a=`opening_drive_thrust_ratio`, b=`smooth_momentum_structure` |
+| `combo_z_sum__close_vs_open_range__rsi_opening` | `z_sum` | a=`close_vs_open_range`, b=`rsi_opening` |
+| `combo_sig_product__star50_limit_proximity_early__max_down_ret` | `sig_product` | a=`star50_limit_proximity_early`, b=`max_down_ret` |
+| `combo_z_sum__star50_limit_proximity_early__max_down_ret` | `z_sum` | a=`star50_limit_proximity_early`, b=`max_down_ret` |
+| `combo_sig_product__star50_limit_proximity_early__first_bar_return` | `sig_product` | a=`star50_limit_proximity_early`, b=`first_bar_return` |
+| `combo_sig_product__opening_auction_imbalance__bar_ret_0` | `sig_product` | a=`opening_auction_imbalance`, b=`bar_ret_0` |
+| `combo_sig_product__max_up_ret__bar_ret_0` | `sig_product` | a=`max_up_ret`, b=`bar_ret_0` |
+| `combo_max__star50_limit_proximity_early__trend_bar_close_consistency` | `max` | a=`star50_limit_proximity_early`, b=`trend_bar_close_consistency` |
+| `combo_sig_product__rsi_opening__first_bar_return` | `sig_product` | a=`rsi_opening`, b=`first_bar_return` |
+| `combo_sig_product__volatility_expansion_trend_vector__max_down_ret` | `sig_product` | a=`volatility_expansion_trend_vector`, b=`max_down_ret` |
+| `combo_tri_min__opening_drive_thrust_ratio__star50_limit_proximity_early__bar_body_rng_0` | `tri_min` | a=`opening_drive_thrust_ratio`, b=`star50_limit_proximity_early`, c=`bar_body_rng_0` |
+| `combo_rank_min__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early` | `rank_min` | a=`opening_drive_thrust_ratio`, b=`rbreaker_sell_setup_proximity_early` |
+| `combo_min__star50_limit_proximity_early__volume_weighted_price_position` | `min` | a=`star50_limit_proximity_early`, b=`volume_weighted_price_position` |
+| `combo_tri_mean__opening_drive_thrust_ratio__star50_limit_proximity_early__first_bar_return` | `tri_mean` | a=`opening_drive_thrust_ratio`, b=`star50_limit_proximity_early`, c=`first_bar_return` |
+| `combo_rank_min__rbreaker_sell_setup_proximity_early__first_bar_return` | `rank_min` | a=`rbreaker_sell_setup_proximity_early`, b=`first_bar_return` |
+| `combo_min__star50_limit_proximity_early__volatility_expansion_trend_vector` | `min` | a=`star50_limit_proximity_early`, b=`volatility_expansion_trend_vector` |
+| `combo_min__rbreaker_sell_setup_proximity_early__max_up_ret` | `min` | a=`rbreaker_sell_setup_proximity_early`, b=`max_up_ret` |
+| `combo_rel_diff__first_bar_return__demark_setup_reversal_early` | `rel_diff` | a=`first_bar_return`, b=`demark_setup_reversal_early` |
+| `combo_min__rbreaker_sell_setup_proximity_early__impulse_bar_dominance` | `min` | a=`rbreaker_sell_setup_proximity_early`, b=`impulse_bar_dominance` |
+| `combo_rank_min__opening_drive_thrust_ratio__max_up_ret` | `rank_min` | a=`opening_drive_thrust_ratio`, b=`max_up_ret` |
+| `combo_mean__star50_limit_proximity_early__volume_weighted_price_position` | `mean` | a=`star50_limit_proximity_early`, b=`volume_weighted_price_position` |
+| `combo_tri_mean__max_up_ret__first_bar_sentiment__bar_body_rng_0` | `tri_mean` | a=`max_up_ret`, b=`first_bar_sentiment`, c=`bar_body_rng_0` |
+| `combo_rank_min__bar_body_rng_0__rbreaker_buy_setup_proximity_early` | `rank_min` | a=`bar_body_rng_0`, b=`rbreaker_buy_setup_proximity_early` |
+| `combo_rank_min__opening_drive_thrust_ratio__volume_weighted_price_position` | `rank_min` | a=`opening_drive_thrust_ratio`, b=`volume_weighted_price_position` |
+| `combo_min__first_bar_return__rbreaker_buy_setup_proximity_early` | `min` | a=`first_bar_return`, b=`rbreaker_buy_setup_proximity_early` |
+| `combo_min__star50_limit_proximity_early__yesterday_first_30min_return` | `min` | a=`star50_limit_proximity_early`, b=`yesterday_first_30min_return` |
+| `combo_mean__rbreaker_sell_setup_proximity_early__max_up_ret` | `mean` | a=`rbreaker_sell_setup_proximity_early`, b=`max_up_ret` |
+| `combo_mean__star50_limit_proximity_early__first_bar_sentiment` | `mean` | a=`star50_limit_proximity_early`, b=`first_bar_sentiment` |
+| `combo_rank_max__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early` | `rank_max` | a=`opening_drive_thrust_ratio`, b=`rbreaker_sell_setup_proximity_early` |
+| `combo_rank_max__rbreaker_sell_setup_proximity_early__impulse_bar_dominance` | `rank_max` | a=`rbreaker_sell_setup_proximity_early`, b=`impulse_bar_dominance` |
+| `combo_sig_product__star50_limit_proximity_early__yesterday_first_30min_return` | `sig_product` | a=`star50_limit_proximity_early`, b=`yesterday_first_30min_return` |
+| `combo_max__rbreaker_sell_setup_proximity_early__first_bar_return` | `max` | a=`rbreaker_sell_setup_proximity_early`, b=`first_bar_return` |
+| `combo_sig_product__rbreaker_sell_setup_proximity_early__bar_ret_0` | `sig_product` | a=`rbreaker_sell_setup_proximity_early`, b=`bar_ret_0` |
+| `combo_sig_product__star50_limit_proximity_early__bar_ret_0` | `sig_product` | a=`star50_limit_proximity_early`, b=`bar_ret_0` |
+| `combo_ratio__star50_limit_proximity_early__volume_weighted_price_position` | `ratio` | a=`star50_limit_proximity_early`, b=`volume_weighted_price_position` |
+| `combo_ratio__bar_ret_0__volume_weighted_price_position` | `ratio` | a=`bar_ret_0`, b=`volume_weighted_price_position` |
