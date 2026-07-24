@@ -164,9 +164,12 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
         "status": "SUCCESS",
         "n_features": len(pool),
         "z_th": z_th_prod,
+        "z_th_long": z_th_prod,
         "z_th_short": z_th_short,
-        "z_th_train": sweep_info["optimal_z_th"] if sweep_info else None,
+        "z_th_train_long": sweep_info.get("optimal_z_th_long", sweep_info.get("optimal_z_th")) if sweep_info else None,
+        "z_th_train_short": sweep_info.get("optimal_z_th_short") if sweep_info else None,
         "z_buffer": z_buffer if auto_threshold else 0.0,
+        "long_only": long_only,
         "position_mode": position_mode,
         "dates": df_oos["date"].dt.strftime("%Y-%m-%d").tolist() if "date" in df_oos.columns else [],
         "cum_pnl": np.cumsum(net_returns).tolist(),
@@ -308,9 +311,21 @@ def main():
     
     def _format_row(r):
         if r["status"] == "SUCCESS":
-            z_th_str = f"{r['z_th']:.2f}"
-            if r.get("z_th_train") is not None:
-                z_th_str += f" (train:{r['z_th_train']:.2f})"
+            z_l = r.get("z_th_long", r["z_th"])
+            z_s = r.get("z_th_short", r["z_th"])
+            tr_l = r.get("z_th_train_long")
+            tr_s = r.get("z_th_train_short")
+            
+            if r.get("long_only", False) or z_l == z_s:
+                z_th_str = f"{z_l:.2f}"
+                if tr_l is not None:
+                    z_th_str += f" (train:{tr_l:.2f})"
+            else:
+                z_th_str = f"L:{z_l:.2f}/S:{z_s:.2f}"
+                if tr_l is not None and tr_s is not None:
+                    z_th_str += f" (train L:{tr_l:.2f}/S:{tr_s:.2f})"
+                elif tr_l is not None:
+                    z_th_str += f" (train:{tr_l:.2f})"
             
             n_l = r.get("n_long_trades", 0)
             n_s = r.get("n_short_trades", 0)
