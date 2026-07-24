@@ -40,6 +40,7 @@ DEFAULT_THETA = 0.85
 MAX_POOL_SIZE = 35
 TOP_PROTECTED_COUNT = 25
 TIGHT_THETA = 0.75
+MAX_RECENCY_RATIO = 2.0  # Cap recent_ic / early_ic to prune late-training overfit spikes
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
@@ -1293,20 +1294,26 @@ def main():
 
     print(f"B2 Rolling Guard: {len(guard_survivors)} / {len(stable_results)} candidates passed (dropped {len(guard_rejects)} guard).")
 
-    # 3d. Temporal Validation Gate: require positive tail IC in the most recent 30% of training
-    # This catches features whose signal decayed over time (regime-specific overfit).
+    # 3d. Temporal Validation Gate: require positive tail IC in recent training AND cap recency_ratio
+    # This catches features whose signal decayed or was artificially concentrated in late training.
     temporal_survivors = []
     temporal_rejects = []
     for item in guard_survivors:
         recent_ic = item.get("recent_ic", 0.0)
-        if recent_ic > 0.0:
+        ic_first = item.get("split_half_ic_first", 0.0)
+        recency_ratio = recent_ic / (abs(ic_first) + 1e-5) if abs(ic_first) > 1e-4 else 99.0
+        item["recency_ratio"] = float(recency_ratio)
+        
+        # Pass if recent IC > 0 AND signal is not excessively concentrated in late training (recency_ratio < MAX_RECENCY_RATIO)
+        passes_temporal = (recent_ic > 0.0) and (recency_ratio < MAX_RECENCY_RATIO)
+        if passes_temporal:
             temporal_survivors.append(item)
         else:
             item["passes_temporal_gate"] = False
             temporal_rejects.append(item)
 
     if temporal_rejects:
-        print(f"Temporal Validation Gate (recent 30% IC > 0): rejected {len(temporal_rejects)} / {len(guard_survivors)} candidates (signal decayed).")
+        print(f"Temporal Validation Gate (recent 30% IC > 0 & recency_ratio < {MAX_RECENCY_RATIO}): rejected {len(temporal_rejects)} / {len(guard_survivors)} candidates (signal decayed or late-concentrated).")
     else:
         print(f"Temporal Validation Gate: all {len(guard_survivors)} candidates passed.")
     guard_survivors = temporal_survivors

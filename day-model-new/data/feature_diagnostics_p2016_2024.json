@@ -2,12 +2,12 @@
   "300ETF": {
     "single": {
       "full_model": {
-        "train_ic": 0.11510701113421776,
-        "oos_ic": 0.03020903173977761,
-        "lock_ic": 0.03020903173977761,
-        "train_sharpe": 0.31603593474071345,
-        "oos_sharpe": -0.07010159609374576,
-        "lock_sharpe": -0.07010159609374576
+        "train_ic": 0.11553611089257873,
+        "oos_ic": 0.03071044538722702,
+        "lock_ic": 0.03071044538722702,
+        "train_sharpe": 0.34144521611990675,
+        "oos_sharpe": -0.7350240182220864,
+        "lock_sharpe": -0.7350240182220864
       },
       "features": [
         {
@@ -66,9 +66,9 @@
             "win_rate": 0.4918032786885246
           },
           "loo": {
-            "delta_oos_ic": 0.0032639063099428496,
-            "delta_lock_ic": 0.0032639063099428496,
-            "delta_lock_sharpe": 0.005324143000883283
+            "delta_oos_ic": 0.004337316181454814,
+            "delta_lock_ic": 0.004337316181454814,
+            "delta_lock_sharpe": -0.6595982791274574
           }
         },
         {
@@ -126,9 +126,9 @@
             "win_rate": 0.4918032786885246
           },
           "loo": {
-            "delta_oos_ic": 0.001584621614429519,
-            "delta_lock_ic": 0.001584621614429519,
-            "delta_lock_sharpe": 0.0759632264680349
+            "delta_oos_ic": 0.0016572778620412183,
+            "delta_lock_ic": 0.0016572778620412183,
+            "delta_lock_sharpe": -0.0658519978780987
           }
         },
         {
@@ -187,9 +187,9 @@
             "win_rate": 0.45081967213114754
           },
           "loo": {
-            "delta_oos_ic": -0.001590350130563016,
-            "delta_lock_ic": -0.001590350130563016,
-            "delta_lock_sharpe": 0.5700968044535718
+            "delta_oos_ic": -0.0011509651668577363,
+            "delta_lock_ic": -0.0011509651668577363,
+            "delta_lock_sharpe": 0.2338309223323186
           }
         },
         {
@@ -247,9 +247,9 @@
             "win_rate": 0.4262295081967213
           },
           "loo": {
-            "delta_oos_ic": -0.002063561852432144,
-            "delta_lock_ic": -0.002063561852432144,
-            "delta_lock_sharpe": 0.3483854388773388
+            "delta_oos_ic": -0.0019950011050425785,
+            "delta_lock_ic": -0.0019950011050425785,
+            "delta_lock_sharpe": 0.1551133261313109
           }
         },
         {
@@ -307,9 +307,9 @@
             "win_rate": 0.5409836065573771
           },
           "loo": {
-            "delta_oos_ic": 0.002013379014267229,
-            "delta_lock_ic": 0.002013379014267229,
-            "delta_lock_sharpe": 0.3515204033634345
+            "delta_oos_ic": 0.0012712899265486036,
+            "delta_lock_ic": 0.0012712899265486036,
+            "delta_lock_sharpe": -0.0696297316448733
           }
         },
         {
@@ -367,9 +367,9 @@
             "win_rate": 0.5573770491803278
           },
           "loo": {
-            "delta_oos_ic": 0.0028537082655421646,
-            "delta_lock_ic": 0.0028537082655421646,
-            "delta_lock_sharpe": 0.06541528970351344
+            "delta_oos_ic": 0.0032015406546614597,
+            "delta_lock_ic": 0.0032015406546614597,
+            "delta_lock_sharpe": -0.48735250797235846
           }
         },
         {
@@ -428,9 +428,9 @@
             "win_rate": 0.45081967213114754
           },
           "loo": {
-            "delta_oos_ic": -0.0003236222802112214,
-            "delta_lock_ic": -0.0003236222802112214,
-            "delta_lock_sharpe": 0.5257179990797763
+            "delta_oos_ic": 0.0003058146305111725,
+            "delta_lock_ic": 0.0003058146305111725,
+            "delta_lock_sharpe": 0.1831945096913553
           }
         },
         {
@@ -489,9 +489,9 @@
             "win_rate": 0.4344262295081967
           },
           "loo": {
-            "delta_oos_ic": -0.0014665519719495798,
-            "delta_lock_ic": -0.0014665519719495798,
-            "delta_lock_sharpe": 0.610681680245975
+            "delta_oos_ic": -0.0013685969381555634,
+            "delta_lock_ic": -0.0013685969381555634,
+            "delta_lock_sharpe": 0.08770997674467107
           }
         },
         {
@@ -549,129 +549,125 @@
             "win_rate": 0.4426229508196721
           },
           "loo": {
-            "delta_oos_ic": -0.0009205803189188261,
-            "delta_lock_ic": -0.0009205803189188261,
-            "delta_lock_sharpe": 0.6205342857565324
+            "delta_oos_ic": -0.0006280371827983681,
+            "delta_lock_ic": -0.0006280371827983681,
+            "delta_lock_sharpe": 0.2587197033563725
           }
         },
         {
-          "feature_name": "combo_min__volume_weighted_price_position__opening_drive_thrust_ratio",
+          "feature_name": "combo_mean__volume_weighted_price_position__opening_drive_thrust_ratio",
           "sign": 1,
           "family": "Volatility & Oscillators",
           "recipe": {
-            "op": "min",
+            "op": "mean",
             "feature_a": "volume_weighted_price_position",
             "feature_b": "opening_drive_thrust_ratio"
           },
           "train": {
-            "overall_ic": 0.095528741084329,
-            "tail_ic": 0.21669224486714128,
-            "mono": 0.9636363636363636,
-            "raw_ann_ret": 0.09901809572990629,
-            "raw_sharpe": 1.7172658963112437,
-            "cost_ann_ret": 0.030572645858440998,
-            "cost_sharpe": 0.5349370155936837,
-            "sortino": 0.9274672986826352,
-            "max_dd": 0.10916890577962293,
-            "annual_turnover": 85.55681233933163,
-            "avg_trade_ret_bps": 20.342888731057517,
-            "friction_eff": 2.5428610913821896,
-            "win_rate": 0.5979381443298969
+            "overall_ic": 0.09681918809930994,
+            "tail_ic": 0.19840733246677952,
+            "mono": 0.7454545454545455,
+            "raw_ann_ret": 0.09435303444078935,
+            "raw_sharpe": 1.5504701848135936,
+            "cost_ann_ret": 0.02490398559760168,
+            "cost_sharpe": 0.411293658537361,
+            "sortino": 0.744635948881782,
+            "max_dd": 0.1279055766583989,
+            "annual_turnover": 86.81131105398458,
+            "avg_trade_ret_bps": 19.384469746845458,
+            "friction_eff": 2.4230587183556818,
+            "win_rate": 0.6005154639175257
           },
           "oos": {
-            "overall_ic": 0.012536066971084685,
-            "tail_ic": 0.024185527016346763,
-            "mono": 0.41818181818181815,
-            "raw_ann_ret": 0.013668403042114398,
-            "raw_sharpe": 0.24889173180532506,
-            "cost_ann_ret": -0.058498372202185296,
-            "cost_sharpe": -1.063035669950307,
-            "sortino": -1.6925905827893855,
-            "max_dd": 0.1932848370896321,
-            "annual_turnover": 90.2084690553746,
-            "avg_trade_ret_bps": 2.819268834942973,
-            "friction_eff": 0.35240860436787164,
-            "win_rate": 0.4426229508196721
+            "overall_ic": -0.003335292434067938,
+            "tail_ic": 0.06298018300376458,
+            "mono": 0.15151515151515152,
+            "raw_ann_ret": 0.01738500670119502,
+            "raw_sharpe": 0.38273688319877397,
+            "cost_ann_ret": -0.05541759916199718,
+            "cost_sharpe": -1.2071604342755664,
+            "sortino": -1.8040084831177814,
+            "max_dd": 0.18476758539002125,
+            "annual_turnover": 91.00325732899023,
+            "avg_trade_ret_bps": 3.585862037937966,
+            "friction_eff": 0.4482327547422457,
+            "win_rate": 0.45901639344262296
           },
           "lockbox": {
-            "overall_ic": 0.012536066971084685,
-            "tail_ic": 0.024185527016346763,
-            "mono": 0.41818181818181815,
-            "raw_ann_ret": 0.013668403042114398,
-            "raw_sharpe": 0.24889173180532506,
-            "cost_ann_ret": -0.058498372202185296,
-            "cost_sharpe": -1.063035669950307,
-            "sortino": -1.6925905827893855,
-            "max_dd": 0.1932848370896321,
-            "annual_turnover": 90.2084690553746,
-            "avg_trade_ret_bps": 2.819268834942973,
-            "friction_eff": 0.35240860436787164,
-            "win_rate": 0.4426229508196721
+            "overall_ic": -0.003335292434067938,
+            "tail_ic": 0.06298018300376458,
+            "mono": 0.15151515151515152,
+            "raw_ann_ret": 0.01738500670119502,
+            "raw_sharpe": 0.38273688319877397,
+            "cost_ann_ret": -0.05541759916199718,
+            "cost_sharpe": -1.2071604342755664,
+            "sortino": -1.8040084831177814,
+            "max_dd": 0.18476758539002125,
+            "annual_turnover": 91.00325732899023,
+            "avg_trade_ret_bps": 3.585862037937966,
+            "friction_eff": 0.4482327547422457,
+            "win_rate": 0.45901639344262296
           },
           "loo": {
-            "delta_oos_ic": 4.676128101730251e-05,
-            "delta_lock_ic": 4.676128101730251e-05,
-            "delta_lock_sharpe": 0.6016110393910044
+            "delta_oos_ic": -0.0003306986824937741,
+            "delta_lock_ic": -0.0003306986824937741,
+            "delta_lock_sharpe": 0.08770997674467107
           }
         },
         {
-          "feature_name": "combo_rank_max__bar_ret_0__first_bar_sentiment",
+          "feature_name": "bar_body_rng_0",
           "sign": 1,
-          "family": "Gap / Overnight Reversal",
-          "recipe": {
-            "op": "rank_max",
-            "feature_a": "bar_ret_0",
-            "feature_b": "first_bar_sentiment"
-          },
+          "family": "Other Technical",
+          "recipe": null,
           "train": {
-            "overall_ic": 0.08547134192526724,
-            "tail_ic": 0.062051245805687404,
-            "mono": 0.696969696969697,
-            "raw_ann_ret": 0.03574766536103905,
-            "raw_sharpe": 0.5872770911146353,
-            "cost_ann_ret": -0.015536242093973796,
-            "cost_sharpe": -0.2544922375066519,
-            "sortino": -0.38953788512990195,
-            "max_dd": 0.19089384171189724,
-            "annual_turnover": 64.10488431876607,
-            "avg_trade_ret_bps": 7.34422100802993,
-            "friction_eff": 0.9180276260037412,
-            "win_rate": 0.4845360824742268
+            "overall_ic": 0.09880724561041827,
+            "tail_ic": 0.19545217400147386,
+            "mono": 0.8545454545454545,
+            "raw_ann_ret": 0.09371732236546501,
+            "raw_sharpe": 1.6119262776071077,
+            "cost_ann_ret": 0.023465394344899446,
+            "cost_sharpe": 0.40608266132881593,
+            "sortino": 0.7515856797075978,
+            "max_dd": 0.19812440864597258,
+            "annual_turnover": 87.81491002570694,
+            "avg_trade_ret_bps": 19.25386513444624,
+            "friction_eff": 2.4067331418057796,
+            "win_rate": 0.5670103092783505
           },
           "oos": {
-            "overall_ic": -0.003324316552184624,
-            "tail_ic": 0.03475717650591278,
-            "mono": 0.12727272727272726,
-            "raw_ann_ret": 0.014637260274693928,
-            "raw_sharpe": 0.2225855383518352,
-            "cost_ann_ret": -0.03527544330836797,
-            "cost_sharpe": -0.5336196738335556,
-            "sortino": -0.8377230693628049,
-            "max_dd": 0.12950618468629443,
-            "annual_turnover": 62.390879478827365,
-            "avg_trade_ret_bps": 3.01910703059059,
-            "friction_eff": 0.37738837882382376,
-            "win_rate": 0.4672131147540984
+            "overall_ic": 0.030103741094826234,
+            "tail_ic": 0.014100378038776657,
+            "mono": 0.696969696969697,
+            "raw_ann_ret": 0.029874827168646024,
+            "raw_sharpe": 0.48159187007089627,
+            "cost_ann_ret": -0.03974862560008364,
+            "cost_sharpe": -0.640390801386236,
+            "sortino": -1.0790821715903884,
+            "max_dd": 0.1810125828031679,
+            "annual_turnover": 87.02931596091204,
+            "avg_trade_ret_bps": 6.162034359563506,
+            "friction_eff": 0.7702542949454383,
+            "win_rate": 0.5081967213114754
           },
           "lockbox": {
-            "overall_ic": -0.003324316552184624,
-            "tail_ic": 0.03475717650591278,
-            "mono": 0.12727272727272726,
-            "raw_ann_ret": 0.014637260274693928,
-            "raw_sharpe": 0.2225855383518352,
-            "cost_ann_ret": -0.03527544330836797,
-            "cost_sharpe": -0.5336196738335556,
-            "sortino": -0.8377230693628049,
-            "max_dd": 0.12950618468629443,
-            "annual_turnover": 62.390879478827365,
-            "avg_trade_ret_bps": 3.01910703059059,
-            "friction_eff": 0.37738837882382376,
-            "win_rate": 0.4672131147540984
+            "overall_ic": 0.030103741094826234,
+            "tail_ic": 0.014100378038776657,
+            "mono": 0.696969696969697,
+            "raw_ann_ret": 0.029874827168646024,
+            "raw_sharpe": 0.48159187007089627,
+            "cost_ann_ret": -0.03974862560008364,
+            "cost_sharpe": -0.640390801386236,
+            "sortino": -1.0790821715903884,
+            "max_dd": 0.1810125828031679,
+            "annual_turnover": 87.02931596091204,
+            "avg_trade_ret_bps": 6.162034359563506,
+            "friction_eff": 0.7702542949454383,
+            "win_rate": 0.5081967213114754
           },
           "loo": {
-            "delta_oos_ic": -0.0024465948067518214,
-            "delta_lock_ic": -0.0024465948067518214,
-            "delta_lock_sharpe": 0.0
+            "delta_oos_ic": 0.0005628461507814556,
+            "delta_lock_ic": 0.0005628461507814556,
+            "delta_lock_sharpe": -0.35625614414863194
           }
         },
         {
@@ -729,9 +725,9 @@
             "win_rate": 0.5
           },
           "loo": {
-            "delta_oos_ic": -0.0017332519832505972,
-            "delta_lock_ic": -0.0017332519832505972,
-            "delta_lock_sharpe": 0.4025784273351539
+            "delta_oos_ic": -0.001830584915745042,
+            "delta_lock_ic": -0.001830584915745042,
+            "delta_lock_sharpe": -0.027869455068178395
           }
         },
         {
@@ -789,129 +785,9 @@
             "win_rate": 0.5245901639344263
           },
           "loo": {
-            "delta_oos_ic": 0.0027967082339695193,
-            "delta_lock_ic": 0.0027967082339695193,
-            "delta_lock_sharpe": -0.02535257239011087
-          }
-        },
-        {
-          "feature_name": "combo_rank_max__volume_weighted_price_position__opening_drive_thrust_ratio",
-          "sign": 1,
-          "family": "Volatility & Oscillators",
-          "recipe": {
-            "op": "rank_max",
-            "feature_a": "volume_weighted_price_position",
-            "feature_b": "opening_drive_thrust_ratio"
-          },
-          "train": {
-            "overall_ic": 0.09154877576151317,
-            "tail_ic": 0.18921032226996104,
-            "mono": 0.5757575757575758,
-            "raw_ann_ret": 0.1105195732157072,
-            "raw_sharpe": 1.795615658078727,
-            "cost_ann_ret": 0.039464766017763754,
-            "cost_sharpe": 0.645639881802518,
-            "sortino": 1.2523688015845877,
-            "max_dd": 0.1290986576384574,
-            "annual_turnover": 88.8185089974293,
-            "avg_trade_ret_bps": 22.705823253395987,
-            "friction_eff": 2.8382279066744984,
-            "win_rate": 0.595360824742268
-          },
-          "oos": {
-            "overall_ic": -0.016053584076391587,
-            "tail_ic": 0.06942438792268775,
-            "mono": 0.10303030303030303,
-            "raw_ann_ret": 0.018523150757995023,
-            "raw_sharpe": 0.3922253505483605,
-            "cost_ann_ret": -0.05300779386741215,
-            "cost_sharpe": -1.115162924059719,
-            "sortino": -1.6442762392723012,
-            "max_dd": 0.169214705472915,
-            "annual_turnover": 89.41368078175896,
-            "avg_trade_ret_bps": 3.820617631486475,
-            "friction_eff": 0.4775772039358094,
-            "win_rate": 0.48360655737704916
-          },
-          "lockbox": {
-            "overall_ic": -0.016053584076391587,
-            "tail_ic": 0.06942438792268775,
-            "mono": 0.10303030303030303,
-            "raw_ann_ret": 0.018523150757995023,
-            "raw_sharpe": 0.3922253505483605,
-            "cost_ann_ret": -0.05300779386741215,
-            "cost_sharpe": -1.115162924059719,
-            "sortino": -1.6442762392723012,
-            "max_dd": 0.169214705472915,
-            "annual_turnover": 89.41368078175896,
-            "avg_trade_ret_bps": 3.820617631486475,
-            "friction_eff": 0.4775772039358094,
-            "win_rate": 0.48360655737704916
-          },
-          "loo": {
-            "delta_oos_ic": -0.0019319096649116976,
-            "delta_lock_ic": -0.0019319096649116976,
-            "delta_lock_sharpe": 0.49030768488307375
-          }
-        },
-        {
-          "feature_name": "combo_min__opening_drive_thrust_ratio__volume_surge_direction",
-          "sign": 1,
-          "family": "Volatility & Oscillators",
-          "recipe": {
-            "op": "min",
-            "feature_a": "opening_drive_thrust_ratio",
-            "feature_b": "volume_surge_direction"
-          },
-          "train": {
-            "overall_ic": 0.09219496530571553,
-            "tail_ic": 0.18283999387811897,
-            "mono": 0.9030303030303031,
-            "raw_ann_ret": 0.0976381619208776,
-            "raw_sharpe": 1.4372229961289535,
-            "cost_ann_ret": 0.029995591226790203,
-            "cost_sharpe": 0.444371741609592,
-            "sortino": 0.7843999986652315,
-            "max_dd": 0.12127296606271754,
-            "annual_turnover": 84.55321336760926,
-            "avg_trade_ret_bps": 20.059386612314828,
-            "friction_eff": 2.5074233265393535,
-            "win_rate": 0.5747422680412371
-          },
-          "oos": {
-            "overall_ic": 0.029115559101354677,
-            "tail_ic": 0.13220188321694865,
-            "mono": 0.3939393939393939,
-            "raw_ann_ret": 0.049589131758875575,
-            "raw_sharpe": 0.6969021853742468,
-            "cost_ann_ret": -0.016537252605945282,
-            "cost_sharpe": -0.23300256407911538,
-            "sortino": -0.35336924794193597,
-            "max_dd": 0.12876509749450438,
-            "annual_turnover": 82.65798045602605,
-            "avg_trade_ret_bps": 10.228341474049184,
-            "friction_eff": 1.2785426842561478,
-            "win_rate": 0.5491803278688525
-          },
-          "lockbox": {
-            "overall_ic": 0.029115559101354677,
-            "tail_ic": 0.13220188321694865,
-            "mono": 0.3939393939393939,
-            "raw_ann_ret": 0.049589131758875575,
-            "raw_sharpe": 0.6969021853742468,
-            "cost_ann_ret": -0.016537252605945282,
-            "cost_sharpe": -0.23300256407911538,
-            "sortino": -0.35336924794193597,
-            "max_dd": 0.12876509749450438,
-            "annual_turnover": 82.65798045602605,
-            "avg_trade_ret_bps": 10.228341474049184,
-            "friction_eff": 1.2785426842561478,
-            "win_rate": 0.5491803278688525
-          },
-          "loo": {
-            "delta_oos_ic": 0.0013607429092485565,
-            "delta_lock_ic": 0.0013607429092485565,
-            "delta_lock_sharpe": 0.15422725805997817
+            "delta_oos_ic": 0.0036493239859108663,
+            "delta_lock_ic": 0.0036493239859108663,
+            "delta_lock_sharpe": -0.13876854670705618
           }
         },
         {
@@ -969,9 +845,9 @@
             "win_rate": 0.47540983606557374
           },
           "loo": {
-            "delta_oos_ic": -0.00026462634030247414,
-            "delta_lock_ic": -0.00026462634030247414,
-            "delta_lock_sharpe": 0.49030768488307375
+            "delta_oos_ic": -0.00021558402118676198,
+            "delta_lock_ic": -0.00021558402118676198,
+            "delta_lock_sharpe": 0.013914900434856103
           }
         },
         {
@@ -1029,69 +905,69 @@
             "win_rate": 0.5
           },
           "loo": {
-            "delta_oos_ic": 0.0014599421456416954,
-            "delta_lock_ic": 0.0014599421456416954,
-            "delta_lock_sharpe": 0.595758392311685
+            "delta_oos_ic": 0.0009321151138482579,
+            "delta_lock_ic": 0.0009321151138482579,
+            "delta_lock_sharpe": 0.19265283286564394
           }
         },
         {
-          "feature_name": "combo_ratio__bar_ret_0__volume_weighted_price_position",
+          "feature_name": "combo_min__max_up_ret__first_bar_sentiment",
           "sign": 1,
-          "family": "Volatility & Oscillators",
+          "family": "Gap / Overnight Reversal",
           "recipe": {
-            "op": "ratio",
-            "feature_a": "bar_ret_0",
-            "feature_b": "volume_weighted_price_position"
+            "op": "min",
+            "feature_a": "max_up_ret",
+            "feature_b": "first_bar_sentiment"
           },
           "train": {
-            "overall_ic": 0.09567316480155164,
-            "tail_ic": 0.16362380646590977,
-            "mono": 0.8909090909090909,
-            "raw_ann_ret": 0.07670899090059918,
-            "raw_sharpe": 1.0703126197119517,
-            "cost_ann_ret": 0.006657782674378093,
-            "cost_sharpe": 0.09296726075639314,
-            "sortino": 0.1514954832329394,
-            "max_dd": 0.17124713474159756,
-            "annual_turnover": 87.56401028277635,
-            "avg_trade_ret_bps": 15.759568542089044,
-            "friction_eff": 1.9699460677611305,
-            "win_rate": 0.5463917525773195
+            "overall_ic": 0.09128814717979618,
+            "tail_ic": 0.16724130787491515,
+            "mono": 0.9515151515151515,
+            "raw_ann_ret": 0.08535395722875627,
+            "raw_sharpe": 1.2455040648690956,
+            "cost_ann_ret": 0.027546656457548026,
+            "cost_sharpe": 0.4025233126934302,
+            "sortino": 0.6606749429861233,
+            "max_dd": 0.1375622699302536,
+            "annual_turnover": 72.25912596401028,
+            "avg_trade_ret_bps": 17.535643781681056,
+            "friction_eff": 2.191955472710132,
+            "win_rate": 0.5798969072164949
           },
           "oos": {
-            "overall_ic": 0.004176736283504594,
-            "tail_ic": 0.04913414656317168,
-            "mono": 0.34545454545454546,
-            "raw_ann_ret": 0.04616446317288589,
-            "raw_sharpe": 0.5680309922844592,
-            "cost_ann_ret": -0.02345898959584375,
-            "cost_sharpe": -0.287817485813152,
-            "sortino": -0.543938197319528,
-            "max_dd": 0.19964393615288162,
-            "annual_turnover": 87.02931596091204,
-            "avg_trade_ret_bps": 9.521963312332684,
-            "friction_eff": 1.1902454140415855,
-            "win_rate": 0.4672131147540984
+            "overall_ic": -0.003262693373195378,
+            "tail_ic": -0.011870136894663055,
+            "mono": 0.3575757575757576,
+            "raw_ann_ret": 0.02240528037060404,
+            "raw_sharpe": 0.27754069446324786,
+            "cost_ann_ret": -0.03609113656750672,
+            "cost_sharpe": -0.44641001681196113,
+            "sortino": -0.7164920106490582,
+            "max_dd": 0.24436024393719488,
+            "annual_turnover": 73.12052117263845,
+            "avg_trade_ret_bps": 4.6213525085833345,
+            "friction_eff": 0.5776690635729167,
+            "win_rate": 0.45081967213114754
           },
           "lockbox": {
-            "overall_ic": 0.004176736283504594,
-            "tail_ic": 0.04913414656317168,
-            "mono": 0.34545454545454546,
-            "raw_ann_ret": 0.04616446317288589,
-            "raw_sharpe": 0.5680309922844592,
-            "cost_ann_ret": -0.02345898959584375,
-            "cost_sharpe": -0.287817485813152,
-            "sortino": -0.543938197319528,
-            "max_dd": 0.19964393615288162,
-            "annual_turnover": 87.02931596091204,
-            "avg_trade_ret_bps": 9.521963312332684,
-            "friction_eff": 1.1902454140415855,
-            "win_rate": 0.4672131147540984
+            "overall_ic": -0.003262693373195378,
+            "tail_ic": -0.011870136894663055,
+            "mono": 0.3575757575757576,
+            "raw_ann_ret": 0.02240528037060404,
+            "raw_sharpe": 0.27754069446324786,
+            "cost_ann_ret": -0.03609113656750672,
+            "cost_sharpe": -0.44641001681196113,
+            "sortino": -0.7164920106490582,
+            "max_dd": 0.24436024393719488,
+            "annual_turnover": 73.12052117263845,
+            "avg_trade_ret_bps": 4.6213525085833345,
+            "friction_eff": 0.5776690635729167,
+            "win_rate": 0.45081967213114754
           },
           "loo": {
-            "delta_oos_ic": -0.000729621140839843,
-            "delta_lock_ic": -0.000729621140839843,
-            "delta_lock_sharpe": -0.04562767005159585
+            "delta_oos_ic": -0.0027792893975816975,
+            "delta_lock_ic": -0.0027792893975816975,
+            "delta_lock_sharpe": 0.04724666989421755
           }
         },
         {
@@ -1149,9 +1025,9 @@
             "win_rate": 0.5655737704918032
           },
           "loo": {
-            "delta_oos_ic": 0.003507225680735221,
-            "delta_lock_ic": 0.003507225680735221,
-            "delta_lock_sharpe": 0.37277493917052024
+            "delta_oos_ic": 0.004453623203585992,
+            "delta_lock_ic": 0.004453623203585992,
+            "delta_lock_sharpe": -0.0508486118401561
           }
         },
         {
@@ -1209,9 +1085,9 @@
             "win_rate": 0.47540983606557374
           },
           "loo": {
-            "delta_oos_ic": -0.0015124319427924984,
-            "delta_lock_ic": -0.0015124319427924984,
-            "delta_lock_sharpe": 0.49030768488307375
+            "delta_oos_ic": -0.0011077291265379659,
+            "delta_lock_ic": -0.0011077291265379659,
+            "delta_lock_sharpe": 0.07644325631492455
           }
         },
         {
@@ -1269,9 +1145,9 @@
             "win_rate": 0.5163934426229508
           },
           "loo": {
-            "delta_oos_ic": 0.0019332316301732683,
-            "delta_lock_ic": 0.0019332316301732683,
-            "delta_lock_sharpe": 0.4315748912957783
+            "delta_oos_ic": 0.0031207452483804528,
+            "delta_lock_ic": 0.0031207452483804528,
+            "delta_lock_sharpe": 0.13947315605333044
           }
         }
       ]
@@ -1281,12 +1157,12 @@
   "500ETF": {
     "single": {
       "full_model": {
-        "train_ic": 0.14663362845399636,
-        "oos_ic": 0.11400406696363286,
-        "lock_ic": 0.11400406696363286,
-        "train_sharpe": 0.8073265784381319,
-        "oos_sharpe": 0.5089072088945605,
-        "lock_sharpe": 0.5089072088945605
+        "train_ic": 0.14735087651290465,
+        "oos_ic": 0.11311493384379999,
+        "lock_ic": 0.11311493384379999,
+        "train_sharpe": 0.9119583506690688,
+        "oos_sharpe": 0.3881722946955138,
+        "lock_sharpe": 0.3881722946955138
       },
       "features": [
         {
@@ -1345,9 +1221,9 @@
             "win_rate": 0.5409836065573771
           },
           "loo": {
-            "delta_oos_ic": 0.0019659842168632674,
-            "delta_lock_ic": 0.0019659842168632674,
-            "delta_lock_sharpe": 0.06266513007921348
+            "delta_oos_ic": 0.0018806790714673838,
+            "delta_lock_ic": 0.0018806790714673838,
+            "delta_lock_sharpe": 0.04281099317319842
           }
         },
         {
@@ -1406,9 +1282,9 @@
             "win_rate": 0.5491803278688525
           },
           "loo": {
-            "delta_oos_ic": -8.862299972912935e-05,
-            "delta_lock_ic": -8.862299972912935e-05,
-            "delta_lock_sharpe": -0.08407771731969516
+            "delta_oos_ic": 2.0140412632208005e-05,
+            "delta_lock_ic": 2.0140412632208005e-05,
+            "delta_lock_sharpe": 0.04860366736310895
           }
         },
         {
@@ -1467,9 +1343,9 @@
             "win_rate": 0.5409836065573771
           },
           "loo": {
-            "delta_oos_ic": 0.00022416253338915226,
-            "delta_lock_ic": 0.00022416253338915226,
-            "delta_lock_sharpe": -0.009619012624211165
+            "delta_oos_ic": 7.120426447965178e-05,
+            "delta_lock_ic": 7.120426447965178e-05,
+            "delta_lock_sharpe": 0.13254244501802626
           }
         },
         {
@@ -1527,69 +1403,9 @@
             "win_rate": 0.5983606557377049
           },
           "loo": {
-            "delta_oos_ic": 0.00028142144137442704,
-            "delta_lock_ic": 0.00028142144137442704,
-            "delta_lock_sharpe": 0.18780905548036808
-          }
-        },
-        {
-          "feature_name": "combo_rank_max__first_bar_sentiment__bar_ret_0",
-          "sign": 1,
-          "family": "Gap / Overnight Reversal",
-          "recipe": {
-            "op": "rank_max",
-            "feature_a": "first_bar_sentiment",
-            "feature_b": "bar_ret_0"
-          },
-          "train": {
-            "overall_ic": 0.08785929250653517,
-            "tail_ic": 0.05105888536339374,
-            "mono": 0.6848484848484848,
-            "raw_ann_ret": 0.03786130877463512,
-            "raw_sharpe": 0.46838683756616484,
-            "cost_ann_ret": -0.0144261976521001,
-            "cost_sharpe": -0.17809781439843328,
-            "sortino": -0.26505043188785127,
-            "max_dd": 0.18396205035911656,
-            "annual_turnover": 65.35938303341902,
-            "avg_trade_ret_bps": 7.778460956424847,
-            "friction_eff": 0.9723076195531059,
-            "win_rate": 0.520618556701031
-          },
-          "oos": {
-            "overall_ic": 0.058493479516262555,
-            "tail_ic": 0.08119976614465957,
-            "mono": 0.24848484848484848,
-            "raw_ann_ret": 0.04667001298470036,
-            "raw_sharpe": 0.5313055662152842,
-            "cost_ann_ret": -0.005786013073931583,
-            "cost_sharpe": -0.06575471135883139,
-            "sortino": -0.09807056326981134,
-            "max_dd": 0.1885332606593338,
-            "annual_turnover": 65.57003257328991,
-            "avg_trade_ret_bps": 9.626238905067867,
-            "friction_eff": 1.2032798631334831,
-            "win_rate": 0.5491803278688525
-          },
-          "lockbox": {
-            "overall_ic": 0.058493479516262555,
-            "tail_ic": 0.08119976614465957,
-            "mono": 0.24848484848484848,
-            "raw_ann_ret": 0.04667001298470036,
-            "raw_sharpe": 0.5313055662152842,
-            "cost_ann_ret": -0.005786013073931583,
-            "cost_sharpe": -0.06575471135883139,
-            "sortino": -0.09807056326981134,
-            "max_dd": 0.1885332606593338,
-            "annual_turnover": 65.57003257328991,
-            "avg_trade_ret_bps": 9.626238905067867,
-            "friction_eff": 1.2032798631334831,
-            "win_rate": 0.5491803278688525
-          },
-          "loo": {
-            "delta_oos_ic": -0.0006441562346500701,
-            "delta_lock_ic": -0.0006441562346500701,
-            "delta_lock_sharpe": 0.008187627107824613
+            "delta_oos_ic": 0.0006650483486546621,
+            "delta_lock_ic": 0.0006650483486546621,
+            "delta_lock_sharpe": 0.07656647843787545
           }
         },
         {
@@ -1647,9 +1463,69 @@
             "win_rate": 0.5901639344262295
           },
           "loo": {
-            "delta_oos_ic": -0.0005444650802311629,
-            "delta_lock_ic": -0.0005444650802311629,
-            "delta_lock_sharpe": -0.037577059565400805
+            "delta_oos_ic": -0.0002573929181954454,
+            "delta_lock_ic": -0.0002573929181954454,
+            "delta_lock_sharpe": -0.1568595267499539
+          }
+        },
+        {
+          "feature_name": "combo_min__max_up_ret__first_bar_sentiment",
+          "sign": 1,
+          "family": "Gap / Overnight Reversal",
+          "recipe": {
+            "op": "min",
+            "feature_a": "max_up_ret",
+            "feature_b": "first_bar_sentiment"
+          },
+          "train": {
+            "overall_ic": 0.13320378550131604,
+            "tail_ic": 0.25458968496533585,
+            "mono": 0.9272727272727272,
+            "raw_ann_ret": 0.1324949860248188,
+            "raw_sharpe": 1.757774292830811,
+            "cost_ann_ret": 0.07809992175746659,
+            "cost_sharpe": 1.0421573369585413,
+            "sortino": 1.8313808330252537,
+            "max_dd": 0.08191444889755406,
+            "annual_turnover": 67.99383033419024,
+            "avg_trade_ret_bps": 27.22058769417278,
+            "friction_eff": 3.4025734617715973,
+            "win_rate": 0.6134020618556701
+          },
+          "oos": {
+            "overall_ic": 0.06975784418845563,
+            "tail_ic": 0.09938346722466965,
+            "mono": 0.6848484848484848,
+            "raw_ann_ret": 0.03144954233054619,
+            "raw_sharpe": 0.39258165791354976,
+            "cost_ann_ret": -0.02704687460756455,
+            "cost_sharpe": -0.3371531936655466,
+            "sortino": -0.47565739452333394,
+            "max_dd": 0.18899634257318731,
+            "annual_turnover": 73.12052117263845,
+            "avg_trade_ret_bps": 6.486837876563883,
+            "friction_eff": 0.8108547345704853,
+            "win_rate": 0.5163934426229508
+          },
+          "lockbox": {
+            "overall_ic": 0.06975784418845563,
+            "tail_ic": 0.09938346722466965,
+            "mono": 0.6848484848484848,
+            "raw_ann_ret": 0.03144954233054619,
+            "raw_sharpe": 0.39258165791354976,
+            "cost_ann_ret": -0.02704687460756455,
+            "cost_sharpe": -0.3371531936655466,
+            "sortino": -0.47565739452333394,
+            "max_dd": 0.18899634257318731,
+            "annual_turnover": 73.12052117263845,
+            "avg_trade_ret_bps": 6.486837876563883,
+            "friction_eff": 0.8108547345704853,
+            "win_rate": 0.5163934426229508
+          },
+          "loo": {
+            "delta_oos_ic": -0.0008692778353074221,
+            "delta_lock_ic": -0.0008692778353074221,
+            "delta_lock_sharpe": -0.004618515848347882
           }
         },
         {
@@ -1707,9 +1583,9 @@
             "win_rate": 0.5737704918032787
           },
           "loo": {
-            "delta_oos_ic": 0.0014003937359947094,
-            "delta_lock_ic": 0.0014003937359947094,
-            "delta_lock_sharpe": 0.1470253894952407
+            "delta_oos_ic": 0.0016835000252727328,
+            "delta_lock_ic": 0.0016835000252727328,
+            "delta_lock_sharpe": 0.31130815864281575
           }
         },
         {
@@ -1767,9 +1643,9 @@
             "win_rate": 0.5573770491803278
           },
           "loo": {
-            "delta_oos_ic": 0.00016597047887265126,
-            "delta_lock_ic": 0.00016597047887265126,
-            "delta_lock_sharpe": -0.045200022985318444
+            "delta_oos_ic": -6.617564150583621e-05,
+            "delta_lock_ic": -6.617564150583621e-05,
+            "delta_lock_sharpe": -0.1568595267499539
           }
         },
         {
@@ -1827,429 +1703,9 @@
             "win_rate": 0.4918032786885246
           },
           "loo": {
-            "delta_oos_ic": -0.0010678566012988916,
-            "delta_lock_ic": -0.0010678566012988916,
-            "delta_lock_sharpe": -0.008712946737041594
-          }
-        },
-        {
-          "feature_name": "combo_min__opening_auction_imbalance__star50_limit_proximity_early",
-          "sign": 1,
-          "family": "Volatility & Oscillators",
-          "recipe": {
-            "op": "min",
-            "feature_a": "opening_auction_imbalance",
-            "feature_b": "star50_limit_proximity_early"
-          },
-          "train": {
-            "overall_ic": 0.10286149490780486,
-            "tail_ic": 0.22845402734883227,
-            "mono": 0.8303030303030303,
-            "raw_ann_ret": 0.11469931807105223,
-            "raw_sharpe": 1.3273500085954786,
-            "cost_ann_ret": 0.04444739005048669,
-            "cost_sharpe": 0.5157589519520352,
-            "sortino": 0.9054445225928359,
-            "max_dd": 0.10837438484028439,
-            "annual_turnover": 87.81491002570694,
-            "avg_trade_ret_bps": 23.56453583405829,
-            "friction_eff": 2.9455669792572863,
-            "win_rate": 0.6005154639175257
-          },
-          "oos": {
-            "overall_ic": 0.12349341548479009,
-            "tail_ic": 0.1999497721572528,
-            "mono": 0.6121212121212121,
-            "raw_ann_ret": 0.14601605383866192,
-            "raw_sharpe": 1.4498036220825925,
-            "cost_ann_ret": 0.07702843168882478,
-            "cost_sharpe": 0.7688185169855923,
-            "sortino": 1.3237009706904468,
-            "max_dd": 0.10634682463520921,
-            "annual_turnover": 86.23452768729642,
-            "avg_trade_ret_bps": 30.117527901417102,
-            "friction_eff": 3.7646909876771377,
-            "win_rate": 0.6147540983606558
-          },
-          "lockbox": {
-            "overall_ic": 0.12349341548479009,
-            "tail_ic": 0.1999497721572528,
-            "mono": 0.6121212121212121,
-            "raw_ann_ret": 0.14601605383866192,
-            "raw_sharpe": 1.4498036220825925,
-            "cost_ann_ret": 0.07702843168882478,
-            "cost_sharpe": 0.7688185169855923,
-            "sortino": 1.3237009706904468,
-            "max_dd": 0.10634682463520921,
-            "annual_turnover": 86.23452768729642,
-            "avg_trade_ret_bps": 30.117527901417102,
-            "friction_eff": 3.7646909876771377,
-            "win_rate": 0.6147540983606558
-          },
-          "loo": {
-            "delta_oos_ic": 0.0023108855430977737,
-            "delta_lock_ic": 0.0023108855430977737,
-            "delta_lock_sharpe": 0.17152439561415428
-          }
-        },
-        {
-          "feature_name": "combo_min__opening_drive_thrust_ratio__first_bar_return",
-          "sign": 1,
-          "family": "Gap / Overnight Reversal",
-          "recipe": {
-            "op": "min",
-            "feature_a": "opening_drive_thrust_ratio",
-            "feature_b": "first_bar_return"
-          },
-          "train": {
-            "overall_ic": 0.12893322466395693,
-            "tail_ic": 0.2279760748060997,
-            "mono": 0.9515151515151515,
-            "raw_ann_ret": 0.11534523193101326,
-            "raw_sharpe": 1.4835013611193666,
-            "cost_ann_ret": 0.045795823190653354,
-            "cost_sharpe": 0.5935793859607551,
-            "sortino": 1.0263605302722145,
-            "max_dd": 0.1139306659643192,
-            "annual_turnover": 86.93676092544986,
-            "avg_trade_ret_bps": 23.69723636405915,
-            "friction_eff": 2.962154545507394,
-            "win_rate": 0.5902061855670103
-          },
-          "oos": {
-            "overall_ic": 0.09051960586477487,
-            "tail_ic": 0.08262299850062017,
-            "mono": 0.7090909090909091,
-            "raw_ann_ret": 0.05626069757272013,
-            "raw_sharpe": 0.6431246182269763,
-            "cost_ann_ret": -0.010819432720439484,
-            "cost_sharpe": -0.12333611621195725,
-            "sortino": -0.19353790156579323,
-            "max_dd": 0.18556104452289898,
-            "annual_turnover": 83.85016286644951,
-            "avg_trade_ret_bps": 11.604430364703761,
-            "friction_eff": 1.4505537955879702,
-            "win_rate": 0.5409836065573771
-          },
-          "lockbox": {
-            "overall_ic": 0.09051960586477487,
-            "tail_ic": 0.08262299850062017,
-            "mono": 0.7090909090909091,
-            "raw_ann_ret": 0.05626069757272013,
-            "raw_sharpe": 0.6431246182269763,
-            "cost_ann_ret": -0.010819432720439484,
-            "cost_sharpe": -0.12333611621195725,
-            "sortino": -0.19353790156579323,
-            "max_dd": 0.18556104452289898,
-            "annual_turnover": 83.85016286644951,
-            "avg_trade_ret_bps": 11.604430364703761,
-            "friction_eff": 1.4505537955879702,
-            "win_rate": 0.5409836065573771
-          },
-          "loo": {
-            "delta_oos_ic": 0.0004716796507958365,
-            "delta_lock_ic": 0.0004716796507958365,
-            "delta_lock_sharpe": 0.24815088935270335
-          }
-        },
-        {
-          "feature_name": "combo_rank_min__rbreaker_sell_setup_proximity_early__bar_ret_0",
-          "sign": 1,
-          "family": "Other Technical",
-          "recipe": {
-            "op": "rank_min",
-            "feature_a": "rbreaker_sell_setup_proximity_early",
-            "feature_b": "bar_ret_0"
-          },
-          "train": {
-            "overall_ic": 0.12424353284561226,
-            "tail_ic": 0.22721789530240227,
-            "mono": 0.9030303030303031,
-            "raw_ann_ret": 0.12885453192345012,
-            "raw_sharpe": 1.4431214025543344,
-            "cost_ann_ret": 0.05910440338874575,
-            "cost_sharpe": 0.6651582694918674,
-            "sortino": 1.1884910102348907,
-            "max_dd": 0.22934472922390264,
-            "annual_turnover": 87.18766066838046,
-            "avg_trade_ret_bps": 26.47267033453508,
-            "friction_eff": 3.309083791816885,
-            "win_rate": 0.5824742268041238
-          },
-          "oos": {
-            "overall_ic": 0.09716748680527613,
-            "tail_ic": 0.19481165353993027,
-            "mono": 0.6484848484848484,
-            "raw_ann_ret": 0.15165314516988787,
-            "raw_sharpe": 1.359862159595313,
-            "cost_ann_ret": 0.0871163373522983,
-            "cost_sharpe": 0.7832980447425428,
-            "sortino": 1.425551159071798,
-            "max_dd": 0.11969845671634091,
-            "annual_turnover": 80.67100977198696,
-            "avg_trade_ret_bps": 31.280244267102653,
-            "friction_eff": 3.9100305333878316,
-            "win_rate": 0.5737704918032787
-          },
-          "lockbox": {
-            "overall_ic": 0.09716748680527613,
-            "tail_ic": 0.19481165353993027,
-            "mono": 0.6484848484848484,
-            "raw_ann_ret": 0.15165314516988787,
-            "raw_sharpe": 1.359862159595313,
-            "cost_ann_ret": 0.0871163373522983,
-            "cost_sharpe": 0.7832980447425428,
-            "sortino": 1.425551159071798,
-            "max_dd": 0.11969845671634091,
-            "annual_turnover": 80.67100977198696,
-            "avg_trade_ret_bps": 31.280244267102653,
-            "friction_eff": 3.9100305333878316,
-            "win_rate": 0.5737704918032787
-          },
-          "loo": {
-            "delta_oos_ic": 0.0005371295116662761,
-            "delta_lock_ic": 0.0005371295116662761,
-            "delta_lock_sharpe": 0.06384886322880962
-          }
-        },
-        {
-          "feature_name": "combo_min__rbreaker_sell_setup_proximity_early__bar_ret_0",
-          "sign": 1,
-          "family": "Other Technical",
-          "recipe": {
-            "op": "min",
-            "feature_a": "rbreaker_sell_setup_proximity_early",
-            "feature_b": "bar_ret_0"
-          },
-          "train": {
-            "overall_ic": 0.1222538706162833,
-            "tail_ic": 0.22670468984749434,
-            "mono": 0.8909090909090909,
-            "raw_ann_ret": 0.11968459102071817,
-            "raw_sharpe": 1.3594311066394489,
-            "cost_ann_ret": 0.04983410258884155,
-            "cost_sharpe": 0.5690640689632352,
-            "sortino": 1.000596208042223,
-            "max_dd": 0.2703285910425014,
-            "annual_turnover": 87.31311053984577,
-            "avg_trade_ret_bps": 24.588741078174838,
-            "friction_eff": 3.0735926347718547,
-            "win_rate": 0.5695876288659794
-          },
-          "oos": {
-            "overall_ic": 0.09258742092555253,
-            "tail_ic": 0.1772318795325274,
-            "mono": 0.7696969696969697,
-            "raw_ann_ret": 0.14375399407029776,
-            "raw_sharpe": 1.2976941438417233,
-            "cost_ann_ret": 0.07985301687160067,
-            "cost_sharpe": 0.720854297408109,
-            "sortino": 1.2878333800431796,
-            "max_dd": 0.1381499508144879,
-            "annual_turnover": 79.87622149837134,
-            "avg_trade_ret_bps": 29.65095147781605,
-            "friction_eff": 3.7063689347270063,
-            "win_rate": 0.5901639344262295
-          },
-          "lockbox": {
-            "overall_ic": 0.09258742092555253,
-            "tail_ic": 0.1772318795325274,
-            "mono": 0.7696969696969697,
-            "raw_ann_ret": 0.14375399407029776,
-            "raw_sharpe": 1.2976941438417233,
-            "cost_ann_ret": 0.07985301687160067,
-            "cost_sharpe": 0.720854297408109,
-            "sortino": 1.2878333800431796,
-            "max_dd": 0.1381499508144879,
-            "annual_turnover": 79.87622149837134,
-            "avg_trade_ret_bps": 29.65095147781605,
-            "friction_eff": 3.7063689347270063,
-            "win_rate": 0.5901639344262295
-          },
-          "loo": {
-            "delta_oos_ic": 0.0016811671589446742,
-            "delta_lock_ic": 0.0016811671589446742,
-            "delta_lock_sharpe": 0.2130581489803381
-          }
-        },
-        {
-          "feature_name": "combo_min__volatility_expansion_trend_vector__close_vs_open_range",
-          "sign": 1,
-          "family": "Volatility & Oscillators",
-          "recipe": {
-            "op": "min",
-            "feature_a": "volatility_expansion_trend_vector",
-            "feature_b": "close_vs_open_range"
-          },
-          "train": {
-            "overall_ic": 0.09408277413572645,
-            "tail_ic": 0.22498732015645784,
-            "mono": 0.8545454545454545,
-            "raw_ann_ret": 0.11987462444796386,
-            "raw_sharpe": 1.5356976725496523,
-            "cost_ann_ret": 0.04922125683870934,
-            "cost_sharpe": 0.6344268212903893,
-            "sortino": 1.1857832181762422,
-            "max_dd": 0.14293109938361506,
-            "annual_turnover": 88.31670951156812,
-            "avg_trade_ret_bps": 24.627782718363367,
-            "friction_eff": 3.0784728397954204,
-            "win_rate": 0.6030927835051546
-          },
-          "oos": {
-            "overall_ic": 0.08475569825579278,
-            "tail_ic": 0.10497074478545652,
-            "mono": 0.5151515151515151,
-            "raw_ann_ret": 0.05259430548409903,
-            "raw_sharpe": 0.7579840375152308,
-            "cost_ann_ret": -0.016711231975184374,
-            "cost_sharpe": -0.24131845666362373,
-            "sortino": -0.37870487632910765,
-            "max_dd": 0.19078974520355418,
-            "annual_turnover": 86.63192182410424,
-            "avg_trade_ret_bps": 10.848193888483204,
-            "friction_eff": 1.3560242360604005,
-            "win_rate": 0.5491803278688525
-          },
-          "lockbox": {
-            "overall_ic": 0.08475569825579278,
-            "tail_ic": 0.10497074478545652,
-            "mono": 0.5151515151515151,
-            "raw_ann_ret": 0.05259430548409903,
-            "raw_sharpe": 0.7579840375152308,
-            "cost_ann_ret": -0.016711231975184374,
-            "cost_sharpe": -0.24131845666362373,
-            "sortino": -0.37870487632910765,
-            "max_dd": 0.19078974520355418,
-            "annual_turnover": 86.63192182410424,
-            "avg_trade_ret_bps": 10.848193888483204,
-            "friction_eff": 1.3560242360604005,
-            "win_rate": 0.5491803278688525
-          },
-          "loo": {
-            "delta_oos_ic": 0.00016545206413308422,
-            "delta_lock_ic": 0.00016545206413308422,
-            "delta_lock_sharpe": 0.08379255325053925
-          }
-        },
-        {
-          "feature_name": "combo_max__close_vs_open_range__first_bar_return",
-          "sign": 1,
-          "family": "Gap / Overnight Reversal",
-          "recipe": {
-            "op": "max",
-            "feature_a": "close_vs_open_range",
-            "feature_b": "first_bar_return"
-          },
-          "train": {
-            "overall_ic": 0.13444741364459617,
-            "tail_ic": 0.219450126624095,
-            "mono": 0.7212121212121212,
-            "raw_ann_ret": 0.13579428419151435,
-            "raw_sharpe": 1.6801946269129997,
-            "cost_ann_ret": 0.06795099370308244,
-            "cost_sharpe": 0.846065705993569,
-            "sortino": 1.4954238498348407,
-            "max_dd": 0.10371504900083622,
-            "annual_turnover": 84.80411311053984,
-            "avg_trade_ret_bps": 27.898415872960893,
-            "friction_eff": 3.4873019841201116,
-            "win_rate": 0.6314432989690721
-          },
-          "oos": {
-            "overall_ic": 0.07486735710869794,
-            "tail_ic": -0.05532662967870703,
-            "mono": 0.7333333333333333,
-            "raw_ann_ret": 0.04361046248860729,
-            "raw_sharpe": 0.44613282335388255,
-            "cost_ann_ret": -0.026330905589568604,
-            "cost_sharpe": -0.27003708407466603,
-            "sortino": -0.42299354771793074,
-            "max_dd": 0.30937723068071526,
-            "annual_turnover": 87.42671009771986,
-            "avg_trade_ret_bps": 8.995170642302094,
-            "friction_eff": 1.1243963302877618,
-            "win_rate": 0.5245901639344263
-          },
-          "lockbox": {
-            "overall_ic": 0.07486735710869794,
-            "tail_ic": -0.05532662967870703,
-            "mono": 0.7333333333333333,
-            "raw_ann_ret": 0.04361046248860729,
-            "raw_sharpe": 0.44613282335388255,
-            "cost_ann_ret": -0.026330905589568604,
-            "cost_sharpe": -0.27003708407466603,
-            "sortino": -0.42299354771793074,
-            "max_dd": 0.30937723068071526,
-            "annual_turnover": 87.42671009771986,
-            "avg_trade_ret_bps": 8.995170642302094,
-            "friction_eff": 1.1243963302877618,
-            "win_rate": 0.5245901639344263
-          },
-          "loo": {
-            "delta_oos_ic": -0.00042370036664883537,
-            "delta_lock_ic": -0.00042370036664883537,
-            "delta_lock_sharpe": 0.07282129620704081
-          }
-        },
-        {
-          "feature_name": "combo_sig_product__opening_drive_thrust_ratio__volatility_expansion_trend_vector",
-          "sign": 1,
-          "family": "Volatility & Oscillators",
-          "recipe": {
-            "op": "sig_product",
-            "feature_a": "opening_drive_thrust_ratio",
-            "feature_b": "volatility_expansion_trend_vector"
-          },
-          "train": {
-            "overall_ic": 0.1252252646945225,
-            "tail_ic": 0.21547750583501993,
-            "mono": 0.9393939393939394,
-            "raw_ann_ret": 0.10484383796807621,
-            "raw_sharpe": 1.3626679808853768,
-            "cost_ann_ret": 0.034892989639027386,
-            "cost_sharpe": 0.4555724080241366,
-            "sortino": 0.8029607954583637,
-            "max_dd": 0.14156425377926501,
-            "annual_turnover": 87.43856041131104,
-            "avg_trade_ret_bps": 21.539765173219987,
-            "friction_eff": 2.6924706466524984,
-            "win_rate": 0.5979381443298969
-          },
-          "oos": {
-            "overall_ic": 0.06072117751270133,
-            "tail_ic": 0.07584314939004205,
-            "mono": 0.5393939393939394,
-            "raw_ann_ret": 0.05704334157401132,
-            "raw_sharpe": 0.7291345547084649,
-            "cost_ann_ret": -0.012898026504164566,
-            "cost_sharpe": -0.16546056625158315,
-            "sortino": -0.26211888013880613,
-            "max_dd": 0.17798490887062954,
-            "annual_turnover": 87.42671009771986,
-            "avg_trade_ret_bps": 11.765859891978959,
-            "friction_eff": 1.4707324864973697,
-            "win_rate": 0.5491803278688525
-          },
-          "lockbox": {
-            "overall_ic": 0.06072117751270133,
-            "tail_ic": 0.07584314939004205,
-            "mono": 0.5393939393939394,
-            "raw_ann_ret": 0.05704334157401132,
-            "raw_sharpe": 0.7291345547084649,
-            "cost_ann_ret": -0.012898026504164566,
-            "cost_sharpe": -0.16546056625158315,
-            "sortino": -0.26211888013880613,
-            "max_dd": 0.17798490887062954,
-            "annual_turnover": 87.42671009771986,
-            "avg_trade_ret_bps": 11.765859891978959,
-            "friction_eff": 1.4707324864973697,
-            "win_rate": 0.5491803278688525
-          },
-          "loo": {
-            "delta_oos_ic": -0.0007452730296027832,
-            "delta_lock_ic": -0.0007452730296027832,
-            "delta_lock_sharpe": -0.05202341471165017
+            "delta_oos_ic": -0.0011337471146979777,
+            "delta_lock_ic": -0.0011337471146979777,
+            "delta_lock_sharpe": -0.09681914798639679
           }
         },
         {
@@ -2307,9 +1763,489 @@
             "win_rate": 0.5655737704918032
           },
           "loo": {
-            "delta_oos_ic": 0.00030293565306649395,
-            "delta_lock_ic": 0.00030293565306649395,
-            "delta_lock_sharpe": 0.008187627107824613
+            "delta_oos_ic": 0.0005071910604562413,
+            "delta_lock_ic": 0.0005071910604562413,
+            "delta_lock_sharpe": 0.00799392841653207
+          }
+        },
+        {
+          "feature_name": "combo_min__opening_auction_imbalance__star50_limit_proximity_early",
+          "sign": 1,
+          "family": "Volatility & Oscillators",
+          "recipe": {
+            "op": "min",
+            "feature_a": "opening_auction_imbalance",
+            "feature_b": "star50_limit_proximity_early"
+          },
+          "train": {
+            "overall_ic": 0.10286149490780486,
+            "tail_ic": 0.22845402734883227,
+            "mono": 0.8303030303030303,
+            "raw_ann_ret": 0.11469931807105223,
+            "raw_sharpe": 1.3273500085954786,
+            "cost_ann_ret": 0.04444739005048669,
+            "cost_sharpe": 0.5157589519520352,
+            "sortino": 0.9054445225928359,
+            "max_dd": 0.10837438484028439,
+            "annual_turnover": 87.81491002570694,
+            "avg_trade_ret_bps": 23.56453583405829,
+            "friction_eff": 2.9455669792572863,
+            "win_rate": 0.6005154639175257
+          },
+          "oos": {
+            "overall_ic": 0.12349341548479009,
+            "tail_ic": 0.1999497721572528,
+            "mono": 0.6121212121212121,
+            "raw_ann_ret": 0.14601605383866192,
+            "raw_sharpe": 1.4498036220825925,
+            "cost_ann_ret": 0.07702843168882478,
+            "cost_sharpe": 0.7688185169855923,
+            "sortino": 1.3237009706904468,
+            "max_dd": 0.10634682463520921,
+            "annual_turnover": 86.23452768729642,
+            "avg_trade_ret_bps": 30.117527901417102,
+            "friction_eff": 3.7646909876771377,
+            "win_rate": 0.6147540983606558
+          },
+          "lockbox": {
+            "overall_ic": 0.12349341548479009,
+            "tail_ic": 0.1999497721572528,
+            "mono": 0.6121212121212121,
+            "raw_ann_ret": 0.14601605383866192,
+            "raw_sharpe": 1.4498036220825925,
+            "cost_ann_ret": 0.07702843168882478,
+            "cost_sharpe": 0.7688185169855923,
+            "sortino": 1.3237009706904468,
+            "max_dd": 0.10634682463520921,
+            "annual_turnover": 86.23452768729642,
+            "avg_trade_ret_bps": 30.117527901417102,
+            "friction_eff": 3.7646909876771377,
+            "win_rate": 0.6147540983606558
+          },
+          "loo": {
+            "delta_oos_ic": 0.0029927305293144385,
+            "delta_lock_ic": 0.0029927305293144385,
+            "delta_lock_sharpe": 0.23329466470660637
+          }
+        },
+        {
+          "feature_name": "combo_min__opening_drive_thrust_ratio__first_bar_return",
+          "sign": 1,
+          "family": "Gap / Overnight Reversal",
+          "recipe": {
+            "op": "min",
+            "feature_a": "opening_drive_thrust_ratio",
+            "feature_b": "first_bar_return"
+          },
+          "train": {
+            "overall_ic": 0.12893322466395693,
+            "tail_ic": 0.2279760748060997,
+            "mono": 0.9515151515151515,
+            "raw_ann_ret": 0.11534523193101326,
+            "raw_sharpe": 1.4835013611193666,
+            "cost_ann_ret": 0.045795823190653354,
+            "cost_sharpe": 0.5935793859607551,
+            "sortino": 1.0263605302722145,
+            "max_dd": 0.1139306659643192,
+            "annual_turnover": 86.93676092544986,
+            "avg_trade_ret_bps": 23.69723636405915,
+            "friction_eff": 2.962154545507394,
+            "win_rate": 0.5902061855670103
+          },
+          "oos": {
+            "overall_ic": 0.09051960586477487,
+            "tail_ic": 0.08262299850062017,
+            "mono": 0.7090909090909091,
+            "raw_ann_ret": 0.05626069757272013,
+            "raw_sharpe": 0.6431246182269763,
+            "cost_ann_ret": -0.010819432720439484,
+            "cost_sharpe": -0.12333611621195725,
+            "sortino": -0.19353790156579323,
+            "max_dd": 0.18556104452289898,
+            "annual_turnover": 83.85016286644951,
+            "avg_trade_ret_bps": 11.604430364703761,
+            "friction_eff": 1.4505537955879702,
+            "win_rate": 0.5409836065573771
+          },
+          "lockbox": {
+            "overall_ic": 0.09051960586477487,
+            "tail_ic": 0.08262299850062017,
+            "mono": 0.7090909090909091,
+            "raw_ann_ret": 0.05626069757272013,
+            "raw_sharpe": 0.6431246182269763,
+            "cost_ann_ret": -0.010819432720439484,
+            "cost_sharpe": -0.12333611621195725,
+            "sortino": -0.19353790156579323,
+            "max_dd": 0.18556104452289898,
+            "annual_turnover": 83.85016286644951,
+            "avg_trade_ret_bps": 11.604430364703761,
+            "friction_eff": 1.4505537955879702,
+            "win_rate": 0.5409836065573771
+          },
+          "loo": {
+            "delta_oos_ic": 0.0008027393034838876,
+            "delta_lock_ic": 0.0008027393034838876,
+            "delta_lock_sharpe": 0.007938298377782316
+          }
+        },
+        {
+          "feature_name": "combo_rank_min__rbreaker_sell_setup_proximity_early__bar_ret_0",
+          "sign": 1,
+          "family": "Other Technical",
+          "recipe": {
+            "op": "rank_min",
+            "feature_a": "rbreaker_sell_setup_proximity_early",
+            "feature_b": "bar_ret_0"
+          },
+          "train": {
+            "overall_ic": 0.12424353284561226,
+            "tail_ic": 0.22721789530240227,
+            "mono": 0.9030303030303031,
+            "raw_ann_ret": 0.12885453192345012,
+            "raw_sharpe": 1.4431214025543344,
+            "cost_ann_ret": 0.05910440338874575,
+            "cost_sharpe": 0.6651582694918674,
+            "sortino": 1.1884910102348907,
+            "max_dd": 0.22934472922390264,
+            "annual_turnover": 87.18766066838046,
+            "avg_trade_ret_bps": 26.47267033453508,
+            "friction_eff": 3.309083791816885,
+            "win_rate": 0.5824742268041238
+          },
+          "oos": {
+            "overall_ic": 0.09716748680527613,
+            "tail_ic": 0.19481165353993027,
+            "mono": 0.6484848484848484,
+            "raw_ann_ret": 0.15165314516988787,
+            "raw_sharpe": 1.359862159595313,
+            "cost_ann_ret": 0.0871163373522983,
+            "cost_sharpe": 0.7832980447425428,
+            "sortino": 1.425551159071798,
+            "max_dd": 0.11969845671634091,
+            "annual_turnover": 80.67100977198696,
+            "avg_trade_ret_bps": 31.280244267102653,
+            "friction_eff": 3.9100305333878316,
+            "win_rate": 0.5737704918032787
+          },
+          "lockbox": {
+            "overall_ic": 0.09716748680527613,
+            "tail_ic": 0.19481165353993027,
+            "mono": 0.6484848484848484,
+            "raw_ann_ret": 0.15165314516988787,
+            "raw_sharpe": 1.359862159595313,
+            "cost_ann_ret": 0.0871163373522983,
+            "cost_sharpe": 0.7832980447425428,
+            "sortino": 1.425551159071798,
+            "max_dd": 0.11969845671634091,
+            "annual_turnover": 80.67100977198696,
+            "avg_trade_ret_bps": 31.280244267102653,
+            "friction_eff": 3.9100305333878316,
+            "win_rate": 0.5737704918032787
+          },
+          "loo": {
+            "delta_oos_ic": 0.0005681047923554589,
+            "delta_lock_ic": 0.0005681047923554589,
+            "delta_lock_sharpe": -0.04709662669848047
+          }
+        },
+        {
+          "feature_name": "combo_min__rbreaker_sell_setup_proximity_early__bar_ret_0",
+          "sign": 1,
+          "family": "Other Technical",
+          "recipe": {
+            "op": "min",
+            "feature_a": "rbreaker_sell_setup_proximity_early",
+            "feature_b": "bar_ret_0"
+          },
+          "train": {
+            "overall_ic": 0.1222538706162833,
+            "tail_ic": 0.22670468984749434,
+            "mono": 0.8909090909090909,
+            "raw_ann_ret": 0.11968459102071817,
+            "raw_sharpe": 1.3594311066394489,
+            "cost_ann_ret": 0.04983410258884155,
+            "cost_sharpe": 0.5690640689632352,
+            "sortino": 1.000596208042223,
+            "max_dd": 0.2703285910425014,
+            "annual_turnover": 87.31311053984577,
+            "avg_trade_ret_bps": 24.588741078174838,
+            "friction_eff": 3.0735926347718547,
+            "win_rate": 0.5695876288659794
+          },
+          "oos": {
+            "overall_ic": 0.09258742092555253,
+            "tail_ic": 0.1772318795325274,
+            "mono": 0.7696969696969697,
+            "raw_ann_ret": 0.14375399407029776,
+            "raw_sharpe": 1.2976941438417233,
+            "cost_ann_ret": 0.07985301687160067,
+            "cost_sharpe": 0.720854297408109,
+            "sortino": 1.2878333800431796,
+            "max_dd": 0.1381499508144879,
+            "annual_turnover": 79.87622149837134,
+            "avg_trade_ret_bps": 29.65095147781605,
+            "friction_eff": 3.7063689347270063,
+            "win_rate": 0.5901639344262295
+          },
+          "lockbox": {
+            "overall_ic": 0.09258742092555253,
+            "tail_ic": 0.1772318795325274,
+            "mono": 0.7696969696969697,
+            "raw_ann_ret": 0.14375399407029776,
+            "raw_sharpe": 1.2976941438417233,
+            "cost_ann_ret": 0.07985301687160067,
+            "cost_sharpe": 0.720854297408109,
+            "sortino": 1.2878333800431796,
+            "max_dd": 0.1381499508144879,
+            "annual_turnover": 79.87622149837134,
+            "avg_trade_ret_bps": 29.65095147781605,
+            "friction_eff": 3.7063689347270063,
+            "win_rate": 0.5901639344262295
+          },
+          "loo": {
+            "delta_oos_ic": 0.001463381126852209,
+            "delta_lock_ic": 0.001463381126852209,
+            "delta_lock_sharpe": 0.17594922286279066
+          }
+        },
+        {
+          "feature_name": "combo_min__volatility_expansion_trend_vector__close_vs_open_range",
+          "sign": 1,
+          "family": "Volatility & Oscillators",
+          "recipe": {
+            "op": "min",
+            "feature_a": "volatility_expansion_trend_vector",
+            "feature_b": "close_vs_open_range"
+          },
+          "train": {
+            "overall_ic": 0.09408277413572645,
+            "tail_ic": 0.22498732015645784,
+            "mono": 0.8545454545454545,
+            "raw_ann_ret": 0.11987462444796386,
+            "raw_sharpe": 1.5356976725496523,
+            "cost_ann_ret": 0.04922125683870934,
+            "cost_sharpe": 0.6344268212903893,
+            "sortino": 1.1857832181762422,
+            "max_dd": 0.14293109938361506,
+            "annual_turnover": 88.31670951156812,
+            "avg_trade_ret_bps": 24.627782718363367,
+            "friction_eff": 3.0784728397954204,
+            "win_rate": 0.6030927835051546
+          },
+          "oos": {
+            "overall_ic": 0.08475569825579278,
+            "tail_ic": 0.10497074478545652,
+            "mono": 0.5151515151515151,
+            "raw_ann_ret": 0.05259430548409903,
+            "raw_sharpe": 0.7579840375152308,
+            "cost_ann_ret": -0.016711231975184374,
+            "cost_sharpe": -0.24131845666362373,
+            "sortino": -0.37870487632910765,
+            "max_dd": 0.19078974520355418,
+            "annual_turnover": 86.63192182410424,
+            "avg_trade_ret_bps": 10.848193888483204,
+            "friction_eff": 1.3560242360604005,
+            "win_rate": 0.5491803278688525
+          },
+          "lockbox": {
+            "overall_ic": 0.08475569825579278,
+            "tail_ic": 0.10497074478545652,
+            "mono": 0.5151515151515151,
+            "raw_ann_ret": 0.05259430548409903,
+            "raw_sharpe": 0.7579840375152308,
+            "cost_ann_ret": -0.016711231975184374,
+            "cost_sharpe": -0.24131845666362373,
+            "sortino": -0.37870487632910765,
+            "max_dd": 0.19078974520355418,
+            "annual_turnover": 86.63192182410424,
+            "avg_trade_ret_bps": 10.848193888483204,
+            "friction_eff": 1.3560242360604005,
+            "win_rate": 0.5491803278688525
+          },
+          "loo": {
+            "delta_oos_ic": 0.0006174319548253454,
+            "delta_lock_ic": 0.0006174319548253454,
+            "delta_lock_sharpe": 0.09625489691993239
+          }
+        },
+        {
+          "feature_name": "combo_max__first_bar_sentiment__bar_ret_0",
+          "sign": 1,
+          "family": "Gap / Overnight Reversal",
+          "recipe": {
+            "op": "max",
+            "feature_a": "first_bar_sentiment",
+            "feature_b": "bar_ret_0"
+          },
+          "train": {
+            "overall_ic": 0.11854159342914612,
+            "tail_ic": 0.2200306372754744,
+            "mono": 0.6,
+            "raw_ann_ret": 0.13465228638851276,
+            "raw_sharpe": 1.588630460183084,
+            "cost_ann_ret": 0.06711007559159758,
+            "cost_sharpe": 0.7952061409336116,
+            "sortino": 1.3605390772930581,
+            "max_dd": 0.1362126379775957,
+            "annual_turnover": 84.42776349614395,
+            "avg_trade_ret_bps": 27.66379679584854,
+            "friction_eff": 3.457974599481067,
+            "win_rate": 0.6056701030927835
+          },
+          "oos": {
+            "overall_ic": 0.06726166747382535,
+            "tail_ic": -0.04486016837514278,
+            "mono": 0.18787878787878787,
+            "raw_ann_ret": 0.01821160313895861,
+            "raw_sharpe": 0.1786299062687329,
+            "cost_ann_ret": -0.048232696535308504,
+            "cost_sharpe": -0.47233701091671654,
+            "sortino": -0.7312526956510167,
+            "max_dd": 0.2947973845161404,
+            "annual_turnover": 83.05537459283387,
+            "avg_trade_ret_bps": 3.7563572720104066,
+            "friction_eff": 0.4695446590013008,
+            "win_rate": 0.5245901639344263
+          },
+          "lockbox": {
+            "overall_ic": 0.06726166747382535,
+            "tail_ic": -0.04486016837514278,
+            "mono": 0.18787878787878787,
+            "raw_ann_ret": 0.01821160313895861,
+            "raw_sharpe": 0.1786299062687329,
+            "cost_ann_ret": -0.048232696535308504,
+            "cost_sharpe": -0.47233701091671654,
+            "sortino": -0.7312526956510167,
+            "max_dd": 0.2947973845161404,
+            "annual_turnover": 83.05537459283387,
+            "avg_trade_ret_bps": 3.7563572720104066,
+            "friction_eff": 0.4695446590013008,
+            "win_rate": 0.5245901639344263
+          },
+          "loo": {
+            "delta_oos_ic": -0.0004735718645952486,
+            "delta_lock_ic": -0.0004735718645952486,
+            "delta_lock_sharpe": -0.07657097277501995
+          }
+        },
+        {
+          "feature_name": "combo_max__close_vs_open_range__first_bar_return",
+          "sign": 1,
+          "family": "Gap / Overnight Reversal",
+          "recipe": {
+            "op": "max",
+            "feature_a": "close_vs_open_range",
+            "feature_b": "first_bar_return"
+          },
+          "train": {
+            "overall_ic": 0.13444741364459617,
+            "tail_ic": 0.219450126624095,
+            "mono": 0.7212121212121212,
+            "raw_ann_ret": 0.13579428419151435,
+            "raw_sharpe": 1.6801946269129997,
+            "cost_ann_ret": 0.06795099370308244,
+            "cost_sharpe": 0.846065705993569,
+            "sortino": 1.4954238498348407,
+            "max_dd": 0.10371504900083622,
+            "annual_turnover": 84.80411311053984,
+            "avg_trade_ret_bps": 27.898415872960893,
+            "friction_eff": 3.4873019841201116,
+            "win_rate": 0.6314432989690721
+          },
+          "oos": {
+            "overall_ic": 0.07486735710869794,
+            "tail_ic": -0.05532662967870703,
+            "mono": 0.7333333333333333,
+            "raw_ann_ret": 0.04361046248860729,
+            "raw_sharpe": 0.44613282335388255,
+            "cost_ann_ret": -0.026330905589568604,
+            "cost_sharpe": -0.27003708407466603,
+            "sortino": -0.42299354771793074,
+            "max_dd": 0.30937723068071526,
+            "annual_turnover": 87.42671009771986,
+            "avg_trade_ret_bps": 8.995170642302094,
+            "friction_eff": 1.1243963302877618,
+            "win_rate": 0.5245901639344263
+          },
+          "lockbox": {
+            "overall_ic": 0.07486735710869794,
+            "tail_ic": -0.05532662967870703,
+            "mono": 0.7333333333333333,
+            "raw_ann_ret": 0.04361046248860729,
+            "raw_sharpe": 0.44613282335388255,
+            "cost_ann_ret": -0.026330905589568604,
+            "cost_sharpe": -0.27003708407466603,
+            "sortino": -0.42299354771793074,
+            "max_dd": 0.30937723068071526,
+            "annual_turnover": 87.42671009771986,
+            "avg_trade_ret_bps": 8.995170642302094,
+            "friction_eff": 1.1243963302877618,
+            "win_rate": 0.5245901639344263
+          },
+          "loo": {
+            "delta_oos_ic": -0.0008918288764786231,
+            "delta_lock_ic": -0.0008918288764786231,
+            "delta_lock_sharpe": -0.17348877336527663
+          }
+        },
+        {
+          "feature_name": "combo_sig_product__opening_drive_thrust_ratio__volatility_expansion_trend_vector",
+          "sign": 1,
+          "family": "Volatility & Oscillators",
+          "recipe": {
+            "op": "sig_product",
+            "feature_a": "opening_drive_thrust_ratio",
+            "feature_b": "volatility_expansion_trend_vector"
+          },
+          "train": {
+            "overall_ic": 0.1252252646945225,
+            "tail_ic": 0.21547750583501993,
+            "mono": 0.9393939393939394,
+            "raw_ann_ret": 0.10484383796807621,
+            "raw_sharpe": 1.3626679808853768,
+            "cost_ann_ret": 0.034892989639027386,
+            "cost_sharpe": 0.4555724080241366,
+            "sortino": 0.8029607954583637,
+            "max_dd": 0.14156425377926501,
+            "annual_turnover": 87.43856041131104,
+            "avg_trade_ret_bps": 21.539765173219987,
+            "friction_eff": 2.6924706466524984,
+            "win_rate": 0.5979381443298969
+          },
+          "oos": {
+            "overall_ic": 0.06072117751270133,
+            "tail_ic": 0.07584314939004205,
+            "mono": 0.5393939393939394,
+            "raw_ann_ret": 0.05704334157401132,
+            "raw_sharpe": 0.7291345547084649,
+            "cost_ann_ret": -0.012898026504164566,
+            "cost_sharpe": -0.16546056625158315,
+            "sortino": -0.26211888013880613,
+            "max_dd": 0.17798490887062954,
+            "annual_turnover": 87.42671009771986,
+            "avg_trade_ret_bps": 11.765859891978959,
+            "friction_eff": 1.4707324864973697,
+            "win_rate": 0.5491803278688525
+          },
+          "lockbox": {
+            "overall_ic": 0.06072117751270133,
+            "tail_ic": 0.07584314939004205,
+            "mono": 0.5393939393939394,
+            "raw_ann_ret": 0.05704334157401132,
+            "raw_sharpe": 0.7291345547084649,
+            "cost_ann_ret": -0.012898026504164566,
+            "cost_sharpe": -0.16546056625158315,
+            "sortino": -0.26211888013880613,
+            "max_dd": 0.17798490887062954,
+            "annual_turnover": 87.42671009771986,
+            "avg_trade_ret_bps": 11.765859891978959,
+            "friction_eff": 1.4707324864973697,
+            "win_rate": 0.5491803278688525
+          },
+          "loo": {
+            "delta_oos_ic": -0.0004967190827169649,
+            "delta_lock_ic": -0.0004967190827169649,
+            "delta_lock_sharpe": 0.11410798292435576
           }
         },
         {
@@ -2367,9 +2303,9 @@
             "win_rate": 0.5081967213114754
           },
           "loo": {
-            "delta_oos_ic": 0.0004066963631910031,
-            "delta_lock_ic": 0.0004066963631910031,
-            "delta_lock_sharpe": 0.3705418441254277
+            "delta_oos_ic": 0.0003045945802331168,
+            "delta_lock_ic": 0.0003045945802331168,
+            "delta_lock_sharpe": 0.14455108961972832
           }
         },
         {
@@ -2423,9 +2359,9 @@
             "win_rate": 0.5163934426229508
           },
           "loo": {
-            "delta_oos_ic": -0.00026146247390106125,
-            "delta_lock_ic": -0.00026146247390106125,
-            "delta_lock_sharpe": 0.18594547442947718
+            "delta_oos_ic": -0.0003469231437188275,
+            "delta_lock_ic": -0.0003469231437188275,
+            "delta_lock_sharpe": 0.1022882856792916
           }
         },
         {
@@ -2483,9 +2419,9 @@
             "win_rate": 0.5737704918032787
           },
           "loo": {
-            "delta_oos_ic": -0.0002408036465292862,
-            "delta_lock_ic": -0.0002408036465292862,
-            "delta_lock_sharpe": 0.008187627107824613
+            "delta_oos_ic": -0.0002049552672881566,
+            "delta_lock_ic": -0.0002049552672881566,
+            "delta_lock_sharpe": -0.14923244269560826
           }
         },
         {
@@ -2543,9 +2479,9 @@
             "win_rate": 0.5573770491803278
           },
           "loo": {
-            "delta_oos_ic": -0.0006627673238005505,
-            "delta_lock_ic": -0.0006627673238005505,
-            "delta_lock_sharpe": 0.0831853155055034
+            "delta_oos_ic": -5.6170237032179826e-05,
+            "delta_lock_ic": -5.6170237032179826e-05,
+            "delta_lock_sharpe": 0.26344993750610946
           }
         },
         {
@@ -2603,9 +2539,9 @@
             "win_rate": 0.5901639344262295
           },
           "loo": {
-            "delta_oos_ic": -0.00017709047503638997,
-            "delta_lock_ic": -0.00017709047503638997,
-            "delta_lock_sharpe": -0.09707522923827627
+            "delta_oos_ic": 0.0005043657001255891,
+            "delta_lock_ic": 0.0005043657001255891,
+            "delta_lock_sharpe": -0.11681865866091595
           }
         },
         {
@@ -2663,9 +2599,9 @@
             "win_rate": 0.5573770491803278
           },
           "loo": {
-            "delta_oos_ic": -0.0004192679206255212,
-            "delta_lock_ic": -0.0004192679206255212,
-            "delta_lock_sharpe": 0.29702763733577864
+            "delta_oos_ic": -0.0004986372172533643,
+            "delta_lock_ic": -0.0004986372172533643,
+            "delta_lock_sharpe": 0.06525064165623873
           }
         },
         {
@@ -2723,9 +2659,9 @@
             "win_rate": 0.5655737704918032
           },
           "loo": {
-            "delta_oos_ic": 0.002142141545368431,
-            "delta_lock_ic": 0.002142141545368431,
-            "delta_lock_sharpe": 0.17771588239979114
+            "delta_oos_ic": 0.0022483906462428815,
+            "delta_lock_ic": 0.0022483906462428815,
+            "delta_lock_sharpe": 0.008472361955052021
           }
         },
         {
@@ -2783,9 +2719,9 @@
             "win_rate": 0.6311475409836066
           },
           "loo": {
-            "delta_oos_ic": 0.0006319734882702238,
-            "delta_lock_ic": 0.0006319734882702238,
-            "delta_lock_sharpe": 0.031233904621322472
+            "delta_oos_ic": 0.0012515050227908248,
+            "delta_lock_ic": 0.0012515050227908248,
+            "delta_lock_sharpe": 0.05898934085625346
           }
         },
         {
@@ -2843,9 +2779,9 @@
             "win_rate": 0.5081967213114754
           },
           "loo": {
-            "delta_oos_ic": -0.0012850464564408554,
-            "delta_lock_ic": -0.0012850464564408554,
-            "delta_lock_sharpe": 0.29702763733577864
+            "delta_oos_ic": -0.0011761793611315963,
+            "delta_lock_ic": -0.0011761793611315963,
+            "delta_lock_sharpe": 0.06525064165623873
           }
         },
         {
@@ -2903,9 +2839,9 @@
             "win_rate": 0.6065573770491803
           },
           "loo": {
-            "delta_oos_ic": 0.0007243031533872568,
-            "delta_lock_ic": 0.0007243031533872568,
-            "delta_lock_sharpe": 0.06744617641397987
+            "delta_oos_ic": 0.0017541858750128175,
+            "delta_lock_ic": 0.0017541858750128175,
+            "delta_lock_sharpe": 0.19533290062479344
           }
         },
         {
@@ -2959,9 +2895,9 @@
             "win_rate": 0.5327868852459017
           },
           "loo": {
-            "delta_oos_ic": -0.0005863529911882548,
-            "delta_lock_ic": -0.0005863529911882548,
-            "delta_lock_sharpe": 0.05085831455537754
+            "delta_oos_ic": -0.00028844596109556253,
+            "delta_lock_ic": -0.00028844596109556253,
+            "delta_lock_sharpe": 0.02597461018996372
           }
         },
         {
@@ -3019,9 +2955,9 @@
             "win_rate": 0.5983606557377049
           },
           "loo": {
-            "delta_oos_ic": 0.0002782850322000374,
-            "delta_lock_ic": 0.0002782850322000374,
-            "delta_lock_sharpe": -0.045200022985318444
+            "delta_oos_ic": 0.0006285001095151233,
+            "delta_lock_ic": 0.0006285001095151233,
+            "delta_lock_sharpe": -0.1568595267499539
           }
         },
         {
@@ -3079,9 +3015,9 @@
             "win_rate": 0.5737704918032787
           },
           "loo": {
-            "delta_oos_ic": 7.167083774525795e-05,
-            "delta_lock_ic": 7.167083774525795e-05,
-            "delta_lock_sharpe": 0.05920515812240279
+            "delta_oos_ic": 0.0005802875387353051,
+            "delta_lock_ic": 0.0005802875387353051,
+            "delta_lock_sharpe": -0.02051638038297554
           }
         },
         {
@@ -3139,9 +3075,9 @@
             "win_rate": 0.5983606557377049
           },
           "loo": {
-            "delta_oos_ic": 0.0007189375608327303,
-            "delta_lock_ic": 0.0007189375608327303,
-            "delta_lock_sharpe": 0.2287208512064477
+            "delta_oos_ic": 0.0006430675636969752,
+            "delta_lock_ic": 0.0006430675636969752,
+            "delta_lock_sharpe": -0.02051638038297554
           }
         }
       ]
@@ -3151,12 +3087,12 @@
   "159915ETF": {
     "single": {
       "full_model": {
-        "train_ic": 0.14144900591649479,
-        "oos_ic": 0.14248695822696308,
-        "lock_ic": 0.14248695822696308,
-        "train_sharpe": 1.3424427861017656,
-        "oos_sharpe": 0.9897436931547331,
-        "lock_sharpe": 0.9897436931547331
+        "train_ic": 0.14311341564421975,
+        "oos_ic": 0.14469997501202483,
+        "lock_ic": 0.14469997501202483,
+        "train_sharpe": 1.4948382064543735,
+        "oos_sharpe": 0.9456318969196815,
+        "lock_sharpe": 0.9456318969196815
       },
       "features": [
         {
@@ -3215,9 +3151,9 @@
             "win_rate": 0.5737704918032787
           },
           "loo": {
-            "delta_oos_ic": 0.0006908938037508972,
-            "delta_lock_ic": 0.0006908938037508972,
-            "delta_lock_sharpe": -0.033784653662832675
+            "delta_oos_ic": -0.0003956037079930197,
+            "delta_lock_ic": -0.0003956037079930197,
+            "delta_lock_sharpe": -0.13139944826960193
           }
         },
         {
@@ -3276,9 +3212,9 @@
             "win_rate": 0.5409836065573771
           },
           "loo": {
-            "delta_oos_ic": 0.0013859349403073928,
-            "delta_lock_ic": 0.0013859349403073928,
-            "delta_lock_sharpe": -0.08776020073403801
+            "delta_oos_ic": 0.0008556725202829019,
+            "delta_lock_ic": 0.0008556725202829019,
+            "delta_lock_sharpe": -0.24224103494566496
           }
         },
         {
@@ -3336,9 +3272,9 @@
             "win_rate": 0.5901639344262295
           },
           "loo": {
-            "delta_oos_ic": -0.0005697916858277141,
-            "delta_lock_ic": -0.0005697916858277141,
-            "delta_lock_sharpe": 0.08184015211906881
+            "delta_oos_ic": -0.0010566885572037554,
+            "delta_lock_ic": -0.0010566885572037554,
+            "delta_lock_sharpe": -0.12189776899626592
           }
         },
         {
@@ -3396,9 +3332,9 @@
             "win_rate": 0.5983606557377049
           },
           "loo": {
-            "delta_oos_ic": 0.0014786537493423069,
-            "delta_lock_ic": 0.0014786537493423069,
-            "delta_lock_sharpe": 0.02412977722190479
+            "delta_oos_ic": 0.0015154872488219173,
+            "delta_lock_ic": 0.0015154872488219173,
+            "delta_lock_sharpe": 0.011589028265624801
           }
         },
         {
@@ -3456,9 +3392,9 @@
             "win_rate": 0.6065573770491803
           },
           "loo": {
-            "delta_oos_ic": 0.0005040823816891971,
-            "delta_lock_ic": 0.0005040823816891971,
-            "delta_lock_sharpe": -0.006705901856534857
+            "delta_oos_ic": -0.00031514545156460794,
+            "delta_lock_ic": -0.00031514545156460794,
+            "delta_lock_sharpe": 0.04509974711215892
           }
         },
         {
@@ -3517,9 +3453,9 @@
             "win_rate": 0.6311475409836066
           },
           "loo": {
-            "delta_oos_ic": 0.0002766530189627636,
-            "delta_lock_ic": 0.0002766530189627636,
-            "delta_lock_sharpe": 0.17055604329754648
+            "delta_oos_ic": -0.0003592367834540089,
+            "delta_lock_ic": -0.0003592367834540089,
+            "delta_lock_sharpe": 0.020423030301544465
           }
         },
         {
@@ -3577,9 +3513,9 @@
             "win_rate": 0.5573770491803278
           },
           "loo": {
-            "delta_oos_ic": -0.00018795193858323067,
-            "delta_lock_ic": -0.00018795193858323067,
-            "delta_lock_sharpe": 0.0
+            "delta_oos_ic": 0.00033093123705588146,
+            "delta_lock_ic": 0.00033093123705588146,
+            "delta_lock_sharpe": -0.0009778000071232196
           }
         },
         {
@@ -3637,69 +3573,9 @@
             "win_rate": 0.5245901639344263
           },
           "loo": {
-            "delta_oos_ic": 0.0007964693444831583,
-            "delta_lock_ic": 0.0007964693444831583,
-            "delta_lock_sharpe": 0.16118636445929313
-          }
-        },
-        {
-          "feature_name": "combo_min__opening_drive_thrust_ratio__max_up_ret",
-          "sign": 1,
-          "family": "Intraday Range Momentum",
-          "recipe": {
-            "op": "min",
-            "feature_a": "opening_drive_thrust_ratio",
-            "feature_b": "max_up_ret"
-          },
-          "train": {
-            "overall_ic": 0.10387028628363738,
-            "tail_ic": 0.25240020027426285,
-            "mono": 0.793939393939394,
-            "raw_ann_ret": 0.13856805114123993,
-            "raw_sharpe": 1.5184983250738007,
-            "cost_ann_ret": 0.07052404085846359,
-            "cost_sharpe": 0.7766219432862922,
-            "sortino": 1.2727333913805523,
-            "max_dd": 0.1289083549664125,
-            "annual_turnover": 85.05501285347044,
-            "avg_trade_ret_bps": 28.46827567493152,
-            "friction_eff": 3.55853445936644,
-            "win_rate": 0.6005154639175257
-          },
-          "oos": {
-            "overall_ic": 0.0879443844351976,
-            "tail_ic": 0.1067549214044824,
-            "mono": 0.7454545454545455,
-            "raw_ann_ret": 0.08350398639013377,
-            "raw_sharpe": 0.8136680357644709,
-            "cost_ann_ret": 0.014834279549742901,
-            "cost_sharpe": 0.14480617912349278,
-            "sortino": 0.22704185342157862,
-            "max_dd": 0.208734279217857,
-            "annual_turnover": 85.8371335504886,
-            "avg_trade_ret_bps": 17.223678998771213,
-            "friction_eff": 2.1529598748464016,
-            "win_rate": 0.5245901639344263
-          },
-          "lockbox": {
-            "overall_ic": 0.0879443844351976,
-            "tail_ic": 0.1067549214044824,
-            "mono": 0.7454545454545455,
-            "raw_ann_ret": 0.08350398639013377,
-            "raw_sharpe": 0.8136680357644709,
-            "cost_ann_ret": 0.014834279549742901,
-            "cost_sharpe": 0.14480617912349278,
-            "sortino": 0.22704185342157862,
-            "max_dd": 0.208734279217857,
-            "annual_turnover": 85.8371335504886,
-            "avg_trade_ret_bps": 17.223678998771213,
-            "friction_eff": 2.1529598748464016,
-            "win_rate": 0.5245901639344263
-          },
-          "loo": {
-            "delta_oos_ic": -0.0003358821155925451,
-            "delta_lock_ic": -0.0003358821155925451,
-            "delta_lock_sharpe": -0.09248775538303955
+            "delta_oos_ic": 0.0006544231958917623,
+            "delta_lock_ic": 0.0006544231958917623,
+            "delta_lock_sharpe": 0.008262742216804453
           }
         },
         {
@@ -3757,8 +3633,8 @@
             "win_rate": 0.5491803278688525
           },
           "loo": {
-            "delta_oos_ic": 0.00010466831168104429,
-            "delta_lock_ic": 0.00010466831168104429,
+            "delta_oos_ic": -7.750328180441968e-05,
+            "delta_lock_ic": -7.750328180441968e-05,
             "delta_lock_sharpe": 0.0
           }
         },
@@ -3817,9 +3693,9 @@
             "win_rate": 0.5245901639344263
           },
           "loo": {
-            "delta_oos_ic": -0.0004429610644668125,
-            "delta_lock_ic": -0.0004429610644668125,
-            "delta_lock_sharpe": 0.010889275872231319
+            "delta_oos_ic": -0.0003368671071338758,
+            "delta_lock_ic": -0.0003368671071338758,
+            "delta_lock_sharpe": -0.07717090002338822
           }
         },
         {
@@ -3877,9 +3753,9 @@
             "win_rate": 0.6229508196721312
           },
           "loo": {
-            "delta_oos_ic": 0.0008892918368382241,
-            "delta_lock_ic": 0.0008892918368382241,
-            "delta_lock_sharpe": 0.19721505529672745
+            "delta_oos_ic": 0.0002513024471886005,
+            "delta_lock_ic": 0.0002513024471886005,
+            "delta_lock_sharpe": 0.03195618193653382
           }
         },
         {
@@ -3937,9 +3813,9 @@
             "win_rate": 0.5573770491803278
           },
           "loo": {
-            "delta_oos_ic": 0.0002343243035157483,
-            "delta_lock_ic": 0.0002343243035157483,
-            "delta_lock_sharpe": 0.03877487981547434
+            "delta_oos_ic": -0.00019396557115133883,
+            "delta_lock_ic": -0.00019396557115133883,
+            "delta_lock_sharpe": -0.006055581910685781
           }
         },
         {
@@ -3997,9 +3873,9 @@
             "win_rate": 0.5819672131147541
           },
           "loo": {
-            "delta_oos_ic": 0.0007315895069057443,
-            "delta_lock_ic": 0.0007315895069057443,
-            "delta_lock_sharpe": -0.018326458571851334
+            "delta_oos_ic": 0.00017932030218162365,
+            "delta_lock_ic": 0.00017932030218162365,
+            "delta_lock_sharpe": -0.14815892772078287
           }
         },
         {
@@ -4057,69 +3933,130 @@
             "win_rate": 0.5901639344262295
           },
           "loo": {
-            "delta_oos_ic": 0.0009135537337509048,
-            "delta_lock_ic": 0.0009135537337509048,
-            "delta_lock_sharpe": -0.006705901856534857
+            "delta_oos_ic": 5.624820117577922e-05,
+            "delta_lock_ic": 5.624820117577922e-05,
+            "delta_lock_sharpe": -0.030185436471001803
           }
         },
         {
-          "feature_name": "combo_rank_max__max_up_ret__impulse_bar_dominance",
+          "feature_name": "combo_tri_median__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__max_up_ret",
           "sign": 1,
           "family": "Intraday Range Momentum",
           "recipe": {
-            "op": "rank_max",
-            "feature_a": "max_up_ret",
-            "feature_b": "impulse_bar_dominance"
+            "op": "tri_median",
+            "feature_a": "opening_drive_thrust_ratio",
+            "feature_b": "rbreaker_sell_setup_proximity_early",
+            "feature_c": "max_up_ret"
           },
           "train": {
-            "overall_ic": 0.07039225359825423,
-            "tail_ic": 0.07451171691033949,
-            "mono": 0.6848484848484848,
-            "raw_ann_ret": 0.048615125398395576,
-            "raw_sharpe": 0.6102619382569475,
-            "cost_ann_ret": -0.010095414447362783,
-            "cost_sharpe": -0.12677788029748802,
-            "sortino": -0.19528915369707678,
-            "max_dd": 0.2720477334766893,
-            "annual_turnover": 73.38817480719794,
-            "avg_trade_ret_bps": 9.987791416668012,
-            "friction_eff": 1.2484739270835012,
-            "win_rate": 0.5180412371134021
+            "overall_ic": 0.12327023070789994,
+            "tail_ic": 0.23000345712881132,
+            "mono": 0.7818181818181819,
+            "raw_ann_ret": 0.16092863919022407,
+            "raw_sharpe": 1.6696493159966073,
+            "cost_ann_ret": 0.09188102993572538,
+            "cost_sharpe": 0.9572635172847075,
+            "sortino": 1.6372840743470571,
+            "max_dd": 0.1913069777629446,
+            "annual_turnover": 86.3095115681234,
+            "avg_trade_ret_bps": 33.062172894307274,
+            "friction_eff": 4.132771611788409,
+            "win_rate": 0.6211340206185567
           },
           "oos": {
-            "overall_ic": 0.05748447554508342,
-            "tail_ic": 0.03131911817629082,
-            "mono": 0.4303030303030303,
-            "raw_ann_ret": 0.0008760882783974739,
-            "raw_sharpe": 0.01014327649037663,
-            "cost_ann_ret": -0.060481566444729545,
-            "cost_sharpe": -0.6941916411088345,
-            "sortino": -0.9404994699594681,
-            "max_dd": 0.25776462517704796,
-            "annual_turnover": 76.69706840390879,
-            "avg_trade_ret_bps": 0.1807035081080528,
-            "friction_eff": 0.022587938513506597,
-            "win_rate": 0.5
+            "overall_ic": 0.11178162206522115,
+            "tail_ic": 0.1975626941001359,
+            "mono": 0.8545454545454545,
+            "raw_ann_ret": 0.13692107282121277,
+            "raw_sharpe": 1.2274168385874489,
+            "cost_ann_ret": 0.06666178943359062,
+            "cost_sharpe": 0.5971299963502845,
+            "sortino": 1.093156378733943,
+            "max_dd": 0.22024603922790387,
+            "annual_turnover": 87.82410423452768,
+            "avg_trade_ret_bps": 28.241581131491746,
+            "friction_eff": 3.530197641436468,
+            "win_rate": 0.5573770491803278
           },
           "lockbox": {
-            "overall_ic": 0.05748447554508342,
-            "tail_ic": 0.03131911817629082,
-            "mono": 0.4303030303030303,
-            "raw_ann_ret": 0.0008760882783974739,
-            "raw_sharpe": 0.01014327649037663,
-            "cost_ann_ret": -0.060481566444729545,
-            "cost_sharpe": -0.6941916411088345,
-            "sortino": -0.9404994699594681,
-            "max_dd": 0.25776462517704796,
-            "annual_turnover": 76.69706840390879,
-            "avg_trade_ret_bps": 0.1807035081080528,
-            "friction_eff": 0.022587938513506597,
-            "win_rate": 0.5
+            "overall_ic": 0.11178162206522115,
+            "tail_ic": 0.1975626941001359,
+            "mono": 0.8545454545454545,
+            "raw_ann_ret": 0.13692107282121277,
+            "raw_sharpe": 1.2274168385874489,
+            "cost_ann_ret": 0.06666178943359062,
+            "cost_sharpe": 0.5971299963502845,
+            "sortino": 1.093156378733943,
+            "max_dd": 0.22024603922790387,
+            "annual_turnover": 87.82410423452768,
+            "avg_trade_ret_bps": 28.241581131491746,
+            "friction_eff": 3.530197641436468,
+            "win_rate": 0.5573770491803278
           },
           "loo": {
-            "delta_oos_ic": -0.0008440599884272648,
-            "delta_lock_ic": -0.0008440599884272648,
-            "delta_lock_sharpe": -0.03374057036278055
+            "delta_oos_ic": 0.0001470488687881355,
+            "delta_lock_ic": 0.0001470488687881355,
+            "delta_lock_sharpe": -0.15688319759307912
+          }
+        },
+        {
+          "feature_name": "combo_rank_max__rbreaker_sell_setup_proximity_early__first_bar_sentiment",
+          "sign": 1,
+          "family": "Gap / Overnight Reversal",
+          "recipe": {
+            "op": "rank_max",
+            "feature_a": "rbreaker_sell_setup_proximity_early",
+            "feature_b": "first_bar_sentiment"
+          },
+          "train": {
+            "overall_ic": 0.09648023076742031,
+            "tail_ic": 0.10710718055230074,
+            "mono": 0.5757575757575758,
+            "raw_ann_ret": 0.050882574563928015,
+            "raw_sharpe": 0.546499184771299,
+            "cost_ann_ret": -0.001003492274118252,
+            "cost_sharpe": -0.010779614499418692,
+            "sortino": -0.015459684228980053,
+            "max_dd": 0.18788725947019436,
+            "annual_turnover": 64.85758354755784,
+            "avg_trade_ret_bps": 10.45363016803701,
+            "friction_eff": 1.3067037710046263,
+            "win_rate": 0.5360824742268041
+          },
+          "oos": {
+            "overall_ic": 0.0778992370768095,
+            "tail_ic": 0.14796871943366524,
+            "mono": 0.40606060606060607,
+            "raw_ann_ret": 0.052330833938817094,
+            "raw_sharpe": 0.5527348655856227,
+            "cost_ann_ret": -0.002032683976492351,
+            "cost_sharpe": -0.021536989801431133,
+            "sortino": -0.031923737911594495,
+            "max_dd": 0.14529655907648362,
+            "annual_turnover": 67.9543973941368,
+            "avg_trade_ret_bps": 10.79384978447786,
+            "friction_eff": 1.3492312230597323,
+            "win_rate": 0.5491803278688525
+          },
+          "lockbox": {
+            "overall_ic": 0.0778992370768095,
+            "tail_ic": 0.14796871943366524,
+            "mono": 0.40606060606060607,
+            "raw_ann_ret": 0.052330833938817094,
+            "raw_sharpe": 0.5527348655856227,
+            "cost_ann_ret": -0.002032683976492351,
+            "cost_sharpe": -0.021536989801431133,
+            "sortino": -0.031923737911594495,
+            "max_dd": 0.14529655907648362,
+            "annual_turnover": 67.9543973941368,
+            "avg_trade_ret_bps": 10.79384978447786,
+            "friction_eff": 1.3492312230597323,
+            "win_rate": 0.5491803278688525
+          },
+          "loo": {
+            "delta_oos_ic": -0.0010574402612747724,
+            "delta_lock_ic": -0.0010574402612747724,
+            "delta_lock_sharpe": 0.029413664670166817
           }
         },
         {
@@ -4133,18 +4070,18 @@
           },
           "train": {
             "overall_ic": 0.10190919481005324,
-            "tail_ic": 0.2218778242338088,
-            "mono": 0.7696969696969697,
-            "raw_ann_ret": 0.16006423948775556,
-            "raw_sharpe": 1.4967128560227094,
-            "cost_ann_ret": 0.09422814694276838,
-            "cost_sharpe": 0.8846040006554251,
-            "sortino": 1.5117156007323427,
-            "max_dd": 0.11906702320920837,
-            "annual_turnover": 82.29511568123394,
-            "avg_trade_ret_bps": 32.88458528431685,
-            "friction_eff": 4.110573160539606,
-            "win_rate": 0.5979381443298969
+            "tail_ic": 0.2239385644806086,
+            "mono": 0.7454545454545455,
+            "raw_ann_ret": 0.15152163580618486,
+            "raw_sharpe": 1.4914607890618496,
+            "cost_ann_ret": 0.08588626305554212,
+            "cost_sharpe": 0.8482699347674697,
+            "sortino": 1.4161297046921022,
+            "max_dd": 0.1628391013548509,
+            "annual_turnover": 82.04421593830335,
+            "avg_trade_ret_bps": 31.129540058626574,
+            "friction_eff": 3.8911925073283213,
+            "win_rate": 0.6005154639175257
           },
           "oos": {
             "overall_ic": 0.12836590537093331,
@@ -4177,69 +4114,70 @@
             "win_rate": 0.6147540983606558
           },
           "loo": {
-            "delta_oos_ic": 0.0006153864258591768,
-            "delta_lock_ic": 0.0006153864258591768,
-            "delta_lock_sharpe": 0.08120768540431023
+            "delta_oos_ic": -0.00014614163973689087,
+            "delta_lock_ic": -0.00014614163973689087,
+            "delta_lock_sharpe": 0.07150339022885077
           }
         },
         {
-          "feature_name": "combo_max__rbreaker_sell_setup_proximity_early__bar_body_rng_0",
+          "feature_name": "combo_tri_median__opening_drive_thrust_ratio__star50_limit_proximity_early__first_bar_sentiment",
           "sign": 1,
-          "family": "Other Technical",
+          "family": "Gap / Overnight Reversal",
           "recipe": {
-            "op": "max",
-            "feature_a": "rbreaker_sell_setup_proximity_early",
-            "feature_b": "bar_body_rng_0"
+            "op": "tri_median",
+            "feature_a": "opening_drive_thrust_ratio",
+            "feature_b": "star50_limit_proximity_early",
+            "feature_c": "first_bar_sentiment"
           },
           "train": {
-            "overall_ic": 0.12651563383801748,
-            "tail_ic": 0.21672828297857966,
-            "mono": 0.7696969696969697,
-            "raw_ann_ret": 0.1403844553881504,
-            "raw_sharpe": 1.4984488868880435,
-            "cost_ann_ret": 0.07234044510537405,
-            "cost_sharpe": 0.7745375879494233,
-            "sortino": 1.2690161211152762,
-            "max_dd": 0.155274256938654,
-            "annual_turnover": 85.05501285347044,
-            "avg_trade_ret_bps": 28.84144897434854,
-            "friction_eff": 3.6051811217935676,
-            "win_rate": 0.6211340206185567
+            "overall_ic": 0.12024150991411962,
+            "tail_ic": 0.21343456479529455,
+            "mono": 0.7333333333333333,
+            "raw_ann_ret": 0.15518580749258284,
+            "raw_sharpe": 1.5573545357826422,
+            "cost_ann_ret": 0.0891489951532512,
+            "cost_sharpe": 0.8972505685132018,
+            "sortino": 1.5527902939208378,
+            "max_dd": 0.10322827658183586,
+            "annual_turnover": 82.54601542416454,
+            "avg_trade_ret_bps": 31.88233010531874,
+            "friction_eff": 3.985291263164842,
+            "win_rate": 0.595360824742268
           },
           "oos": {
-            "overall_ic": 0.1212224942578519,
-            "tail_ic": 0.130542824192637,
-            "mono": 0.8181818181818182,
-            "raw_ann_ret": 0.05892438904560285,
-            "raw_sharpe": 0.5063745955489463,
-            "cost_ann_ret": -0.01006323310423428,
-            "cost_sharpe": -0.08629148657777927,
-            "sortino": -0.13743091727514206,
-            "max_dd": 0.34358514469939583,
-            "annual_turnover": 86.23452768729642,
-            "avg_trade_ret_bps": 12.153848049583498,
-            "friction_eff": 1.5192310061979373,
-            "win_rate": 0.5327868852459017
+            "overall_ic": 0.12137330963210005,
+            "tail_ic": 0.22591509283088437,
+            "mono": 0.8787878787878788,
+            "raw_ann_ret": 0.13034900885751782,
+            "raw_sharpe": 1.338748525935821,
+            "cost_ann_ret": 0.06454053980214322,
+            "cost_sharpe": 0.6640516501517073,
+            "sortino": 1.1052908651561706,
+            "max_dd": 0.12947390769237355,
+            "annual_turnover": 82.26058631921823,
+            "avg_trade_ret_bps": 26.886015667332686,
+            "friction_eff": 3.3607519584165852,
+            "win_rate": 0.5819672131147541
           },
           "lockbox": {
-            "overall_ic": 0.1212224942578519,
-            "tail_ic": 0.130542824192637,
-            "mono": 0.8181818181818182,
-            "raw_ann_ret": 0.05892438904560285,
-            "raw_sharpe": 0.5063745955489463,
-            "cost_ann_ret": -0.01006323310423428,
-            "cost_sharpe": -0.08629148657777927,
-            "sortino": -0.13743091727514206,
-            "max_dd": 0.34358514469939583,
-            "annual_turnover": 86.23452768729642,
-            "avg_trade_ret_bps": 12.153848049583498,
-            "friction_eff": 1.5192310061979373,
-            "win_rate": 0.5327868852459017
+            "overall_ic": 0.12137330963210005,
+            "tail_ic": 0.22591509283088437,
+            "mono": 0.8787878787878788,
+            "raw_ann_ret": 0.13034900885751782,
+            "raw_sharpe": 1.338748525935821,
+            "cost_ann_ret": 0.06454053980214322,
+            "cost_sharpe": 0.6640516501517073,
+            "sortino": 1.1052908651561706,
+            "max_dd": 0.12947390769237355,
+            "annual_turnover": 82.26058631921823,
+            "avg_trade_ret_bps": 26.886015667332686,
+            "friction_eff": 3.3607519584165852,
+            "win_rate": 0.5819672131147541
           },
           "loo": {
-            "delta_oos_ic": -0.0006014410193003472,
-            "delta_lock_ic": -0.0006014410193003472,
-            "delta_lock_sharpe": 0.09591807939712971
+            "delta_oos_ic": -0.00028849883828871437,
+            "delta_lock_ic": -0.00028849883828871437,
+            "delta_lock_sharpe": 0.036014678102664344
           }
         },
         {
@@ -4297,9 +4235,9 @@
             "win_rate": 0.5573770491803278
           },
           "loo": {
-            "delta_oos_ic": 0.001948779843685744,
-            "delta_lock_ic": 0.001948779843685744,
-            "delta_lock_sharpe": 0.05227054139770271
+            "delta_oos_ic": 0.0012387823881991056,
+            "delta_lock_ic": 0.0012387823881991056,
+            "delta_lock_sharpe": -0.06596392461365741
           }
         },
         {
@@ -4357,69 +4295,9 @@
             "win_rate": 0.5327868852459017
           },
           "loo": {
-            "delta_oos_ic": 0.0003424400855913945,
-            "delta_lock_ic": 0.0003424400855913945,
-            "delta_lock_sharpe": 0.15420989979121935
-          }
-        },
-        {
-          "feature_name": "combo_rank_max__star50_limit_proximity_early__first_bar_sentiment",
-          "sign": 1,
-          "family": "Gap / Overnight Reversal",
-          "recipe": {
-            "op": "rank_max",
-            "feature_a": "star50_limit_proximity_early",
-            "feature_b": "first_bar_sentiment"
-          },
-          "train": {
-            "overall_ic": 0.09434689697542335,
-            "tail_ic": 0.11111700945396276,
-            "mono": 0.4303030303030303,
-            "raw_ann_ret": 0.0682737839892124,
-            "raw_sharpe": 0.6977474878417986,
-            "cost_ann_ret": 0.016789156739855066,
-            "cost_sharpe": 0.17185712212225557,
-            "sortino": 0.2559651446601292,
-            "max_dd": 0.19291910608371643,
-            "annual_turnover": 64.35578406169665,
-            "avg_trade_ret_bps": 14.026587571723224,
-            "friction_eff": 1.753323446465403,
-            "win_rate": 0.5412371134020618
-          },
-          "oos": {
-            "overall_ic": 0.07532076767898137,
-            "tail_ic": 0.15288605553917917,
-            "mono": 0.38181818181818183,
-            "raw_ann_ret": 0.05731454224521973,
-            "raw_sharpe": 0.5547084388069462,
-            "cost_ann_ret": 0.004222685567695293,
-            "cost_sharpe": 0.0409396004304865,
-            "sortino": 0.06138123230056603,
-            "max_dd": 0.1411066494937493,
-            "annual_turnover": 66.36482084690554,
-            "avg_trade_ret_bps": 11.82179821908254,
-            "friction_eff": 1.4777247773853173,
-            "win_rate": 0.5245901639344263
-          },
-          "lockbox": {
-            "overall_ic": 0.07532076767898137,
-            "tail_ic": 0.15288605553917917,
-            "mono": 0.38181818181818183,
-            "raw_ann_ret": 0.05731454224521973,
-            "raw_sharpe": 0.5547084388069462,
-            "cost_ann_ret": 0.004222685567695293,
-            "cost_sharpe": 0.0409396004304865,
-            "sortino": 0.06138123230056603,
-            "max_dd": 0.1411066494937493,
-            "annual_turnover": 66.36482084690554,
-            "avg_trade_ret_bps": 11.82179821908254,
-            "friction_eff": 1.4777247773853173,
-            "win_rate": 0.5245901639344263
-          },
-          "loo": {
-            "delta_oos_ic": -0.0005480181885983704,
-            "delta_lock_ic": -0.0005480181885983704,
-            "delta_lock_sharpe": 0.10506837215664544
+            "delta_oos_ic": 9.142276753318357e-05,
+            "delta_lock_ic": 9.142276753318357e-05,
+            "delta_lock_sharpe": -0.008256636199468925
           }
         },
         {
@@ -4478,9 +4356,9 @@
             "win_rate": 0.5409836065573771
           },
           "loo": {
-            "delta_oos_ic": -0.000946654633705496,
-            "delta_lock_ic": -0.000946654633705496,
-            "delta_lock_sharpe": 0.15602210564710506
+            "delta_oos_ic": -0.00045737304596624173,
+            "delta_lock_ic": -0.00045737304596624173,
+            "delta_lock_sharpe": -0.040987108418854445
           }
         },
         {
@@ -4538,9 +4416,9 @@
             "win_rate": 0.5655737704918032
           },
           "loo": {
-            "delta_oos_ic": -0.0003465355767368894,
-            "delta_lock_ic": -0.0003465355767368894,
-            "delta_lock_sharpe": 0.031787645490960026
+            "delta_oos_ic": -0.0007982060400954782,
+            "delta_lock_ic": -0.0007982060400954782,
+            "delta_lock_sharpe": -0.05498486888666365
           }
         },
         {
@@ -4598,69 +4476,9 @@
             "win_rate": 0.5737704918032787
           },
           "loo": {
-            "delta_oos_ic": -2.073666402793717e-05,
-            "delta_lock_ic": -2.073666402793717e-05,
-            "delta_lock_sharpe": 0.09591807939712971
-          }
-        },
-        {
-          "feature_name": "combo_ratio__max_up_ret__volume_weighted_price_position",
-          "sign": 1,
-          "family": "Intraday Range Momentum",
-          "recipe": {
-            "op": "ratio",
-            "feature_a": "max_up_ret",
-            "feature_b": "volume_weighted_price_position"
-          },
-          "train": {
-            "overall_ic": 0.10561304317891239,
-            "tail_ic": 0.19331345898316318,
-            "mono": 0.9030303030303031,
-            "raw_ann_ret": 0.11550436873752155,
-            "raw_sharpe": 1.1730196098106078,
-            "cost_ann_ret": 0.048463957426467565,
-            "cost_sharpe": 0.49254796962895525,
-            "sortino": 0.7661690050592133,
-            "max_dd": 0.21187392741819153,
-            "annual_turnover": 83.80051413881749,
-            "avg_trade_ret_bps": 23.729930411788008,
-            "friction_eff": 2.966241301473501,
-            "win_rate": 0.595360824742268
-          },
-          "oos": {
-            "overall_ic": 0.06736769736684707,
-            "tail_ic": 0.054353194599900664,
-            "mono": 0.4909090909090909,
-            "raw_ann_ret": 0.037081097967143616,
-            "raw_sharpe": 0.34209867905744756,
-            "cost_ann_ret": -0.028727371088230983,
-            "cost_sharpe": -0.26413159490238614,
-            "sortino": -0.4279037110854772,
-            "max_dd": 0.2947067963903227,
-            "annual_turnover": 82.26058631921823,
-            "avg_trade_ret_bps": 7.648412440145858,
-            "friction_eff": 0.9560515550182322,
-            "win_rate": 0.4918032786885246
-          },
-          "lockbox": {
-            "overall_ic": 0.06736769736684707,
-            "tail_ic": 0.054353194599900664,
-            "mono": 0.4909090909090909,
-            "raw_ann_ret": 0.037081097967143616,
-            "raw_sharpe": 0.34209867905744756,
-            "cost_ann_ret": -0.028727371088230983,
-            "cost_sharpe": -0.26413159490238614,
-            "sortino": -0.4279037110854772,
-            "max_dd": 0.2947067963903227,
-            "annual_turnover": 82.26058631921823,
-            "avg_trade_ret_bps": 7.648412440145858,
-            "friction_eff": 0.9560515550182322,
-            "win_rate": 0.4918032786885246
-          },
-          "loo": {
-            "delta_oos_ic": -0.001349723540748582,
-            "delta_lock_ic": -0.001349723540748582,
-            "delta_lock_sharpe": -0.11288975210391305
+            "delta_oos_ic": 0.000762124244686857,
+            "delta_lock_ic": 0.000762124244686857,
+            "delta_lock_sharpe": -0.1145546669024955
           }
         },
         {
@@ -4718,9 +4536,9 @@
             "win_rate": 0.5163934426229508
           },
           "loo": {
-            "delta_oos_ic": 0.00039467055811179264,
-            "delta_lock_ic": 0.00039467055811179264,
-            "delta_lock_sharpe": 0.11104261004431948
+            "delta_oos_ic": -0.0004566472627252627,
+            "delta_lock_ic": -0.0004566472627252627,
+            "delta_lock_sharpe": -0.0198895122272289
           }
         },
         {
@@ -4734,18 +4552,18 @@
           },
           "train": {
             "overall_ic": 0.10161681356926923,
-            "tail_ic": 0.18477541307589,
+            "tail_ic": 0.17801027672967265,
             "mono": 0.9272727272727272,
-            "raw_ann_ret": 0.12124645158460438,
-            "raw_sharpe": 1.2245065444862338,
-            "cost_ann_ret": 0.054406760067894876,
-            "cost_sharpe": 0.5510601474903117,
-            "sortino": 0.9107004978172529,
-            "max_dd": 0.1787338486916828,
-            "annual_turnover": 83.54961439588689,
-            "avg_trade_ret_bps": 24.909619352295877,
-            "friction_eff": 3.1137024190369846,
-            "win_rate": 0.5902061855670103
+            "raw_ann_ret": 0.12497162010612918,
+            "raw_sharpe": 1.2259176474276452,
+            "cost_ann_ret": 0.05833264838376413,
+            "cost_sharpe": 0.5728784273628685,
+            "sortino": 0.9514891917489073,
+            "max_dd": 0.17369934948228466,
+            "annual_turnover": 83.2987146529563,
+            "avg_trade_ret_bps": 25.67494096527181,
+            "friction_eff": 3.209367620658976,
+            "win_rate": 0.5824742268041238
           },
           "oos": {
             "overall_ic": 0.12976060253565183,
@@ -4778,9 +4596,9 @@
             "win_rate": 0.5573770491803278
           },
           "loo": {
-            "delta_oos_ic": -0.0001793203021815959,
-            "delta_lock_ic": -0.0001793203021815959,
-            "delta_lock_sharpe": 0.0
+            "delta_oos_ic": -0.0006356565149464588,
+            "delta_lock_ic": -0.0006356565149464588,
+            "delta_lock_sharpe": -0.056767471626677724
           }
         },
         {
@@ -4838,9 +4656,9 @@
             "win_rate": 0.5491803278688525
           },
           "loo": {
-            "delta_oos_ic": -0.0008774719383422558,
-            "delta_lock_ic": -0.0008774719383422558,
-            "delta_lock_sharpe": 0.07623973540491402
+            "delta_oos_ic": -0.0002039710115448179,
+            "delta_lock_ic": -0.0002039710115448179,
+            "delta_lock_sharpe": 0.07513765693121266
           }
         },
         {
@@ -4898,9 +4716,69 @@
             "win_rate": 0.6475409836065574
           },
           "loo": {
-            "delta_oos_ic": -0.0001850747264493524,
-            "delta_lock_ic": -0.0001850747264493524,
-            "delta_lock_sharpe": 0.10506837215664544
+            "delta_oos_ic": -0.0007606726782048989,
+            "delta_lock_ic": -0.0007606726782048989,
+            "delta_lock_sharpe": 0.031549638009892744
+          }
+        },
+        {
+          "feature_name": "combo_sig_product__opening_drive_thrust_ratio__max_up_ret",
+          "sign": 1,
+          "family": "Intraday Range Momentum",
+          "recipe": {
+            "op": "sig_product",
+            "feature_a": "opening_drive_thrust_ratio",
+            "feature_b": "max_up_ret"
+          },
+          "train": {
+            "overall_ic": 0.10213760021219723,
+            "tail_ic": 0.17116713148915058,
+            "mono": 0.806060606060606,
+            "raw_ann_ret": 0.10863425424846128,
+            "raw_sharpe": 1.123453585673768,
+            "cost_ann_ret": 0.04159384293740727,
+            "cost_sharpe": 0.4299143426398612,
+            "sortino": 0.6648191700170419,
+            "max_dd": 0.29339813863162684,
+            "annual_turnover": 83.80051413881749,
+            "avg_trade_ret_bps": 22.31849168848838,
+            "friction_eff": 2.7898114610610474,
+            "win_rate": 0.5824742268041238
+          },
+          "oos": {
+            "overall_ic": 0.07885517305409734,
+            "tail_ic": 0.09254823718857107,
+            "mono": 0.7454545454545455,
+            "raw_ann_ret": 0.08406173010762275,
+            "raw_sharpe": 0.7561194792964732,
+            "cost_ann_ret": 0.015709938576678142,
+            "cost_sharpe": 0.14106851442177068,
+            "sortino": 0.2527712247882238,
+            "max_dd": 0.18021031906295742,
+            "annual_turnover": 85.43973941368078,
+            "avg_trade_ret_bps": 17.3387201982264,
+            "friction_eff": 2.1673400247783,
+            "win_rate": 0.4918032786885246
+          },
+          "lockbox": {
+            "overall_ic": 0.07885517305409734,
+            "tail_ic": 0.09254823718857107,
+            "mono": 0.7454545454545455,
+            "raw_ann_ret": 0.08406173010762275,
+            "raw_sharpe": 0.7561194792964732,
+            "cost_ann_ret": 0.015709938576678142,
+            "cost_sharpe": 0.14106851442177068,
+            "sortino": 0.2527712247882238,
+            "max_dd": 0.18021031906295742,
+            "annual_turnover": 85.43973941368078,
+            "avg_trade_ret_bps": 17.3387201982264,
+            "friction_eff": 2.1673400247783,
+            "win_rate": 0.4918032786885246
+          },
+          "loo": {
+            "delta_oos_ic": -0.0007474789757171418,
+            "delta_lock_ic": -0.0007474789757171418,
+            "delta_lock_sharpe": -0.1748868463179012
           }
         },
         {
@@ -4958,9 +4836,9 @@
             "win_rate": 0.6311475409836066
           },
           "loo": {
-            "delta_oos_ic": -0.00047142213584516757,
-            "delta_lock_ic": -0.00047142213584516757,
-            "delta_lock_sharpe": 0.18709085474997678
+            "delta_oos_ic": -0.0005756238725855845,
+            "delta_lock_ic": -0.0005756238725855845,
+            "delta_lock_sharpe": 0.031549638009892744
           }
         }
       ]

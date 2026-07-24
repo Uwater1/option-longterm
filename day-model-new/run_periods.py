@@ -40,7 +40,7 @@ PERIODS = {
 
 # 588000ETF excluded — insufficient history for multi-period
 ETFS = ["300ETF", "50ETF", "500ETF", "159915ETF"]
-SIDES = ["single", "long", "short"]
+SIDES = ["single"]
 
 
 def period_suffix(period_name: str) -> str:
