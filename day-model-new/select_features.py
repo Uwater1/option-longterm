@@ -40,7 +40,7 @@ DEFAULT_THETA = 0.85
 MAX_POOL_SIZE = 35
 TOP_PROTECTED_COUNT = 25
 TIGHT_THETA = 0.75
-MAX_RECENCY_RATIO = 2.0  # Cap recent_ic / early_ic to prune late-training overfit spikes
+MAX_RECENCY_RATIO = 2.0  # Cap recent_ic / early_ic to prune late-training overfit spikes, higher = less conservative
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
