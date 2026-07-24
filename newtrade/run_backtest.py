@@ -34,13 +34,13 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                         position_mode: str = "binary", fee_bps: float = 0.0008, min_features: int = 10,
                         start_date: str = "2022-01-01", end_date: str = "2026-01-01",
                         z_buffer: float = 0.2, z_short_buffer: float = None, auto_threshold: bool = False,
-                        rank_kwargs: dict = None, dynamic_ic: bool = False) -> dict:
+                        rank_kwargs: dict = None, dynamic_ic: bool = False, long_only: bool = False) -> dict:
     """
     Run backtest for one ETF and side combination filtered to OOS date range.
     
     If auto_threshold=True, sweeps Z_th on training data and applies production buffer.
     """
-    print(f"--> Running Backtest: ETF={etf}, Side={side}, Scheme={scheme_name.upper()}, z_th={'auto' if auto_threshold else z_th}, Mode={position_mode}, OOS=[{start_date} to {end_date}]")
+    print(f"--> Running Backtest: ETF={etf}, Side={side}, Scheme={scheme_name.upper()}, z_th={'auto' if auto_threshold else z_th}, Mode={position_mode}, LongOnly={long_only}, OOS=[{start_date} to {end_date}]")
     
     # 1. Load admitted pool
     pool = load_admitted_pool(etf, side=side, min_features=min_features)
@@ -105,17 +105,20 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
         # Sweep on training data
         sweep_info = sweep_optimal_threshold(
             Z_composite_train, trade_returns_train,
-            mode=position_mode, fee_bps=fee_bps
+            mode=position_mode, fee_bps=fee_bps, long_only=long_only
         )
         z_th_prod, z_th_short = compute_production_threshold(sweep_info, z_buffer=z_buffer, z_short_buffer=z_short_buffer)
-        eff_short_buf = z_short_buffer if z_short_buffer is not None else (z_buffer + 0.1)
-        print(f"    [THRESHOLD] Train-optimal Z_th={sweep_info['optimal_z_th']:.2f} (Sharpe={sweep_info['best_sharpe']:.3f}) -> Prod Long Z_th={z_th_prod:.2f} (buffer=+{z_buffer:.2f}), Short Z_th={z_th_short:.2f} (buffer=+{eff_short_buf:.2f})")
+        eff_short_buf = z_short_buffer if z_short_buffer is not None else z_buffer
+        opt_l = sweep_info.get("optimal_z_th_long", sweep_info.get("optimal_z_th", 0.5))
+        opt_s = sweep_info.get("optimal_z_th_short", opt_l)
+        print(f"    [THRESHOLD] Train-optimal Long Z_th={opt_l:.2f}, Short Z_th={opt_s:.2f} (Long Sharpe={sweep_info['best_sharpe']:.3f}) -> Prod Long Z_th={z_th_prod:.2f} (buf=+{z_buffer:.2f}), Short Z_th={z_th_short:.2f} (buf=+{eff_short_buf:.2f})")
     else:
         z_th_prod = z_th
-        z_th_short = z_th + (z_short_buffer - z_buffer if z_short_buffer is not None else 0.1)
+        eff_short_buf = z_short_buffer if z_short_buffer is not None else z_buffer
+        z_th_short = z_th + (eff_short_buf - z_buffer if z_short_buffer is not None else 0.0)
 
     # 7. Position Sizing with production thresholds
-    positions_full = generate_positions(Z_composite, z_th=z_th_prod, z_th_short=z_th_short, mode=position_mode, long_only=True)
+    positions_full = generate_positions(Z_composite, z_th=z_th_prod, z_th_short=z_th_short, mode=position_mode, long_only=long_only)
 
     # 8. Date Filtering to OOS Evaluation Period
     t_start = pd.Timestamp(start_date)
@@ -197,10 +200,9 @@ def main():
     parser.add_argument("--rank-power", type=float, default=2.0, help="Power exponent for 'power' rank mapping shape")
     parser.add_argument("--rank-top-k", type=int, default=None, help="Top K factors truncation threshold for 'top_k' rank mapping shape")
     parser.add_argument("--dynamic-ic", action="store_true", help="Enable zero-lookahead expanding rolling factor IC ranking")
+    parser.add_argument("--long-only", action="store_true", help="Restrict to long-only trades (Spot ETF mode). Default: False (allows short trades).")
 
     args = parser.parse_args()
-
-
 
     # Parse z_th: 'auto' or float
     auto_threshold = args.z_th.lower() == "auto"
@@ -211,7 +213,7 @@ def main():
     fee_bps = args.fee_bps / 10000.0
 
     print("================================================================================")
-    print(f"NewTrade Backtest Engine | Scheme={args.scheme.upper()} | z_th={args.z_th} | buffer={args.z_buffer} | OOS=[{args.start_date} ~ {args.end_date}]")
+    print(f"NewTrade Backtest Engine | Scheme={args.scheme.upper()} | z_th={args.z_th} | buffer={args.z_buffer} | LongOnly={args.long_only} | OOS=[{args.start_date} ~ {args.end_date}]")
     print("================================================================================")
 
     rank_kwargs = {
@@ -239,6 +241,7 @@ def main():
                 auto_threshold=auto_threshold,
                 rank_kwargs=rank_kwargs,
                 dynamic_ic=args.dynamic_ic,
+                long_only=args.long_only,
             )
             results.append(res)
 
@@ -308,18 +311,27 @@ def main():
             z_th_str = f"{r['z_th']:.2f}"
             if r.get("z_th_train") is not None:
                 z_th_str += f" (train:{r['z_th_train']:.2f})"
+            
+            n_l = r.get("n_long_trades", 0)
+            n_s = r.get("n_short_trades", 0)
+            trades_str = f"{r.get('n_trades', 0)} ({n_l}L/{n_s}S)"
+
+            win_l = f"{r['win_rate_long_pct']:.1f}%" if r.get("win_rate_long_pct") is not None else "N/A"
+            win_s = f"{r['win_rate_short_pct']:.1f}%" if r.get("win_rate_short_pct") is not None else "N/A"
+            win_str = f"{r['win_rate_pct']:.1f}% (L:{win_l}, S:{win_s})"
+
             return [
                 r["etf"],
                 r["side"],
                 r["period"],
                 z_th_str,
                 str(r["n_features"]),
-                str(r.get("n_trades", 0)),
+                trades_str,
                 f"{r['cost_sharpe']:.3f}",
                 f"{r['raw_sharpe']:.3f}",
                 f"{r['total_pnl']:+.4f}",
                 f"{r['max_drawdown']:.4f}",
-                f"{r['win_rate_pct']:.1f}%",
+                win_str,
                 f"{r['ann_turnover']:.1f}x",
             ]
         else:

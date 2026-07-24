@@ -73,28 +73,23 @@ def sweep_optimal_threshold(Z_composite_train: np.ndarray, trade_returns_train: 
                             mode: str = "binary", gamma: float = 1.5, long_only: bool = True,
                             fee_bps: float = 0.0008, z_range: tuple = (0.2, 1.5), z_step: float = 0.1) -> dict:
     """
-    Sweep conviction threshold on training data to find optimal Z_th that maximizes
-    cost-adjusted Sharpe ratio.
+    Sweep conviction thresholds on training data for long and short sides independently.
+    Finds optimal Z_th_long and Z_th_short that maximize cost-adjusted Sharpe ratio.
     """
     z_min, z_max = z_range
     thresholds = np.arange(z_min, z_max + z_step * 0.5, z_step)
     
     sweep_results = []
-    best_sharpe = -np.inf
-    optimal_z_th = z_min
+    best_sharpe_long = -np.inf
+    optimal_z_th_long = z_min
     
+    # 1. Sweep Long side (Z > z_th)
     for z_th in thresholds:
-        positions = generate_positions(Z_composite_train, z_th=z_th, mode=mode, gamma=gamma, long_only=long_only)
+        positions = generate_positions(Z_composite_train, z_th=z_th, mode=mode, gamma=gamma, long_only=True)
         net_returns, _, _ = simulate_etf_spot(trade_returns_train, positions, fee_bps=fee_bps)
         
-        # Cost-adjusted Sharpe
         std_net = np.std(net_returns)
-        if std_net > 1e-12:
-            sharpe = float((np.mean(net_returns) / std_net) * np.sqrt(252))
-        else:
-            sharpe = 0.0
-        
-        # Count active days
+        sharpe = float((np.mean(net_returns) / std_net) * np.sqrt(252)) if std_net > 1e-12 else 0.0
         n_active = int((np.abs(positions) > 1e-5).sum())
         
         sweep_results.append({
@@ -104,36 +99,80 @@ def sweep_optimal_threshold(Z_composite_train: np.ndarray, trade_returns_train: 
             "active_pct": round(n_active / len(positions) * 100, 1) if len(positions) > 0 else 0.0,
         })
         
-        if sharpe > best_sharpe:
-            best_sharpe = sharpe
-            optimal_z_th = float(z_th)
+        if sharpe > best_sharpe_long:
+            best_sharpe_long = sharpe
+            optimal_z_th_long = float(z_th)
+
+    # 2. Sweep Short side (Z < -z_th)
+    best_sharpe_short = -np.inf
+    optimal_z_th_short = z_min
+    for z_th in thresholds:
+        pos_short = np.zeros(len(Z_composite_train), dtype=np.float64)
+        if mode == "binary":
+            pos_short[Z_composite_train < -z_th] = -1.0
+        elif mode == "tanh":
+            for t in range(len(Z_composite_train)):
+                z = Z_composite_train[t]
+                if z < -z_th:
+                    pos_short[t] = np.tanh((z + z_th) / gamma)
+        elif mode == "quadratic":
+            for t in range(len(Z_composite_train)):
+                z = Z_composite_train[t]
+                if z < -z_th:
+                    pos_short[t] = -min(1.0, ((-z - z_th) / gamma) ** 2)
+        
+        net_returns, _, _ = simulate_etf_spot(trade_returns_train, pos_short, fee_bps=fee_bps)
+        std_net = np.std(net_returns)
+        sharpe = float((np.mean(net_returns) / std_net) * np.sqrt(252)) if std_net > 1e-12 else 0.0
+        
+        if sharpe > best_sharpe_short:
+            best_sharpe_short = sharpe
+            optimal_z_th_short = float(z_th)
     
+    # 3. 2D search if long_only is False
+    best_sharpe_2d = -np.inf
+    if not long_only:
+        for zl in thresholds:
+            for zs in thresholds:
+                positions = generate_positions(Z_composite_train, z_th=zl, z_th_short=zs, mode=mode, gamma=gamma, long_only=False)
+                net_returns, _, _ = simulate_etf_spot(trade_returns_train, positions, fee_bps=fee_bps)
+                std_net = np.std(net_returns)
+                sharpe = float((np.mean(net_returns) / std_net) * np.sqrt(252)) if std_net > 1e-12 else 0.0
+                if sharpe > best_sharpe_2d:
+                    best_sharpe_2d = sharpe
+                    optimal_z_th_long = float(zl)
+                    optimal_z_th_short = float(zs)
+
     return {
-        "optimal_z_th": round(optimal_z_th, 2),
-        "best_sharpe": round(best_sharpe, 4),
+        "optimal_z_th": round(optimal_z_th_long, 2),
+        "optimal_z_th_long": round(optimal_z_th_long, 2),
+        "optimal_z_th_short": round(optimal_z_th_short, 2),
+        "best_sharpe": round(best_sharpe_long, 4),
+        "best_sharpe_short": round(best_sharpe_short, 4),
         "sweep_results": sweep_results,
     }
 
 
 def compute_production_threshold(train_sweep_result: dict, z_buffer: float = 0.2, z_short_buffer: float = None) -> tuple[float, float]:
-
     """
     Compute production threshold for long and short sides.
-    z_th_long = z_th_train + z_buffer
-    z_th_short = z_th_train + (z_short_buffer if z_short_buffer is not None else z_buffer + 0.1)
+    z_th_long = z_th_long_train + z_buffer
+    z_th_short = z_th_short_train + (z_short_buffer if z_short_buffer is not None else z_buffer)
     
     Args:
       - train_sweep_result: Output from sweep_optimal_threshold()
       - z_buffer: Conservative buffer added to train-optimal threshold for long (default 0.2)
-      - z_short_buffer: Conservative buffer for short threshold (default z_buffer + 0.1)
+      - z_short_buffer: Conservative buffer for short threshold (default z_buffer if None)
       
     Returns:
       - (z_th_long, z_th_short)
     """
-    z_th_train = train_sweep_result["optimal_z_th"]
-    z_th_long = z_th_train + z_buffer
-    effective_short_buf = z_short_buffer if z_short_buffer is not None else (z_buffer + 0.1)
-    z_th_short = z_th_train + effective_short_buf
+    z_th_long_train = train_sweep_result.get("optimal_z_th_long", train_sweep_result.get("optimal_z_th", 0.5))
+    z_th_short_train = train_sweep_result.get("optimal_z_th_short", z_th_long_train)
+    
+    effective_short_buf = z_short_buffer if z_short_buffer is not None else z_buffer
+    z_th_long = z_th_long_train + z_buffer
+    z_th_short = z_th_short_train + effective_short_buf
     return round(z_th_long, 2), round(z_th_short, 2)
 
 
@@ -199,6 +238,12 @@ def calculate_metrics(net_returns: np.ndarray, raw_returns: np.ndarray, position
     drawdowns = running_max - cum_returns
     max_dd = float(np.max(drawdowns)) if len(drawdowns) > 0 else 0.0
 
+    # Long vs Short breakdown
+    long_mask = positions > 1e-5
+    short_mask = positions < -1e-5
+    n_long = int(long_mask.sum())
+    n_short = int(short_mask.sum())
+
     # Win Rate on active trading days
     if n_active > 0:
         active_returns = net_returns[active_mask]
@@ -210,6 +255,9 @@ def calculate_metrics(net_returns: np.ndarray, raw_returns: np.ndarray, position
     else:
         win_rate = 0.0
         profit_factor = 0.0
+
+    win_rate_long = float((net_returns[long_mask] > 0).sum() / n_long * 100.0) if n_long > 0 else 0.0
+    win_rate_short = float((net_returns[short_mask] > 0).sum() / n_short * 100.0) if n_short > 0 else 0.0
 
     # Annualized Turnover (sum of turnover / years)
     pos_prev = np.roll(positions, 1)
@@ -230,6 +278,8 @@ def calculate_metrics(net_returns: np.ndarray, raw_returns: np.ndarray, position
         "n_days": T,
         "n_active_days": n_active,
         "n_trades": n_active,  # Each active day is 1 intraday trade (10:00 -> 14:35)
+        "n_long_trades": n_long,
+        "n_short_trades": n_short,
         "trade_window": "10:00-14:35",
         "period": period_str,
         "active_pct": round(active_pct, 1),
@@ -239,6 +289,8 @@ def calculate_metrics(net_returns: np.ndarray, raw_returns: np.ndarray, position
         "raw_sharpe": round(raw_sharpe, 3),
         "max_drawdown": round(max_dd, 4),
         "win_rate_pct": round(win_rate, 1),
+        "win_rate_long_pct": round(win_rate_long, 1) if n_long > 0 else None,
+        "win_rate_short_pct": round(win_rate_short, 1) if n_short > 0 else None,
         "profit_factor": round(profit_factor, 2),
         "ann_turnover": round(ann_turnover, 2),
     }

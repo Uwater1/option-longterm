@@ -9,16 +9,16 @@ Monetize admitted factors from `day-model-new` into ETF spot trading signals. Se
 uv run python newtrade/run_backtest.py -e 300ETF --scheme ew
 
 # Compare all weighting schemes side-by-side (auto exports trades CSVs)
-uv run python newtrade/run_backtest.py -e 300ETF --scheme all
+uv run python newtrade/run_backtest.py -e 500ETF --scheme all
 
 # Scheme 4 with dynamic zero-lookahead IC ranking & quadratic position sizing
 uv run python newtrade/run_backtest.py -e 300ETF --scheme rank --dynamic-ic --position-mode quadratic
 
 # Custom long/short threshold buffers (long buffer=0.1, short buffer=0.2 default)
-uv run python newtrade/run_backtest.py -e 300ETF --scheme rank --z-buffer 0.1 --z-short-buffer 0.25
+uv run python newtrade/run_backtest.py -e all --scheme rank --z-buffer 0.1 --z-short-buffer 0.25
 
 # All ETFs, all schemes, tanh sizing, custom buffer
-uv run python newtrade/run_backtest.py -e all --scheme all --position-mode tanh --z-buffer 0.1
+uv run python newtrade/run_backtest.py -e all --scheme all --z-buffer 0.1
 # --z-buffer 0.1 chosen because of a little sweep, little look ahead but logically correct
 
 # Scheme 4 Dedicated Diagnostic Suite (sensitivity sweep, factor rank PnL, conviction bins)
@@ -54,7 +54,7 @@ newtrade/
 | **Feature Floor** | ETF/side must have ≥ 10 admitted features, else skipped. |
 | **Zero Lookahead** | Expanding-window z-score (μ/σ from t-1). Expanding factor IC from t-1. Threshold from training sweep. |
 | **Friction** | 8 bps per position state transition. All metrics cost-adjusted. |
-| **Instrument** | ETF Spot only (long-only). Futures/Options deferred. |
+| **Instrument** | Long-Short enabled by default (`long_only=False`). Use `--long-only` to restrict to Spot ETF long-only trades. |
 | **Trade Window** | 10:00 entry → 14:35 exit (intraday). |
 
 ## Data Dependencies
