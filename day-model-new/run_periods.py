@@ -64,6 +64,26 @@ def run_combo(etf: str, side: str, period_name: str, inner_n_jobs: int) -> tuple
     suffix = period_suffix(period_name)
     oos_start = train_end  # OOS starts where training ends
 
+    # Stage 0: Ensure candidate combination file exists
+    cand_file = HERE / "mining" / f"candidates_{etf}_{side}.json"
+    if not cand_file.exists() or cand_file.stat().st_size < 100:
+        print(f"\n>>> [Stage 0] generate_combos --no-dedup: ETF={etf}, Side={side} (candidates missing)")
+        cmd_gen = [
+            sys.executable,
+            str(HERE / "mining" / "generate_combos.py"),
+            "-e", etf,
+            "-s", side,
+            "--no-dedup",
+        ]
+        try:
+            result_gen = subprocess.run(
+                cmd_gen, cwd=str(REPO_ROOT), text=True, encoding="utf-8", errors="replace",
+            )
+            if result_gen.returncode not in (0, None):
+                print(f"WARNING: generate_combos exited {result_gen.returncode} for {etf} {side}")
+        except Exception as e:
+            print(f"WARNING: generate_combos failed to launch for {etf} {side}: {e}")
+
     # Stage A: Feature Selection
     cmd_a = [
         sys.executable,
