@@ -1,15 +1,1 @@
-[
-  {
-    "feature_name": "combo_z_sum__vix_skew_proxy__vix_iv_spread",
-    "sign": 1,
-    "overall_ic": 0.25158129535523766,
-    "deflated_ic": 0.2531591957751154,
-    "ic_ir": 0.19124004768348224,
-    "monotonicity": 0.5597235932872655,
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "vix_skew_proxy",
-      "feature_b": "vix_iv_spread"
-    }
-  }
-]
+[]

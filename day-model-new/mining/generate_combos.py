@@ -85,10 +85,17 @@ COMPONENT_NEG_YEARS_MAX = 2     # Max number of negative-IC years allowed
 # ─── Mining Log ───────────────────────────────────────────────────────────────
 
 def load_mining_log() -> dict:
-    """Load the persistent mining log, or return empty structure."""
+    """Load the persistent mining log, or return empty structure.
+    Tolerates trailing garbage (e.g. extra braces from interrupted writes)
+    by using raw_decode to extract the first valid JSON object."""
     if MINING_LOG_PATH.exists():
-        with open(MINING_LOG_PATH, "r") as f:
-            return json.load(f)
+        try:
+            with open(MINING_LOG_PATH, "r", encoding="utf-8") as f:
+                content = f.read()
+            obj, _end = json.JSONDecoder().raw_decode(content)
+            return obj
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"WARNING: mining_log.json corrupted ({e}); starting fresh.")
     return {"generated_space": {}, "batches": []}
 
 

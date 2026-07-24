@@ -2,8 +2,8 @@
   {
     "feature_name": "combo_rel_diff__rsi_opening__smooth_momentum_structure",
     "sign": 1,
-    "overall_ic": 0.3259665753018905,
-    "deflated_ic": 0.3247618946391743,
+    "overall_ic": 0.32596656680107117,
+    "deflated_ic": 0.324761886138355,
     "ic_ir": 1.1114228975617,
     "monotonicity": 0.857847976307996,
     "recipe": {
@@ -15,8 +15,8 @@
   {
     "feature_name": "combo_diff__directional_volume_signature__smooth_momentum_structure",
     "sign": 1,
-    "overall_ic": 0.30372657836812206,
-    "deflated_ic": 0.30254259639381564,
+    "overall_ic": 0.30372658371925354,
+    "deflated_ic": 0.3025426017449471,
     "ic_ir": 0.7795226713374771,
     "monotonicity": 0.7601184600197434,
     "recipe": {
@@ -28,8 +28,8 @@
   {
     "feature_name": "combo_sig_product__rsi_opening__pullback_depth_ratio",
     "sign": 1,
-    "overall_ic": 0.2856195794989092,
-    "deflated_ic": 0.2848014188753657,
+    "overall_ic": 0.2856195867061615,
+    "deflated_ic": 0.284801426082618,
     "ic_ir": 0.6832225655519203,
     "monotonicity": 0.7374136229022705,
     "recipe": {
@@ -41,8 +41,8 @@
   {
     "feature_name": "combo_sig_product__rsi_opening__vwap_trend_channel_slope",
     "sign": 1,
-    "overall_ic": 0.26600856850577437,
-    "deflated_ic": 0.2656042074988388,
+    "overall_ic": 0.26600855588912964,
+    "deflated_ic": 0.26560419488219406,
     "ic_ir": 0.864856025474726,
     "monotonicity": 0.7778874629812438,
     "recipe": {
@@ -52,27 +52,24 @@
     }
   },
   {
+    "feature_name": "combo_sig_product__directional_volume_signature__smooth_momentum_structure",
+    "sign": 1,
+    "overall_ic": 0.2645051181316376,
+    "deflated_ic": 0.2642003330218361,
+    "ic_ir": 0.6275086501931872,
+    "monotonicity": 0.7512339585389931,
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "smooth_momentum_structure"
+    }
+  },
+  {
     "feature_name": "max_up_ret",
     "sign": 1,
-    "overall_ic": 0.1934996544494661,
-    "deflated_ic": 0.19338354973585473,
+    "overall_ic": 0.19349965453147888,
+    "deflated_ic": 0.1933835498178675,
     "ic_ir": 0.6050890044419849,
     "monotonicity": 0.7265547877591313
-  },
-  {
-    "feature_name": "vix_rolling_percentile_60d",
-    "sign": 1,
-    "overall_ic": 0.1917937076687431,
-    "deflated_ic": 0.1929248518483641,
-    "ic_ir": 0.337899900519694,
-    "monotonicity": 0.6288252714708786
-  },
-  {
-    "feature_name": "vix",
-    "sign": 1,
-    "overall_ic": 0.15447387139847846,
-    "deflated_ic": 0.15296132083639458,
-    "ic_ir": 0.4225398751729412,
-    "monotonicity": 0.6574531095755183
   }
 ]
