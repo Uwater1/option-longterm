@@ -12,37 +12,55 @@ import numpy as np
 import pandas as pd
 
 
-def generate_positions(Z_composite: np.ndarray, z_th: float = 0.5, mode: str = "binary", gamma: float = 1.5, long_only: bool = True) -> np.ndarray:
+def generate_positions(Z_composite: np.ndarray, z_th: float = 0.5, mode: str = "binary", gamma: float = 1.5,
+                       long_only: bool = True, z_th_short: float = None, z_th_short_bias: float = 0.1) -> np.ndarray:
     """
     Generate target positions S_t from composite signal Z_composite.
     
     Args:
       - Z_composite: Composite signal Z array shape (T,)
-      - z_th: Conviction threshold (e.g. 0.5)
-      - mode: Sizing mode ('binary' or 'tanh')
-      - gamma: Ramp parameter for tanh mode
+      - z_th: Conviction threshold for long trades (z_th_long)
+      - mode: Sizing mode ('binary', 'tanh', or 'quadratic')
+      - gamma: Ramp parameter for tanh/quadratic mode
       - long_only: If True, clamp negative positions to 0.0 (Spot ETF default)
+      - z_th_short: Explicit threshold for short trades. If None, uses z_th + z_th_short_bias
+      - z_th_short_bias: Additional buffer for short conviction threshold (default +0.1)
     """
     T = len(Z_composite)
     positions = np.zeros(T, dtype=np.float64)
     
+    z_th_long = z_th
+    z_th_short_effective = z_th_short if z_th_short is not None else (z_th_long + z_th_short_bias)
+    
     if mode == "binary":
-        long_mask = Z_composite > z_th
-        short_mask = Z_composite < -z_th
+        long_mask = Z_composite > z_th_long
+        short_mask = Z_composite < -z_th_short_effective
         positions[long_mask] = 1.0
         positions[short_mask] = -1.0
         
     elif mode == "tanh":
         for t in range(T):
             z = Z_composite[t]
-            if z > z_th:
-                positions[t] = np.tanh((z - z_th) / gamma)
-            elif z < -z_th:
-                positions[t] = np.tanh((z + z_th) / gamma)
+            if z > z_th_long:
+                positions[t] = np.tanh((z - z_th_long) / gamma)
+            elif z < -z_th_short_effective:
+                positions[t] = np.tanh((z + z_th_short_effective) / gamma)
+            else:
+                positions[t] = 0.0
+
+    elif mode == "quadratic":
+        for t in range(T):
+            z = Z_composite[t]
+            if z > z_th_long:
+                val = ((z - z_th_long) / gamma) ** 2
+                positions[t] = min(1.0, val)
+            elif z < -z_th_short_effective:
+                val = ((-z - z_th_short_effective) / gamma) ** 2
+                positions[t] = -min(1.0, val)
             else:
                 positions[t] = 0.0
     else:
-        raise ValueError(f"Unknown position mode '{mode}'. Choose 'binary' or 'tanh'.")
+        raise ValueError(f"Unknown position mode '{mode}'. Choose 'binary', 'tanh', or 'quadratic'.")
 
     # Long-only clamping for Spot ETFs
     if long_only:
@@ -57,19 +75,6 @@ def sweep_optimal_threshold(Z_composite_train: np.ndarray, trade_returns_train: 
     """
     Sweep conviction threshold on training data to find optimal Z_th that maximizes
     cost-adjusted Sharpe ratio.
-    
-    Args:
-      - Z_composite_train: Composite signal for training period shape (T_train,)
-      - trade_returns_train: Intraday trade returns for training period shape (T_train,)
-      - mode: Position sizing mode ('binary' or 'tanh')
-      - gamma: Ramp parameter for tanh mode
-      - long_only: If True, clamp negative positions to 0.0
-      - fee_bps: Transaction fee per position change
-      - z_range: (min, max) threshold range to sweep
-      - z_step: Step size for sweep
-      
-    Returns:
-      - dict with 'optimal_z_th', 'best_sharpe', 'sweep_results' list
     """
     z_min, z_max = z_range
     thresholds = np.arange(z_min, z_max + z_step * 0.5, z_step)
@@ -110,23 +115,27 @@ def sweep_optimal_threshold(Z_composite_train: np.ndarray, trade_returns_train: 
     }
 
 
-def compute_production_threshold(train_sweep_result: dict, z_buffer: float = 0.2) -> float:
+def compute_production_threshold(train_sweep_result: dict, z_buffer: float = 0.2, z_short_buffer: float = None) -> tuple[float, float]:
+
     """
-    Compute production threshold = train-optimal + buffer.
-    
-    The buffer compensates for IC decay from train to OOS (~20-40% typical).
-    Higher threshold trades only highest-conviction days, reducing exposure to decayed signals.
+    Compute production threshold for long and short sides.
+    z_th_long = z_th_train + z_buffer
+    z_th_short = z_th_train + (z_short_buffer if z_short_buffer is not None else z_buffer + 0.1)
     
     Args:
       - train_sweep_result: Output from sweep_optimal_threshold()
-      - z_buffer: Conservative buffer added to train-optimal threshold (default 0.2)
+      - z_buffer: Conservative buffer added to train-optimal threshold for long (default 0.2)
+      - z_short_buffer: Conservative buffer for short threshold (default z_buffer + 0.1)
       
     Returns:
-      - z_th_prod: Production conviction threshold
+      - (z_th_long, z_th_short)
     """
     z_th_train = train_sweep_result["optimal_z_th"]
-    z_th_prod = z_th_train + z_buffer
-    return round(z_th_prod, 2)
+    z_th_long = z_th_train + z_buffer
+    effective_short_buf = z_short_buffer if z_short_buffer is not None else (z_buffer + 0.1)
+    z_th_short = z_th_train + effective_short_buf
+    return round(z_th_long, 2), round(z_th_short, 2)
+
 
 
 def simulate_etf_spot(trade_returns: np.ndarray, positions: np.ndarray, fee_bps: float = 0.0008) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -233,3 +242,34 @@ def calculate_metrics(net_returns: np.ndarray, raw_returns: np.ndarray, position
         "profit_factor": round(profit_factor, 2),
         "ann_turnover": round(ann_turnover, 2),
     }
+
+
+def build_trade_log_df(df_oos: pd.DataFrame, Z_composite_oos: np.ndarray, positions_oos: np.ndarray,
+                       net_returns: np.ndarray, raw_returns: np.ndarray, fees: np.ndarray,
+                       etf: str, scheme: str, z_th: float) -> pd.DataFrame:
+    """
+    Build detailed date-level trade log DataFrame for CSV export and AI/text inspection.
+    """
+    dates = pd.to_datetime(df_oos["date"]).dt.strftime("%Y-%m-%d") if "date" in df_oos.columns else pd.Series([f"day_{i}" for i in range(len(df_oos))])
+    trade_returns = df_oos["trade_return"].values.astype(np.float64) if "trade_return" in df_oos.columns else df_oos["close"].pct_change().fillna(0.0).values
+    
+    cum_pnl = np.cumsum(net_returns)
+    is_trade = (np.abs(positions_oos) > 1e-5).astype(int)
+
+    trade_log = pd.DataFrame({
+        "date": dates,
+        "etf": etf,
+        "scheme": scheme,
+        "z_composite": np.round(Z_composite_oos, 4),
+        "z_th": round(float(z_th), 2),
+        "position": np.round(positions_oos, 4),
+        "is_trade": is_trade,
+        "trade_return": np.round(trade_returns, 6),
+        "raw_pnl": np.round(raw_returns, 6),
+        "fee": np.round(fees, 6),
+        "net_pnl": np.round(net_returns, 6),
+        "cum_pnl": np.round(cum_pnl, 6),
+    })
+
+    return trade_log
+

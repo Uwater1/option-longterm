@@ -37,13 +37,13 @@ $$\text{score}_i = 0.40 \times \text{rank\_norm}(\text{deflated\_ic}_i) + 0.35 \
 - **Why not B3 directly?** B3 (`0.4×Mono + 0.3×Sortino + 0.2×|TailIC| + 0.1×|OverallIC|`) is an *admission gate* that requires per-candidate `simulate_returns()` for Sortino — expensive and not stored per pool item. `ic_ir` (mean IC / std IC) is the information-ratio analog capturing the same "risk-adjusted predictive power" concept.
 - **Design principle**: Admission (B3) decides IF a feature enters the pool; weighting decides HOW MUCH influence it gets. Different objectives → different formulas.
 
-#### Scheme 4 — Rank Bounded Mapping
+#### Scheme 4 — Rank Bounded Mapping (Enhanced)
 
 $$w_i = w_{\min} + (w_{\max} - w_{\min}) \cdot \frac{\text{rank}(\text{score}_i) - 1}{N - 1}$$
 
-- Default: $w_{\min} = 0.5/N$, $w_{\max} = 1.5/N$ (i.e. top factor gets 3× weight of bottom factor).
-- Guarantees no single factor > $1.5/N$ weight → natural diversification.
-- Uses same `score_i` as Scheme 3 for ranking.
+- **Moderate Tilt Default**: $w_{\min} = 0.2/N$, $w_{\max} = 1.8/N$ (top factor gets $9\times$ weight of bottom factor). Protects against pool tail noise while tilting heavily to top factors.
+- **Mapping Shapes**: Supports `linear`, `power` ($R^p$), `softmax` ($\exp(\tau R/N)$), and `top_k` truncation.
+- **Zero-Lookahead Expanding Rolling IC Ranking (`--dynamic-ic`)**: Dynamically updates factor rank scores $S_{i,t}$ on day $t$ using historical expanding factor IC calculated strictly on data up to $t-1$. Automatically downweights decaying factors OOS.
 
 ---
 
@@ -55,22 +55,26 @@ $$w_i = w_{\min} + (w_{\max} - w_{\min}) \cdot \frac{\text{rank}(\text{score}_i)
 
 1. **Training Sweep**: On expanding-window training portion (pre-OOS), sweep $Z_{\text{th}} \in [0.2, 1.5]$ step $0.1$:
    $$Z_{\text{th}}^{\text{train}*} = \arg\max_{Z_{\text{th}}} \text{CostAdjustedSharpe}(Z_{\text{th}})$$
-2. **Production Threshold**:
-   $$Z_{\text{th}}^{\text{prod}} = Z_{\text{th}}^{\text{train}*} + \Delta_{\text{buffer}}$$
+2. **Production Threshold & Asymmetric Short Gating**:
+   $$Z_{\text{th}}^{\text{long}} = Z_{\text{th}}^{\text{train}*} + \Delta_{\text{buffer}}, \quad Z_{\text{th}}^{\text{short}} = Z_{\text{th}}^{\text{long}} + \Delta_{\text{short\_buffer}}$$
    - Default $\Delta_{\text{buffer}} = 0.2$ (user-configurable via `--z-buffer`).
-   - Rationale: IC decays ~20-40% from train to OOS; higher threshold trades only highest-conviction days, reducing exposure to decayed signals.
+   - Short Buffer Bias: A-share markets have structural long bias; short signals require higher conviction ($Z_{\text{th}}^{\text{short}} > Z_{\text{th}}^{\text{long}}$, default $\Delta_{\text{short\_buffer}} = 0.2$) to filter out intraday mean-reversion noise.
 3. **CLI**: `--z-th auto` (default) triggers train-sweep + buffer. `--z-th 0.7` overrides with fixed value.
 
-### 3.2 Signal Thresholding Modes
+### 3.2 Signal Thresholding & Sizing Modes
 
 Only trade when signal conviction is strong enough to cover transaction cost (8 bps friction):
 
 - **Binary Mode**:
-  $$S_t = \begin{cases} +1 & \text{if } Z_{\text{composite},t} > Z_{\text{th}}^{\text{prod}} \\ -1 \text{ (or 0)} & \text{if } Z_{\text{composite},t} < -Z_{\text{th}}^{\text{prod}} \\ 0 & \text{otherwise} \end{cases}$$
+  $$S_t = \begin{cases} +1 & \text{if } Z_{\text{composite},t} > Z_{\text{th}}^{\text{long}} \\ -1 & \text{if } Z_{\text{composite},t} < -Z_{\text{th}}^{\text{short}} \\ 0 & \text{otherwise} \end{cases}$$
 
 - **Smooth Conviction Mode (tanh)**:
-  $$S_t = \tanh\left(\frac{Z_{\text{composite},t} - Z_{\text{th}}^{\text{prod}}}{\gamma}\right) \quad \text{for } |Z_{\text{composite},t}| > Z_{\text{th}}^{\text{prod}}$$
-  - $\gamma = 1.5$ default (smooth ramp from 0 at threshold to ~1.0 for strong signals).
+  $$S_t = \begin{cases} \tanh\left(\frac{Z_{\text{composite},t} - Z_{\text{th}}^{\text{long}}}{\gamma}\right) & \text{if } Z_{\text{composite},t} > Z_{\text{th}}^{\text{long}} \\ -\tanh\left(\frac{-Z_{\text{composite},t} - Z_{\text{th}}^{\text{short}}}{\gamma}\right) & \text{if } Z_{\text{composite},t} < -Z_{\text{th}}^{\text{short}} \\ 0 & \text{otherwise} \end{cases}$$
+
+- **Steep Conviction Mode (quadratic)**:
+  $$S_t = \begin{cases} \min\left(1.0, \left(\frac{Z_{\text{composite},t} - Z_{\text{th}}^{\text{long}}}{\gamma}\right)^2\right) & \text{if } Z_{\text{composite},t} > Z_{\text{th}}^{\text{long}} \\ -\min\left(1.0, \left(\frac{-Z_{\text{composite},t} - Z_{\text{th}}^{\text{short}}}{\gamma}\right)^2\right) & \text{if } Z_{\text{composite},t} < -Z_{\text{th}}^{\text{short}} \\ 0 & \text{otherwise} \end{cases}$$
+  - Rationale: Diagnostic conviction binning shows $|Z| > 1.2$ signals generate 4.9~5.9 Sharpe and ~70% win rate; quadratic sizing ramps position quickly on extreme conviction days while minimizing size on weak days.
+
 
 ---
 

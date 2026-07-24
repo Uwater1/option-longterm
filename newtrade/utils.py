@@ -172,3 +172,43 @@ def expanding_zscore_numba(X: np.ndarray, burn_in: int = 252, clip: float = 3.0)
             sum_sq[j] += val * val
 
     return Z
+
+
+@njit(cache=True)
+def expanding_factor_ic_numba(Z_std: np.ndarray, signs: np.ndarray, trade_returns: np.ndarray, burn_in: int = 252) -> np.ndarray:
+    """
+    Compute expanding zero-lookahead IC (correlation) for each factor over time.
+    Returns IC_matrix of shape (T, N) where row t contains IC calculated using data up to t-1.
+    """
+    T, N = Z_std.shape
+    IC_matrix = np.zeros((T, N), dtype=np.float64)
+    if T < burn_in or N == 0:
+        return IC_matrix
+
+    # Pre-align signs
+    Z_signed = np.zeros((T, N), dtype=np.float64)
+    for j in range(N):
+        Z_signed[:, j] = Z_std[:, j] * signs[j]
+
+    for t in range(burn_in, T):
+        ret_sub = trade_returns[:t]
+        mean_ret = np.mean(ret_sub)
+        std_ret = np.std(ret_sub)
+        if std_ret < 1e-12:
+            continue
+
+        for j in range(N):
+            z_sub = Z_signed[:t, j]
+            mean_z = np.mean(z_sub)
+            std_z = np.std(z_sub)
+            if std_z > 1e-12:
+                cov = np.mean((z_sub - mean_z) * (ret_sub - mean_ret))
+                IC_matrix[t, j] = cov / (std_z * std_ret)
+
+    # For burn-in period, fill with first computed IC
+    if burn_in < T:
+        for t in range(burn_in):
+            IC_matrix[t, :] = IC_matrix[burn_in, :]
+
+    return IC_matrix
+

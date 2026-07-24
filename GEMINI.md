@@ -30,6 +30,8 @@ python compare_alpha_phases.py               # Cross-phase comparison
 > Day-model commands: see [day-model/AGENTS.md](file:///home/hallo/Documents/option-longterm/day-model/AGENTS.md)
 > Day-model rewrite commands: see [day-model-new/AGENTS.md](file:///home/hallo/Documents/option-longterm/day-model-new/AGENTS.md)
 > Daytrade commands: see [daytrade/AGENTS.md](file:///home/hallo/Documents/option-longterm/daytrade/AGENTS.md)
+> Newtrade commands: see [newtrade/AGENTS.md](file:///home/hallo/Documents/option-longterm/newtrade/AGENTS.md)
+
 
 ## Project Structure
 

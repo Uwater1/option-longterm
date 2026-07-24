@@ -1,0 +1,28 @@
+[
+  {
+    "n_days": 969,
+    "n_active_days": 17,
+    "n_trades": 17,
+    "trade_window": "10:00-14:35",
+    "period": "2022-01 ~ 2025-12",
+    "active_pct": 1.8,
+    "total_pnl": 0.1128,
+    "raw_total_pnl": 0.14,
+    "cost_sharpe": 0.945,
+    "raw_sharpe": 1.144,
+    "max_drawdown": 0.0153,
+    "win_rate_pct": 76.5,
+    "profit_factor": 5.29,
+    "ann_turnover": 8.84,
+    "etf": "300ETF",
+    "side": "single",
+    "scheme": "rank",
+    "status": "SUCCESS",
+    "n_features": 10,
+    "z_th": 1.4,
+    "z_th_short": 1.5,
+    "z_th_train": 1.3,
+    "z_buffer": 0.1,
+    "position_mode": "binary"
+  }
+]
