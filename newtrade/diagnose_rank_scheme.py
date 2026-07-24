@@ -76,12 +76,13 @@ def run_rank_sensitivity_sweep(etf: str, df: pd.DataFrame, pool: list, X_raw: np
         # Train threshold sweep
         Z_comp_train = Z_comp[train_mask.values]
         sw_res = sweep_optimal_threshold(Z_comp_train, trade_returns_train, mode=position_mode, fee_bps=fee_bps)
-        z_th_prod = compute_production_threshold(sw_res, z_buffer=z_buffer)
+        z_th_long, z_th_short = compute_production_threshold(sw_res, z_buffer=z_buffer)
 
         # OOS simulation
         Z_comp_oos = Z_comp[oos_mask.values]
-        positions_oos = generate_positions(Z_comp, z_th=z_th_prod, mode=position_mode, long_only=True)[oos_mask.values]
+        positions_oos = generate_positions(Z_comp, z_th=z_th_long, z_th_short=z_th_short, mode=position_mode, long_only=True)[oos_mask.values]
         net_ret, raw_ret, fees = simulate_etf_spot(trade_returns_oos, positions_oos, fee_bps=fee_bps)
+
 
         metrics = calculate_metrics(net_ret, raw_ret, positions_oos, dates=df_oos["date"])
         
@@ -89,8 +90,9 @@ def run_rank_sensitivity_sweep(etf: str, df: pd.DataFrame, pool: list, X_raw: np
             "config": label,
             "mapping": shape,
             "w_min_max": f"{min_r:.1f}~{max_r:.1f}",
-            "z_th_prod": z_th_prod,
+            "z_th_prod": z_th_long,
             "trades": metrics["n_trades"],
+
             "cost_sharpe": metrics["cost_sharpe"],
             "raw_sharpe": metrics["raw_sharpe"],
             "total_pnl": metrics["total_pnl"],
