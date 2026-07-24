@@ -91,6 +91,20 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 - **Rationale for pre-correlation placement**: Prevents low-quality/unstable features from occupying pool slots and blocking higher-quality candidates via the correlation gate.
 - **Zero look-ahead bias**: Uses only training-period metrics. No OOS or lockbox data is accessed.
 
+### B6b. Adaptive Boundary Gate (Post-Correlation Pool Control)
+- **Trigger**: When initial admission yields $> \text{MAX\_POOL\_SIZE}$ features (default: 35).
+- **Global Constants** (defined at top of `select_features.py`):
+  - `DEFAULT_THETA = 0.85`: Base correlation threshold for initial admission pass.
+  - `MAX_POOL_SIZE = 35`: Target max admitted pool size.
+  - `TOP_PROTECTED_COUNT = 25`: Unconditionally protects top 25 features based on training quality score $S_{train}$.
+  - `TIGHT_THETA = 0.75`: Lower-tier correlation threshold to trim redundant tail features.
+- **Mechanism**:
+  1. Computes training quality score $S_{train} = 0.40 \cdot \text{deflated\_ic} + 0.25 \cdot \text{sortino} + 0.20 \cdot \text{ic\_ir} + 0.15 \cdot \text{recent\_ic}$.
+  2. Protects top `TOP_PROTECTED_COUNT` (25) features unconditionally.
+  3. Screens lower-tier features with `TIGHT_THETA` (0.75) and quality floors (`recent_ic > 0`, `sortino > 0.05`, `deflated_ic >= 0.04`).
+  4. Overwrites initial `ADMITTED` verdict in `attempts_log` for pruned features to `REJECTED_ADAPTIVE_*`.
+- **Zero OOS leakage**: Uses only training set statistics.
+
 ### B7. Outputs
 - Version-controlled admitted pools registry in [admitted_pools.py](file:///home/hallo/Documents/option-longterm/day-model-new/admitted_pools.py).
 - Detailed log of attempts in `data/mining_attempts_{ETF}_{side}.json`.
@@ -146,6 +160,7 @@ SE_IC ≈ 1/√n_train
 - [x] **Component stability gate (A0)** — Yearly IC decomposition in `generate_combos.py`. Flags features with IC_CV > 3.0 or neg_years > 2 as unstable, excludes from all combos. Training-only, ETF-agnostic.
 - [x] **B4 correlation threshold** — θ=0.85. Tightened from 0.90 after diagnosis showed 63% FP rate at 0.90 for 500ETF.
 - [x] **Quality Gate before Correlation** — Moved Quality Gate (B6) before B4 correlation gate. Prevents low-quality features from blocking high-quality candidates.
+- [x] **Adaptive Boundary Gate (B6b)** — Dynamically tightens quality floors & correlation threshold (0.85→0.75) when pool > 35 features, protecting top 25 TP features. Configured via top-level global constants in `select_features.py`.
 - [x] **Deep filter diagnosis tool** — `filter_diagnosis.py` for causal FP/FN analysis. Temporal decomposition, component stability, regime concentration, Cohen's d discriminators. Excludes 588000ETF.
 
 ## References

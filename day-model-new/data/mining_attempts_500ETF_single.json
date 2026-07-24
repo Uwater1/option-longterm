@@ -29180,7 +29180,7 @@
     "passes_fdr": true,
     "max_corr": 0.775980182967293,
     "max_corr_feature": "combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__close_vs_open_range",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "z_sum",
       "feature_a": "max_up_ret",
@@ -29626,7 +29626,7 @@
     "passes_fdr": true,
     "max_corr": 0.8021354893852868,
     "max_corr_feature": "combo_clamp_diff__first_bar_return__demark_setup_reversal_early",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "rel_diff",
       "feature_a": "rbreaker_sell_setup_proximity_early",
@@ -30030,7 +30030,7 @@
     "passes_fdr": true,
     "max_corr": 0.8468706617074363,
     "max_corr_feature": "combo_z_sum__max_up_ret__early_order_flow_imbalance",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "tri_mean",
       "feature_a": "max_up_ret",
@@ -33072,7 +33072,7 @@
     "passes_fdr": true,
     "max_corr": 0.8425266335352398,
     "max_corr_feature": "combo_tri_mean__max_up_ret__close_vs_open_range__first_bar_sentiment",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "tri_max",
       "feature_a": "max_up_ret",
@@ -33996,7 +33996,7 @@
     "passes_fdr": true,
     "max_corr": 0.8129212255967688,
     "max_corr_feature": "combo_rank_min__close_vs_open_range__bar_ret_0",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "min",
       "feature_a": "close_vs_open_range",
@@ -34647,7 +34647,7 @@
     "passes_fdr": true,
     "max_corr": 0.8273725845271578,
     "max_corr_feature": "combo_rel_diff__rbreaker_sell_setup_proximity_early__demark_setup_reversal_early",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "rank_max",
       "feature_a": "rbreaker_sell_setup_proximity_early",
@@ -36809,7 +36809,7 @@
     "passes_fdr": true,
     "max_corr": 0.8219576111002025,
     "max_corr_feature": "combo_rank_min__max_up_ret__close_vs_open_range",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "z_sum",
       "feature_a": "close_vs_open_range",
@@ -39483,7 +39483,7 @@
     "passes_fdr": true,
     "max_corr": 0.8468465601388436,
     "max_corr_feature": "combo_rank_min__close_vs_open_range__bar_ret_0",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "rank_min",
       "feature_a": "net_volume_flow",
@@ -40415,7 +40415,7 @@
     "passes_fdr": true,
     "max_corr": 0.8125322679269612,
     "max_corr_feature": "combo_rel_diff__max_up_ret__early_order_flow_imbalance",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "diff",
       "feature_a": "max_up_ret",
@@ -40455,7 +40455,7 @@
     "passes_fdr": true,
     "max_corr": 0.8126127092605104,
     "max_corr_feature": "combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__close_vs_open_range",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "max",
       "feature_a": "rbreaker_sell_setup_proximity_early",
@@ -40573,7 +40573,7 @@
     "passes_fdr": true,
     "max_corr": 0.84706704820525,
     "max_corr_feature": "combo_z_sum__close_vs_open_range__early_body_momentum",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "rank_min",
       "feature_a": "close_vs_open_range",
@@ -40593,7 +40593,7 @@
     "passes_fdr": true,
     "max_corr": 0.7832338685157492,
     "max_corr_feature": "combo_min__star50_limit_proximity_early__max_down_ret",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "sig_product",
       "feature_a": "star50_limit_proximity_early",
@@ -40705,7 +40705,7 @@
     "passes_fdr": true,
     "max_corr": 0.8191939623359423,
     "max_corr_feature": "combo_rank_min__max_up_ret__close_vs_open_range",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "sig_product",
       "feature_a": "max_up_ret",
@@ -41974,7 +41974,7 @@
     "passes_fdr": true,
     "max_corr": 0.8464011164018954,
     "max_corr_feature": "combo_z_sum__max_up_ret__early_order_flow_imbalance",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "z_sum",
       "feature_a": "bar_ret_0",
@@ -42438,7 +42438,7 @@
     "passes_fdr": true,
     "max_corr": 0.8463787678247665,
     "max_corr_feature": "combo_mean__bar_ret_0__max_down_ret",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "min",
       "feature_a": "first_bar_sentiment",
@@ -42762,7 +42762,7 @@
     "passes_fdr": true,
     "max_corr": 0.8437519283241621,
     "max_corr_feature": "combo_mean__bar_ret_0__max_down_ret",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "z_sum",
       "feature_a": "net_volume_flow",
@@ -43025,7 +43025,7 @@
     "passes_fdr": true,
     "max_corr": 0.8408779779308206,
     "max_corr_feature": "combo_rank_max__first_bar_sentiment__max_down_ret",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "mean",
       "feature_a": "first_bar_sentiment",
@@ -43259,7 +43259,7 @@
     "passes_fdr": true,
     "max_corr": 0.7586897049322612,
     "max_corr_feature": "combo_mean__first_bar_sentiment__bar_ret_0",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "sig_product",
       "feature_a": "first_bar_sentiment",
@@ -43535,7 +43535,7 @@
     "passes_fdr": true,
     "max_corr": 0.762578964204206,
     "max_corr_feature": "combo_rank_max__first_bar_sentiment__max_down_ret",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "max",
       "feature_a": "first_bar_sentiment",
@@ -44951,7 +44951,7 @@
     "passes_fdr": true,
     "max_corr": 0.8451321849322451,
     "max_corr_feature": "combo_rank_min__net_volume_flow__max_down_ret",
-    "verdict": "ADMITTED",
+    "verdict": "REJECTED_ADAPTIVE_REDUNDANCY",
     "recipe": {
       "op": "rank_min",
       "feature_a": "first_bar_sentiment",

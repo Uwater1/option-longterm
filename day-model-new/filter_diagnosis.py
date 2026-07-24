@@ -48,6 +48,9 @@ GATE_ORDER = [
     ("REJECTED_FDR_GATE", "BH-FDR Gate"),
     ("REJECTED_ADMISSION_FLOOR", "B3 Composite Floor"),
     ("REJECTED_REDUNDANCY", "B4 Correlation Gate"),
+    ("REJECTED_ADAPTIVE_QUALITY_FLOOR", "Adaptive Quality Floor"),
+    ("REJECTED_ADAPTIVE_REDUNDANCY", "Adaptive Correlation Gate"),
+    ("REJECTED_ADAPTIVE_CAP_TRIM", "Adaptive Pool Size Cap"),
 ]
 
 

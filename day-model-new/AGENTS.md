@@ -68,7 +68,7 @@ python3 day-model-new/filter_diagnosis.py
   - `recipe_utils.py` handles on-the-fly execution of combinations. Aligns scale via standardization, isolates parameters to training sets to prevent lookahead leakage.
   - **Mining Log** (`mining_log.json`): Persistent dedup guarantee — tracks all generated candidate names per ETF/side. Re-runs emit only the delta (new ops/combos), never duplicates. Batch summaries appended by `select_features.py`.
 
-### Feature Selection Pipeline (8 Gates, All Training-Only)
+### Feature Selection Pipeline (9 Gates, All Training-Only)
 
 | # | Gate | Key Parameters | Purpose |
 |---|------|---------------|---------|
@@ -80,8 +80,10 @@ python3 day-model-new/filter_diagnosis.py
 | 6 | Temporal Stability Gate | ic_cv × weak_link_cv ≥ 0.15 (combo features) | Kill artificially smooth mirages |
 | 7 | Quality Gate | deflated_ic≥0.03/0.05, raw_ic≥0.02/0.03, sortino>0 | Kill tail-only mirages |
 | 8 | B4 Correlation Gate | θ=0.85, replacement rule (1.15× if pool < 10 else 1.30×) | Reject redundancy |
+| 9 | Adaptive Boundary Gate | max_pool_size=30, tight_theta=0.60 | Prune weak tail features when pool > 30 |
 
 - **B3 Composite Score**: $0.4 \times \text{RollingMono} + 0.3 \times \text{Sortino} + 0.2 \times |\text{Tail IC}| + 0.1 \times |\text{Overall IC}|$. Deflation haircut: `cand_ic - ic_null_mean` using standalone raw IC null mean. Uses 95th-pct for conditional 2-way, 97th-pct for symmetric 2-way (`max`, `min`, `mean`, `rank_max`, `rank_min`), and 99th-pct for 3-way (`combo_tri_*`).
+- **Adaptive Boundary Gate (Step 9)**: When initial admission yields $> 30$ features (e.g. 500ETF yielding 52 features), dynamically tightens training-only quality floors ($S_{train} = 0.40 \times \text{deflated\_ic} + 0.25 \times \text{sortino} + 0.20 \times \text{ic\_ir} + 0.15 \times \text{recent\_ic}$) and correlation threshold $\theta$ ($0.85 \to 0.60$) on lower-tier features to prune weak/decaying/redundant tail features down to ~30 features while protecting top TP features. Zero OOS/lockbox data used.
 - **Temporal Stability & Quality Gates (Steps 6 & 7)**: Training-only gates applied BEFORE correlation gate. `ic_cv * weak_link_cv >= 0.15` filters out features with artificially uniform IC (structural mirages). Quality gate enforces minimum deflated IC, raw IC, and positive Sortino. Running before B4 prevents low-quality/unstable features from blocking high-quality ones in correlation comparison. **No OOS/lockbox data is used — zero look-ahead bias.**
 - **Cumulative Ledger**: Saves unique tried feature names to `data/trial_ledger_{ETF}_{side}{suffix}.json` to track overall unique trials $N$ across sequential mining rounds (prevents under-deflation). Seeds from existing attempts JSON logs.
 - **VIF Safety Net & Leakage Prevention**: Dropped collinear features if VIF > 5.0 in `evaluate_concept.py`. Stats prebuilding includes `feature_c` and `feature_cond2` for 3-way recipes (`tri_*`), preventing OOS lookahead leakage.
