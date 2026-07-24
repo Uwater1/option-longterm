@@ -988,6 +988,358 @@ def calc_opening_drive_thrust_ratio(op, hi, lo, cl, vol, prev_close, exp_bar_vol
     return np.float32(min(max(thrust, -1.0), 1.0))
 
 
+# --- Batch 5: Market Regime & Big Trend Quality (Al Brooks Trend Day / Always-In) ---
+
+@njit(cache=True, fastmath=True)
+def calc_trend_resumption_after_pullback(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Al Brooks Ch11: First pullback in trend then resumption.
+    Detect if bars show pullback (counter-trend bar) followed by trend resumption.
+    Returns: positive = bull trend resumption, negative = bear trend resumption."""
+    n = len(op)
+    if n < 4:
+        return np.float32(0.0)
+    # Determine dominant trend direction from first half
+    mid = n // 2
+    first_half_ret = (float(cl[mid-1]) - float(op[0])) / (float(op[0]) + 1e-8)
+    # Find pullback: bar that goes against trend
+    pullback_found = False
+    pullback_idx = -1
+    for i in range(1, n - 1):
+        if first_half_ret > 0 and float(cl[i]) < float(op[i]):  # bear bar in bull trend
+            pullback_found = True
+            pullback_idx = i
+            break
+        elif first_half_ret < 0 and float(cl[i]) > float(op[i]):  # bull bar in bear trend
+            pullback_found = True
+            pullback_idx = i
+            break
+    if not pullback_found or pullback_idx >= n - 1:
+        return np.float32(0.0)
+    # Measure resumption: bars after pullback continue original trend
+    resumption_strength = 0.0
+    for i in range(pullback_idx + 1, n):
+        rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+        body_i = (float(cl[i]) - float(op[i])) / rng_i
+        if first_half_ret > 0:
+            resumption_strength += max(body_i, 0.0)
+        else:
+            resumption_strength += max(-body_i, 0.0)
+    resumption_strength /= float(n - pullback_idx - 1)
+    # Pullback depth relative to range
+    rng = float(hi[0]) - float(lo[0])
+    for i in range(1, n):
+        if float(hi[i]) - float(lo[i]) > rng:
+            rng = float(hi[i]) - float(lo[i])
+    rng += 1e-8
+    pb_depth = 0.0
+    if first_half_ret > 0:
+        pb_low = float(lo[pullback_idx])
+        for i in range(pullback_idx):
+            if float(lo[i]) < pb_low:
+                pb_low = float(lo[i])
+        pb_depth = (float(hi[pullback_idx]) - pb_low) / rng
+    else:
+        pb_high = float(hi[pullback_idx])
+        for i in range(pullback_idx):
+            if float(hi[i]) > pb_high:
+                pb_high = float(hi[i])
+        pb_depth = (pb_high - float(lo[pullback_idx])) / rng
+    # Shallow pullback + strong resumption = high conviction
+    val = resumption_strength * (1.0 - min(pb_depth, 1.0))
+    if first_half_ret < 0:
+        val = -val
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_directional_volume_signature(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Volume profile difference between trend bars and countertrend bars.
+    In a healthy trend, trend bars have higher volume than countertrend bars.
+    Returns: positive = bull trend volume signature, negative = bear."""
+    n = len(op)
+    if n < 2:
+        return np.float32(0.0)
+    bull_vol = 0.0
+    bear_vol = 0.0
+    bull_count = 0.0
+    bear_count = 0.0
+    for i in range(n):
+        body = float(cl[i]) - float(op[i])
+        v = float(vol[i])
+        if body > 0:
+            bull_vol += v
+            bull_count += 1.0
+        elif body < 0:
+            bear_vol += v
+            bear_count += 1.0
+    avg_bull_vol = bull_vol / (bull_count + 1e-8)
+    avg_bear_vol = bear_vol / (bear_count + 1e-8)
+    total_avg = (bull_vol + bear_vol) / (float(n) + 1e-8)
+    # Normalized difference
+    val = (avg_bull_vol - avg_bear_vol) / (total_avg + 1e-8)
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_body_size_progression(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Progressive body size expansion in trend direction.
+    Al Brooks: in a strong trend, successive trend bars have similar or increasing bodies.
+    Returns slope of body sizes in trend direction, normalized."""
+    n = len(op)
+    if n < 3:
+        return np.float32(0.0)
+    # Determine trend direction
+    net = float(cl[n-1]) - float(op[0])
+    # Compute signed body sizes (positive = with-trend)
+    bodies = np.zeros(n, dtype=np.float32)
+    for i in range(n):
+        body = (float(cl[i]) - float(op[i])) / (float(hi[i]) - float(lo[i]) + 1e-8)
+        if net > 0:
+            bodies[i] = body  # positive bodies are with-trend
+        else:
+            bodies[i] = -body  # negative bodies are with-trend
+    # OLS slope of with-trend body sizes
+    sx = 0.0
+    sy = 0.0
+    sxx = 0.0
+    sxy = 0.0
+    for i in range(n):
+        xi = float(i)
+        yi = float(bodies[i])
+        sx += xi
+        sy += yi
+        sxx += xi * xi
+        sxy += xi * yi
+    denom = float(n) * sxx - sx * sx
+    if abs(denom) < 1e-12:
+        return np.float32(0.0)
+    slope = (float(n) * sxy - sx * sy) / denom
+    sign = 1.0 if net > 0 else -1.0
+    val = sign * slope
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_pullback_shallowness_score(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Al Brooks: shallow pullbacks in trend = continuation signal.
+    Measures the maximum counter-trend retracement as fraction of prior impulse.
+    Returns: positive = shallow bull pullback (continuation up), negative = shallow bear."""
+    n = len(op)
+    if n < 3:
+        return np.float32(0.0)
+    # Find the largest impulse move (max absolute close-to-close in one direction)
+    max_impulse = 0.0
+    impulse_dir = 0.0
+    impulse_end = 0
+    for i in range(1, n):
+        move = float(cl[i]) - float(cl[i-1])
+        if abs(move) > max_impulse:
+            max_impulse = abs(move)
+            impulse_dir = 1.0 if move > 0 else -1.0
+            impulse_end = i
+    if max_impulse < 1e-8 or impulse_end >= n - 1:
+        return np.float32(0.0)
+    # Measure pullback after impulse
+    max_retrace = 0.0
+    impulse_close = float(cl[impulse_end])
+    for i in range(impulse_end + 1, n):
+        if impulse_dir > 0:
+            retrace = impulse_close - float(lo[i])
+        else:
+            retrace = float(hi[i]) - impulse_close
+        if retrace > max_retrace:
+            max_retrace = retrace
+    # Shallowness: 1 - (retrace / impulse)
+    shallowness = 1.0 - min(max_retrace / (max_impulse + 1e-8), 1.0)
+    val = impulse_dir * shallowness
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_range_progression_trend(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Progressive range expansion with directional bias.
+    In a strong trend, each bar's range expands AND the close is consistently
+    in the trend-direction extreme of the range.
+    Returns signed score in [-1, 1]."""
+    n = len(op)
+    if n < 3:
+        return np.float32(0.0)
+    # Range slope
+    sx = 0.0
+    sy = 0.0
+    sxx = 0.0
+    sxy = 0.0
+    for i in range(n):
+        xi = float(i)
+        yi = float(hi[i]) - float(lo[i])
+        sx += xi
+        sy += yi
+        sxx += xi * xi
+        sxy += xi * yi
+    denom = float(n) * sxx - sx * sx
+    if abs(denom) < 1e-12:
+        return np.float32(0.0)
+    range_slope = (float(n) * sxy - sx * sy) / denom
+    mean_range = sy / float(n)
+    norm_slope = range_slope / (mean_range + 1e-8)
+    # Directional bias: average close position in range
+    dir_bias = 0.0
+    for i in range(n):
+        rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+        pos = (float(cl[i]) - float(lo[i])) / rng_i
+        dir_bias += (pos - 0.5) * 2.0  # [-1, 1]
+    dir_bias /= float(n)
+    # Combine: expanding range + directional bias
+    val = dir_bias * (1.0 + min(norm_slope, 1.0))
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_volume_confirmed_breakout(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Detect breakout bar (exceeds prior range) with volume confirmation.
+    Al Brooks Ch3: strong breakout bar with follow-through.
+    Returns: positive = bullish breakout with volume, negative = bearish."""
+    n = len(op)
+    if n < 3:
+        return np.float32(0.0)
+    avg_vol = 0.0
+    for i in range(n):
+        avg_vol += float(vol[i])
+    avg_vol /= float(n)
+    best_score = 0.0
+    for i in range(1, n):
+        # Prior range high/low (up to bar i-1)
+        prior_h = float(hi[0])
+        prior_l = float(lo[0])
+        for j in range(1, i):
+            if float(hi[j]) > prior_h:
+                prior_h = float(hi[j])
+            if float(lo[j]) < prior_l:
+                prior_l = float(lo[j])
+        rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+        vol_factor = min(float(vol[i]) / (avg_vol + 1e-8), 2.5)
+        # Bullish breakout: high exceeds prior high, close near high
+        if float(hi[i]) > prior_h:
+            close_pos = (float(cl[i]) - float(lo[i])) / rng_i
+            if close_pos > 0.6:
+                score = ((float(hi[i]) - prior_h) / rng_i) * close_pos * vol_factor
+                if score > best_score:
+                    best_score = score
+        # Bearish breakout: low breaks prior low, close near low
+        if float(lo[i]) < prior_l:
+            close_pos = (float(hi[i]) - float(cl[i])) / rng_i
+            if close_pos > 0.6:
+                score = ((prior_l - float(lo[i])) / rng_i) * close_pos * vol_factor
+                if -score < best_score:
+                    best_score = -score
+    return np.float32(min(max(best_score, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_trend_bar_close_consistency(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Weighted directional close consistency: body direction weighted by body/range.
+    Unlike simple close count, this weights by conviction (body size).
+    Returns: positive = consistent bull closes, negative = bear."""
+    n = len(op)
+    if n < 1:
+        return np.float32(0.0)
+    score = 0.0
+    total_weight = 0.0
+    for i in range(n):
+        rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+        body = (float(cl[i]) - float(op[i])) / rng_i  # signed body ratio
+        # Weight by body magnitude (stronger bars count more)
+        weight = abs(body)
+        score += body * weight
+        total_weight += weight
+    if total_weight < 1e-8:
+        return np.float32(0.0)
+    val = score / total_weight
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_vwap_close_divergence_trend(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Divergence between close trajectory and VWAP trajectory.
+    In a strong trend, close stays consistently above/below VWAP.
+    Returns: positive = close persistently above VWAP (bull), negative = below."""
+    n = len(op)
+    if n < 2:
+        return np.float32(0.0)
+    cum_pv = 0.0
+    cum_v = 0.0
+    above_count = 0.0
+    below_count = 0.0
+    total_dev = 0.0
+    for i in range(n):
+        p = (float(hi[i]) + float(lo[i]) + float(cl[i])) / 3.0
+        v = float(vol[i])
+        cum_pv += p * v
+        cum_v += v
+        vwap = cum_pv / (cum_v + 1e-8)
+        dev = (float(cl[i]) - vwap) / (prev_close * 0.005 + 1e-8)
+        total_dev += dev
+        if float(cl[i]) > vwap:
+            above_count += 1.0
+        elif float(cl[i]) < vwap:
+            below_count += 1.0
+    # Consistency: fraction of bars on one side * average deviation
+    consistency = max(above_count, below_count) / float(n)
+    avg_dev = total_dev / float(n)
+    val = avg_dev * consistency
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_impulse_bar_dominance(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Fraction of total range captured by the single largest-body bar (impulse bar).
+    Al Brooks: strong trends have a dominant impulse bar.
+    Returns signed dominance: positive = bull impulse dominant, negative = bear."""
+    n = len(op)
+    if n < 2:
+        return np.float32(0.0)
+    total_range = 0.0
+    max_body = 0.0
+    max_body_dir = 0.0
+    for i in range(n):
+        rng_i = float(hi[i]) - float(lo[i])
+        total_range += rng_i
+        body = abs(float(cl[i]) - float(op[i]))
+        if body > max_body:
+            max_body = body
+            max_body_dir = 1.0 if float(cl[i]) > float(op[i]) else -1.0
+    if total_range < 1e-8:
+        return np.float32(0.0)
+    dominance = max_body / total_range
+    val = max_body_dir * dominance * float(n)  # scale by n bars
+    return np.float32(min(max(val, -1.0), 1.0))
+
+@njit(cache=True, fastmath=True)
+def calc_counter_trend_bar_weakness(op, hi, lo, cl, vol, prev_close, exp_bar_vol, is_20pct):
+    """Measure how weak counter-trend bars are relative to trend bars.
+    In a strong trend, counter-trend bars have small bodies and low volume.
+    Returns: positive = counter-trend bars weak in bull trend, negative = bear."""
+    n = len(op)
+    if n < 2:
+        return np.float32(0.0)
+    # Determine trend direction
+    net = float(cl[n-1]) - float(op[0])
+    if abs(net) < 1e-8:
+        return np.float32(0.0)
+    trend_dir = 1.0 if net > 0 else -1.0
+    trend_body_sum = 0.0
+    trend_count = 0.0
+    counter_body_sum = 0.0
+    counter_count = 0.0
+    for i in range(n):
+        rng_i = float(hi[i]) - float(lo[i]) + 1e-8
+        body = (float(cl[i]) - float(op[i])) / rng_i
+        if body * trend_dir > 0:
+            trend_body_sum += abs(body)
+            trend_count += 1.0
+        elif body * trend_dir < 0:
+            counter_body_sum += abs(body)
+            counter_count += 1.0
+    avg_trend = trend_body_sum / (trend_count + 1e-8)
+    avg_counter = counter_body_sum / (counter_count + 1e-8)
+    # Ratio: how much weaker counter-trend bars are
+    weakness = 1.0 - min(avg_counter / (avg_trend + 1e-8), 1.0)
+    val = trend_dir * weakness
+    return np.float32(min(max(val, -1.0), 1.0))
+
+
 CANDIDATES = {
     # Batch 1 (original)
     "h2_l2_pullback_continuation": calc_h2_l2_pullback_continuation,
@@ -1027,6 +1379,17 @@ CANDIDATES = {
     "volatility_expansion_trend_vector": calc_volatility_expansion_trend_vector,
     "tight_channel_persistence": calc_tight_channel_persistence,
     "opening_drive_thrust_ratio": calc_opening_drive_thrust_ratio,
+    # Batch 5 (Market Regime & Big Trend Quality — Al Brooks Trend Day / Always-In)
+    "trend_resumption_after_pullback": calc_trend_resumption_after_pullback,
+    "directional_volume_signature": calc_directional_volume_signature,
+    "body_size_progression": calc_body_size_progression,
+    "pullback_shallowness_score": calc_pullback_shallowness_score,
+    "range_progression_trend": calc_range_progression_trend,
+    "volume_confirmed_breakout": calc_volume_confirmed_breakout,
+    "trend_bar_close_consistency": calc_trend_bar_close_consistency,
+    "vwap_close_divergence_trend": calc_vwap_close_divergence_trend,
+    "impulse_bar_dominance": calc_impulse_bar_dominance,
+    "counter_trend_bar_weakness": calc_counter_trend_bar_weakness,
 }
 
 def main():

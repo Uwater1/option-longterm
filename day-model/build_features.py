@@ -6,7 +6,7 @@ Combines:
     Causality: per-ETF ``DECISION_BAR`` below controls how many bars are actually
     consumed (bars beyond ``decision_bar`` are padded with 0.0).
   - Day-level indicators (58) computed from prior day's close (shifted by 1 to prevent leakage),
-    including technical indicators and Ricequant 3rd-party margin/capital flow/northbound quota.
+    including technical indicators and option-derived features.
   - Yesterday's features (22) representing the full-day and early-day properties of day t-1.
 
 Primary target: ``trade_return`` = log(close[EXIT_BAR] / open[decision_bar+1])
@@ -93,15 +93,6 @@ BASE_DAY_FEATURES = [
     "vol_pk20", "vol_gk10", "vol_gk20",
     # New volume ratio (2)
     "volume_sma_ratio", "volume_sma_ratio_long",
-    # New 3rd party margin (10)
-    "margin_balance", "buy_on_margin_value", "margin_repayment", "short_balance",
-    "short_balance_quantity", "short_sell_quantity", "short_repayment_quantity",
-    "total_balance", "margin_net_buy", "margin_short_ratio",
-    # New 3rd party cap flow (6)
-    "capital_buy_volume", "capital_buy_value", "capital_sell_volume", "capital_sell_value",
-    "capital_net_value", "capital_net_ratio",
-    # New 3rd party northbound (3)
-    "northbound_buy", "northbound_sell", "northbound_net",
     # New Option Derived Features (8)
     "iv", "iv_vol_ratio", "vix", "vix_vol_ratio", "vix_iv_spread", "vix_iv_ratio",
     "iv_diff_1d", "vix_diff_1d",
@@ -110,9 +101,7 @@ BASE_DAY_FEATURES = [
     "yesterday_limit_down_touch", "growth_momentum_ratio", "high_beta_vol_ratio", "retail_turnover_acceleration",
     "vix_skew_proxy", "iv_term_structure", "vix_rolling_percentile_60d", "iv_corridor_width",
     "yesterday_vix_early_drift", "vix_realized_spread", "iv_acceleration_1d", "option_volume_pc_ratio",
-    "option_oi_growth", "iv_envelope_deviation", "northbound_net_accel", "margin_lever_ratio",
-    "capital_net_accel", "northbound_volume_share", "yesterday_northbound_net_ratio", "margin_buy_repayment_spread",
-    "short_sell_cover_spread", "northbound_momentum_5d", "margin_extreme_rank_252d", "capital_large_order_ratio",
+    "option_oi_growth", "iv_envelope_deviation",
     "demark_setup_count_day", "consecutive_inside_bars_3d", "outside_bar_reversal_day", "wavetrend_osc_day",
     "wavetrend_cross_day", "keltner_squeeze_width", "stoch_rsi_divergence", "yesterday_wavetrend_osc",
     "yesterday_stoch_rsi_cross", "cvd_divergence_day", "yesterday_illiquidity_amihud", "turtle_channel_proximity_day",
@@ -207,89 +196,10 @@ DECISION_BAR = {
 
 
 # ============================================================
-# Caching helpers for rqdatac
-# ============================================================
-def get_cached_margin_data(order_book_ids, start_date, end_date) -> pd.DataFrame:
-    cache_path = DATA_DIR / "securities_margin.parquet"
-    if cache_path.exists():
-        try:
-            return pd.read_parquet(cache_path)
-        except Exception as e:
-            print(f"    [WARN] Failed to read margin cache: {e}")
-            
-    print("    Downloading securities margin from Ricequant...")
-    import rqdatac
-    if not rqdatac.initialized():
-        rqdatac.init()
-    df_list = []
-    for obid in order_book_ids:
-        try:
-            df = rqdatac.get_securities_margin(obid, start_date=start_date, end_date=end_date)
-            if df is not None and not df.empty:
-                df_list.append(df)
-        except Exception as e:
-            print(f"      [WARN] get_securities_margin failed for {obid}: {e}")
-    if df_list:
-        full_df = pd.concat(df_list)
-        full_df.to_parquet(cache_path)
-        return full_df
-    return pd.DataFrame()
-
-
-def get_cached_capital_flow(order_book_ids, start_date, end_date) -> pd.DataFrame:
-    cache_path = DATA_DIR / "capital_flow.parquet"
-    if cache_path.exists():
-        try:
-            return pd.read_parquet(cache_path)
-        except Exception as e:
-            print(f"    [WARN] Failed to read capital flow cache: {e}")
-            
-    print("    Downloading capital flow from Ricequant...")
-    import rqdatac
-    if not rqdatac.initialized():
-        rqdatac.init()
-    df_list = []
-    for obid in order_book_ids:
-        try:
-            df = rqdatac.get_capital_flow(obid, start_date=start_date, end_date=end_date)
-            if df is not None and not df.empty:
-                df_list.append(df)
-        except Exception as e:
-            print(f"      [WARN] get_capital_flow failed for {obid}: {e}")
-    if df_list:
-        full_df = pd.concat(df_list)
-        full_df.to_parquet(cache_path)
-        return full_df
-    return pd.DataFrame()
-
-
-def get_cached_stock_connect_quota(start_date, end_date) -> pd.DataFrame:
-    cache_path = DATA_DIR / "stock_connect_quota.parquet"
-    if cache_path.exists():
-        try:
-            return pd.read_parquet(cache_path)
-        except Exception as e:
-            print(f"    [WARN] Failed to read stock connect quota cache: {e}")
-            
-    print("    Downloading stock connect quota from Ricequant...")
-    import rqdatac
-    if not rqdatac.initialized():
-        rqdatac.init()
-    try:
-        df = rqdatac.get_stock_connect_quota(start_date=start_date, end_date=end_date)
-        if df is not None and not df.empty:
-            df.to_parquet(cache_path)
-            return df
-    except Exception as e:
-        print(f"    [WARN] get_stock_connect_quota failed: {e}")
-    return pd.DataFrame()
-
-
-# ============================================================
 # Day-level indicators (computed on full history, then shifted by 1)
 # ============================================================
-def compute_daylevel_indicators(df_1d: pd.DataFrame, margin_cache: pd.DataFrame, cap_flow_cache: pd.DataFrame, quota_cache: pd.DataFrame) -> pd.DataFrame:
-    """Compute technical and 3rd party indicators on daily close_adj, shift by 1 to avoid look-ahead."""
+def compute_daylevel_indicators(df_1d: pd.DataFrame) -> pd.DataFrame:
+    """Compute technical indicators on daily close_adj, shift by 1 to avoid look-ahead."""
     df = df_1d.sort_values("date").reset_index(drop=True).copy()
     px = df["close_adj"]
 
@@ -400,83 +310,9 @@ def compute_daylevel_indicators(df_1d: pd.DataFrame, margin_cache: pd.DataFrame,
     df["volume_sma_ratio"] = df["volume"] / df["volume"].rolling(20).mean()
     df["volume_sma_ratio_long"] = df["volume"].rolling(5).mean() / df["volume"].rolling(60).mean()
 
-    # 3) Ricequant 3rd Party Indicators from Caches
+    # 3) Prepare date column
     order_book_id = df["order_book_id"].iloc[0]
     df["date"] = pd.to_datetime(df["date"])
-
-    # Map to ETF order book id for querying cached 3rd party datasets
-    etf_id_map = {
-        "000016.XSHG": "510050.XSHG",
-        "000300.XSHG": "510300.XSHG",
-        "000905.XSHG": "510500.XSHG",
-        "000688.XSHG": "588000.XSHG",
-        "399006.XSHE": "159915.XSHE",
-        "510050.XSHG": "510050.XSHG",
-        "510300.XSHG": "510300.XSHG",
-        "510500.XSHG": "510500.XSHG",
-        "588000.XSHG": "588000.XSHG",
-        "159915.XSHE": "159915.XSHE"
-    }
-    etf_obid = etf_id_map.get(order_book_id, order_book_id)
-
-    # Securities Margin
-    if margin_cache is not None and not margin_cache.empty:
-        try:
-            margin = margin_cache.reset_index()
-            margin["date"] = pd.to_datetime(margin["date"])
-            etf_margin = margin[margin["order_book_id"] == etf_obid].copy()
-            if not etf_margin.empty:
-                etf_margin = etf_margin.set_index("date").drop(columns=["order_book_id"], errors="ignore")
-                etf_margin = etf_margin.rename(columns={
-                    "short_sell_quantity": "short_sell_quantity",
-                    "short_repayment_quantity": "short_repayment_quantity",
-                    "short_balance_quantity": "short_balance_quantity"
-                })
-                etf_margin["margin_net_buy"] = etf_margin["buy_on_margin_value"] - etf_margin["margin_repayment"]
-                etf_margin["margin_short_ratio"] = etf_margin["margin_balance"] / (etf_margin["short_balance"] + 1e-8)
-                margin_cols = [c for c in etf_margin.columns if c in DAY_FEATURES]
-                df = df.merge(etf_margin[margin_cols], on="date", how="left")
-        except Exception as e:
-            print(f"    [WARN] Failed to merge margin cache: {e}")
-
-    # Active Capital Flow
-    if cap_flow_cache is not None and not cap_flow_cache.empty:
-        try:
-            cap_flow = cap_flow_cache.reset_index()
-            cap_flow["date"] = pd.to_datetime(cap_flow["date"])
-            etf_cap = cap_flow[cap_flow["order_book_id"] == etf_obid].copy()
-            if not etf_cap.empty:
-                etf_cap = etf_cap.set_index("date").drop(columns=["order_book_id"], errors="ignore")
-                etf_cap = etf_cap.rename(columns={
-                    "buy_volume": "capital_buy_volume",
-                    "buy_value": "capital_buy_value",
-                    "sell_volume": "capital_sell_volume",
-                    "sell_value": "capital_sell_value"
-                })
-                etf_cap["capital_net_value"] = etf_cap["capital_buy_value"] - etf_cap["capital_sell_value"]
-                etf_cap["capital_net_ratio"] = (etf_cap["capital_buy_value"] - etf_cap["capital_sell_value"]) / (etf_cap["capital_buy_value"] + etf_cap["capital_sell_value"] + 1e-8)
-                cap_cols = [c for c in etf_cap.columns if c in DAY_FEATURES]
-                df = df.merge(etf_cap[cap_cols], on="date", how="left")
-        except Exception as e:
-            print(f"    [WARN] Failed to merge capital flow cache: {e}")
-
-    # Market-Wide Northbound Flow
-    if quota_cache is not None and not quota_cache.empty:
-        try:
-            quota = quota_cache.reset_index()
-            quota["datetime"] = pd.to_datetime(quota["datetime"])
-            nb_quota = quota[quota["connect"].isin(["hk_to_sh", "hk_to_sz"])]
-            nb_grouped = nb_quota.groupby("datetime")[["buy_turnover", "sell_turnover"]].sum()
-            nb_grouped.index.name = "date"
-            nb_grouped["northbound_net"] = nb_grouped["buy_turnover"] - nb_grouped["sell_turnover"]
-            nb_grouped = nb_grouped.rename(columns={
-                "buy_turnover": "northbound_buy",
-                "sell_turnover": "northbound_sell"
-            })
-            nb_cols = [c for c in nb_grouped.columns if c in DAY_FEATURES]
-            df = df.merge(nb_grouped[nb_cols], on="date", how="left")
-        except Exception as e:
-            print(f"    [WARN] Failed to merge northbound cache: {e}")
 
     # 4) Option Derived Features
     order_book_id = df["order_book_id"].iloc[0]
@@ -690,16 +526,6 @@ def compute_daylevel_indicators(df_1d: pd.DataFrame, margin_cache: pd.DataFrame,
     df["iv_envelope_deviation"] = (df["iv"] - iv_sma20) / (iv_sma20 + 1e-8)
     
     df["yesterday_vix_early_drift"] = df["vix_diff_1d"]
-    df["northbound_net_accel"] = df["northbound_net"].diff(1) / (df["volume"] + 1e-8)
-    df["margin_lever_ratio"] = df["margin_balance"] / (df["short_balance"] + 1e-8)
-    df["capital_net_accel"] = df["capital_net_ratio"].diff(1)
-    df["northbound_volume_share"] = (df["northbound_buy"] + df["northbound_sell"]) / (df["volume"] + 1e-8)
-    df["yesterday_northbound_net_ratio"] = df["northbound_net"] / (df["volume"] + 1e-8)
-    df["margin_buy_repayment_spread"] = (df["buy_on_margin_value"] - df["margin_repayment"]) / (df["total_balance"] + 1e-8)
-    df["short_sell_cover_spread"] = (df["short_sell_quantity"] - df["short_repayment_quantity"]) / (df["short_balance_quantity"] + 1e-8)
-    df["northbound_momentum_5d"] = df["northbound_net"].rolling(5).sum() / (df["volume"].rolling(5).mean() + 1e-8)
-    df["margin_extreme_rank_252d"] = df["margin_balance"].rolling(252).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1] if len(x) > 0 else np.nan, raw=True)
-    df["capital_large_order_ratio"] = (df["capital_buy_volume"] - df["capital_sell_volume"]) / (df["capital_buy_volume"] + df["capital_sell_volume"] + 1e-8)
     
     # TD Sequential Setup Count
     consec_buy = (df["close_adj"] < df["close_adj"].shift(4)).astype(int)
@@ -1169,19 +995,13 @@ def build_features_for_etf(etf_name: str, save: bool = True, early: bool = False
     df_etf_5m["date"] = df_etf_5m["datetime"].dt.normalize()
     df_etf_5m = df_etf_5m.sort_values(["date", "datetime"]).reset_index(drop=True)
 
-    # ── Fetch/Load caches once for all ETFs ──
-    all_etf_ids = ["510300.XSHG", "510050.XSHG", "510500.XSHG", "588000.XSHG", "159915.XSHE"]
-    margin_df = get_cached_margin_data(all_etf_ids, "2010-01-01", "2026-06-19")
-    cap_df = get_cached_capital_flow(all_etf_ids, "2010-01-01", "2026-06-19")
-    quota_df = get_cached_stock_connect_quota("2010-01-01", "2026-06-19")
-
     # Add adjusted columns to daily Index data for compatibility with compute_daylevel_indicators
     for col in ["open", "high", "low", "close"]:
         if f"{col}_adj" not in df_idx_1d.columns:
             df_idx_1d[f"{col}_adj"] = df_idx_1d[col]
 
     # ── Day-level indicators (shifted to prior day) ──
-    daylevel = compute_daylevel_indicators(df_idx_1d, margin_df, cap_df, quota_df)
+    daylevel = compute_daylevel_indicators(df_idx_1d)
     daylevel["date"] = pd.to_datetime(daylevel["date"])
     daylevel = daylevel.set_index("date").sort_index()
     daylevel_dict = daylevel.to_dict(orient="index")

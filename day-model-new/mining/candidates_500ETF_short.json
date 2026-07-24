@@ -432,243 +432,435 @@
     }
   },
   {
-    "feature_name": "combo_min__short_balance__volume_trend_intraday",
+    "feature_name": "combo_min__failed_breakout_reversal_early__net_volume_flow",
     "recipe": {
       "op": "min",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "net_volume_flow"
     }
   },
   {
-    "feature_name": "combo_max__short_balance__volume_trend_intraday",
+    "feature_name": "combo_max__failed_breakout_reversal_early__net_volume_flow",
     "recipe": {
       "op": "max",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "net_volume_flow"
     }
   },
   {
-    "feature_name": "combo_diff__short_balance__volume_trend_intraday",
+    "feature_name": "combo_diff__failed_breakout_reversal_early__net_volume_flow",
     "recipe": {
       "op": "diff",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "net_volume_flow"
     }
   },
   {
-    "feature_name": "combo_mean__short_balance__volume_trend_intraday",
+    "feature_name": "combo_mean__failed_breakout_reversal_early__net_volume_flow",
     "recipe": {
       "op": "mean",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "net_volume_flow"
     }
   },
   {
-    "feature_name": "combo_product__short_balance__volume_trend_intraday",
+    "feature_name": "combo_product__failed_breakout_reversal_early__net_volume_flow",
     "recipe": {
       "op": "product",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "net_volume_flow"
     }
   },
   {
-    "feature_name": "combo_abs_diff__short_balance__volume_trend_intraday",
+    "feature_name": "combo_abs_diff__failed_breakout_reversal_early__net_volume_flow",
     "recipe": {
       "op": "abs_diff",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "net_volume_flow"
     }
   },
   {
-    "feature_name": "combo_rank_min__short_balance__volume_trend_intraday",
+    "feature_name": "combo_rank_min__failed_breakout_reversal_early__net_volume_flow",
     "recipe": {
       "op": "rank_min",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "net_volume_flow"
     }
   },
   {
-    "feature_name": "combo_rank_max__short_balance__volume_trend_intraday",
+    "feature_name": "combo_rank_max__failed_breakout_reversal_early__net_volume_flow",
     "recipe": {
       "op": "rank_max",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "net_volume_flow"
     }
   },
   {
-    "feature_name": "combo_clamp_diff__short_balance__volume_trend_intraday",
+    "feature_name": "combo_clamp_diff__failed_breakout_reversal_early__net_volume_flow",
     "recipe": {
       "op": "clamp_diff",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "net_volume_flow"
     }
   },
   {
-    "feature_name": "combo_z_sum__short_balance__volume_trend_intraday",
+    "feature_name": "combo_z_sum__failed_breakout_reversal_early__net_volume_flow",
     "recipe": {
       "op": "z_sum",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "net_volume_flow"
     }
   },
   {
-    "feature_name": "combo_z_diff__short_balance__volume_trend_intraday",
+    "feature_name": "combo_z_diff__failed_breakout_reversal_early__net_volume_flow",
     "recipe": {
       "op": "z_diff",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "net_volume_flow"
     }
   },
   {
-    "feature_name": "combo_sig_product__short_balance__volume_trend_intraday",
+    "feature_name": "combo_sig_product__failed_breakout_reversal_early__net_volume_flow",
     "recipe": {
       "op": "sig_product",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "net_volume_flow"
     }
   },
   {
-    "feature_name": "combo_rel_diff__short_balance__volume_trend_intraday",
+    "feature_name": "combo_rel_diff__failed_breakout_reversal_early__net_volume_flow",
     "recipe": {
       "op": "rel_diff",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "net_volume_flow"
     }
   },
   {
-    "feature_name": "combo_ratio__short_balance__volume_trend_intraday",
+    "feature_name": "combo_ratio__failed_breakout_reversal_early__net_volume_flow",
     "recipe": {
       "op": "ratio",
-      "feature_a": "short_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "net_volume_flow"
     }
   },
   {
-    "feature_name": "combo_ratio__volume_trend_intraday__short_balance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "volume_trend_intraday",
-      "feature_b": "short_balance"
-    }
-  },
-  {
-    "feature_name": "combo_min__total_balance__volume_trend_intraday",
+    "feature_name": "combo_min__failed_breakout_reversal_early__opening_auction_imbalance",
     "recipe": {
       "op": "min",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
-    "feature_name": "combo_max__total_balance__volume_trend_intraday",
+    "feature_name": "combo_max__failed_breakout_reversal_early__opening_auction_imbalance",
     "recipe": {
       "op": "max",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
-    "feature_name": "combo_diff__total_balance__volume_trend_intraday",
+    "feature_name": "combo_diff__failed_breakout_reversal_early__opening_auction_imbalance",
     "recipe": {
       "op": "diff",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
-    "feature_name": "combo_mean__total_balance__volume_trend_intraday",
+    "feature_name": "combo_mean__failed_breakout_reversal_early__opening_auction_imbalance",
     "recipe": {
       "op": "mean",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
-    "feature_name": "combo_product__total_balance__volume_trend_intraday",
+    "feature_name": "combo_product__failed_breakout_reversal_early__opening_auction_imbalance",
     "recipe": {
       "op": "product",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
-    "feature_name": "combo_abs_diff__total_balance__volume_trend_intraday",
+    "feature_name": "combo_abs_diff__failed_breakout_reversal_early__opening_auction_imbalance",
     "recipe": {
       "op": "abs_diff",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
-    "feature_name": "combo_rank_min__total_balance__volume_trend_intraday",
+    "feature_name": "combo_rank_min__failed_breakout_reversal_early__opening_auction_imbalance",
     "recipe": {
       "op": "rank_min",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
-    "feature_name": "combo_rank_max__total_balance__volume_trend_intraday",
+    "feature_name": "combo_rank_max__failed_breakout_reversal_early__opening_auction_imbalance",
     "recipe": {
       "op": "rank_max",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
-    "feature_name": "combo_clamp_diff__total_balance__volume_trend_intraday",
+    "feature_name": "combo_clamp_diff__failed_breakout_reversal_early__opening_auction_imbalance",
     "recipe": {
       "op": "clamp_diff",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
-    "feature_name": "combo_z_sum__total_balance__volume_trend_intraday",
+    "feature_name": "combo_z_sum__failed_breakout_reversal_early__opening_auction_imbalance",
     "recipe": {
       "op": "z_sum",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
-    "feature_name": "combo_z_diff__total_balance__volume_trend_intraday",
+    "feature_name": "combo_z_diff__failed_breakout_reversal_early__opening_auction_imbalance",
     "recipe": {
       "op": "z_diff",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
-    "feature_name": "combo_sig_product__total_balance__volume_trend_intraday",
+    "feature_name": "combo_sig_product__failed_breakout_reversal_early__opening_auction_imbalance",
     "recipe": {
       "op": "sig_product",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
-    "feature_name": "combo_rel_diff__total_balance__volume_trend_intraday",
+    "feature_name": "combo_rel_diff__failed_breakout_reversal_early__opening_auction_imbalance",
     "recipe": {
       "op": "rel_diff",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
-    "feature_name": "combo_ratio__total_balance__volume_trend_intraday",
+    "feature_name": "combo_ratio__failed_breakout_reversal_early__opening_auction_imbalance",
     "recipe": {
       "op": "ratio",
-      "feature_a": "total_balance",
-      "feature_b": "volume_trend_intraday"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
-    "feature_name": "combo_ratio__volume_trend_intraday__total_balance",
+    "feature_name": "combo_min__failed_breakout_reversal_early__early_late_momentum_divergence",
     "recipe": {
-      "op": "ratio",
-      "feature_a": "volume_trend_intraday",
-      "feature_b": "total_balance"
+      "op": "min",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_max__failed_breakout_reversal_early__early_late_momentum_divergence",
+    "recipe": {
+      "op": "max",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_diff__failed_breakout_reversal_early__early_late_momentum_divergence",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_mean__failed_breakout_reversal_early__early_late_momentum_divergence",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_product__failed_breakout_reversal_early__early_late_momentum_divergence",
+    "recipe": {
+      "op": "product",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__failed_breakout_reversal_early__early_late_momentum_divergence",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__failed_breakout_reversal_early__early_late_momentum_divergence",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__failed_breakout_reversal_early__early_late_momentum_divergence",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__failed_breakout_reversal_early__early_late_momentum_divergence",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__failed_breakout_reversal_early__early_late_momentum_divergence",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__failed_breakout_reversal_early__early_late_momentum_divergence",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__failed_breakout_reversal_early__early_late_momentum_divergence",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__failed_breakout_reversal_early__early_late_momentum_divergence",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_min__failed_breakout_reversal_early__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "min",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_max__failed_breakout_reversal_early__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "max",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_diff__failed_breakout_reversal_early__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_mean__failed_breakout_reversal_early__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_product__failed_breakout_reversal_early__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "product",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__failed_breakout_reversal_early__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__failed_breakout_reversal_early__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__failed_breakout_reversal_early__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__failed_breakout_reversal_early__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__failed_breakout_reversal_early__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__failed_breakout_reversal_early__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__failed_breakout_reversal_early__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__failed_breakout_reversal_early__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "double_bottom_bull_flag_early"
     }
   },
   {
@@ -896,6 +1088,110 @@
     }
   },
   {
+    "feature_name": "combo_min__early_late_momentum_divergence__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "min",
+      "feature_a": "early_late_momentum_divergence",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_max__early_late_momentum_divergence__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "max",
+      "feature_a": "early_late_momentum_divergence",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_diff__early_late_momentum_divergence__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "early_late_momentum_divergence",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_mean__early_late_momentum_divergence__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "early_late_momentum_divergence",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_product__early_late_momentum_divergence__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "product",
+      "feature_a": "early_late_momentum_divergence",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__early_late_momentum_divergence__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "early_late_momentum_divergence",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__early_late_momentum_divergence__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "early_late_momentum_divergence",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__early_late_momentum_divergence__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "early_late_momentum_divergence",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__early_late_momentum_divergence__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "early_late_momentum_divergence",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__early_late_momentum_divergence__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "early_late_momentum_divergence",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__early_late_momentum_divergence__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "early_late_momentum_divergence",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__early_late_momentum_divergence__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "early_late_momentum_divergence",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__early_late_momentum_divergence__double_bottom_bull_flag_early",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "early_late_momentum_divergence",
+      "feature_b": "double_bottom_bull_flag_early"
+    }
+  },
+  {
     "feature_name": "combo_ifelse__gap_pct__rbreaker_sell_setup_proximity_early__rsi5",
     "recipe": {
       "op": "ifelse",
@@ -905,21 +1201,12 @@
     }
   },
   {
-    "feature_name": "combo_ifelse__gap_pct__rbreaker_sell_setup_proximity_early__short_balance",
+    "feature_name": "combo_ifelse__gap_pct__rbreaker_sell_setup_proximity_early__failed_breakout_reversal_early",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
       "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "short_balance"
-    }
-  },
-  {
-    "feature_name": "combo_ifelse__gap_pct__rbreaker_sell_setup_proximity_early__total_balance",
-    "recipe": {
-      "op": "ifelse",
-      "feature_cond": "gap_pct",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "total_balance"
+      "feature_b": "failed_breakout_reversal_early"
     }
   },
   {
@@ -968,21 +1255,30 @@
     }
   },
   {
-    "feature_name": "combo_ifelse__gap_pct__rsi5__short_balance",
+    "feature_name": "combo_ifelse__gap_pct__rbreaker_sell_setup_proximity_early__sma100_dist",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
-      "feature_a": "rsi5",
-      "feature_b": "short_balance"
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "sma100_dist"
     }
   },
   {
-    "feature_name": "combo_ifelse__gap_pct__rsi5__total_balance",
+    "feature_name": "combo_ifelse__gap_pct__rbreaker_sell_setup_proximity_early__early_late_momentum_divergence",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__rsi5__failed_breakout_reversal_early",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
       "feature_a": "rsi5",
-      "feature_b": "total_balance"
+      "feature_b": "failed_breakout_reversal_early"
     }
   },
   {
@@ -1031,102 +1327,84 @@
     }
   },
   {
-    "feature_name": "combo_ifelse__gap_pct__short_balance__total_balance",
+    "feature_name": "combo_ifelse__gap_pct__rsi5__sma100_dist",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
-      "feature_a": "short_balance",
-      "feature_b": "total_balance"
+      "feature_a": "rsi5",
+      "feature_b": "sma100_dist"
     }
   },
   {
-    "feature_name": "combo_ifelse__gap_pct__short_balance__yesterday_early_vwap_dev",
+    "feature_name": "combo_ifelse__gap_pct__rsi5__early_late_momentum_divergence",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
-      "feature_a": "short_balance",
+      "feature_a": "rsi5",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__failed_breakout_reversal_early__yesterday_early_vwap_dev",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "failed_breakout_reversal_early",
       "feature_b": "yesterday_early_vwap_dev"
     }
   },
   {
-    "feature_name": "combo_ifelse__gap_pct__short_balance__body_to_range_ratio",
+    "feature_name": "combo_ifelse__gap_pct__failed_breakout_reversal_early__body_to_range_ratio",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
-      "feature_a": "short_balance",
+      "feature_a": "failed_breakout_reversal_early",
       "feature_b": "body_to_range_ratio"
     }
   },
   {
-    "feature_name": "combo_ifelse__gap_pct__short_balance__net_volume_flow",
+    "feature_name": "combo_ifelse__gap_pct__failed_breakout_reversal_early__net_volume_flow",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
-      "feature_a": "short_balance",
+      "feature_a": "failed_breakout_reversal_early",
       "feature_b": "net_volume_flow"
     }
   },
   {
-    "feature_name": "combo_ifelse__gap_pct__short_balance__opening_auction_imbalance",
+    "feature_name": "combo_ifelse__gap_pct__failed_breakout_reversal_early__opening_auction_imbalance",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
-      "feature_a": "short_balance",
+      "feature_a": "failed_breakout_reversal_early",
       "feature_b": "opening_auction_imbalance"
     }
   },
   {
-    "feature_name": "combo_ifelse__gap_pct__short_balance__yesterday_day_kurtosis",
+    "feature_name": "combo_ifelse__gap_pct__failed_breakout_reversal_early__yesterday_day_kurtosis",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
-      "feature_a": "short_balance",
+      "feature_a": "failed_breakout_reversal_early",
       "feature_b": "yesterday_day_kurtosis"
     }
   },
   {
-    "feature_name": "combo_ifelse__gap_pct__total_balance__yesterday_early_vwap_dev",
+    "feature_name": "combo_ifelse__gap_pct__failed_breakout_reversal_early__sma100_dist",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
-      "feature_a": "total_balance",
-      "feature_b": "yesterday_early_vwap_dev"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "sma100_dist"
     }
   },
   {
-    "feature_name": "combo_ifelse__gap_pct__total_balance__body_to_range_ratio",
+    "feature_name": "combo_ifelse__gap_pct__failed_breakout_reversal_early__early_late_momentum_divergence",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
-      "feature_a": "total_balance",
-      "feature_b": "body_to_range_ratio"
-    }
-  },
-  {
-    "feature_name": "combo_ifelse__gap_pct__total_balance__net_volume_flow",
-    "recipe": {
-      "op": "ifelse",
-      "feature_cond": "gap_pct",
-      "feature_a": "total_balance",
-      "feature_b": "net_volume_flow"
-    }
-  },
-  {
-    "feature_name": "combo_ifelse__gap_pct__total_balance__opening_auction_imbalance",
-    "recipe": {
-      "op": "ifelse",
-      "feature_cond": "gap_pct",
-      "feature_a": "total_balance",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_ifelse__gap_pct__total_balance__yesterday_day_kurtosis",
-    "recipe": {
-      "op": "ifelse",
-      "feature_cond": "gap_pct",
-      "feature_a": "total_balance",
-      "feature_b": "yesterday_day_kurtosis"
+      "feature_a": "failed_breakout_reversal_early",
+      "feature_b": "early_late_momentum_divergence"
     }
   },
   {
@@ -1166,6 +1444,24 @@
     }
   },
   {
+    "feature_name": "combo_ifelse__gap_pct__yesterday_early_vwap_dev__sma100_dist",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "yesterday_early_vwap_dev",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__yesterday_early_vwap_dev__early_late_momentum_divergence",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "yesterday_early_vwap_dev",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
     "feature_name": "combo_ifelse__gap_pct__body_to_range_ratio__net_volume_flow",
     "recipe": {
       "op": "ifelse",
@@ -1193,6 +1489,24 @@
     }
   },
   {
+    "feature_name": "combo_ifelse__gap_pct__body_to_range_ratio__sma100_dist",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "body_to_range_ratio",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__body_to_range_ratio__early_late_momentum_divergence",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "body_to_range_ratio",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
     "feature_name": "combo_ifelse__gap_pct__net_volume_flow__opening_auction_imbalance",
     "recipe": {
       "op": "ifelse",
@@ -1211,12 +1525,75 @@
     }
   },
   {
+    "feature_name": "combo_ifelse__gap_pct__net_volume_flow__sma100_dist",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "net_volume_flow",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__net_volume_flow__early_late_momentum_divergence",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "net_volume_flow",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
     "feature_name": "combo_ifelse__gap_pct__opening_auction_imbalance__yesterday_day_kurtosis",
     "recipe": {
       "op": "ifelse",
       "feature_cond": "gap_pct",
       "feature_a": "opening_auction_imbalance",
       "feature_b": "yesterday_day_kurtosis"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__opening_auction_imbalance__sma100_dist",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__opening_auction_imbalance__early_late_momentum_divergence",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__yesterday_day_kurtosis__sma100_dist",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "yesterday_day_kurtosis",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__yesterday_day_kurtosis__early_late_momentum_divergence",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "yesterday_day_kurtosis",
+      "feature_b": "early_late_momentum_divergence"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__gap_pct__sma100_dist__early_late_momentum_divergence",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "gap_pct",
+      "feature_a": "sma100_dist",
+      "feature_b": "early_late_momentum_divergence"
     }
   }
 ]

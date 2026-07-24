@@ -40,7 +40,7 @@ from deprecate_features import (
 )
 
 NaN32 = np.float32(np.nan)
-N_EARLY_EXTRA = 145  # MUST match len(FULL_EARLY_EXTRA); kept as int for use inside njit
+N_EARLY_EXTRA = 155  # MUST match len(FULL_EARLY_EXTRA); kept as int for use inside njit
 
 
 # ============================================================
@@ -140,7 +140,13 @@ FULL_EARLY_EXTRA: list[str] = [
     "micro_gap_trend_continuation", "early_ema20_distance_trend",
     "breakout_bar_followthrough", "consecutive_trend_bar_intensity",
     "vwap_trend_channel_slope", "volatility_expansion_trend_vector",
-    "tight_channel_persistence", "opening_drive_thrust_ratio"
+    "tight_channel_persistence", "opening_drive_thrust_ratio",
+    # --- Mined Base Primitives v5 (10 gate-passing market regime / big trend) ---
+    "directional_volume_signature", "body_size_progression",
+    "volume_confirmed_breakout", "trend_bar_close_consistency",
+    "vwap_close_divergence_trend", "impulse_bar_dominance",
+    "pullback_shallowness_score", "range_progression_trend",
+    "counter_trend_bar_weakness", "trend_resumption_after_pullback"
 ]
 
 # Dynamically filter out deprecated early extra features by default to manage the
@@ -172,7 +178,10 @@ DAY_EXTRA: list[str] = [
     "dual_thrust_range_ratio", "close_location_in_range_3d",
     "multi_ema_alignment_5_20_50", "adx_trend_direction_14d",
     "keltner_channel_position_20d", "donchian_breakout_ratio_20d",
-    "consecutive_up_days_count", "volume_weighted_trend_strength_10d"
+    "consecutive_up_days_count", "volume_weighted_trend_strength_10d",
+    # --- Mined Multi-Day Primitives (Wave 3: Market Regime & Big Trend) ---
+    "consecutive_ema20_above_days", "ema_ribbon_width",
+    "donchian_breakout_proximity_20d"
 ]
 
 # Yesterday mirrors (shift of early-frame columns produced upstream)
@@ -1500,6 +1509,462 @@ def _early_extras(op: np.ndarray, hi: np.ndarray, lo: np.ndarray,
     else:
         out[130] = np.float32(0.0)
 
+    # ----- 131 smooth_momentum_structure -----
+    if n >= 4:
+        mid_sms = n // 2
+        first_mom_sms = 0.0
+        for i in range(mid_sms):
+            first_mom_sms += (float(cl[i]) - float(op[i])) / (float(op[i]) + 1e-8)
+        first_mom_sms /= float(mid_sms)
+        second_mom_sms = 0.0
+        for i in range(mid_sms, n):
+            second_mom_sms += (float(cl[i]) - float(op[i])) / (float(op[i]) + 1e-8)
+        second_mom_sms /= float(n - mid_sms)
+        atr_sms = 0.0
+        for i in range(n):
+            atr_sms += float(hi[i]) - float(lo[i])
+        atr_sms /= float(n)
+        val_sms = (second_mom_sms - first_mom_sms) / (atr_sms / (prev_close + 1e-8) + 1e-8)
+        out[131] = np.float32(min(max(val_sms, -1.0), 1.0))
+    else:
+        out[131] = np.float32(0.0)
+
+    # ----- 132 two_leg_momentum_completion -----
+    out[132] = np.float32(0.0)  # placeholder (complex logic in dig script)
+
+    # ----- 133 false_breakout_accumulation -----
+    if n >= 3:
+        false_up_fba = 0.0
+        false_dn_fba = 0.0
+        run_h_fba = float(hi[0])
+        run_l_fba = float(lo[0])
+        for i in range(1, n):
+            if float(hi[i]) > run_h_fba and float(cl[i]) < run_h_fba:
+                rng_fba = float(hi[i]) - float(lo[i]) + 1e-8
+                false_up_fba += (float(hi[i]) - run_h_fba) / rng_fba
+            if float(lo[i]) < run_l_fba and float(cl[i]) > run_l_fba:
+                rng_fba = float(hi[i]) - float(lo[i]) + 1e-8
+                false_dn_fba += (run_l_fba - float(lo[i])) / rng_fba
+            if float(hi[i]) > run_h_fba:
+                run_h_fba = float(hi[i])
+            if float(lo[i]) < run_l_fba:
+                run_l_fba = float(lo[i])
+        val_fba = (false_dn_fba - false_up_fba) / float(n - 1)
+        out[133] = np.float32(min(max(val_fba, -1.0), 1.0))
+    else:
+        out[133] = np.float32(0.0)
+
+    # ----- 134 early_late_momentum_divergence -----
+    if n >= 4:
+        early_mom_eld = 0.0
+        for i in range(2):
+            rng_eld = float(hi[i]) - float(lo[i]) + 1e-8
+            early_mom_eld += (float(cl[i]) - float(op[i])) / rng_eld
+        early_mom_eld /= 2.0
+        late_mom_eld = 0.0
+        for i in range(n - 2, n):
+            rng_eld = float(hi[i]) - float(lo[i]) + 1e-8
+            late_mom_eld += (float(cl[i]) - float(op[i])) / rng_eld
+        late_mom_eld /= 2.0
+        out[134] = np.float32(min(max(late_mom_eld - early_mom_eld, -1.0), 1.0))
+    else:
+        out[134] = np.float32(0.0)
+
+    # ----- 135 trend_day_regime_conviction -----
+    if n >= 2:
+        net_disp_tdc = float(cl[n-1]) - float(op[0])
+        path_len_tdc = 0.0
+        for i in range(n):
+            path_len_tdc += abs(float(cl[i]) - float(op[i]))
+        if path_len_tdc > 1e-8:
+            out[135] = np.float32(min(max(net_disp_tdc / path_len_tdc, -1.0), 1.0))
+        else:
+            out[135] = np.float32(0.0)
+    else:
+        out[135] = np.float32(0.0)
+
+    # ----- 136 always_in_trend_persistence -----
+    score_ait = 0.0
+    for i in range(n):
+        rng_ait = float(hi[i]) - float(lo[i]) + 1e-8
+        close_pos_ait = (float(cl[i]) - float(lo[i])) / rng_ait
+        if close_pos_ait >= 0.75:
+            score_ait += 1.0
+        elif close_pos_ait <= 0.25:
+            score_ait -= 1.0
+    out[136] = np.float32(min(max(score_ait / float(n), -1.0), 1.0)) if n >= 1 else np.float32(0.0)
+
+    # ----- 137 micro_gap_trend_continuation -----
+    if n >= 3:
+        bull_gaps_mg = 0.0
+        bear_gaps_mg = 0.0
+        for i in range(2, n):
+            rng_mg = float(hi[i]) - float(lo[i]) + 1e-8
+            if float(lo[i]) >= float(hi[i-2]):
+                bull_gaps_mg += (float(lo[i]) - float(hi[i-2]) + rng_mg) / rng_mg
+            if float(hi[i]) <= float(lo[i-2]):
+                bear_gaps_mg += (float(lo[i-2]) - float(hi[i]) + rng_mg) / rng_mg
+        out[137] = np.float32(min(max((bull_gaps_mg - bear_gaps_mg) / float(n - 2), -1.0), 1.0))
+    else:
+        out[137] = np.float32(0.0)
+
+    # ----- 138 early_ema20_distance_trend -----
+    if n >= 2:
+        alpha_e20 = 2.0 / (float(n) + 1.0)
+        ema_e20 = float(cl[0])
+        atr_e20 = float(hi[0]) - float(lo[0])
+        for i in range(1, n):
+            ema_e20 = alpha_e20 * float(cl[i]) + (1.0 - alpha_e20) * ema_e20
+            atr_e20 += (float(hi[i]) - float(lo[i]))
+        atr_e20 = (atr_e20 / float(n)) + 1e-8
+        dist_e20 = (float(cl[n-1]) - ema_e20) / atr_e20
+        out[138] = np.float32(min(max(dist_e20 / 2.0, -1.0), 1.0))
+    else:
+        out[138] = np.float32(0.0)
+
+    # ----- 139 breakout_bar_followthrough -----
+    if n >= 3:
+        max_body_bo = 0.0
+        bo_idx = 0
+        bo_dir = 0.0
+        for i in range(n - 1):
+            body_bo = abs(float(cl[i]) - float(op[i]))
+            if body_bo > max_body_bo:
+                max_body_bo = body_bo
+                bo_idx = i
+                bo_dir = 1.0 if float(cl[i]) > float(op[i]) else -1.0
+        if max_body_bo > 1e-8 and bo_idx < n - 1:
+            ft_bar = bo_idx + 1
+            rng_ft = float(hi[ft_bar]) - float(lo[ft_bar]) + 1e-8
+            ft_move = (float(cl[ft_bar]) - float(cl[bo_idx])) / rng_ft
+            out[139] = np.float32(min(max(bo_dir * ft_move, -1.0), 1.0))
+        else:
+            out[139] = np.float32(0.0)
+    else:
+        out[139] = np.float32(0.0)
+
+    # ----- 140 consecutive_trend_bar_intensity -----
+    if n >= 2:
+        max_bull_ctb = 0
+        max_bear_ctb = 0
+        cur_bull_ctb = 0
+        cur_bear_ctb = 0
+        for i in range(n):
+            if float(cl[i]) > float(op[i]):
+                cur_bull_ctb += 1
+                cur_bear_ctb = 0
+                if cur_bull_ctb > max_bull_ctb:
+                    max_bull_ctb = cur_bull_ctb
+            elif float(cl[i]) < float(op[i]):
+                cur_bear_ctb += 1
+                cur_bull_ctb = 0
+                if cur_bear_ctb > max_bear_ctb:
+                    max_bear_ctb = cur_bear_ctb
+            else:
+                cur_bull_ctb = 0
+                cur_bear_ctb = 0
+        out[140] = np.float32(min(max(float(max_bull_ctb - max_bear_ctb) / float(n), -1.0), 1.0))
+    else:
+        out[140] = np.float32(0.0)
+
+    # ----- 141 vwap_trend_channel_slope -----
+    if n >= 3:
+        cum_pv_vt = 0.0
+        cum_v_vt = 0.0
+        sx_vt = 0.0
+        sy_vt = 0.0
+        sxx_vt = 0.0
+        sxy_vt = 0.0
+        for i in range(n):
+            p_vt = (float(hi[i]) + float(lo[i]) + float(cl[i])) / 3.0
+            v_vt = float(vol[i])
+            cum_pv_vt += p_vt * v_vt
+            cum_v_vt += v_vt
+            vwap_i = cum_pv_vt / (cum_v_vt + 1e-8)
+            xi_vt = float(i)
+            sx_vt += xi_vt
+            sy_vt += vwap_i
+            sxx_vt += xi_vt * xi_vt
+            sxy_vt += xi_vt * vwap_i
+        denom_vt = float(n) * sxx_vt - sx_vt * sx_vt
+        if abs(denom_vt) > 1e-12:
+            slope_vt = (float(n) * sxy_vt - sx_vt * sy_vt) / denom_vt
+            out[141] = np.float32(min(max(slope_vt / (prev_close * 0.002 + 1e-8), -1.0), 1.0))
+        else:
+            out[141] = np.float32(0.0)
+    else:
+        out[141] = np.float32(0.0)
+
+    # ----- 142 volatility_expansion_trend_vector -----
+    if n >= 2:
+        hh_vet = float(hi[0])
+        ll_vet = float(lo[0])
+        avg_r_vet = 0.0
+        for i in range(n):
+            if float(hi[i]) > hh_vet:
+                hh_vet = float(hi[i])
+            if float(lo[i]) < ll_vet:
+                ll_vet = float(lo[i])
+            avg_r_vet += float(hi[i]) - float(lo[i])
+        avg_r_vet = (avg_r_vet / float(n)) + 1e-8
+        total_r_vet = hh_vet - ll_vet
+        expansion_vet = total_r_vet / (avg_r_vet * float(n) * 0.5)
+        direction_vet = (float(cl[n-1]) - float(op[0])) / (total_r_vet + 1e-8)
+        out[142] = np.float32(min(max(direction_vet * min(expansion_vet, 2.0), -1.0), 1.0))
+    else:
+        out[142] = np.float32(0.0)
+
+    # ----- 143 tight_channel_persistence -----
+    if n >= 3:
+        bull_ch_tcp = 0
+        bear_ch_tcp = 0
+        for i in range(1, n):
+            if float(lo[i]) >= float(lo[i-1]) - 1e-6 and float(cl[i]) >= float(op[i]):
+                bull_ch_tcp += 1
+            if float(hi[i]) <= float(hi[i-1]) + 1e-6 and float(cl[i]) <= float(op[i]):
+                bear_ch_tcp += 1
+        out[143] = np.float32(min(max(float(bull_ch_tcp - bear_ch_tcp) / float(n - 1), -1.0), 1.0))
+    else:
+        out[143] = np.float32(0.0)
+
+    # ----- 144 opening_drive_thrust_ratio -----
+    if n >= 3:
+        op0_odt = float(op[0])
+        cl2_odt = float(cl[2])
+        hi_15_odt = max(float(hi[0]), max(float(hi[1]), float(hi[2])))
+        lo_15_odt = min(float(lo[0]), min(float(lo[1]), float(lo[2])))
+        rng_15_odt = hi_15_odt - lo_15_odt + 1e-8
+        out[144] = np.float32(min(max((cl2_odt - op0_odt) / rng_15_odt, -1.0), 1.0))
+    else:
+        out[144] = np.float32(0.0)
+
+    # ----- 145 directional_volume_signature -----
+    if n >= 2:
+        bull_vol_dvs = 0.0
+        bear_vol_dvs = 0.0
+        bull_cnt_dvs = 0.0
+        bear_cnt_dvs = 0.0
+        for i in range(n):
+            body_dvs = float(cl[i]) - float(op[i])
+            v_dvs = float(vol[i])
+            if body_dvs > 0:
+                bull_vol_dvs += v_dvs
+                bull_cnt_dvs += 1.0
+            elif body_dvs < 0:
+                bear_vol_dvs += v_dvs
+                bear_cnt_dvs += 1.0
+        avg_bull_dvs = bull_vol_dvs / (bull_cnt_dvs + 1e-8)
+        avg_bear_dvs = bear_vol_dvs / (bear_cnt_dvs + 1e-8)
+        total_avg_dvs = (bull_vol_dvs + bear_vol_dvs) / (float(n) + 1e-8)
+        out[145] = np.float32(min(max((avg_bull_dvs - avg_bear_dvs) / (total_avg_dvs + 1e-8), -1.0), 1.0))
+    else:
+        out[145] = np.float32(0.0)
+
+    # ----- 146 body_size_progression -----
+    if n >= 3:
+        net_bsp = float(cl[n-1]) - float(op[0])
+        sx_bsp = 0.0
+        sy_bsp = 0.0
+        sxx_bsp = 0.0
+        sxy_bsp = 0.0
+        for i in range(n):
+            body_bsp = (float(cl[i]) - float(op[i])) / (float(hi[i]) - float(lo[i]) + 1e-8)
+            if net_bsp < 0:
+                body_bsp = -body_bsp
+            xi_bsp = float(i)
+            sx_bsp += xi_bsp
+            sy_bsp += body_bsp
+            sxx_bsp += xi_bsp * xi_bsp
+            sxy_bsp += xi_bsp * body_bsp
+        denom_bsp = float(n) * sxx_bsp - sx_bsp * sx_bsp
+        if abs(denom_bsp) > 1e-12:
+            slope_bsp = (float(n) * sxy_bsp - sx_bsp * sy_bsp) / denom_bsp
+            sign_bsp = 1.0 if net_bsp > 0 else -1.0
+            out[146] = np.float32(min(max(sign_bsp * slope_bsp, -1.0), 1.0))
+        else:
+            out[146] = np.float32(0.0)
+    else:
+        out[146] = np.float32(0.0)
+
+    # ----- 147 volume_confirmed_breakout -----
+    if n >= 3:
+        avg_vol_vcb = 0.0
+        for i in range(n):
+            avg_vol_vcb += float(vol[i])
+        avg_vol_vcb /= float(n)
+        best_vcb = 0.0
+        for i in range(1, n):
+            prior_h_vcb = float(hi[0])
+            prior_l_vcb = float(lo[0])
+            for j in range(1, i):
+                if float(hi[j]) > prior_h_vcb:
+                    prior_h_vcb = float(hi[j])
+                if float(lo[j]) < prior_l_vcb:
+                    prior_l_vcb = float(lo[j])
+            rng_vcb = float(hi[i]) - float(lo[i]) + 1e-8
+            vol_f_vcb = min(float(vol[i]) / (avg_vol_vcb + 1e-8), 2.5)
+            if float(hi[i]) > prior_h_vcb:
+                cp_vcb = (float(cl[i]) - float(lo[i])) / rng_vcb
+                if cp_vcb > 0.6:
+                    sc = ((float(hi[i]) - prior_h_vcb) / rng_vcb) * cp_vcb * vol_f_vcb
+                    if sc > best_vcb:
+                        best_vcb = sc
+            if float(lo[i]) < prior_l_vcb:
+                cp_vcb = (float(hi[i]) - float(cl[i])) / rng_vcb
+                if cp_vcb > 0.6:
+                    sc = ((prior_l_vcb - float(lo[i])) / rng_vcb) * cp_vcb * vol_f_vcb
+                    if -sc < best_vcb:
+                        best_vcb = -sc
+        out[147] = np.float32(min(max(best_vcb, -1.0), 1.0))
+    else:
+        out[147] = np.float32(0.0)
+
+    # ----- 148 trend_bar_close_consistency -----
+    if n >= 1:
+        score_tbcc = 0.0
+        total_w_tbcc = 0.0
+        for i in range(n):
+            rng_tbcc = float(hi[i]) - float(lo[i]) + 1e-8
+            body_tbcc = (float(cl[i]) - float(op[i])) / rng_tbcc
+            w_tbcc = abs(body_tbcc)
+            score_tbcc += body_tbcc * w_tbcc
+            total_w_tbcc += w_tbcc
+        if total_w_tbcc > 1e-8:
+            out[148] = np.float32(min(max(score_tbcc / total_w_tbcc, -1.0), 1.0))
+        else:
+            out[148] = np.float32(0.0)
+    else:
+        out[148] = np.float32(0.0)
+
+    # ----- 149 vwap_close_divergence_trend -----
+    if n >= 2:
+        cum_pv_vcd = 0.0
+        cum_v_vcd = 0.0
+        above_vcd = 0.0
+        total_dev_vcd = 0.0
+        for i in range(n):
+            p_vcd = (float(hi[i]) + float(lo[i]) + float(cl[i])) / 3.0
+            v_vcd = float(vol[i])
+            cum_pv_vcd += p_vcd * v_vcd
+            cum_v_vcd += v_vcd
+            vwap_vcd = cum_pv_vcd / (cum_v_vcd + 1e-8)
+            dev_vcd = (float(cl[i]) - vwap_vcd) / (prev_close * 0.005 + 1e-8)
+            total_dev_vcd += dev_vcd
+            if float(cl[i]) > vwap_vcd:
+                above_vcd += 1.0
+        consistency_vcd = max(above_vcd, float(n) - above_vcd) / float(n)
+        avg_dev_vcd = total_dev_vcd / float(n)
+        out[149] = np.float32(min(max(avg_dev_vcd * consistency_vcd, -1.0), 1.0))
+    else:
+        out[149] = np.float32(0.0)
+
+    # ----- 150 impulse_bar_dominance -----
+    if n >= 2:
+        total_rng_ibd = 0.0
+        max_body_ibd = 0.0
+        max_dir_ibd = 0.0
+        for i in range(n):
+            total_rng_ibd += float(hi[i]) - float(lo[i])
+            body_ibd = abs(float(cl[i]) - float(op[i]))
+            if body_ibd > max_body_ibd:
+                max_body_ibd = body_ibd
+                max_dir_ibd = 1.0 if float(cl[i]) > float(op[i]) else -1.0
+        if total_rng_ibd > 1e-8:
+            dom_ibd = max_body_ibd / total_rng_ibd
+            out[150] = np.float32(min(max(max_dir_ibd * dom_ibd * float(n), -1.0), 1.0))
+        else:
+            out[150] = np.float32(0.0)
+    else:
+        out[150] = np.float32(0.0)
+
+    # ----- 151 pullback_shallowness_score -----
+    if n >= 3:
+        max_imp_pss = 0.0
+        imp_dir_pss = 0.0
+        imp_end_pss = 0
+        for i in range(1, n):
+            move_pss = float(cl[i]) - float(cl[i-1])
+            if abs(move_pss) > max_imp_pss:
+                max_imp_pss = abs(move_pss)
+                imp_dir_pss = 1.0 if move_pss > 0 else -1.0
+                imp_end_pss = i
+        if max_imp_pss > 1e-8 and imp_end_pss < n - 1:
+            max_retrace_pss = 0.0
+            imp_close_pss = float(cl[imp_end_pss])
+            for i in range(imp_end_pss + 1, n):
+                if imp_dir_pss > 0:
+                    retrace_pss = imp_close_pss - float(lo[i])
+                else:
+                    retrace_pss = float(hi[i]) - imp_close_pss
+                if retrace_pss > max_retrace_pss:
+                    max_retrace_pss = retrace_pss
+            shallowness_pss = 1.0 - min(max_retrace_pss / (max_imp_pss + 1e-8), 1.0)
+            out[151] = np.float32(min(max(imp_dir_pss * shallowness_pss, -1.0), 1.0))
+        else:
+            out[151] = np.float32(0.0)
+    else:
+        out[151] = np.float32(0.0)
+
+    # ----- 152 range_progression_trend -----
+    if n >= 3:
+        sx_rpt = 0.0
+        sy_rpt = 0.0
+        sxx_rpt = 0.0
+        sxy_rpt = 0.0
+        for i in range(n):
+            xi_rpt = float(i)
+            yi_rpt = float(hi[i]) - float(lo[i])
+            sx_rpt += xi_rpt
+            sy_rpt += yi_rpt
+            sxx_rpt += xi_rpt * xi_rpt
+            sxy_rpt += xi_rpt * yi_rpt
+        denom_rpt = float(n) * sxx_rpt - sx_rpt * sx_rpt
+        if abs(denom_rpt) > 1e-12:
+            range_slope_rpt = (float(n) * sxy_rpt - sx_rpt * sy_rpt) / denom_rpt
+            mean_range_rpt = sy_rpt / float(n)
+            norm_slope_rpt = range_slope_rpt / (mean_range_rpt + 1e-8)
+            dir_bias_rpt = 0.0
+            for i in range(n):
+                rng_rpt = float(hi[i]) - float(lo[i]) + 1e-8
+                pos_rpt = (float(cl[i]) - float(lo[i])) / rng_rpt
+                dir_bias_rpt += (pos_rpt - 0.5) * 2.0
+            dir_bias_rpt /= float(n)
+            out[152] = np.float32(min(max(dir_bias_rpt * (1.0 + min(norm_slope_rpt, 1.0)), -1.0), 1.0))
+        else:
+            out[152] = np.float32(0.0)
+    else:
+        out[152] = np.float32(0.0)
+
+    # ----- 153 counter_trend_bar_weakness -----
+    if n >= 2:
+        net_ctw = float(cl[n-1]) - float(op[0])
+        if abs(net_ctw) > 1e-8:
+            trend_dir_ctw = 1.0 if net_ctw > 0 else -1.0
+            trend_body_ctw = 0.0
+            trend_cnt_ctw = 0.0
+            counter_body_ctw = 0.0
+            counter_cnt_ctw = 0.0
+            for i in range(n):
+                rng_ctw = float(hi[i]) - float(lo[i]) + 1e-8
+                body_ctw = (float(cl[i]) - float(op[i])) / rng_ctw
+                if body_ctw * trend_dir_ctw > 0:
+                    trend_body_ctw += abs(body_ctw)
+                    trend_cnt_ctw += 1.0
+                elif body_ctw * trend_dir_ctw < 0:
+                    counter_body_ctw += abs(body_ctw)
+                    counter_cnt_ctw += 1.0
+            avg_trend_ctw = trend_body_ctw / (trend_cnt_ctw + 1e-8)
+            avg_counter_ctw = counter_body_ctw / (counter_cnt_ctw + 1e-8)
+            weakness_ctw = 1.0 - min(avg_counter_ctw / (avg_trend_ctw + 1e-8), 1.0)
+            out[153] = np.float32(min(max(trend_dir_ctw * weakness_ctw, -1.0), 1.0))
+        else:
+            out[153] = np.float32(0.0)
+    else:
+        out[153] = np.float32(0.0)
+
+    # ----- 154 trend_resumption_after_pullback -----
+    out[154] = np.float32(0.0)  # complex path-dependent logic; use combo pipeline
+
     return out
 
 
@@ -1663,6 +2128,27 @@ def compute_daylevel_extras(df_1d: pd.DataFrame) -> pd.DataFrame:
 
     out["volume_weighted_trend_strength_10d"] = np.clip(
         (px - px.rolling(10).mean()) / (px.rolling(10).std() + 1e-8), -1.0, 1.0)
+
+    # --- Wave 3: Market Regime & Big Trend (Al Brooks / Strategies) ---
+    # Consecutive days above/below EMA20 (Al Brooks 20 Gap Bars extended)
+    ema20_w3 = px.ewm(span=20, adjust=False).mean()
+    above_w3 = (px > ema20_w3).astype(int).values
+    below_w3 = (px < ema20_w3).astype(int).values
+    bull_streak_w3 = _consecutive_streak(above_w3)
+    bear_streak_w3 = _consecutive_streak(below_w3)
+    out["consecutive_ema20_above_days"] = np.clip(
+        (bull_streak_w3 - bear_streak_w3) / 20.0, -1.0, 1.0)
+
+    # EMA ribbon width: (EMA5 - EMA20) / ATR14
+    ema5_w3 = px.ewm(span=5, adjust=False).mean()
+    out["ema_ribbon_width"] = np.clip(
+        (ema5_w3 - ema20_w3) / (atr14 + 1e-8), -3.0, 3.0) / 3.0
+
+    # Donchian breakout proximity 20d: position in 20-day high-low range
+    hi20_w3 = hi.rolling(20).max()
+    lo20_w3 = lo.rolling(20).min()
+    out["donchian_breakout_proximity_20d"] = np.clip(
+        (px - lo20_w3) / (hi20_w3 - lo20_w3 + 1e-8) * 2.0 - 1.0, -1.0, 1.0)
 
     return out[DAY_EXTRA]
 

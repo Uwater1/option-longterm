@@ -208,110 +208,6 @@
     }
   },
   {
-    "feature_name": "combo_min__donchian_breakout_ratio_20d__limit_up_proximity_day",
-    "recipe": {
-      "op": "min",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_max__donchian_breakout_ratio_20d__limit_up_proximity_day",
-    "recipe": {
-      "op": "max",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_diff__donchian_breakout_ratio_20d__limit_up_proximity_day",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_mean__donchian_breakout_ratio_20d__limit_up_proximity_day",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_product__donchian_breakout_ratio_20d__limit_up_proximity_day",
-    "recipe": {
-      "op": "product",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__donchian_breakout_ratio_20d__limit_up_proximity_day",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__donchian_breakout_ratio_20d__limit_up_proximity_day",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__donchian_breakout_ratio_20d__limit_up_proximity_day",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__donchian_breakout_ratio_20d__limit_up_proximity_day",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__donchian_breakout_ratio_20d__limit_up_proximity_day",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__donchian_breakout_ratio_20d__limit_up_proximity_day",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__donchian_breakout_ratio_20d__limit_up_proximity_day",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__donchian_breakout_ratio_20d__limit_up_proximity_day",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
     "feature_name": "combo_min__donchian_breakout_ratio_20d__yesterday_return",
     "recipe": {
       "op": "min",
@@ -413,6 +309,110 @@
       "op": "rel_diff",
       "feature_a": "donchian_breakout_ratio_20d",
       "feature_b": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_min__donchian_breakout_ratio_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "min",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_max__donchian_breakout_ratio_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "max",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_diff__donchian_breakout_ratio_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_mean__donchian_breakout_ratio_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_product__donchian_breakout_ratio_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "product",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__donchian_breakout_ratio_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__donchian_breakout_ratio_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__donchian_breakout_ratio_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__donchian_breakout_ratio_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__donchian_breakout_ratio_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__donchian_breakout_ratio_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__donchian_breakout_ratio_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__donchian_breakout_ratio_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_up_proximity_day"
     }
   },
   {
@@ -728,6 +728,734 @@
     }
   },
   {
+    "feature_name": "combo_min__donchian_breakout_proximity_20d__limit_down_proximity_early",
+    "recipe": {
+      "op": "min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_max__donchian_breakout_proximity_20d__limit_down_proximity_early",
+    "recipe": {
+      "op": "max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_diff__donchian_breakout_proximity_20d__limit_down_proximity_early",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_mean__donchian_breakout_proximity_20d__limit_down_proximity_early",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_product__donchian_breakout_proximity_20d__limit_down_proximity_early",
+    "recipe": {
+      "op": "product",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__donchian_breakout_proximity_20d__limit_down_proximity_early",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__donchian_breakout_proximity_20d__limit_down_proximity_early",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__donchian_breakout_proximity_20d__limit_down_proximity_early",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__donchian_breakout_proximity_20d__limit_down_proximity_early",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__donchian_breakout_proximity_20d__limit_down_proximity_early",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__donchian_breakout_proximity_20d__limit_down_proximity_early",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__donchian_breakout_proximity_20d__limit_down_proximity_early",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__donchian_breakout_proximity_20d__limit_down_proximity_early",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_min__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_max__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_diff__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_mean__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_product__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "product",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_min__donchian_breakout_proximity_20d__yesterday_return",
+    "recipe": {
+      "op": "min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_max__donchian_breakout_proximity_20d__yesterday_return",
+    "recipe": {
+      "op": "max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_diff__donchian_breakout_proximity_20d__yesterday_return",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_mean__donchian_breakout_proximity_20d__yesterday_return",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_product__donchian_breakout_proximity_20d__yesterday_return",
+    "recipe": {
+      "op": "product",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__donchian_breakout_proximity_20d__yesterday_return",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__donchian_breakout_proximity_20d__yesterday_return",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__donchian_breakout_proximity_20d__yesterday_return",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__donchian_breakout_proximity_20d__yesterday_return",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__donchian_breakout_proximity_20d__yesterday_return",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__donchian_breakout_proximity_20d__yesterday_return",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__donchian_breakout_proximity_20d__yesterday_return",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__donchian_breakout_proximity_20d__yesterday_return",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_min__donchian_breakout_proximity_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_max__donchian_breakout_proximity_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_diff__donchian_breakout_proximity_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_mean__donchian_breakout_proximity_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_product__donchian_breakout_proximity_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "product",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__donchian_breakout_proximity_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__donchian_breakout_proximity_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__donchian_breakout_proximity_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__donchian_breakout_proximity_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__donchian_breakout_proximity_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__donchian_breakout_proximity_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__donchian_breakout_proximity_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__donchian_breakout_proximity_20d__limit_up_proximity_day",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_min__donchian_breakout_proximity_20d__limit_down_proximity_day",
+    "recipe": {
+      "op": "min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_max__donchian_breakout_proximity_20d__limit_down_proximity_day",
+    "recipe": {
+      "op": "max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_diff__donchian_breakout_proximity_20d__limit_down_proximity_day",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_mean__donchian_breakout_proximity_20d__limit_down_proximity_day",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_product__donchian_breakout_proximity_20d__limit_down_proximity_day",
+    "recipe": {
+      "op": "product",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__donchian_breakout_proximity_20d__limit_down_proximity_day",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__donchian_breakout_proximity_20d__limit_down_proximity_day",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__donchian_breakout_proximity_20d__limit_down_proximity_day",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__donchian_breakout_proximity_20d__limit_down_proximity_day",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__donchian_breakout_proximity_20d__limit_down_proximity_day",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__donchian_breakout_proximity_20d__limit_down_proximity_day",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__donchian_breakout_proximity_20d__limit_down_proximity_day",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__donchian_breakout_proximity_20d__limit_down_proximity_day",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_min__donchian_breakout_proximity_20d__sma100_dist",
+    "recipe": {
+      "op": "min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_max__donchian_breakout_proximity_20d__sma100_dist",
+    "recipe": {
+      "op": "max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_diff__donchian_breakout_proximity_20d__sma100_dist",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_mean__donchian_breakout_proximity_20d__sma100_dist",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_product__donchian_breakout_proximity_20d__sma100_dist",
+    "recipe": {
+      "op": "product",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__donchian_breakout_proximity_20d__sma100_dist",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__donchian_breakout_proximity_20d__sma100_dist",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__donchian_breakout_proximity_20d__sma100_dist",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__donchian_breakout_proximity_20d__sma100_dist",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__donchian_breakout_proximity_20d__sma100_dist",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__donchian_breakout_proximity_20d__sma100_dist",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__donchian_breakout_proximity_20d__sma100_dist",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__donchian_breakout_proximity_20d__sma100_dist",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_min__donchian_breakout_proximity_20d__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_max__donchian_breakout_proximity_20d__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_diff__donchian_breakout_proximity_20d__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_mean__donchian_breakout_proximity_20d__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_product__donchian_breakout_proximity_20d__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "product",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__donchian_breakout_proximity_20d__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__donchian_breakout_proximity_20d__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__donchian_breakout_proximity_20d__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__donchian_breakout_proximity_20d__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__donchian_breakout_proximity_20d__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__donchian_breakout_proximity_20d__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__donchian_breakout_proximity_20d__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__donchian_breakout_proximity_20d__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
     "feature_name": "combo_min__early_body_momentum__limit_down_proximity_early",
     "recipe": {
       "op": "min",
@@ -1037,6 +1765,214 @@
       "op": "rel_diff",
       "feature_a": "early_body_momentum",
       "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_min__early_body_momentum__false_breakout_accumulation",
+    "recipe": {
+      "op": "min",
+      "feature_a": "early_body_momentum",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_max__early_body_momentum__false_breakout_accumulation",
+    "recipe": {
+      "op": "max",
+      "feature_a": "early_body_momentum",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_diff__early_body_momentum__false_breakout_accumulation",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "early_body_momentum",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_mean__early_body_momentum__false_breakout_accumulation",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "early_body_momentum",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_product__early_body_momentum__false_breakout_accumulation",
+    "recipe": {
+      "op": "product",
+      "feature_a": "early_body_momentum",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__early_body_momentum__false_breakout_accumulation",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "early_body_momentum",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__early_body_momentum__false_breakout_accumulation",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "early_body_momentum",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__early_body_momentum__false_breakout_accumulation",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "early_body_momentum",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__early_body_momentum__false_breakout_accumulation",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "early_body_momentum",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__early_body_momentum__false_breakout_accumulation",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "early_body_momentum",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__early_body_momentum__false_breakout_accumulation",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "early_body_momentum",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__early_body_momentum__false_breakout_accumulation",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "early_body_momentum",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__early_body_momentum__false_breakout_accumulation",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "early_body_momentum",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_min__early_body_momentum__consecutive_higher_highs",
+    "recipe": {
+      "op": "min",
+      "feature_a": "early_body_momentum",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_max__early_body_momentum__consecutive_higher_highs",
+    "recipe": {
+      "op": "max",
+      "feature_a": "early_body_momentum",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_diff__early_body_momentum__consecutive_higher_highs",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "early_body_momentum",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_mean__early_body_momentum__consecutive_higher_highs",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "early_body_momentum",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_product__early_body_momentum__consecutive_higher_highs",
+    "recipe": {
+      "op": "product",
+      "feature_a": "early_body_momentum",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__early_body_momentum__consecutive_higher_highs",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "early_body_momentum",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__early_body_momentum__consecutive_higher_highs",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "early_body_momentum",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__early_body_momentum__consecutive_higher_highs",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "early_body_momentum",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__early_body_momentum__consecutive_higher_highs",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "early_body_momentum",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__early_body_momentum__consecutive_higher_highs",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "early_body_momentum",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__early_body_momentum__consecutive_higher_highs",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "early_body_momentum",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__early_body_momentum__consecutive_higher_highs",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "early_body_momentum",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__early_body_momentum__consecutive_higher_highs",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "early_body_momentum",
+      "feature_b": "consecutive_higher_highs"
     }
   },
   {
@@ -1768,6 +2704,214 @@
     }
   },
   {
+    "feature_name": "combo_min__opening_momentum_score__false_breakout_accumulation",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_momentum_score__false_breakout_accumulation",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_momentum_score__false_breakout_accumulation",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_momentum_score__false_breakout_accumulation",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_momentum_score__false_breakout_accumulation",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_momentum_score__false_breakout_accumulation",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_momentum_score__false_breakout_accumulation",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_momentum_score__false_breakout_accumulation",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_momentum_score__false_breakout_accumulation",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_momentum_score__false_breakout_accumulation",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_momentum_score__false_breakout_accumulation",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_momentum_score__false_breakout_accumulation",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_momentum_score__false_breakout_accumulation",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_momentum_score__consecutive_higher_highs",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_momentum_score__consecutive_higher_highs",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_momentum_score__consecutive_higher_highs",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_momentum_score__consecutive_higher_highs",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_momentum_score__consecutive_higher_highs",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_momentum_score__consecutive_higher_highs",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_momentum_score__consecutive_higher_highs",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_momentum_score__consecutive_higher_highs",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_momentum_score__consecutive_higher_highs",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_momentum_score__consecutive_higher_highs",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_momentum_score__consecutive_higher_highs",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_momentum_score__consecutive_higher_highs",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_momentum_score__consecutive_higher_highs",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
     "feature_name": "combo_min__opening_momentum_score__bar_ret_2",
     "recipe": {
       "op": "min",
@@ -2184,110 +3328,6 @@
     }
   },
   {
-    "feature_name": "combo_min__limit_down_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "min",
-      "feature_a": "limit_down_proximity_early",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_max__limit_down_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "max",
-      "feature_a": "limit_down_proximity_early",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_diff__limit_down_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "limit_down_proximity_early",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_mean__limit_down_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "limit_down_proximity_early",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_product__limit_down_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "product",
-      "feature_a": "limit_down_proximity_early",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__limit_down_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "limit_down_proximity_early",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__limit_down_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "limit_down_proximity_early",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__limit_down_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "limit_down_proximity_early",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__limit_down_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "limit_down_proximity_early",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__limit_down_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "limit_down_proximity_early",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__limit_down_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "limit_down_proximity_early",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__limit_down_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "limit_down_proximity_early",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__limit_down_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "limit_down_proximity_early",
-      "feature_b": "limit_up_proximity_day"
-    }
-  },
-  {
     "feature_name": "combo_min__limit_down_proximity_early__yesterday_return",
     "recipe": {
       "op": "min",
@@ -2389,6 +3429,110 @@
       "op": "rel_diff",
       "feature_a": "limit_down_proximity_early",
       "feature_b": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_min__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "min",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_max__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "max",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_diff__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_mean__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_product__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "product",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "limit_up_proximity_day"
     }
   },
   {
@@ -2912,107 +4056,107 @@
     }
   },
   {
-    "feature_name": "combo_min__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_min__limit_down_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "min",
-      "feature_a": "rbreaker_buy_setup_proximity_early",
-      "feature_b": "limit_up_proximity_day"
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_max__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_max__limit_down_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "max",
-      "feature_a": "rbreaker_buy_setup_proximity_early",
-      "feature_b": "limit_up_proximity_day"
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_diff__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_diff__limit_down_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "diff",
-      "feature_a": "rbreaker_buy_setup_proximity_early",
-      "feature_b": "limit_up_proximity_day"
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_mean__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_mean__limit_down_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "mean",
-      "feature_a": "rbreaker_buy_setup_proximity_early",
-      "feature_b": "limit_up_proximity_day"
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_product__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_product__limit_down_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "product",
-      "feature_a": "rbreaker_buy_setup_proximity_early",
-      "feature_b": "limit_up_proximity_day"
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_abs_diff__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_abs_diff__limit_down_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "abs_diff",
-      "feature_a": "rbreaker_buy_setup_proximity_early",
-      "feature_b": "limit_up_proximity_day"
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_rank_min__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_rank_min__limit_down_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "rank_min",
-      "feature_a": "rbreaker_buy_setup_proximity_early",
-      "feature_b": "limit_up_proximity_day"
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_rank_max__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_rank_max__limit_down_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "rank_max",
-      "feature_a": "rbreaker_buy_setup_proximity_early",
-      "feature_b": "limit_up_proximity_day"
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_clamp_diff__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_clamp_diff__limit_down_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "clamp_diff",
-      "feature_a": "rbreaker_buy_setup_proximity_early",
-      "feature_b": "limit_up_proximity_day"
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_z_sum__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_z_sum__limit_down_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "z_sum",
-      "feature_a": "rbreaker_buy_setup_proximity_early",
-      "feature_b": "limit_up_proximity_day"
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_z_diff__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_z_diff__limit_down_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "z_diff",
-      "feature_a": "rbreaker_buy_setup_proximity_early",
-      "feature_b": "limit_up_proximity_day"
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_sig_product__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_sig_product__limit_down_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "sig_product",
-      "feature_a": "rbreaker_buy_setup_proximity_early",
-      "feature_b": "limit_up_proximity_day"
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_rel_diff__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_rel_diff__limit_down_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "rel_diff",
-      "feature_a": "rbreaker_buy_setup_proximity_early",
-      "feature_b": "limit_up_proximity_day"
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
@@ -3117,6 +4261,110 @@
       "op": "rel_diff",
       "feature_a": "rbreaker_buy_setup_proximity_early",
       "feature_b": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_min__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "min",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_max__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "max",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_diff__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_mean__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_product__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "product",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "limit_up_proximity_day"
     }
   },
   {
@@ -3640,435 +4888,107 @@
     }
   },
   {
-    "feature_name": "combo_min__margin_balance__short_balance",
+    "feature_name": "combo_min__rbreaker_buy_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "min",
-      "feature_a": "margin_balance",
-      "feature_b": "short_balance"
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_max__margin_balance__short_balance",
+    "feature_name": "combo_max__rbreaker_buy_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "max",
-      "feature_a": "margin_balance",
-      "feature_b": "short_balance"
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_diff__margin_balance__short_balance",
+    "feature_name": "combo_diff__rbreaker_buy_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "diff",
-      "feature_a": "margin_balance",
-      "feature_b": "short_balance"
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_mean__margin_balance__short_balance",
+    "feature_name": "combo_mean__rbreaker_buy_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "mean",
-      "feature_a": "margin_balance",
-      "feature_b": "short_balance"
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_product__margin_balance__short_balance",
+    "feature_name": "combo_product__rbreaker_buy_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "product",
-      "feature_a": "margin_balance",
-      "feature_b": "short_balance"
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_abs_diff__margin_balance__short_balance",
+    "feature_name": "combo_abs_diff__rbreaker_buy_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "abs_diff",
-      "feature_a": "margin_balance",
-      "feature_b": "short_balance"
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_rank_min__margin_balance__short_balance",
+    "feature_name": "combo_rank_min__rbreaker_buy_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "rank_min",
-      "feature_a": "margin_balance",
-      "feature_b": "short_balance"
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_rank_max__margin_balance__short_balance",
+    "feature_name": "combo_rank_max__rbreaker_buy_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "rank_max",
-      "feature_a": "margin_balance",
-      "feature_b": "short_balance"
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_clamp_diff__margin_balance__short_balance",
+    "feature_name": "combo_clamp_diff__rbreaker_buy_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "clamp_diff",
-      "feature_a": "margin_balance",
-      "feature_b": "short_balance"
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_z_sum__margin_balance__short_balance",
+    "feature_name": "combo_z_sum__rbreaker_buy_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "z_sum",
-      "feature_a": "margin_balance",
-      "feature_b": "short_balance"
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_z_diff__margin_balance__short_balance",
+    "feature_name": "combo_z_diff__rbreaker_buy_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "z_diff",
-      "feature_a": "margin_balance",
-      "feature_b": "short_balance"
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_sig_product__margin_balance__short_balance",
+    "feature_name": "combo_sig_product__rbreaker_buy_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "sig_product",
-      "feature_a": "margin_balance",
-      "feature_b": "short_balance"
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_rel_diff__margin_balance__short_balance",
+    "feature_name": "combo_rel_diff__rbreaker_buy_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "rel_diff",
-      "feature_a": "margin_balance",
-      "feature_b": "short_balance"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__margin_balance__short_balance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "margin_balance",
-      "feature_b": "short_balance"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__short_balance__margin_balance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "short_balance",
-      "feature_b": "margin_balance"
-    }
-  },
-  {
-    "feature_name": "combo_min__limit_up_proximity_day__star50_limit_proximity_early",
-    "recipe": {
-      "op": "min",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_max__limit_up_proximity_day__star50_limit_proximity_early",
-    "recipe": {
-      "op": "max",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_diff__limit_up_proximity_day__star50_limit_proximity_early",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_mean__limit_up_proximity_day__star50_limit_proximity_early",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_product__limit_up_proximity_day__star50_limit_proximity_early",
-    "recipe": {
-      "op": "product",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__limit_up_proximity_day__star50_limit_proximity_early",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__limit_up_proximity_day__star50_limit_proximity_early",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__limit_up_proximity_day__star50_limit_proximity_early",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__limit_up_proximity_day__star50_limit_proximity_early",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__limit_up_proximity_day__star50_limit_proximity_early",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__limit_up_proximity_day__star50_limit_proximity_early",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__limit_up_proximity_day__star50_limit_proximity_early",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__limit_up_proximity_day__star50_limit_proximity_early",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_min__limit_up_proximity_day__sma100_dist",
-    "recipe": {
-      "op": "min",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "sma100_dist"
-    }
-  },
-  {
-    "feature_name": "combo_max__limit_up_proximity_day__sma100_dist",
-    "recipe": {
-      "op": "max",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "sma100_dist"
-    }
-  },
-  {
-    "feature_name": "combo_diff__limit_up_proximity_day__sma100_dist",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "sma100_dist"
-    }
-  },
-  {
-    "feature_name": "combo_mean__limit_up_proximity_day__sma100_dist",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "sma100_dist"
-    }
-  },
-  {
-    "feature_name": "combo_product__limit_up_proximity_day__sma100_dist",
-    "recipe": {
-      "op": "product",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "sma100_dist"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__limit_up_proximity_day__sma100_dist",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "sma100_dist"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__limit_up_proximity_day__sma100_dist",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "sma100_dist"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__limit_up_proximity_day__sma100_dist",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "sma100_dist"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__limit_up_proximity_day__sma100_dist",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "sma100_dist"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__limit_up_proximity_day__sma100_dist",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "sma100_dist"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__limit_up_proximity_day__sma100_dist",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "sma100_dist"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__limit_up_proximity_day__sma100_dist",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "sma100_dist"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__limit_up_proximity_day__sma100_dist",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "sma100_dist"
-    }
-  },
-  {
-    "feature_name": "combo_min__limit_up_proximity_day__yesterday_illiquidity_amihud",
-    "recipe": {
-      "op": "min",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "yesterday_illiquidity_amihud"
-    }
-  },
-  {
-    "feature_name": "combo_max__limit_up_proximity_day__yesterday_illiquidity_amihud",
-    "recipe": {
-      "op": "max",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "yesterday_illiquidity_amihud"
-    }
-  },
-  {
-    "feature_name": "combo_diff__limit_up_proximity_day__yesterday_illiquidity_amihud",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "yesterday_illiquidity_amihud"
-    }
-  },
-  {
-    "feature_name": "combo_mean__limit_up_proximity_day__yesterday_illiquidity_amihud",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "yesterday_illiquidity_amihud"
-    }
-  },
-  {
-    "feature_name": "combo_product__limit_up_proximity_day__yesterday_illiquidity_amihud",
-    "recipe": {
-      "op": "product",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "yesterday_illiquidity_amihud"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__limit_up_proximity_day__yesterday_illiquidity_amihud",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "yesterday_illiquidity_amihud"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__limit_up_proximity_day__yesterday_illiquidity_amihud",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "yesterday_illiquidity_amihud"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__limit_up_proximity_day__yesterday_illiquidity_amihud",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "yesterday_illiquidity_amihud"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__limit_up_proximity_day__yesterday_illiquidity_amihud",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "yesterday_illiquidity_amihud"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__limit_up_proximity_day__yesterday_illiquidity_amihud",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "yesterday_illiquidity_amihud"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__limit_up_proximity_day__yesterday_illiquidity_amihud",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "yesterday_illiquidity_amihud"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__limit_up_proximity_day__yesterday_illiquidity_amihud",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "yesterday_illiquidity_amihud"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__limit_up_proximity_day__yesterday_illiquidity_amihud",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "limit_up_proximity_day",
-      "feature_b": "yesterday_illiquidity_amihud"
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
@@ -4380,6 +5300,318 @@
     "recipe": {
       "op": "rel_diff",
       "feature_a": "yesterday_return",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_min__limit_up_proximity_day__star50_limit_proximity_early",
+    "recipe": {
+      "op": "min",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_max__limit_up_proximity_day__star50_limit_proximity_early",
+    "recipe": {
+      "op": "max",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_diff__limit_up_proximity_day__star50_limit_proximity_early",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_mean__limit_up_proximity_day__star50_limit_proximity_early",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_product__limit_up_proximity_day__star50_limit_proximity_early",
+    "recipe": {
+      "op": "product",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__limit_up_proximity_day__star50_limit_proximity_early",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__limit_up_proximity_day__star50_limit_proximity_early",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__limit_up_proximity_day__star50_limit_proximity_early",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__limit_up_proximity_day__star50_limit_proximity_early",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__limit_up_proximity_day__star50_limit_proximity_early",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__limit_up_proximity_day__star50_limit_proximity_early",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__limit_up_proximity_day__star50_limit_proximity_early",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__limit_up_proximity_day__star50_limit_proximity_early",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_min__limit_up_proximity_day__sma100_dist",
+    "recipe": {
+      "op": "min",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_max__limit_up_proximity_day__sma100_dist",
+    "recipe": {
+      "op": "max",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_diff__limit_up_proximity_day__sma100_dist",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_mean__limit_up_proximity_day__sma100_dist",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_product__limit_up_proximity_day__sma100_dist",
+    "recipe": {
+      "op": "product",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__limit_up_proximity_day__sma100_dist",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__limit_up_proximity_day__sma100_dist",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__limit_up_proximity_day__sma100_dist",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__limit_up_proximity_day__sma100_dist",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__limit_up_proximity_day__sma100_dist",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__limit_up_proximity_day__sma100_dist",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__limit_up_proximity_day__sma100_dist",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__limit_up_proximity_day__sma100_dist",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "sma100_dist"
+    }
+  },
+  {
+    "feature_name": "combo_min__limit_up_proximity_day__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "min",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_max__limit_up_proximity_day__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "max",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_diff__limit_up_proximity_day__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_mean__limit_up_proximity_day__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_product__limit_up_proximity_day__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "product",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__limit_up_proximity_day__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__limit_up_proximity_day__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__limit_up_proximity_day__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__limit_up_proximity_day__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__limit_up_proximity_day__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__limit_up_proximity_day__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__limit_up_proximity_day__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "limit_up_proximity_day",
+      "feature_b": "yesterday_illiquidity_amihud"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__limit_up_proximity_day__yesterday_illiquidity_amihud",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "limit_up_proximity_day",
       "feature_b": "yesterday_illiquidity_amihud"
     }
   },
@@ -4800,6 +6032,110 @@
     }
   },
   {
+    "feature_name": "combo_min__star50_limit_proximity_early__trend_day_regime_conviction",
+    "recipe": {
+      "op": "min",
+      "feature_a": "star50_limit_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_max__star50_limit_proximity_early__trend_day_regime_conviction",
+    "recipe": {
+      "op": "max",
+      "feature_a": "star50_limit_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_diff__star50_limit_proximity_early__trend_day_regime_conviction",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "star50_limit_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_mean__star50_limit_proximity_early__trend_day_regime_conviction",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "star50_limit_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_product__star50_limit_proximity_early__trend_day_regime_conviction",
+    "recipe": {
+      "op": "product",
+      "feature_a": "star50_limit_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__star50_limit_proximity_early__trend_day_regime_conviction",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "star50_limit_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__star50_limit_proximity_early__trend_day_regime_conviction",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "star50_limit_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__star50_limit_proximity_early__trend_day_regime_conviction",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "star50_limit_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__star50_limit_proximity_early__trend_day_regime_conviction",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "star50_limit_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__star50_limit_proximity_early__trend_day_regime_conviction",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "star50_limit_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__star50_limit_proximity_early__trend_day_regime_conviction",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "star50_limit_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__star50_limit_proximity_early__trend_day_regime_conviction",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "star50_limit_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__star50_limit_proximity_early__trend_day_regime_conviction",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "star50_limit_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
     "feature_name": "combo_min__star50_limit_proximity_early__morning_trend_extrapolated",
     "recipe": {
       "op": "min",
@@ -4900,6 +6236,422 @@
     "recipe": {
       "op": "rel_diff",
       "feature_a": "star50_limit_proximity_early",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_min__false_breakout_accumulation__consecutive_higher_highs",
+    "recipe": {
+      "op": "min",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_max__false_breakout_accumulation__consecutive_higher_highs",
+    "recipe": {
+      "op": "max",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_diff__false_breakout_accumulation__consecutive_higher_highs",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_mean__false_breakout_accumulation__consecutive_higher_highs",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_product__false_breakout_accumulation__consecutive_higher_highs",
+    "recipe": {
+      "op": "product",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__false_breakout_accumulation__consecutive_higher_highs",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__false_breakout_accumulation__consecutive_higher_highs",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__false_breakout_accumulation__consecutive_higher_highs",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__false_breakout_accumulation__consecutive_higher_highs",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__false_breakout_accumulation__consecutive_higher_highs",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__false_breakout_accumulation__consecutive_higher_highs",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__false_breakout_accumulation__consecutive_higher_highs",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__false_breakout_accumulation__consecutive_higher_highs",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "consecutive_higher_highs"
+    }
+  },
+  {
+    "feature_name": "combo_min__false_breakout_accumulation__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "min",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_max__false_breakout_accumulation__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "max",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_diff__false_breakout_accumulation__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_mean__false_breakout_accumulation__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_product__false_breakout_accumulation__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "product",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__false_breakout_accumulation__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__false_breakout_accumulation__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__false_breakout_accumulation__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__false_breakout_accumulation__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__false_breakout_accumulation__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__false_breakout_accumulation__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__false_breakout_accumulation__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__false_breakout_accumulation__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_min__false_breakout_accumulation__trend_day_regime_conviction",
+    "recipe": {
+      "op": "min",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_max__false_breakout_accumulation__trend_day_regime_conviction",
+    "recipe": {
+      "op": "max",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_diff__false_breakout_accumulation__trend_day_regime_conviction",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_mean__false_breakout_accumulation__trend_day_regime_conviction",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_product__false_breakout_accumulation__trend_day_regime_conviction",
+    "recipe": {
+      "op": "product",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__false_breakout_accumulation__trend_day_regime_conviction",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__false_breakout_accumulation__trend_day_regime_conviction",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__false_breakout_accumulation__trend_day_regime_conviction",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__false_breakout_accumulation__trend_day_regime_conviction",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__false_breakout_accumulation__trend_day_regime_conviction",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__false_breakout_accumulation__trend_day_regime_conviction",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__false_breakout_accumulation__trend_day_regime_conviction",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__false_breakout_accumulation__trend_day_regime_conviction",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_min__false_breakout_accumulation__morning_trend_extrapolated",
+    "recipe": {
+      "op": "min",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_max__false_breakout_accumulation__morning_trend_extrapolated",
+    "recipe": {
+      "op": "max",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_diff__false_breakout_accumulation__morning_trend_extrapolated",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_mean__false_breakout_accumulation__morning_trend_extrapolated",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_product__false_breakout_accumulation__morning_trend_extrapolated",
+    "recipe": {
+      "op": "product",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__false_breakout_accumulation__morning_trend_extrapolated",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__false_breakout_accumulation__morning_trend_extrapolated",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__false_breakout_accumulation__morning_trend_extrapolated",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__false_breakout_accumulation__morning_trend_extrapolated",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__false_breakout_accumulation__morning_trend_extrapolated",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__false_breakout_accumulation__morning_trend_extrapolated",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__false_breakout_accumulation__morning_trend_extrapolated",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "false_breakout_accumulation",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__false_breakout_accumulation__morning_trend_extrapolated",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "false_breakout_accumulation",
       "feature_b": "morning_trend_extrapolated"
     }
   },
@@ -5008,6 +6760,422 @@
     }
   },
   {
+    "feature_name": "combo_min__consecutive_higher_highs__bar_ret_2",
+    "recipe": {
+      "op": "min",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "bar_ret_2"
+    }
+  },
+  {
+    "feature_name": "combo_max__consecutive_higher_highs__bar_ret_2",
+    "recipe": {
+      "op": "max",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "bar_ret_2"
+    }
+  },
+  {
+    "feature_name": "combo_diff__consecutive_higher_highs__bar_ret_2",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "bar_ret_2"
+    }
+  },
+  {
+    "feature_name": "combo_mean__consecutive_higher_highs__bar_ret_2",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "bar_ret_2"
+    }
+  },
+  {
+    "feature_name": "combo_product__consecutive_higher_highs__bar_ret_2",
+    "recipe": {
+      "op": "product",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "bar_ret_2"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__consecutive_higher_highs__bar_ret_2",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "bar_ret_2"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__consecutive_higher_highs__bar_ret_2",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "bar_ret_2"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__consecutive_higher_highs__bar_ret_2",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "bar_ret_2"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__consecutive_higher_highs__bar_ret_2",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "bar_ret_2"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__consecutive_higher_highs__bar_ret_2",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "bar_ret_2"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__consecutive_higher_highs__bar_ret_2",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "bar_ret_2"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__consecutive_higher_highs__bar_ret_2",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "bar_ret_2"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__consecutive_higher_highs__bar_ret_2",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "bar_ret_2"
+    }
+  },
+  {
+    "feature_name": "combo_min__consecutive_higher_highs__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "min",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_max__consecutive_higher_highs__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "max",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_diff__consecutive_higher_highs__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_mean__consecutive_higher_highs__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_product__consecutive_higher_highs__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "product",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__consecutive_higher_highs__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__consecutive_higher_highs__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__consecutive_higher_highs__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__consecutive_higher_highs__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__consecutive_higher_highs__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__consecutive_higher_highs__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__consecutive_higher_highs__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__consecutive_higher_highs__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_min__consecutive_higher_highs__trend_day_regime_conviction",
+    "recipe": {
+      "op": "min",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_max__consecutive_higher_highs__trend_day_regime_conviction",
+    "recipe": {
+      "op": "max",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_diff__consecutive_higher_highs__trend_day_regime_conviction",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_mean__consecutive_higher_highs__trend_day_regime_conviction",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_product__consecutive_higher_highs__trend_day_regime_conviction",
+    "recipe": {
+      "op": "product",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__consecutive_higher_highs__trend_day_regime_conviction",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__consecutive_higher_highs__trend_day_regime_conviction",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__consecutive_higher_highs__trend_day_regime_conviction",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__consecutive_higher_highs__trend_day_regime_conviction",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__consecutive_higher_highs__trend_day_regime_conviction",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__consecutive_higher_highs__trend_day_regime_conviction",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__consecutive_higher_highs__trend_day_regime_conviction",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__consecutive_higher_highs__trend_day_regime_conviction",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_min__consecutive_higher_highs__morning_trend_extrapolated",
+    "recipe": {
+      "op": "min",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_max__consecutive_higher_highs__morning_trend_extrapolated",
+    "recipe": {
+      "op": "max",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_diff__consecutive_higher_highs__morning_trend_extrapolated",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_mean__consecutive_higher_highs__morning_trend_extrapolated",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_product__consecutive_higher_highs__morning_trend_extrapolated",
+    "recipe": {
+      "op": "product",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__consecutive_higher_highs__morning_trend_extrapolated",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__consecutive_higher_highs__morning_trend_extrapolated",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__consecutive_higher_highs__morning_trend_extrapolated",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__consecutive_higher_highs__morning_trend_extrapolated",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__consecutive_higher_highs__morning_trend_extrapolated",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__consecutive_higher_highs__morning_trend_extrapolated",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__consecutive_higher_highs__morning_trend_extrapolated",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__consecutive_higher_highs__morning_trend_extrapolated",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "consecutive_higher_highs",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
     "feature_name": "combo_min__bar_ret_2__shaved_bar_trend_conviction",
     "recipe": {
       "op": "min",
@@ -5109,6 +7277,110 @@
       "op": "rel_diff",
       "feature_a": "bar_ret_2",
       "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_min__bar_ret_2__trend_day_regime_conviction",
+    "recipe": {
+      "op": "min",
+      "feature_a": "bar_ret_2",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_max__bar_ret_2__trend_day_regime_conviction",
+    "recipe": {
+      "op": "max",
+      "feature_a": "bar_ret_2",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_diff__bar_ret_2__trend_day_regime_conviction",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "bar_ret_2",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_mean__bar_ret_2__trend_day_regime_conviction",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "bar_ret_2",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_product__bar_ret_2__trend_day_regime_conviction",
+    "recipe": {
+      "op": "product",
+      "feature_a": "bar_ret_2",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__bar_ret_2__trend_day_regime_conviction",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "bar_ret_2",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__bar_ret_2__trend_day_regime_conviction",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "bar_ret_2",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__bar_ret_2__trend_day_regime_conviction",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "bar_ret_2",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__bar_ret_2__trend_day_regime_conviction",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "bar_ret_2",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__bar_ret_2__trend_day_regime_conviction",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "bar_ret_2",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__bar_ret_2__trend_day_regime_conviction",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "bar_ret_2",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__bar_ret_2__trend_day_regime_conviction",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "bar_ret_2",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__bar_ret_2__trend_day_regime_conviction",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "bar_ret_2",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
@@ -5320,6 +7592,110 @@
     }
   },
   {
+    "feature_name": "combo_min__shaved_bar_trend_conviction__trend_day_regime_conviction",
+    "recipe": {
+      "op": "min",
+      "feature_a": "shaved_bar_trend_conviction",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_max__shaved_bar_trend_conviction__trend_day_regime_conviction",
+    "recipe": {
+      "op": "max",
+      "feature_a": "shaved_bar_trend_conviction",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_diff__shaved_bar_trend_conviction__trend_day_regime_conviction",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "shaved_bar_trend_conviction",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_mean__shaved_bar_trend_conviction__trend_day_regime_conviction",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "shaved_bar_trend_conviction",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_product__shaved_bar_trend_conviction__trend_day_regime_conviction",
+    "recipe": {
+      "op": "product",
+      "feature_a": "shaved_bar_trend_conviction",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__shaved_bar_trend_conviction__trend_day_regime_conviction",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "shaved_bar_trend_conviction",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__shaved_bar_trend_conviction__trend_day_regime_conviction",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "shaved_bar_trend_conviction",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__shaved_bar_trend_conviction__trend_day_regime_conviction",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "shaved_bar_trend_conviction",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__shaved_bar_trend_conviction__trend_day_regime_conviction",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "shaved_bar_trend_conviction",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__shaved_bar_trend_conviction__trend_day_regime_conviction",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "shaved_bar_trend_conviction",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__shaved_bar_trend_conviction__trend_day_regime_conviction",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "shaved_bar_trend_conviction",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__shaved_bar_trend_conviction__trend_day_regime_conviction",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "shaved_bar_trend_conviction",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__shaved_bar_trend_conviction__trend_day_regime_conviction",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "shaved_bar_trend_conviction",
+      "feature_b": "trend_day_regime_conviction"
+    }
+  },
+  {
     "feature_name": "combo_min__shaved_bar_trend_conviction__morning_trend_extrapolated",
     "recipe": {
       "op": "min",
@@ -5424,115 +7800,107 @@
     }
   },
   {
-    "feature_name": "combo_min__short_balance__yesterday_illiquidity_amihud",
+    "feature_name": "combo_min__rbreaker_sell_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "min",
-      "feature_a": "short_balance",
-      "feature_b": "yesterday_illiquidity_amihud"
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_max__short_balance__yesterday_illiquidity_amihud",
+    "feature_name": "combo_max__rbreaker_sell_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "max",
-      "feature_a": "short_balance",
-      "feature_b": "yesterday_illiquidity_amihud"
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_diff__short_balance__yesterday_illiquidity_amihud",
+    "feature_name": "combo_diff__rbreaker_sell_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "diff",
-      "feature_a": "short_balance",
-      "feature_b": "yesterday_illiquidity_amihud"
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_mean__short_balance__yesterday_illiquidity_amihud",
+    "feature_name": "combo_mean__rbreaker_sell_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "mean",
-      "feature_a": "short_balance",
-      "feature_b": "yesterday_illiquidity_amihud"
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_product__short_balance__yesterday_illiquidity_amihud",
+    "feature_name": "combo_product__rbreaker_sell_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "product",
-      "feature_a": "short_balance",
-      "feature_b": "yesterday_illiquidity_amihud"
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_abs_diff__short_balance__yesterday_illiquidity_amihud",
+    "feature_name": "combo_abs_diff__rbreaker_sell_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "abs_diff",
-      "feature_a": "short_balance",
-      "feature_b": "yesterday_illiquidity_amihud"
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_rank_min__short_balance__yesterday_illiquidity_amihud",
+    "feature_name": "combo_rank_min__rbreaker_sell_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "rank_min",
-      "feature_a": "short_balance",
-      "feature_b": "yesterday_illiquidity_amihud"
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_rank_max__short_balance__yesterday_illiquidity_amihud",
+    "feature_name": "combo_rank_max__rbreaker_sell_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "rank_max",
-      "feature_a": "short_balance",
-      "feature_b": "yesterday_illiquidity_amihud"
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_clamp_diff__short_balance__yesterday_illiquidity_amihud",
+    "feature_name": "combo_clamp_diff__rbreaker_sell_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "clamp_diff",
-      "feature_a": "short_balance",
-      "feature_b": "yesterday_illiquidity_amihud"
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_z_sum__short_balance__yesterday_illiquidity_amihud",
+    "feature_name": "combo_z_sum__rbreaker_sell_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "z_sum",
-      "feature_a": "short_balance",
-      "feature_b": "yesterday_illiquidity_amihud"
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_z_diff__short_balance__yesterday_illiquidity_amihud",
+    "feature_name": "combo_z_diff__rbreaker_sell_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "z_diff",
-      "feature_a": "short_balance",
-      "feature_b": "yesterday_illiquidity_amihud"
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_sig_product__short_balance__yesterday_illiquidity_amihud",
+    "feature_name": "combo_sig_product__rbreaker_sell_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "sig_product",
-      "feature_a": "short_balance",
-      "feature_b": "yesterday_illiquidity_amihud"
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
-    "feature_name": "combo_rel_diff__short_balance__yesterday_illiquidity_amihud",
+    "feature_name": "combo_rel_diff__rbreaker_sell_setup_proximity_early__trend_day_regime_conviction",
     "recipe": {
       "op": "rel_diff",
-      "feature_a": "short_balance",
-      "feature_b": "yesterday_illiquidity_amihud"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__yesterday_illiquidity_amihud__short_balance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "yesterday_illiquidity_amihud",
-      "feature_b": "short_balance"
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "trend_day_regime_conviction"
     }
   },
   {
@@ -5640,57 +8008,107 @@
     }
   },
   {
-    "feature_name": "combo_tri_mean__donchian_breakout_ratio_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_min__trend_day_regime_conviction__morning_trend_extrapolated",
     "recipe": {
-      "op": "tri_mean",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_down_proximity_early",
-      "feature_c": "limit_up_proximity_day"
+      "op": "min",
+      "feature_a": "trend_day_regime_conviction",
+      "feature_b": "morning_trend_extrapolated"
     }
   },
   {
-    "feature_name": "combo_tri_min__donchian_breakout_ratio_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_max__trend_day_regime_conviction__morning_trend_extrapolated",
     "recipe": {
-      "op": "tri_min",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_down_proximity_early",
-      "feature_c": "limit_up_proximity_day"
+      "op": "max",
+      "feature_a": "trend_day_regime_conviction",
+      "feature_b": "morning_trend_extrapolated"
     }
   },
   {
-    "feature_name": "combo_tri_max__donchian_breakout_ratio_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_diff__trend_day_regime_conviction__morning_trend_extrapolated",
     "recipe": {
-      "op": "tri_max",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_down_proximity_early",
-      "feature_c": "limit_up_proximity_day"
+      "op": "diff",
+      "feature_a": "trend_day_regime_conviction",
+      "feature_b": "morning_trend_extrapolated"
     }
   },
   {
-    "feature_name": "combo_tri_median__donchian_breakout_ratio_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_mean__trend_day_regime_conviction__morning_trend_extrapolated",
     "recipe": {
-      "op": "tri_median",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_down_proximity_early",
-      "feature_c": "limit_up_proximity_day"
+      "op": "mean",
+      "feature_a": "trend_day_regime_conviction",
+      "feature_b": "morning_trend_extrapolated"
     }
   },
   {
-    "feature_name": "combo_tri_z_mean__donchian_breakout_ratio_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_product__trend_day_regime_conviction__morning_trend_extrapolated",
     "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_down_proximity_early",
-      "feature_c": "limit_up_proximity_day"
+      "op": "product",
+      "feature_a": "trend_day_regime_conviction",
+      "feature_b": "morning_trend_extrapolated"
     }
   },
   {
-    "feature_name": "combo_tri_sig_max__donchian_breakout_ratio_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "feature_name": "combo_abs_diff__trend_day_regime_conviction__morning_trend_extrapolated",
     "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "limit_down_proximity_early",
-      "feature_c": "limit_up_proximity_day"
+      "op": "abs_diff",
+      "feature_a": "trend_day_regime_conviction",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__trend_day_regime_conviction__morning_trend_extrapolated",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "trend_day_regime_conviction",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__trend_day_regime_conviction__morning_trend_extrapolated",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "trend_day_regime_conviction",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__trend_day_regime_conviction__morning_trend_extrapolated",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "trend_day_regime_conviction",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__trend_day_regime_conviction__morning_trend_extrapolated",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "trend_day_regime_conviction",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__trend_day_regime_conviction__morning_trend_extrapolated",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "trend_day_regime_conviction",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__trend_day_regime_conviction__morning_trend_extrapolated",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "trend_day_regime_conviction",
+      "feature_b": "morning_trend_extrapolated"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__trend_day_regime_conviction__morning_trend_extrapolated",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "trend_day_regime_conviction",
+      "feature_b": "morning_trend_extrapolated"
     }
   },
   {
@@ -5748,6 +8166,60 @@
     }
   },
   {
+    "feature_name": "combo_tri_mean__donchian_breakout_ratio_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__donchian_breakout_ratio_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__donchian_breakout_ratio_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__donchian_breakout_ratio_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__donchian_breakout_ratio_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__donchian_breakout_ratio_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
     "feature_name": "combo_tri_mean__donchian_breakout_ratio_20d__limit_down_proximity_early__limit_down_proximity_day",
     "recipe": {
       "op": "tri_mean",
@@ -5799,60 +8271,6 @@
       "feature_a": "donchian_breakout_ratio_20d",
       "feature_b": "limit_down_proximity_early",
       "feature_c": "limit_down_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_tri_mean__donchian_breakout_ratio_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "rbreaker_buy_setup_proximity_early",
-      "feature_c": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__donchian_breakout_ratio_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "rbreaker_buy_setup_proximity_early",
-      "feature_c": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__donchian_breakout_ratio_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "rbreaker_buy_setup_proximity_early",
-      "feature_c": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__donchian_breakout_ratio_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "rbreaker_buy_setup_proximity_early",
-      "feature_c": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__donchian_breakout_ratio_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "rbreaker_buy_setup_proximity_early",
-      "feature_c": "limit_up_proximity_day"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__donchian_breakout_ratio_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "rbreaker_buy_setup_proximity_early",
-      "feature_c": "limit_up_proximity_day"
     }
   },
   {
@@ -5910,6 +8328,60 @@
     }
   },
   {
+    "feature_name": "combo_tri_mean__donchian_breakout_ratio_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__donchian_breakout_ratio_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__donchian_breakout_ratio_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__donchian_breakout_ratio_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__donchian_breakout_ratio_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__donchian_breakout_ratio_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "donchian_breakout_ratio_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
     "feature_name": "combo_tri_mean__donchian_breakout_ratio_20d__rbreaker_buy_setup_proximity_early__limit_down_proximity_day",
     "recipe": {
       "op": "tri_mean",
@@ -5961,6 +8433,654 @@
       "feature_a": "donchian_breakout_ratio_20d",
       "feature_b": "rbreaker_buy_setup_proximity_early",
       "feature_c": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__donchian_breakout_proximity_20d__limit_down_proximity_early__yesterday_return",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__donchian_breakout_proximity_20d__limit_down_proximity_early__yesterday_return",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__donchian_breakout_proximity_20d__limit_down_proximity_early__yesterday_return",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__donchian_breakout_proximity_20d__limit_down_proximity_early__yesterday_return",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__donchian_breakout_proximity_20d__limit_down_proximity_early__yesterday_return",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__donchian_breakout_proximity_20d__limit_down_proximity_early__yesterday_return",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__donchian_breakout_proximity_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__donchian_breakout_proximity_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__donchian_breakout_proximity_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__donchian_breakout_proximity_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__donchian_breakout_proximity_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__donchian_breakout_proximity_20d__limit_down_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__donchian_breakout_proximity_20d__limit_down_proximity_early__limit_down_proximity_day",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__donchian_breakout_proximity_20d__limit_down_proximity_early__limit_down_proximity_day",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__donchian_breakout_proximity_20d__limit_down_proximity_early__limit_down_proximity_day",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__donchian_breakout_proximity_20d__limit_down_proximity_early__limit_down_proximity_day",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__donchian_breakout_proximity_20d__limit_down_proximity_early__limit_down_proximity_day",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__donchian_breakout_proximity_20d__limit_down_proximity_early__limit_down_proximity_day",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__yesterday_return",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__yesterday_return",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__yesterday_return",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__yesterday_return",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__yesterday_return",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__yesterday_return",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "yesterday_return"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__limit_up_proximity_day",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_up_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__limit_down_proximity_day",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__limit_down_proximity_day",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__limit_down_proximity_day",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__limit_down_proximity_day",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__limit_down_proximity_day",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__donchian_breakout_proximity_20d__rbreaker_buy_setup_proximity_early__limit_down_proximity_day",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "donchian_breakout_proximity_20d",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "limit_down_proximity_day"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__early_body_momentum__limit_down_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "early_body_momentum",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__early_body_momentum__limit_down_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "early_body_momentum",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__early_body_momentum__limit_down_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "early_body_momentum",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__early_body_momentum__limit_down_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "early_body_momentum",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__early_body_momentum__limit_down_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "early_body_momentum",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__early_body_momentum__limit_down_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "early_body_momentum",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__early_body_momentum__rbreaker_buy_setup_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "early_body_momentum",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__early_body_momentum__rbreaker_buy_setup_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "early_body_momentum",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__early_body_momentum__rbreaker_buy_setup_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "early_body_momentum",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__early_body_momentum__rbreaker_buy_setup_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "early_body_momentum",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__early_body_momentum__rbreaker_buy_setup_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "early_body_momentum",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__early_body_momentum__rbreaker_buy_setup_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "early_body_momentum",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__early_body_momentum__star50_limit_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "early_body_momentum",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__early_body_momentum__star50_limit_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "early_body_momentum",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__early_body_momentum__star50_limit_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "early_body_momentum",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__early_body_momentum__star50_limit_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "early_body_momentum",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__early_body_momentum__star50_limit_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "early_body_momentum",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__early_body_momentum__star50_limit_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "early_body_momentum",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__opening_momentum_score__limit_down_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__opening_momentum_score__limit_down_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__opening_momentum_score__limit_down_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__opening_momentum_score__limit_down_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__opening_momentum_score__limit_down_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__opening_momentum_score__limit_down_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "limit_down_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__opening_momentum_score__rbreaker_buy_setup_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__opening_momentum_score__rbreaker_buy_setup_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__opening_momentum_score__rbreaker_buy_setup_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__opening_momentum_score__rbreaker_buy_setup_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__opening_momentum_score__rbreaker_buy_setup_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__opening_momentum_score__rbreaker_buy_setup_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "rbreaker_buy_setup_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__opening_momentum_score__star50_limit_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__opening_momentum_score__star50_limit_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__opening_momentum_score__star50_limit_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__opening_momentum_score__star50_limit_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__opening_momentum_score__star50_limit_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "false_breakout_accumulation"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__opening_momentum_score__star50_limit_proximity_early__false_breakout_accumulation",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "opening_momentum_score",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "false_breakout_accumulation"
     }
   }
 ]

@@ -13438,5 +13438,18 @@
   "keltner_channel_position_20d",
   "donchian_breakout_ratio_20d",
   "consecutive_up_days_count",
-  "volume_weighted_trend_strength_10d"
+  "volume_weighted_trend_strength_10d",
+  "directional_volume_signature",
+  "body_size_progression",
+  "volume_confirmed_breakout",
+  "trend_bar_close_consistency",
+  "vwap_close_divergence_trend",
+  "impulse_bar_dominance",
+  "pullback_shallowness_score",
+  "range_progression_trend",
+  "counter_trend_bar_weakness",
+  "trend_resumption_after_pullback",
+  "consecutive_ema20_above_days",
+  "ema_ribbon_width",
+  "donchian_breakout_proximity_20d"
 ]

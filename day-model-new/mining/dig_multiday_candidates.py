@@ -413,6 +413,330 @@ def calc_open_close_reversal_3d(df: pd.DataFrame) -> pd.Series:
 # ============================================================
 # Registry of all multi-day candidates
 # ============================================================
+# ============================================================
+# Wave 3: Market Regime & Big Trend Factors (Al Brooks / Strategies)
+# ============================================================
+
+def calc_adx_14d(df: pd.DataFrame) -> pd.Series:
+    """14-day ADX (Average Directional Index) — trend strength measure.
+    ADX > 25 = trending, ADX < 20 = ranging.
+    Normalized to [0, 1] by dividing by 50."""
+    hi = df["high_adj"]
+    lo = df["low_adj"]
+    cl = df["close_adj"]
+    prev_cl = cl.shift(1)
+    # True Range
+    tr = pd.concat([(hi - lo).abs(), (hi - prev_cl).abs(), (lo - prev_cl).abs()], axis=1).max(axis=1)
+    # Directional Movement
+    up_move = hi - hi.shift(1)
+    down_move = lo.shift(1) - lo
+    plus_dm = np.where((up_move > down_move) & (up_move > 0), up_move, 0.0)
+    minus_dm = np.where((down_move > up_move) & (down_move > 0), down_move, 0.0)
+    plus_dm_s = pd.Series(plus_dm, index=df.index).rolling(14).mean()
+    minus_dm_s = pd.Series(minus_dm, index=df.index).rolling(14).mean()
+    tr_s = tr.rolling(14).mean()
+    plus_di = 100.0 * plus_dm_s / (tr_s + 1e-8)
+    minus_di = 100.0 * minus_dm_s / (tr_s + 1e-8)
+    dx = 100.0 * (plus_di - minus_di).abs() / (plus_di + minus_di + 1e-8)
+    adx = dx.rolling(14).mean()
+    # Normalize: ADX 0-50 -> [0, 1]
+    return (adx / 50.0).clip(0, 1).shift(1)
+
+
+def calc_ema_ribbon_width(df: pd.DataFrame) -> pd.Series:
+    """EMA ribbon width: (EMA5 - EMA20) / ATR14.
+    Wide positive ribbon = strong bull trend, wide negative = bear trend.
+    Narrow = ranging/compression."""
+    cl = df["close_adj"]
+    hi = df["high_adj"]
+    lo = df["low_adj"]
+    prev_cl = cl.shift(1)
+    tr = pd.concat([(hi - lo).abs(), (hi - prev_cl).abs(), (lo - prev_cl).abs()], axis=1).max(axis=1)
+    atr14 = tr.rolling(14).mean()
+    ema5 = cl.ewm(span=5, adjust=False).mean()
+    ema20 = cl.ewm(span=20, adjust=False).mean()
+    ribbon = (ema5 - ema20) / (atr14 + 1e-8)
+    return ribbon.clip(-3, 3).div(3).shift(1)
+
+
+def calc_donchian_breakout_proximity_20d(df: pd.DataFrame) -> pd.Series:
+    """Proximity of close to 20-day Donchian channel extreme.
+    +1 = at 20-day high, -1 = at 20-day low, 0 = middle.
+    Captures whether market is at breakout levels."""
+    hi20 = df["high_adj"].rolling(20).max()
+    lo20 = df["low_adj"].rolling(20).min()
+    cl = df["close_adj"]
+    pos = (cl - lo20) / (hi20 - lo20 + 1e-8)
+    centered = (pos - 0.5) * 2.0
+    return centered.clip(-1, 1).shift(1)
+
+
+def calc_trend_persistence_hurst_proxy(df: pd.DataFrame) -> pd.Series:
+    """Hurst exponent proxy via variance ratio of multi-day returns.
+    VR = Var(5d returns) / (5 * Var(1d returns)). VR > 1 = trending, VR < 1 = mean-reverting.
+    Centered at 0: (VR - 1) clipped to [-1, 1]."""
+    cl = df["close_adj"]
+    ret1 = cl.pct_change(1)
+    ret5 = cl.pct_change(5)
+    var1 = ret1.rolling(20).var()
+    var5 = ret5.rolling(20).var()
+    vr = var5 / (5.0 * var1 + 1e-12)
+    # Center at 1: VR > 1 = trending
+    centered = (vr - 1.0)
+    return centered.clip(-1, 1).shift(1)
+
+
+def calc_buying_selling_pressure_10d(df: pd.DataFrame) -> pd.Series:
+    """Al Brooks Buying/Selling Pressure: 10-day average of lower-tail / upper-tail ratio.
+    Buying pressure = lower tails prominent (buyers defending lows).
+    Selling pressure = upper tails prominent (sellers defending highs).
+    Returns: positive = buying pressure dominant, negative = selling."""
+    hi = df["high_adj"]
+    lo = df["low_adj"]
+    cl = df["close_adj"]
+    op = df["open_adj"]
+    rng = hi - lo + 1e-8
+    lower_tail = (np.minimum(op, cl) - lo) / rng
+    upper_tail = (hi - np.maximum(op, cl)) / rng
+    bp = lower_tail.rolling(10).mean()
+    sp = upper_tail.rolling(10).mean()
+    pressure = (bp - sp) / (bp + sp + 1e-8)
+    return pressure.clip(-1, 1).shift(1)
+
+
+def calc_trend_maturity_bars_since_reversal(df: pd.DataFrame) -> pd.Series:
+    """Bars (days) since last significant trend reversal.
+    Reversal = close crosses 10-day EMA after being on other side for 3+ days.
+    Young trend (few bars since reversal) = high continuation probability.
+    Returns: normalized bars since reversal, signed by trend direction."""
+    cl = df["close_adj"]
+    ema10 = cl.ewm(span=10, adjust=False).mean()
+    above = (cl > ema10).astype(int)
+    # Detect crossings
+    cross = (above != above.shift(1)).astype(int)
+    # Count bars since last cross
+    bars_since = np.zeros(len(df), dtype=np.float64)
+    last_cross_idx = 0
+    for i in range(len(df)):
+        if cross.iloc[i] == 1:
+            last_cross_idx = i
+        bars_since[i] = i - last_cross_idx
+    # Sign by current trend direction
+    direction = np.where(above == 1, 1.0, -1.0)
+    # Normalize: cap at 30 bars
+    norm_bars = np.minimum(bars_since / 30.0, 1.0)
+    result = pd.Series(direction * norm_bars, index=df.index)
+    return result.clip(-1, 1).shift(1)
+
+
+def calc_spike_quality_5d(df: pd.DataFrame) -> pd.Series:
+    """Quality of the largest single-day move in last 5 days.
+    Spike quality = body/range of the largest absolute return day.
+    High quality spike (body >> tails) = strong institutional conviction.
+    Signed by spike direction."""
+    cl = df["close_adj"]
+    op = df["open_adj"]
+    hi = df["high_adj"]
+    lo = df["low_adj"]
+    ret = (cl - cl.shift(1)).abs()
+    body = (cl - op)
+    rng = hi - lo + 1e-8
+    body_ratio = body.abs() / rng
+    # Find the day with max absolute return in rolling 5-day window
+    # Use rolling apply to get body_ratio of max-return day
+    def _spike_quality(window_ret, window_br):
+        if len(window_ret) < 5:
+            return 0.0
+        max_idx = np.argmax(window_ret)
+        return window_br[max_idx]
+    # Simpler: rolling max return * its body ratio
+    max_ret_5d = ret.rolling(5).max()
+    # Get sign and quality of the spike day
+    signed_body = body / rng
+    # Use the body_ratio of the day with max return
+    spike_quality = pd.Series(0.0, index=df.index)
+    for i in range(4, len(df)):
+        window_ret = ret.iloc[i-4:i+1].values
+        window_br = signed_body.iloc[i-4:i+1].values
+        max_idx = np.argmax(window_ret)
+        spike_quality.iloc[i] = window_br[max_idx]
+    return spike_quality.clip(-1, 1).shift(1)
+
+
+def calc_volatility_compression_breakout_setup(df: pd.DataFrame) -> pd.Series:
+    """Bollinger Band width compression over 10 days relative to 40 days.
+    Extreme compression = breakout imminent (direction from BB slope).
+    Returns: compression * sign(EMA5 slope)."""
+    cl = df["close_adj"]
+    sma20 = cl.rolling(20).mean()
+    std20 = cl.rolling(20).std()
+    bb_width = (2.0 * std20) / (sma20 + 1e-8)
+    # Compression: current width vs 40-day average width
+    bb_width_40 = bb_width.rolling(40).mean()
+    compression = 1.0 - (bb_width / (bb_width_40 + 1e-8))
+    # Direction from EMA5 slope
+    ema5 = cl.ewm(span=5, adjust=False).mean()
+    slope_sign = np.sign(ema5 - ema5.shift(3))
+    result = compression * slope_sign
+    return result.clip(-1, 1).shift(1)
+
+
+def calc_directional_movement_efficiency_10d(df: pd.DataFrame) -> pd.Series:
+    """10-day directional movement efficiency: net displacement / total path length.
+    High = clean trend (efficient movement), Low = choppy/ranging.
+    Signed by direction."""
+    cl = df["close_adj"]
+    # Net displacement over 10 days
+    net_disp = cl - cl.shift(10)
+    # Total path length: sum of absolute daily moves over 10 days
+    daily_move = (cl - cl.shift(1)).abs()
+    path_len = daily_move.rolling(10).sum()
+    efficiency = net_disp / (path_len + 1e-8)
+    return efficiency.clip(-1, 1).shift(1)
+
+
+def calc_channel_width_trend_5d(df: pd.DataFrame) -> pd.Series:
+    """5-day channel width trend: is the daily range expanding or contracting?
+    Expanding channel = trend acceleration, Contracting = trend exhaustion.
+    Returns slope of 5-day range normalized by mean range."""
+    hi = df["high_adj"]
+    lo = df["low_adj"]
+    rng = (hi - lo) / (df["close_adj"] + 1e-8)
+    # Linear slope over 5 days
+    x = np.arange(5, dtype=np.float64)
+    x_mean = x.mean()
+    x_var = ((x - x_mean) ** 2).sum()
+    def _slope(vals):
+        if len(vals) < 5:
+            return 0.0
+        y = vals - vals.mean()
+        return ((x - x_mean) * y).sum() / x_var
+    slope = rng.rolling(5).apply(_slope, raw=True)
+    mean_rng = rng.rolling(20).mean()
+    norm_slope = slope / (mean_rng + 1e-8)
+    return norm_slope.clip(-2, 2).div(2).shift(1)
+
+
+def calc_new_high_low_momentum_10d(df: pd.DataFrame) -> pd.Series:
+    """Count of 10-day new highs minus new lows over last 10 days.
+    Frequent new highs = strong uptrend, frequent new lows = downtrend.
+    Normalized to [-1, 1]."""
+    hi = df["high_adj"]
+    lo = df["low_adj"]
+    # Is today's high a 10-day high?
+    new_high = (hi >= hi.rolling(10).max()).astype(float)
+    new_low = (lo <= lo.rolling(10).min()).astype(float)
+    # Count over 10 days
+    nh_count = new_high.rolling(10).sum()
+    nl_count = new_low.rolling(10).sum()
+    momentum = (nh_count - nl_count) / 10.0
+    return momentum.clip(-1, 1).shift(1)
+
+
+def calc_volume_weighted_close_momentum_10d(df: pd.DataFrame) -> pd.Series:
+    """10-day volume-weighted close momentum.
+    Weights recent returns by volume — high-volume moves carry more weight.
+    Normalized by 10-day volatility."""
+    cl = df["close_adj"]
+    vol = df["volume"]
+    ret = cl.pct_change(1)
+    # Volume-weighted return over 10 days
+    vw_ret = (ret * vol).rolling(10).sum() / (vol.rolling(10).sum() + 1e-8)
+    # Normalize by 10-day vol
+    vol10 = ret.rolling(10).std() + 1e-8
+    norm = vw_ret / vol10
+    return norm.clip(-3, 3).div(3).shift(1)
+
+
+def calc_trend_line_distance_10d(df: pd.DataFrame) -> pd.Series:
+    """Distance of close from 10-day linear regression trend line.
+    Above trend line = bullish extension, below = bearish.
+    Normalized by ATR14."""
+    cl = df["close_adj"]
+    hi = df["high_adj"]
+    lo = df["low_adj"]
+    prev_cl = cl.shift(1)
+    tr = pd.concat([(hi - lo).abs(), (hi - prev_cl).abs(), (lo - prev_cl).abs()], axis=1).max(axis=1)
+    atr14 = tr.rolling(14).mean()
+    # 10-day linear regression
+    x = np.arange(10, dtype=np.float64)
+    x_mean = x.mean()
+    x_var = ((x - x_mean) ** 2).sum()
+    def _trend_dist(vals):
+        if len(vals) < 10:
+            return 0.0
+        y = vals
+        y_mean = y.mean()
+        slope = ((x - x_mean) * (y - y_mean)).sum() / x_var
+        intercept = y_mean - slope * x_mean
+        predicted_last = intercept + slope * 9.0
+        return y[-1] - predicted_last
+    dist = cl.rolling(10).apply(_trend_dist, raw=True)
+    norm_dist = dist / (atr14 + 1e-8)
+    return norm_dist.clip(-3, 3).div(3).shift(1)
+
+
+def calc_consecutive_ema20_above_days(df: pd.DataFrame) -> pd.Series:
+    """Number of consecutive days close is above/below EMA20.
+    Extended streak = strong trend regime (Al Brooks 20 Gap Bars).
+    Returns: streak / 20, signed by direction, clipped to [-1, 1]."""
+    cl = df["close_adj"]
+    ema20 = cl.ewm(span=20, adjust=False).mean()
+    above = (cl > ema20).astype(int).values
+    below = (cl < ema20).astype(int).values
+    # Compute streaks
+    bull_streak = np.zeros(len(df), dtype=np.float64)
+    bear_streak = np.zeros(len(df), dtype=np.float64)
+    bs = 0
+    brs = 0
+    for i in range(len(df)):
+        if above[i]:
+            bs += 1
+            brs = 0
+        elif below[i]:
+            brs += 1
+            bs = 0
+        else:
+            bs = 0
+            brs = 0
+        bull_streak[i] = bs
+        bear_streak[i] = brs
+    result = pd.Series((bull_streak - bear_streak) / 20.0, index=df.index)
+    return result.clip(-1, 1).shift(1)
+
+
+def calc_multi_day_body_efficiency_5d(df: pd.DataFrame) -> pd.Series:
+    """5-day average body efficiency: |close-open| / (high-low).
+    High = clean directional movement (trend), Low = indecision (range).
+    Signed by net direction over 5 days."""
+    op = df["open_adj"]
+    cl = df["close_adj"]
+    hi = df["high_adj"]
+    lo = df["low_adj"]
+    body_eff = (cl - op).abs() / (hi - lo + 1e-8)
+    avg_eff = body_eff.rolling(5).mean()
+    # Sign by 5-day net return
+    net_ret = cl - cl.shift(5)
+    signed_eff = avg_eff * np.sign(net_ret)
+    return signed_eff.clip(-1, 1).shift(1)
+
+
+def calc_overnight_gap_trend_5d(df: pd.DataFrame) -> pd.Series:
+    """5-day cumulative overnight gap direction.
+    Persistent positive gaps = institutional buying at open (bull trend).
+    Persistent negative gaps = distribution (bear trend).
+    Normalized by 5-day range."""
+    op = df["open_adj"]
+    cl = df["close_adj"]
+    prev_cl = cl.shift(1)
+    gap = (op - prev_cl) / (prev_cl + 1e-8)
+    cum_gap = gap.rolling(5).sum()
+    # Normalize by 5-day average range
+    rng = ((df["high_adj"] - df["low_adj"]) / (cl + 1e-8)).rolling(5).mean()
+    norm = cum_gap / (rng + 1e-8)
+    return norm.clip(-3, 3).div(3).shift(1)
+
+
 DAY_CANDIDATES = {
     # Wave 1 (original)
     "dual_thrust_range_ratio": calc_dual_thrust_range_ratio,
@@ -437,6 +761,23 @@ DAY_CANDIDATES = {
     "consecutive_close_direction": calc_consecutive_close_direction,
     "range_position_momentum": calc_range_position_momentum,
     "open_close_reversal_3d": calc_open_close_reversal_3d,
+    # Wave 3 (Market Regime & Big Trend Factors)
+    "adx_14d": calc_adx_14d,
+    "ema_ribbon_width": calc_ema_ribbon_width,
+    "donchian_breakout_proximity_20d": calc_donchian_breakout_proximity_20d,
+    "trend_persistence_hurst_proxy": calc_trend_persistence_hurst_proxy,
+    "buying_selling_pressure_10d": calc_buying_selling_pressure_10d,
+    "trend_maturity_bars_since_reversal": calc_trend_maturity_bars_since_reversal,
+    "spike_quality_5d": calc_spike_quality_5d,
+    "volatility_compression_breakout_setup": calc_volatility_compression_breakout_setup,
+    "directional_movement_efficiency_10d": calc_directional_movement_efficiency_10d,
+    "channel_width_trend_5d": calc_channel_width_trend_5d,
+    "new_high_low_momentum_10d": calc_new_high_low_momentum_10d,
+    "volume_weighted_close_momentum_10d": calc_volume_weighted_close_momentum_10d,
+    "trend_line_distance_10d": calc_trend_line_distance_10d,
+    "consecutive_ema20_above_days": calc_consecutive_ema20_above_days,
+    "multi_day_body_efficiency_5d": calc_multi_day_body_efficiency_5d,
+    "overnight_gap_trend_5d": calc_overnight_gap_trend_5d,
 }
 
 

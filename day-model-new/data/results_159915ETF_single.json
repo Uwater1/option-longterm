@@ -4,85 +4,89 @@
   "early": false,
   "k": 1.0,
   "features_selected": [
-    "combo_tri_min__first_bar_sentiment__star50_limit_proximity_early__bar_body_rng_0",
+    "combo_min__opening_drive_thrust_ratio__star50_limit_proximity_early",
+    "combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__first_bar_sentiment",
+    "combo_tri_median__opening_drive_thrust_ratio__star50_limit_proximity_early__first_bar_sentiment",
+    "combo_tri_median__rbreaker_sell_setup_proximity_early__first_bar_sentiment__bar_body_rng_0",
     "combo_rank_min__rbreaker_sell_setup_proximity_early__bar_body_rng_0",
+    "combo_min__star50_limit_proximity_early__bar_ret_0",
     "combo_mean__rbreaker_sell_setup_proximity_early__bar_ret_0",
     "combo_rank_max__rbreaker_sell_setup_proximity_early__first_bar_sentiment",
     "combo_min__star50_limit_proximity_early__yesterday_first_30min_return",
-    "combo_mean__rbreaker_sell_setup_proximity_early__early_range",
     "combo_mean__rbreaker_sell_setup_proximity_early__max_up_ret",
-    "combo_mean__max_up_ret__bar_body_rng_0",
+    "combo_rank_max__max_up_ret__first_bar_sentiment",
+    "combo_rank_max__opening_drive_thrust_ratio__max_up_ret",
     "combo_clamp_diff__bar_ret_0__demark_setup_reversal_early",
-    "combo_rank_max__max_up_ret__opening_auction_imbalance",
-    "combo_ratio__max_up_ret__volume_weighted_price_position"
+    "combo_max__max_up_ret__first_bar_return",
+    "combo_z_sum__first_bar_sentiment__rbreaker_buy_setup_proximity_early"
   ],
   "training_metrics": {
-    "overall_ic": 0.17442364493521034,
+    "overall_ic": 0.17380238982377624,
     "overall_ic_ci": [
-      0.12522997083379353,
-      0.21793530402141043
+      0.12737499729444868,
+      0.21780056544691132
     ],
-    "tail_ic": 0.2640752540603089,
+    "tail_ic": 0.26856460696026785,
     "tail_ic_ci": [
-      0.17134038662048268,
-      0.36272187628327746
+      0.1866799046195698,
+      0.3646241800381949
     ],
-    "monotonicity": 0.8424242424242424,
+    "monotonicity": 0.9393939393939394,
     "monotonicity_ci": [
-      0.503030303030303,
-      0.9393939393939394
+      0.6484848484848484,
+      0.9639393939393937
     ],
-    "ann_ret": 0.06782822864266805,
-    "raw_ann_ret": 0.0953161195835899,
-    "raw_sharpe": 1.7116235493885694,
-    "sharpe": 1.2232107857607775,
-    "sortino": 2.040426155290006,
-    "max_dd": 0.054709078840470785
+    "ann_ret": 0.055399854634978436,
+    "raw_ann_ret": 0.08173753620727198,
+    "raw_sharpe": 1.462347304406094,
+    "sharpe": 0.9939301010207204,
+    "sortino": 1.5199769309103395,
+    "max_dd": 0.07362933728524482
   },
   "oos_metrics": {
-    "overall_ic": 0.13582906987304522,
+    "overall_ic": 0.13667425113250217,
     "overall_ic_ci": [
-      0.06861260874424725,
-      0.19311728204903597
+      0.06779157956142202,
+      0.19379423780537566
     ],
-    "tail_ic": 0.25622898226175334,
+    "tail_ic": 0.26701400422175237,
     "tail_ic_ci": [
-      0.0955896584695735,
-      0.37899377356053765
+      0.11106749469643573,
+      0.3986843743647451
     ],
-    "monotonicity": 0.6484848484848484,
+    "monotonicity": 0.7090909090909091,
     "monotonicity_ci": [
       0.3212121212121212,
-      0.9151515151515152
+      0.8666666666666667
     ],
-    "ann_ret": 0.06328714329471181,
-    "raw_ann_ret": 0.08818145675787657,
-    "raw_sharpe": 1.42116355359124,
-    "sharpe": 1.024587742163025,
-    "sortino": 2.5879333075820274,
-    "max_dd": 0.07316677668129495
+    "ann_ret": 0.07052629659054246,
+    "raw_ann_ret": 0.0945642464015973,
+    "raw_sharpe": 1.5801350000643481,
+    "sharpe": 1.1854151579347942,
+    "sortino": 3.1472202471780153,
+    "max_dd": 0.07060776896514148
   },
   "lockbox_metrics": {
-    "overall_ic": 0.14182764802776385,
+    "overall_ic": 0.1450478660746502,
     "overall_ic_ci": [
-      0.04932931460253589,
-      0.2270924254985917
+      0.0491600226082889,
+      0.2326632819824331
     ],
-    "tail_ic": 0.23635502057673685,
+    "tail_ic": 0.2790852149036215,
     "tail_ic_ci": [
-      0.017429578177841683,
-      0.4365405722848869
+      0.05810473663959824,
+      0.47816305866628855
     ],
-    "monotonicity": 0.8666666666666667,
+    "monotonicity": 0.6,
     "monotonicity_ci": [
-      0.24848484848484848,
-      0.9275757575757573
+      0.2606060606060606,
+      0.8666666666666667
     ],
-    "ann_ret": 0.07753000582016677,
-    "raw_ann_ret": 0.10343219388565418,
-    "raw_sharpe": 1.3362535926256904,
-    "sharpe": 1.0041136335697114,
-    "sortino": 2.7478271693194882,
-    "max_dd": 0.07758014133786453
+    "ann_ret": 0.10253239515554716,
+    "raw_ann_ret": 0.1277544841833686,
+    "raw_sharpe": 1.67718670887258,
+    "sharpe": 1.3520910903899144,
+    "sortino": 3.9106310048796082,
+    "max_dd": 0.06640475493018391
   }
 }

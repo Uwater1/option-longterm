@@ -224,6 +224,222 @@
     }
   },
   {
+    "feature_name": "combo_min__pullback_depth_ratio__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "min",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_max__pullback_depth_ratio__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "max",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_diff__pullback_depth_ratio__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_mean__pullback_depth_ratio__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_product__pullback_depth_ratio__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "product",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__pullback_depth_ratio__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__pullback_depth_ratio__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__pullback_depth_ratio__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__pullback_depth_ratio__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__pullback_depth_ratio__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__pullback_depth_ratio__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__pullback_depth_ratio__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__pullback_depth_ratio__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_min__pullback_depth_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "min",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_max__pullback_depth_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "max",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_diff__pullback_depth_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_mean__pullback_depth_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_product__pullback_depth_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "product",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__pullback_depth_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__pullback_depth_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__pullback_depth_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__pullback_depth_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__pullback_depth_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__pullback_depth_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__pullback_depth_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__pullback_depth_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__pullback_depth_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
     "feature_name": "combo_min__pullback_depth_ratio__bar_ret_1",
     "recipe": {
       "op": "min",
@@ -325,6 +541,462 @@
       "op": "rel_diff",
       "feature_a": "pullback_depth_ratio",
       "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_min__pullback_depth_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "min",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_max__pullback_depth_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "max",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_diff__pullback_depth_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_mean__pullback_depth_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_product__pullback_depth_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "product",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__pullback_depth_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__pullback_depth_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__pullback_depth_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__pullback_depth_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__pullback_depth_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__pullback_depth_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__pullback_depth_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__pullback_depth_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__pullback_depth_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_min__vix__yesterday_lunch_gap",
+    "recipe": {
+      "op": "min",
+      "feature_a": "vix",
+      "feature_b": "yesterday_lunch_gap"
+    }
+  },
+  {
+    "feature_name": "combo_max__vix__yesterday_lunch_gap",
+    "recipe": {
+      "op": "max",
+      "feature_a": "vix",
+      "feature_b": "yesterday_lunch_gap"
+    }
+  },
+  {
+    "feature_name": "combo_diff__vix__yesterday_lunch_gap",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "vix",
+      "feature_b": "yesterday_lunch_gap"
+    }
+  },
+  {
+    "feature_name": "combo_mean__vix__yesterday_lunch_gap",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "vix",
+      "feature_b": "yesterday_lunch_gap"
+    }
+  },
+  {
+    "feature_name": "combo_product__vix__yesterday_lunch_gap",
+    "recipe": {
+      "op": "product",
+      "feature_a": "vix",
+      "feature_b": "yesterday_lunch_gap"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__vix__yesterday_lunch_gap",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "vix",
+      "feature_b": "yesterday_lunch_gap"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__vix__yesterday_lunch_gap",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "vix",
+      "feature_b": "yesterday_lunch_gap"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__vix__yesterday_lunch_gap",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "vix",
+      "feature_b": "yesterday_lunch_gap"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__vix__yesterday_lunch_gap",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "vix",
+      "feature_b": "yesterday_lunch_gap"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__vix__yesterday_lunch_gap",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "vix",
+      "feature_b": "yesterday_lunch_gap"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__vix__yesterday_lunch_gap",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "vix",
+      "feature_b": "yesterday_lunch_gap"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__vix__yesterday_lunch_gap",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "vix",
+      "feature_b": "yesterday_lunch_gap"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__vix__yesterday_lunch_gap",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "vix",
+      "feature_b": "yesterday_lunch_gap"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__yesterday_lunch_gap__vix",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "yesterday_lunch_gap",
+      "feature_b": "vix"
+    }
+  },
+  {
+    "feature_name": "combo_min__vix__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "min",
+      "feature_a": "vix",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_max__vix__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "max",
+      "feature_a": "vix",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_diff__vix__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "vix",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_mean__vix__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "vix",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_product__vix__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "product",
+      "feature_a": "vix",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__vix__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "vix",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__vix__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "vix",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__vix__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "vix",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__vix__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "vix",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__vix__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "vix",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__vix__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "vix",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__vix__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "vix",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__vix__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "vix",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__vix__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "vix",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__vix_rolling_percentile_60d__vix",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "vix"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__opening_drive_thrust_ratio__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
@@ -436,6 +1108,246 @@
     "recipe": {
       "op": "ratio",
       "feature_a": "early_vwap_acceleration",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_auction_imbalance__directional_volume_signature",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_auction_imbalance__directional_volume_signature",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_auction_imbalance__directional_volume_signature",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_auction_imbalance__directional_volume_signature",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_auction_imbalance__directional_volume_signature",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_auction_imbalance__directional_volume_signature",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_auction_imbalance__directional_volume_signature",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_auction_imbalance__directional_volume_signature",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_auction_imbalance__directional_volume_signature",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_auction_imbalance__directional_volume_signature",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_auction_imbalance__directional_volume_signature",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_auction_imbalance__directional_volume_signature",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_auction_imbalance__directional_volume_signature",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__opening_auction_imbalance__directional_volume_signature",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__directional_volume_signature__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_auction_imbalance__volume_confirmed_breakout",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_auction_imbalance__volume_confirmed_breakout",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_auction_imbalance__volume_confirmed_breakout",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_auction_imbalance__volume_confirmed_breakout",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_auction_imbalance__volume_confirmed_breakout",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_auction_imbalance__volume_confirmed_breakout",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_auction_imbalance__volume_confirmed_breakout",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_auction_imbalance__volume_confirmed_breakout",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_auction_imbalance__volume_confirmed_breakout",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_auction_imbalance__volume_confirmed_breakout",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_auction_imbalance__volume_confirmed_breakout",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_auction_imbalance__volume_confirmed_breakout",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_auction_imbalance__volume_confirmed_breakout",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__opening_auction_imbalance__volume_confirmed_breakout",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__volume_confirmed_breakout__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "volume_confirmed_breakout",
       "feature_b": "opening_auction_imbalance"
     }
   },
@@ -552,118 +1464,6 @@
     }
   },
   {
-    "feature_name": "combo_min__opening_auction_imbalance__limit_down_proximity_early",
-    "recipe": {
-      "op": "min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_max__opening_auction_imbalance__limit_down_proximity_early",
-    "recipe": {
-      "op": "max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_diff__opening_auction_imbalance__limit_down_proximity_early",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_mean__opening_auction_imbalance__limit_down_proximity_early",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_product__opening_auction_imbalance__limit_down_proximity_early",
-    "recipe": {
-      "op": "product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__opening_auction_imbalance__limit_down_proximity_early",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__opening_auction_imbalance__limit_down_proximity_early",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__opening_auction_imbalance__limit_down_proximity_early",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__opening_auction_imbalance__limit_down_proximity_early",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__opening_auction_imbalance__limit_down_proximity_early",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__opening_auction_imbalance__limit_down_proximity_early",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__opening_auction_imbalance__limit_down_proximity_early",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__opening_auction_imbalance__limit_down_proximity_early",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__limit_down_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "limit_down_proximity_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
     "feature_name": "combo_min__opening_auction_imbalance__rbreaker_buy_setup_proximity_early",
     "recipe": {
       "op": "min",
@@ -776,6 +1576,230 @@
     }
   },
   {
+    "feature_name": "combo_min__opening_auction_imbalance__limit_down_proximity_early",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_auction_imbalance__limit_down_proximity_early",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_auction_imbalance__limit_down_proximity_early",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_auction_imbalance__limit_down_proximity_early",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_auction_imbalance__limit_down_proximity_early",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_auction_imbalance__limit_down_proximity_early",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_auction_imbalance__limit_down_proximity_early",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_auction_imbalance__limit_down_proximity_early",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_auction_imbalance__limit_down_proximity_early",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_auction_imbalance__limit_down_proximity_early",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_auction_imbalance__limit_down_proximity_early",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_auction_imbalance__limit_down_proximity_early",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_auction_imbalance__limit_down_proximity_early",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__limit_down_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_min__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "min",
+      "feature_a": "net_volume_flow",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_max__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "max",
+      "feature_a": "net_volume_flow",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_diff__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "net_volume_flow",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_mean__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "net_volume_flow",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_product__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "product",
+      "feature_a": "net_volume_flow",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "net_volume_flow",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "net_volume_flow",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "net_volume_flow",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "net_volume_flow",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "net_volume_flow",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "net_volume_flow",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "net_volume_flow",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "net_volume_flow",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__opening_drive_thrust_ratio__net_volume_flow",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "net_volume_flow"
+    }
+  },
+  {
     "feature_name": "combo_min__net_volume_flow__early_vwap_acceleration",
     "recipe": {
       "op": "min",
@@ -884,6 +1908,246 @@
     "recipe": {
       "op": "ratio",
       "feature_a": "early_vwap_acceleration",
+      "feature_b": "net_volume_flow"
+    }
+  },
+  {
+    "feature_name": "combo_min__net_volume_flow__directional_volume_signature",
+    "recipe": {
+      "op": "min",
+      "feature_a": "net_volume_flow",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_max__net_volume_flow__directional_volume_signature",
+    "recipe": {
+      "op": "max",
+      "feature_a": "net_volume_flow",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_diff__net_volume_flow__directional_volume_signature",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "net_volume_flow",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_mean__net_volume_flow__directional_volume_signature",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "net_volume_flow",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_product__net_volume_flow__directional_volume_signature",
+    "recipe": {
+      "op": "product",
+      "feature_a": "net_volume_flow",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__net_volume_flow__directional_volume_signature",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "net_volume_flow",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__net_volume_flow__directional_volume_signature",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "net_volume_flow",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__net_volume_flow__directional_volume_signature",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "net_volume_flow",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__net_volume_flow__directional_volume_signature",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "net_volume_flow",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__net_volume_flow__directional_volume_signature",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "net_volume_flow",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__net_volume_flow__directional_volume_signature",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "net_volume_flow",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__net_volume_flow__directional_volume_signature",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "net_volume_flow",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__net_volume_flow__directional_volume_signature",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "net_volume_flow",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__net_volume_flow__directional_volume_signature",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "net_volume_flow",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__directional_volume_signature__net_volume_flow",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "net_volume_flow"
+    }
+  },
+  {
+    "feature_name": "combo_min__net_volume_flow__volume_confirmed_breakout",
+    "recipe": {
+      "op": "min",
+      "feature_a": "net_volume_flow",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_max__net_volume_flow__volume_confirmed_breakout",
+    "recipe": {
+      "op": "max",
+      "feature_a": "net_volume_flow",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_diff__net_volume_flow__volume_confirmed_breakout",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "net_volume_flow",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_mean__net_volume_flow__volume_confirmed_breakout",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "net_volume_flow",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_product__net_volume_flow__volume_confirmed_breakout",
+    "recipe": {
+      "op": "product",
+      "feature_a": "net_volume_flow",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__net_volume_flow__volume_confirmed_breakout",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "net_volume_flow",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__net_volume_flow__volume_confirmed_breakout",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "net_volume_flow",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__net_volume_flow__volume_confirmed_breakout",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "net_volume_flow",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__net_volume_flow__volume_confirmed_breakout",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "net_volume_flow",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__net_volume_flow__volume_confirmed_breakout",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "net_volume_flow",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__net_volume_flow__volume_confirmed_breakout",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "net_volume_flow",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__net_volume_flow__volume_confirmed_breakout",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "net_volume_flow",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__net_volume_flow__volume_confirmed_breakout",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "net_volume_flow",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__net_volume_flow__volume_confirmed_breakout",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "net_volume_flow",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__volume_confirmed_breakout__net_volume_flow",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "volume_confirmed_breakout",
       "feature_b": "net_volume_flow"
     }
   },
@@ -1000,118 +2264,6 @@
     }
   },
   {
-    "feature_name": "combo_min__net_volume_flow__limit_down_proximity_early",
-    "recipe": {
-      "op": "min",
-      "feature_a": "net_volume_flow",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_max__net_volume_flow__limit_down_proximity_early",
-    "recipe": {
-      "op": "max",
-      "feature_a": "net_volume_flow",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_diff__net_volume_flow__limit_down_proximity_early",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "net_volume_flow",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_mean__net_volume_flow__limit_down_proximity_early",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "net_volume_flow",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_product__net_volume_flow__limit_down_proximity_early",
-    "recipe": {
-      "op": "product",
-      "feature_a": "net_volume_flow",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__net_volume_flow__limit_down_proximity_early",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "net_volume_flow",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__net_volume_flow__limit_down_proximity_early",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "net_volume_flow",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__net_volume_flow__limit_down_proximity_early",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "net_volume_flow",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__net_volume_flow__limit_down_proximity_early",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "net_volume_flow",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__net_volume_flow__limit_down_proximity_early",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "net_volume_flow",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__net_volume_flow__limit_down_proximity_early",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "net_volume_flow",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__net_volume_flow__limit_down_proximity_early",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "net_volume_flow",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__net_volume_flow__limit_down_proximity_early",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "net_volume_flow",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__limit_down_proximity_early__net_volume_flow",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "limit_down_proximity_early",
-      "feature_b": "net_volume_flow"
-    }
-  },
-  {
     "feature_name": "combo_min__net_volume_flow__rbreaker_buy_setup_proximity_early",
     "recipe": {
       "op": "min",
@@ -1224,115 +2376,1091 @@
     }
   },
   {
-    "feature_name": "combo_min__yesterday_lunch_gap__capital_sell_value",
+    "feature_name": "combo_min__net_volume_flow__limit_down_proximity_early",
     "recipe": {
       "op": "min",
-      "feature_a": "yesterday_lunch_gap",
-      "feature_b": "capital_sell_value"
+      "feature_a": "net_volume_flow",
+      "feature_b": "limit_down_proximity_early"
     }
   },
   {
-    "feature_name": "combo_max__yesterday_lunch_gap__capital_sell_value",
+    "feature_name": "combo_max__net_volume_flow__limit_down_proximity_early",
     "recipe": {
       "op": "max",
-      "feature_a": "yesterday_lunch_gap",
-      "feature_b": "capital_sell_value"
+      "feature_a": "net_volume_flow",
+      "feature_b": "limit_down_proximity_early"
     }
   },
   {
-    "feature_name": "combo_diff__yesterday_lunch_gap__capital_sell_value",
+    "feature_name": "combo_diff__net_volume_flow__limit_down_proximity_early",
     "recipe": {
       "op": "diff",
-      "feature_a": "yesterday_lunch_gap",
-      "feature_b": "capital_sell_value"
+      "feature_a": "net_volume_flow",
+      "feature_b": "limit_down_proximity_early"
     }
   },
   {
-    "feature_name": "combo_mean__yesterday_lunch_gap__capital_sell_value",
+    "feature_name": "combo_mean__net_volume_flow__limit_down_proximity_early",
     "recipe": {
       "op": "mean",
-      "feature_a": "yesterday_lunch_gap",
-      "feature_b": "capital_sell_value"
+      "feature_a": "net_volume_flow",
+      "feature_b": "limit_down_proximity_early"
     }
   },
   {
-    "feature_name": "combo_product__yesterday_lunch_gap__capital_sell_value",
+    "feature_name": "combo_product__net_volume_flow__limit_down_proximity_early",
     "recipe": {
       "op": "product",
-      "feature_a": "yesterday_lunch_gap",
-      "feature_b": "capital_sell_value"
+      "feature_a": "net_volume_flow",
+      "feature_b": "limit_down_proximity_early"
     }
   },
   {
-    "feature_name": "combo_abs_diff__yesterday_lunch_gap__capital_sell_value",
+    "feature_name": "combo_abs_diff__net_volume_flow__limit_down_proximity_early",
     "recipe": {
       "op": "abs_diff",
-      "feature_a": "yesterday_lunch_gap",
-      "feature_b": "capital_sell_value"
+      "feature_a": "net_volume_flow",
+      "feature_b": "limit_down_proximity_early"
     }
   },
   {
-    "feature_name": "combo_rank_min__yesterday_lunch_gap__capital_sell_value",
+    "feature_name": "combo_rank_min__net_volume_flow__limit_down_proximity_early",
     "recipe": {
       "op": "rank_min",
-      "feature_a": "yesterday_lunch_gap",
-      "feature_b": "capital_sell_value"
+      "feature_a": "net_volume_flow",
+      "feature_b": "limit_down_proximity_early"
     }
   },
   {
-    "feature_name": "combo_rank_max__yesterday_lunch_gap__capital_sell_value",
+    "feature_name": "combo_rank_max__net_volume_flow__limit_down_proximity_early",
     "recipe": {
       "op": "rank_max",
-      "feature_a": "yesterday_lunch_gap",
-      "feature_b": "capital_sell_value"
+      "feature_a": "net_volume_flow",
+      "feature_b": "limit_down_proximity_early"
     }
   },
   {
-    "feature_name": "combo_clamp_diff__yesterday_lunch_gap__capital_sell_value",
+    "feature_name": "combo_clamp_diff__net_volume_flow__limit_down_proximity_early",
     "recipe": {
       "op": "clamp_diff",
-      "feature_a": "yesterday_lunch_gap",
-      "feature_b": "capital_sell_value"
+      "feature_a": "net_volume_flow",
+      "feature_b": "limit_down_proximity_early"
     }
   },
   {
-    "feature_name": "combo_z_sum__yesterday_lunch_gap__capital_sell_value",
+    "feature_name": "combo_z_sum__net_volume_flow__limit_down_proximity_early",
     "recipe": {
       "op": "z_sum",
-      "feature_a": "yesterday_lunch_gap",
-      "feature_b": "capital_sell_value"
+      "feature_a": "net_volume_flow",
+      "feature_b": "limit_down_proximity_early"
     }
   },
   {
-    "feature_name": "combo_z_diff__yesterday_lunch_gap__capital_sell_value",
+    "feature_name": "combo_z_diff__net_volume_flow__limit_down_proximity_early",
     "recipe": {
       "op": "z_diff",
-      "feature_a": "yesterday_lunch_gap",
-      "feature_b": "capital_sell_value"
+      "feature_a": "net_volume_flow",
+      "feature_b": "limit_down_proximity_early"
     }
   },
   {
-    "feature_name": "combo_sig_product__yesterday_lunch_gap__capital_sell_value",
+    "feature_name": "combo_sig_product__net_volume_flow__limit_down_proximity_early",
     "recipe": {
       "op": "sig_product",
-      "feature_a": "yesterday_lunch_gap",
-      "feature_b": "capital_sell_value"
+      "feature_a": "net_volume_flow",
+      "feature_b": "limit_down_proximity_early"
     }
   },
   {
-    "feature_name": "combo_rel_diff__yesterday_lunch_gap__capital_sell_value",
+    "feature_name": "combo_rel_diff__net_volume_flow__limit_down_proximity_early",
     "recipe": {
       "op": "rel_diff",
-      "feature_a": "yesterday_lunch_gap",
-      "feature_b": "capital_sell_value"
+      "feature_a": "net_volume_flow",
+      "feature_b": "limit_down_proximity_early"
     }
   },
   {
-    "feature_name": "combo_ratio__yesterday_lunch_gap__capital_sell_value",
+    "feature_name": "combo_ratio__limit_down_proximity_early__net_volume_flow",
     "recipe": {
       "op": "ratio",
-      "feature_a": "yesterday_lunch_gap",
-      "feature_b": "capital_sell_value"
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "net_volume_flow"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_drive_thrust_ratio__early_vwap_acceleration",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_drive_thrust_ratio__early_vwap_acceleration",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_drive_thrust_ratio__early_vwap_acceleration",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_drive_thrust_ratio__early_vwap_acceleration",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_drive_thrust_ratio__early_vwap_acceleration",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_drive_thrust_ratio__early_vwap_acceleration",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_drive_thrust_ratio__early_vwap_acceleration",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_drive_thrust_ratio__early_vwap_acceleration",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_drive_thrust_ratio__early_vwap_acceleration",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_drive_thrust_ratio__early_vwap_acceleration",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_drive_thrust_ratio__early_vwap_acceleration",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_drive_thrust_ratio__early_vwap_acceleration",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_drive_thrust_ratio__early_vwap_acceleration",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_drive_thrust_ratio__directional_volume_signature",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_drive_thrust_ratio__directional_volume_signature",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_drive_thrust_ratio__directional_volume_signature",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_drive_thrust_ratio__directional_volume_signature",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_drive_thrust_ratio__directional_volume_signature",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_drive_thrust_ratio__directional_volume_signature",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_drive_thrust_ratio__directional_volume_signature",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_drive_thrust_ratio__directional_volume_signature",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_drive_thrust_ratio__directional_volume_signature",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_drive_thrust_ratio__directional_volume_signature",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_drive_thrust_ratio__directional_volume_signature",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_drive_thrust_ratio__directional_volume_signature",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_drive_thrust_ratio__directional_volume_signature",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__opening_drive_thrust_ratio__directional_volume_signature",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_drive_thrust_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_drive_thrust_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_drive_thrust_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_drive_thrust_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_drive_thrust_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_drive_thrust_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_drive_thrust_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_drive_thrust_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_drive_thrust_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_drive_thrust_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_drive_thrust_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_drive_thrust_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_drive_thrust_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__opening_drive_thrust_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_drive_thrust_ratio__bar_ret_1",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_drive_thrust_ratio__bar_ret_1",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_drive_thrust_ratio__bar_ret_1",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_drive_thrust_ratio__bar_ret_1",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_drive_thrust_ratio__bar_ret_1",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_drive_thrust_ratio__bar_ret_1",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_drive_thrust_ratio__bar_ret_1",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_drive_thrust_ratio__bar_ret_1",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_drive_thrust_ratio__bar_ret_1",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_drive_thrust_ratio__bar_ret_1",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_drive_thrust_ratio__bar_ret_1",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_drive_thrust_ratio__bar_ret_1",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_drive_thrust_ratio__bar_ret_1",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_drive_thrust_ratio__limit_down_proximity_early",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_drive_thrust_ratio__limit_down_proximity_early",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_drive_thrust_ratio__limit_down_proximity_early",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_drive_thrust_ratio__limit_down_proximity_early",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_drive_thrust_ratio__limit_down_proximity_early",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_drive_thrust_ratio__limit_down_proximity_early",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_drive_thrust_ratio__limit_down_proximity_early",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_drive_thrust_ratio__limit_down_proximity_early",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_drive_thrust_ratio__limit_down_proximity_early",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_drive_thrust_ratio__limit_down_proximity_early",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_drive_thrust_ratio__limit_down_proximity_early",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_drive_thrust_ratio__limit_down_proximity_early",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_drive_thrust_ratio__limit_down_proximity_early",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_drive_thrust_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_drive_thrust_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_drive_thrust_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_drive_thrust_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_drive_thrust_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_drive_thrust_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_drive_thrust_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_drive_thrust_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_drive_thrust_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_drive_thrust_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_drive_thrust_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_drive_thrust_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_drive_thrust_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__opening_drive_thrust_ratio__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_min__early_vwap_acceleration__directional_volume_signature",
+    "recipe": {
+      "op": "min",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_max__early_vwap_acceleration__directional_volume_signature",
+    "recipe": {
+      "op": "max",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_diff__early_vwap_acceleration__directional_volume_signature",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_mean__early_vwap_acceleration__directional_volume_signature",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_product__early_vwap_acceleration__directional_volume_signature",
+    "recipe": {
+      "op": "product",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__early_vwap_acceleration__directional_volume_signature",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__early_vwap_acceleration__directional_volume_signature",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__early_vwap_acceleration__directional_volume_signature",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__early_vwap_acceleration__directional_volume_signature",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__early_vwap_acceleration__directional_volume_signature",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__early_vwap_acceleration__directional_volume_signature",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__early_vwap_acceleration__directional_volume_signature",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__early_vwap_acceleration__directional_volume_signature",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__early_vwap_acceleration__directional_volume_signature",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_min__early_vwap_acceleration__volume_confirmed_breakout",
+    "recipe": {
+      "op": "min",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_max__early_vwap_acceleration__volume_confirmed_breakout",
+    "recipe": {
+      "op": "max",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_diff__early_vwap_acceleration__volume_confirmed_breakout",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_mean__early_vwap_acceleration__volume_confirmed_breakout",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_product__early_vwap_acceleration__volume_confirmed_breakout",
+    "recipe": {
+      "op": "product",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__early_vwap_acceleration__volume_confirmed_breakout",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__early_vwap_acceleration__volume_confirmed_breakout",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__early_vwap_acceleration__volume_confirmed_breakout",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__early_vwap_acceleration__volume_confirmed_breakout",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__early_vwap_acceleration__volume_confirmed_breakout",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__early_vwap_acceleration__volume_confirmed_breakout",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__early_vwap_acceleration__volume_confirmed_breakout",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__early_vwap_acceleration__volume_confirmed_breakout",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__early_vwap_acceleration__volume_confirmed_breakout",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "volume_confirmed_breakout"
     }
   },
   {
@@ -1440,123 +3568,2073 @@
     }
   },
   {
-    "feature_name": "combo_min__vix_rolling_percentile_60d__capital_sell_value",
+    "feature_name": "combo_min__directional_volume_signature__volume_confirmed_breakout",
     "recipe": {
       "op": "min",
-      "feature_a": "vix_rolling_percentile_60d",
-      "feature_b": "capital_sell_value"
+      "feature_a": "directional_volume_signature",
+      "feature_b": "volume_confirmed_breakout"
     }
   },
   {
-    "feature_name": "combo_max__vix_rolling_percentile_60d__capital_sell_value",
+    "feature_name": "combo_max__directional_volume_signature__volume_confirmed_breakout",
     "recipe": {
       "op": "max",
-      "feature_a": "vix_rolling_percentile_60d",
-      "feature_b": "capital_sell_value"
+      "feature_a": "directional_volume_signature",
+      "feature_b": "volume_confirmed_breakout"
     }
   },
   {
-    "feature_name": "combo_diff__vix_rolling_percentile_60d__capital_sell_value",
+    "feature_name": "combo_diff__directional_volume_signature__volume_confirmed_breakout",
     "recipe": {
       "op": "diff",
-      "feature_a": "vix_rolling_percentile_60d",
-      "feature_b": "capital_sell_value"
+      "feature_a": "directional_volume_signature",
+      "feature_b": "volume_confirmed_breakout"
     }
   },
   {
-    "feature_name": "combo_mean__vix_rolling_percentile_60d__capital_sell_value",
+    "feature_name": "combo_mean__directional_volume_signature__volume_confirmed_breakout",
     "recipe": {
       "op": "mean",
-      "feature_a": "vix_rolling_percentile_60d",
-      "feature_b": "capital_sell_value"
+      "feature_a": "directional_volume_signature",
+      "feature_b": "volume_confirmed_breakout"
     }
   },
   {
-    "feature_name": "combo_product__vix_rolling_percentile_60d__capital_sell_value",
+    "feature_name": "combo_product__directional_volume_signature__volume_confirmed_breakout",
     "recipe": {
       "op": "product",
-      "feature_a": "vix_rolling_percentile_60d",
-      "feature_b": "capital_sell_value"
+      "feature_a": "directional_volume_signature",
+      "feature_b": "volume_confirmed_breakout"
     }
   },
   {
-    "feature_name": "combo_abs_diff__vix_rolling_percentile_60d__capital_sell_value",
+    "feature_name": "combo_abs_diff__directional_volume_signature__volume_confirmed_breakout",
     "recipe": {
       "op": "abs_diff",
-      "feature_a": "vix_rolling_percentile_60d",
-      "feature_b": "capital_sell_value"
+      "feature_a": "directional_volume_signature",
+      "feature_b": "volume_confirmed_breakout"
     }
   },
   {
-    "feature_name": "combo_rank_min__vix_rolling_percentile_60d__capital_sell_value",
+    "feature_name": "combo_rank_min__directional_volume_signature__volume_confirmed_breakout",
     "recipe": {
       "op": "rank_min",
-      "feature_a": "vix_rolling_percentile_60d",
-      "feature_b": "capital_sell_value"
+      "feature_a": "directional_volume_signature",
+      "feature_b": "volume_confirmed_breakout"
     }
   },
   {
-    "feature_name": "combo_rank_max__vix_rolling_percentile_60d__capital_sell_value",
+    "feature_name": "combo_rank_max__directional_volume_signature__volume_confirmed_breakout",
     "recipe": {
       "op": "rank_max",
-      "feature_a": "vix_rolling_percentile_60d",
-      "feature_b": "capital_sell_value"
+      "feature_a": "directional_volume_signature",
+      "feature_b": "volume_confirmed_breakout"
     }
   },
   {
-    "feature_name": "combo_clamp_diff__vix_rolling_percentile_60d__capital_sell_value",
+    "feature_name": "combo_clamp_diff__directional_volume_signature__volume_confirmed_breakout",
     "recipe": {
       "op": "clamp_diff",
-      "feature_a": "vix_rolling_percentile_60d",
-      "feature_b": "capital_sell_value"
+      "feature_a": "directional_volume_signature",
+      "feature_b": "volume_confirmed_breakout"
     }
   },
   {
-    "feature_name": "combo_z_sum__vix_rolling_percentile_60d__capital_sell_value",
+    "feature_name": "combo_z_sum__directional_volume_signature__volume_confirmed_breakout",
     "recipe": {
       "op": "z_sum",
-      "feature_a": "vix_rolling_percentile_60d",
-      "feature_b": "capital_sell_value"
+      "feature_a": "directional_volume_signature",
+      "feature_b": "volume_confirmed_breakout"
     }
   },
   {
-    "feature_name": "combo_z_diff__vix_rolling_percentile_60d__capital_sell_value",
+    "feature_name": "combo_z_diff__directional_volume_signature__volume_confirmed_breakout",
     "recipe": {
       "op": "z_diff",
-      "feature_a": "vix_rolling_percentile_60d",
-      "feature_b": "capital_sell_value"
+      "feature_a": "directional_volume_signature",
+      "feature_b": "volume_confirmed_breakout"
     }
   },
   {
-    "feature_name": "combo_sig_product__vix_rolling_percentile_60d__capital_sell_value",
+    "feature_name": "combo_sig_product__directional_volume_signature__volume_confirmed_breakout",
     "recipe": {
       "op": "sig_product",
-      "feature_a": "vix_rolling_percentile_60d",
-      "feature_b": "capital_sell_value"
+      "feature_a": "directional_volume_signature",
+      "feature_b": "volume_confirmed_breakout"
     }
   },
   {
-    "feature_name": "combo_rel_diff__vix_rolling_percentile_60d__capital_sell_value",
+    "feature_name": "combo_rel_diff__directional_volume_signature__volume_confirmed_breakout",
     "recipe": {
       "op": "rel_diff",
-      "feature_a": "vix_rolling_percentile_60d",
-      "feature_b": "capital_sell_value"
+      "feature_a": "directional_volume_signature",
+      "feature_b": "volume_confirmed_breakout"
     }
   },
   {
-    "feature_name": "combo_ratio__vix_rolling_percentile_60d__capital_sell_value",
+    "feature_name": "combo_ratio__directional_volume_signature__volume_confirmed_breakout",
     "recipe": {
       "op": "ratio",
-      "feature_a": "vix_rolling_percentile_60d",
-      "feature_b": "capital_sell_value"
+      "feature_a": "directional_volume_signature",
+      "feature_b": "volume_confirmed_breakout"
     }
   },
   {
-    "feature_name": "combo_ratio__capital_sell_value__vix_rolling_percentile_60d",
+    "feature_name": "combo_ratio__volume_confirmed_breakout__directional_volume_signature",
     "recipe": {
       "op": "ratio",
-      "feature_a": "capital_sell_value",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_min__directional_volume_signature__bar_ret_1",
+    "recipe": {
+      "op": "min",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_max__directional_volume_signature__bar_ret_1",
+    "recipe": {
+      "op": "max",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_diff__directional_volume_signature__bar_ret_1",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_mean__directional_volume_signature__bar_ret_1",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_product__directional_volume_signature__bar_ret_1",
+    "recipe": {
+      "op": "product",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__directional_volume_signature__bar_ret_1",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__directional_volume_signature__bar_ret_1",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__directional_volume_signature__bar_ret_1",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__directional_volume_signature__bar_ret_1",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__directional_volume_signature__bar_ret_1",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__directional_volume_signature__bar_ret_1",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__directional_volume_signature__bar_ret_1",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__directional_volume_signature__bar_ret_1",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__bar_ret_1__directional_volume_signature",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "bar_ret_1",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_min__directional_volume_signature__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "min",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_max__directional_volume_signature__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "max",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_diff__directional_volume_signature__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_mean__directional_volume_signature__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_product__directional_volume_signature__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "product",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__directional_volume_signature__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__directional_volume_signature__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__directional_volume_signature__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__directional_volume_signature__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__directional_volume_signature__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__directional_volume_signature__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__directional_volume_signature__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__directional_volume_signature__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__rbreaker_buy_setup_proximity_early__directional_volume_signature",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_min__directional_volume_signature__limit_down_proximity_early",
+    "recipe": {
+      "op": "min",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_max__directional_volume_signature__limit_down_proximity_early",
+    "recipe": {
+      "op": "max",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_diff__directional_volume_signature__limit_down_proximity_early",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_mean__directional_volume_signature__limit_down_proximity_early",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_product__directional_volume_signature__limit_down_proximity_early",
+    "recipe": {
+      "op": "product",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__directional_volume_signature__limit_down_proximity_early",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__directional_volume_signature__limit_down_proximity_early",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__directional_volume_signature__limit_down_proximity_early",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__directional_volume_signature__limit_down_proximity_early",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__directional_volume_signature__limit_down_proximity_early",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__directional_volume_signature__limit_down_proximity_early",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__directional_volume_signature__limit_down_proximity_early",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__directional_volume_signature__limit_down_proximity_early",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__limit_down_proximity_early__directional_volume_signature",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_min__directional_volume_signature__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "min",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_max__directional_volume_signature__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "max",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_diff__directional_volume_signature__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_mean__directional_volume_signature__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_product__directional_volume_signature__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "product",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__directional_volume_signature__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__directional_volume_signature__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__directional_volume_signature__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__directional_volume_signature__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__directional_volume_signature__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__directional_volume_signature__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__directional_volume_signature__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__directional_volume_signature__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__directional_volume_signature__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__morning_volume_weighted_momentum__directional_volume_signature",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "morning_volume_weighted_momentum",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_min__volume_confirmed_breakout__bar_ret_1",
+    "recipe": {
+      "op": "min",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_max__volume_confirmed_breakout__bar_ret_1",
+    "recipe": {
+      "op": "max",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_diff__volume_confirmed_breakout__bar_ret_1",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_mean__volume_confirmed_breakout__bar_ret_1",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_product__volume_confirmed_breakout__bar_ret_1",
+    "recipe": {
+      "op": "product",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__volume_confirmed_breakout__bar_ret_1",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__volume_confirmed_breakout__bar_ret_1",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__volume_confirmed_breakout__bar_ret_1",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__volume_confirmed_breakout__bar_ret_1",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__volume_confirmed_breakout__bar_ret_1",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__volume_confirmed_breakout__bar_ret_1",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__volume_confirmed_breakout__bar_ret_1",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__volume_confirmed_breakout__bar_ret_1",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__bar_ret_1__volume_confirmed_breakout",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "bar_ret_1",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_min__volume_confirmed_breakout__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "min",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_max__volume_confirmed_breakout__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "max",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_diff__volume_confirmed_breakout__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_mean__volume_confirmed_breakout__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_product__volume_confirmed_breakout__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "product",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__volume_confirmed_breakout__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__volume_confirmed_breakout__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__volume_confirmed_breakout__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__volume_confirmed_breakout__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__volume_confirmed_breakout__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__volume_confirmed_breakout__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__volume_confirmed_breakout__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__volume_confirmed_breakout__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__rbreaker_buy_setup_proximity_early__volume_confirmed_breakout",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_min__volume_confirmed_breakout__limit_down_proximity_early",
+    "recipe": {
+      "op": "min",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_max__volume_confirmed_breakout__limit_down_proximity_early",
+    "recipe": {
+      "op": "max",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_diff__volume_confirmed_breakout__limit_down_proximity_early",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_mean__volume_confirmed_breakout__limit_down_proximity_early",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_product__volume_confirmed_breakout__limit_down_proximity_early",
+    "recipe": {
+      "op": "product",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__volume_confirmed_breakout__limit_down_proximity_early",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__volume_confirmed_breakout__limit_down_proximity_early",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__volume_confirmed_breakout__limit_down_proximity_early",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__volume_confirmed_breakout__limit_down_proximity_early",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__volume_confirmed_breakout__limit_down_proximity_early",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__volume_confirmed_breakout__limit_down_proximity_early",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__volume_confirmed_breakout__limit_down_proximity_early",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__volume_confirmed_breakout__limit_down_proximity_early",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__limit_down_proximity_early__volume_confirmed_breakout",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_min__volume_confirmed_breakout__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "min",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_max__volume_confirmed_breakout__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "max",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_diff__volume_confirmed_breakout__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_mean__volume_confirmed_breakout__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_product__volume_confirmed_breakout__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "product",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__volume_confirmed_breakout__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__volume_confirmed_breakout__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__volume_confirmed_breakout__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__volume_confirmed_breakout__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__volume_confirmed_breakout__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__volume_confirmed_breakout__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__volume_confirmed_breakout__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__volume_confirmed_breakout__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__volume_confirmed_breakout__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__morning_volume_weighted_momentum__volume_confirmed_breakout",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "morning_volume_weighted_momentum",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_min__bar_ret_1__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "min",
+      "feature_a": "bar_ret_1",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_max__bar_ret_1__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "max",
+      "feature_a": "bar_ret_1",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_diff__bar_ret_1__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "bar_ret_1",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_mean__bar_ret_1__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "bar_ret_1",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_product__bar_ret_1__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "product",
+      "feature_a": "bar_ret_1",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__bar_ret_1__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "bar_ret_1",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__bar_ret_1__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "bar_ret_1",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__bar_ret_1__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "bar_ret_1",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__bar_ret_1__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "bar_ret_1",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__bar_ret_1__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "bar_ret_1",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__bar_ret_1__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "bar_ret_1",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__bar_ret_1__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "bar_ret_1",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__bar_ret_1__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "bar_ret_1",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__bar_ret_1__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "bar_ret_1",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_min__rbreaker_buy_setup_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "min",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_max__rbreaker_buy_setup_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "max",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_diff__rbreaker_buy_setup_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_mean__rbreaker_buy_setup_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_product__rbreaker_buy_setup_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "product",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__rbreaker_buy_setup_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__rbreaker_buy_setup_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__rbreaker_buy_setup_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__rbreaker_buy_setup_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__rbreaker_buy_setup_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__rbreaker_buy_setup_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__rbreaker_buy_setup_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__rbreaker_buy_setup_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__rbreaker_buy_setup_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_min__limit_down_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "min",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_max__limit_down_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "max",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_diff__limit_down_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_mean__limit_down_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_product__limit_down_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "product",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__limit_down_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__limit_down_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__limit_down_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__limit_down_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__limit_down_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__limit_down_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__limit_down_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__limit_down_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__limit_down_proximity_early__morning_volume_weighted_momentum",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "limit_down_proximity_early",
+      "feature_b": "morning_volume_weighted_momentum"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__pullback_depth_ratio__opening_auction_imbalance",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__pullback_depth_ratio__net_volume_flow",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "net_volume_flow"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__pullback_depth_ratio__yesterday_lunch_gap",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "yesterday_lunch_gap"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__pullback_depth_ratio__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__pullback_depth_ratio__early_vwap_acceleration",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__pullback_depth_ratio__directional_volume_signature",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__pullback_depth_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__pullback_depth_ratio__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "pullback_depth_ratio",
       "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__pullback_depth_ratio__bar_ret_1",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__pullback_depth_ratio__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__pullback_depth_ratio__limit_down_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_auction_imbalance__net_volume_flow",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "net_volume_flow"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_auction_imbalance__yesterday_lunch_gap",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "yesterday_lunch_gap"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_auction_imbalance__early_vwap_acceleration",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_auction_imbalance__directional_volume_signature",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_auction_imbalance__volume_confirmed_breakout",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_auction_imbalance__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_auction_imbalance__bar_ret_1",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_auction_imbalance__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_auction_imbalance__limit_down_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__net_volume_flow__yesterday_lunch_gap",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "net_volume_flow",
+      "feature_b": "yesterday_lunch_gap"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "net_volume_flow",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__net_volume_flow__early_vwap_acceleration",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "net_volume_flow",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__net_volume_flow__directional_volume_signature",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "net_volume_flow",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__net_volume_flow__volume_confirmed_breakout",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "net_volume_flow",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__net_volume_flow__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "net_volume_flow",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__net_volume_flow__bar_ret_1",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "net_volume_flow",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__net_volume_flow__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "net_volume_flow",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__net_volume_flow__limit_down_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "net_volume_flow",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__yesterday_lunch_gap__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "yesterday_lunch_gap",
+      "feature_b": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__yesterday_lunch_gap__early_vwap_acceleration",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "yesterday_lunch_gap",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__yesterday_lunch_gap__directional_volume_signature",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "yesterday_lunch_gap",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__yesterday_lunch_gap__volume_confirmed_breakout",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "yesterday_lunch_gap",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__yesterday_lunch_gap__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "yesterday_lunch_gap",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__yesterday_lunch_gap__bar_ret_1",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "yesterday_lunch_gap",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__yesterday_lunch_gap__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "yesterday_lunch_gap",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__yesterday_lunch_gap__limit_down_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "yesterday_lunch_gap",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_drive_thrust_ratio__early_vwap_acceleration",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "early_vwap_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_drive_thrust_ratio__directional_volume_signature",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_drive_thrust_ratio__volume_confirmed_breakout",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_drive_thrust_ratio__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_drive_thrust_ratio__bar_ret_1",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__opening_drive_thrust_ratio__limit_down_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__early_vwap_acceleration__directional_volume_signature",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "directional_volume_signature"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__early_vwap_acceleration__volume_confirmed_breakout",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__early_vwap_acceleration__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__early_vwap_acceleration__bar_ret_1",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__early_vwap_acceleration__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__early_vwap_acceleration__limit_down_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "early_vwap_acceleration",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__directional_volume_signature__volume_confirmed_breakout",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "volume_confirmed_breakout"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__directional_volume_signature__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__directional_volume_signature__bar_ret_1",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__directional_volume_signature__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__directional_volume_signature__limit_down_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "directional_volume_signature",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__volume_confirmed_breakout__vix_rolling_percentile_60d",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__volume_confirmed_breakout__bar_ret_1",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__volume_confirmed_breakout__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__volume_confirmed_breakout__limit_down_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "volume_confirmed_breakout",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__vix_rolling_percentile_60d__bar_ret_1",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "bar_ret_1"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__vix_rolling_percentile_60d__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__vix_rolling_percentile_60d__limit_down_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__bar_ret_1__rbreaker_buy_setup_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "bar_ret_1",
+      "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__bar_ret_1__limit_down_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "bar_ret_1",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ifelse__vix__rbreaker_buy_setup_proximity_early__limit_down_proximity_early",
+    "recipe": {
+      "op": "ifelse",
+      "feature_cond": "vix",
+      "feature_a": "rbreaker_buy_setup_proximity_early",
+      "feature_b": "limit_down_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__pullback_depth_ratio__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__pullback_depth_ratio__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__pullback_depth_ratio__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__pullback_depth_ratio__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__pullback_depth_ratio__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__pullback_depth_ratio__opening_auction_imbalance__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__pullback_depth_ratio__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "net_volume_flow",
+      "feature_c": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__pullback_depth_ratio__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "net_volume_flow",
+      "feature_c": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__pullback_depth_ratio__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "net_volume_flow",
+      "feature_c": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__pullback_depth_ratio__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "net_volume_flow",
+      "feature_c": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__pullback_depth_ratio__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "net_volume_flow",
+      "feature_c": "opening_drive_thrust_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__pullback_depth_ratio__net_volume_flow__opening_drive_thrust_ratio",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "pullback_depth_ratio",
+      "feature_b": "net_volume_flow",
+      "feature_c": "opening_drive_thrust_ratio"
     }
   }
 ]
