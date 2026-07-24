@@ -12,13 +12,13 @@ python3 day-model-new/mining/dig_and_test_candidates.py
 
 # 0b. Generate aggressive feature combination recipes (2-way + 3-way by default)
 # Defaults: top-50 for 2-way, top-25 for 3-way, 11 + 5 ops, dedup via mining_log.json
-python3 day-model-new/mining/generate_combos.py -e 300ETF -s single [--two-only]
+python3 day-model-new/mining/generate_combos.py -e all -s all [--two-only]
 
 # Custom top-K for broader search
 python3 day-model-new/mining/generate_combos.py -e 300ETF -s single [-k 60 (optional)] [--top-k-3 30 (optional)]
 
 # Regenerate everything (ignore mining log dedup)
-python3 day-model-new/mining/generate_combos.py -e 300ETF -s single --no-dedup
+python3 day-model-new/mining/generate_combos.py -e all -s single --no-dedup
 
 # 1. Run Stage A feature selection (saves selected_pool & mining_attempts JSONs to data/)
 # Note: select_features.py processes ONE ETF/side combination. For all combinations, use run_baseline.py.
@@ -51,6 +51,15 @@ python3 day-model-new/analyze_admitted_features.py
 # 5. Run deep filter diagnosis (FP/FN causal analysis, training-only discriminators)
 # Excludes 588000ETF (insufficient history). Uses lockbox as ground truth for labeling only.
 python3 day-model-new/filter_diagnosis.py
+
+# 6. Multi-period FP rate analysis (3 alternate training windows, OOS as ground truth)
+# Periods: P2=2015-2023, P3=2016-2024, P4=2017-2025. Excludes 588000ETF.
+# Jackknife uses n_chunks = training_years (1 chunk per calendar year).
+python3 day-model-new/run_periods.py                    # All 3 periods, all ETFs/sides
+python3 day-model-new/run_periods.py -e 300ETF          # Single ETF
+python3 day-model-new/run_periods.py --periods p2,p3    # Subset of periods
+python3 day-model-new/run_periods.py --compile-only     # Recompile MULTI_PERIOD_FP_REPORT.md
+python3 day-model-new/run_periods.py --max-parallel 4   # Parallel combos
 ```
 
 ## Architecture
@@ -72,7 +81,7 @@ python3 day-model-new/filter_diagnosis.py
 
 | # | Gate | Key Parameters | Purpose |
 |---|------|---------------|---------|
-| 1 | 7-Year Jackknife Sign Stability | max_flips=2 (1 for 588000ETF), last 2 chunks must not flip | Reject sign-flipping features |
+| 1 | Yearly Jackknife Sign Stability | n_chunks=training_years (~1yr/chunk), max_flips=1, last 2 chunks must not flip | Reject sign-flipping features |
 | 2 | B2 Rolling Guard | mono_thr=0.60 (single) / 0.55 (L/S), ir_thr=0.30 / 0.15 | Reject unstable rolling IC |
 | 3 | Temporal Validation | recent 30% IC > 0 | Reject decayed signals |
 | 4 | BH-FDR | q=0.30, 5000 block-shuffled sims | Multiple-testing correction |
@@ -96,4 +105,5 @@ python3 day-model-new/filter_diagnosis.py
 - **Parallel baseline runner**: Optimized using `joblib.Parallel` and `sys.executable` for safe execution.
 - **Filter Effectiveness Diagnostics** (`analyze_admitted_features.py`): Evaluates each gate's false positive/negative rate against lockbox performance (read-only, never fed back into selection). Outputs: per-gate FN rate, threshold sensitivity sweep (mono_thr × ir_thr grid), IC decay curves (rolling 126-day IC across train→OOS→lockbox), and data-driven filter tuning recommendations. Results saved to `data/filter_effectiveness.json` and appended to `FEATURE_DIAGNOSTICS.md`.
 - **Deep Filter Diagnosis** (`filter_diagnosis.py`): Causal analysis of false acceptance/rejection. Computes temporal IC decomposition, component stability, regime concentration, and training-only discriminators (Cohen's d) to identify WHY filters fail. Excludes 588000ETF (insufficient history). Outputs `FILTER_DIAGNOSIS.md` and `data/filter_diagnosis.json`. Lockbox used for labeling only — never fed back into selection logic.
+- **Multi-Period FP Analysis** (`run_periods.py`): Runs the full pipeline across 3 alternate training windows (P2: 2015-2023, P3: 2016-2024, P4: 2017-2025) to assess temporal robustness of filter gates. Uses OOS as ground truth (no lockbox — insufficient future data for later periods). Outputs: per-period `FEATURE_DIAGNOSTICS{suffix}.md`, `data/filter_effectiveness{suffix}.json`, and consolidated `MULTI_PERIOD_FP_REPORT.md`. Does NOT modify `admitted_pools.py` — purely diagnostic. Supports `--train-start`/`--train-end`/`--period-suffix` CLI overrides on `select_features.py`, `evaluate_concept.py`, and `analyze_admitted_features.py`.
 

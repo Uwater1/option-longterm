@@ -1,0 +1,58 @@
+[
+  {
+    "feature_name": "opening_drive_thrust_ratio",
+    "sign": 1,
+    "overall_ic": 0.26318615674972534,
+    "deflated_ic": 0.26487812856734394,
+    "ic_ir": 0.7901587282476408,
+    "monotonicity": 0.8084232152028762
+  },
+  {
+    "feature_name": "max_up_ret",
+    "sign": 1,
+    "overall_ic": 0.23170793056488037,
+    "deflated_ic": 0.2328342811536742,
+    "ic_ir": 0.610727723978037,
+    "monotonicity": 0.7370313302516692
+  },
+  {
+    "feature_name": "volatility_expansion_trend_vector",
+    "sign": 1,
+    "overall_ic": 0.21735522150993347,
+    "deflated_ic": 0.21887459524934424,
+    "ic_ir": 0.49767464548653645,
+    "monotonicity": 0.7036466358500256
+  },
+  {
+    "feature_name": "close_vs_open_range",
+    "sign": 1,
+    "overall_ic": 0.20570072531700134,
+    "deflated_ic": 0.20715027787817047,
+    "ic_ir": 0.5363227121441072,
+    "monotonicity": 0.7041602465331279
+  },
+  {
+    "feature_name": "first_bar_return",
+    "sign": 1,
+    "overall_ic": 0.19305475056171417,
+    "deflated_ic": 0.19452068261913416,
+    "ic_ir": 0.6013809690548804,
+    "monotonicity": 0.7180277349768875
+  },
+  {
+    "feature_name": "max_down_ret",
+    "sign": 1,
+    "overall_ic": 0.17503230273723602,
+    "deflated_ic": 0.17737858820449487,
+    "ic_ir": 0.5099960520022422,
+    "monotonicity": 0.6589625064201335
+  },
+  {
+    "feature_name": "first_30min_return",
+    "sign": 1,
+    "overall_ic": 0.15571877360343933,
+    "deflated_ic": 0.15670021783974933,
+    "ic_ir": 0.4824373597987976,
+    "monotonicity": 0.6954288649203904
+  }
+]

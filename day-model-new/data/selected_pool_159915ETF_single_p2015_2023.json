@@ -1,0 +1,18 @@
+[
+  {
+    "feature_name": "rbreaker_sell_setup_proximity_early",
+    "sign": 1,
+    "overall_ic": 0.22794575989246368,
+    "deflated_ic": 0.22815468250311874,
+    "ic_ir": 0.6028122047991643,
+    "monotonicity": 0.7010785824345146
+  },
+  {
+    "feature_name": "max_up_ret",
+    "sign": 1,
+    "overall_ic": 0.21359334886074066,
+    "deflated_ic": 0.21484673440564123,
+    "ic_ir": 0.5942212854654139,
+    "monotonicity": 0.7164869029275809
+  }
+]

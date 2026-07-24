@@ -1,0 +1,61 @@
+{
+  "etf": "500ETF",
+  "side": "single",
+  "early": false,
+  "k": 1.0,
+  "features_selected": [
+    "opening_drive_thrust_ratio",
+    "max_up_ret",
+    "volatility_expansion_trend_vector",
+    "close_vs_open_range",
+    "first_bar_return",
+    "max_down_ret",
+    "first_30min_return"
+  ],
+  "training_metrics": {
+    "overall_ic": 0.15710997676237265,
+    "overall_ic_ci": [
+      0.11619170345294481,
+      0.19994626609544605
+    ],
+    "tail_ic": 0.25223638880859534,
+    "tail_ic_ci": [
+      0.14947873234971876,
+      0.34499598566591
+    ],
+    "monotonicity": 0.8181818181818182,
+    "monotonicity_ci": [
+      0.5515151515151515,
+      0.9636363636363636
+    ],
+    "ann_ret": 0.05310482789193858,
+    "raw_ann_ret": 0.08039749501901143,
+    "raw_sharpe": 1.3221290904179295,
+    "sharpe": 0.8776736362855535,
+    "sortino": 1.610313782068522,
+    "max_dd": 0.053688410440974776
+  },
+  "oos_metrics": {
+    "overall_ic": 0.10271757125187868,
+    "overall_ic_ci": [
+      0.025095769090443313,
+      0.17763171000162048
+    ],
+    "tail_ic": 0.10824921684650192,
+    "tail_ic_ci": [
+      -0.05555584052369002,
+      0.25800147776332577
+    ],
+    "monotonicity": 0.8303030303030303,
+    "monotonicity_ci": [
+      0.22424242424242424,
+      0.9030303030303031
+    ],
+    "ann_ret": 0.020784625080485813,
+    "raw_ann_ret": 0.04837068189177321,
+    "raw_sharpe": 0.945008771924525,
+    "sharpe": 0.41040139969739664,
+    "sortino": 0.7560177929406461,
+    "max_dd": 0.08538611631039142
+  }
+}

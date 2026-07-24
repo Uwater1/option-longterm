@@ -322,10 +322,19 @@ def main():
     parser.add_argument("--position-mode", choices=["binary", "score_weighted", "conviction_weighted"], default="conviction_weighted", help="Position sizing mode (default: conviction_weighted)")
     parser.add_argument("--conviction-z", type=float, default=1.0, help="Min z-score to trade in conviction_weighted mode (default: 1.0)")
     parser.add_argument("--no-abs-sign", action="store_true", help="Disable absolute sign kill switch")
+    parser.add_argument("--train-start", type=str, default=None, help="Override training start date (YYYY-MM-DD)")
+    parser.add_argument("--train-end", type=str, default=None, help="Override training end date (YYYY-MM-DD)")
+    parser.add_argument("--oos-start", type=str, default=None, help="Override OOS start date (YYYY-MM-DD)")
+    parser.add_argument("--period-suffix", type=str, default=None, help="Output file suffix for multi-period runs (e.g., _p2015_2023)")
     args = parser.parse_args()
 
     # Determine dynamic date ranges
-    if args.etf == "588000ETF":
+    if args.train_start and args.train_end:
+        train_start = pd.Timestamp(args.train_start)
+        train_end = pd.Timestamp(args.train_end)
+        oos_start = pd.Timestamp(args.oos_start) if args.oos_start else train_end
+        lockbox_start = None  # No lockbox for multi-period runs
+    elif args.etf == "588000ETF":
         train_start = pd.Timestamp("2020-11-01")
         train_end = pd.Timestamp("2025-01-01")
         oos_start = pd.Timestamp("2025-01-01")
@@ -341,7 +350,7 @@ def main():
     print(f"================================================================================")
 
     # 1. Load selected feature pool
-    suffix = "_early" if args.early else ""
+    suffix = args.period_suffix or ("_early" if args.early else "")
     data_out_dir = HERE / "data"
     pool_path = data_out_dir / f"selected_pool_{args.etf}_{args.side}{suffix}.json"
     if not pool_path.exists():
@@ -376,15 +385,19 @@ def main():
     oos_mask = df["date"] >= oos_start
     oos_df = df[oos_mask].reset_index(drop=True)
     
-    lockbox_mask = df["date"] >= lockbox_start
-    lockbox_df = df[lockbox_mask].reset_index(drop=True)
+    if lockbox_start is not None:
+        lockbox_mask = df["date"] >= lockbox_start
+        lockbox_df = df[lockbox_mask].reset_index(drop=True)
+    else:
+        lockbox_df = pd.DataFrame()  # No lockbox for multi-period runs
 
     # Standardize and prepare feature values based on selection pool
     # Fill base features NaNs defensively using vectorized DataFrame operations
     col_med_train = train_df[FEATURES].median().fillna(0.0)
     train_df[FEATURES] = train_df[FEATURES].ffill().fillna(col_med_train)
     oos_df[FEATURES] = oos_df[FEATURES].ffill().fillna(col_med_train)
-    lockbox_df[FEATURES] = lockbox_df[FEATURES].ffill().fillna(col_med_train)
+    if len(lockbox_df) > 0:
+        lockbox_df[FEATURES] = lockbox_df[FEATURES].ffill().fillna(col_med_train)
 
     # Import recipe utils
     import sys
@@ -429,7 +442,8 @@ def main():
             recipe = item["recipe"]
             train_df[feat_name] = compute_recipe(train_df, recipe, train_means, train_stds, train_medians, train_ecdfs)
             oos_df[feat_name] = compute_recipe(oos_df, recipe, train_means, train_stds, train_medians, train_ecdfs)
-            lockbox_df[feat_name] = compute_recipe(lockbox_df, recipe, train_means, train_stds, train_medians, train_ecdfs)
+            if len(lockbox_df) > 0:
+                lockbox_df[feat_name] = compute_recipe(lockbox_df, recipe, train_means, train_stds, train_medians, train_ecdfs)
 
 
     all_selected_features = [item["feature_name"] for item in selected_pool]
@@ -447,18 +461,19 @@ def main():
 
         X_train_std = get_standardized_x(train_df)
         X_oos_std = get_standardized_x(oos_df)
-        X_lock_std = get_standardized_x(lockbox_df)
+        X_lock_std = get_standardized_x(lockbox_df) if len(lockbox_df) > 0 else np.empty((0, len(all_selected_features)))
 
         # Apply sign flips saved in selection pool
         signs = np.array([item["sign"] for item in selected_pool])
         X_train_std = X_train_std * signs
         X_oos_std = X_oos_std * signs
-        X_lock_std = X_lock_std * signs
+        if len(X_lock_std) > 0:
+            X_lock_std = X_lock_std * signs
 
     # Target returns
     y_train = train_df["trade_return"].values.astype(np.float64)
     y_oos = oos_df["trade_return"].values.astype(np.float64)
-    y_lock = lockbox_df["trade_return"].values.astype(np.float64)
+    y_lock = lockbox_df["trade_return"].values.astype(np.float64) if len(lockbox_df) > 0 else np.array([])
 
     # 3. IC-weighted combination predictions (B1) with empirical Bayes shrinkage
     if selected_pool:
@@ -474,7 +489,7 @@ def main():
             
         pred_train = X_train_std @ weights
         pred_oos = X_oos_std @ weights
-        pred_lock = X_lock_std @ weights
+        pred_lock = X_lock_std @ weights if len(X_lock_std) > 0 else np.array([])
     else:
         pred_train = np.zeros(len(y_train))
         pred_oos = np.zeros(len(y_oos))
@@ -524,7 +539,9 @@ def main():
 
     train_results = run_eval(y_train, pred_train, f"Training Period ({train_start.year}-{train_end.year})")
     oos_results = run_eval(y_oos, pred_oos, f"Holdout OOS Period ({oos_start.year}-present)")
-    lock_results = run_eval(y_lock, pred_lock, f"OOS Lockbox Period ({lockbox_start.year}-present)")
+    lock_results = None
+    if len(y_lock) > 0:
+        lock_results = run_eval(y_lock, pred_lock, f"OOS Lockbox Period ({lockbox_start.year}-present)")
 
     # Save results to a report file
     results_path = data_out_dir / f"results_{args.etf}_{args.side}{suffix}.json"
@@ -536,8 +553,9 @@ def main():
         "features_selected": [item["feature_name"] for item in selected_pool],
         "training_metrics": train_results,
         "oos_metrics": oos_results,
-        "lockbox_metrics": lock_results
     }
+    if lock_results is not None:
+        out_dict["lockbox_metrics"] = lock_results
     with open(results_path, "w") as f:
         json.dump(out_dict, f, indent=2)
     print(f"\nSaved evaluation metrics to {results_path}")

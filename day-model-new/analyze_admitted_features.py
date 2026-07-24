@@ -190,14 +190,14 @@ def _compute_feature_on_split(df, feat_name, recipe, train_means, train_stds, tr
     return {"ic": float(ic), "sharpe": float(sharpe)}
 
 
-def analyze_gate_effectiveness(etf, side, train_df, oos_df, lockbox_df, train_means, train_stds, train_medians, top_k=30):
+def analyze_gate_effectiveness(etf, side, train_df, oos_df, lockbox_df, train_means, train_stds, train_medians, top_k=30, suffix=""):
     """Analyze each filter gate's false positive/negative rate against lockbox performance.
     
     For each gate, sample top-K rejects (by training overall_ic) and compute their
     lockbox IC/Sharpe. High false-negative rate = gate is too strict.
     Also compute admitted features' lockbox performance for false-positive rate.
     """
-    attempts_path = HERE / "data" / f"mining_attempts_{etf}_{side}.json"
+    attempts_path = HERE / "data" / f"mining_attempts_{etf}_{side}{suffix}.json"
     if not attempts_path.exists():
         return None
     
@@ -327,13 +327,13 @@ def analyze_gate_effectiveness(etf, side, train_df, oos_df, lockbox_df, train_me
     return gate_results
 
 
-def analyze_threshold_sensitivity(etf, side, lockbox_df, train_means, train_stds, train_medians):
+def analyze_threshold_sensitivity(etf, side, lockbox_df, train_means, train_stds, train_medians, suffix=""):
     """Sweep mono_thr and ir_thr to find optimal gate thresholds.
     
     Uses mining_attempts log data (which has monotonicity and ic_ir for rolling guard rejects)
     to simulate different threshold combinations and estimate lockbox performance.
     """
-    attempts_path = HERE / "data" / f"mining_attempts_{etf}_{side}.json"
+    attempts_path = HERE / "data" / f"mining_attempts_{etf}_{side}{suffix}.json"
     if not attempts_path.exists():
         return None
     
@@ -464,6 +464,21 @@ def analyze_ic_decay(etf, side, df_full, pool, train_means, train_stds, train_me
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--period-suffix", type=str, default=None, help="Period suffix for multi-period runs (e.g., _p2015_2023)")
+    parser.add_argument("--train-start", type=str, default=None, help="Override training start date (YYYY-MM-DD)")
+    parser.add_argument("--train-end", type=str, default=None, help="Override training end date (YYYY-MM-DD)")
+    cli_args = parser.parse_args()
+
+    suffix = cli_args.period_suffix or ""
+    multi_period = bool(suffix)
+
+    # In multi-period mode, override dates and use OOS as ground truth
+    if multi_period and cli_args.train_start and cli_args.train_end:
+        override_dates = (cli_args.train_start, cli_args.train_end, cli_args.train_end, cli_args.train_end)
+    else:
+        override_dates = None
+
     features_dir = REPO_ROOT / "day-model" / "data"
     data_out_dir = HERE / "data"
     data_out_dir.mkdir(parents=True, exist_ok=True)
@@ -471,7 +486,10 @@ def main():
     results = {}
     
     for etf in ETFS:
-        train_start, train_end, oos_start, lockbox_start = ADAPTIVE_DATES.get(etf, ADAPTIVE_DATES["_default"])
+        if override_dates:
+            train_start, train_end, oos_start, lockbox_start = override_dates
+        else:
+            train_start, train_end, oos_start, lockbox_start = ADAPTIVE_DATES.get(etf, ADAPTIVE_DATES["_default"])
         
         path = features_dir / f"features_{etf}.parquet"
         if not path.exists():
@@ -485,7 +503,10 @@ def main():
         
         train_df = df[(df["date"] >= train_start) & (df["date"] < train_end)].reset_index(drop=True)
         oos_df = df[df["date"] >= oos_start].reset_index(drop=True)
-        lockbox_df = df[df["date"] >= lockbox_start].reset_index(drop=True)
+        if multi_period:
+            lockbox_df = oos_df  # Use OOS as ground truth in multi-period mode
+        else:
+            lockbox_df = df[df["date"] >= lockbox_start].reset_index(drop=True)
         
         # Defensive fill NaNs using train medians
         col_med_train = train_df[FEATURES].median().fillna(0.0)
@@ -497,7 +518,16 @@ def main():
         results[etf] = {}
         
         for side in SIDES:
-            pool = POOLS.get(etf, {}).get(side, [])
+            if multi_period:
+                # Load pool from period-suffixed selected_pool JSON
+                pool_path = data_out_dir / f"selected_pool_{etf}_{side}{suffix}.json"
+                if pool_path.exists():
+                    with open(pool_path, "r", encoding="utf-8") as f:
+                        pool = json.load(f)
+                else:
+                    pool = []
+            else:
+                pool = POOLS.get(etf, {}).get(side, [])
             if not pool:
                 continue
                 
@@ -635,7 +665,7 @@ def main():
             }
             
     # Save JSON metrics
-    with open(data_out_dir / "feature_diagnostics.json", "w", encoding="utf-8") as f:
+    with open(data_out_dir / f"feature_diagnostics{suffix}.json", "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
     
     # ─── Filter Effectiveness Analysis ────────────────────────────────────────
@@ -643,7 +673,10 @@ def main():
     filter_results = {}
     
     for etf in ETFS:
-        train_start, train_end, oos_start, lockbox_start = ADAPTIVE_DATES.get(etf, ADAPTIVE_DATES["_default"])
+        if override_dates:
+            train_start, train_end, oos_start, lockbox_start = override_dates
+        else:
+            train_start, train_end, oos_start, lockbox_start = ADAPTIVE_DATES.get(etf, ADAPTIVE_DATES["_default"])
         
         path = features_dir / f"features_{etf}.parquet"
         if not path.exists():
@@ -656,7 +689,10 @@ def main():
         df = df.sort_values("date").reset_index(drop=True)
         
         train_df = df[(df["date"] >= train_start) & (df["date"] < train_end)].reset_index(drop=True)
-        lockbox_df = df[df["date"] >= lockbox_start].reset_index(drop=True)
+        if multi_period:
+            lockbox_df = df[df["date"] >= oos_start].reset_index(drop=True)  # OOS as ground truth
+        else:
+            lockbox_df = df[df["date"] >= lockbox_start].reset_index(drop=True)
         
         # Fill NaNs
         col_med_train = train_df[FEATURES].median().fillna(0.0)
@@ -672,19 +708,27 @@ def main():
         filter_results[etf] = {}
         
         for side in SIDES:
-            pool = POOLS.get(etf, {}).get(side, [])
+            if multi_period:
+                pool_path = data_out_dir / f"selected_pool_{etf}_{side}{suffix}.json"
+                if pool_path.exists():
+                    with open(pool_path, "r", encoding="utf-8") as f:
+                        pool = json.load(f)
+                else:
+                    pool = []
+            else:
+                pool = POOLS.get(etf, {}).get(side, [])
             
             # Gate effectiveness
             print(f"  {etf}/{side}: gate effectiveness...")
             gate_eff = analyze_gate_effectiveness(
                 etf, side, train_df, None, lockbox_df,
-                all_train_means, all_train_stds, all_train_medians, top_k=30
+                all_train_means, all_train_stds, all_train_medians, top_k=30, suffix=suffix
             )
             
             # Threshold sensitivity
             print(f"  {etf}/{side}: threshold sensitivity...")
             thresh_sens = analyze_threshold_sensitivity(
-                etf, side, lockbox_df, all_train_means, all_train_stds, all_train_medians
+                etf, side, lockbox_df, all_train_means, all_train_stds, all_train_medians, suffix=suffix
             )
             
             # IC decay for admitted features
@@ -704,9 +748,9 @@ def main():
             }
     
     # Save filter effectiveness JSON
-    with open(data_out_dir / "filter_effectiveness.json", "w", encoding="utf-8") as f:
+    with open(data_out_dir / f"filter_effectiveness{suffix}.json", "w", encoding="utf-8") as f:
         json.dump(filter_results, f, indent=2, default=str)
-    print(f"Filter effectiveness JSON written to: {data_out_dir / 'filter_effectiveness.json'}")
+    print(f"Filter effectiveness JSON written to: {data_out_dir / f'filter_effectiveness{suffix}.json'}")
     
     # ─── Generate Markdown Report ─────────────────────────────────────────────
     report_lines = [
@@ -967,13 +1011,13 @@ def main():
         "4. **OOS Validation Gate**: Add a mandatory OOS IC > 0 check before final admission to reduce false positives.",
     ])
     
-    report_path = HERE / "FEATURE_DIAGNOSTICS.md"
+    report_path = HERE / f"FEATURE_DIAGNOSTICS{suffix}.md"
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(report_lines) + "\n")
         
     print(f"Successfully ran diagnostics across {len(results)} ETFs.")
     print(f"Report written to: {report_path}")
-    print(f"JSON metrics written to: {data_out_dir / 'feature_diagnostics.json'}")
+    print(f"JSON metrics written to: {data_out_dir / f'feature_diagnostics{suffix}.json'}")
 
 if __name__ == "__main__":
     main()

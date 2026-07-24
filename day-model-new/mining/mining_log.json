@@ -172278,6 +172278,64 @@
       "n_rejected_fdr": 4,
       "n_rejected_corr": 0,
       "admitted_names": []
+    },
+    {
+      "batch_id": 417,
+      "etf": "300ETF",
+      "side": "single",
+      "timestamp": "2026-07-24T07:41:45.189279+00:00",
+      "n_candidates": 221,
+      "n_admitted": 2,
+      "n_rejected_split_half": 181,
+      "n_rejected_rolling": 28,
+      "n_rejected_fdr": 5,
+      "n_rejected_corr": 1,
+      "admitted_names": [
+        "rbreaker_sell_setup_proximity_early",
+        "bar_body_rng_0"
+      ]
+    },
+    {
+      "batch_id": 418,
+      "etf": "300ETF",
+      "side": "short",
+      "timestamp": "2026-07-24T07:44:23.836902+00:00",
+      "n_candidates": 235,
+      "n_admitted": 0,
+      "n_rejected_split_half": 192,
+      "n_rejected_rolling": 41,
+      "n_rejected_fdr": 2,
+      "n_rejected_corr": 0,
+      "admitted_names": []
+    },
+    {
+      "batch_id": 419,
+      "etf": "300ETF",
+      "side": "single",
+      "timestamp": "2026-07-24T07:44:24.798749+00:00",
+      "n_candidates": 221,
+      "n_admitted": 2,
+      "n_rejected_split_half": 181,
+      "n_rejected_rolling": 28,
+      "n_rejected_fdr": 5,
+      "n_rejected_corr": 1,
+      "admitted_names": [
+        "rbreaker_sell_setup_proximity_early",
+        "bar_body_rng_0"
+      ]
+    },
+    {
+      "batch_id": 420,
+      "etf": "50ETF",
+      "side": "long",
+      "timestamp": "2026-07-24T07:44:30.994404+00:00",
+      "n_candidates": 227,
+      "n_admitted": 0,
+      "n_rejected_split_half": 194,
+      "n_rejected_rolling": 25,
+      "n_rejected_fdr": 8,
+      "n_rejected_corr": 0,
+      "admitted_names": []
     }
   ]
-}
+}}

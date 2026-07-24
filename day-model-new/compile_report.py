@@ -198,6 +198,8 @@ def build_report(etfs, sides, suffix):
             res = _load_json(DATA_DIR / f"results_{etf}_{side}{suffix}.json")
             if res is None:
                 continue
+            if "lockbox_metrics" not in res:
+                continue
             n_feats = len(res["features_selected"])
             lines.append(_metrics_row(etf, side, n_feats, res["lockbox_metrics"]))
 
@@ -309,12 +311,13 @@ def main():
     parser.add_argument("-e", "--etf", default="all", help="ETF or 'all'")
     parser.add_argument("-s", "--side", default="all", help="Side or 'all'")
     parser.add_argument("--early", action="store_true", help="Use early window dataset suffix")
+    parser.add_argument("--period-suffix", type=str, default=None, help="Period suffix for multi-period runs (e.g., _p2015_2023)")
     parser.add_argument("-o", "--output", default=None, help="Output path (default: day-model-new/BASELINE_REPORT{suffix}.md)")
     args = parser.parse_args()
 
     etfs = ETFS if args.etf == "all" else [args.etf]
     sides = SIDES if args.side == "all" else [args.side]
-    suffix = "_early" if args.early else ""
+    suffix = args.period_suffix or ("_early" if args.early else "")
 
     lines = build_report(etfs, sides, suffix)
     out_path = Path(args.output) if args.output else (HERE / f"BASELINE_REPORT{suffix}.md")

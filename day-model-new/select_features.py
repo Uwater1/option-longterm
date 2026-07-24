@@ -388,8 +388,8 @@ def compute_rolling_tail_ic_series(x_flipped: np.ndarray, y: np.ndarray, window_
     return numba_rolling_tail_ic(x_flipped, y, window_starts, window_ends, tail_def, pct)
 
 def expanding_wf_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str, max_flips: int = 2) -> tuple:
-    """7-year Jackknife sign stability check on RAW x.
-    Splits training data into 7 equal chunks (approximating calendar years).
+    """Yearly Jackknife sign stability check on RAW x.
+    Splits training data into N equal chunks (one per ~calendar year, ~252 trading days).
     Computes tail IC per chunk, locks sign from full-sample IC.
     Counts 'flip chunks' where chunk IC sign disagrees with locked sign.
     Passes if flip_count <= max_flips.
@@ -397,7 +397,8 @@ def expanding_wf_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str, max_fli
     Returns (passes: bool, locked_sign: float, ic_first_half, ic_second_half, ic_recent).
     """
     n = len(y)
-    n_chunks = 7
+    n_years = max(1, round(n / 252))  # ~252 trading days per year
+    n_chunks = max(3, n_years)        # at least 3 chunks
     chunk_size = n // n_chunks
     
     if chunk_size < 10:
@@ -960,6 +961,9 @@ def main():
     parser.add_argument("--ir-thr", type=float, default=None, help="Rolling tail IC Information Ratio threshold")
     parser.add_argument("--early", action="store_true", help="Use early window return dataset")
     parser.add_argument("--n-jobs", type=int, default=-1, help="Parallel workers")
+    parser.add_argument("--train-start", type=str, default=None, help="Override training start date (YYYY-MM-DD)")
+    parser.add_argument("--train-end", type=str, default=None, help="Override training end date (YYYY-MM-DD)")
+    parser.add_argument("--period-suffix", type=str, default=None, help="Output file suffix for multi-period runs (e.g., _p2015_2023)")
     args = parser.parse_args()
 
     # Dynamic defaults based on side
@@ -969,7 +973,11 @@ def main():
         args.ir_thr = 0.15 if args.side in ["long", "short"] else 0.30
 
     # Determine dynamic training start and end dates
-    if args.etf == "588000ETF":
+    if args.train_start and args.train_end:
+        train_start = pd.Timestamp(args.train_start)
+        train_end = pd.Timestamp(args.train_end)
+        args.max_flips = MAX_FLIPS
+    elif args.etf == "588000ETF":
         train_start = pd.Timestamp("2020-11-01")
         train_end = pd.Timestamp("2025-01-01")
         args.max_flips = 1
@@ -1020,7 +1028,7 @@ def main():
     # Load and compute candidate recipes dynamically (vectorized batch + parquet cache)
     from recipe_utils import compute_recipe
     
-    suffix = "_early" if args.early else ""
+    suffix = args.period_suffix or ("_early" if args.early else "")
     candidates_path = HERE / "mining" / f"candidates_{args.etf}_{args.side}{suffix}.json"
     candidate_recipes = {}
     features_to_eval = list(FEATURES)
@@ -1218,7 +1226,7 @@ def main():
     # 3. Persistent Cumulative Trial Ledger with robust attempts-log seeding
     data_out_dir = HERE / "data"
     os.makedirs(data_out_dir, exist_ok=True)
-    suffix = "_early" if args.early else ""
+    suffix = args.period_suffix or ("_early" if args.early else "")
     ledger_path = data_out_dir / f"trial_ledger_{args.etf}_{args.side}{suffix}.json"
     
     if ledger_path.exists():

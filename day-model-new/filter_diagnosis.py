@@ -550,9 +550,9 @@ def compute_training_discriminators(fp_features, tp_features):
     return discriminators
 
 
-def load_attempts(etf, side):
+def load_attempts(etf, side, suffix=""):
     """Load mining attempts for an ETF/side."""
-    path = HERE / "data" / f"mining_attempts_{etf}_{side}.json"
+    path = HERE / "data" / f"mining_attempts_{etf}_{side}{suffix}.json"
     if not path.exists():
         return None
     with open(path, "r", encoding="utf-8") as f:
@@ -563,7 +563,19 @@ def main():
     parser = argparse.ArgumentParser(description="Filter Pipeline Deep Diagnosis")
     parser.add_argument("-e", "--etf", nargs="*", default=ETFS)
     parser.add_argument("-s", "--side", nargs="*", default=SIDES)
+    parser.add_argument("--period-suffix", type=str, default=None, help="Period suffix for multi-period runs (e.g., _p2015_2023)")
+    parser.add_argument("--train-start", type=str, default=None, help="Override training start date (YYYY-MM-DD)")
+    parser.add_argument("--train-end", type=str, default=None, help="Override training end date (YYYY-MM-DD)")
     args = parser.parse_args()
+
+    suffix = args.period_suffix or ""
+    multi_period = bool(suffix)
+
+    # In multi-period mode, override dates and use OOS as ground truth
+    if multi_period and args.train_start and args.train_end:
+        override_dates = (args.train_start, args.train_end, args.train_end, args.train_end)
+    else:
+        override_dates = None
 
     features_dir = REPO_ROOT / "day-model" / "data"
     data_out_dir = HERE / "data"
@@ -574,7 +586,10 @@ def main():
     for etf in args.etf:
         if etf not in ETFS:
             continue
-        train_start, train_end, oos_start, lockbox_start = ADAPTIVE_DATES["_default"]
+        if override_dates:
+            train_start, train_end, oos_start, lockbox_start = override_dates
+        else:
+            train_start, train_end, oos_start, lockbox_start = ADAPTIVE_DATES["_default"]
 
         path = features_dir / f"features_{etf}.parquet"
         if not path.exists():
@@ -592,7 +607,10 @@ def main():
         df = df.sort_values("date").reset_index(drop=True)
 
         train_df = df[(df["date"] >= train_start) & (df["date"] < train_end)].reset_index(drop=True)
-        lockbox_df = df[df["date"] >= lockbox_start].reset_index(drop=True)
+        if multi_period:
+            lockbox_df = df[df["date"] >= oos_start].reset_index(drop=True)  # OOS as ground truth
+        else:
+            lockbox_df = df[df["date"] >= lockbox_start].reset_index(drop=True)
 
         # Fill NaNs
         col_med_train = train_df[FEATURES].median().fillna(0.0)
@@ -610,7 +628,7 @@ def main():
         for side in args.side:
             print(f"\n  {etf}/{side}:")
 
-            attempts = load_attempts(etf, side)
+            attempts = load_attempts(etf, side, suffix=suffix)
             if not attempts:
                 print(f"    No mining attempts found")
                 continue
@@ -770,16 +788,16 @@ def main():
             }
 
     # Save JSON
-    json_path = data_out_dir / "filter_diagnosis.json"
+    json_path = data_out_dir / f"filter_diagnosis{suffix}.json"
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(all_results, f, indent=2, default=str)
     print(f"\nJSON written to: {json_path}")
 
     # Generate report
-    generate_report(all_results)
+    generate_report(all_results, suffix=suffix)
 
 
-def generate_report(results):
+def generate_report(results, suffix=""):
     """Generate FILTER_DIAGNOSIS.md with deep causal analysis."""
     lines = [
         "# Filter Pipeline Deep Diagnosis",
@@ -1225,7 +1243,7 @@ def generate_report(results):
     lines.append("")
 
     # Write report
-    report_path = HERE / "FILTER_DIAGNOSIS.md"
+    report_path = HERE / f"FILTER_DIAGNOSIS{suffix}.md"
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
