@@ -352,14 +352,7 @@ def compute_daylevel_indicators(df_1d: pd.DataFrame) -> pd.DataFrame:
     else:
         df["vix"] = np.nan
 
-    # Backfill VIX before launch date using IV + mean bias on overlapping dates
-    overlap = df[["iv", "vix"]].dropna()
-    if not overlap.empty:
-        mean_bias = (overlap["vix"] - overlap["iv"]).mean()
-    else:
-        mean_bias = {"50": 0.0068, "300": 0.0220, "500": 0.0395}.get(etf_key, 0.02)
-    
-    df["vix"] = df["vix"].fillna(df["iv"] + mean_bias)
+    # Keep VIX as NaN before launch date (no synthetic backfill)
 
     # Compute factors
     df["iv_vol_ratio"] = df["iv"] / (df["vol20"] + 1e-8)
@@ -518,7 +511,9 @@ def compute_daylevel_indicators(df_1d: pd.DataFrame) -> pd.DataFrame:
     # ── Mined daily technical/regime indicators ──
     df["date_dt"] = pd.to_datetime(df["date"])
     df["vix_skew_proxy"] = (df["vix"] - df["vix"].shift(1)) / (df["vix"].shift(1) + 1e-8)
-    df["vix_rolling_percentile_60d"] = df["vix"].rolling(60).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1] if len(x) > 0 else np.nan, raw=True)
+    df["vix_rolling_percentile_60d"] = df["vix"].rolling(60, min_periods=20).apply(
+        lambda x: pd.Series(x).dropna().rank(pct=True).iloc[-1] if (len(pd.Series(x).dropna()) >= 20 and not np.isnan(x[-1])) else np.nan, raw=True
+    )
     df["vix_realized_spread"] = df["vix"] - df["vol20"]
     df["iv_acceleration_1d"] = df["iv"].diff(1).diff(1)
     
@@ -684,10 +679,12 @@ def compute_daylevel_indicators(df_1d: pd.DataFrame) -> pd.DataFrame:
         for col in DAY_EXTRA:
             df[col] = np.nan
 
-    # Check and fill missing columns/NaNs robustly
+    # Check and fill missing columns/NaNs robustly (exempt VIX features under Option A)
     for col in DAY_FEATURES:
         if col not in df.columns:
             df[col] = np.nan
+        if "vix" in col.lower():
+            continue  # Option A: Preserve authentic NaNs for pre-launch VIX dates
         col_mean = df[col].mean()
         if pd.isna(col_mean):
             col_mean = 0.0

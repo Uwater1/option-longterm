@@ -44,12 +44,15 @@ MAX_RECENCY_RATIO = 2.5  # Cap recent_ic / early_ic, higher = less conservative
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
-    if a.shape[0] < 5:
+    valid = ~(np.isnan(a) | np.isnan(b))
+    if valid.sum() < 5:
         return 0.0
-    if np.std(a) < 1e-12 or np.std(b) < 1e-12:
+    a_v = a[valid]
+    b_v = b[valid]
+    if np.std(a_v) < 1e-12 or np.std(b_v) < 1e-12:
         return 0.0
-    ra = rankdata(a)
-    rb = rankdata(b)
+    ra = rankdata(a_v)
+    rb = rankdata(b_v)
     ra -= ra.mean()
     rb -= rb.mean()
     denom = np.sqrt((ra * ra).sum() * (rb * rb).sum())
@@ -354,7 +357,12 @@ def benjamini_hochberg_fdr(p_values: np.ndarray, fdr_threshold=FDR_THRESHOLD, m_
 
 def compute_side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str) -> float:
     """Compute tail-specific Spearman correlation on the active strategy tail."""
-    n = len(y_pred)
+    valid = ~(np.isnan(y_true) | np.isnan(y_pred))
+    if valid.sum() < 10:
+        return 0.0
+    yt = y_true[valid]
+    yp = y_pred[valid]
+    n = len(yp)
     if side == "long":
         pct = 0.15
     elif side == "short":
@@ -365,7 +373,7 @@ def compute_side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str) -> f
     if n < n_tail:
         return 0.0
         
-    order = np.argsort(y_pred)
+    order = np.argsort(yp)
     if side == "long":
         idx = order[-n_tail:]
     elif side == "short":
@@ -373,7 +381,7 @@ def compute_side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str) -> f
     else:  # two-sided
         idx = np.concatenate([order[:n_tail], order[-n_tail:]])
         
-    return _spearman_from_arrays(y_true[idx], y_pred[idx])
+    return _spearman_from_arrays(yt[idx], yp[idx])
 
 def compute_rolling_tail_ic_series(x_flipped: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str) -> np.ndarray:
     """Calculate the rolling tail IC series for a single flipped feature using Numba."""
@@ -458,6 +466,28 @@ def split_half_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str) -> tuple:
 
 def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str, max_flips: int = 2):
     """Evaluate a single candidate feature: cheap gates first to avoid wasting compute on rejected signals."""
+    # Coverage Gate: Minimum 70% non-NaN data required in training window
+    valid_ratio = float(np.sum(~np.isnan(x)) / len(x)) if len(x) > 0 else 0.0
+    if valid_ratio < 0.70:
+        return {
+            "feature_name": feature_name,
+            "sign": 1,
+            "raw_ic": 0.0,
+            "overall_ic": 0.0,
+            "mean_tail_ic": 0.0,
+            "std_tail_ic": 0.0,
+            "ic_ir": 0.0,
+            "monotonicity": 0.0,
+            "sortino": 0.0,
+            "composite_score": 0.0,
+            "split_half_passes": False,
+            "split_half_ic_first": 0.0,
+            "split_half_ic_second": 0.0,
+            "recent_ic": 0.0,
+            "valid_ratio": valid_ratio,
+            "x_flipped": x,
+        }
+
     sh_passes, locked_sign, sh_ic_first, sh_ic_second, ic_f3 = expanding_wf_sign_check(x, y, side, max_flips=max_flips)
     
     x_flipped = x * locked_sign

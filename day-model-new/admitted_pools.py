@@ -572,31 +572,9 @@ POOLS = {
                 "deflated_ic": 0.19338354973585473,
                 "ic_ir": 0.6050890044419849,
                 "monotonicity": 0.7265547877591313
-            },
-            {
-                "feature_name": "vix_rolling_percentile_60d",
-                "sign": 1,
-                "overall_ic": 0.19119057706837445,
-                "deflated_ic": 0.19232172124799546,
-                "ic_ir": 0.337899900519694,
-                "monotonicity": 0.6288252714708786
             }
         ],
-        "long": [
-            {
-                "feature_name": "combo_z_sum__vix_skew_proxy__vix_iv_spread",
-                "sign": 1,
-                "overall_ic": 0.25158129535523766,
-                "deflated_ic": 0.2531591957751154,
-                "ic_ir": 0.19124004768348224,
-                "monotonicity": 0.5597235932872655,
-                "recipe": {
-                    "op": "z_sum",
-                    "feature_a": "vix_skew_proxy",
-                    "feature_b": "vix_iv_spread"
-                }
-            }
-        ],
+        "long": [],
         "short": []
     },
     "159915ETF": {
