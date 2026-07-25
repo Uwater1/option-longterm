@@ -416,9 +416,13 @@ def expanding_wf_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str, max_fli
         locked_sign = -1.0 if raw_ic < 0 else 1.0
         return True, locked_sign, 0.0, 0.0, 0.0
 
-    # Lock sign from full-sample tail IC
-    full_ic = compute_side_tail_ic(y, x_raw, side)
-    locked_sign = 1.0 if full_ic >= 0 else -1.0
+    # Lock sign from early chunks only (exclude last 2 chunks) to avoid circularity:
+    # the recent-flip check below evaluates the last 2 chunks against this sign,
+    # so the sign must not be determined by those same chunks.
+    n_early = max(1, n_chunks - 2)
+    early_end = n_early * chunk_size
+    early_ic = compute_side_tail_ic(y[:early_end], x_raw[:early_end], side)
+    locked_sign = 1.0 if early_ic >= 0 else -1.0
 
     # Compute per-chunk tail IC and count flips
     flip_count = 0
@@ -1362,12 +1366,15 @@ def main():
     
     # Pre-cache BH-FDR single-feature empirical null distribution
     fdr_cache_path = data_out_dir / f"fdr_null_{args.etf}_{args.side}{suffix}.json"
+    # Feature-set hash: invalidate cache when survivor set changes (not just n_rows)
+    _survivor_names = sorted(item["feature_name"] for item in guard_survivors) if guard_survivors else []
+    fdr_feat_hash = hashlib.md5("|".join(_survivor_names).encode()).hexdigest()[:12]
     fdr_cache_valid = False
     if fdr_cache_path.exists():
         try:
             with open(fdr_cache_path, "r") as f:
                 fdr_cache = json.load(f)
-            if fdr_cache.get("n_rows") == len(y_train):
+            if fdr_cache.get("n_rows") == len(y_train) and fdr_cache.get("feat_hash") == fdr_feat_hash:
                 null_single_ics = np.array(fdr_cache["null_single_ics"], dtype=np.float64)
                 fdr_cache_valid = True
                 print(f"BH-FDR single-trial null cache hit (shape: {null_single_ics.shape})")
@@ -1383,7 +1390,7 @@ def main():
         null_single_ics = numba_single_trial_empirical_sim(X_survivors, y_train, tail_def, n_tail, 5000, block_size=10)
         try:
             with open(fdr_cache_path, "w") as f:
-                json.dump({"n_rows": len(y_train), "null_single_ics": null_single_ics.tolist()}, f)
+                json.dump({"n_rows": len(y_train), "feat_hash": fdr_feat_hash, "null_single_ics": null_single_ics.tolist()}, f)
             print(f"Saved BH-FDR null cache to {fdr_cache_path.name}")
         except Exception as e:
             print(f"WARNING: Could not save FDR null cache to {fdr_cache_path}: {e}")
@@ -1764,6 +1771,57 @@ def main():
     n_quality_rejects = sum(1 for a in attempts_log if a.get("verdict") == "REJECTED_QUALITY_GATE")
     n_stability_rejects = sum(1 for a in attempts_log if a.get("verdict") == "REJECTED_STABILITY_GATE")
     print(f"Initial admitted pool size: {len(admitted_pool)} (Quality Gate rejected {n_quality_rejects}, Stability Gate rejected {n_stability_rejects} pre-correlation)")
+
+    # Post-hoc swap pass: correct greedy descending-IC ordering bias.
+    # In the main loop, candidates are processed high-IC-first so the replacement rule
+    # (cand_ic >= mult * old_ic) can never fire. This pass checks rejected candidates
+    # that have HIGHER IC than the pool member they correlate with and swaps them in.
+    _rejected_for_swap = [
+        a for a in attempts_log
+        if a.get("verdict") == "REJECTED_REDUNDANCY"
+        and a.get("overall_ic") is not None
+        and a.get("max_corr_feature") is not None
+    ]
+    _swap_count = 0
+    for att in _rejected_for_swap:
+        cand_name = att["feature_name"]
+        cand_ic = att["overall_ic"]
+        corr_feat = att["max_corr_feature"]
+        # Locate pool member and its current IC
+        pool_idx = next((i for i, p in enumerate(admitted_pool) if p["feature_name"] == corr_feat), None)
+        if pool_idx is None:
+            continue
+        old_ic = admitted_pool[pool_idx].get("overall_ic", 0.0)
+        replacement_mult = 1.15 if len(admitted_pool) < 10 else 1.30
+        if cand_ic < replacement_mult * old_ic:
+            continue
+        # Locate full candidate dict from surviving_candidates
+        cand_dict = next((c for c in surviving_candidates if c["feature_name"] == cand_name), None)
+        if cand_dict is None:
+            continue
+        # Verify correlation still holds with current pool member
+        x_cand = cand_dict["x_flipped"]
+        x_pool = admitted_pool[pool_idx]["x_flipped"]
+        if abs(np.corrcoef(x_cand, x_pool)[0, 1]) < args.theta:
+            continue
+        # Swap
+        admitted_pool[pool_idx] = cand_dict
+        attempts_log.append({
+            "feature_name": cand_name,
+            "sign": cand_dict["sign"],
+            "raw_ic": cand_dict["raw_ic"],
+            "overall_ic": cand_ic,
+            "deflated_ic": cand_dict.get("deflated_ic", 0.0),
+            "ic_ir": cand_dict["ic_ir"],
+            "monotonicity": cand_dict["monotonicity"],
+            "max_corr": att.get("max_corr", 0.0),
+            "max_corr_feature": corr_feat,
+            "verdict": f"ADMITTED_SWAP_REPLACED_{corr_feat}",
+        })
+        attempts_log.append({"feature_name": corr_feat, "verdict": f"DROPPED_SWAP_BY_{cand_name}"})
+        _swap_count += 1
+    if _swap_count:
+        print(f"Ordering-bias swap pass: replaced {_swap_count} feature(s) with higher-IC alternatives.")
 
     # Apply adaptive boundary tightening if pool size exceeds max_pool_size (> 30)
     admitted_pool = apply_adaptive_boundary(admitted_pool, attempts_log, max_pool_size=args.max_pool_size, theta=args.theta)

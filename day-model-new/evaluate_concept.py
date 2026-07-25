@@ -500,13 +500,14 @@ def main():
         print(f"  - {item['feature_name']}: sign={item['sign']}, overall_ic={item['overall_ic']:.4f}, deflated_ic={item['deflated_ic']:.4f}")
 
     # 4. Evaluate Performance
-    def run_eval(y_true, y_pred, label):
+    def run_eval(y_true, y_pred, label, enforce_abs=None):
+        if enforce_abs is None:
+            enforce_abs = not args.no_abs_sign
         overall_ic = _spearman_from_arrays(y_true, y_pred)
         tail_ic = compute_side_tail_ic(y_true, y_pred, args.side)
         mono = compute_decile_monotonicity(y_true, y_pred)
         
         ci_overall, ci_tail, ci_mono = block_bootstrap_ci(y_true, y_pred, args.side)
-        enforce_abs = not args.no_abs_sign
         ann_ret, sharpe, sortino, max_dd, raw_ann_ret, raw_sharpe = simulate_returns(
             y_true, y_pred, args.side, position_mode=args.position_mode, enforce_absolute_sign=enforce_abs,
             conviction_z=args.conviction_z
@@ -538,10 +539,13 @@ def main():
         }
 
     train_results = run_eval(y_train, pred_train, f"Training Period ({train_start.year}-{train_end.year})")
-    oos_results = run_eval(y_oos, pred_oos, f"Holdout OOS Period ({oos_start.year}-present)")
+    # OOS/lockbox: disable absolute-sign kill switch to prevent look-ahead bias
+    # (the kill switch uses realized tail returns to decide whether to trade —
+    #  in OOS that peeks at outcomes; training eval keeps it as a sanity filter)
+    oos_results = run_eval(y_oos, pred_oos, f"Holdout OOS Period ({oos_start.year}-present)", enforce_abs=False)
     lock_results = None
     if len(y_lock) > 0:
-        lock_results = run_eval(y_lock, pred_lock, f"OOS Lockbox Period ({lockbox_start.year}-present)")
+        lock_results = run_eval(y_lock, pred_lock, f"OOS Lockbox Period ({lockbox_start.year}-present)", enforce_abs=False)
 
     # Save results to a report file
     results_path = data_out_dir / f"results_{args.etf}_{args.side}{suffix}.json"

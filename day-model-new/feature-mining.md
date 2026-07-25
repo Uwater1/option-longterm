@@ -174,8 +174,10 @@ that were always going to fail. Every candidate, in order:
    herd first, not a final filter.
 
 2. **7-Year Jackknife sign stability — universal cheap block, runs before any simulation.** Split training
-   data into 7 equal chunks, compute tail IC per chunk, lock sign from full sample, reject if flip_count > 1
-   or recent 2 chunks flip. This is a very cheap check (no resampling) and catches features whose in-sample
+   data into 7 equal chunks, compute tail IC per chunk, lock sign from early chunks only (excl. last 2
+   chunks — avoids circularity: the recent-flip check below evaluates those last 2 chunks against this
+   sign, so the sign must not be determined by them). Reject if flip_count > 1 or recent 2 chunks flip.
+   This is a very cheap check (no resampling) and catches features whose in-sample
    IC is real-looking but internally unstable. Running this *before* the null-simulation step keeps a 10,000+ candidate
    flood from reaching the expensive stage at all. Applies to every ETF/side.
 
@@ -189,12 +191,23 @@ that were always going to fail. Every candidate, in order:
 5. **Dynamic simulation-based admission floor** (95th percentile of multi-trial null, N = current
    ledger count) — final bar a surviving candidate's deflated IC must clear.
 
+   > **Known issue (Sortino null mismatch)**: The B3 null kernels compute Sortino with `n_tail`
+   > denominator and `√244/4` annualization, while `simulate_returns` uses `n` denominator and `√244`.
+   > This inflates null Sortino by `4 × n / n_tail ≈ 2.58×`. Since `n_tail/n` is fixed per (ETF, side),
+   > the inflation is a constant factor across all candidates — relative ranking is preserved and the
+   > admission floor is shifted by the same factor, so selection is fair. The gate is conservative.
+   > If the formula is later aligned, raise the Sortino weight (currently 0.3) to ~0.5–0.6 to replicate
+   > current admission behavior.
+
 6. **Quality Gate** (deflated_ic ≥ 0.03/0.05, |raw_ic| ≥ 0.02/0.03, sortino > 0) — runs BEFORE
    correlation to prevent low-quality features from blocking high-quality candidates. Kills
    tail-only mirages and negative risk-adjusted returns.
 
-7. **Correlation gate + replacement rule** (θ=0.85, replacement if new IC≥0.10 and ≥1.3×old and
-   corr>θ with exactly one pool member). Tightened from 0.90 after diagnosis showed 63% FP rate.
+7. **Correlation gate + post-hoc swap pass** (θ=0.85; after greedy admission, rejected candidates
+   with IC ≥ 1.15× (pool < 10) or 1.30× (pool ≥ 10) the correlated pool member's IC are swapped in).
+   The original in-loop replacement rule (IC ≥ 0.10 and ≥ 1.3× old) is dead code under descending-IC
+   processing order — the swap pass corrects this ordering bias. Tightened from 0.90 after diagnosis
+   showed 63% FP rate.
 
 8. **Ledger update** — every attempt (admitted or not) logged, N persists across batches, seeded
    from prior `mining_attempts_*.json` runs.

@@ -422,7 +422,7 @@ Top-20 rejects per gate evaluated on lockbox. High FN rate = gate too strict.
 
 - `combo_ratio__rbreaker_buy_setup_proximity_early__volume_concentration`: Train IC=+0.1637, Lock IC=+0.0306, Sharpe=+0.2008
 
-**BH-FDR Gate**: 3/19 top rejects are profitable (16%)
+**BH-FDR Gate**: 4/20 top rejects are profitable (20%)
 
 - `combo_sig_product__bar_ret_0__volume_surge_direction`: Train IC=+0.1080, Lock IC=+0.0280, Sharpe=+0.3353
 - `combo_sig_product__first_bar_return__volume_surge_direction`: Train IC=+0.1080, Lock IC=+0.0260, Sharpe=+0.3353
@@ -490,7 +490,7 @@ Top-20 rejects per gate evaluated on lockbox. High FN rate = gate too strict.
 - `combo_diff__max_up_ret__impulse_bar_dominance`: Train IC=+0.2018, Lock IC=+0.0176, Sharpe=+0.4946
 - `combo_z_diff__max_up_ret__impulse_bar_dominance`: Train IC=+0.2018, Lock IC=+0.0176, Sharpe=+0.4946
 
-**BH-FDR Gate**: 5/11 top rejects are profitable (45%)
+**BH-FDR Gate**: 5/14 top rejects are profitable (36%)
 
 - `combo_diff__rbreaker_sell_setup_proximity_early__volatility_expansion_trend_vector`: Train IC=+0.0987, Lock IC=+0.0489, Sharpe=+0.7804
 - `combo_z_diff__rbreaker_sell_setup_proximity_early__volatility_expansion_trend_vector`: Train IC=+0.0987, Lock IC=+0.0489, Sharpe=+0.7804
@@ -520,17 +520,17 @@ Per-primitive FP rate across all combo features. Flag primitives with FP rate â‰
 
 | Primitive | FP | TP | Total | FP Rate | Flag |
 | :--- | ---: | ---: | ---: | ---: | :--- |
-| `bar_ret_0` | 0 | 3 | 3 | 0% |  |
-| `close_vs_open_range` | 0 | 2 | 2 | 0% |  |
-| `rbreaker_sell_setup_proximity_early` | 0 | 9 | 9 | 0% |  |
-| `bar_body_rng_0` | 0 | 2 | 2 | 0% |  |
-| `volume_weighted_momentum_acceleration` | 0 | 3 | 3 | 0% |  |
-| `star50_limit_proximity_early` | 0 | 10 | 10 | 0% |  |
-| `first_bar_sentiment` | 0 | 8 | 8 | 0% |  |
 | `max_down_ret` | 0 | 3 | 3 | 0% |  |
-| `body_size_progression` | 0 | 2 | 2 | 0% |  |
+| `bar_ret_0` | 0 | 3 | 3 | 0% |  |
+| `rbreaker_sell_setup_proximity_early` | 0 | 9 | 9 | 0% |  |
 | `max_up_ret` | 0 | 11 | 11 | 0% |  |
+| `star50_limit_proximity_early` | 0 | 10 | 10 | 0% |  |
+| `close_vs_open_range` | 0 | 2 | 2 | 0% |  |
+| `volume_weighted_momentum_acceleration` | 0 | 3 | 3 | 0% |  |
 | `opening_drive_thrust_ratio` | 0 | 5 | 5 | 0% |  |
+| `body_size_progression` | 0 | 2 | 2 | 0% |  |
+| `first_bar_sentiment` | 0 | 8 | 8 | 0% |  |
+| `bar_body_rng_0` | 0 | 2 | 2 | 0% |  |
 
 ---
 
