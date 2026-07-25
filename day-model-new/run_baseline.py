@@ -224,7 +224,7 @@ def compile_report(etfs_to_run, sides_to_run, suffix: str):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-e", "--etf", default="all", help="ETF: 300ETF, 50ETF, etc., or 'all'")
-    parser.add_argument("-s", "--side", default="all", help="Side: single, long, short, or 'all'")
+    parser.add_argument("-s", "--side", default="single", help="Side: single, long, short, or 'all'")
     parser.add_argument("--early", action="store_true", help="Use early window return dataset")
     parser.add_argument("--compile-only", action="store_true", help="Only compile the baseline report from existing JSON outputs")
     parser.add_argument(

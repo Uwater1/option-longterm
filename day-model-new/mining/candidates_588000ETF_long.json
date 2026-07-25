@@ -624,115 +624,107 @@
     }
   },
   {
-    "feature_name": "combo_min__vol5__vix_rolling_percentile_60d",
+    "feature_name": "combo_min__vix_rolling_percentile_60d__vol5",
     "recipe": {
       "op": "min",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d"
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "vol5"
     }
   },
   {
-    "feature_name": "combo_max__vol5__vix_rolling_percentile_60d",
+    "feature_name": "combo_max__vix_rolling_percentile_60d__vol5",
     "recipe": {
       "op": "max",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d"
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "vol5"
     }
   },
   {
-    "feature_name": "combo_diff__vol5__vix_rolling_percentile_60d",
+    "feature_name": "combo_diff__vix_rolling_percentile_60d__vol5",
     "recipe": {
       "op": "diff",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d"
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "vol5"
     }
   },
   {
-    "feature_name": "combo_mean__vol5__vix_rolling_percentile_60d",
+    "feature_name": "combo_mean__vix_rolling_percentile_60d__vol5",
     "recipe": {
       "op": "mean",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d"
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "vol5"
     }
   },
   {
-    "feature_name": "combo_product__vol5__vix_rolling_percentile_60d",
+    "feature_name": "combo_product__vix_rolling_percentile_60d__vol5",
     "recipe": {
       "op": "product",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d"
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "vol5"
     }
   },
   {
-    "feature_name": "combo_abs_diff__vol5__vix_rolling_percentile_60d",
+    "feature_name": "combo_abs_diff__vix_rolling_percentile_60d__vol5",
     "recipe": {
       "op": "abs_diff",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d"
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "vol5"
     }
   },
   {
-    "feature_name": "combo_rank_min__vol5__vix_rolling_percentile_60d",
+    "feature_name": "combo_rank_min__vix_rolling_percentile_60d__vol5",
     "recipe": {
       "op": "rank_min",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d"
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "vol5"
     }
   },
   {
-    "feature_name": "combo_rank_max__vol5__vix_rolling_percentile_60d",
+    "feature_name": "combo_rank_max__vix_rolling_percentile_60d__vol5",
     "recipe": {
       "op": "rank_max",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d"
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "vol5"
     }
   },
   {
-    "feature_name": "combo_clamp_diff__vol5__vix_rolling_percentile_60d",
+    "feature_name": "combo_clamp_diff__vix_rolling_percentile_60d__vol5",
     "recipe": {
       "op": "clamp_diff",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d"
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "vol5"
     }
   },
   {
-    "feature_name": "combo_z_sum__vol5__vix_rolling_percentile_60d",
+    "feature_name": "combo_z_sum__vix_rolling_percentile_60d__vol5",
     "recipe": {
       "op": "z_sum",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d"
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "vol5"
     }
   },
   {
-    "feature_name": "combo_z_diff__vol5__vix_rolling_percentile_60d",
+    "feature_name": "combo_z_diff__vix_rolling_percentile_60d__vol5",
     "recipe": {
       "op": "z_diff",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d"
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "vol5"
     }
   },
   {
-    "feature_name": "combo_sig_product__vol5__vix_rolling_percentile_60d",
+    "feature_name": "combo_sig_product__vix_rolling_percentile_60d__vol5",
     "recipe": {
       "op": "sig_product",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d"
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "vol5"
     }
   },
   {
-    "feature_name": "combo_rel_diff__vol5__vix_rolling_percentile_60d",
+    "feature_name": "combo_rel_diff__vix_rolling_percentile_60d__vol5",
     "recipe": {
       "op": "rel_diff",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__vol5__vix_rolling_percentile_60d",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d"
+      "feature_a": "vix_rolling_percentile_60d",
+      "feature_b": "vol5"
     }
   },
   {
@@ -744,355 +736,11 @@
     }
   },
   {
-    "feature_name": "combo_min__vol5__iv_envelope_deviation",
-    "recipe": {
-      "op": "min",
-      "feature_a": "vol5",
-      "feature_b": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_max__vol5__iv_envelope_deviation",
-    "recipe": {
-      "op": "max",
-      "feature_a": "vol5",
-      "feature_b": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_diff__vol5__iv_envelope_deviation",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "vol5",
-      "feature_b": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_mean__vol5__iv_envelope_deviation",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "vol5",
-      "feature_b": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_product__vol5__iv_envelope_deviation",
-    "recipe": {
-      "op": "product",
-      "feature_a": "vol5",
-      "feature_b": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__vol5__iv_envelope_deviation",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "vol5",
-      "feature_b": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__vol5__iv_envelope_deviation",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "vol5",
-      "feature_b": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__vol5__iv_envelope_deviation",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "vol5",
-      "feature_b": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__vol5__iv_envelope_deviation",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "vol5",
-      "feature_b": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__vol5__iv_envelope_deviation",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "vol5",
-      "feature_b": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__vol5__iv_envelope_deviation",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "vol5",
-      "feature_b": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__vol5__iv_envelope_deviation",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "vol5",
-      "feature_b": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__vol5__iv_envelope_deviation",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "vol5",
-      "feature_b": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__iv_envelope_deviation__vol5",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "iv_envelope_deviation",
-      "feature_b": "vol5"
-    }
-  },
-  {
-    "feature_name": "combo_min__vol5__yesterday_day_realized_vol",
-    "recipe": {
-      "op": "min",
-      "feature_a": "vol5",
-      "feature_b": "yesterday_day_realized_vol"
-    }
-  },
-  {
-    "feature_name": "combo_max__vol5__yesterday_day_realized_vol",
-    "recipe": {
-      "op": "max",
-      "feature_a": "vol5",
-      "feature_b": "yesterday_day_realized_vol"
-    }
-  },
-  {
-    "feature_name": "combo_diff__vol5__yesterday_day_realized_vol",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "vol5",
-      "feature_b": "yesterday_day_realized_vol"
-    }
-  },
-  {
-    "feature_name": "combo_mean__vol5__yesterday_day_realized_vol",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "vol5",
-      "feature_b": "yesterday_day_realized_vol"
-    }
-  },
-  {
-    "feature_name": "combo_product__vol5__yesterday_day_realized_vol",
-    "recipe": {
-      "op": "product",
-      "feature_a": "vol5",
-      "feature_b": "yesterday_day_realized_vol"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__vol5__yesterday_day_realized_vol",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "vol5",
-      "feature_b": "yesterday_day_realized_vol"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__vol5__yesterday_day_realized_vol",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "vol5",
-      "feature_b": "yesterday_day_realized_vol"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__vol5__yesterday_day_realized_vol",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "vol5",
-      "feature_b": "yesterday_day_realized_vol"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__vol5__yesterday_day_realized_vol",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "vol5",
-      "feature_b": "yesterday_day_realized_vol"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__vol5__yesterday_day_realized_vol",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "vol5",
-      "feature_b": "yesterday_day_realized_vol"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__vol5__yesterday_day_realized_vol",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "vol5",
-      "feature_b": "yesterday_day_realized_vol"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__vol5__yesterday_day_realized_vol",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "vol5",
-      "feature_b": "yesterday_day_realized_vol"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__vol5__yesterday_day_realized_vol",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "vol5",
-      "feature_b": "yesterday_day_realized_vol"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__vol5__yesterday_day_realized_vol",
+    "feature_name": "combo_ratio__vol5__vix_rolling_percentile_60d",
     "recipe": {
       "op": "ratio",
       "feature_a": "vol5",
-      "feature_b": "yesterday_day_realized_vol"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__yesterday_day_realized_vol__vol5",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "yesterday_day_realized_vol",
-      "feature_b": "vol5"
-    }
-  },
-  {
-    "feature_name": "combo_min__vol5__vix_iv_spread",
-    "recipe": {
-      "op": "min",
-      "feature_a": "vol5",
-      "feature_b": "vix_iv_spread"
-    }
-  },
-  {
-    "feature_name": "combo_max__vol5__vix_iv_spread",
-    "recipe": {
-      "op": "max",
-      "feature_a": "vol5",
-      "feature_b": "vix_iv_spread"
-    }
-  },
-  {
-    "feature_name": "combo_diff__vol5__vix_iv_spread",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "vol5",
-      "feature_b": "vix_iv_spread"
-    }
-  },
-  {
-    "feature_name": "combo_mean__vol5__vix_iv_spread",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "vol5",
-      "feature_b": "vix_iv_spread"
-    }
-  },
-  {
-    "feature_name": "combo_product__vol5__vix_iv_spread",
-    "recipe": {
-      "op": "product",
-      "feature_a": "vol5",
-      "feature_b": "vix_iv_spread"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__vol5__vix_iv_spread",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "vol5",
-      "feature_b": "vix_iv_spread"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__vol5__vix_iv_spread",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "vol5",
-      "feature_b": "vix_iv_spread"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__vol5__vix_iv_spread",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "vol5",
-      "feature_b": "vix_iv_spread"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__vol5__vix_iv_spread",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "vol5",
-      "feature_b": "vix_iv_spread"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__vol5__vix_iv_spread",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "vol5",
-      "feature_b": "vix_iv_spread"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__vol5__vix_iv_spread",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "vol5",
-      "feature_b": "vix_iv_spread"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__vol5__vix_iv_spread",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "vol5",
-      "feature_b": "vix_iv_spread"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__vol5__vix_iv_spread",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "vol5",
-      "feature_b": "vix_iv_spread"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__vol5__vix_iv_spread",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "vol5",
-      "feature_b": "vix_iv_spread"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__vix_iv_spread__vol5",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "vix_iv_spread",
-      "feature_b": "vol5"
+      "feature_b": "vix_rolling_percentile_60d"
     }
   },
   {
@@ -1445,6 +1093,358 @@
       "op": "ratio",
       "feature_a": "vix_skew_proxy",
       "feature_b": "vix_rolling_percentile_60d"
+    }
+  },
+  {
+    "feature_name": "combo_min__vol5__iv_envelope_deviation",
+    "recipe": {
+      "op": "min",
+      "feature_a": "vol5",
+      "feature_b": "iv_envelope_deviation"
+    }
+  },
+  {
+    "feature_name": "combo_max__vol5__iv_envelope_deviation",
+    "recipe": {
+      "op": "max",
+      "feature_a": "vol5",
+      "feature_b": "iv_envelope_deviation"
+    }
+  },
+  {
+    "feature_name": "combo_diff__vol5__iv_envelope_deviation",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "vol5",
+      "feature_b": "iv_envelope_deviation"
+    }
+  },
+  {
+    "feature_name": "combo_mean__vol5__iv_envelope_deviation",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "vol5",
+      "feature_b": "iv_envelope_deviation"
+    }
+  },
+  {
+    "feature_name": "combo_product__vol5__iv_envelope_deviation",
+    "recipe": {
+      "op": "product",
+      "feature_a": "vol5",
+      "feature_b": "iv_envelope_deviation"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__vol5__iv_envelope_deviation",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "vol5",
+      "feature_b": "iv_envelope_deviation"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__vol5__iv_envelope_deviation",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "vol5",
+      "feature_b": "iv_envelope_deviation"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__vol5__iv_envelope_deviation",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "vol5",
+      "feature_b": "iv_envelope_deviation"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__vol5__iv_envelope_deviation",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "vol5",
+      "feature_b": "iv_envelope_deviation"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__vol5__iv_envelope_deviation",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "vol5",
+      "feature_b": "iv_envelope_deviation"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__vol5__iv_envelope_deviation",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "vol5",
+      "feature_b": "iv_envelope_deviation"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__vol5__iv_envelope_deviation",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "vol5",
+      "feature_b": "iv_envelope_deviation"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__vol5__iv_envelope_deviation",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "vol5",
+      "feature_b": "iv_envelope_deviation"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__iv_envelope_deviation__vol5",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "iv_envelope_deviation",
+      "feature_b": "vol5"
+    }
+  },
+  {
+    "feature_name": "combo_min__vol5__yesterday_day_realized_vol",
+    "recipe": {
+      "op": "min",
+      "feature_a": "vol5",
+      "feature_b": "yesterday_day_realized_vol"
+    }
+  },
+  {
+    "feature_name": "combo_max__vol5__yesterday_day_realized_vol",
+    "recipe": {
+      "op": "max",
+      "feature_a": "vol5",
+      "feature_b": "yesterday_day_realized_vol"
+    }
+  },
+  {
+    "feature_name": "combo_diff__vol5__yesterday_day_realized_vol",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "vol5",
+      "feature_b": "yesterday_day_realized_vol"
+    }
+  },
+  {
+    "feature_name": "combo_mean__vol5__yesterday_day_realized_vol",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "vol5",
+      "feature_b": "yesterday_day_realized_vol"
+    }
+  },
+  {
+    "feature_name": "combo_product__vol5__yesterday_day_realized_vol",
+    "recipe": {
+      "op": "product",
+      "feature_a": "vol5",
+      "feature_b": "yesterday_day_realized_vol"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__vol5__yesterday_day_realized_vol",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "vol5",
+      "feature_b": "yesterday_day_realized_vol"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__vol5__yesterday_day_realized_vol",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "vol5",
+      "feature_b": "yesterday_day_realized_vol"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__vol5__yesterday_day_realized_vol",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "vol5",
+      "feature_b": "yesterday_day_realized_vol"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__vol5__yesterday_day_realized_vol",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "vol5",
+      "feature_b": "yesterday_day_realized_vol"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__vol5__yesterday_day_realized_vol",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "vol5",
+      "feature_b": "yesterday_day_realized_vol"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__vol5__yesterday_day_realized_vol",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "vol5",
+      "feature_b": "yesterday_day_realized_vol"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__vol5__yesterday_day_realized_vol",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "vol5",
+      "feature_b": "yesterday_day_realized_vol"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__vol5__yesterday_day_realized_vol",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "vol5",
+      "feature_b": "yesterday_day_realized_vol"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__vol5__yesterday_day_realized_vol",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "vol5",
+      "feature_b": "yesterday_day_realized_vol"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__yesterday_day_realized_vol__vol5",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "yesterday_day_realized_vol",
+      "feature_b": "vol5"
+    }
+  },
+  {
+    "feature_name": "combo_min__vol5__vix_iv_spread",
+    "recipe": {
+      "op": "min",
+      "feature_a": "vol5",
+      "feature_b": "vix_iv_spread"
+    }
+  },
+  {
+    "feature_name": "combo_max__vol5__vix_iv_spread",
+    "recipe": {
+      "op": "max",
+      "feature_a": "vol5",
+      "feature_b": "vix_iv_spread"
+    }
+  },
+  {
+    "feature_name": "combo_diff__vol5__vix_iv_spread",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "vol5",
+      "feature_b": "vix_iv_spread"
+    }
+  },
+  {
+    "feature_name": "combo_mean__vol5__vix_iv_spread",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "vol5",
+      "feature_b": "vix_iv_spread"
+    }
+  },
+  {
+    "feature_name": "combo_product__vol5__vix_iv_spread",
+    "recipe": {
+      "op": "product",
+      "feature_a": "vol5",
+      "feature_b": "vix_iv_spread"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__vol5__vix_iv_spread",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "vol5",
+      "feature_b": "vix_iv_spread"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__vol5__vix_iv_spread",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "vol5",
+      "feature_b": "vix_iv_spread"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__vol5__vix_iv_spread",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "vol5",
+      "feature_b": "vix_iv_spread"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__vol5__vix_iv_spread",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "vol5",
+      "feature_b": "vix_iv_spread"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__vol5__vix_iv_spread",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "vol5",
+      "feature_b": "vix_iv_spread"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__vol5__vix_iv_spread",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "vol5",
+      "feature_b": "vix_iv_spread"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__vol5__vix_iv_spread",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "vol5",
+      "feature_b": "vix_iv_spread"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__vol5__vix_iv_spread",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "vol5",
+      "feature_b": "vix_iv_spread"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__vol5__vix_iv_spread",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "vol5",
+      "feature_b": "vix_iv_spread"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__vix_iv_spread__vol5",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "vix_iv_spread",
+      "feature_b": "vol5"
     }
   },
   {
@@ -3581,60 +3581,6 @@
       "op": "ratio",
       "feature_a": "vix_iv_spread",
       "feature_b": "vix_skew_proxy"
-    }
-  },
-  {
-    "feature_name": "combo_tri_mean__vol5__vix_rolling_percentile_60d__iv_envelope_deviation",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d",
-      "feature_c": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__vol5__vix_rolling_percentile_60d__iv_envelope_deviation",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d",
-      "feature_c": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__vol5__vix_rolling_percentile_60d__iv_envelope_deviation",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d",
-      "feature_c": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__vol5__vix_rolling_percentile_60d__iv_envelope_deviation",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d",
-      "feature_c": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__vol5__vix_rolling_percentile_60d__iv_envelope_deviation",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d",
-      "feature_c": "iv_envelope_deviation"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__vol5__vix_rolling_percentile_60d__iv_envelope_deviation",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "vol5",
-      "feature_b": "vix_rolling_percentile_60d",
-      "feature_c": "iv_envelope_deviation"
     }
   }
 ]

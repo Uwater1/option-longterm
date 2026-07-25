@@ -112,107 +112,115 @@
     }
   },
   {
-    "feature_name": "combo_min__sma50_dist__mfi14",
+    "feature_name": "combo_min__sma50_dist__volume_differential_10d",
     "recipe": {
       "op": "min",
       "feature_a": "sma50_dist",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_max__sma50_dist__mfi14",
+    "feature_name": "combo_max__sma50_dist__volume_differential_10d",
     "recipe": {
       "op": "max",
       "feature_a": "sma50_dist",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_diff__sma50_dist__mfi14",
+    "feature_name": "combo_diff__sma50_dist__volume_differential_10d",
     "recipe": {
       "op": "diff",
       "feature_a": "sma50_dist",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_mean__sma50_dist__mfi14",
+    "feature_name": "combo_mean__sma50_dist__volume_differential_10d",
     "recipe": {
       "op": "mean",
       "feature_a": "sma50_dist",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_product__sma50_dist__mfi14",
+    "feature_name": "combo_product__sma50_dist__volume_differential_10d",
     "recipe": {
       "op": "product",
       "feature_a": "sma50_dist",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_abs_diff__sma50_dist__mfi14",
+    "feature_name": "combo_abs_diff__sma50_dist__volume_differential_10d",
     "recipe": {
       "op": "abs_diff",
       "feature_a": "sma50_dist",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_rank_min__sma50_dist__mfi14",
+    "feature_name": "combo_rank_min__sma50_dist__volume_differential_10d",
     "recipe": {
       "op": "rank_min",
       "feature_a": "sma50_dist",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_rank_max__sma50_dist__mfi14",
+    "feature_name": "combo_rank_max__sma50_dist__volume_differential_10d",
     "recipe": {
       "op": "rank_max",
       "feature_a": "sma50_dist",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_clamp_diff__sma50_dist__mfi14",
+    "feature_name": "combo_clamp_diff__sma50_dist__volume_differential_10d",
     "recipe": {
       "op": "clamp_diff",
       "feature_a": "sma50_dist",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_z_sum__sma50_dist__mfi14",
+    "feature_name": "combo_z_sum__sma50_dist__volume_differential_10d",
     "recipe": {
       "op": "z_sum",
       "feature_a": "sma50_dist",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_z_diff__sma50_dist__mfi14",
+    "feature_name": "combo_z_diff__sma50_dist__volume_differential_10d",
     "recipe": {
       "op": "z_diff",
       "feature_a": "sma50_dist",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_sig_product__sma50_dist__mfi14",
+    "feature_name": "combo_sig_product__sma50_dist__volume_differential_10d",
     "recipe": {
       "op": "sig_product",
       "feature_a": "sma50_dist",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_rel_diff__sma50_dist__mfi14",
+    "feature_name": "combo_rel_diff__sma50_dist__volume_differential_10d",
     "recipe": {
       "op": "rel_diff",
       "feature_a": "sma50_dist",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__sma50_dist__volume_differential_10d",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "sma50_dist",
+      "feature_b": "volume_differential_10d"
     }
   },
   {
@@ -448,219 +456,235 @@
     }
   },
   {
-    "feature_name": "combo_min__bar_vol_4__mfi14",
+    "feature_name": "combo_min__bar_vol_4__volume_differential_10d",
     "recipe": {
       "op": "min",
       "feature_a": "bar_vol_4",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_max__bar_vol_4__mfi14",
+    "feature_name": "combo_max__bar_vol_4__volume_differential_10d",
     "recipe": {
       "op": "max",
       "feature_a": "bar_vol_4",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_diff__bar_vol_4__mfi14",
+    "feature_name": "combo_diff__bar_vol_4__volume_differential_10d",
     "recipe": {
       "op": "diff",
       "feature_a": "bar_vol_4",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_mean__bar_vol_4__mfi14",
+    "feature_name": "combo_mean__bar_vol_4__volume_differential_10d",
     "recipe": {
       "op": "mean",
       "feature_a": "bar_vol_4",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_product__bar_vol_4__mfi14",
+    "feature_name": "combo_product__bar_vol_4__volume_differential_10d",
     "recipe": {
       "op": "product",
       "feature_a": "bar_vol_4",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_abs_diff__bar_vol_4__mfi14",
+    "feature_name": "combo_abs_diff__bar_vol_4__volume_differential_10d",
     "recipe": {
       "op": "abs_diff",
       "feature_a": "bar_vol_4",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_rank_min__bar_vol_4__mfi14",
+    "feature_name": "combo_rank_min__bar_vol_4__volume_differential_10d",
     "recipe": {
       "op": "rank_min",
       "feature_a": "bar_vol_4",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_rank_max__bar_vol_4__mfi14",
+    "feature_name": "combo_rank_max__bar_vol_4__volume_differential_10d",
     "recipe": {
       "op": "rank_max",
       "feature_a": "bar_vol_4",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_clamp_diff__bar_vol_4__mfi14",
+    "feature_name": "combo_clamp_diff__bar_vol_4__volume_differential_10d",
     "recipe": {
       "op": "clamp_diff",
       "feature_a": "bar_vol_4",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_z_sum__bar_vol_4__mfi14",
+    "feature_name": "combo_z_sum__bar_vol_4__volume_differential_10d",
     "recipe": {
       "op": "z_sum",
       "feature_a": "bar_vol_4",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_z_diff__bar_vol_4__mfi14",
+    "feature_name": "combo_z_diff__bar_vol_4__volume_differential_10d",
     "recipe": {
       "op": "z_diff",
       "feature_a": "bar_vol_4",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_sig_product__bar_vol_4__mfi14",
+    "feature_name": "combo_sig_product__bar_vol_4__volume_differential_10d",
     "recipe": {
       "op": "sig_product",
       "feature_a": "bar_vol_4",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_rel_diff__bar_vol_4__mfi14",
+    "feature_name": "combo_rel_diff__bar_vol_4__volume_differential_10d",
     "recipe": {
       "op": "rel_diff",
       "feature_a": "bar_vol_4",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_ratio__mfi14__bar_vol_4",
+    "feature_name": "combo_ratio__bar_vol_4__volume_differential_10d",
     "recipe": {
       "op": "ratio",
-      "feature_a": "mfi14",
+      "feature_a": "bar_vol_4",
+      "feature_b": "volume_differential_10d"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__volume_differential_10d__bar_vol_4",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "volume_differential_10d",
       "feature_b": "bar_vol_4"
     }
   },
   {
-    "feature_name": "combo_min__sma_distance_60d__mfi14",
+    "feature_name": "combo_min__sma_distance_60d__volume_differential_10d",
     "recipe": {
       "op": "min",
       "feature_a": "sma_distance_60d",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_max__sma_distance_60d__mfi14",
+    "feature_name": "combo_max__sma_distance_60d__volume_differential_10d",
     "recipe": {
       "op": "max",
       "feature_a": "sma_distance_60d",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_diff__sma_distance_60d__mfi14",
+    "feature_name": "combo_diff__sma_distance_60d__volume_differential_10d",
     "recipe": {
       "op": "diff",
       "feature_a": "sma_distance_60d",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_mean__sma_distance_60d__mfi14",
+    "feature_name": "combo_mean__sma_distance_60d__volume_differential_10d",
     "recipe": {
       "op": "mean",
       "feature_a": "sma_distance_60d",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_product__sma_distance_60d__mfi14",
+    "feature_name": "combo_product__sma_distance_60d__volume_differential_10d",
     "recipe": {
       "op": "product",
       "feature_a": "sma_distance_60d",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_abs_diff__sma_distance_60d__mfi14",
+    "feature_name": "combo_abs_diff__sma_distance_60d__volume_differential_10d",
     "recipe": {
       "op": "abs_diff",
       "feature_a": "sma_distance_60d",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_rank_min__sma_distance_60d__mfi14",
+    "feature_name": "combo_rank_min__sma_distance_60d__volume_differential_10d",
     "recipe": {
       "op": "rank_min",
       "feature_a": "sma_distance_60d",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_rank_max__sma_distance_60d__mfi14",
+    "feature_name": "combo_rank_max__sma_distance_60d__volume_differential_10d",
     "recipe": {
       "op": "rank_max",
       "feature_a": "sma_distance_60d",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_clamp_diff__sma_distance_60d__mfi14",
+    "feature_name": "combo_clamp_diff__sma_distance_60d__volume_differential_10d",
     "recipe": {
       "op": "clamp_diff",
       "feature_a": "sma_distance_60d",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_z_sum__sma_distance_60d__mfi14",
+    "feature_name": "combo_z_sum__sma_distance_60d__volume_differential_10d",
     "recipe": {
       "op": "z_sum",
       "feature_a": "sma_distance_60d",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_z_diff__sma_distance_60d__mfi14",
+    "feature_name": "combo_z_diff__sma_distance_60d__volume_differential_10d",
     "recipe": {
       "op": "z_diff",
       "feature_a": "sma_distance_60d",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_sig_product__sma_distance_60d__mfi14",
+    "feature_name": "combo_sig_product__sma_distance_60d__volume_differential_10d",
     "recipe": {
       "op": "sig_product",
       "feature_a": "sma_distance_60d",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
     }
   },
   {
-    "feature_name": "combo_rel_diff__sma_distance_60d__mfi14",
+    "feature_name": "combo_rel_diff__sma_distance_60d__volume_differential_10d",
     "recipe": {
       "op": "rel_diff",
       "feature_a": "sma_distance_60d",
-      "feature_b": "mfi14"
+      "feature_b": "volume_differential_10d"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__sma_distance_60d__volume_differential_10d",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "sma_distance_60d",
+      "feature_b": "volume_differential_10d"
     }
   }
 ]

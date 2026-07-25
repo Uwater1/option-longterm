@@ -550,7 +550,10 @@ def run_one(etf: str, side: str, args):
     # Load mining memory (forbidden directions)
     memory = load_mining_memory(etf, side, suffix)
     forbidden_set = set(memory.get("forbidden_features", []))
-    forbidden_families = memory.get("rejected_families", [])
+    forbidden_families = [
+        entry["family"] if isinstance(entry, dict) else entry
+        for entry in memory.get("rejected_families", [])
+    ]
 
     # Identify regime features in the top K
     regime_candidates = [f for f in top_k_features if f in REGIME_SET]

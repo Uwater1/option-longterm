@@ -4,79 +4,81 @@
   "early": false,
   "k": 1.0,
   "features_selected": [
+    "combo_tri_median__max_up_ret__first_bar_sentiment__bar_body_rng_0",
     "combo_min__rbreaker_sell_setup_proximity_early__max_up_ret",
+    "combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__first_bar_sentiment",
     "rbreaker_sell_setup_proximity_early",
     "combo_product__rbreaker_sell_setup_proximity_early__max_up_ret",
-    "combo_ratio__limit_down_proximity_early__volume_concentration",
-    "combo_ratio__bar_body_rng_0__volume_weighted_price_position"
+    "combo_rel_diff__rbreaker_sell_setup_proximity_early__demark_setup_reversal_early",
+    "combo_ratio__limit_down_proximity_early__volume_concentration"
   ],
   "training_metrics": {
-    "overall_ic": 0.12512278338271207,
+    "overall_ic": 0.1269819777420198,
     "overall_ic_ci": [
-      0.0702189984007831,
-      0.1764525134220767
+      0.07509020774179409,
+      0.17422214987781076
     ],
-    "tail_ic": 0.24775738442679385,
+    "tail_ic": 0.2610178288739522,
     "tail_ic_ci": [
-      0.12812057961014317,
-      0.3598120175067665
+      0.13459602998804693,
+      0.3717067647135152
     ],
-    "monotonicity": 0.9151515151515152,
+    "monotonicity": 0.9393939393939394,
     "monotonicity_ci": [
-      0.5636363636363636,
+      0.6363636363636364,
       0.9636363636363636
     ],
-    "ann_ret": 0.05051968719727555,
-    "raw_ann_ret": 0.07074677792730097,
-    "raw_sharpe": 1.3009496126928672,
-    "sharpe": 0.9385282800402689,
-    "sortino": 1.8941486856107248,
-    "max_dd": 0.06579266589758331
+    "ann_ret": 0.05408705145803407,
+    "raw_ann_ret": 0.07628553999333718,
+    "raw_sharpe": 1.4674666506521872,
+    "sharpe": 1.0526977600803467,
+    "sortino": 2.2362600721223496,
+    "max_dd": 0.06618593615589075
   },
   "oos_metrics": {
-    "overall_ic": 0.06506766039752677,
+    "overall_ic": 0.07125898679690001,
     "overall_ic_ci": [
-      -0.003862859611839072,
-      0.12440465782560642
+      0.001474250359146174,
+      0.13000143061530067
     ],
-    "tail_ic": 0.19587916948661163,
+    "tail_ic": 0.18322530726132208,
     "tail_ic_ci": [
-      0.035647770360155887,
-      0.3138797013208669
+      0.020981902148008682,
+      0.30115650422866225
     ],
-    "monotonicity": 0.6363636363636364,
+    "monotonicity": 0.8181818181818182,
     "monotonicity_ci": [
-      0.04212121212121214,
-      0.8181818181818182
+      0.12696969696969698,
+      0.8787878787878788
     ],
-    "ann_ret": 0.021082065052443887,
-    "raw_ann_ret": 0.044738730920687204,
-    "raw_sharpe": 0.9656491139404261,
-    "sharpe": 0.45997669731310975,
-    "sortino": 0.7619531685958388,
-    "max_dd": 0.04918217045739538
+    "ann_ret": 0.020994281552997634,
+    "raw_ann_ret": 0.045095766083567856,
+    "raw_sharpe": 1.0124706147494242,
+    "sharpe": 0.47601756102166276,
+    "sortino": 0.831456778069339,
+    "max_dd": 0.04680110240678873
   },
   "lockbox_metrics": {
-    "overall_ic": 0.03681103848682351,
+    "overall_ic": 0.03747863493893425,
     "overall_ic_ci": [
-      -0.06100461211092654,
-      0.12098983663962068
+      -0.0592997936443922,
+      0.12845859907068138
     ],
-    "tail_ic": 0.17748706474112827,
+    "tail_ic": 0.16772915789270187,
     "tail_ic_ci": [
-      -0.07221745205645896,
-      0.34704380227212894
+      -0.0701129989267127,
+      0.34322087442538624
     ],
-    "monotonicity": 0.6484848484848484,
+    "monotonicity": 0.503030303030303,
     "monotonicity_ci": [
-      -0.21212121212121213,
-      0.7696969696969697
+      -0.16363636363636364,
+      0.7575757575757576
     ],
-    "ann_ret": 0.026671986391187265,
-    "raw_ann_ret": 0.044484357640281635,
-    "raw_sharpe": 0.8039347632692201,
-    "sharpe": 0.48766108341023323,
-    "sortino": 0.8068165065865143,
-    "max_dd": 0.04175228949042856
+    "ann_ret": 0.025978467317326278,
+    "raw_ann_ret": 0.04705670319182946,
+    "raw_sharpe": 0.8750402001405645,
+    "sharpe": 0.487861824538559,
+    "sortino": 0.8581817517646928,
+    "max_dd": 0.03521756813123837
   }
 }
