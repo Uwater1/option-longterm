@@ -55,6 +55,10 @@ Translates qualitative setups (`ideas/` repo, Al Brooks price action `ideas/Albr
    - **0 features is better than admitting false positive mirages**.
    - If a document-mined setup fails Step 2 admission (7Y-Jackknife or BH-FDR), log its mechanism family to `mining_memory_{ETF}_{side}.json`. Do NOT lower admission thresholds or force-fit parameters.
 
+6. **Double Check on Look-ahead bias**
+- AGENT MUST DOUBLE CHECK ON WHETHER ANY FUTURE DATA ARE USED OR NOT WHEN DEVELOPING NEW FEATURES.
+- AGENT should also consider the implementability of the feature in real trading.
+
 #### CLI Usage (Single Primitive Screening)
 ```bash
 # 1. Run causality perturbation test for early-bar features
@@ -240,4 +244,6 @@ preemptively complicate the model in anticipation of that.
 - [x] Implement mining_log.json dedup — no combination space explored twice.
 - [x] Integrate batch summary logging into select_features.py.
 - [x] Set aggressive defaults: top-50 (2-way), top-25 (3-way), 3-way enabled by default.
+- [x] Wave 4 big-trend/regime mining (`dig_trend_regime_candidates.py`, 38 candidates). 11 gate-passing features integrated into DAY_EXTRA. Causality test caught `climax_volume_reversal_3d` lookahead (IC 0.07 was 100% from `cl.shift(-1)`); causal rewrite → IC ~0 → dropped. Family logged to `mining_memory_300ETF_single.json` as forbidden.
+- [x] Wave 5 multi-family mining (`dig_wave5_candidates.py`, 41 candidates across 7 families: smart-money, path/distribution, cross-asset, calendar, liquidity, higher-TF, IV/VIX). 8 gate-passing; 7 single-ETF winners integrated into DAY_EXTRA. Cross-asset `relative_strength_vs_cross_5d` deferred (needs build_features plumbing). VIX features failed jackknife due to short history (post-2015).
 - [ ] Run aggressive mining across all 5 ETFs x 3 sides.

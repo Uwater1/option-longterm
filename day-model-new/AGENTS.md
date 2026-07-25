@@ -9,6 +9,9 @@ Simplified feature selection & IC-weighted return combination pipeline. Check [p
 # Tests causality, computes 7Y-Jackknife stability + IC CV across all 5 ETFs, logs to mining/mined_candidates.csv
 python3 day-model-new/test_feature_causality.py
 python3 day-model-new/mining/dig_and_test_candidates.py
+python3 day-model-new/mining/dig_multiday_candidates.py     # Multi-day (2-5d) trend/regime primitives
+python3 day-model-new/mining/dig_trend_regime_candidates.py # Wave 4: big-trend/regime (Kaufman/Choppiness/MA-stack/Keltner/Brooks)
+python3 day-model-new/mining/dig_wave5_candidates.py        # Wave 5: smart-money/path/liquidity/cross-asset/calendar/VIX
 
 # 0b. Generate aggressive feature combination recipes (2-way + 3-way by default)
 # Defaults: top-50 for 2-way, top-25 for 3-way, 11 + 5 ops, dedup via mining_log.json
@@ -76,6 +79,12 @@ python3 day-model-new/run_periods.py --max-parallel 4   # Parallel combos
   - **3-way ops (5)**: `tri_mean`, `tri_min`, `tri_max`, `tri_median`, `tri_ifelse`. Correlation bounds: [0.10, 0.90] (relaxed for broader exploration).
   - `recipe_utils.py` handles on-the-fly execution of combinations. Aligns scale via standardization, isolates parameters to training sets to prevent lookahead leakage.
   - **Mining Log** (`mining_log.json`): Persistent dedup guarantee — tracks all generated candidate names per ETF/side. Re-runs emit only the delta (new ops/combos), never duplicates. Batch summaries appended by `select_features.py`.
+  - **Document-Mining Scripts** (1b protocol):
+    - `dig_and_test_candidates.py` — 40 early-bar (5m) Al Brooks / microstructure primitives.
+    - `dig_multiday_candidates.py` — 38 multi-day (2-5d) trend/regime primitives.
+    - `dig_trend_regime_candidates.py` — 38 Wave-4 big-trend/regime primitives (Kaufman ER, Choppiness, MA stack alignment, Keltner position, SuperTrend proxy, Brooks trend-day count, MACD cross age, trend persistence composite). All use 4-gate screen (IC_CV≤3.0, n_neg_years≤2, 7Y-Jackknife, |IC|≥0.02). 11 gate-passing features integrated into `DAY_EXTRA` in `day-model/features_extra.py` (see `Wave 4` block).
+    - `dig_wave5_candidates.py` — 41 Wave-5 multi-family primitives: smart-money (OBV, A/D, NVI, PVI, Force Index, MFI, PVT), path/distribution (skewness, kurtosis, Ulcer, Pain, drawdown, MFE/MAE), cross-asset regime (5-ETF breadth, rotation, dispersion, correlation), calendar (options expiry, month boundaries, pre-holiday), liquidity (Amihud, Roll spread, turnover), higher-timeframe (weekly/monthly/quarterly), and IV/VIX (rq_vix). 7 single-ETF winners integrated into `DAY_EXTRA` (cross-asset `relative_strength_vs_cross_5d` not yet integrated — needs separate plumbing in `build_features.py`).
+    - **Lookahead lesson (Jul 2026)**: `climax_volume_reversal_3d` initially passed 4 ETFs at IC 0.07-0.09 but used `cl.shift(-1)` for next-day follow-through. Causal rewrite confirmed IC ~0. Family forbidden in `mining_memory_300ETF_single.json`. Do NOT re-mine climax-with-future-confirmation.
 
 ### Feature Selection Pipeline (9 Gates, All Training-Only)
 

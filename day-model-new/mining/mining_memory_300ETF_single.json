@@ -1,4 +1,10 @@
 {
   "forbidden_features": [],
-  "rejected_families": []
+  "rejected_families": [
+    {
+      "family": "climax_volume_reversal_with_follow_through",
+      "added": "2026-07-25",
+      "reason": "Used cl.shift(-1) for next-day confirmation. IC was 0.07-0.09 on 4 ETFs but entirely from lookahead. Causal rewrite (today's close vs prior climax close) drops IC to ~0. Do NOT re-mine climax patterns with future follow-through confirmation."
+    }
+  ]
 }

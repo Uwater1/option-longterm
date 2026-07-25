@@ -17,14 +17,16 @@ import pandas as pd
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
 
-from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba
+from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, load_future_trade_returns
+
 from weighting import get_rank_weights, _compute_pool_scores, compute_rank_w
 from strategy import generate_positions, simulate_etf_spot, calculate_metrics, sweep_optimal_threshold, compute_production_threshold, build_trade_log_df
 
 
 def run_rank_sensitivity_sweep(etf: str, df: pd.DataFrame, pool: list, X_raw: np.ndarray, signs: np.ndarray,
                                start_date: str = "2022-01-01", end_date: str = "2026-01-01",
-                               position_mode: str = "tanh", fee_bps: float = 0.0008, z_buffer: float = 0.2) -> pd.DataFrame:
+                               position_mode: str = "tanh", fee_bps: float = 0.0008, z_buffer: float = 0.1,
+                               trade_returns_full: np.ndarray = None) -> pd.DataFrame:
     """
     Grid sweep across ratio bounds, mapping shapes, powers, and top_k settings.
     """
@@ -40,8 +42,12 @@ def run_rank_sensitivity_sweep(etf: str, df: pd.DataFrame, pool: list, X_raw: np
         oos_mask = df["date"] >= df["date"].iloc[-1000]
 
     df_oos = df[oos_mask].reset_index(drop=True)
-    trade_returns_train = df[train_mask]["trade_return"].values.astype(np.float64) if "trade_return" in df.columns else df[train_mask]["close"].pct_change().fillna(0.0).values
-    trade_returns_oos = df_oos["trade_return"].values.astype(np.float64) if "trade_return" in df_oos.columns else df_oos["close"].pct_change().fillna(0.0).values
+    if trade_returns_full is not None:
+        trade_returns_train = trade_returns_full[train_mask.values]
+        trade_returns_oos = trade_returns_full[oos_mask.values]
+    else:
+        trade_returns_train = df[train_mask]["trade_return"].values.astype(np.float64) if "trade_return" in df.columns else df[train_mask]["close"].pct_change().fillna(0.0).values
+        trade_returns_oos = df_oos["trade_return"].values.astype(np.float64) if "trade_return" in df.columns else df_oos["close"].pct_change().fillna(0.0).values
 
     configurations = [
         # (label, min_ratio, max_ratio, mapping_shape, power, softmax_tau, top_k)
@@ -83,7 +89,6 @@ def run_rank_sensitivity_sweep(etf: str, df: pd.DataFrame, pool: list, X_raw: np
         positions_oos = generate_positions(Z_comp, z_th=z_th_long, z_th_short=z_th_short, mode=position_mode, long_only=True)[oos_mask.values]
         net_ret, raw_ret, fees = simulate_etf_spot(trade_returns_oos, positions_oos, fee_bps=fee_bps)
 
-
         metrics = calculate_metrics(net_ret, raw_ret, positions_oos, dates=df_oos["date"])
         
         sweep_rows.append({
@@ -105,7 +110,8 @@ def run_rank_sensitivity_sweep(etf: str, df: pd.DataFrame, pool: list, X_raw: np
 
 
 def analyze_factor_contributions(etf: str, df: pd.DataFrame, pool: list, X_raw: np.ndarray, signs: np.ndarray,
-                                 start_date: str = "2022-01-01", end_date: str = "2026-01-01") -> pd.DataFrame:
+                                 start_date: str = "2022-01-01", end_date: str = "2026-01-01",
+                                 trade_returns_full: np.ndarray = None) -> pd.DataFrame:
     """
     Decompose per-factor PnL contribution OOS:
     contrib_{i,t} = w_i * sign_i * z_{i,t} * r_t
@@ -120,7 +126,10 @@ def analyze_factor_contributions(etf: str, df: pd.DataFrame, pool: list, X_raw: 
         oos_mask = df["date"] >= df["date"].iloc[-1000]
 
     df_oos = df[oos_mask].reset_index(drop=True)
-    trade_returns = df_oos["trade_return"].values.astype(np.float64) if "trade_return" in df_oos.columns else df_oos["close"].pct_change().fillna(0.0).values
+    if trade_returns_full is not None:
+        trade_returns = trade_returns_full[oos_mask.values]
+    else:
+        trade_returns = df_oos["trade_return"].values.astype(np.float64) if "trade_return" in df_oos.columns else df_oos["close"].pct_change().fillna(0.0).values
     
     weights = get_rank_weights(pool, w_min_ratio=0.5, w_max_ratio=1.5, mapping_shape="linear")
     scores = _compute_pool_scores(pool)
@@ -199,27 +208,38 @@ def analyze_conviction_bins(df_oos: pd.DataFrame, Z_composite_oos: np.ndarray, p
     return pd.DataFrame(bin_rows)
 
 
-def run_diagnosis(etf: str, start_date: str = "2022-01-01", end_date: str = "2026-01-01"):
-    print("=" * 80)
-    print(f"SCHEME 4 (RANK BOUNDED MAPPING) DIAGNOSTIC SUITE — {etf}")
-    print("=" * 80)
-
+def run_diagnosis(etf: str, start_date: str = "2022-01-01", end_date: str = "2026-01-01", use_future: bool = False):
     pool = load_admitted_pool(etf, side="single", min_features=10)
     if not pool:
         print(f"[SKIP] ETF {etf} has < 10 admitted features.")
         return
 
     df = load_etf_dataset(etf)
+
+    trade_returns_full = None
+    asset_label = "Spot ETF"
+    if use_future:
+        fut_returns, fut_ok, fut_name = load_future_trade_returns(etf, df)
+        if not fut_ok:
+            print(f"[SKIP] {etf} has no Index Future mapping for --future mode.")
+            return
+        trade_returns_full = fut_returns
+        asset_label = f"Future ({fut_name})"
+
+    print("=" * 80)
+    print(f"SCHEME 4 (RANK BOUNDED MAPPING) DIAGNOSTIC SUITE — {etf} ({asset_label})")
+    print("=" * 80)
+
     X_raw, signs, feat_names = build_pool_feature_matrix(df, pool)
 
     # 1. Parameter Sensitivity Grid Sweep
     print("\n--- 1. Parameter & Mapping Sensitivity Sweep ---")
-    df_sweep = run_rank_sensitivity_sweep(etf, df, pool, X_raw, signs, start_date=start_date, end_date=end_date)
+    df_sweep = run_rank_sensitivity_sweep(etf, df, pool, X_raw, signs, start_date=start_date, end_date=end_date, trade_returns_full=trade_returns_full)
     print(df_sweep.to_string(index=False))
 
     # 2. Per-Factor PnL Contribution
     print("\n--- 2. Factor Rank & PnL Contribution Decomposition ---")
-    df_contrib = analyze_factor_contributions(etf, df, pool, X_raw, signs, start_date=start_date, end_date=end_date)
+    df_contrib = analyze_factor_contributions(etf, df, pool, X_raw, signs, start_date=start_date, end_date=end_date, trade_returns_full=trade_returns_full)
     print(df_contrib[["rank", "feature", "weight", "composite_score", "deflated_ic", "oos_ic", "total_weighted_pnl"]].to_string(index=False))
 
     # 3. Conviction Signal Bins
@@ -234,7 +254,11 @@ def run_diagnosis(etf: str, start_date: str = "2022-01-01", end_date: str = "202
     df_oos = df[oos_mask].reset_index(drop=True)
 
     Z_comp_oos = Z_comp[oos_mask.values]
-    trade_returns = df_oos["trade_return"].values.astype(np.float64) if "trade_return" in df_oos.columns else df_oos["close"].pct_change().fillna(0.0).values
+    if trade_returns_full is not None:
+        trade_returns = trade_returns_full[oos_mask.values]
+    else:
+        trade_returns = df_oos["trade_return"].values.astype(np.float64) if "trade_return" in df_oos.columns else df_oos["close"].pct_change().fillna(0.0).values
+
     positions_oos = generate_positions(Z_comp, z_th=0.5, mode="tanh", long_only=True)[oos_mask.values]
     net_ret, _, _ = simulate_etf_spot(trade_returns, positions_oos, fee_bps=0.0008)
 
@@ -244,9 +268,10 @@ def run_diagnosis(etf: str, start_date: str = "2022-01-01", end_date: str = "202
     # Save summary artifact CSVs
     artifacts_dir = HERE / "artifacts"
     artifacts_dir.mkdir(parents=True, exist_ok=True)
-    df_sweep.to_csv(artifacts_dir / f"diag_rank_sensitivity_{etf}.csv", index=False)
-    df_contrib.to_csv(artifacts_dir / f"diag_factor_contrib_{etf}.csv", index=False)
-    df_bins.to_csv(artifacts_dir / f"diag_conviction_bins_{etf}.csv", index=False)
+    fut_suffix = "_future" if use_future else ""
+    df_sweep.to_csv(artifacts_dir / f"diag_rank_sensitivity_{etf}{fut_suffix}.csv", index=False)
+    df_contrib.to_csv(artifacts_dir / f"diag_factor_contrib_{etf}{fut_suffix}.csv", index=False)
+    df_bins.to_csv(artifacts_dir / f"diag_conviction_bins_{etf}{fut_suffix}.csv", index=False)
     print(f"\nSaved diagnostic CSV artifacts for {etf} to {artifacts_dir}/")
 
 
@@ -255,13 +280,15 @@ def main():
     parser.add_argument("-e", "--etf", type=str, default="300ETF", help="Target ETF or 'all'")
     parser.add_argument("--start-date", type=str, default="2022-01-01", help="OOS Start Date")
     parser.add_argument("--end-date", type=str, default="2026-01-01", help="OOS End Date")
+    parser.add_argument("--future", action="store_true", help="Trade underlying Index Futures (IF88 for 300ETF, IC88 for 500ETF, IH88 for 50ETF)")
 
     args = parser.parse_args()
 
-    etfs = ["300ETF", "500ETF", "159915ETF"] if args.etf.lower() == "all" else [args.etf]
+    etfs = ["300ETF", "500ETF", "50ETF"] if args.etf.lower() == "all" else [args.etf]
     for etf in etfs:
-        run_diagnosis(etf, start_date=args.start_date, end_date=args.end_date)
+        run_diagnosis(etf, start_date=args.start_date, end_date=args.end_date, use_future=args.future)
 
 
 if __name__ == "__main__":
     main()
+

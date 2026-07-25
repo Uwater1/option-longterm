@@ -28,6 +28,60 @@ from recipe_utils import compute_recipe
 from build_features import FEATURES
 
 
+# Futures symbol & continuous contract 5m parquet mapping
+FUTURES_MAP = {
+    "300ETF": "IF88_5m.parquet",
+    "500ETF": "IC88_5m.parquet",
+    "50ETF": "IH88_5m.parquet",
+}
+
+FUTURES_NAME_MAP = {
+    "300ETF": "IF88 (CSI 300 Futures)",
+    "500ETF": "IC88 (CSI 500 Futures)",
+    "50ETF": "IH88 (SSE 50 Futures)",
+}
+
+
+def load_future_trade_returns(etf: str, df_etf: pd.DataFrame) -> tuple[np.ndarray, bool, str]:
+    """
+    Load intraday trade return (10:00 open -> 14:35 close) for underlying index future.
+    Falls back to ETF spot trade_return for historical dates prior to 5m futures data coverage.
+
+    Returns:
+      - combined_returns: np.ndarray shape (T,)
+      - is_available: bool
+      - future_name: str
+    """
+    if etf not in FUTURES_MAP:
+        return None, False, ""
+
+    fut_file = REPO_ROOT / "data" / FUTURES_MAP[etf]
+    if not fut_file.exists():
+        return None, False, ""
+
+    df_5m = pd.read_parquet(fut_file)
+    df_5m["datetime"] = pd.to_datetime(df_5m["datetime"])
+    df_5m["date"] = df_5m["datetime"].dt.date
+
+    fut_returns_dict = {}
+    for d, g in df_5m.groupby("date"):
+        g = g.sort_values("datetime").reset_index(drop=True)
+        if len(g) > 42:
+            entry_open = float(g.iloc[6]["open"])
+            exit_close = float(g.iloc[42]["close"])
+            if entry_open > 0 and exit_close > 0:
+                fut_returns_dict[pd.Timestamp(d)] = float(np.log(exit_close / entry_open))
+
+    fut_s = pd.Series(fut_returns_dict, name="future_trade_return")
+    merged = df_etf[["date", "trade_return"]].set_index("date").join(fut_s)
+
+    # Fallback to ETF spot trade_return for dates without 5m futures data
+    combined = merged["future_trade_return"].fillna(merged["trade_return"]).values.astype(np.float64)
+    fut_name = FUTURES_NAME_MAP.get(etf, FUTURES_MAP[etf])
+
+    return combined, True, fut_name
+
+
 def load_admitted_pool(etf: str, side: str = "single", min_features: int = 10) -> list:
     """
     Load admitted feature pool for given ETF and side.
@@ -35,11 +89,11 @@ def load_admitted_pool(etf: str, side: str = "single", min_features: int = 10) -
     """
     etf_pools = POOLS.get(etf, {})
     pool = etf_pools.get(side, [])
-    
+
     if len(pool) < min_features:
         print(f"[GUARDRAIL WARNING] {etf} ({side}) has only {len(pool)} features (< {min_features} minimum). Skipping execution.")
         return []
-    
+
     return pool
 
 
@@ -50,18 +104,19 @@ def load_etf_dataset(etf: str) -> pd.DataFrame:
     path = REPO_ROOT / "day-model" / "data" / f"features_{etf}.parquet"
     if not path.exists():
         raise FileNotFoundError(f"Dataset not found at {path}")
-    
+
     df = pd.read_parquet(path)
     if "date" not in df.columns:
         df = df.reset_index()
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values("date").reset_index(drop=True)
-    
+
     # Fill base features defensively using forward fill + median fill
     base_med = df[FEATURES].median().fillna(0.0)
     df[FEATURES] = df[FEATURES].ffill().fillna(base_med)
-    
+
     return df
+
 
 
 def build_pool_feature_matrix(df: pd.DataFrame, pool: list) -> tuple[np.ndarray, np.ndarray, list[str]]:

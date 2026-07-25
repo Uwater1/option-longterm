@@ -153,7 +153,7 @@ def sweep_optimal_threshold(Z_composite_train: np.ndarray, trade_returns_train: 
     }
 
 
-def compute_production_threshold(train_sweep_result: dict, z_buffer: float = 0.2, z_short_buffer: float = None) -> tuple[float, float]:
+def compute_production_threshold(train_sweep_result: dict, z_buffer: float = 0.1, z_short_buffer: float = None) -> tuple[float, float]:
     """
     Compute production threshold for long and short sides.
     z_th_long = z_th_long_train + z_buffer
@@ -161,7 +161,7 @@ def compute_production_threshold(train_sweep_result: dict, z_buffer: float = 0.2
     
     Args:
       - train_sweep_result: Output from sweep_optimal_threshold()
-      - z_buffer: Conservative buffer added to train-optimal threshold for long (default 0.2)
+      - z_buffer: Conservative buffer added to train-optimal threshold for long (default 0.1)
       - z_short_buffer: Conservative buffer for short threshold (default z_buffer if None)
       
     Returns:
@@ -298,12 +298,16 @@ def calculate_metrics(net_returns: np.ndarray, raw_returns: np.ndarray, position
 
 def build_trade_log_df(df_oos: pd.DataFrame, Z_composite_oos: np.ndarray, positions_oos: np.ndarray,
                        net_returns: np.ndarray, raw_returns: np.ndarray, fees: np.ndarray,
-                       etf: str, scheme: str, z_th: float) -> pd.DataFrame:
+                       etf: str, scheme: str, z_th: float, asset_type: str = "Spot ETF",
+                       trade_returns_arr: np.ndarray = None) -> pd.DataFrame:
     """
     Build detailed date-level trade log DataFrame for CSV export and AI/text inspection.
     """
     dates = pd.to_datetime(df_oos["date"]).dt.strftime("%Y-%m-%d") if "date" in df_oos.columns else pd.Series([f"day_{i}" for i in range(len(df_oos))])
-    trade_returns = df_oos["trade_return"].values.astype(np.float64) if "trade_return" in df_oos.columns else df_oos["close"].pct_change().fillna(0.0).values
+    if trade_returns_arr is not None:
+        trade_returns = trade_returns_arr
+    else:
+        trade_returns = df_oos["trade_return"].values.astype(np.float64) if "trade_return" in df_oos.columns else df_oos["close"].pct_change().fillna(0.0).values
     
     cum_pnl = np.cumsum(net_returns)
     is_trade = (np.abs(positions_oos) > 1e-5).astype(int)
@@ -311,6 +315,7 @@ def build_trade_log_df(df_oos: pd.DataFrame, Z_composite_oos: np.ndarray, positi
     trade_log = pd.DataFrame({
         "date": dates,
         "etf": etf,
+        "asset_type": asset_type,
         "scheme": scheme,
         "z_composite": np.round(Z_composite_oos, 4),
         "z_th": round(float(z_th), 2),
@@ -324,4 +329,5 @@ def build_trade_log_df(df_oos: pd.DataFrame, Z_composite_oos: np.ndarray, positi
     })
 
     return trade_log
+
 

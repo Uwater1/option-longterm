@@ -39,8 +39,8 @@ FDR_THRESHOLD = 0.20
 DEFAULT_THETA = 0.85
 MAX_POOL_SIZE = 35
 TOP_PROTECTED_COUNT = 25
-TIGHT_THETA = 0.75
-MAX_RECENCY_RATIO = 2.5  # Cap recent_ic / early_ic to prune late-training overfit spikes, higher = less conservative
+TIGHT_THETA = 0.70
+MAX_RECENCY_RATIO = 2.5  # Cap recent_ic / early_ic, higher = less conservative
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
@@ -1781,9 +1781,8 @@ def main():
     mining_log_path = HERE / "mining" / "mining_log.json"
     try:
         if mining_log_path.exists():
-            with open(mining_log_path, "r", encoding="utf-8") as f:
-                _content = f.read()
-            mining_log, _ = json.JSONDecoder().raw_decode(_content)
+            with open(mining_log_path, "r") as f:
+                mining_log = json.load(f)
         else:
             mining_log = {"generated_space": {}, "batches": []}
 

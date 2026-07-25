@@ -181,7 +181,28 @@ DAY_EXTRA: list[str] = [
     "consecutive_up_days_count", "volume_weighted_trend_strength_10d",
     # --- Mined Multi-Day Primitives (Wave 3: Market Regime & Big Trend) ---
     "consecutive_ema20_above_days", "ema_ribbon_width",
-    "donchian_breakout_proximity_20d"
+    "donchian_breakout_proximity_20d",
+    # --- Wave 4: Big Trend / Regime Factors (Al Brooks Ch11-13, strategy ideas;
+    # all gate-passed IC_CV<=3.0, n_neg_years<=2, 7Y-Jackknife, |IC|>=0.02 on >=1 ETF) ---
+    "close_to_ema21_distance",          # PASSED 300,50 — Brooks 21-EMA gap distance
+    "keltner_position_atr10_20d",       # PASSED 300  — channel extension (ATR10 variant)
+    "realized_vol_zscore_20d",          # PASSED 500  — vol regime z-score
+    "kaufman_efficiency_ratio_20d",     # PASSED 50   — clean trend regime
+    "ma_alignment_score_5_10_20_50",    # PASSED 50   — multi-timeframe MA stack
+    "ma_alignment_score_5_10_20",       # PASSED 50   — triple MA stack
+    "ma50_slope_normalized_10d",        # PASSED 50   — long-term trend slope
+    "donchian_width_atr_ratio_20d",     # PASSED 588000 — channel width / ATR (trend strength)
+    "trend_day_count_5d",               # PASSED 588000 — Brooks trend-day count
+    "macd_line_cross_age",              # PASSED 588000 — young cross signal
+    "trend_persistence_composite",      # PASSED 588000 — composite ER+AC+VR
+    # --- Wave 5: Smart-money / Path / Liquidity / Higher-TF (7 features) ---
+    "current_drawdown_from_peak_20d",   # PASSED 300 — drawdown mean-reversion
+    "liquidity_efficiency_ratio_10d",   # PASSED 500 — volume/range efficiency
+    "quarterly_trend_direction",        # PASSED 50  — 63d EMA slope
+    "ease_of_movement_10d",             # PASSED 588000 — EVM smart money
+    "money_flow_index_14d",             # PASSED 588000 — volume-weighted RSI
+    "volume_differential_10d",          # PASSED 588000 — up vs down volume
+    "roll_spread_proxy_10d",            # PASSED 588000 — spread regime
 ]
 
 # Yesterday mirrors (shift of early-frame columns produced upstream)
@@ -2149,6 +2170,197 @@ def compute_daylevel_extras(df_1d: pd.DataFrame) -> pd.DataFrame:
     lo20_w3 = lo.rolling(20).min()
     out["donchian_breakout_proximity_20d"] = np.clip(
         (px - lo20_w3) / (hi20_w3 - lo20_w3 + 1e-8) * 2.0 - 1.0, -1.0, 1.0)
+
+    # --- Wave 4: Big Trend / Regime Factors ---
+    # NOTE: formulas end without .shift(1) — upstream build_features.py:697 shifts
+    # all DAY_FEATURES by 1, which aligns daily row T-1 to training row T.
+    ema21 = px.ewm(span=21, adjust=False).mean()
+    out["close_to_ema21_distance"] = np.clip(
+        (px - ema21) / (atr14 + 1e-8) / 3.0, -1.0, 1.0)
+
+    atr10 = tr.rolling(10).mean()
+    out["keltner_position_atr10_20d"] = np.clip(
+        (px - ema20) / (2.0 * atr10 + 1e-8), -1.0, 1.0)
+
+    log_ret_10d = np.log(px / px.shift(1))
+    rv_10d = log_ret_10d.rolling(10).std() * np.sqrt(252)
+    rv_mean_250 = rv_10d.rolling(250, min_periods=60).mean()
+    rv_std_250 = rv_10d.rolling(250, min_periods=60).std()
+    out["realized_vol_zscore_20d"] = np.clip(
+        (rv_10d - rv_mean_250) / (rv_std_250 + 1e-8) / 3.0, -1.0, 1.0)
+
+    net_20 = (px - px.shift(20)).abs()
+    daily_abs_20 = (px - px.shift(1)).abs().rolling(20).sum()
+    er_20 = net_20 / (daily_abs_20 + 1e-8) * np.sign(px - px.shift(20))
+    out["kaufman_efficiency_ratio_20d"] = np.clip(
+        er_20.rolling(3).mean(), -1.0, 1.0)
+
+    ema5_w4 = px.ewm(span=5, adjust=False).mean()
+    ema10_w4 = px.ewm(span=10, adjust=False).mean()
+    ema50_w4 = px.ewm(span=50, adjust=False).mean()
+    # MA stack: count correctly-ordered pairs among (5,10,20,50)
+    emas_4 = [ema5_w4, ema10_w4, ema20_w3, ema50_w4]
+    bull_pairs_4 = 0
+    bear_pairs_4 = 0
+    for i in range(4):
+        for j in range(i + 1, 4):
+            d = emas_4[i] - emas_4[j]
+            bull_pairs_4 = bull_pairs_4 + (d > 0).astype(int)
+            bear_pairs_4 = bear_pairs_4 + (d < 0).astype(int)
+    out["ma_alignment_score_5_10_20_50"] = np.clip(
+        (bull_pairs_4 - bear_pairs_4) / 6.0, -1.0, 1.0)
+    # Triple stack
+    emas_3 = [ema5_w4, ema10_w4, ema20_w3]
+    bull_pairs_3 = 0
+    bear_pairs_3 = 0
+    for i in range(3):
+        for j in range(i + 1, 3):
+            d = emas_3[i] - emas_3[j]
+            bull_pairs_3 = bull_pairs_3 + (d > 0).astype(int)
+            bear_pairs_3 = bear_pairs_3 + (d < 0).astype(int)
+    out["ma_alignment_score_5_10_20"] = np.clip(
+        (bull_pairs_3 - bear_pairs_3) / 3.0, -1.0, 1.0)
+
+    # MA50 slope over 10 days, normalized by ATR14
+    ema50_w4_arr = ema50_w4.values
+    _x = np.arange(10, dtype=np.float64)
+    _x_mean = _x.mean()
+    _x_var = ((_x - _x_mean) ** 2).sum()
+    def _slope10(v):
+        if len(v) < 10:
+            return 0.0
+        y = v
+        y_mean = y.mean()
+        return ((_x - _x_mean) * (y - y_mean)).sum() / _x_var
+    ema50_slope = pd.Series(ema50_w4.rolling(10).apply(_slope10, raw=True),
+                            index=px.index)
+    out["ma50_slope_normalized_10d"] = np.clip(
+        ema50_slope / (atr14 + 1e-8) / 3.0, -1.0, 1.0)
+
+    # Donchian width / ATR (signed by trend direction via ema5-ema20)
+    width_20 = hi.rolling(20).max() - lo.rolling(20).min()
+    ratio = width_20 / (atr14 + 1e-8)
+    norm_ratio = (ratio - 10.0) / 10.0
+    trend_sign_w4 = np.sign(ema5_w4 - ema20_w3)
+    out["donchian_width_atr_ratio_20d"] = np.clip(
+        norm_ratio * trend_sign_w4, -1.0, 1.0)
+
+    # Brooks trend day count: |close-open|/range > 0.7 AND |body| > 0.5*ATR
+    rng_w4 = hi - lo + 1e-8
+    body_ratio_w4 = (px - op).abs() / rng_w4
+    net_body = (px - op).abs()
+    is_trend_day = (body_ratio_w4 > 0.7) & (net_body > 0.5 * atr14)
+    day_dir = np.sign(px - op)
+    bull_td = (is_trend_day & (day_dir > 0)).astype(int).rolling(5).sum()
+    bear_td = (is_trend_day & (day_dir < 0)).astype(int).rolling(5).sum()
+    out["trend_day_count_5d"] = np.clip(
+        (bull_td - bear_td) / 5.0, -1.0, 1.0)
+
+    # MACD line cross age: bars since MACD crossed signal, signed by direction
+    ema12_w4 = px.ewm(span=12, adjust=False).mean()
+    ema26_w4 = px.ewm(span=26, adjust=False).mean()
+    macd_line = ema12_w4 - ema26_w4
+    macd_signal = macd_line.ewm(span=9, adjust=False).mean()
+    above_macd = (macd_line > macd_signal).astype(int).values
+    cross_macd = (np.diff(above_macd, prepend=above_macd[0]) != 0).astype(int)
+    bars_since_macd = np.zeros(len(px), dtype=np.float64)
+    last_cross = 0
+    for i in range(len(cross_macd)):
+        if cross_macd[i] == 1:
+            last_cross = i
+        bars_since_macd[i] = i - last_cross
+    macd_dir = np.where(above_macd == 1, 1.0, -1.0)
+    macd_mag = 1.0 - np.minimum(bars_since_macd / 20.0, 1.0)
+    out["macd_line_cross_age"] = np.clip(
+        macd_dir * macd_mag, -1.0, 1.0)
+
+    # Trend persistence composite: average of (signed ER10, lag-1 autocorr, VR sign)
+    net_10 = (px - px.shift(10)).abs()
+    daily_abs_10 = (px - px.shift(1)).abs().rolling(10).sum()
+    er_10 = net_10 / (daily_abs_10 + 1e-8) * np.sign(px - px.shift(10))
+    # Lag-1 autocorr of log returns over 11-day window
+    log_ret_full = np.log(px / px.shift(1))
+    def _ac11(v):
+        if len(v) < 5:
+            return 0.0
+        a = v[:-1]; b = v[1:]
+        ma_, mb_ = a.mean(), b.mean()
+        sa = np.sqrt(((a - ma_) ** 2).mean())
+        sb = np.sqrt(((b - mb_) ** 2).mean())
+        if sa < 1e-8 or sb < 1e-8:
+            return 0.0
+        return ((a - ma_) * (b - mb_)).mean() / (sa * sb)
+    ac_11 = log_ret_full.rolling(11).apply(_ac11, raw=True).fillna(0)
+    var1_r = log_ret_full.rolling(20).var()
+    var5_r = (np.log(px / px.shift(5))).rolling(20).var()
+    vr_r = var5_r / (5.0 * var1_r + 1e-12)
+    vr_sign = np.tanh(np.log(vr_r.clip(0.1, 10.0)))
+    out["trend_persistence_composite"] = np.clip(
+        (er_10 + ac_11 + vr_sign) / 3.0, -1.0, 1.0)
+
+    # --- Wave 5: Smart-money / Path / Liquidity / Higher-TF ---
+    # current_drawdown_from_peak_20d
+    hh_20_w5 = px.rolling(20).max()
+    dd_w5 = (px - hh_20_w5) / (hh_20_w5 + 1e-8)
+    out["current_drawdown_from_peak_20d"] = np.clip(dd_w5 * 5.0, -1.0, 1.0)
+
+    # liquidity_efficiency_ratio_10d (volume/range z, signed by 5d momentum)
+    rng_w5 = (hi - lo) / (px + 1e-8)
+    eff_w5 = vol / (rng_w5 + 1e-8)
+    eff_z_w5 = (eff_w5 - eff_w5.rolling(60).mean()) / (eff_w5.rolling(60).std() + 1e-8)
+    sign_w5 = np.sign(px - px.shift(5))
+    out["liquidity_efficiency_ratio_10d"] = np.clip(
+        eff_z_w5 * sign_w5 / 3.0, -1.0, 1.0)
+
+    # quarterly_trend_direction (63d EMA slope over 10d, normalized by ATR)
+    ema63_w5 = px.ewm(span=63, adjust=False).mean()
+    ema63_slope_w5 = ema63_w5.rolling(10).apply(_slope10, raw=True)
+    out["quarterly_trend_direction"] = np.clip(
+        ema63_slope_w5 / (atr14 + 1e-8) / 3.0, -1.0, 1.0)
+
+    # ease_of_movement_10d
+    mid_w5 = (hi + lo) / 2.0
+    mid_chg_w5 = mid_w5 - mid_w5.shift(1)
+    rng_w5_evm = hi - lo + 1e-8
+    vol_scale_w5 = (vol / (vol.rolling(20).mean() + 1e-8)) * 1e-3
+    evm_w5 = mid_chg_w5 / (rng_w5_evm + 1e-8) / (vol_scale_w5 + 1e-8)
+    out["ease_of_movement_10d"] = np.clip(
+        evm_w5.rolling(10).mean() * 1000.0, -1.0, 1.0)
+
+    # money_flow_index_14d (volume-weighted RSI variant)
+    tp_w5 = (hi + lo + px) / 3.0
+    mf_w5 = tp_w5 * vol
+    pos_mf_w5 = pd.Series(np.where(tp_w5 > tp_w5.shift(1), mf_w5, 0.0), index=px.index)
+    neg_mf_w5 = pd.Series(np.where(tp_w5 < tp_w5.shift(1), mf_w5, 0.0), index=px.index)
+    pos_sum_w5 = pos_mf_w5.rolling(14).sum()
+    neg_sum_w5 = neg_mf_w5.rolling(14).sum()
+    mfr_w5 = pos_sum_w5 / (neg_sum_w5 + 1e-8)
+    mfi_w5 = 100.0 - 100.0 / (1.0 + mfr_w5)
+    out["money_flow_index_14d"] = np.clip((mfi_w5 - 50.0) / 50.0, -1.0, 1.0)
+
+    # volume_differential_10d (up-day vol vs down-day vol)
+    up_w5 = (px > px.shift(1))
+    dn_w5 = (px < px.shift(1))
+    up_vol_w5 = vol.where(up_w5, 0).rolling(10).mean()
+    dn_vol_w5 = vol.where(dn_w5, 0).rolling(10).mean()
+    out["volume_differential_10d"] = np.clip(
+        (up_vol_w5 - dn_vol_w5) / (up_vol_w5 + dn_vol_w5 + 1e-8), -1.0, 1.0)
+
+    # roll_spread_proxy_10d (Roll's effective spread estimator)
+    ret_w5_roll = px.pct_change()
+    def _roll_cov_w5(v):
+        if len(v) < 5:
+            return 0.0
+        a = v[:-1]; b = v[1:]
+        return ((a - a.mean()) * (b - b.mean())).mean()
+    cov_w5 = ret_w5_roll.rolling(11).apply(_roll_cov_w5, raw=True)
+    # Clamp to non-positive before sqrt to avoid NaN warnings (np.where is eager)
+    neg_cov_w5 = np.minimum(cov_w5.fillna(0), 0.0)
+    roll_w5 = 2.0 * np.sqrt(-neg_cov_w5)
+    roll_s_w5 = pd.Series(roll_w5, index=px.index)
+    rv_w5 = ret_w5_roll.rolling(10).std()
+    out["roll_spread_proxy_10d"] = np.clip(
+        roll_s_w5 / (rv_w5 + 1e-8) * 10.0, -1.0, 1.0)
 
     return out[DAY_EXTRA]
 

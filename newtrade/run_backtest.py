@@ -22,7 +22,7 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
 
-from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_ic_numba
+from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_ic_numba, load_future_trade_returns
 from weighting import get_weighting_scheme
 from strategy import generate_positions, simulate_etf_spot, calculate_metrics, sweep_optimal_threshold, compute_production_threshold, build_trade_log_df
 
@@ -33,15 +33,15 @@ ALL_SCHEMES = ["ew", "icw", "score", "rank"]  # glm deferred
 def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew", z_th: float = 0.5, 
                         position_mode: str = "binary", fee_bps: float = 0.0008, min_features: int = 10,
                         start_date: str = "2022-01-01", end_date: str = "2026-01-01",
-                        z_buffer: float = 0.2, z_short_buffer: float = None, auto_threshold: bool = False,
-                        rank_kwargs: dict = None, dynamic_ic: bool = False, long_only: bool = False) -> dict:
+                        z_buffer: float = 0.1, z_short_buffer: float = None, auto_threshold: bool = False,
+                        rank_kwargs: dict = None, dynamic_ic: bool = False, long_only: bool = False,
+                        use_future: bool = False) -> dict:
     """
     Run backtest for one ETF and side combination filtered to OOS date range.
     
     If auto_threshold=True, sweeps Z_th on training data and applies production buffer.
+    If use_future=True, trades underlying Index Futures (IF88 for 300ETF, IC88 for 500ETF, IH88 for 50ETF).
     """
-    print(f"--> Running Backtest: ETF={etf}, Side={side}, Scheme={scheme_name.upper()}, z_th={'auto' if auto_threshold else z_th}, Mode={position_mode}, LongOnly={long_only}, OOS=[{start_date} to {end_date}]")
-    
     # 1. Load admitted pool
     pool = load_admitted_pool(etf, side=side, min_features=min_features)
     if not pool:
@@ -50,6 +50,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
             "etf": etf,
             "side": side,
             "scheme": scheme_name,
+            "asset_type": "Future" if use_future else "Spot ETF",
             "status": "SKIPPED_FEAT_FLOOR",
             "n_features": len(pool),
             "period": f"{start_date[:7]} ~ {end_date[:7]}",
@@ -65,6 +66,36 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
 
     # 2. Load ETF dataset
     df = load_etf_dataset(etf)
+
+    # Handle --future underlying traded return loading
+    asset_type = "Spot ETF"
+    if use_future:
+        fut_returns, fut_ok, fut_name = load_future_trade_returns(etf, df)
+        if not fut_ok:
+            print(f"--> [SKIP] {etf} has no Index Future mapping for --future mode.")
+            return {
+                "etf": etf,
+                "side": side,
+                "scheme": scheme_name,
+                "asset_type": "Future (N/A)",
+                "status": "SKIPPED_NO_FUTURE",
+                "n_features": len(pool),
+                "period": f"{start_date[:7]} ~ {end_date[:7]}",
+                "n_trades": 0,
+                "cost_sharpe": 0.0,
+                "raw_sharpe": 0.0,
+                "total_pnl": 0.0,
+                "max_drawdown": 0.0,
+                "win_rate_pct": 0.0,
+                "ann_turnover": 0.0,
+                "trade_log_df": None,
+            }
+        full_trade_ret = fut_returns
+        asset_type = f"Future ({fut_name})"
+    else:
+        full_trade_ret = df["trade_return"].values.astype(np.float64) if "trade_return" in df.columns else df["close"].pct_change().fillna(0.0).values
+
+    print(f"--> Running Backtest: ETF={etf}, Asset={asset_type}, Side={side}, Scheme={scheme_name.upper()}, z_th={'auto' if auto_threshold else z_th}, Mode={position_mode}, LongOnly={long_only}, OOS=[{start_date} to {end_date}]")
     
     # 3. Build raw feature matrix & signs
     X_raw, signs, feat_names = build_pool_feature_matrix(df, pool)
@@ -84,7 +115,6 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     
     extra_kwargs = rank_kwargs if (scheme_name == "rank" and rank_kwargs) else {}
     if dynamic_ic and scheme_name == "rank":
-        full_trade_ret = df["trade_return"].values.astype(np.float64) if "trade_return" in df.columns else df["close"].pct_change().fillna(0.0).values
         exp_ic_mat = expanding_factor_ic_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
         extra_kwargs["expanding_ic"] = exp_ic_mat
 
@@ -96,11 +126,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
         # Get training-period composite signal and returns for sweep
         train_mask = df["date"] < t_start_ts
         Z_composite_train = Z_composite[train_mask.values]
-        trade_returns_col = "trade_return" if "trade_return" in df.columns else None
-        if trade_returns_col:
-            trade_returns_train = df[train_mask][trade_returns_col].values.astype(np.float64)
-        else:
-            trade_returns_train = df[train_mask]["close"].pct_change().fillna(0.0).values
+        trade_returns_train = full_trade_ret[train_mask.values]
         
         # Sweep on training data
         sweep_info = sweep_optimal_threshold(
@@ -134,8 +160,8 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     Z_composite_oos = Z_composite[mask.values if isinstance(mask, pd.Series) else mask]
 
     # 9. Backtest Simulation on OOS slice
-    trade_returns = df_oos["trade_return"].values.astype(np.float64) if "trade_return" in df_oos.columns else df_oos["close"].pct_change().fillna(0.0).values
-    net_returns, raw_returns, fees = simulate_etf_spot(trade_returns, positions_oos, fee_bps=fee_bps)
+    trade_returns_oos = full_trade_ret[mask.values if isinstance(mask, pd.Series) else mask]
+    net_returns, raw_returns, fees = simulate_etf_spot(trade_returns_oos, positions_oos, fee_bps=fee_bps)
 
     # 10. Trade log DataFrame creation & CSV export
     trade_log_df = build_trade_log_df(
@@ -148,17 +174,21 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
         etf=etf,
         scheme=scheme_name,
         z_th=z_th_prod,
+        asset_type=asset_type,
+        trade_returns_arr=trade_returns_oos,
     )
     
     artifacts_dir = HERE / "artifacts"
     artifacts_dir.mkdir(parents=True, exist_ok=True)
-    trade_csv_path = artifacts_dir / f"trades_{scheme_name}_{etf}.csv"
+    fut_suffix = "_future" if use_future else ""
+    trade_csv_path = artifacts_dir / f"trades_{scheme_name}_{etf}{fut_suffix}.csv"
     trade_log_df.to_csv(trade_csv_path, index=False)
 
     # 11. Calculate Metrics
     metrics = calculate_metrics(net_returns, raw_returns, positions_oos, dates=df_oos["date"])
     metrics.update({
         "etf": etf,
+        "asset_type": asset_type,
         "side": side,
         "scheme": scheme_name,
         "status": "SUCCESS",
@@ -170,6 +200,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
         "z_th_train_short": sweep_info.get("optimal_z_th_short") if sweep_info else None,
         "z_buffer": z_buffer if auto_threshold else 0.0,
         "long_only": long_only,
+        "use_future": use_future,
         "position_mode": position_mode,
         "dates": df_oos["date"].dt.strftime("%Y-%m-%d").tolist() if "date" in df_oos.columns else [],
         "cum_pnl": np.cumsum(net_returns).tolist(),
@@ -181,13 +212,14 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     return metrics
 
 
+
 def main():
     parser = argparse.ArgumentParser(description="NewTrade Day-Model Factor Monetization Backtest Runner")
     parser.add_argument("-e", "--etf", type=str, default="all", help="Target ETF (300ETF, 500ETF, 50ETF, 588000ETF, 159915ETF, or all)")
     parser.add_argument("-s", "--side", type=str, default="single", choices=["single", "long", "short"], help="Trading side")
     parser.add_argument("--scheme", type=str, default="ew", choices=["ew", "icw", "score", "rank", "glm", "all"], help="Factor weighting scheme ('all' runs ew/icw/score/rank)")
     parser.add_argument("--z-th", type=str, default="auto", help="Conviction threshold Z score. 'auto' = train-sweep + buffer, or float value for fixed.")
-    parser.add_argument("--z-buffer", type=float, default=0.2, help="Production buffer added to train-optimal threshold for long (default 0.2)")
+    parser.add_argument("--z-buffer", type=float, default=0.1, help="Production buffer added to train-optimal threshold for long (default 0.1)")
     parser.add_argument("--z-short-buffer", type=float, default=None, help="Production buffer for short threshold (default: z_buffer + 0.1)")
     parser.add_argument("--position-mode", type=str, default="binary", choices=["binary", "tanh", "quadratic"], help="Position sizing mode")
     parser.add_argument("--fee-bps", type=float, default=8.0, help="Transaction fee in basis points (default 8.0 = 0.0008)")
@@ -204,6 +236,7 @@ def main():
     parser.add_argument("--rank-top-k", type=int, default=None, help="Top K factors truncation threshold for 'top_k' rank mapping shape")
     parser.add_argument("--dynamic-ic", action="store_true", help="Enable zero-lookahead expanding rolling factor IC ranking")
     parser.add_argument("--long-only", action="store_true", help="Restrict to long-only trades (Spot ETF mode). Default: False (allows short trades).")
+    parser.add_argument("--future", action="store_true", help="Trade underlying Index Futures (IF88 for 300ETF, IC88 for 500ETF, IH88 for 50ETF) instead of Spot ETF.")
 
     args = parser.parse_args()
 
@@ -216,7 +249,7 @@ def main():
     fee_bps = args.fee_bps / 10000.0
 
     print("================================================================================")
-    print(f"NewTrade Backtest Engine | Scheme={args.scheme.upper()} | z_th={args.z_th} | buffer={args.z_buffer} | LongOnly={args.long_only} | OOS=[{args.start_date} ~ {args.end_date}]")
+    print(f"NewTrade Backtest Engine | Mode={'Future' if args.future else 'Spot ETF'} | Scheme={args.scheme.upper()} | z_th={args.z_th} | buffer={args.z_buffer} | LongOnly={args.long_only} | OOS=[{args.start_date} ~ {args.end_date}]")
     print("================================================================================")
 
     rank_kwargs = {
@@ -245,10 +278,9 @@ def main():
                 rank_kwargs=rank_kwargs,
                 dynamic_ic=args.dynamic_ic,
                 long_only=args.long_only,
+                use_future=args.future,
             )
             results.append(res)
-
-
 
     # Save aggregated Rank Bounded Weight trades CSV artifact
     rank_results = [r for r in results if r.get("scheme") == "rank" and r.get("status") == "SUCCESS"]
@@ -258,7 +290,8 @@ def main():
             combined_rank_df = pd.concat(all_rank_dfs, ignore_index=True)
             artifacts_dir = HERE / "artifacts"
             artifacts_dir.mkdir(parents=True, exist_ok=True)
-            combined_rank_csv = artifacts_dir / "rank_bounded_trades.csv"
+            fut_suffix = "_future" if args.future else ""
+            combined_rank_csv = artifacts_dir / f"rank_bounded_trades{fut_suffix}.csv"
             combined_rank_df.to_csv(combined_rank_csv, index=False)
             print(f"Saved primary Rank Bounded trade log CSV to {combined_rank_csv}")
 
@@ -275,9 +308,10 @@ def main():
                 if r.get("dates") and r.get("cum_pnl"):
                     dates = pd.to_datetime(r["dates"])
                     cum_pnl = r["cum_pnl"]
-                    ax.plot(dates, cum_pnl, label=f"{r['etf']} (Sharpe: {r['cost_sharpe']:.3f}, PnL: {r['total_pnl']:+.4f})", linewidth=1.8)
+                    ax.plot(dates, cum_pnl, label=f"{r['etf']} ({r.get('asset_type', 'Spot ETF')}) (Sharpe: {r['cost_sharpe']:.3f}, PnL: {r['total_pnl']:+.4f})", linewidth=1.8)
             
-            ax.set_title(f"Rank Bounded Weight ({args.rank_mapping.upper()}) — OOS Cumulative Net PnL (10:00 - 14:35 Intraday)", fontsize=11, fontweight='bold')
+            mode_title = "Index Future" if args.future else "Spot ETF"
+            ax.set_title(f"Rank Bounded Weight ({args.rank_mapping.upper()}) — {mode_title} OOS Net PnL (10:00 - 14:35 Intraday)", fontsize=11, fontweight='bold')
             ax.set_xlabel("Date", fontsize=9)
             ax.set_ylabel("Cumulative Net PnL", fontsize=9)
             ax.grid(True, linestyle="--", alpha=0.5)
@@ -286,20 +320,21 @@ def main():
 
             artifacts_dir = HERE / "artifacts"
             artifacts_dir.mkdir(parents=True, exist_ok=True)
-            chart_path = artifacts_dir / "rank_bounded_equity.png"
+            fut_suffix = "_future" if args.future else ""
+            chart_path = artifacts_dir / f"rank_bounded_equity{fut_suffix}.png"
             fig.savefig(chart_path)
             plt.close(fig)
-            chart_rel_path = "artifacts/rank_bounded_equity.png"
+            chart_rel_path = f"artifacts/rank_bounded_equity{fut_suffix}.png"
             print(f"Saved Rank Bounded equity chart to {chart_path}")
         except Exception as e:
             print(f"[WARNING] Failed to generate plot: {e}")
 
     # Print summary table
     print("\n================================================================================")
-    print("NEWTRADE OOS BACKTEST PERFORMANCE SUMMARY (10:00 - 14:35 Intraday Trades)")
+    print(f"NEWTRADE OOS BACKTEST PERFORMANCE SUMMARY ({'INDEX FUTURE' if args.future else 'SPOT ETF'}) (10:00 - 14:35 Intraday Trades)")
     print("================================================================================")
     
-    headers = ["ETF", "Side", "OOS Period", "Z_th", "Features", "Trades", "Cost Sharpe", "Raw Sharpe", "Total PnL", "Max DD", "Win Rate", "Turnover"]
+    headers = ["ETF", "Asset", "Side", "OOS Period", "Z_th", "Features", "Trades", "Cost Sharpe", "Raw Sharpe", "Total PnL", "Max DD", "Win Rate", "Turnover"]
     
     SCHEME_TITLES = {
         "rank": f"Rank Bounded Weight ({args.rank_mapping.capitalize()})",
@@ -337,6 +372,7 @@ def main():
 
             return [
                 r["etf"],
+                r.get("asset_type", "Spot ETF"),
                 r["side"],
                 r["period"],
                 z_th_str,
@@ -352,12 +388,14 @@ def main():
         else:
             return [
                 r["etf"],
+                r.get("asset_type", "N/A"),
                 r["side"],
                 r.get("period", "N/A"),
                 "N/A",
                 str(r["n_features"]),
                 "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"
             ]
+
     
     def _render_table(rows):
         lines = []
