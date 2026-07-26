@@ -41,7 +41,8 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 ### B1. 7-Year Jackknife Sign Stability & Temporal Validation Pre-filters
 1. **7-Year Jackknife Sign Guard**: Split training data into 7 equal chunks (approximating calendar years). Compute tail IC per chunk, lock sign from full-sample IC. Count "flip chunks" where chunk IC sign disagrees with locked sign. Reject if flip_count > 1 OR if either of the last 2 chunks is a flip (recent signal must be intact).
    - **Sign locking**: Outputs a locked `sign` (+1 or -1) value from full train set. This sign is the pipeline's single source of truth carried forward to B2 and B3.
-2. **Temporal Validation Gate**: Require positive tail IC in the most recent 30% of training (last chunk from jackknife). Rejects features whose signal decayed over time (regime-specific overfit). Uses `ic_recent` already computed in step 1 — zero additional compute.
+2. **Temporal Validation Gate** (adaptive): Require positive tail IC in the most recent chunk from jackknife (`recent_ic > 0`). Additionally, cap `recency_ratio < 2.5` ONLY when `|early_ic| < 0.05` ("appeared from nowhere" pattern). Features with solid early IC (≥ 0.05) that strengthen recently pass freely — a high ratio with positive early base indicates a strengthening signal, not overfit. Diagnosed via `filter_diagnosis.py` §6b/6c.
+   - _Known limitation: single-chunk `recent_ic` is noisy for short training windows; a multi-chunk rolling average could improve stability._
 
 ### B2. Rolling Guard & FDR Pre-filter
 1. **Rolling Guard (Pre-filter check)**: 90-calendar-date rolling tail IC evaluated instantly on pre-computed values. Drop if monotonicity < `mono_thr` or `IC_IR` < `ir_thr`:
@@ -161,7 +162,8 @@ SE_IC ≈ 1/√n_train
 - [x] **B4 correlation threshold** — θ=0.85. Tightened from 0.90 after diagnosis showed 63% FP rate at 0.90 for 500ETF.
 - [x] **Quality Gate before Correlation** — Moved Quality Gate (B6) before B4 correlation gate. Prevents low-quality features from blocking high-quality candidates.
 - [x] **Adaptive Boundary Gate (B6b)** — Dynamically tightens quality floors & correlation threshold (0.85→0.75) when pool > 35 features, protecting top 25 TP features. Configured via top-level global constants in `select_features.py`.
-- [x] **Deep filter diagnosis tool** — `filter_diagnosis.py` for causal FP/FN analysis. Temporal decomposition, component stability, regime concentration, Cohen's d discriminators. Excludes 588000ETF.
+- [x] **Deep filter diagnosis tool** — `filter_diagnosis.py` for causal FP/FN analysis. Temporal decomposition, component stability, regime concentration, Cohen's d discriminators. Per-gate confusion matrix (§6b) and temporal sub-condition analysis (§6c). Excludes 588000ETF.
+- [x] **Adaptive temporal gate relaxation** — Ratio cap (`recency_ratio < 2.5`) now only fires when `|early_ic| < 0.05`. Features with solid early IC that strengthen recently are no longer penalized. Result: 300ETF pool 7→15, 159915ETF 11→16, 500ETF unchanged (capped). FP rate remains 0% for 500ETF/159915ETF; 300ETF gained 2 FP in exchange for 2× pool size.
 
 ## References
 - Wang et al. 2026, *FactorMiner: A Self-Evolving Agent with Skills and Experience Memory for Financial Alpha Discovery*, arXiv:2602.14670 — admission gate, replacement rule, IC-weighted vs orthogonal vs learned-selection comparison.

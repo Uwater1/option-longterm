@@ -45,6 +45,7 @@ ADAPTIVE_DATES = {
 GATE_ORDER = [
     ("REJECTED_SPLIT_HALF", "7-Year Jackknife"),
     ("REJECTED_ROLLING_GUARD", "B2 Rolling Guard"),
+    ("REJECTED_TEMPORAL", "Temporal Validation Gate"),
     ("REJECTED_FDR_GATE", "BH-FDR Gate"),
     ("REJECTED_ADMISSION_FLOOR", "B3 Composite Floor"),
     ("REJECTED_REDUNDANCY", "B4 Correlation Gate"),
@@ -772,6 +773,129 @@ def main():
                         "top_fn": sorted(fn_entries, key=lambda x: -x["lock_sharpe"])[:5],
                     }
 
+            # ─── Phase 5b: Full-population gate confusion matrix ─────────────────
+            # Evaluate ALL rejects per gate (sampled if too many) on lockbox to compute
+            # precision (FP catch rate) and collateral (TP kill rate).
+            print(f"    Computing per-gate confusion matrices...")
+            gate_confusion = {}
+            MAX_EVAL_PER_GATE = 80  # cap evaluations per gate for speed
+            for gate_verdict, gate_label in GATE_ORDER:
+                rejects = [a for a in attempts if a.get("verdict") == gate_verdict]
+                if not rejects:
+                    continue
+                # Sample if too many: stratified by training IC (top/mid/bottom)
+                if len(rejects) > MAX_EVAL_PER_GATE:
+                    rejects_sorted_all = sorted(rejects, key=lambda x: x.get("overall_ic", 0), reverse=True)
+                    n_third = MAX_EVAL_PER_GATE // 3
+                    sampled = (
+                        rejects_sorted_all[:n_third]
+                        + rejects_sorted_all[len(rejects_sorted_all)//2 - n_third//2 : len(rejects_sorted_all)//2 + n_third//2]
+                        + rejects_sorted_all[-n_third:]
+                    )
+                else:
+                    sampled = rejects
+                
+                n_fp_caught = 0  # rejected AND lockbox IC <= 0 (correct rejection)
+                n_median_caught = 0  # rejected AND lockbox IC > 0, Sharpe <= 0
+                n_tp_killed = 0  # rejected AND lockbox IC > 0, Sharpe > 0 (false negative)
+                n_evaluated = 0
+                tp_killed_list = []
+                fp_caught_list = []
+                
+                for item in sampled:
+                    lock_result = evaluate_feature(
+                        lockbox_df, item["feature_name"], item.get("recipe"),
+                        item.get("sign", 1), side, train_means, train_stds, train_medians
+                    )
+                    if lock_result is None:
+                        continue
+                    n_evaluated += 1
+                    if lock_result["ic"] <= 0:
+                        n_fp_caught += 1
+                        fp_caught_list.append({
+                            "feature_name": item["feature_name"],
+                            "train_ic": item.get("overall_ic", 0),
+                            "lock_ic": lock_result["ic"],
+                            "lock_sharpe": lock_result["sharpe"],
+                        })
+                    elif lock_result["sharpe"] > 0:
+                        n_tp_killed += 1
+                        tp_killed_list.append({
+                            "feature_name": item["feature_name"],
+                            "train_ic": item.get("overall_ic", 0),
+                            "lock_ic": lock_result["ic"],
+                            "lock_sharpe": lock_result["sharpe"],
+                        })
+                    else:
+                        n_median_caught += 1
+                
+                if n_evaluated > 0:
+                    gate_confusion[gate_label] = {
+                        "n_total_rejects": len(rejects),
+                        "n_evaluated": n_evaluated,
+                        "n_fp_caught": n_fp_caught,
+                        "n_median_caught": n_median_caught,
+                        "n_tp_killed": n_tp_killed,
+                        "precision": n_fp_caught / n_evaluated,  # % correctly rejected
+                        "collateral_rate": n_tp_killed / n_evaluated,  # % TP killed
+                        "top_tp_killed": sorted(tp_killed_list, key=lambda x: -x["lock_sharpe"])[:5],
+                        "top_fp_caught": sorted(fp_caught_list, key=lambda x: x["lock_ic"])[:5],
+                    }
+
+            # ─── Phase 5c: Temporal gate sub-condition analysis ──────────────────
+            # For the temporal gate specifically, break down by rejection reason.
+            temporal_sub_analysis = None
+            temporal_rejects = [a for a in attempts if a.get("verdict") == "REJECTED_TEMPORAL"]
+            if temporal_rejects:
+                print(f"    Analyzing temporal gate sub-conditions ({len(temporal_rejects)} rejects)...")
+                # Split by condition
+                neg_recent = [a for a in temporal_rejects if a.get("recent_ic", 0) <= 0]
+                high_ratio = [a for a in temporal_rejects if a.get("recent_ic", 0) > 0 and a.get("recency_ratio", 99) >= 2.5]
+                
+                def _eval_subgroup(group, label, max_n=50):
+                    """Evaluate a subgroup of temporal rejects on lockbox."""
+                    if not group:
+                        return {"label": label, "n": 0}
+                    # Sample top by training IC
+                    sampled = sorted(group, key=lambda x: x.get("overall_ic", 0), reverse=True)[:max_n]
+                    n_fp = 0
+                    n_tp = 0
+                    n_med = 0
+                    n_eval = 0
+                    tp_list = []
+                    for item in sampled:
+                        lr = evaluate_feature(
+                            lockbox_df, item["feature_name"], item.get("recipe"),
+                            item.get("sign", 1), side, train_means, train_stds, train_medians
+                        )
+                        if lr is None:
+                            continue
+                        n_eval += 1
+                        if lr["ic"] <= 0:
+                            n_fp += 1
+                        elif lr["sharpe"] > 0:
+                            n_tp += 1
+                            tp_list.append({"feature_name": item["feature_name"], "train_ic": item.get("overall_ic", 0), "lock_ic": lr["ic"], "lock_sharpe": lr["sharpe"]})
+                        else:
+                            n_med += 1
+                    return {
+                        "label": label,
+                        "n": len(group),
+                        "n_evaluated": n_eval,
+                        "n_fp_caught": n_fp,
+                        "n_tp_killed": n_tp,
+                        "n_median": n_med,
+                        "fp_precision": n_fp / n_eval if n_eval > 0 else 0,
+                        "tp_collateral": n_tp / n_eval if n_eval > 0 else 0,
+                        "top_tp_killed": sorted(tp_list, key=lambda x: -x["lock_sharpe"])[:5],
+                    }
+                
+                temporal_sub_analysis = {
+                    "total_rejects": len(temporal_rejects),
+                    "neg_recent_ic": _eval_subgroup(neg_recent, "recent_ic <= 0 (decayed)"),
+                    "high_ratio": _eval_subgroup(high_ratio, "recency_ratio >= 2.5 (late-concentrated)"),
+                }
+
             all_results[etf][side] = {
                 "n_fp": len(fp_list),
                 "n_median": len(median_list),
@@ -785,6 +909,8 @@ def main():
                 "disc_median_vs_tp": disc_median_vs_tp,
                 "gate_mechanism": gate_mech,
                 "fn_analysis": fn_analysis,
+                "gate_confusion": gate_confusion,
+                "temporal_sub_analysis": temporal_sub_analysis,
             }
 
     # Save JSON
@@ -1105,6 +1231,95 @@ def generate_report(results, suffix=""):
                     "",
                 ])
                 for item in gate_data["top_fn"][:3]:
+                    lines.append(
+                        f"- `{item['feature_name']}`: Train IC={item['train_ic']:+.4f}, "
+                        f"Lock IC={item['lock_ic']:+.4f}, Sharpe={item['lock_sharpe']:+.4f}"
+                    )
+                lines.append("")
+
+    # ─── Section 6b: Per-Gate Confusion Matrix ─────────────────────────────
+    lines.extend([
+        "---",
+        "",
+        "## 6b. Per-Gate Confusion Matrix (Full Population)",
+        "",
+        "Stratified sample of ALL rejects per gate evaluated on lockbox.",
+        "**Precision** = % of rejects that are true FP (lock IC ≤ 0). Higher = gate is accurate.",
+        "**Collateral** = % of rejects that are TP (lock IC > 0, Sharpe > 0). Lower = less damage.",
+        "",
+    ])
+
+    for etf, sides in results.items():
+        for side, data in sides.items():
+            gc = data.get("gate_confusion", {})
+            if not gc:
+                continue
+
+            lines.extend([
+                f"### {etf} — `{side}`",
+                "",
+                "| Gate | Total Rej | Evaluated | FP Caught | Median | TP Killed | Precision | Collateral |",
+                "| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+            ])
+            for gate_label, g in gc.items():
+                lines.append(
+                    f"| {gate_label} | {g['n_total_rejects']} | {g['n_evaluated']} | "
+                    f"{g['n_fp_caught']} | {g['n_median_caught']} | {g['n_tp_killed']} | "
+                    f"{g['precision']:.0%} | {g['collateral_rate']:.0%} |"
+                )
+            lines.append("")
+
+            # Show top TP killed for gates with high collateral
+            for gate_label, g in gc.items():
+                if g["collateral_rate"] > 0.20 and g["top_tp_killed"]:
+                    lines.append(f"**{gate_label}** — top TP casualties:")
+                    for item in g["top_tp_killed"][:3]:
+                        lines.append(
+                            f"- `{item['feature_name']}`: Train IC={item['train_ic']:+.4f}, "
+                            f"Lock IC={item['lock_ic']:+.4f}, Sharpe={item['lock_sharpe']:+.4f}"
+                        )
+                    lines.append("")
+
+    # ─── Section 6c: Temporal Gate Sub-Condition Analysis ───────────────────
+    lines.extend([
+        "---",
+        "",
+        "## 6c. Temporal Gate Sub-Condition Analysis",
+        "",
+        "Breakdown of temporal gate rejects by condition:",
+        "- **recent_ic ≤ 0**: signal decayed (last training chunk has no predictive power)",
+        "- **recency_ratio ≥ 2.5**: signal suspiciously concentrated in late training",
+        "",
+    ])
+
+    for etf, sides in results.items():
+        for side, data in sides.items():
+            tsa = data.get("temporal_sub_analysis")
+            if not tsa:
+                continue
+
+            lines.extend([f"### {etf} — `{side}` ({tsa['total_rejects']} total temporal rejects)", ""])
+            lines.extend([
+                "| Condition | N | Evaluated | FP Caught | TP Killed | Median | FP Precision | TP Collateral |",
+                "| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+            ])
+            for key in ["neg_recent_ic", "high_ratio"]:
+                sub = tsa[key]
+                if sub.get("n", 0) == 0:
+                    continue
+                n_eval = sub.get("n_evaluated", 0)
+                lines.append(
+                    f"| {sub['label']} | {sub['n']} | {n_eval} | "
+                    f"{sub.get('n_fp_caught', 0)} | {sub.get('n_tp_killed', 0)} | {sub.get('n_median', 0)} | "
+                    f"{sub.get('fp_precision', 0):.0%} | {sub.get('tp_collateral', 0):.0%} |"
+                )
+            lines.append("")
+
+            # Show top TP killed by the high-ratio condition
+            high_ratio = tsa.get("high_ratio", {})
+            if high_ratio.get("top_tp_killed"):
+                lines.append("**Top TP killed by recency_ratio cap:**")
+                for item in high_ratio["top_tp_killed"][:5]:
                     lines.append(
                         f"- `{item['feature_name']}`: Train IC={item['train_ic']:+.4f}, "
                         f"Lock IC={item['lock_ic']:+.4f}, Sharpe={item['lock_sharpe']:+.4f}"

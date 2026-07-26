@@ -41,6 +41,7 @@ MAX_POOL_SIZE = 35
 TOP_PROTECTED_COUNT = 25
 TIGHT_THETA = 0.70
 MAX_RECENCY_RATIO = 2.5  # Cap recent_ic / early_ic, higher = less conservative
+RECENCY_RATIO_EARLY_IC_FLOOR = 0.05  # Only apply ratio cap when early IC < this ("appeared from nowhere" check)
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
@@ -1338,8 +1339,10 @@ def main():
         recency_ratio = recent_ic / (abs(ic_first) + 1e-5) if abs(ic_first) > 1e-4 else 99.0
         item["recency_ratio"] = float(recency_ratio)
         
-        # Pass if recent IC > 0 AND signal is not excessively concentrated in late training (recency_ratio < MAX_RECENCY_RATIO)
-        passes_temporal = (recent_ic > 0.0) and (recency_ratio < MAX_RECENCY_RATIO)
+        # Pass if recent IC > 0 AND signal is not excessively concentrated in late training.
+        # Ratio cap only applies when early IC is near-zero ("appeared from nowhere" pattern).
+        # Features with solid early IC (>= floor) that strengthen recently are NOT suspicious.
+        passes_temporal = (recent_ic > 0.0) and (abs(ic_first) >= RECENCY_RATIO_EARLY_IC_FLOOR or recency_ratio < MAX_RECENCY_RATIO)
         if passes_temporal:
             temporal_survivors.append(item)
         else:
@@ -1347,7 +1350,7 @@ def main():
             temporal_rejects.append(item)
 
     if temporal_rejects:
-        print(f"Temporal Validation Gate (recent 30% IC > 0 & recency_ratio < {MAX_RECENCY_RATIO}): rejected {len(temporal_rejects)} / {len(guard_survivors)} candidates (signal decayed or late-concentrated).")
+        print(f"Temporal Validation Gate (recent IC > 0 & ratio < {MAX_RECENCY_RATIO} when early_ic < {RECENCY_RATIO_EARLY_IC_FLOOR}): rejected {len(temporal_rejects)} / {len(guard_survivors)} candidates (signal decayed or late-concentrated).")
     else:
         print(f"Temporal Validation Gate: all {len(guard_survivors)} candidates passed.")
     guard_survivors = temporal_survivors
@@ -1450,6 +1453,29 @@ def main():
             "passes_rolling_guard": False,
             "passes_fdr": False,
             "verdict": "REJECTED_ROLLING_GUARD"
+        })
+
+    # Log temporal gate rejects
+    for item in temporal_rejects:
+        attempts_log.append({
+            "feature_name": item["feature_name"],
+            "sign": item["sign"],
+            "raw_ic": item["raw_ic"],
+            "overall_ic": item["overall_ic"],
+            "mean_tail_ic": item["mean_tail_ic"],
+            "sortino": item["sortino"],
+            "composite_score": item["composite_score"],
+            "ic_ir": item["ic_ir"],
+            "monotonicity": item["monotonicity"],
+            "split_half_ic_first": item["split_half_ic_first"],
+            "split_half_ic_second": item["split_half_ic_second"],
+            "recent_ic": item.get("recent_ic", 0.0),
+            "recency_ratio": item.get("recency_ratio", 0.0),
+            "passes_split_half": True,
+            "passes_rolling_guard": True,
+            "passes_temporal_gate": False,
+            "passes_fdr": False,
+            "verdict": "REJECTED_TEMPORAL"
         })
 
     # Log FDR rejects
