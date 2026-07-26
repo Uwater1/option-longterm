@@ -156,7 +156,7 @@ Output:
 
 ## 8. What This Does NOT Do
 
-- ❌ No feature selection / pruning inside GLM (that's day-model-new's job)
+- ❌ No hard feature selection / pruning inside GLM (that's day-model-new's job)
 - ❌ No additional signal filters (RSI, MACD, vol gates, etc.)
 - ❌ No non-linear terms, interactions, or polynomial features
 - ❌ No Optuna / Bayesian hyperparameter search
@@ -178,3 +178,56 @@ For each ETF:
 ```
 
 If GLM passes for ≥ 3 out of 5 ETFs, consider it production-viable and integrate into `run_backtest.py` as `--scheme glm`.
+
+---
+
+## 10. V2 Improvements — IC-Weighted Prior & N-Adaptive Regularization
+
+### 10.1 V1 Failure Analysis
+
+| ETF | N | V1 Result | Root Cause |
+|-----|---|-----------|------------|
+| 300ETF | 10 | PASS (Sharpe 0.919) | Small pool, Ridge concentrates well |
+| 500ETF | 32 | FAIL (Sharpe 0.422) | Signal dilution across 32 correlated combos |
+| 159915ETF | 11 | FAIL (Sharpe 1.056, WR 56%) | Overtrading (628 vs 239 trades), noisy composite |
+
+**Core weakness**: Ridge with $\alpha I$ penalty treats all features equally. With large correlated pools, it cannot concentrate signal the way Rank does with score-based tilting.
+
+### 10.2 V2 Design: IC-Weighted Ridge Prior
+
+Replace isotropic penalty with anisotropic prior informed by admission metadata:
+
+$$\hat{\beta}_t = \arg\min_{\beta} \sum_{s=0}^{t-1} (y_s - \tilde{Z}_s^\top \beta)^2 + \lambda \cdot \beta^\top D^{-1} \beta$$
+
+where $D = \text{diag}(\text{deflated\_ic}_1, \ldots, \text{deflated\_ic}_N)$.
+
+- Features with **strong** admission IC → small penalty → allowed large coefficient
+- Features with **weak** admission IC → large penalty → shrunk toward zero
+- This is a **Bayesian prior** (not selection): all features retain non-zero weight
+
+Fallback: if pool has no `deflated_ic` metadata, fall back to isotropic $\alpha I$.
+
+### 10.3 V2 Design: N-Adaptive Alpha Scaling
+
+Scale the effective regularization with pool size:
+
+$$\lambda_{\text{eff}} = \lambda_{\text{base}} \times \frac{N}{10}$$
+
+Rationale: 32 features need ~3× more regularization than 10 features to prevent noise accumulation. The `/10` normalizes to the smallest viable pool.
+
+### 10.4 V2 Design: Trade Frequency Guard
+
+To prevent overtrading (159915ETF issue), add optional percentile-based gating:
+
+After computing $Z_{\text{composite}}$, zero out signals below the expanding $P_{\min}$ percentile of $|Z|$:
+
+$$Z_{\text{gated},t} = \begin{cases} Z_{\text{composite},t} & \text{if } |Z_{\text{composite},t}| > P_{\min}(t) \\ 0 & \text{otherwise} \end{cases}$$
+
+Default $P_{\min} = 0$ (disabled). Enable with `--min-percentile 30` to require top-70% conviction.
+
+### 10.5 Implementation
+
+All V2 changes are in `glm.py` only (new parameters to existing functions). CLI flags:
+- `--ic-prior`: Enable IC-weighted Ridge prior (default: ON)
+- `--n-adaptive`: Enable N-adaptive alpha scaling (default: ON)
+- `--min-percentile P`: Percentile gate for trade frequency control

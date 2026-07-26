@@ -19,6 +19,7 @@
     "profit_factor": 2.21,
     "ann_turnover": 23.41,
     "etf": "300ETF",
+    "asset_type": "Spot ETF",
     "side": "single",
     "scheme": "ew",
     "status": "SUCCESS",
@@ -30,6 +31,7 @@
     "z_th_train_short": 0.9,
     "z_buffer": 0.1,
     "long_only": false,
+    "use_future": false,
     "position_mode": "binary"
   },
   {
@@ -52,6 +54,7 @@
     "profit_factor": 1.63,
     "ann_turnover": 102.46,
     "etf": "500ETF",
+    "asset_type": "Spot ETF",
     "side": "single",
     "scheme": "ew",
     "status": "SUCCESS",
@@ -63,12 +66,14 @@
     "z_th_train_short": 0.8,
     "z_buffer": 0.1,
     "long_only": false,
+    "use_future": false,
     "position_mode": "binary"
   },
   {
     "etf": "50ETF",
     "side": "single",
     "scheme": "ew",
+    "asset_type": "Spot ETF",
     "status": "SKIPPED_FEAT_FLOOR",
     "n_features": 0,
     "period": "2022-01 ~ 2026-01",
@@ -84,6 +89,7 @@
     "etf": "588000ETF",
     "side": "single",
     "scheme": "ew",
+    "asset_type": "Spot ETF",
     "status": "SKIPPED_FEAT_FLOOR",
     "n_features": 0,
     "period": "2022-01 ~ 2026-01",
@@ -115,6 +121,7 @@
     "profit_factor": 1.71,
     "ann_turnover": 125.87,
     "etf": "159915ETF",
+    "asset_type": "Spot ETF",
     "side": "single",
     "scheme": "ew",
     "status": "SUCCESS",
@@ -126,6 +133,7 @@
     "z_th_train_short": 0.8,
     "z_buffer": 0.1,
     "long_only": false,
+    "use_future": false,
     "position_mode": "binary"
   },
   {
@@ -148,6 +156,7 @@
     "profit_factor": 2.21,
     "ann_turnover": 31.21,
     "etf": "300ETF",
+    "asset_type": "Spot ETF",
     "side": "single",
     "scheme": "icw",
     "status": "SUCCESS",
@@ -159,6 +168,7 @@
     "z_th_train_short": 0.9,
     "z_buffer": 0.1,
     "long_only": false,
+    "use_future": false,
     "position_mode": "binary"
   },
   {
@@ -181,6 +191,7 @@
     "profit_factor": 1.64,
     "ann_turnover": 125.87,
     "etf": "500ETF",
+    "asset_type": "Spot ETF",
     "side": "single",
     "scheme": "icw",
     "status": "SUCCESS",
@@ -192,12 +203,14 @@
     "z_th_train_short": 0.8,
     "z_buffer": 0.1,
     "long_only": false,
+    "use_future": false,
     "position_mode": "binary"
   },
   {
     "etf": "50ETF",
     "side": "single",
     "scheme": "icw",
+    "asset_type": "Spot ETF",
     "status": "SKIPPED_FEAT_FLOOR",
     "n_features": 0,
     "period": "2022-01 ~ 2026-01",
@@ -213,6 +226,7 @@
     "etf": "588000ETF",
     "side": "single",
     "scheme": "icw",
+    "asset_type": "Spot ETF",
     "status": "SKIPPED_FEAT_FLOOR",
     "n_features": 0,
     "period": "2022-01 ~ 2026-01",
@@ -244,6 +258,7 @@
     "profit_factor": 1.66,
     "ann_turnover": 123.27,
     "etf": "159915ETF",
+    "asset_type": "Spot ETF",
     "side": "single",
     "scheme": "icw",
     "status": "SUCCESS",
@@ -255,6 +270,7 @@
     "z_th_train_short": 0.8,
     "z_buffer": 0.1,
     "long_only": false,
+    "use_future": false,
     "position_mode": "binary"
   },
   {
@@ -277,6 +293,7 @@
     "profit_factor": 2.23,
     "ann_turnover": 31.73,
     "etf": "300ETF",
+    "asset_type": "Spot ETF",
     "side": "single",
     "scheme": "score",
     "status": "SUCCESS",
@@ -288,6 +305,7 @@
     "z_th_train_short": 0.9,
     "z_buffer": 0.1,
     "long_only": false,
+    "use_future": false,
     "position_mode": "binary"
   },
   {
@@ -310,6 +328,7 @@
     "profit_factor": 1.63,
     "ann_turnover": 97.26,
     "etf": "500ETF",
+    "asset_type": "Spot ETF",
     "side": "single",
     "scheme": "score",
     "status": "SUCCESS",
@@ -321,12 +340,14 @@
     "z_th_train_short": 1.0,
     "z_buffer": 0.1,
     "long_only": false,
+    "use_future": false,
     "position_mode": "binary"
   },
   {
     "etf": "50ETF",
     "side": "single",
     "scheme": "score",
+    "asset_type": "Spot ETF",
     "status": "SKIPPED_FEAT_FLOOR",
     "n_features": 0,
     "period": "2022-01 ~ 2026-01",
@@ -342,6 +363,7 @@
     "etf": "588000ETF",
     "side": "single",
     "scheme": "score",
+    "asset_type": "Spot ETF",
     "status": "SKIPPED_FEAT_FLOOR",
     "n_features": 0,
     "period": "2022-01 ~ 2026-01",
@@ -373,6 +395,7 @@
     "profit_factor": 1.9,
     "ann_turnover": 109.75,
     "etf": "159915ETF",
+    "asset_type": "Spot ETF",
     "side": "single",
     "scheme": "score",
     "status": "SUCCESS",
@@ -384,6 +407,7 @@
     "z_th_train_short": 0.9,
     "z_buffer": 0.1,
     "long_only": false,
+    "use_future": false,
     "position_mode": "binary"
   },
   {
@@ -406,6 +430,7 @@
     "profit_factor": 1.8,
     "ann_turnover": 66.06,
     "etf": "300ETF",
+    "asset_type": "Spot ETF",
     "side": "single",
     "scheme": "rank",
     "status": "SUCCESS",
@@ -417,6 +442,7 @@
     "z_th_train_short": 0.7,
     "z_buffer": 0.1,
     "long_only": false,
+    "use_future": false,
     "position_mode": "binary"
   },
   {
@@ -439,6 +465,7 @@
     "profit_factor": 1.53,
     "ann_turnover": 111.83,
     "etf": "500ETF",
+    "asset_type": "Spot ETF",
     "side": "single",
     "scheme": "rank",
     "status": "SUCCESS",
@@ -450,12 +477,14 @@
     "z_th_train_short": 0.9,
     "z_buffer": 0.1,
     "long_only": false,
+    "use_future": false,
     "position_mode": "binary"
   },
   {
     "etf": "50ETF",
     "side": "single",
     "scheme": "rank",
+    "asset_type": "Spot ETF",
     "status": "SKIPPED_FEAT_FLOOR",
     "n_features": 0,
     "period": "2022-01 ~ 2026-01",
@@ -471,6 +500,7 @@
     "etf": "588000ETF",
     "side": "single",
     "scheme": "rank",
+    "asset_type": "Spot ETF",
     "status": "SKIPPED_FEAT_FLOOR",
     "n_features": 0,
     "period": "2022-01 ~ 2026-01",
@@ -502,6 +532,7 @@
     "profit_factor": 1.92,
     "ann_turnover": 108.71,
     "etf": "159915ETF",
+    "asset_type": "Spot ETF",
     "side": "single",
     "scheme": "rank",
     "status": "SUCCESS",
@@ -513,6 +544,7 @@
     "z_th_train_short": 0.9,
     "z_buffer": 0.1,
     "long_only": false,
+    "use_future": false,
     "position_mode": "binary"
   }
 ]
