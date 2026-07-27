@@ -1088,7 +1088,7 @@ def main():
                 print(f"Loaded {len(cands)} candidate combinations from {candidates_path.name}")
                 
                 # Pre-extract standardized columns once for batch recipe computation
-                from scipy.stats import rankdata as _rankdata
+                from recipe_utils import build_ecdf_grid_float32, fast_ecdf_interp_float32
                 _std_cache = {}  # col_name -> standardized numpy array
                 _rank_cache = {}  # col_name -> rank array
                 n_rows = len(X_df)
@@ -1105,10 +1105,9 @@ def main():
                 
                 def _get_rank_col_fast(col_name):
                     if col_name not in _rank_cache:
-                        val = X_df[col_name].values.astype(np.float64)
-                        med = np.nanmedian(val)
-                        val_filled = np.where(np.isnan(val), med, val)
-                        _rank_cache[col_name] = _rankdata(val_filled) / n_rows
+                        val32 = X_df[col_name].values.astype(np.float32)
+                        xp, fp = build_ecdf_grid_float32(val32, n_knots=128)
+                        _rank_cache[col_name] = fast_ecdf_interp_float32(val32, xp, fp).astype(np.float64)
                     return _rank_cache[col_name]
                 
                 def _compute_recipe_fast(recipe):

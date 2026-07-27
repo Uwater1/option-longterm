@@ -32,7 +32,7 @@ sys.path.append(str(REPO_ROOT / "day-model"))
 sys.path.append(str(HERE / "mining"))
 
 from build_features import FEATURES
-from recipe_utils import compute_recipe, simulate_returns
+from recipe_utils import compute_recipe, simulate_returns, build_ecdf_grid_float32
 from admitted_pools import POOLS
 
 ETFS = ["300ETF", "50ETF", "500ETF", "588000ETF", "159915ETF"]
@@ -533,6 +533,7 @@ def main():
                 
             # Pre-compute statistics for recipe building
             train_means, train_stds, train_medians = {}, {}, {}
+            train_ecdfs = {}
             for item in pool:
                 if "recipe" in item:
                     r = item["recipe"]
@@ -543,15 +544,17 @@ def main():
                                 train_means[col] = train_df[col].mean()
                                 train_stds[col] = train_df[col].std()
                                 train_medians[col] = train_df[col].median()
+                                val32 = train_df[col].values.astype(np.float32)
+                                train_ecdfs[col] = build_ecdf_grid_float32(val32, n_knots=128)
                                 
             # Calculate feature values for train, oos, lockbox
             for item in pool:
                 feat_name = item["feature_name"]
                 if "recipe" in item:
                     recipe = item["recipe"]
-                    train_df[feat_name] = compute_recipe(train_df, recipe, train_means, train_stds, train_medians)
-                    oos_df[feat_name] = compute_recipe(oos_df, recipe, train_means, train_stds, train_medians)
-                    lockbox_df[feat_name] = compute_recipe(lockbox_df, recipe, train_means, train_stds, train_medians)
+                    train_df[feat_name] = compute_recipe(train_df, recipe, train_means, train_stds, train_medians, train_ecdfs)
+                    oos_df[feat_name] = compute_recipe(oos_df, recipe, train_means, train_stds, train_medians, train_ecdfs)
+                    lockbox_df[feat_name] = compute_recipe(lockbox_df, recipe, train_means, train_stds, train_medians, train_ecdfs)
                     
             feat_diagnostics = []
             

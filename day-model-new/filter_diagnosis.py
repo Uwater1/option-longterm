@@ -32,7 +32,7 @@ sys.path.append(str(REPO_ROOT / "day-model"))
 sys.path.append(str(HERE / "mining"))
 
 from build_features import FEATURES
-from recipe_utils import compute_recipe, simulate_returns
+from recipe_utils import compute_recipe, simulate_returns, build_ecdf_grid_float32
 
 # Exclude 588000ETF — insufficient history for meaningful diagnosis
 ETFS = ["300ETF", "50ETF", "500ETF", "159915ETF"]
@@ -82,11 +82,11 @@ def compute_tail_ic(y: np.ndarray, pred: np.ndarray, side: str) -> float:
     return _spearman(y[idx], pred[idx])
 
 
-def compute_feature_values(df, feat_name, recipe, train_means, train_stds, train_medians):
+def compute_feature_values(df, feat_name, recipe, train_means, train_stds, train_medians, train_ecdfs=None):
     """Get raw feature values (sign-adjusted later)."""
     if recipe:
         try:
-            return compute_recipe(df, recipe, train_means, train_stds, train_medians)
+            return compute_recipe(df, recipe, train_means, train_stds, train_medians, train_ecdfs)
         except Exception:
             return None
     else:
@@ -95,9 +95,9 @@ def compute_feature_values(df, feat_name, recipe, train_means, train_stds, train
         return df[feat_name].values.astype(np.float64)
 
 
-def evaluate_feature(df, feat_name, recipe, sign, side, train_means, train_stds, train_medians):
+def evaluate_feature(df, feat_name, recipe, sign, side, train_means, train_stds, train_medians, train_ecdfs=None):
     """Compute IC and Sharpe for a feature on a dataframe split."""
-    vals = compute_feature_values(df, feat_name, recipe, train_means, train_stds, train_medians)
+    vals = compute_feature_values(df, feat_name, recipe, train_means, train_stds, train_medians, train_ecdfs)
     if vals is None:
         return None
 
@@ -623,6 +623,7 @@ def main():
         train_means = {col: float(train_df[col].mean()) for col in FEATURES}
         train_stds = {col: float(train_df[col].std()) for col in FEATURES}
         train_medians = {col: float(train_df[col].median()) for col in FEATURES}
+        train_ecdfs = {col: build_ecdf_grid_float32(train_df[col].values.astype(np.float32), n_knots=128) for col in FEATURES}
 
         all_results[etf] = {}
 
@@ -654,7 +655,7 @@ def main():
                 sign = item.get("sign", 1)
                 recipe = item.get("recipe", None)
 
-                lock_result = evaluate_feature(lockbox_df, feat_name, recipe, sign, side, train_means, train_stds, train_medians)
+                lock_result = evaluate_feature(lockbox_df, feat_name, recipe, sign, side, train_means, train_stds, train_medians, train_ecdfs)
                 if lock_result is None:
                     continue
 
