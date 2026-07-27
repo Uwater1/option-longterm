@@ -17,20 +17,20 @@ _Note: Cost metrics incorporate 8 bps (0.0008) transaction cost per position sta
 
 Candidate counts at each admission gate. Shows where features get pruned.
 
-| ETF | Side | Total Candidates | 7Y-Jackknife Pass | B2 Rolling Guard | BH-FDR Pass | B3 Composite Floor | Stability Gate | Quality Gate | B4 Correlation | Final Admitted |
-| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 300ETF | single | 1,369 | 327 | 249 | 237 | 41 | 41 | 40 | 13 | 13 |
-| 300ETF | long | 579 | 40 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 300ETF | short | 586 | 93 | 26 | 5 | 0 | 0 | 0 | 0 | 0 |
-| 50ETF | single | 737 | 33 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 50ETF | long | 361 | 46 | 8 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 50ETF | short | 317 | 39 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 500ETF | single | 2,836 | 1,156 | 1,052 | 1,043 | 609 | 493 | 493 | 32 | 32 |
-| 500ETF | long | 1,360 | 108 | 62 | 29 | 0 | 0 | 0 | 0 | 0 |
-| 500ETF | short | 426 | 54 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 159915ETF | single | 1,742 | 623 | 449 | 445 | 166 | 166 | 166 | 25 | 25 |
-| 159915ETF | long | 1,121 | 108 | 48 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 159915ETF | short | 302 | 47 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
+| ETF | Side | Total Candidates | 7Y-Jackknife Pass | B2 Rolling Guard | Temporal Gate | BH-FDR Pass | B3 Composite Floor | Stability Gate | Quality Gate | B4 Correlation | Final Admitted |
+| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 300ETF | single | 1,369 | 327 | 249 | 249 | 237 | 41 | 41 | 40 | 13 | 13 |
+| 300ETF | long | 579 | 40 | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 300ETF | short | 586 | 93 | 26 | 26 | 5 | 0 | 0 | 0 | 0 | 0 |
+| 50ETF | single | 737 | 33 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 50ETF | long | 361 | 46 | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 50ETF | short | 317 | 39 | 6 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 500ETF | single | 2,836 | 1,156 | 1,052 | 1,052 | 1,043 | 609 | 493 | 493 | 32 | 32 |
+| 500ETF | long | 1,360 | 108 | 62 | 62 | 29 | 0 | 0 | 0 | 0 | 0 |
+| 500ETF | short | 426 | 54 | 6 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 159915ETF | single | 1,742 | 623 | 449 | 449 | 445 | 166 | 166 | 166 | 25 | 25 |
+| 159915ETF | long | 1,121 | 108 | 48 | 48 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 159915ETF | short | 302 | 47 | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 
 ## 2. Training-Period Performance (in-sample)
 
