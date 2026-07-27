@@ -637,7 +637,7 @@ def numba_fast_null_composite_kernel(x_flipped: np.ndarray, y: np.ndarray, windo
             down_std = np.sqrt(sum_sq_down / n) * 15.620499351813308  # Fixed: use n denominator
             sortino_null = ann_ret / (down_std + 1e-10)
             
-        null_scores[s] = 0.286 * mono_null + 0.5 * sortino_null + 0.143 * abs(tail_ic_null) + 0.071 * abs(raw_ic_null)
+        null_scores[s] = 0.3 * mono_null + 0.5 * sortino_null + 0.15 * abs(tail_ic_null) + 0.05 * abs(raw_ic_null)
         
     return null_scores
 
@@ -762,18 +762,18 @@ def numba_batched_b3_null_kernel(X: np.ndarray, y: np.ndarray, window_starts: np
                 down_std = np.sqrt(sum_sq_down / n) * 15.620499351813308  # Fixed: use n denominator
                 sortino_null = ann_ret / (down_std + 1e-10)
 
-            null_scores_local[s] = 0.286 * mono_null + 0.5 * sortino_null + 0.143 * abs(tail_ic_null) + 0.071 * abs(raw_ic_null)
+            null_scores_local[s] = 0.3 * mono_null + 0.5 * sortino_null + 0.15 * abs(tail_ic_null) + 0.05 * abs(raw_ic_null)
 
-        # 92nd and 96th percentile via partial sort (calibrated for fixed Sortino formula)
+        # 93rd and 97th percentile via partial sort (calibrated for fixed Sortino formula)
         null_scores_local.sort()
-        idx_92 = int(0.92 * n_sims)
-        if idx_92 >= n_sims:
-            idx_92 = n_sims - 1
-        idx_96 = int(0.96 * n_sims)
-        if idx_96 >= n_sims:
-            idx_96 = n_sims - 1
-        out_95[c] = null_scores_local[idx_92]  # Store 92nd in out_95 slot
-        out_99[c] = null_scores_local[idx_96]  # Store 96th in out_99 slot
+        idx_93 = int(0.93 * n_sims)
+        if idx_93 >= n_sims:
+            idx_93 = n_sims - 1
+        idx_97 = int(0.97 * n_sims)
+        if idx_97 >= n_sims:
+            idx_97 = n_sims - 1
+        out_95[c] = null_scores_local[idx_93]  # Store 93rd in out_95 slot
+        out_99[c] = null_scores_local[idx_97]  # Store 97th in out_99 slot
         s_sum = 0.0
         for k in range(n_sims):
             s_sum += null_scores_local[k]
@@ -1526,9 +1526,9 @@ def main():
         cand_name = cand["feature_name"]
         cand_ic = cand["overall_ic"]
         cand_comp = cand["composite_score"]
-        emp_95th = cand["empirical_95th"]  # Actually 92nd percentile (calibrated for fixed Sortino)
-        emp_99th = cand.get("empirical_99th", emp_95th)  # Actually 96th percentile
-        emp_97th = 0.5 * (emp_95th + emp_99th)  # interpolate 94th from 92nd and 96th
+        emp_95th = cand["empirical_95th"]  # Actually 93rd percentile (calibrated for fixed Sortino)
+        emp_99th = cand.get("empirical_99th", emp_95th)  # Actually 97th percentile
+        emp_97th = 0.5 * (emp_95th + emp_99th)  # interpolate 95th from 93rd and 97th
         emp_mean = cand["empirical_mean"]
         ic_null_mean = cand.get("ic_null_mean", 0.0)
         x_cand = cand["x_flipped"]
@@ -1536,9 +1536,9 @@ def main():
         cand["deflated_ic"] = deflated_ic
         
         # Operator-class-aware B3 floor (calibrated for fixed Sortino formula w=0.50):
-        # - 3-way combos (tri_*): 96th percentile
-        # - Symmetric 2-way ops (max/min/mean/rank_max/rank_min): 94th percentile
-        # - Conditional 2-way ops + base features: 92nd percentile
+        # - 3-way combos (tri_*): 97th percentile
+        # - Symmetric 2-way ops (max/min/mean/rank_max/rank_min): 95th percentile
+        # - Conditional 2-way ops + base features: 93rd percentile
         is_tri_combo = cand_name.startswith("combo_tri_")
         is_combo = cand_name.startswith("combo_")
         is_symmetric = False

@@ -55,16 +55,16 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 
 ### B3. Admission Floor (Composite score gate)
 - **Rank-normalized Composite Score** (Sortino weight calibrated for fixed null formula):
-  $$\text{score} = 0.286 \times \text{RollingMono}_{90\text{d}} + 0.5 \times \text{Sortino} + 0.143 \times |\text{Tail IC}| + 0.071 \times |\text{Overall IC}|$$
+  $$\text{score} = 0.3 \times \text{RollingMono}_{90\text{d}} + 0.5 \times \text{Sortino} + 0.15 \times |\text{Tail IC}| + 0.05 \times |\text{Overall IC}|$$
   - `RollingMono` (cached from B2) and `Sortino` consume locked `sign` from B1 (computed post sign-resolution, no $|\text{abs}|$ needed).
   - `Tail IC` and `Overall IC` use absolute values $|\text{IC}|$.
 - **Per-candidate trade simulation**: Runs `simulate_returns()` (ported to shared module `recipe_utils.py`) per candidate using B1 locked sign to compute candidate Sortino.
 - **Null-permutation-wrapped threshold**: Block-permute target $y$ (500 trials), recompute entire composite score per permutation, and take percentile as admission floor. Null Sortino uses `n` denominator (aligned with `simulate_returns`).
 - **Tiered admission floor by combo complexity & operator class**:
-  - Conditional 2-way combos & base features: $\text{composite\_score} \ge \text{empirical\_92nd}$
-  - Symmetric 2-way combos (`max`, `min`, `mean`, `rank_max`, `rank_min`): $\text{composite\_score} \ge \text{empirical\_94th}$ (symmetric ops destroy regime conditioning)
-  - 3-way combos (`combo_tri_*`): $\text{composite\_score} \ge \text{empirical\_96th}$ (stricter — more degrees of freedom = higher overfit risk)
-- *Compute note*: Heavier compute per survivor, but B1 + B2 thin pool first (cheap-first order preserved). 96th percentile computed in same kernel pass as 92nd — no additional simulation cost.
+  - Conditional 2-way combos & base features: $\text{composite\_score} \ge \text{empirical\_93rd}$
+  - Symmetric 2-way combos (`max`, `min`, `mean`, `rank_max`, `rank_min`): $\text{composite\_score} \ge \text{empirical\_95th}$ (symmetric ops destroy regime conditioning)
+  - 3-way combos (`combo_tri_*`): $\text{composite\_score} \ge \text{empirical\_97th}$ (stricter — more degrees of freedom = higher overfit risk)
+- *Compute note*: Heavier compute per survivor, but B1 + B2 thin pool first (cheap-first order preserved). 97th percentile computed in same kernel pass as 93rd — no additional simulation cost.
 
 ### B4. Correlation Gate, Primitive Cluster Cap & Replacement Rule
 - Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.85$).

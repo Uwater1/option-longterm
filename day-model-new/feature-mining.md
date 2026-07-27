@@ -188,7 +188,7 @@ that were always going to fail. Every candidate, in order:
 4. **BH-FDR filter at q=0.20** against that null — reject before correlation check, so noise doesn't
    get a chance to displace a real feature via the replacement rule.
 
-5. **Dynamic simulation-based admission floor** (92nd percentile of multi-trial null, N = current
+5. **Dynamic simulation-based admission floor** (93rd percentile of multi-trial null, N = current
    ledger count) — final bar a surviving candidate's deflated IC must clear. Sortino weight=0.50,
    null formula aligned with `simulate_returns` (both use `n` denominator for downside deviation).
 
