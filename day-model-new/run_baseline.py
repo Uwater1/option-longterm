@@ -202,7 +202,7 @@ def compile_report(etfs_to_run, sides_to_run, suffix: str):
         print(f"WARNING: could not import compile_report module: {e}; falling back to subprocess")
         cmd = [sys.executable, str(HERE / "compile_report.py")]
         if etfs_to_run != ETFS:
-            cmd += ["-e", ",".join(etfs_to_run)] if False else ["-e", etfs_to_run[0] if len(etfs_to_run) == 1 else "all"]
+            cmd += ["-e", etfs_to_run[0] if len(etfs_to_run) == 1 else "all"]
         if sides_to_run != SIDES:
             cmd += ["-s", sides_to_run[0] if len(sides_to_run) == 1 else "all"]
         if suffix:

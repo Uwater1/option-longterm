@@ -347,7 +347,7 @@ def regime_concentration_analysis(train_df, feat_name, recipe, sign, side, train
     }
 
 
-def post_discovery_decay_analysis(df, train_end, feat_name, recipe, sign, side, train_means, train_stds, train_medians):
+def post_discovery_decay_analysis(df, train_end, feat_name, recipe, sign, side, train_means, train_stds, train_medians, train_ecdfs=None):
     """Compute IC/Sharpe in successive 1-year windows AFTER training ends.
 
     Reveals whether alpha decays immediately post-discovery or persists 1-2 years.
@@ -375,7 +375,7 @@ def post_discovery_decay_analysis(df, train_end, feat_name, recipe, sign, side, 
             w_df = post_df[post_df["date"] >= w_start]
             if len(w_df) < 20:
                 break
-            result = evaluate_feature(w_df, feat_name, recipe, sign, side, train_means, train_stds, train_medians)
+            result = evaluate_feature(w_df, feat_name, recipe, sign, side, train_means, train_stds, train_medians, train_ecdfs)
             if result:
                 windows.append({
                     "window": f"Y{year_idx + 1}+",
@@ -386,7 +386,7 @@ def post_discovery_decay_analysis(df, train_end, feat_name, recipe, sign, side, 
                 })
             break
         else:
-            result = evaluate_feature(w_df, feat_name, recipe, sign, side, train_means, train_stds, train_medians)
+            result = evaluate_feature(w_df, feat_name, recipe, sign, side, train_means, train_stds, train_medians, train_ecdfs)
             if result:
                 windows.append({
                     "window": f"Y{year_idx + 1}",
@@ -730,7 +730,7 @@ def main():
             for entry in all_features_for_analysis:
                 decay = post_discovery_decay_analysis(
                     df, train_end, entry["feature_name"], entry["recipe"],
-                    entry["sign"], side, train_means, train_stds, train_medians
+                    entry["sign"], side, train_means, train_stds, train_medians, train_ecdfs
                 )
                 if decay:
                     entry["decay"] = decay

@@ -117,8 +117,8 @@ def build_report(etfs, sides, suffix):
         "",
         "Candidate counts at each admission gate. Shows where features get pruned.",
         "",
-        "| ETF | Side | Total Candidates | 7Y-Jackknife Pass | B2 Rolling Guard | BH-FDR Pass | B3 Composite Floor | Stability Gate | Quality Gate | B4 Correlation | Final Admitted |",
-        "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| ETF | Side | Total Candidates | 7Y-Jackknife Pass | B2 Rolling Guard | Temporal Gate | BH-FDR Pass | B3 Composite Floor | Stability Gate | Quality Gate | B4 Correlation | Final Admitted |",
+        "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ])
     for etf in etfs:
         for side in sides:
@@ -131,8 +131,10 @@ def build_report(etfs, sides, suffix):
             sh_pass = total - counts.get("REJECTED_SPLIT_HALF", 0)
             # rolling-guard survivors = sh_pass - rg_rejects
             rg_survivors = sh_pass - counts.get("REJECTED_ROLLING_GUARD", 0)
-            # FDR rejects are subset of rolling-guard survivors
-            fdr_survivors = rg_survivors - counts.get("REJECTED_FDR_GATE", 0)
+            # Temporal gate rejects are subset of rolling-guard survivors
+            temporal_survivors = rg_survivors - counts.get("REJECTED_TEMPORAL", 0)
+            # FDR rejects are subset of temporal survivors
+            fdr_survivors = temporal_survivors - counts.get("REJECTED_FDR_GATE", 0)
             # B3 Composite Floor rejects
             b3_survivors = fdr_survivors - counts.get("REJECTED_ADMISSION_FLOOR", 0)
             # Stability Gate rejects
@@ -143,7 +145,7 @@ def build_report(etfs, sides, suffix):
             admitted = counts.get("ADMITTED", 0) + counts.get("ADMITTED_REPLACED", 0)
             final_pool = admitted - counts.get("DROPPED_REPLACED", 0)
             lines.append(
-                f"| {etf} | {side} | {total:,} | {sh_pass:,} | {rg_survivors:,} | {fdr_survivors:,} "
+                f"| {etf} | {side} | {total:,} | {sh_pass:,} | {rg_survivors:,} | {temporal_survivors:,} | {fdr_survivors:,} "
                 f"| {b3_survivors:,} | {stab_survivors:,} | {qual_survivors:,} | {admitted:,} | {final_pool} |"
             )
 
@@ -161,6 +163,8 @@ def build_report(etfs, sides, suffix):
         for side in sides:
             res = _load_json(DATA_DIR / f"results_{etf}_{side}{suffix}.json")
             if res is None:
+                continue
+            if not res.get("training_metrics"):
                 continue
             n_feats = len(res["features_selected"])
             lines.append(_metrics_row(etf, side, n_feats, res["training_metrics"]))
@@ -180,6 +184,8 @@ def build_report(etfs, sides, suffix):
             res = _load_json(DATA_DIR / f"results_{etf}_{side}{suffix}.json")
             if res is None:
                 continue
+            if not res.get("oos_metrics"):
+                continue
             n_feats = len(res["features_selected"])
             lines.append(_metrics_row(etf, side, n_feats, res["oos_metrics"]))
 
@@ -198,7 +204,7 @@ def build_report(etfs, sides, suffix):
             res = _load_json(DATA_DIR / f"results_{etf}_{side}{suffix}.json")
             if res is None:
                 continue
-            if "lockbox_metrics" not in res:
+            if not res.get("lockbox_metrics"):
                 continue
             n_feats = len(res["features_selected"])
             lines.append(_metrics_row(etf, side, n_feats, res["lockbox_metrics"]))
@@ -273,8 +279,6 @@ def build_report(etfs, sides, suffix):
                 if fname in recipe_seen:
                     continue
                 recipe_seen.add(fname)
-                r = item["recipe"]
-                op = r.get("op", "?")
 
             # No per-ETF separation in this section since names are unique;
             # we collect all combos across ETFs in one block.

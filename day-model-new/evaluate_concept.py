@@ -361,8 +361,21 @@ def main():
         selected_pool = json.load(f)
         
     if not selected_pool:
-        print(f"WARNING: Selected feature pool is empty. Simple model will produce 0.0 predictions.")
-        # Create dummy prediction metrics
+        print(f"WARNING: Selected feature pool is empty. Saving empty results and exiting.")
+        results_path = data_out_dir / f"results_{args.etf}_{args.side}{suffix}.json"
+        out_dict = {
+            "etf": args.etf,
+            "side": args.side,
+            "early": args.early,
+            "k": args.k,
+            "features_selected": [],
+            "training_metrics": None,
+            "oos_metrics": None,
+        }
+        with open(results_path, "w") as f:
+            json.dump(out_dict, f, indent=2)
+        print(f"Saved empty results to {results_path}")
+        return
         
     # 2. Load dataset
     features_dir = REPO_ROOT / "day-model" / "data"
