@@ -85,6 +85,7 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 ### B6. Training-Only Quality & Temporal Stability Gates (Before Correlation)
 - Applied AFTER B3 floor, BEFORE B4 correlation gate.
 - **Temporal Stability Gate**: For combo features, require `ic_cv * weak_link_cv >= 0.15`. Features with artificially low temporal variation (suspiciously "too smooth" in-sample) are fitting structural artifacts.
+- **Sign Consistency Gate**: Rejects candidate if meaningful full-sample IC ($|\text{IC}_{\text{full}}| \ge 0.015$) contradicts tail IC sign ($\text{IC}_{\text{full}} \cdot \text{IC}_{\text{tail}} < 0$), preventing non-monotonic tail mirages from entering the pool.
 - **Quality Gate**: Requires all three:
   - `deflated_ic >= 0.03` (normal) / `0.05` (short-history ETFs with n_train < 1200)
   - `|raw_ic| >= 0.02` (normal) / `0.03` (short-history) — catches tail-only mirages

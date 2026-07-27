@@ -412,6 +412,12 @@ def expanding_wf_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str, max_fli
     full_ic = compute_side_tail_ic(y, x_raw, side)
     locked_sign = 1.0 if full_ic >= 0 else -1.0
 
+    # Sign consistency check: reject if full-sample linear IC is meaningful (|full_sample_ic| >= 0.015)
+    # and its sign directly contradicts the locked tail IC sign.
+    full_sample_ic = _spearman_from_arrays(x_raw, y)
+    if abs(full_sample_ic) >= 0.015 and (full_sample_ic * full_ic) < 0:
+        return False, locked_sign, 0.0, 0.0, 0.0
+
     # Compute per-chunk tail IC and count flips
     flip_count = 0
     chunk_ics = []
