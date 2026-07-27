@@ -175205,6 +175205,25 @@
         "combo_clamp_diff__max_up_ret__demark_setup_reversal_early",
         "combo_ratio__star50_limit_proximity_early__volatility_expansion_trend_vector"
       ]
+    },
+    {
+      "batch_id": 493,
+      "etf": "159915ETF",
+      "side": "single",
+      "timestamp": "2026-07-27T06:05:17.603549+00:00",
+      "n_candidates": 1565,
+      "n_admitted": 5,
+      "n_rejected_split_half": 1110,
+      "n_rejected_rolling": 232,
+      "n_rejected_fdr": 15,
+      "n_rejected_corr": 12,
+      "admitted_names": [
+        "combo_min__star50_limit_proximity_early__bar_body_rng_0",
+        "combo_rank_max__rbreaker_sell_setup_proximity_early__first_bar_sentiment",
+        "combo_min__star50_limit_proximity_early__yesterday_first_30min_return",
+        "combo_z_sum__opening_drive_thrust_ratio__max_up_ret",
+        "combo_ratio__star50_limit_proximity_early__volatility_expansion_trend_vector"
+      ]
     }
   ]
 }

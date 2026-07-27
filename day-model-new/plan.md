@@ -154,12 +154,12 @@ SE_IC ≈ 1/√n_train
 - [x] **Anti-overfit: Full search-space FDR correction** — BY-FDR uses `m_total = len(eval_results)` (total candidates before filtering) for harmonic correction, not just survivor count.
 - [x] **Anti-overfit: Temporal validation gate** — Require positive tail IC in most recent 30% of training (fold 3). Zero additional compute (reuses `ic_f3` from walk-forward).
 - [x] **Anti-overfit: IC shrinkage weighting** — Subtract $SE_{IC} \approx 1/\sqrt{n}$ from `deflated_ic` before IC-weighting in `evaluate_concept.py`.
-- [x] **Anti-overfit: Tiered B3 admission floor** — 3-way combos (`combo_tri_*`) require 99th percentile vs 95th for 2-way/base features. Computed in same kernel pass.
+- [x] **Anti-overfit: Tiered B3 admission floor** — 3-way combos (`combo_tri_*`) require 97th percentile vs 95th/93rd for 2-way/base features. Computed in same kernel pass.
 - [x] **Anti-overfit: Training-only Quality Gate (B6)** — Require deflated_ic ≥ 0.03/0.05, |raw_ic| ≥ 0.02/0.03, sortino > 0. Catches tail-only mirages. Zero look-ahead.
 - [x] **Execution: Conviction-weighted position sizing** — Default mode in `evaluate_concept.py`. Skips low-conviction days (z < 0.5), smooth tanh ramp. Reduces turnover ~40% without losing high-conviction trades.
-- [x] **Filter calibration: Relaxed B2/FDR/θ** — mono_thr 0.70→0.60, FDR q 0.20→0.30, θ 0.35→0.50. Data-driven from per-gate OOS diagnostics (FEATURE_DIAGNOSTICS.md).
+- [x] **Filter calibration: Relaxed B2/FDR/θ** — mono_thr 0.70→0.60, FDR q 0.20→0.30, θ 0.70. Data-driven from per-gate OOS diagnostics (FEATURE_DIAGNOSTICS.md).
 - [x] **Component stability gate (A0)** — Yearly IC decomposition in `generate_combos.py`. Flags features with IC_CV > 3.0 or neg_years > 2 as unstable, excludes from all combos. Training-only, ETF-agnostic.
-- [x] **B4 correlation threshold** — θ=0.85. Tightened from 0.90 after diagnosis showed 63% FP rate at 0.90 for 500ETF.
+- [x] **B4 correlation threshold** — θ=0.70. Set for strict redundancy control.
 - [x] **Quality Gate before Correlation** — Moved Quality Gate (B6) before B4 correlation gate. Prevents low-quality features from blocking high-quality candidates.
 - [x] **Adaptive Boundary Gate (B6b)** — Dynamically tightens quality floors & correlation threshold (0.85→0.75) when pool > 35 features, protecting top 25 TP features. Configured via top-level global constants in `select_features.py`.
 - [x] **Deep filter diagnosis tool** — `filter_diagnosis.py` for causal FP/FN analysis. Temporal decomposition, component stability, regime concentration, Cohen's d discriminators. Per-gate confusion matrix (§6b) and temporal sub-condition analysis (§6c). Excludes 588000ETF.
