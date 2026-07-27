@@ -914,6 +914,26 @@ def main():
                 "temporal_sub_analysis": temporal_sub_analysis,
             }
 
+    # Compute OOS span for report caveats
+    oos_years = None
+    if override_dates:
+        _oos_start = override_dates[2]
+    else:
+        _oos_start = ADAPTIVE_DATES["_default"][2]
+    try:
+        _oos_start_ts = pd.Timestamp(_oos_start)
+        _data_end = pd.Timestamp.now().normalize()
+        # Use actual data max if available
+        if all_results:
+            _any_side = next(iter(next(iter(all_results.values())).values()), {})
+            _any_feats = _any_side.get("tp_features") or _any_side.get("median_features") or _any_side.get("fp_features") or []
+            if _any_feats and _any_feats[0].get("decay") and _any_feats[0]["decay"].get("windows"):
+                _last_w = _any_feats[0]["decay"]["windows"][-1]
+                _data_end = pd.Timestamp(_last_w["end"])
+        oos_years = (_data_end - _oos_start_ts).days / 365.25
+    except Exception:
+        pass
+
     # Save JSON
     json_path = data_out_dir / f"filter_diagnosis{suffix}.json"
     with open(json_path, "w", encoding="utf-8") as f:
@@ -921,10 +941,10 @@ def main():
     print(f"\nJSON written to: {json_path}")
 
     # Generate report
-    generate_report(all_results, suffix=suffix)
+    generate_report(all_results, suffix=suffix, oos_years=oos_years)
 
 
-def generate_report(results, suffix=""):
+def generate_report(results, suffix="", oos_years=None):
     """Generate FILTER_DIAGNOSIS.md with deep causal analysis."""
     lines = [
         "# Filter Pipeline Deep Diagnosis",
@@ -946,6 +966,11 @@ def generate_report(results, suffix=""):
         "**Decay multiplier** (assumes annual retraining): persistent=1.0, gradual=0.75, fast=0.25, immediate=0.0.  ",
         "**Prod Score** = mean(tier_score × decay_mult) where TP=1.0, Median=0.5, FP=0.0.",
         "",
+    ])
+    if oos_years is not None and oos_years < 2.0:
+        lines.append(f"> **Caveat**: Lockbox spans ~{oos_years:.1f}y. Sharpe-based TP/Median split has high variance at this horizon; some Median features may flip to TP with more data.")
+        lines.append("")
+    lines.extend([
         "| ETF | Side | Admitted | FP | Median | TP | FP Rate | Prod Score |",
         "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ])
@@ -1142,8 +1167,9 @@ def generate_report(results, suffix=""):
             lines.extend([f"### {etf} — `{side}`", ""])
 
             # Summary table
+            y2_hdr = "Y2+ IC (partial)" if (oos_years is not None and oos_years < 2.0) else "Y2 IC"
             lines.extend([
-                "| Feature | Tier | Decay | Y1 IC | Y2 IC | Y3+ IC | Half-life |",
+                f"| Feature | Tier | Decay | Y1 IC | {y2_hdr} | Y3+ IC | Half-life |",
                 "| :--- | :--- | :--- | ---: | ---: | ---: | ---: |",
             ])
             for f in sorted(features_with_decay, key=lambda x: x["decay"]["y1_ic"], reverse=True):
