@@ -188,16 +188,9 @@ that were always going to fail. Every candidate, in order:
 4. **BH-FDR filter at q=0.20** against that null — reject before correlation check, so noise doesn't
    get a chance to displace a real feature via the replacement rule.
 
-5. **Dynamic simulation-based admission floor** (95th percentile of multi-trial null, N = current
-   ledger count) — final bar a surviving candidate's deflated IC must clear.
-
-   > **Known issue (Sortino null mismatch)**: The B3 null kernels compute Sortino with `n_tail`
-   > denominator and `√244/4` annualization, while `simulate_returns` uses `n` denominator and `√244`.
-   > This inflates null Sortino by `4 × n / n_tail ≈ 2.58×`. Since `n_tail/n` is fixed per (ETF, side),
-   > the inflation is a constant factor across all candidates — relative ranking is preserved and the
-   > admission floor is shifted by the same factor, so selection is fair. The gate is conservative.
-   > If the formula is later aligned, raise the Sortino weight (currently 0.3) to ~0.5–0.6 to replicate
-   > current admission behavior.
+5. **Dynamic simulation-based admission floor** (92nd percentile of multi-trial null, N = current
+   ledger count) — final bar a surviving candidate's deflated IC must clear. Sortino weight=0.50,
+   null formula aligned with `simulate_returns` (both use `n` denominator for downside deviation).
 
 6. **Quality Gate** (deflated_ic ≥ 0.03/0.05, |raw_ic| ≥ 0.02/0.03, sortino > 0) — runs BEFORE
    correlation to prevent low-quality features from blocking high-quality candidates. Kills

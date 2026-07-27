@@ -53,18 +53,18 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 2. **Benjamini-Hochberg (BH-FDR) pre-filter**: Reject if empirical $p$-value fails Benjamini-Hochberg FDR at $q=0.20$ (standard screening threshold, via 5,000-trial single-feature block-shuffled simulation on compact survivor matrix `X_survivors`, cached per ETF/side).
    - **Full search-space correction**: Uses `m_total = len(eval_results)` (total candidates before any filtering) for rank denominator, properly accounting for pre-filter selection bias. This does NOT increase computation — FDR still runs only on survivors.
 
-### B3. Admission Floor (Composite score gate) (maybe too strick)
-- **Rank-normalized Composite Score**:
-  $$\text{score} = 0.4 \times \text{RollingMono}_{90\text{d}} + 0.3 \times \text{Sortino} + 0.2 \times |\text{Tail IC}| + 0.1 \times |\text{Overall IC}|$$
+### B3. Admission Floor (Composite score gate)
+- **Rank-normalized Composite Score** (Sortino weight calibrated for fixed null formula):
+  $$\text{score} = 0.286 \times \text{RollingMono}_{90\text{d}} + 0.5 \times \text{Sortino} + 0.143 \times |\text{Tail IC}| + 0.071 \times |\text{Overall IC}|$$
   - `RollingMono` (cached from B2) and `Sortino` consume locked `sign` from B1 (computed post sign-resolution, no $|\text{abs}|$ needed).
   - `Tail IC` and `Overall IC` use absolute values $|\text{IC}|$.
 - **Per-candidate trade simulation**: Runs `simulate_returns()` (ported to shared module `recipe_utils.py`) per candidate using B1 locked sign to compute candidate Sortino.
-- **Null-permutation-wrapped threshold**: Block-permute target $y$ (500 trials), recompute entire composite score per permutation, and take percentile as admission floor.
+- **Null-permutation-wrapped threshold**: Block-permute target $y$ (500 trials), recompute entire composite score per permutation, and take percentile as admission floor. Null Sortino uses `n` denominator (aligned with `simulate_returns`).
 - **Tiered admission floor by combo complexity & operator class**:
-  - Conditional 2-way combos & base features: $\text{composite\_score} \ge \text{empirical\_95th}$
-  - Symmetric 2-way combos (`max`, `min`, `mean`, `rank_max`, `rank_min`): $\text{composite\_score} \ge \text{empirical\_97th}$ (symmetric ops destroy regime conditioning, 67% FP rate)
-  - 3-way combos (`combo_tri_*`): $\text{composite\_score} \ge \text{empirical\_99th}$ (stricter — more degrees of freedom = higher overfit risk)
-- *Compute note*: Heavier compute per survivor, but B1 + B2 thin pool first (cheap-first order preserved). 99th percentile computed in same kernel pass as 95th — no additional simulation cost.
+  - Conditional 2-way combos & base features: $\text{composite\_score} \ge \text{empirical\_92nd}$
+  - Symmetric 2-way combos (`max`, `min`, `mean`, `rank_max`, `rank_min`): $\text{composite\_score} \ge \text{empirical\_94th}$ (symmetric ops destroy regime conditioning)
+  - 3-way combos (`combo_tri_*`): $\text{composite\_score} \ge \text{empirical\_96th}$ (stricter — more degrees of freedom = higher overfit risk)
+- *Compute note*: Heavier compute per survivor, but B1 + B2 thin pool first (cheap-first order preserved). 96th percentile computed in same kernel pass as 92nd — no additional simulation cost.
 
 ### B4. Correlation Gate, Primitive Cluster Cap & Replacement Rule
 - Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.85$).

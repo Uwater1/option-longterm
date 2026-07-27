@@ -1,0 +1,3786 @@
+{
+  "results": [
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 90,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 15,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 91,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 15,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 92,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 14,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 93,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 12,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 94,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 9,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 95,
+      "tp_admitted": 6,
+      "tp_total": 11,
+      "fp_admitted": 5,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 90,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 15,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 91,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 15,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 92,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 14,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 93,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 11,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 94,
+      "tp_admitted": 9,
+      "tp_total": 11,
+      "fp_admitted": 9,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 95,
+      "tp_admitted": 6,
+      "tp_total": 11,
+      "fp_admitted": 5,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 90,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 15,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 91,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 15,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 92,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 13,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 93,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 11,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 94,
+      "tp_admitted": 8,
+      "tp_total": 11,
+      "fp_admitted": 9,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 95,
+      "tp_admitted": 6,
+      "tp_total": 11,
+      "fp_admitted": 5,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 90,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 15,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 91,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 15,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 92,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 13,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 93,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 11,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 94,
+      "tp_admitted": 8,
+      "tp_total": 11,
+      "fp_admitted": 9,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 95,
+      "tp_admitted": 6,
+      "tp_total": 11,
+      "fp_admitted": 5,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 90,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 15,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 91,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 15,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 92,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 12,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 93,
+      "tp_admitted": 11,
+      "tp_total": 11,
+      "fp_admitted": 11,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 94,
+      "tp_admitted": 8,
+      "tp_total": 11,
+      "fp_admitted": 9,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 95,
+      "tp_admitted": 5,
+      "tp_total": 11,
+      "fp_admitted": 4,
+      "fp_total": 15
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 90,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 91,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 92,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 90,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 91,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 92,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 90,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 91,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 92,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 90,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 91,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 92,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 90,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 91,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 92,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 90,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 91,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 92,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 93,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 94,
+      "tp_admitted": 2,
+      "tp_total": 3,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 95,
+      "tp_admitted": 2,
+      "tp_total": 3,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 90,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 91,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 92,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 93,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 94,
+      "tp_admitted": 2,
+      "tp_total": 3,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 95,
+      "tp_admitted": 2,
+      "tp_total": 3,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 90,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 91,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 92,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 93,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 94,
+      "tp_admitted": 2,
+      "tp_total": 3,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 95,
+      "tp_admitted": 2,
+      "tp_total": 3,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 90,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 91,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 92,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 93,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 94,
+      "tp_admitted": 2,
+      "tp_total": 3,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 95,
+      "tp_admitted": 2,
+      "tp_total": 3,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 90,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 91,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 92,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 93,
+      "tp_admitted": 3,
+      "tp_total": 3,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 94,
+      "tp_admitted": 2,
+      "tp_total": 3,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "300ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 95,
+      "tp_admitted": 2,
+      "tp_total": 3,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 90,
+      "tp_admitted": 24,
+      "tp_total": 24,
+      "fp_admitted": 24,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 91,
+      "tp_admitted": 23,
+      "tp_total": 24,
+      "fp_admitted": 23,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 92,
+      "tp_admitted": 22,
+      "tp_total": 24,
+      "fp_admitted": 21,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 93,
+      "tp_admitted": 20,
+      "tp_total": 24,
+      "fp_admitted": 19,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 94,
+      "tp_admitted": 18,
+      "tp_total": 24,
+      "fp_admitted": 17,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 95,
+      "tp_admitted": 16,
+      "tp_total": 24,
+      "fp_admitted": 17,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 90,
+      "tp_admitted": 24,
+      "tp_total": 24,
+      "fp_admitted": 24,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 91,
+      "tp_admitted": 23,
+      "tp_total": 24,
+      "fp_admitted": 23,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 92,
+      "tp_admitted": 21,
+      "tp_total": 24,
+      "fp_admitted": 20,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 93,
+      "tp_admitted": 20,
+      "tp_total": 24,
+      "fp_admitted": 19,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 94,
+      "tp_admitted": 18,
+      "tp_total": 24,
+      "fp_admitted": 17,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 95,
+      "tp_admitted": 13,
+      "tp_total": 24,
+      "fp_admitted": 15,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 90,
+      "tp_admitted": 24,
+      "tp_total": 24,
+      "fp_admitted": 24,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 91,
+      "tp_admitted": 23,
+      "tp_total": 24,
+      "fp_admitted": 23,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 92,
+      "tp_admitted": 21,
+      "tp_total": 24,
+      "fp_admitted": 20,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 93,
+      "tp_admitted": 20,
+      "tp_total": 24,
+      "fp_admitted": 19,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 94,
+      "tp_admitted": 18,
+      "tp_total": 24,
+      "fp_admitted": 17,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 95,
+      "tp_admitted": 13,
+      "tp_total": 24,
+      "fp_admitted": 14,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 90,
+      "tp_admitted": 24,
+      "tp_total": 24,
+      "fp_admitted": 24,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 91,
+      "tp_admitted": 23,
+      "tp_total": 24,
+      "fp_admitted": 23,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 92,
+      "tp_admitted": 20,
+      "tp_total": 24,
+      "fp_admitted": 20,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 93,
+      "tp_admitted": 19,
+      "tp_total": 24,
+      "fp_admitted": 19,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 94,
+      "tp_admitted": 18,
+      "tp_total": 24,
+      "fp_admitted": 17,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 95,
+      "tp_admitted": 13,
+      "tp_total": 24,
+      "fp_admitted": 13,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 90,
+      "tp_admitted": 24,
+      "tp_total": 24,
+      "fp_admitted": 24,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 91,
+      "tp_admitted": 23,
+      "tp_total": 24,
+      "fp_admitted": 22,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 92,
+      "tp_admitted": 20,
+      "tp_total": 24,
+      "fp_admitted": 20,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 93,
+      "tp_admitted": 19,
+      "tp_total": 24,
+      "fp_admitted": 19,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 94,
+      "tp_admitted": 18,
+      "tp_total": 24,
+      "fp_admitted": 17,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 95,
+      "tp_admitted": 13,
+      "tp_total": 24,
+      "fp_admitted": 12,
+      "fp_total": 27
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 90,
+      "tp_admitted": 6,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 91,
+      "tp_admitted": 6,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 92,
+      "tp_admitted": 6,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 93,
+      "tp_admitted": 5,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 94,
+      "tp_admitted": 5,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 95,
+      "tp_admitted": 1,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 90,
+      "tp_admitted": 6,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 91,
+      "tp_admitted": 6,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 92,
+      "tp_admitted": 5,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 93,
+      "tp_admitted": 5,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 94,
+      "tp_admitted": 5,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 95,
+      "tp_admitted": 1,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 90,
+      "tp_admitted": 6,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 91,
+      "tp_admitted": 6,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 92,
+      "tp_admitted": 5,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 93,
+      "tp_admitted": 5,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 94,
+      "tp_admitted": 5,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 95,
+      "tp_admitted": 1,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 90,
+      "tp_admitted": 6,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 91,
+      "tp_admitted": 6,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 92,
+      "tp_admitted": 5,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 93,
+      "tp_admitted": 5,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 94,
+      "tp_admitted": 5,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 95,
+      "tp_admitted": 1,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 90,
+      "tp_admitted": 6,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 91,
+      "tp_admitted": 6,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 92,
+      "tp_admitted": 5,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 93,
+      "tp_admitted": 5,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 94,
+      "tp_admitted": 5,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 95,
+      "tp_admitted": 1,
+      "tp_total": 7,
+      "fp_admitted": 3,
+      "fp_total": 9
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 90,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 3,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 1,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 90,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 3,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 90,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 90,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 90,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 2,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "500ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 0,
+      "fp_admitted": 0,
+      "fp_total": 4
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 90,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 14,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 91,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 14,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 92,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 13,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 93,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 12,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 94,
+      "tp_admitted": 12,
+      "tp_total": 14,
+      "fp_admitted": 11,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 95,
+      "tp_admitted": 8,
+      "tp_total": 14,
+      "fp_admitted": 8,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 90,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 14,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 91,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 14,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 92,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 13,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 93,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 12,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 94,
+      "tp_admitted": 12,
+      "tp_total": 14,
+      "fp_admitted": 11,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 95,
+      "tp_admitted": 8,
+      "tp_total": 14,
+      "fp_admitted": 8,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 90,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 14,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 91,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 14,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 92,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 13,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 93,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 12,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 94,
+      "tp_admitted": 11,
+      "tp_total": 14,
+      "fp_admitted": 11,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 95,
+      "tp_admitted": 8,
+      "tp_total": 14,
+      "fp_admitted": 5,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 90,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 14,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 91,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 14,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 92,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 13,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 93,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 11,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 94,
+      "tp_admitted": 10,
+      "tp_total": 14,
+      "fp_admitted": 10,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 95,
+      "tp_admitted": 8,
+      "tp_total": 14,
+      "fp_admitted": 4,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 90,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 14,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 91,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 14,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 92,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 13,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 93,
+      "tp_admitted": 14,
+      "tp_total": 14,
+      "fp_admitted": 11,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 94,
+      "tp_admitted": 10,
+      "tp_total": 14,
+      "fp_admitted": 9,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 95,
+      "tp_admitted": 8,
+      "tp_total": 14,
+      "fp_admitted": 4,
+      "fp_total": 14
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 90,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 9,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 91,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 2,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 2,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 2,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 90,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 9,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 91,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 2,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 2,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 2,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 90,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 8,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 2,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 2,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 2,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 90,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 7,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 2,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 2,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 2,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 90,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 5,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 2,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 2,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 2,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 17
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 90,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 4,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 91,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 3,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 92,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 93,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 90,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 4,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 91,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 3,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 92,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 93,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 90,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 4,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 91,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 3,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 92,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 93,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 90,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 4,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 91,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 3,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 92,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 93,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 90,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 4,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 91,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 3,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 92,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 93,
+      "tp_admitted": 1,
+      "tp_total": 1,
+      "fp_admitted": 1,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 5
+    },
+    {
+      "etf": "50ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 5
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 90,
+      "tp_admitted": 10,
+      "tp_total": 12,
+      "fp_admitted": 8,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 91,
+      "tp_admitted": 9,
+      "tp_total": 12,
+      "fp_admitted": 8,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 92,
+      "tp_admitted": 8,
+      "tp_total": 12,
+      "fp_admitted": 7,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 93,
+      "tp_admitted": 7,
+      "tp_total": 12,
+      "fp_admitted": 7,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 94,
+      "tp_admitted": 2,
+      "tp_total": 12,
+      "fp_admitted": 6,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.4,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 12,
+      "fp_admitted": 5,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 90,
+      "tp_admitted": 10,
+      "tp_total": 12,
+      "fp_admitted": 8,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 91,
+      "tp_admitted": 9,
+      "tp_total": 12,
+      "fp_admitted": 7,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 92,
+      "tp_admitted": 8,
+      "tp_total": 12,
+      "fp_admitted": 7,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 93,
+      "tp_admitted": 7,
+      "tp_total": 12,
+      "fp_admitted": 7,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 94,
+      "tp_admitted": 2,
+      "tp_total": 12,
+      "fp_admitted": 6,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.45,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 12,
+      "fp_admitted": 4,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 90,
+      "tp_admitted": 10,
+      "tp_total": 12,
+      "fp_admitted": 8,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 91,
+      "tp_admitted": 9,
+      "tp_total": 12,
+      "fp_admitted": 7,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 92,
+      "tp_admitted": 8,
+      "tp_total": 12,
+      "fp_admitted": 7,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 93,
+      "tp_admitted": 6,
+      "tp_total": 12,
+      "fp_admitted": 7,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 94,
+      "tp_admitted": 1,
+      "tp_total": 12,
+      "fp_admitted": 6,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.5,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 12,
+      "fp_admitted": 3,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 90,
+      "tp_admitted": 10,
+      "tp_total": 12,
+      "fp_admitted": 8,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 91,
+      "tp_admitted": 9,
+      "tp_total": 12,
+      "fp_admitted": 7,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 92,
+      "tp_admitted": 8,
+      "tp_total": 12,
+      "fp_admitted": 7,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 93,
+      "tp_admitted": 6,
+      "tp_total": 12,
+      "fp_admitted": 6,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 94,
+      "tp_admitted": 1,
+      "tp_total": 12,
+      "fp_admitted": 5,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.55,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 12,
+      "fp_admitted": 3,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 90,
+      "tp_admitted": 10,
+      "tp_total": 12,
+      "fp_admitted": 8,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 91,
+      "tp_admitted": 9,
+      "tp_total": 12,
+      "fp_admitted": 7,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 92,
+      "tp_admitted": 8,
+      "tp_total": 12,
+      "fp_admitted": 7,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 93,
+      "tp_admitted": 6,
+      "tp_total": 12,
+      "fp_admitted": 6,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 94,
+      "tp_admitted": 1,
+      "tp_total": 12,
+      "fp_admitted": 5,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "single",
+      "weight": 0.6,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 12,
+      "fp_admitted": 3,
+      "fp_total": 11
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 90,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.4,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 90,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.45,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 90,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.5,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 90,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.55,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 90,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "long",
+      "weight": 0.6,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 2,
+      "fp_admitted": 0,
+      "fp_total": 3
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 90,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.4,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 90,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.45,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 90,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.5,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 90,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.55,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 90,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 91,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 92,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 93,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 94,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    },
+    {
+      "etf": "159915ETF",
+      "side": "short",
+      "weight": 0.6,
+      "percentile": 95,
+      "tp_admitted": 0,
+      "tp_total": 1,
+      "fp_admitted": 0,
+      "fp_total": 6
+    }
+  ],
+  "aggregated": {
+    "0.4_90": {
+      "tp": 71,
+      "tp_tot": 77,
+      "fp": 83,
+      "fp_tot": 121
+    },
+    "0.4_91": {
+      "tp": 69,
+      "tp_tot": 77,
+      "fp": 73,
+      "fp_tot": 121
+    },
+    "0.4_92": {
+      "tp": 66,
+      "tp_tot": 77,
+      "fp": 64,
+      "fp_tot": 121
+    },
+    "0.4_93": {
+      "tp": 61,
+      "tp_tot": 77,
+      "fp": 58,
+      "fp_tot": 121
+    },
+    "0.4_94": {
+      "tp": 50,
+      "tp_tot": 77,
+      "fp": 47,
+      "fp_tot": 121
+    },
+    "0.4_95": {
+      "tp": 33,
+      "tp_tot": 77,
+      "fp": 38,
+      "fp_tot": 121
+    },
+    "0.45_90": {
+      "tp": 71,
+      "tp_tot": 77,
+      "fp": 83,
+      "fp_tot": 121
+    },
+    "0.45_91": {
+      "tp": 69,
+      "tp_tot": 77,
+      "fp": 72,
+      "fp_tot": 121
+    },
+    "0.45_92": {
+      "tp": 64,
+      "tp_tot": 77,
+      "fp": 62,
+      "fp_tot": 121
+    },
+    "0.45_93": {
+      "tp": 61,
+      "tp_tot": 77,
+      "fp": 57,
+      "fp_tot": 121
+    },
+    "0.45_94": {
+      "tp": 48,
+      "tp_tot": 77,
+      "fp": 47,
+      "fp_tot": 121
+    },
+    "0.45_95": {
+      "tp": 30,
+      "tp_tot": 77,
+      "fp": 35,
+      "fp_tot": 121
+    },
+    "0.5_90": {
+      "tp": 71,
+      "tp_tot": 77,
+      "fp": 81,
+      "fp_tot": 121
+    },
+    "0.5_91": {
+      "tp": 68,
+      "tp_tot": 77,
+      "fp": 72,
+      "fp_tot": 121
+    },
+    "0.5_92": {
+      "tp": 64,
+      "tp_tot": 77,
+      "fp": 61,
+      "fp_tot": 121
+    },
+    "0.5_93": {
+      "tp": 60,
+      "tp_tot": 77,
+      "fp": 57,
+      "fp_tot": 121
+    },
+    "0.5_94": {
+      "tp": 45,
+      "tp_tot": 77,
+      "fp": 47,
+      "fp_tot": 121
+    },
+    "0.5_95": {
+      "tp": 30,
+      "tp_tot": 77,
+      "fp": 30,
+      "fp_tot": 121
+    },
+    "0.55_90": {
+      "tp": 71,
+      "tp_tot": 77,
+      "fp": 80,
+      "fp_tot": 121
+    },
+    "0.55_91": {
+      "tp": 68,
+      "tp_tot": 77,
+      "fp": 72,
+      "fp_tot": 121
+    },
+    "0.55_92": {
+      "tp": 63,
+      "tp_tot": 77,
+      "fp": 61,
+      "fp_tot": 121
+    },
+    "0.55_93": {
+      "tp": 59,
+      "tp_tot": 77,
+      "fp": 55,
+      "fp_tot": 121
+    },
+    "0.55_94": {
+      "tp": 44,
+      "tp_tot": 77,
+      "fp": 44,
+      "fp_tot": 121
+    },
+    "0.55_95": {
+      "tp": 30,
+      "tp_tot": 77,
+      "fp": 28,
+      "fp_tot": 121
+    },
+    "0.6_90": {
+      "tp": 71,
+      "tp_tot": 77,
+      "fp": 78,
+      "fp_tot": 121
+    },
+    "0.6_91": {
+      "tp": 68,
+      "tp_tot": 77,
+      "fp": 71,
+      "fp_tot": 121
+    },
+    "0.6_92": {
+      "tp": 63,
+      "tp_tot": 77,
+      "fp": 60,
+      "fp_tot": 121
+    },
+    "0.6_93": {
+      "tp": 59,
+      "tp_tot": 77,
+      "fp": 55,
+      "fp_tot": 121
+    },
+    "0.6_94": {
+      "tp": 44,
+      "tp_tot": 77,
+      "fp": 43,
+      "fp_tot": 121
+    },
+    "0.6_95": {
+      "tp": 29,
+      "tp_tot": 77,
+      "fp": 26,
+      "fp_tot": 121
+    }
+  }
+}

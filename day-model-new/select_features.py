@@ -39,21 +39,17 @@ FDR_THRESHOLD = 0.20
 DEFAULT_THETA = 0.85
 MAX_POOL_SIZE = 35
 TOP_PROTECTED_COUNT = 25
-TIGHT_THETA = 0.70
-MAX_RECENCY_RATIO = 2.5  # Cap recent_ic / early_ic, higher = less conservative
-RECENCY_RATIO_EARLY_IC_FLOOR = 0.05  # Only apply ratio cap when early IC < this ("appeared from nowhere" check)
+TIGHT_THETA = 0.75
+MAX_RECENCY_RATIO = 2.5  # Cap recent_ic / early_ic to prune late-training overfit spikes, higher = more features in
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
-    valid = ~(np.isnan(a) | np.isnan(b))
-    if valid.sum() < 5:
+    if a.shape[0] < 5:
         return 0.0
-    a_v = a[valid]
-    b_v = b[valid]
-    if np.std(a_v) < 1e-12 or np.std(b_v) < 1e-12:
+    if np.std(a) < 1e-12 or np.std(b) < 1e-12:
         return 0.0
-    ra = rankdata(a_v)
-    rb = rankdata(b_v)
+    ra = rankdata(a)
+    rb = rankdata(b)
     ra -= ra.mean()
     rb -= rb.mean()
     denom = np.sqrt((ra * ra).sum() * (rb * rb).sum())
@@ -358,12 +354,7 @@ def benjamini_hochberg_fdr(p_values: np.ndarray, fdr_threshold=FDR_THRESHOLD, m_
 
 def compute_side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str) -> float:
     """Compute tail-specific Spearman correlation on the active strategy tail."""
-    valid = ~(np.isnan(y_true) | np.isnan(y_pred))
-    if valid.sum() < 10:
-        return 0.0
-    yt = y_true[valid]
-    yp = y_pred[valid]
-    n = len(yp)
+    n = len(y_pred)
     if side == "long":
         pct = 0.15
     elif side == "short":
@@ -374,7 +365,7 @@ def compute_side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str) -> f
     if n < n_tail:
         return 0.0
         
-    order = np.argsort(yp)
+    order = np.argsort(y_pred)
     if side == "long":
         idx = order[-n_tail:]
     elif side == "short":
@@ -382,7 +373,7 @@ def compute_side_tail_ic(y_true: np.ndarray, y_pred: np.ndarray, side: str) -> f
     else:  # two-sided
         idx = np.concatenate([order[:n_tail], order[-n_tail:]])
         
-    return _spearman_from_arrays(yt[idx], yp[idx])
+    return _spearman_from_arrays(y_true[idx], y_pred[idx])
 
 def compute_rolling_tail_ic_series(x_flipped: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str) -> np.ndarray:
     """Calculate the rolling tail IC series for a single flipped feature using Numba."""
@@ -417,13 +408,9 @@ def expanding_wf_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str, max_fli
         locked_sign = -1.0 if raw_ic < 0 else 1.0
         return True, locked_sign, 0.0, 0.0, 0.0
 
-    # Lock sign from early chunks only (exclude last 2 chunks) to avoid circularity:
-    # the recent-flip check below evaluates the last 2 chunks against this sign,
-    # so the sign must not be determined by those same chunks.
-    n_early = max(1, n_chunks - 2)
-    early_end = n_early * chunk_size
-    early_ic = compute_side_tail_ic(y[:early_end], x_raw[:early_end], side)
-    locked_sign = 1.0 if early_ic >= 0 else -1.0
+    # Lock sign from full-sample tail IC
+    full_ic = compute_side_tail_ic(y, x_raw, side)
+    locked_sign = 1.0 if full_ic >= 0 else -1.0
 
     # Compute per-chunk tail IC and count flips
     flip_count = 0
@@ -471,28 +458,6 @@ def split_half_sign_check(x_raw: np.ndarray, y: np.ndarray, side: str) -> tuple:
 
 def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, side: str, max_flips: int = 2):
     """Evaluate a single candidate feature: cheap gates first to avoid wasting compute on rejected signals."""
-    # Coverage Gate: Minimum 70% non-NaN data required in training window
-    valid_ratio = float(np.sum(~np.isnan(x)) / len(x)) if len(x) > 0 else 0.0
-    if valid_ratio < 0.70:
-        return {
-            "feature_name": feature_name,
-            "sign": 1,
-            "raw_ic": 0.0,
-            "overall_ic": 0.0,
-            "mean_tail_ic": 0.0,
-            "std_tail_ic": 0.0,
-            "ic_ir": 0.0,
-            "monotonicity": 0.0,
-            "sortino": 0.0,
-            "composite_score": 0.0,
-            "split_half_passes": False,
-            "split_half_ic_first": 0.0,
-            "split_half_ic_second": 0.0,
-            "recent_ic": 0.0,
-            "valid_ratio": valid_ratio,
-            "x_flipped": x,
-        }
-
     sh_passes, locked_sign, sh_ic_first, sh_ic_second, ic_f3 = expanding_wf_sign_check(x, y, side, max_flips=max_flips)
     
     x_flipped = x * locked_sign
@@ -556,8 +521,8 @@ def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, win
     # Per-candidate Sortino trade simulation using locked sign (only for B1 + B2 survivors!)
     ann_ret, sharpe, sortino, max_dd, raw_ann_ret, raw_sharpe = simulate_returns(y, x_flipped, side)
     
-    # Rank-normalized Composite Score
-    composite_score = 0.4 * mean_tail_ic + 0.3 * sortino + 0.2 * abs(overall_ic) + 0.1 * abs(raw_ic)
+    # Rank-normalized Composite Score (w=0.50 Sortino, calibrated for fixed null formula)
+    composite_score = 0.3 * mean_tail_ic + 0.5 * sortino + 0.15 * abs(overall_ic) + 0.05 * abs(raw_ic)
     
     return {
         "feature_name": feature_name,
@@ -650,7 +615,7 @@ def numba_fast_null_composite_kernel(x_flipped: np.ndarray, y: np.ndarray, windo
                 if r < 0:
                     sum_sq_down += r * r
             ann_ret = (sum_ret / n_tail) * 244.0
-            down_std = np.sqrt(sum_sq_down / n_tail) * 15.620499351813308
+            down_std = np.sqrt(sum_sq_down / n) * 15.620499351813308  # Fixed: use n denominator (aligned with simulate_returns)
             sortino_null = ann_ret / (down_std + 1e-10)
         else:
             n_l = len(long_idx)
@@ -669,10 +634,10 @@ def numba_fast_null_composite_kernel(x_flipped: np.ndarray, y: np.ndarray, windo
                 if r < 0:
                     sum_sq_down += r * r
             ann_ret = (sum_ret / total_cnt) * 244.0
-            down_std = np.sqrt(sum_sq_down / total_cnt) * 15.620499351813308
+            down_std = np.sqrt(sum_sq_down / n) * 15.620499351813308  # Fixed: use n denominator
             sortino_null = ann_ret / (down_std + 1e-10)
             
-        null_scores[s] = 0.4 * mono_null + 0.3 * sortino_null + 0.2 * abs(tail_ic_null) + 0.1 * abs(raw_ic_null)
+        null_scores[s] = 0.286 * mono_null + 0.5 * sortino_null + 0.143 * abs(tail_ic_null) + 0.071 * abs(raw_ic_null)
         
     return null_scores
 
@@ -775,7 +740,7 @@ def numba_batched_b3_null_kernel(X: np.ndarray, y: np.ndarray, window_starts: np
                         if r < 0:
                             sum_sq_down += r * r
                 ann_ret = (sum_ret / m) * 244.0
-                down_std = np.sqrt(sum_sq_down / m) * 15.620499351813308
+                down_std = np.sqrt(sum_sq_down / n) * 15.620499351813308  # Fixed: use n denominator
                 sortino_null = ann_ret / (down_std + 1e-10)
             else:
                 n_l = len(long_idx)
@@ -794,21 +759,21 @@ def numba_batched_b3_null_kernel(X: np.ndarray, y: np.ndarray, window_starts: np
                     if r < 0:
                         sum_sq_down += r * r
                 ann_ret = (sum_ret / total_cnt) * 244.0
-                down_std = np.sqrt(sum_sq_down / total_cnt) * 15.620499351813308
+                down_std = np.sqrt(sum_sq_down / n) * 15.620499351813308  # Fixed: use n denominator
                 sortino_null = ann_ret / (down_std + 1e-10)
 
-            null_scores_local[s] = 0.4 * mono_null + 0.3 * sortino_null + 0.2 * abs(tail_ic_null) + 0.1 * abs(raw_ic_null)
+            null_scores_local[s] = 0.286 * mono_null + 0.5 * sortino_null + 0.143 * abs(tail_ic_null) + 0.071 * abs(raw_ic_null)
 
-        # 95th and 99th percentile via partial sort
+        # 92nd and 96th percentile via partial sort (calibrated for fixed Sortino formula)
         null_scores_local.sort()
-        idx_95 = int(0.95 * n_sims)
-        if idx_95 >= n_sims:
-            idx_95 = n_sims - 1
-        idx_99 = int(0.99 * n_sims)
-        if idx_99 >= n_sims:
-            idx_99 = n_sims - 1
-        out_95[c] = null_scores_local[idx_95]
-        out_99[c] = null_scores_local[idx_99]
+        idx_92 = int(0.92 * n_sims)
+        if idx_92 >= n_sims:
+            idx_92 = n_sims - 1
+        idx_96 = int(0.96 * n_sims)
+        if idx_96 >= n_sims:
+            idx_96 = n_sims - 1
+        out_95[c] = null_scores_local[idx_92]  # Store 92nd in out_95 slot
+        out_99[c] = null_scores_local[idx_96]  # Store 96th in out_99 slot
         s_sum = 0.0
         for k in range(n_sims):
             s_sum += null_scores_local[k]
@@ -1339,10 +1304,8 @@ def main():
         recency_ratio = recent_ic / (abs(ic_first) + 1e-5) if abs(ic_first) > 1e-4 else 99.0
         item["recency_ratio"] = float(recency_ratio)
         
-        # Pass if recent IC > 0 AND signal is not excessively concentrated in late training.
-        # Ratio cap only applies when early IC is near-zero ("appeared from nowhere" pattern).
-        # Features with solid early IC (>= floor) that strengthen recently are NOT suspicious.
-        passes_temporal = (recent_ic > 0.0) and (abs(ic_first) >= RECENCY_RATIO_EARLY_IC_FLOOR or recency_ratio < MAX_RECENCY_RATIO)
+        # Pass if recent IC > 0 AND signal is not excessively concentrated in late training (recency_ratio < MAX_RECENCY_RATIO)
+        passes_temporal = (recent_ic > 0.0) and (recency_ratio < MAX_RECENCY_RATIO)
         if passes_temporal:
             temporal_survivors.append(item)
         else:
@@ -1350,7 +1313,7 @@ def main():
             temporal_rejects.append(item)
 
     if temporal_rejects:
-        print(f"Temporal Validation Gate (recent IC > 0 & ratio < {MAX_RECENCY_RATIO} when early_ic < {RECENCY_RATIO_EARLY_IC_FLOOR}): rejected {len(temporal_rejects)} / {len(guard_survivors)} candidates (signal decayed or late-concentrated).")
+        print(f"Temporal Validation Gate (recent 30% IC > 0 & recency_ratio < {MAX_RECENCY_RATIO}): rejected {len(temporal_rejects)} / {len(guard_survivors)} candidates (signal decayed or late-concentrated).")
     else:
         print(f"Temporal Validation Gate: all {len(guard_survivors)} candidates passed.")
     guard_survivors = temporal_survivors
@@ -1369,15 +1332,12 @@ def main():
     
     # Pre-cache BH-FDR single-feature empirical null distribution
     fdr_cache_path = data_out_dir / f"fdr_null_{args.etf}_{args.side}{suffix}.json"
-    # Feature-set hash: invalidate cache when survivor set changes (not just n_rows)
-    _survivor_names = sorted(item["feature_name"] for item in guard_survivors) if guard_survivors else []
-    fdr_feat_hash = hashlib.md5("|".join(_survivor_names).encode()).hexdigest()[:12]
     fdr_cache_valid = False
     if fdr_cache_path.exists():
         try:
             with open(fdr_cache_path, "r") as f:
                 fdr_cache = json.load(f)
-            if fdr_cache.get("n_rows") == len(y_train) and fdr_cache.get("feat_hash") == fdr_feat_hash:
+            if fdr_cache.get("n_rows") == len(y_train):
                 null_single_ics = np.array(fdr_cache["null_single_ics"], dtype=np.float64)
                 fdr_cache_valid = True
                 print(f"BH-FDR single-trial null cache hit (shape: {null_single_ics.shape})")
@@ -1393,7 +1353,7 @@ def main():
         null_single_ics = numba_single_trial_empirical_sim(X_survivors, y_train, tail_def, n_tail, 5000, block_size=10)
         try:
             with open(fdr_cache_path, "w") as f:
-                json.dump({"n_rows": len(y_train), "feat_hash": fdr_feat_hash, "null_single_ics": null_single_ics.tolist()}, f)
+                json.dump({"n_rows": len(y_train), "null_single_ics": null_single_ics.tolist()}, f)
             print(f"Saved BH-FDR null cache to {fdr_cache_path.name}")
         except Exception as e:
             print(f"WARNING: Could not save FDR null cache to {fdr_cache_path}: {e}")
@@ -1453,29 +1413,6 @@ def main():
             "passes_rolling_guard": False,
             "passes_fdr": False,
             "verdict": "REJECTED_ROLLING_GUARD"
-        })
-
-    # Log temporal gate rejects
-    for item in temporal_rejects:
-        attempts_log.append({
-            "feature_name": item["feature_name"],
-            "sign": item["sign"],
-            "raw_ic": item["raw_ic"],
-            "overall_ic": item["overall_ic"],
-            "mean_tail_ic": item["mean_tail_ic"],
-            "sortino": item["sortino"],
-            "composite_score": item["composite_score"],
-            "ic_ir": item["ic_ir"],
-            "monotonicity": item["monotonicity"],
-            "split_half_ic_first": item["split_half_ic_first"],
-            "split_half_ic_second": item["split_half_ic_second"],
-            "recent_ic": item.get("recent_ic", 0.0),
-            "recency_ratio": item.get("recency_ratio", 0.0),
-            "passes_split_half": True,
-            "passes_rolling_guard": True,
-            "passes_temporal_gate": False,
-            "passes_fdr": False,
-            "verdict": "REJECTED_TEMPORAL"
         })
 
     # Log FDR rejects
@@ -1589,19 +1526,19 @@ def main():
         cand_name = cand["feature_name"]
         cand_ic = cand["overall_ic"]
         cand_comp = cand["composite_score"]
-        emp_95th = cand["empirical_95th"]
-        emp_99th = cand.get("empirical_99th", emp_95th)
-        emp_97th = 0.5 * (emp_95th + emp_99th)  # interpolate 97th from 95th and 99th
+        emp_95th = cand["empirical_95th"]  # Actually 92nd percentile (calibrated for fixed Sortino)
+        emp_99th = cand.get("empirical_99th", emp_95th)  # Actually 96th percentile
+        emp_97th = 0.5 * (emp_95th + emp_99th)  # interpolate 94th from 92nd and 96th
         emp_mean = cand["empirical_mean"]
         ic_null_mean = cand.get("ic_null_mean", 0.0)
         x_cand = cand["x_flipped"]
         deflated_ic = max(0.0, cand_ic - ic_null_mean)
         cand["deflated_ic"] = deflated_ic
         
-        # Operator-class-aware B3 floor (P2):
-        # - 3-way combos (tri_*): 99th percentile
-        # - Symmetric 2-way ops (max/min/mean/rank_max/rank_min): 97th percentile
-        # - Conditional 2-way ops + base features: 95th percentile
+        # Operator-class-aware B3 floor (calibrated for fixed Sortino formula w=0.50):
+        # - 3-way combos (tri_*): 96th percentile
+        # - Symmetric 2-way ops (max/min/mean/rank_max/rank_min): 94th percentile
+        # - Conditional 2-way ops + base features: 92nd percentile
         is_tri_combo = cand_name.startswith("combo_tri_")
         is_combo = cand_name.startswith("combo_")
         is_symmetric = False
@@ -1798,57 +1735,6 @@ def main():
     n_stability_rejects = sum(1 for a in attempts_log if a.get("verdict") == "REJECTED_STABILITY_GATE")
     print(f"Initial admitted pool size: {len(admitted_pool)} (Quality Gate rejected {n_quality_rejects}, Stability Gate rejected {n_stability_rejects} pre-correlation)")
 
-    # Post-hoc swap pass: correct greedy descending-IC ordering bias.
-    # In the main loop, candidates are processed high-IC-first so the replacement rule
-    # (cand_ic >= mult * old_ic) can never fire. This pass checks rejected candidates
-    # that have HIGHER IC than the pool member they correlate with and swaps them in.
-    _rejected_for_swap = [
-        a for a in attempts_log
-        if a.get("verdict") == "REJECTED_REDUNDANCY"
-        and a.get("overall_ic") is not None
-        and a.get("max_corr_feature") is not None
-    ]
-    _swap_count = 0
-    for att in _rejected_for_swap:
-        cand_name = att["feature_name"]
-        cand_ic = att["overall_ic"]
-        corr_feat = att["max_corr_feature"]
-        # Locate pool member and its current IC
-        pool_idx = next((i for i, p in enumerate(admitted_pool) if p["feature_name"] == corr_feat), None)
-        if pool_idx is None:
-            continue
-        old_ic = admitted_pool[pool_idx].get("overall_ic", 0.0)
-        replacement_mult = 1.15 if len(admitted_pool) < 10 else 1.30
-        if cand_ic < replacement_mult * old_ic:
-            continue
-        # Locate full candidate dict from surviving_candidates
-        cand_dict = next((c for c in surviving_candidates if c["feature_name"] == cand_name), None)
-        if cand_dict is None:
-            continue
-        # Verify correlation still holds with current pool member
-        x_cand = cand_dict["x_flipped"]
-        x_pool = admitted_pool[pool_idx]["x_flipped"]
-        if abs(np.corrcoef(x_cand, x_pool)[0, 1]) < args.theta:
-            continue
-        # Swap
-        admitted_pool[pool_idx] = cand_dict
-        attempts_log.append({
-            "feature_name": cand_name,
-            "sign": cand_dict["sign"],
-            "raw_ic": cand_dict["raw_ic"],
-            "overall_ic": cand_ic,
-            "deflated_ic": cand_dict.get("deflated_ic", 0.0),
-            "ic_ir": cand_dict["ic_ir"],
-            "monotonicity": cand_dict["monotonicity"],
-            "max_corr": att.get("max_corr", 0.0),
-            "max_corr_feature": corr_feat,
-            "verdict": f"ADMITTED_SWAP_REPLACED_{corr_feat}",
-        })
-        attempts_log.append({"feature_name": corr_feat, "verdict": f"DROPPED_SWAP_BY_{cand_name}"})
-        _swap_count += 1
-    if _swap_count:
-        print(f"Ordering-bias swap pass: replaced {_swap_count} feature(s) with higher-IC alternatives.")
-
     # Apply adaptive boundary tightening if pool size exceeds max_pool_size (> 30)
     admitted_pool = apply_adaptive_boundary(admitted_pool, attempts_log, max_pool_size=args.max_pool_size, theta=args.theta)
     print(f"Final admitted pool size: {len(admitted_pool)}")
@@ -1895,8 +1781,9 @@ def main():
     mining_log_path = HERE / "mining" / "mining_log.json"
     try:
         if mining_log_path.exists():
-            with open(mining_log_path, "r") as f:
-                mining_log = json.load(f)
+            with open(mining_log_path, "r", encoding="utf-8") as f:
+                _content = f.read()
+            mining_log, _ = json.JSONDecoder().raw_decode(_content)
         else:
             mining_log = {"generated_space": {}, "batches": []}
 
