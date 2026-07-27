@@ -19,11 +19,11 @@ Candidate counts at each admission gate. Shows where features get pruned.
 
 | ETF | Side | Total Candidates | 7Y-Jackknife Pass | B2 Rolling Guard | BH-FDR Pass | B3 Composite Floor | Stability Gate | Quality Gate | B4 Correlation | Final Admitted |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 300ETF | single | 1,230 | 188 | 56 | 38 | 27 | 27 | 27 | 11 | 11 |
-| 50ETF | single | 779 | 55 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 500ETF | single | 2,718 | 1,258 | 1,100 | 1,084 | 757 | 544 | 542 | 44 | 44 |
-| 588000ETF | single | 1,282 | 750 | 486 | 440 | 29 | 29 | 29 | 5 | 5 |
-| 159915ETF | single | 1,565 | 455 | 223 | 208 | 22 | 22 | 22 | 8 | 8 |
+| 300ETF | single | 1,230 | 186 | 56 | 38 | 27 | 27 | 27 | 11 | 11 |
+| 50ETF | single | 779 | 54 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 500ETF | single | 2,721 | 1,234 | 1,097 | 1,081 | 757 | 544 | 542 | 44 | 44 |
+| 588000ETF | single | 1,287 | 739 | 485 | 440 | 29 | 29 | 29 | 5 | 5 |
+| 159915ETF | single | 1,568 | 452 | 223 | 208 | 22 | 22 | 22 | 8 | 8 |
 
 ## 2. Training-Period Performance (in-sample)
 
