@@ -1,7 +1,7 @@
 # Day-Model Feature Expansion & Return Prediction Workflow
 
 Workflow for day-model feature generation and multi-metric linear return predictor optimization.
-Read [day-model_plan.md](file:///home/hallo/Documents/option-longterm/day-model/day-model_plan.md) for logic. Update both files when logic changes.
+Read [day-model_plan.md](file:///home/hallo/Documents/option-longterm/day-model/day-model_plan.md) and [unified_model.md](file:///home/hallo/Documents/option-longterm/day-model/unified_model.md) for logic & model manifold details. Update files when logic changes.
 
 ## Target Definition
 * **Target**: `trade_return = log(close[EXIT_BAR] / open[decision_bar+1])`

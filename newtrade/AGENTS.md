@@ -35,6 +35,10 @@ uv run python newtrade/glm_backtest.py -e 300ETF --target-mode bj_sign --compare
 uv run python newtrade/glm_backtest.py -e all --target-mode bj_sign --prior-mode kns --kns-gamma 0.2 --compare
 uv run python newtrade/glm_backtest.py -e all --target-mode bj_sign --compare
 uv run python newtrade/glm_backtest.py -e all --target-mode bj_sign --compare --future
+
+# Feature Correlation & Hierarchical Clustering Diagnosis Suite
+uv run python newtrade/diagnose_correlation.py -e 300ETF --side single
+uv run python newtrade/diagnose_correlation.py -e all --side single --threshold 0.70
 ```
 
 ## Architecture
@@ -52,7 +56,8 @@ newtrade/
 ├── strategy.py              # Threshold sweep, position sizing (binary/tanh/quadratic), ETF simulation, trade log builder
 ├── run_backtest.py          # CLI runner (--future, --scheme all, --z-th auto, --z-short-buffer, --dynamic-ic, CSV exporter)
 ├── diagnose_rank_scheme.py  # Dedicated Scheme 4 diagnosis suite
-├── artifacts/               # Equity charts & trade log CSVs (rank_bounded_trades.csv, glm_vs_rank.csv)
+├── diagnose_correlation.py  # Feature correlation & Ward linkage clustering diagnosis
+├── artifacts/               # Equity charts & correlation PNG maps (correlation_300ETF_single.png, high_corr_pairs_*.csv)
 └── data/                    # JSON result artifacts
 ```
 
@@ -62,7 +67,7 @@ newtrade/
 |-------|----------|
 | **Weighting Score** | B3-inspired pool-metadata-only score: `0.40×rank_norm(deflated_ic) + 0.35×rank_norm(ic_ir) + 0.25×rank_norm(mono)`. |
 | **Scheme 4 Bounds** | Moderate Tilt default ($w_{\min}=0.2/N, w_{\max}=1.8/N$). Supports linear, power, softmax, top_k mapping. |
-| **Dynamic IC Ranking** | `--dynamic-ic` computes expanding zero-lookahead factor IC ($1:t-1$) for daily dynamic rank weights. |
+| **Dynamic IC Ranking** | `--dynamic-ic` computes expanding zero-lookahead factor IC ($1:t-1$) for daily dynamic rank weights. EMA IC smoothing (10-20d span) reduces ChiNext whipsaws (-22% trades, Sharpe +21.6%, Max DD -43%). |
 | **Threshold Asymmetry** | Long buffer `--z-buffer` (default 0.1), Short buffer `--z-short-buffer` (default `z_buffer + 0.1`). Short requires higher conviction due to structural long bias. |
 | **Position Sizing** | `binary`, `tanh`, or `quadratic` ($S_t = \text{sign}(Z) \cdot \min(1.0, ((|Z| - Z_{\text{th}})/\gamma)^2)$). |
 | **Trade CSV Export** | Auto-exports date-level trade logs to `artifacts/trades_{scheme}_{etf}.csv` and `artifacts/rank_bounded_trades.csv`. |

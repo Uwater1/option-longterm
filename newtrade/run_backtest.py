@@ -235,6 +235,7 @@ def main():
     parser.add_argument("--rank-power", type=float, default=2.0, help="Power exponent for 'power' rank mapping shape")
     parser.add_argument("--rank-top-k", type=int, default=None, help="Top K factors truncation threshold for 'top_k' rank mapping shape")
     parser.add_argument("--dynamic-ic", action="store_true", help="Enable zero-lookahead expanding rolling factor IC ranking")
+    parser.add_argument("--ic-ema-span", type=int, default=10, help="EMA span parameter for smoothing dynamic expanding factor ICs (default 10)")
     parser.add_argument("--long-only", action="store_true", help="Restrict to long-only trades (Spot ETF mode). Default: False (allows short trades).")
     parser.add_argument("--future", action="store_true", help="Trade underlying Index Futures (IF88 for 300ETF, IC88 for 500ETF, IH88 for 50ETF) instead of Spot ETF.")
 
@@ -258,6 +259,7 @@ def main():
         "mapping_shape": args.rank_mapping,
         "power": args.rank_power,
         "top_k": args.rank_top_k,
+        "ic_ema_span": args.ic_ema_span,
     }
 
     results = []

@@ -23,6 +23,8 @@ Conclusion: Stick to the full-day exit (`14:35`).
 
 ### 1.3 Unified Model Training Manifold
 
+*(Full mathematical formulation and proximal solver details in [unified_model.md](file:///home/hallo/Documents/option-longterm/day-model/unified_model.md))*
+
 To prevent search space fragmentation and the "hard fall to Ridge" cliff, the day-model replaces disjoint categorical options (`skglm_huber_l1`, `skglm_mcp`, `ridge`) with a single continuous manifold estimator:
 * **Estimator**: `GeneralizedLinearEstimator` (composition of datafit, penalty, and solver).
 * **Datafit**: Huber loss (`SkglmHuber(delta)`) for y-outlier robustness.
@@ -35,6 +37,7 @@ To prevent search space fragmentation and the "hard fall to Ridge" cliff, the da
   * `unified_rho`: Sparse-vs-ridge mix ($0.0$ to $1.0$). $\rho = 0.0$ collapses to pure Ridge; $\rho \to 1.0$, large $\gamma$ behaves like L1/ElasticNet; $\rho \to 1.0$, small $\gamma$ enables aggressive non-convex MCP selection.
   * `unified_gamma`: Concavity parameter ($1.5$ to $10000.0$).
   * `huber_delta`: Huber robustness parameter ($0.5$ to $5.0$).
+
 
 ---
 
