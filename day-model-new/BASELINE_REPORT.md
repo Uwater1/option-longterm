@@ -19,7 +19,7 @@ Candidate counts at each admission gate. Shows where features get pruned.
 
 | ETF | Side | Total Candidates | 7Y-Jackknife Pass | B2 Rolling Guard | Temporal Gate | BH-FDR Pass | B3 Composite Floor | Stability Gate | Quality Gate | B4 Correlation | Final Admitted |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 300ETF | single | 1,569 | 530 | 403 | 57 | 37 | 27 | 27 | 27 | 11 | 11 |
+| 300ETF | single | 1,285 | 420 | 316 | 50 | 34 | 26 | 26 | 26 | 9 | 9 |
 | 50ETF | single | 1,244 | 514 | 463 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 500ETF | single | 3,037 | 1,547 | 1,406 | 1,087 | 1,072 | 751 | 537 | 535 | 43 | 43 |
 | 588000ETF | single | 1,583 | 1,016 | 768 | 475 | 427 | 29 | 29 | 29 | 5 | 5 |
@@ -31,7 +31,7 @@ IC-weighted combination model on the training window. Useful for sanity-checking
 
 | ETF | Side | Features | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Raw Ann. Ret | Raw Sharpe | Cost Ann. Ret | Cost Sharpe | Sortino | Max DD |
 | :--- | :--- | ---: | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 300ETF | single | 11 | +0.1343 | [+0.0813, +0.1833] | +0.2713 | [+0.1430, +0.3798] | +0.8909 | 8.51% | 1.7430 | 6.95% | 1.4459 | 3.1432 | 5.46% |
+| 300ETF | single | 9 | +0.1321 | [+0.0811, +0.1806] | +0.2785 | [+0.1497, +0.3891] | +0.9273 | 8.05% | 1.6309 | 6.60% | 1.3574 | 2.9188 | 5.29% |
 | 500ETF | single | 43 | +0.2178 | [+0.1720, +0.2646] | +0.3143 | [+0.2140, +0.4156] | +0.9636 | 9.87% | 2.0222 | 8.26% | 1.7144 | 3.5179 | 4.12% |
 | 588000ETF | single | 5 | +0.1349 | [+0.0687, +0.1987] | +0.3388 | [+0.1895, +0.4335] | +0.9152 | 7.99% | 1.6882 | 6.50% | 1.3918 | 3.1882 | 3.29% |
 | 159915ETF | single | 8 | +0.1698 | [+0.1219, +0.2142] | +0.2552 | [+0.1663, +0.3496] | +0.9515 | 7.81% | 1.2027 | 6.26% | 0.9689 | 1.3295 | 13.45% |
@@ -42,7 +42,7 @@ Out-of-sample from holdout start to present.
 
 | ETF | Side | Features | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Raw Ann. Ret | Raw Sharpe | Cost Ann. Ret | Cost Sharpe | Sortino | Max DD |
 | :--- | :--- | ---: | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 300ETF | single | 11 | +0.0642* | [-0.0019, +0.1232] | +0.1856 | [+0.0259, +0.3134] | +0.9152 | 4.28% | 1.0661 | 2.68% | 0.6744 | 1.2221 | 4.11% |
+| 300ETF | single | 9 | +0.0639* | [-0.0006, +0.1219] | +0.1985 | [+0.0415, +0.3286] | +0.8303 | 4.15% | 1.0535 | 2.58% | 0.6625 | 1.2183 | 3.92% |
 | 500ETF | single | 43 | +0.1175 | [+0.0581, +0.1750] | +0.1233* | [-0.0216, +0.2405] | +0.8788 | 3.65% | 0.9074 | 2.26% | 0.5656 | 0.9784 | 3.47% |
 | 588000ETF | single | 5 | -0.0014* | [-0.0993, +0.0806] | -0.1012* | [-0.3187, +0.1600] | +0.0667 | -2.37% | -0.4313 | -3.89% | -0.7028 | -0.9320 | 11.32% |
 | 159915ETF | single | 8 | +0.1390 | [+0.0701, +0.1956] | +0.2994 | [+0.1310, +0.4277] | +0.6606 | 9.38% | 1.6147 | 8.00% | 1.3937 | 3.3359 | 7.09% |
@@ -53,7 +53,7 @@ Most recent OOS window (lockbox start to present). Strictest generalization test
 
 | ETF | Side | Features | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Raw Ann. Ret | Raw Sharpe | Cost Ann. Ret | Cost Sharpe | Sortino | Max DD |
 | :--- | :--- | ---: | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 300ETF | single | 11 | +0.0290* | [-0.0663, +0.1176] | +0.1887* | [-0.0285, +0.3782] | +0.4788 | 5.12% | 1.0480 | 3.63% | 0.7518 | 1.4700 | 3.79% |
+| 300ETF | single | 9 | +0.0313* | [-0.0631, +0.1156] | +0.1816* | [-0.0283, +0.3722] | +0.4788 | 4.89% | 1.0362 | 3.46% | 0.7407 | 1.5119 | 3.96% |
 | 500ETF | single | 43 | +0.1286 | [+0.0471, +0.2067] | +0.0308* | [-0.1606, +0.2094] | +0.8424 | 2.85% | 0.7476 | 1.45% | 0.3797 | 0.6387 | 2.95% |
 | 588000ETF | single | 5 | -0.0365* | [-0.1413, +0.0803] | -0.1101* | [-0.3543, +0.2096] | +0.0667 | -3.28% | -0.5661 | -4.79% | -0.8233 | -1.0984 | 9.94% |
 | 159915ETF | single | 8 | +0.1442 | [+0.0518, +0.2318] | +0.2848 | [+0.0409, +0.5092] | +0.6727 | 11.82% | 1.6280 | 10.45% | 1.4543 | 3.7311 | 6.90% |
@@ -68,16 +68,14 @@ BH-FDR pre-filter stage; `deflated_ic` is overall_ic adjusted for empirical null
 | Feature | Sign | Raw IC | Overall IC | Deflated IC | p-value | IC IR | Monotonicity | Max Corr |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `combo_min__rbreaker_sell_setup_proximity_early__max_up_ret` | +1 | +0.1267 | +0.2690 | +0.2689 | 0.0000 | +0.5307 | +0.6968 | 0.000 |
-| `rbreaker_sell_setup_proximity_early` | +1 | +0.0953 | +0.2294 | +0.2299 | 0.0000 | +0.5550 | +0.7413 | 0.824 |
 | `combo_rel_diff__limit_down_proximity_early__volume_concentration` | +1 | +0.0571 | +0.2100 | +0.2110 | 0.0000 | +0.5628 | +0.7349 | 0.337 |
 | `combo_product__rbreaker_sell_setup_proximity_early__max_up_ret` | +1 | +0.0208 | +0.2042 | +0.2034 | 0.0000 | +0.4802 | +0.6346 | 0.584 |
+| `combo_max__rbreaker_sell_setup_proximity_early__limit_down_proximity_early` | +1 | +0.0882 | +0.2037 | +0.2036 | 0.0000 | +0.4737 | +0.7284 | 0.791 |
 | `combo_product__smooth_momentum_structure__opening_drive_thrust_ratio` | +1 | +0.0421 | +0.2002 | +0.2033 | 0.0000 | +0.6265 | +0.7144 | 0.106 |
 | `combo_ratio__limit_down_proximity_early__volume_concentration` | +1 | +0.0538 | +0.1928 | +0.1935 | 0.0000 | +0.6003 | +0.7349 | 0.784 |
 | `combo_ratio__bar_body_rng_0__volume_weighted_price_position` | +1 | +0.0999 | +0.1898 | +0.1897 | 0.0000 | +0.6533 | +0.7496 | 0.376 |
 | `combo_rank_max__max_up_ret__volume_weighted_price_position` | +1 | +0.0777 | +0.1863 | +0.1849 | 0.0004 | +0.7183 | +0.7760 | 0.653 |
-| `combo_rank_max__rbreaker_sell_setup_proximity_early__limit_down_proximity_early` | +1 | +0.0859 | +0.1833 | +0.1834 | 0.0006 | +0.3817 | +0.6827 | 0.808 |
 | `combo_clamp_diff__max_up_ret__early_vwap_acceleration` | +1 | +0.0993 | +0.1570 | +0.1561 | 0.0036 | +0.5103 | +0.6786 | 0.608 |
-| `combo_min__max_up_ret__first_bar_sentiment` | +1 | +0.0941 | +0.1550 | +0.1534 | 0.0040 | +0.3542 | +0.6246 | 0.749 |
 
 ### 50ETF / single
 No features admitted.
@@ -163,13 +161,12 @@ Recipes are resolved using training-set statistics (mean/std/median) to prevent 
 | `combo_min__rbreaker_sell_setup_proximity_early__max_up_ret` | `min` | a=`rbreaker_sell_setup_proximity_early`, b=`max_up_ret` |
 | `combo_rel_diff__limit_down_proximity_early__volume_concentration` | `rel_diff` | a=`limit_down_proximity_early`, b=`volume_concentration` |
 | `combo_product__rbreaker_sell_setup_proximity_early__max_up_ret` | `product` | a=`rbreaker_sell_setup_proximity_early`, b=`max_up_ret` |
+| `combo_max__rbreaker_sell_setup_proximity_early__limit_down_proximity_early` | `max` | a=`rbreaker_sell_setup_proximity_early`, b=`limit_down_proximity_early` |
 | `combo_product__smooth_momentum_structure__opening_drive_thrust_ratio` | `product` | a=`smooth_momentum_structure`, b=`opening_drive_thrust_ratio` |
 | `combo_ratio__limit_down_proximity_early__volume_concentration` | `ratio` | a=`limit_down_proximity_early`, b=`volume_concentration` |
 | `combo_ratio__bar_body_rng_0__volume_weighted_price_position` | `ratio` | a=`bar_body_rng_0`, b=`volume_weighted_price_position` |
 | `combo_rank_max__max_up_ret__volume_weighted_price_position` | `rank_max` | a=`max_up_ret`, b=`volume_weighted_price_position` |
-| `combo_rank_max__rbreaker_sell_setup_proximity_early__limit_down_proximity_early` | `rank_max` | a=`rbreaker_sell_setup_proximity_early`, b=`limit_down_proximity_early` |
 | `combo_clamp_diff__max_up_ret__early_vwap_acceleration` | `clamp_diff` | a=`max_up_ret`, b=`early_vwap_acceleration` |
-| `combo_min__max_up_ret__first_bar_sentiment` | `min` | a=`max_up_ret`, b=`first_bar_sentiment` |
 | `combo_rel_diff__star50_limit_proximity_early__volume_weighted_momentum_acceleration` | `rel_diff` | a=`star50_limit_proximity_early`, b=`volume_weighted_momentum_acceleration` |
 | `combo_min__opening_drive_thrust_ratio__star50_limit_proximity_early` | `min` | a=`opening_drive_thrust_ratio`, b=`star50_limit_proximity_early` |
 | `combo_clamp_diff__max_up_ret__volume_weighted_momentum_acceleration` | `clamp_diff` | a=`max_up_ret`, b=`volume_weighted_momentum_acceleration` |

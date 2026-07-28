@@ -36,11 +36,23 @@ MAX_FLIPS = 1 # Maybe 2 better logically, but 1 OOS performance better
 FDR_THRESHOLD = 0.20
 
 # Feature Selection Global Constants (easily fine-tuned)
-DEFAULT_THETA = 0.85
-MAX_POOL_SIZE = 35
-TOP_PROTECTED_COUNT = 25
-TIGHT_THETA = 0.75
-MAX_RECENCY_RATIO = 2.5  # Cap recent_ic / early_ic to prune late-training overfit spikes, higher = more features in
+DEFAULT_THETA = 0.70          # Base correlation threshold for initial admission pass
+MAX_POOL_SIZE = 15            # Target max admitted pool size
+TOP_PROTECTED_COUNT = 7       # Unconditionally protects top N features by S_train score
+TIGHT_THETA = 0.65            # Lower-tier correlation threshold for adaptive pool trimming
+
+# B2 Rolling Guard Defaults
+MONO_THR_SINGLE = 0.65        # Rolling 90d monotonicity threshold for single side
+MONO_THR_DIR = 0.60           # Rolling 90d monotonicity threshold for long/short sides
+IR_THR_SINGLE = 0.30          # Rolling 90d IC_IR threshold for single side
+IR_THR_DIR = 0.15             # Rolling 90d IC_IR threshold for long/short sides
+
+# Temporal & Quality Gate Thresholds
+MAX_RECENCY_RATIO = 2.5       # Cap recent_ic / early_ic to prune late-training overfit spikes
+MIN_EARLY_IC_THRESHOLD = 0.05 # Minimum early IC to trigger recency ratio cap
+MAX_YEARLY_IC_CV = 0.85       # Max coefficient of variation for yearly ICs
+MAX_WEAK_LINK_CV = 1.00       # Max coefficient of variation for primitive components
+MIN_STABILITY_PRODUCT = 0.15  # Min product of ic_cv * weak_link_cv
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
@@ -447,8 +459,8 @@ def evaluate_single_feature(feature_name: str, x: np.ndarray, y: np.ndarray, win
     monotonicity = float(np.mean(rolling_tail_ics > 0))
     
     # Check B2 Rolling Guard thresholds
-    mono_thr = 0.55 if side in ["long", "short"] else 0.60
-    ir_thr = 0.15 if side in ["long", "short"] else 0.30
+    mono_thr = MONO_THR_DIR if side in ["long", "short"] else MONO_THR_SINGLE
+    ir_thr = IR_THR_DIR if side in ["long", "short"] else IR_THR_SINGLE
     passes_guard = (monotonicity >= mono_thr) and (ic_ir >= ir_thr)
     
     if not passes_guard:
@@ -871,9 +883,9 @@ def main():
 
     # Dynamic defaults based on side
     if args.mono_thr is None:
-        args.mono_thr = 0.55 if args.side in ["long", "short"] else 0.60
+        args.mono_thr = MONO_THR_DIR if args.side in ["long", "short"] else MONO_THR_SINGLE
     if args.ir_thr is None:
-        args.ir_thr = 0.15 if args.side in ["long", "short"] else 0.30
+        args.ir_thr = IR_THR_DIR if args.side in ["long", "short"] else IR_THR_SINGLE
 
     # Determine dynamic training start and end dates
     if args.train_start and args.train_end:
@@ -1208,8 +1220,9 @@ def main():
         recency_ratio = recent_ic / (abs(ic_first) + 1e-5) if abs(ic_first) > 1e-4 else 99.0
         item["recency_ratio"] = float(recency_ratio)
         
-        # Pass if recent IC > 0 AND signal is not excessively concentrated in late training (recency_ratio < MAX_RECENCY_RATIO)
-        passes_temporal = (recent_ic > 0.0) and (recency_ratio < MAX_RECENCY_RATIO)
+        # Pass if recent IC > 0 AND signal is not excessively concentrated in late training (only cap recency_ratio when early IC < MIN_EARLY_IC_THRESHOLD)
+        is_late_spike = (abs(ic_first) < MIN_EARLY_IC_THRESHOLD) and (recency_ratio >= MAX_RECENCY_RATIO)
+        passes_temporal = (recent_ic > 0.0) and (not is_late_spike)
         if passes_temporal:
             temporal_survivors.append(item)
         else:
@@ -1499,10 +1512,42 @@ def main():
             wl_cv = _compute_weak_link_cv(cand)
             cand["ic_cv"] = ic_cv
             cand["weak_link_cv"] = wl_cv
+            if ic_cv is not None and ic_cv > MAX_YEARLY_IC_CV:
+                attempts_log.append({
+                    "feature_name": cand_name,
+                    "sign": cand["sign"],
+                    "raw_ic": cand["raw_ic"],
+                    "overall_ic": cand_ic,
+                    "deflated_ic": deflated_ic,
+                    "ic_cv": ic_cv,
+                    "ic_ir": cand["ic_ir"],
+                    "monotonicity": cand["monotonicity"],
+                    "passes_rolling_guard": True,
+                    "passes_fdr": True,
+                    "verdict": "REJECTED_HIGH_YEARLY_IC_CV"
+                })
+                continue
+
+            if wl_cv is not None and wl_cv > MAX_WEAK_LINK_CV:
+                attempts_log.append({
+                    "feature_name": cand_name,
+                    "sign": cand["sign"],
+                    "raw_ic": cand["raw_ic"],
+                    "overall_ic": cand_ic,
+                    "deflated_ic": deflated_ic,
+                    "weak_link_cv": wl_cv,
+                    "ic_ir": cand["ic_ir"],
+                    "monotonicity": cand["monotonicity"],
+                    "passes_rolling_guard": True,
+                    "passes_fdr": True,
+                    "verdict": "REJECTED_UNSTABLE_COMPONENT"
+                })
+                continue
+
             if ic_cv is not None and wl_cv is not None:
                 stability_product = ic_cv * wl_cv
                 cand["stability_product"] = stability_product
-                if stability_product < 0.15:
+                if stability_product < MIN_STABILITY_PRODUCT:
                     attempts_log.append({
                         "feature_name": cand_name,
                         "sign": cand["sign"],

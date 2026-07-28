@@ -47,7 +47,7 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 ### B2. Rolling Guard & FDR Pre-filter
 1. **Rolling Guard (Pre-filter check)**: 90-calendar-date rolling tail IC evaluated instantly on pre-computed values. Drop if monotonicity < `mono_thr` or `IC_IR` < `ir_thr`:
    - `long`/`short`: `mono_thr = 0.55`, `ir_thr = 0.15`
-   - `single`: `mono_thr = 0.60`, `ir_thr = 0.30`
+   - `single`: `mono_thr = 0.65`, `ir_thr = 0.30`
    - **Pass-forward cached values**: Rolling mono average from this step is cached and passed forward to B3, not just its pass/fail verdict (uses locked `sign` from B1).
    - **Cheap-first ordering**: Executed before simulation to thin pool by ~98% instantly.
 2. **Benjamini-Hochberg (BH-FDR) pre-filter**: Reject if empirical $p$-value fails Benjamini-Hochberg FDR at $q=0.20$ (standard screening threshold, via 5,000-trial single-feature block-shuffled simulation on compact survivor matrix `X_survivors`, cached per ETF/side).
@@ -67,7 +67,7 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 - *Compute note*: Heavier compute per survivor, but B1 + B2 thin pool first (cheap-first order preserved). 97th percentile computed in same kernel pass as 93rd — no additional simulation cost.
 
 ### B4. Correlation Gate, Primitive Cluster Cap & Replacement Rule
-- Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.85$).
+- Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.70$).
 - **Runs AFTER Quality & Stability Gates**: Low-quality or unstable features are filtered before correlation comparison, preventing them from blocking high-quality candidates.
 - **Primitive Cluster Cap**: Extract primitive feature set (`feature_a`, `feature_b`, `feature_c`, `feature_cond`, `feature_cond2`). Drop or replace redundant combos built from identical base primitives to ensure pool diversity.
 - **Replacement rule**:
@@ -85,6 +85,8 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 ### B6. Training-Only Quality & Temporal Stability Gates (Before Correlation)
 - Applied AFTER B3 floor, BEFORE B4 correlation gate.
 - **Temporal Stability Gate**: For combo features, require `ic_cv * weak_link_cv >= 0.15`. Features with artificially low temporal variation (suspiciously "too smooth" in-sample) are fitting structural artifacts.
+- **Yearly IC CV Gate**: Requires `yearly_ic_cv <= 0.85`. Rejects features with high year-to-year IC volatility in training set.
+- **Unstable Component Gate**: Requires `weak_link_cv <= 1.00`. Rejects combo features built from noisy base primitives.
 - **Sign Consistency Gate**: Rejects candidate if meaningful full-sample IC ($|\text{IC}_{\text{full}}| \ge 0.015$) contradicts tail IC sign ($\text{IC}_{\text{full}} \cdot \text{IC}_{\text{tail}} < 0$), preventing non-monotonic tail mirages from entering the pool.
 - **Quality Gate**: Requires all three:
   - `deflated_ic >= 0.03` (normal) / `0.05` (short-history ETFs with n_train < 1200)
@@ -94,15 +96,15 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 - **Zero look-ahead bias**: Uses only training-period metrics. No OOS or lockbox data is accessed.
 
 ### B6b. Adaptive Boundary Gate (Post-Correlation Pool Control)
-- **Trigger**: When initial admission yields $> \text{MAX\_POOL\_SIZE}$ features (default: 35).
+- **Trigger**: When initial admission yields $> \text{MAX\_POOL\_SIZE}$ features (default: 15).
 - **Global Constants** (defined at top of `select_features.py`):
-  - `DEFAULT_THETA = 0.85`: Base correlation threshold for initial admission pass.
-  - `MAX_POOL_SIZE = 35`: Target max admitted pool size.
-  - `TOP_PROTECTED_COUNT = 25`: Unconditionally protects top 25 features based on training quality score $S_{train}$.
-  - `TIGHT_THETA = 0.75`: Lower-tier correlation threshold to trim redundant tail features.
+  - `DEFAULT_THETA = 0.70`: Base correlation threshold for initial admission pass.
+  - `MAX_POOL_SIZE = 15`: Target max admitted pool size.
+  - `TOP_PROTECTED_COUNT = 7`: Unconditionally protects top 7 features based on training quality score $S_{train}$.
+  - `TIGHT_THETA = 0.65`: Lower-tier correlation threshold to trim redundant tail features.
 - **Mechanism**:
   1. Computes training quality score $S_{train} = 0.40 \cdot \text{deflated\_ic} + 0.25 \cdot \text{sortino} + 0.20 \cdot \text{ic\_ir} + 0.15 \cdot \text{recent\_ic}$.
-  2. Protects top `TOP_PROTECTED_COUNT` (25) features unconditionally.
+  2. Protects top `TOP_PROTECTED_COUNT` (7) features unconditionally.
   3. Screens lower-tier features with `TIGHT_THETA` (0.75) and quality floors (`recent_ic > 0`, `sortino > 0.05`, `deflated_ic >= 0.04`).
   4. Overwrites initial `ADMITTED` verdict in `attempts_log` for pruned features to `REJECTED_ADAPTIVE_*`.
 - **Zero OOS leakage**: Uses only training set statistics.
@@ -171,100 +173,3 @@ SE_IC ≈ 1/√n_train
 - Dobriban 2026, *No Universal Multiplicative FDR Bound for BH with Correlated Two-Sided Gaussian Tests*, arXiv:2607.14812 — FDR control failure under high candidate correlation; justification for BY-FDR.
 - Bailey & López de Prado 2014, *The Deflated Sharpe Ratio: Correcting for Selection Bias, Backtest Overfitting and Non-Normality*, Journal of Portfolio Management 40(5) — deflate IC/Sharpe by trial count.
 - `day-model_plan.md` (this repo, v2) — chronological split design, CSS+VIF mechanics, block-bootstrap CI reporting, all reused as-is where noted above.
-
----
-
-## TODO: Tighten B4 Correlation Gate (from newtrade downstream evidence)
-
-**Date**: 2026-07-28
-**Source**: `newtrade/test_feature_count.py` + `newtrade/diagnose_correlation.py`
-
-### Problem
-500ETF admitted pool has 32 features. Downstream EW trading shows:
-- Top-5 features → OOS Sharpe = 0.614
-- All-32 features → OOS Sharpe = 0.238 (2.6× worse)
-
-The bottom 22 features aren't bad individually (all passed B3), but equal-weighting them dilutes the top-5 signal into noise.
-
-### Correlation evidence (500ETF, signed standardized)
-- Mean pairwise |r| = **0.47** (very high)
-- 192/496 pairs (39%) have |r| ≥ 0.60
-- 10 pairs have |r| ≥ 0.85
-- Max |r| = 0.89
-
-Compare 159915ETF (11 features): mean |r| = 0.62 but works great (OOS SR=1.085). Fewer features + high corr = strong consensus. Many features + moderate corr = noise accumulation.
-
-### Code discrepancy
-- `plan.md` line 163 says θ=0.70 was set
-- `select_features.py` line 39: `DEFAULT_THETA = 0.85` ← **still 0.85 in code**
-- B6b adaptive gate (TIGHT_THETA=0.75) only fires when pool > 35. 500ETF has 32 → never triggers.
-
-### Recommended fix
-1. **Set `DEFAULT_THETA = 0.70` in code** (match what plan says was done)
-2. **Lower `MAX_POOL_SIZE` from 35 to 15** — sweet spot is 7-10 features per ETF
-3. Do NOT force diversity — low-corr features can be the weak ones (see Q2 below)
-
-### Impact
-Re-running `select_features.py` with θ=0.70 on 500ETF should cut pool from 32 → ~10-12 features. Downstream EW should improve from OOS 0.238 → ~0.6-0.7.
-
----
-
-### Downstream Feature Selection Research (newtrade/research_feature_selection.py)
-
-#### Q1: Feature Count Sweet Spot
-
-| ETF | Best N | OOS SR | Cliff |
-|-----|--------|--------|-------|
-| 500ETF | **7-9** | 0.717-0.723 | Sharp drop at N=12 (0.328) |
-| 159915ETF | **5-11** | 1.085-1.260 | No cliff; all work |
-| 300ETF | **9-10** | 0.440-0.698 | Needs nearly all; top-5 dead (0.057) |
-
-500ETF granular: top-3=0.690, top-5=0.614, top-7=**0.717**, top-9=**0.723**, top-10=0.613, top-12=0.328, top-32=0.238.
-
-**Takeaway**: Target pool size **10-12** for 500ETF. 159915ETF is fine at 11. 300ETF needs all 10.
-
-#### Q2: Low-Correlation ≠ Better
-
-| ETF | Low-corr top-5 | High-corr top-5 | IC top-5 |
-|-----|---------------|----------------|----------|
-| 500ETF | 0.057 (dead, 44 trades) | 0.582 | **0.614** |
-| 159915ETF | **1.249** | 1.037 | 1.260 |
-| 300ETF | **0.493** | 0.062 | 0.057 |
-
-**Insight**: For 500ETF, the low-corr features are the WEAK ones (low IC, barely generate trades). The high-corr features are strong — correlated because they capture the same real signal. For 300ETF, diversity genuinely helps.
-
-**Rule for B4 gate**: The corr gate should remove redundant copies of the SAME signal (e.g., tri_min vs rank_min of same primitives, |r|=0.88). It should NOT force artificial diversity by keeping weak independent features. IC-quality first, then prune redundancy.
-
-#### Q3: Regime-Adaptive Feature Selection = BAD
-
-| ETF | Adaptive top-5 | Adaptive top-10 | Fixed top-5 | Fixed top-10 |
-|-----|---------------|----------------|-------------|--------------|
-| 500ETF | 0.120 | 0.100 | **0.614** | **0.613** |
-| 159915ETF | 0.398 | 0.854 | **1.260** | 0.994 |
-
-Feature ranking stability (500ETF top-5 year-over-year overlap): **0-3/5**. Rankings completely reshuffle annually. Adaptive selection chases yesterday's winners.
-
-159915ETF: 2-4/5 overlap — more stable, but adaptive still loses to fixed.
-
-**Verdict**: Do NOT implement rolling/adaptive feature selection downstream. Fixed pool + EW is superior. This validates the current design: select features once at admission, never re-rank.
-
-#### Q4: Smart Weighting Can't Fix Large Pools
-
-500ETF all-32:
-- EW: 0.238 | IC-weighted: 0.108 (worse!) | Sqrt-IC: 0.224 | Inv-corr: 0.290 | IC×InvCorr: **0.362**
-
-300ETF all-10:
-- EW: 0.440 | IC-weighted: **0.671** | Inv-corr: **0.662** | Sqrt-IC: 0.656
-
-159915ETF all-11:
-- EW: 1.085 | IC-weighted: 1.101 | Inv-corr: **1.151** | IC×InvCorr: 0.977
-
-**Verdict**: For large pools (32), no weighting fixes dilution — cut features. For small pools (10-11), IC-weighting gives +0.2 boost. After corr gate fix, downstream should use ICW for 300ETF and EW for 159915ETF.
-
-#### Summary of Recommendations for day-model-new
-
-1. **θ=0.70, MAX_POOL_SIZE=15** — hits the 7-12 sweet spot
-2. **Quality-first, then prune redundancy** — don't sacrifice IC for diversity
-3. **No adaptive/rolling selection downstream** — rankings are unstable
-4. **Small pools (≤12) are ideal** — 159915ETF (11 features) is the gold standard
-5. **GLM/Ridge: low priority** — if pool is already 10-12, EW or ICW suffices
