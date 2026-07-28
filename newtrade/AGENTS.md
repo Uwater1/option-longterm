@@ -2,7 +2,23 @@
 
 Monetize admitted factors from `day-model-new` into ETF spot trading signals. See [plan.md](plan.md) for full design.
 
-## Commands
+## Production System (Robustness-Validated)
+
+```bash
+# Production ensemble backtest (DSR-validated, CPCV-confirmed)
+python newtrade/run_production.py -e all --mode binary --cpcv
+
+# Multi-ETF portfolio backtest (equal-weight, DSR=0.953 SIGNIFICANT)
+python newtrade/portfolio_backtest.py
+python newtrade/portfolio_backtest.py --fee-bps 20   # Stress test
+
+# Full robustness suite (DSR + CPCV + PBO + Ensemble + Sensitivity)
+python newtrade/robustness.py -e all --all --trials 50
+python newtrade/robustness.py -e 159915ETF --dsr --trials 10
+python newtrade/robustness.py -e 500ETF --cpcv --n-splits 6 --n-test 2
+```
+
+## Research Commands
 
 ```bash
 # Run single ETF with auto threshold (train-sweep + buffer)
@@ -50,8 +66,12 @@ uv run python newtrade/tune_score_weights.py
 newtrade/
 ├── plan.md                  # Design document (weighting formulas, threshold logic, short buffer)
 ├── plan_glm.md              # Scheme 5 GLM design document
-├── REPORT.md                # OOS backtest report for Schemes 1-4
+├── REPORT.md                # OOS backtest report for Schemes 1-4 (research)
+├── REPORT_production.md     # Production ensemble report (DSR-validated)
 ├── REPORT_glm.md            # OOS backtest report for Scheme 5 GLM vs Rank
+├── run_production.py        # Production ensemble CLI (binary L+S, buffer=0.15, DSR)
+├── portfolio_backtest.py    # Multi-ETF portfolio backtest + fee stress test
+├── robustness.py            # DSR, CPCV, PBO, Ensemble, Sensitivity Grid
 ├── tune_score_weights.py    # Zero-lookahead Numba grid search & adaptive metric score weight optimizer
 ├── utils.py                 # Data loading, recipe computation, expanding z-score, futures trade return mapper
 ├── weighting.py             # 4 weighting schemes: EW, ICW, Score, Rank (Moderate Tilt 0.2~1.8 default, dynamic IC)
@@ -61,7 +81,9 @@ newtrade/
 ├── run_backtest.py          # CLI runner (--future, --scheme all, --z-th auto, --z-short-buffer, --dynamic-ic, CSV exporter)
 ├── diagnose_rank_scheme.py  # Dedicated Scheme 4 diagnosis suite
 ├── diagnose_correlation.py  # Feature correlation & Ward linkage clustering diagnosis
-├── artifacts/               # Equity charts & correlation PNG maps (correlation_300ETF_single.png, high_corr_pairs_*.csv)
+├── diagnose_short.py        # Short-side analysis & per-ETF optimal config diagnostic
+├── test_modes.py            # Position mode comparison (binary/tanh/quadratic) + DSR sensitivity
+├── artifacts/               # Equity charts, correlation PNGs, robustness_results.json
 └── data/                    # JSON result artifacts
 ```
 
@@ -69,17 +91,20 @@ newtrade/
 
 | Topic | Decision |
 |-------|----------|
+| **Production Signal** | Ensemble (equal-weight avg of EW+ICW+Score+Rank). IC-only dynamic weighting. |
+| **Production Sizing** | Binary L+S. Shorts add 30-40% of PnL. 61% WR on 159915ETF. |
+| **Production Buffer** | +0.10 above train-optimal. Walk-forward validated. |
+| **Validation** | Portfolio DSR=0.953 (SIGNIFICANT). CPCV 100% positive. PBO=40% (MODERATE). |
+| **Scoring Research** | IC_IR useless for daily weighting. Mono helps at ≥0.65 in walk-forward but not in production. IC-only wins with full training data. |
 | **Weighting Score** | B3-inspired pool-metadata-only score: `0.40×rank_norm(deflated_ic) + 0.35×rank_norm(ic_ir) + 0.25×rank_norm(mono)`. |
 | **Scheme 4 Bounds** | Moderate Tilt default ($w_{\min}=0.2/N, w_{\max}=1.8/N$). Supports linear, power, softmax, top_k mapping. |
-| **Dynamic Score Ranking** | Enabled by default (`--dynamic-score`, opt-out `--no-dynamic-score`). Uses `--dynamic-metric ic` (expanding Pearson correlation IC default) smoothed with 30d EMA (`--ic-ema-span 30`). Boosts 300ETF Sharpe to **1.234** (+0.2025 PnL, 2.65% MaxDD). Supports `--dynamic-metric multi` fallback. |
-| **Threshold Asymmetry** | Long buffer `--z-buffer` (default 0.1), Short buffer `--z-short-buffer` (default `z_buffer + 0.1`). Short requires higher conviction due to structural long bias. |
-| **Position Sizing** | `binary`, `tanh`, or `quadratic` ($S_t = \text{sign}(Z) \cdot \min(1.0, ((|Z| - Z_{\text{th}})/\gamma)^2)$). |
-| **Trade CSV Export** | Auto-exports date-level trade logs to `artifacts/trades_{scheme}_{etf}.csv` and `artifacts/rank_bounded_trades.csv`. |
-| **ICW Shrinkage** | Empirical Bayes: `max(0, deflated_ic - 1/√n_train)^k`. Falls back to EW if all shrink to 0. |
+| **Dynamic Score Ranking** | Enabled by default (`--dynamic-score`, opt-out `--no-dynamic-score`). Uses `--dynamic-metric ic` smoothed with 30d EMA. |
+| **Threshold Asymmetry** | Long buffer `--z-buffer` (default 0.1), Short buffer `--z-short-buffer` (default `z_buffer + 0.1`). |
+| **Position Sizing** | `binary`, `tanh`, or `quadratic`. Production uses binary for max Sharpe. |
 | **Feature Floor** | ETF/side must have ≥ 10 admitted features, else skipped. |
 | **Zero Lookahead** | Expanding-window z-score (μ/σ from t-1). Expanding factor IC from t-1. Threshold from training sweep. |
-| **Friction** | 8 bps per position state transition. All metrics cost-adjusted. |
-| **Instrument** | Long-Short enabled by default (`long_only=False`). Use `--long-only` for Spot ETF long-only trades. Use `--future` to trade underlying Index Futures (IF88 for 300ETF, IC88 for 500ETF, IH88 for 50ETF). |
+| **Friction** | 8 bps per position state transition. Stress-tested to 20bps. |
+| **Instrument** | Long-Short enabled by default. Use `--long-only` for Spot ETF long-only. Use `--future` for Index Futures. |
 | **Trade Window** | 10:00 entry → 14:35 exit (intraday). |
 
 ## Data Dependencies

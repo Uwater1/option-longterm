@@ -25,6 +25,7 @@ REPO_ROOT = HERE.parent
 from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_ic_numba, expanding_factor_score_numba, load_future_trade_returns
 from weighting import get_weighting_scheme
 from strategy import generate_positions, simulate_etf_spot, calculate_metrics, sweep_optimal_threshold, compute_production_threshold, build_trade_log_df
+from robustness import deflated_sharpe_ratio, run_cpcv_backtest
 
 AVAILABLE_ETFS = ["300ETF", "500ETF", "50ETF", "588000ETF", "159915ETF"]
 ALL_SCHEMES = ["ew", "icw", "score", "rank"]  # glm deferred
@@ -211,6 +212,11 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
         "dates": df_oos["date"].dt.strftime("%Y-%m-%d").tolist() if "date" in df_oos.columns else [],
         "cum_pnl": np.cumsum(net_returns).tolist(),
         "trade_log_df": trade_log_df,
+        # Arrays for validation (stripped before JSON save)
+        "_net_returns": net_returns,
+        "_Z_composite": Z_composite,
+        "_trade_returns": full_trade_ret,
+        "_dates_series": df["date"],
     })
 
     print(f"    [RESULT] OOS ({metrics['period']}) | Cost Sharpe: {metrics['cost_sharpe']} | PnL: {metrics['total_pnl']} | WinRate: {metrics['win_rate_pct']}% | Intraday Trades: {metrics['n_trades']}/{metrics['n_days']}")
@@ -223,9 +229,9 @@ def main():
     parser = argparse.ArgumentParser(description="NewTrade Day-Model Factor Monetization Backtest Runner")
     parser.add_argument("-e", "--etf", type=str, default="all", help="Target ETF (300ETF, 500ETF, 50ETF, 588000ETF, 159915ETF, or all)")
     parser.add_argument("-s", "--side", type=str, default="single", choices=["single", "long", "short"], help="Trading side")
-    parser.add_argument("--scheme", type=str, default="score", choices=["ew", "icw", "score", "rank", "glm", "all"], help="Factor weighting scheme (default: score, or 'all' for all schemes)")
+    parser.add_argument("--scheme", type=str, default="all", choices=["ew", "icw", "score", "rank", "glm", "all"], help="Factor weighting scheme (default: all = ensemble average)")
     parser.add_argument("--z-th", type=str, default="auto", help="Conviction threshold Z score. 'auto' = train-sweep + buffer, or float value for fixed.")
-    parser.add_argument("--z-buffer", type=float, default=0.1, help="Production buffer added to train-optimal threshold for long (default 0.1)")
+    parser.add_argument("--z-buffer", type=float, default=0.1, help="Production buffer added to train-optimal threshold (default 0.1, walk-forward validated)")
     parser.add_argument("--z-short-buffer", type=float, default=None, help="Production buffer for short threshold (default: z_buffer + 0.1)")
     parser.add_argument("--position-mode", type=str, default="binary", choices=["binary", "tanh", "quadratic"], help="Position sizing mode")
     parser.add_argument("--fee-bps", type=float, default=8.0, help="Transaction fee in basis points (default 8.0 = 0.0008)")
@@ -252,6 +258,12 @@ def main():
     parser.add_argument("--long-only", dest="long_only", action="store_true", default=False, help="Restrict to long-only trades (Spot ETF mode). Default: False (allows shorting).")
     parser.add_argument("--allow-short", dest="long_only", action="store_false", help="Allow short trades (default)")
     parser.add_argument("--future", action="store_true", help="Trade underlying Index Futures (IF88 for 300ETF, IC88 for 500ETF, IH88 for 50ETF) instead of Spot ETF.")
+
+    # Validation options
+    parser.add_argument("--validate", action="store_true", help="Run DSR + CPCV validation on results")
+    parser.add_argument("--trials", type=int, default=10, help="Number of trials for DSR correction (default: 10)")
+    parser.add_argument("--cpcv-splits", type=int, default=6, help="CPCV number of splits (default: 6)")
+    parser.add_argument("--cpcv-test", type=int, default=2, help="CPCV test chunks per fold (default: 2)")
 
     args = parser.parse_args()
 
@@ -301,6 +313,47 @@ def main():
                 use_future=args.future,
             )
             results.append(res)
+
+    # ─── Validation: DSR + CPCV ───
+    if args.validate:
+        from scipy.stats import skew, kurtosis
+        from math import sqrt
+        print("\n" + "=" * 70)
+        print(f"VALIDATION (DSR trials={args.trials}, CPCV splits={args.cpcv_splits}/test={args.cpcv_test})")
+        print("=" * 70)
+        for r in results:
+            if r.get("status") != "SUCCESS":
+                continue
+            net_ret = r.get("_net_returns")
+            Z_comp = r.get("_Z_composite")
+            trade_ret = r.get("_trade_returns")
+            dates_s = r.get("_dates_series")
+            if net_ret is None or Z_comp is None:
+                continue
+            
+            # DSR
+            std_n = np.std(net_ret)
+            obs_sr = float((np.mean(net_ret) / std_n) * sqrt(252)) if std_n > 1e-12 else 0.0
+            sk = float(skew(net_ret))
+            kt = float(kurtosis(net_ret))
+            dsr = deflated_sharpe_ratio(obs_sr, n_trials=args.trials, n_obs=len(net_ret),
+                                         skewness=sk, kurtosis_excess=kt)
+            r["dsr"] = dsr
+            
+            # CPCV
+            cpcv = run_cpcv_backtest(Z_comp, trade_ret, dates_s,
+                                      n_splits=args.cpcv_splits, n_test=args.cpcv_test,
+                                      purge_gap=5, mode=r.get("position_mode", "binary"),
+                                      fee_bps=args.fee_bps / 10000.0,
+                                      z_buffer=r.get("z_buffer", 0.1),
+                                      long_only=r.get("long_only", False))
+            r["cpcv"] = cpcv
+            
+            print(f"  {r['etf']} ({r['scheme']}): SR={obs_sr:.3f}, "
+                  f"DSR={dsr['dsr']:.3f} ({dsr['verdict']}), "
+                  f"CPCV median={cpcv['sharpe_median']:.3f}\u00b1{cpcv['sharpe_std']:.3f} "
+                  f"({cpcv['pct_positive']:.0f}% pos)")
+        print()
 
     # Save aggregated Rank Bounded Weight trades CSV artifact
     rank_results = [r for r in results if r.get("scheme") == "rank" and r.get("status") == "SUCCESS"]
@@ -461,6 +514,10 @@ def main():
         r_copy.pop("dates", None)
         r_copy.pop("cum_pnl", None)
         r_copy.pop("trade_log_df", None)
+        r_copy.pop("_net_returns", None)
+        r_copy.pop("_Z_composite", None)
+        r_copy.pop("_trade_returns", None)
+        r_copy.pop("_dates_series", None)
         clean_results.append(r_copy)
 
     # Save markdown report (default: REPORT.md in newtrade/)
@@ -476,6 +533,23 @@ def main():
         f.write(f"- **Transaction Friction**: `{args.fee_bps} bps`\n")
         f.write(f"- **Rank Mapping Options**: `mapping={args.rank_mapping}, min_ratio={args.rank_min_ratio}, max_ratio={args.rank_max_ratio}, power={args.rank_power}`\n\n")
         f.write(report_content + "\n")
+        
+        # Append validation section if available
+        if args.validate:
+            val_rows = [r for r in results if r.get("status") == "SUCCESS" and "dsr" in r]
+            if val_rows:
+                f.write("\n---\n\n## Validation (DSR + CPCV)\n\n")
+                f.write(f"- **DSR Trials**: `{args.trials}`\n")
+                f.write(f"- **CPCV**: `{args.cpcv_splits}` splits, `{args.cpcv_test}` test chunks, purge=5\n\n")
+                f.write("| ETF | Scheme | Sharpe | DSR | Verdict | CPCV Median | CPCV Std | % Positive |\n")
+                f.write("| --- | --- | --- | --- | --- | --- | --- | --- |\n")
+                for r in val_rows:
+                    d = r["dsr"]
+                    c = r["cpcv"]
+                    f.write(f"| {r['etf']} | {r['scheme']} | {r['cost_sharpe']:.3f} | "
+                            f"{d['dsr']:.3f} | {d['verdict']} | {c['sharpe_median']:.3f} | "
+                            f"{c['sharpe_std']:.3f} | {c['pct_positive']:.0f}% |\n")
+                f.write("\n")
     print(f"Saved backtest report to {out_path}")
 
     # Save JSON result artifact in newtrade/data/

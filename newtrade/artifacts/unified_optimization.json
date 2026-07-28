@@ -1,0 +1,722 @@
+{
+  "method": "walk-forward (train\u2192val\u2192test)",
+  "periods": {
+    "train_end": "2020-01-01",
+    "val": "2020-01-01~2022-01-01",
+    "test": "2022-01-01~2026-01-01"
+  },
+  "grid_size": 24,
+  "elapsed_s": 10.5,
+  "winner_val": {
+    "params": {
+      "scheme": "ensemble",
+      "score_weights": [
+        0.4,
+        0.05,
+        0.55
+      ],
+      "z_buffer": 0.1,
+      "mode": "binary",
+      "ic_ema_span": 30,
+      "rank_min": 0.4,
+      "rank_max": 1.6,
+      "mono_window": 750,
+      "dynamic_metric": "multi"
+    },
+    "port_sharpe": 1.8327,
+    "port_pnl": 0.2068,
+    "port_maxdd": 0.0333,
+    "etf_sharpes": {
+      "159915ETF": 2.089,
+      "500ETF": 0.3215,
+      "300ETF": 1.3551
+    },
+    "min_etf_sharpe": 0.3215
+  },
+  "winner_test": {
+    "params": {
+      "scheme": "ensemble",
+      "score_weights": [
+        0.4,
+        0.05,
+        0.55
+      ],
+      "z_buffer": 0.1,
+      "mode": "binary",
+      "ic_ema_span": 30,
+      "rank_min": 0.4,
+      "rank_max": 1.6,
+      "mono_window": 750,
+      "dynamic_metric": "multi"
+    },
+    "port_sharpe": 1.1476,
+    "port_pnl": 0.3103,
+    "port_maxdd": 0.0713,
+    "etf_sharpes": {
+      "159915ETF": 1.2892,
+      "500ETF": 0.6849,
+      "300ETF": 0.5928
+    },
+    "min_etf_sharpe": 0.5928,
+    "val_sharpe": 1.8327
+  },
+  "top_20_val": [
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.4,
+          0.05,
+          0.55
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 750,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.8327,
+      "port_pnl": 0.2068,
+      "port_maxdd": 0.0333,
+      "etf_sharpes": {
+        "159915ETF": 2.089,
+        "500ETF": 0.3215,
+        "300ETF": 1.3551
+      },
+      "min_etf_sharpe": 0.3215
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.45,
+          0.0,
+          0.55
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 750,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.7802,
+      "port_pnl": 0.2005,
+      "port_maxdd": 0.0384,
+      "etf_sharpes": {
+        "159915ETF": 2.0249,
+        "500ETF": 0.2942,
+        "300ETF": 1.3551
+      },
+      "min_etf_sharpe": 0.2942
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.25,
+          0.05,
+          0.7
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 1000,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.7525,
+      "port_pnl": 0.1944,
+      "port_maxdd": 0.0412,
+      "etf_sharpes": {
+        "159915ETF": 1.9731,
+        "500ETF": 0.3038,
+        "300ETF": 1.3264
+      },
+      "min_etf_sharpe": 0.3038
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.3,
+          0.0,
+          0.7
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 1000,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.7461,
+      "port_pnl": 0.1937,
+      "port_maxdd": 0.0412,
+      "etf_sharpes": {
+        "159915ETF": 1.9624,
+        "500ETF": 0.3038,
+        "300ETF": 1.3264
+      },
+      "min_etf_sharpe": 0.3038
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.45,
+          0.0,
+          0.55
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 1000,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.7251,
+      "port_pnl": 0.1916,
+      "port_maxdd": 0.042,
+      "etf_sharpes": {
+        "159915ETF": 1.9451,
+        "500ETF": 0.319,
+        "300ETF": 1.2841
+      },
+      "min_etf_sharpe": 0.319
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.4,
+          0.0,
+          0.6
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 1000,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.7184,
+      "port_pnl": 0.1909,
+      "port_maxdd": 0.0427,
+      "etf_sharpes": {
+        "159915ETF": 1.9451,
+        "500ETF": 0.3038,
+        "300ETF": 1.2841
+      },
+      "min_etf_sharpe": 0.3038
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.35,
+          0.05,
+          0.6
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 1000,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.7184,
+      "port_pnl": 0.1909,
+      "port_maxdd": 0.0427,
+      "etf_sharpes": {
+        "159915ETF": 1.9451,
+        "500ETF": 0.3038,
+        "300ETF": 1.2841
+      },
+      "min_etf_sharpe": 0.3038
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.35,
+          0.0,
+          0.65
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 1000,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.717,
+      "port_pnl": 0.1905,
+      "port_maxdd": 0.0412,
+      "etf_sharpes": {
+        "159915ETF": 1.9172,
+        "500ETF": 0.3038,
+        "300ETF": 1.3264
+      },
+      "min_etf_sharpe": 0.3038
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.3,
+          0.05,
+          0.65
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 1000,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.717,
+      "port_pnl": 0.1905,
+      "port_maxdd": 0.0412,
+      "etf_sharpes": {
+        "159915ETF": 1.9172,
+        "500ETF": 0.3038,
+        "300ETF": 1.3264
+      },
+      "min_etf_sharpe": 0.3038
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.35,
+          0.05,
+          0.6
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 750,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.6982,
+      "port_pnl": 0.2002,
+      "port_maxdd": 0.0355,
+      "etf_sharpes": {
+        "159915ETF": 2.0249,
+        "500ETF": 0.3215,
+        "300ETF": 1.1653
+      },
+      "min_etf_sharpe": 0.3215
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.4,
+          0.05,
+          0.55
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 1000,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.6978,
+      "port_pnl": 0.1889,
+      "port_maxdd": 0.0427,
+      "etf_sharpes": {
+        "159915ETF": 1.8892,
+        "500ETF": 0.3311,
+        "300ETF": 1.2841
+      },
+      "min_etf_sharpe": 0.3311
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.25,
+          0.05,
+          0.7
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 750,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.684,
+      "port_pnl": 0.1962,
+      "port_maxdd": 0.0355,
+      "etf_sharpes": {
+        "159915ETF": 1.8702,
+        "500ETF": 0.2942,
+        "300ETF": 1.4567
+      },
+      "min_etf_sharpe": 0.2942
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.4,
+          0.0,
+          0.6
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 500,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.6419,
+      "port_pnl": 0.1828,
+      "port_maxdd": 0.0276,
+      "etf_sharpes": {
+        "159915ETF": 1.6562,
+        "500ETF": 0.6773,
+        "300ETF": 1.1752
+      },
+      "min_etf_sharpe": 0.6773
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.25,
+          0.05,
+          0.7
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 500,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.6392,
+      "port_pnl": 0.1865,
+      "port_maxdd": 0.031,
+      "etf_sharpes": {
+        "159915ETF": 1.6378,
+        "500ETF": 0.6338,
+        "300ETF": 1.2332
+      },
+      "min_etf_sharpe": 0.6338
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.35,
+          0.0,
+          0.65
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 750,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.6334,
+      "port_pnl": 0.1919,
+      "port_maxdd": 0.0355,
+      "etf_sharpes": {
+        "159915ETF": 1.9397,
+        "500ETF": 0.2942,
+        "300ETF": 1.1653
+      },
+      "min_etf_sharpe": 0.2942
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.4,
+          0.0,
+          0.6
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 750,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.6334,
+      "port_pnl": 0.1919,
+      "port_maxdd": 0.0355,
+      "etf_sharpes": {
+        "159915ETF": 1.9397,
+        "500ETF": 0.2942,
+        "300ETF": 1.1653
+      },
+      "min_etf_sharpe": 0.2942
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.3,
+          0.05,
+          0.65
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 750,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.6334,
+      "port_pnl": 0.1919,
+      "port_maxdd": 0.0355,
+      "etf_sharpes": {
+        "159915ETF": 1.9397,
+        "500ETF": 0.2942,
+        "300ETF": 1.1653
+      },
+      "min_etf_sharpe": 0.2942
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.3,
+          0.0,
+          0.7
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 750,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.6183,
+      "port_pnl": 0.1901,
+      "port_maxdd": 0.0355,
+      "etf_sharpes": {
+        "159915ETF": 1.9093,
+        "500ETF": 0.2942,
+        "300ETF": 1.1653
+      },
+      "min_etf_sharpe": 0.2942
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.35,
+          0.0,
+          0.65
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 500,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.5702,
+      "port_pnl": 0.1783,
+      "port_maxdd": 0.0325,
+      "etf_sharpes": {
+        "159915ETF": 1.6378,
+        "500ETF": 0.5233,
+        "300ETF": 1.2398
+      },
+      "min_etf_sharpe": 0.5233
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.3,
+          0.05,
+          0.65
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 500,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.5702,
+      "port_pnl": 0.1783,
+      "port_maxdd": 0.0325,
+      "etf_sharpes": {
+        "159915ETF": 1.6378,
+        "500ETF": 0.5233,
+        "300ETF": 1.2398
+      },
+      "min_etf_sharpe": 0.5233
+    }
+  ],
+  "top_5_test": [
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.4,
+          0.05,
+          0.55
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 750,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.1476,
+      "port_pnl": 0.3103,
+      "port_maxdd": 0.0713,
+      "etf_sharpes": {
+        "159915ETF": 1.2892,
+        "500ETF": 0.6849,
+        "300ETF": 0.5928
+      },
+      "min_etf_sharpe": 0.5928,
+      "val_sharpe": 1.8327
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.45,
+          0.0,
+          0.55
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 750,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.14,
+      "port_pnl": 0.3081,
+      "port_maxdd": 0.0713,
+      "etf_sharpes": {
+        "159915ETF": 1.2892,
+        "500ETF": 0.668,
+        "300ETF": 0.5928
+      },
+      "min_etf_sharpe": 0.5928,
+      "val_sharpe": 1.7802
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.3,
+          0.0,
+          0.7
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 1000,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.1096,
+      "port_pnl": 0.3034,
+      "port_maxdd": 0.0663,
+      "etf_sharpes": {
+        "159915ETF": 1.2241,
+        "500ETF": 0.6875,
+        "300ETF": 0.6084
+      },
+      "min_etf_sharpe": 0.6084,
+      "val_sharpe": 1.7461
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.45,
+          0.0,
+          0.55
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 1000,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.0712,
+      "port_pnl": 0.2965,
+      "port_maxdd": 0.0746,
+      "etf_sharpes": {
+        "159915ETF": 1.2301,
+        "500ETF": 0.6101,
+        "300ETF": 0.5688
+      },
+      "min_etf_sharpe": 0.5688,
+      "val_sharpe": 1.7251
+    },
+    {
+      "params": {
+        "scheme": "ensemble",
+        "score_weights": [
+          0.25,
+          0.05,
+          0.7
+        ],
+        "z_buffer": 0.1,
+        "mode": "binary",
+        "ic_ema_span": 30,
+        "rank_min": 0.4,
+        "rank_max": 1.6,
+        "mono_window": 1000,
+        "dynamic_metric": "multi"
+      },
+      "port_sharpe": 1.067,
+      "port_pnl": 0.2924,
+      "port_maxdd": 0.0701,
+      "etf_sharpes": {
+        "159915ETF": 1.1424,
+        "500ETF": 0.6875,
+        "300ETF": 0.6084
+      },
+      "min_etf_sharpe": 0.6084,
+      "val_sharpe": 1.7525
+    }
+  ]
+}
