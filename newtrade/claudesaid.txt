@@ -1,0 +1,34 @@
+Read plan + report + code. Here rock-solid critique, caveman style. Papers cited where relevant.
+
+**Big problem: threshold overfit.**
+Train-sweep Z_th then add flat buffer (+0.1 to +0.2) not enough armor. This classic backtest-overfit trap — many params/schemes/ETFs tried, best one shown, no correction. Bailey & López de Prado's Deflated Sharpe Ratio (DSR) exist exactly for this: adjust Sharpe for number of trials + non-normal returns. You test 4 schemes × 5 ETFs × multiple thresholds = many trials. Report should show DSR or Probability of Backtest Overfitting (PBO), not raw Cost Sharpe.
+
+**Split method weak.**
+Simple expanding-window train/OOS split (walk-forward) shown in 2024 ScienceDirect study (comparing CPCV, walk-forward, k-fold on synthetic controlled data) to have worse false-discovery control than Combinatorial Purged Cross-Validation (CPCV). CPCV give distribution of Sharpe across many train/test combos → tells you if 1.29 Sharpe is luck or real. Recommend: swap single walk-forward split for CPCV (or at minimum multiple purged folds), report Sharpe distribution not point estimate.
+
+**Short-side skew suspicious.**
+300ETF: 141 short trades vs 11 long. 588000ETF/50ETF: zero features, dead entirely. Smell: params tuned to noisy small-N regime (10 feat only). Small feature count + heavy short concentration = fragile. Check: does removing top 1-2 "monotonic" factors kill the edge? If yes — overfit to few lucky factors, not real signal.
+
+**Score weight formula hand-tuned.**
+0.20/0.15/0.65 split (mono-heavy) — smells like it fit history, not principled. Nest this choice inside CPCV/walk-forward too — don't lock 65% by eyeball. Otherwise you're doing hyperparam search without correction, same DSR problem one level up.
+
+**One scheme, many schemes, no ensemble.**
+Old lit (Rapach et al, cited in ML-asset-pricing lit) — simple combo/average forecast across multiple weighting methods usually beats picking single "best" one, cuts variance, reduces selection bias risk. You test EW/ICW/Score/Rank separately then crown a winner (Rank Bounded here) — try blending Rank+ICW+Score signal instead, more robust than pick-the-best.
+
+**Nonstandard errors caution.**
+Recent EFM 2025 paper (Lalwani et al) on ML strategy research design found strategy returns swing hugely just from small design choices (window length, filters) — non-standard errors up to 5x normal SEs. Translation: your Sharpe numbers (0.48–1.29 cost-adj) could shift wildly just from burn-in length, feature floor (10 vs 12), or z-clip choice. Before trusting current numbers, run sensitivity grid on these knobs, report range not point.
+
+**Turnover/cost blind spot.**
+67x–150x annualized turnover at only 8bps flat fee — real cost curve nonlinear (slippage, impact) at that turnover on Chinese ETFs. Stress-test at 15-20bps, see if edge survives. If Sharpe collapse under 2x fee bump — signal too thin to trust.
+
+**Untested sizing modes.**
+Plan defines tanh/quadratic sizing but REPORT.md only show binary mode. Quadratic claimed 4.9-5.9 Sharpe on |Z|>1.2 bins in diagnostics — never validated OOS. Run it, don't just cite diagnostic bin stat (that's in-sample cherry pick).
+
+**Priority order:**
+1. DSR/PBO on current results — first, cheap, tells you if it's real
+2. CPCV swap for split method
+3. Ensemble schemes instead of pick-winner
+4. Cost/param sensitivity grid
+5. Test quadratic/tanh mode OOS
+
+Skip GLM like you said. Good news: zero-lookahead discipline (expanding z-score, train-then-buffer thresh) already right instinct — just need multi-trial correction layered on top.
