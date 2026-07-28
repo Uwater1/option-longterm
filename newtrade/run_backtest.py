@@ -29,6 +29,7 @@ from robustness import deflated_sharpe_ratio, run_cpcv_backtest
 
 AVAILABLE_ETFS = ["300ETF", "500ETF", "50ETF", "588000ETF", "159915ETF"]
 ALL_SCHEMES = ["ew", "icw", "score", "rank"]  # glm deferred
+ENSEMBLE_SCHEMES = ["ew", "icw", "score", "rank"]  # schemes averaged in ensemble
 
 
 def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew", z_th: float = 0.5, 
@@ -106,26 +107,37 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     Z_std = expanding_zscore_numba(X_raw, burn_in=burn_in, clip=3.0)
     
     # 5. Calculate Composite Signal using weighting scheme
-    scheme_func = get_weighting_scheme(scheme_name)
-    
     # Determine n_train for ICW shrinkage (days before start_date)
     t_start_ts = pd.Timestamp(start_date)
     n_train = int((df["date"] < t_start_ts).sum())
     if n_train < 252:
         n_train = 1700  # fallback ~7 years
     
-    extra_kwargs = rank_kwargs if (scheme_name in ("rank", "score") and rank_kwargs) else {}
-    if dynamic_ic and scheme_name in ("rank", "score"):
-        metric_choice = extra_kwargs.get("dynamic_metric", "multi")
-        if metric_choice == "multi":
-            sw = extra_kwargs.get("score_weights", (0.20, 0.15, 0.65))
-            mw = extra_kwargs.get("mono_window", 750)
-            exp_mat = expanding_factor_score_numba(Z_std, signs, full_trade_ret, burn_in=burn_in, score_weights=sw, mono_window=mw)
-        else:
-            exp_mat = expanding_factor_ic_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
-        extra_kwargs["expanding_ic"] = exp_mat
-
-    Z_composite = scheme_func(Z_std, signs, pool=pool, n_train=n_train, **extra_kwargs)
+    if scheme_name == "ensemble":
+        # Ensemble: equal-weight average of all 4 schemes
+        IC_mat = expanding_factor_ic_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
+        rk = rank_kwargs if rank_kwargs else {}
+        Z_composites = []
+        for s_name in ENSEMBLE_SCHEMES:
+            s_func = get_weighting_scheme(s_name)
+            s_kwargs = dict(rk) if s_name in ("rank", "score") else {}
+            if s_name in ("rank", "score"):
+                s_kwargs["expanding_ic"] = IC_mat
+            Z_composites.append(s_func(Z_std, signs, pool=pool, n_train=n_train, **s_kwargs))
+        Z_composite = np.mean(Z_composites, axis=0)
+    else:
+        scheme_func = get_weighting_scheme(scheme_name)
+        extra_kwargs = rank_kwargs if (scheme_name in ("rank", "score") and rank_kwargs) else {}
+        if dynamic_ic and scheme_name in ("rank", "score"):
+            metric_choice = extra_kwargs.get("dynamic_metric", "multi")
+            if metric_choice == "multi":
+                sw = extra_kwargs.get("score_weights", (0.20, 0.15, 0.65))
+                mw = extra_kwargs.get("mono_window", 750)
+                exp_mat = expanding_factor_score_numba(Z_std, signs, full_trade_ret, burn_in=burn_in, score_weights=sw, mono_window=mw)
+            else:
+                exp_mat = expanding_factor_ic_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
+            extra_kwargs["expanding_ic"] = exp_mat
+        Z_composite = scheme_func(Z_std, signs, pool=pool, n_train=n_train, **extra_kwargs)
 
     # 6. Threshold Determination (auto-sweep or fixed)
     sweep_info = None
@@ -229,7 +241,7 @@ def main():
     parser = argparse.ArgumentParser(description="NewTrade Day-Model Factor Monetization Backtest Runner")
     parser.add_argument("-e", "--etf", type=str, default="all", help="Target ETF (300ETF, 500ETF, 50ETF, 588000ETF, 159915ETF, or all)")
     parser.add_argument("-s", "--side", type=str, default="single", choices=["single", "long", "short"], help="Trading side")
-    parser.add_argument("--scheme", type=str, default="all", choices=["ew", "icw", "score", "rank", "glm", "all"], help="Factor weighting scheme (default: all = ensemble average)")
+    parser.add_argument("--scheme", type=str, default="ensemble", choices=["ew", "icw", "score", "rank", "ensemble", "all"], help="Factor weighting scheme (default: ensemble = equal-weight average of all 4)")
     parser.add_argument("--z-th", type=str, default="auto", help="Conviction threshold Z score. 'auto' = train-sweep + buffer, or float value for fixed.")
     parser.add_argument("--z-buffer", type=float, default=0.1, help="Production buffer added to train-optimal threshold (default 0.1, walk-forward validated)")
     parser.add_argument("--z-short-buffer", type=float, default=None, help="Production buffer for short threshold (default: z_buffer + 0.1)")
@@ -356,7 +368,7 @@ def main():
         print()
 
     # Save aggregated Rank Bounded Weight trades CSV artifact
-    rank_results = [r for r in results if r.get("scheme") == "rank" and r.get("status") == "SUCCESS"]
+    rank_results = [r for r in results if r.get("scheme") in ("rank", "ensemble") and r.get("status") == "SUCCESS"]
     if rank_results:
         all_rank_dfs = [r["trade_log_df"] for r in rank_results if r.get("trade_log_df") is not None]
         if all_rank_dfs:
@@ -410,6 +422,7 @@ def main():
     headers = ["ETF", "Asset", "Side", "OOS Period", "Z_th", "Features", "Trades", "Cost Sharpe", "Raw Sharpe", "Total PnL", "Max DD", "Win Rate", "Turnover"]
     
     SCHEME_TITLES = {
+        "ensemble": "Ensemble (Equal-Weight Average)",
         "rank": f"Rank Bounded Weight ({args.rank_mapping.capitalize()})",
         "ew": "Equal Weight (EW)",
         "icw": "IC Weight (ICW)",
@@ -478,14 +491,16 @@ def main():
             lines.append("| " + " | ".join(row) + " |")
         return "\n".join(lines)
     
-    # Group results by scheme (ensure 'rank' is first)
+    # Group results by scheme (ensure 'ensemble' is first, then 'rank')
     from collections import OrderedDict
     scheme_groups = OrderedDict()
+    if "ensemble" in [r.get("scheme") for r in results]:
+        scheme_groups["ensemble"] = [r for r in results if r.get("scheme") == "ensemble"]
     if "rank" in [r.get("scheme") for r in results]:
         scheme_groups["rank"] = [r for r in results if r.get("scheme") == "rank"]
     for r in results:
         s = r.get("scheme", "?")
-        if s != "rank":
+        if s not in ("rank", "ensemble"):
             scheme_groups.setdefault(s, []).append(r)
     
     # Build report sections
@@ -495,9 +510,9 @@ def main():
         title = SCHEME_TITLES.get(scheme_key, scheme_key.upper())
         table_md = _render_table(rows)
         
-        if scheme_key == "rank":
-            # Uncollapsed main section with chart
-            img_md = f"![Rank Bounded Weight Cumulative Equity]({chart_rel_path})\n\n" if chart_rel_path else ""
+        if scheme_key in ("ensemble", "rank") and scheme_key not in [sg for sg in scheme_groups if scheme_groups[scheme_key] != scheme_results]:
+            # Uncollapsed main section with chart for primary scheme
+            img_md = f"![Cumulative Equity]({chart_rel_path})\n\n" if chart_rel_path and scheme_key == list(scheme_groups.keys())[0] else ""
             section = f"## {title}\n\n{img_md}{table_md}"
         else:
             # Collapsed details block for secondary schemes

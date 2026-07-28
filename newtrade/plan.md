@@ -256,21 +256,50 @@ Original critique (claudesaid.txt) raised 8 issues. Below is what we tested, wha
 
 ---
 
-## 8. Final Production Configuration
+## 8. Component Diagnostic Results (2026-07-28)
+
+Ran `diagnose_components.py`: each scheme × dynamic_ic, fixed Z_th=0.8, per-year Sharpe.
+
+### Key findings
+
+**Dynamic IC HURTS signal quality (on training data):**
+- 300ETF: Score Δ=-0.089, Rank Δ=-0.146
+- 500ETF: Score Δ=+0.005, Rank Δ=-0.049
+- 159915ETF: Score Δ=-0.117, Rank Δ=-0.298
+
+**Simplest scheme wins (by training Sharpe):**
+- 159915ETF: EW = 1.635 (15/16 years positive, only bad: 2017)
+- 500ETF: Rank static = 1.606 (but OOS collapses to 0.339)
+- 300ETF: Score static = 0.940
+
+**500ETF problem = feature dilution, NOT alpha decay:**
+- EW top-5 features: OOS SR = 0.614
+- EW all-32 features: OOS SR = 0.238
+- Correlation: mean |r| = 0.47, 192/496 pairs ≥ 0.60
+- Fix: tighten B4 corr gate in day-model-new (θ=0.85→0.70, MAX_POOL 35→20)
+
+**159915ETF is the real edge:**
+- EW, 11 features, OOS SR=1.085 with FIXED threshold (no sweep)
+- Positive every year 2012-2026 except 2017
+- Robust to feature count (5→11 all work)
+
+### Revised production config
 
 | Parameter | Value | Evidence |
 |-----------|-------|----------|
-| Signal | Ensemble (EW+ICW+Score+Rank)/4 | Eliminates scheme-selection bias |
-| Dynamic weighting | IC-only (EMA-smoothed expanding IC) | Outperforms multi-metric in production |
-| Position mode | Binary L+S | Highest Sharpe; shorts add value |
-| Threshold | Train-sweep (all pre-OOS) + 0.10 buffer | Walk-forward validated |
-| Rank bounds | [0.2, 1.8] | Default; tighter bounds hurt production |
+| Scheme | **EW (equal weight)** | Best train SR, zero parameters, 15/16 years positive |
+| Dynamic IC | **OFF** | Hurts on training data across all ETFs |
+| Position mode | Binary L+S | Highest Sharpe |
+| Threshold | Fixed 0.8 or train-sweep + buffer | Fixed works for 159915ETF |
 | Fee | 8 bps | Stress-tested to 20bps |
 | Feature floor | ≥ 10 | 50ETF/588000ETF skipped |
+| Pool size target | 10-15 | 32 features dilutes signal (500ETF evidence) |
 
-**Production results (2022-2026 OOS):**
-- 159915ETF: SR=1.404, PnL=+0.601, CPCV 100% positive
-- 500ETF: SR=0.969, PnL=+0.359, CPCV 100% positive
-- 300ETF: SR=0.773, PnL=+0.140, CPCV 100% positive
-- Portfolio DSR(10 trials) = 0.953 (SIGNIFICANT)
+### GLM note (future work)
+
+GLM (Ridge/L2) could solve the feature-dilution problem differently: instead of cutting features, let the model learn optimal weights. With 32 correlated features, Ridge would naturally down-weight redundant ones (similar to what ICW does statically). Worth testing AFTER the corr gate fix — if pool is already 12-15 features, GLM may not add value over EW. Test only if:
+1. Corr gate fix still leaves pool > 15
+2. Or: a new ETF with many uncorrelated features becomes available
+
+Priority: low. EW + tight pool is simpler and proven.
 

@@ -171,3 +171,38 @@ SE_IC ≈ 1/√n_train
 - Dobriban 2026, *No Universal Multiplicative FDR Bound for BH with Correlated Two-Sided Gaussian Tests*, arXiv:2607.14812 — FDR control failure under high candidate correlation; justification for BY-FDR.
 - Bailey & López de Prado 2014, *The Deflated Sharpe Ratio: Correcting for Selection Bias, Backtest Overfitting and Non-Normality*, Journal of Portfolio Management 40(5) — deflate IC/Sharpe by trial count.
 - `day-model_plan.md` (this repo, v2) — chronological split design, CSS+VIF mechanics, block-bootstrap CI reporting, all reused as-is where noted above.
+
+---
+
+## TODO: Tighten B4 Correlation Gate (from newtrade downstream evidence)
+
+**Date**: 2026-07-28
+**Source**: `newtrade/test_feature_count.py` + `newtrade/diagnose_correlation.py`
+
+### Problem
+500ETF admitted pool has 32 features. Downstream EW trading shows:
+- Top-5 features → OOS Sharpe = 0.614
+- All-32 features → OOS Sharpe = 0.238 (2.6× worse)
+
+The bottom 22 features aren't bad individually (all passed B3), but equal-weighting them dilutes the top-5 signal into noise.
+
+### Correlation evidence (500ETF, signed standardized)
+- Mean pairwise |r| = **0.47** (very high)
+- 192/496 pairs (39%) have |r| ≥ 0.60
+- 10 pairs have |r| ≥ 0.85
+- Max |r| = 0.89
+
+Compare 159915ETF (11 features): mean |r| = 0.62 but works great (OOS SR=1.085). Fewer features + high corr = strong consensus. Many features + moderate corr = noise accumulation.
+
+### Code discrepancy
+- `plan.md` line 163 says θ=0.70 was set
+- `select_features.py` line 39: `DEFAULT_THETA = 0.85` ← **still 0.85 in code**
+- B6b adaptive gate (TIGHT_THETA=0.75) only fires when pool > 35. 500ETF has 32 → never triggers.
+
+### Recommended fix
+1. **Set `DEFAULT_THETA = 0.70` in code** (match what plan says was done)
+2. **Lower `MAX_POOL_SIZE` from 35 to 20** — 32 features is too many for downstream EW
+3. Consider: even θ=0.70 may be too loose. 159915ETF works with 11 features. Target pool size 10-15.
+
+### Impact
+Re-running `select_features.py` with θ=0.70 on 500ETF should cut pool from 32 → ~12-15 features. Downstream EW should improve from OOS 0.238 → ~0.5-0.6.
