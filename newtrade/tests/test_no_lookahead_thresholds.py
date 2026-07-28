@@ -11,7 +11,9 @@ import numpy as np
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-REPO_ROOT = HERE.parent
+NEWTRADE_DIR = HERE.parent
+if str(NEWTRADE_DIR) not in sys.path:
+    sys.path.insert(0, str(NEWTRADE_DIR))
 
 from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_ic_numba
 from weighting import compute_rank_w

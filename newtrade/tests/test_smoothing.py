@@ -11,8 +11,9 @@ from pathlib import Path
 from scipy.stats import rankdata
 
 HERE = Path(__file__).resolve().parent
-REPO_ROOT = HERE.parent
-sys.path.insert(0, str(HERE))
+NEWTRADE_DIR = HERE.parent
+if str(NEWTRADE_DIR) not in sys.path:
+    sys.path.insert(0, str(NEWTRADE_DIR))
 
 from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_ic_numba
 from strategy import simulate_etf_spot, calculate_metrics, sweep_optimal_threshold, compute_production_threshold

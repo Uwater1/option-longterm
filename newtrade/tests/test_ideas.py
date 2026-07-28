@@ -13,6 +13,7 @@ from scipy.stats import rankdata
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parent))
 
 from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_ic_numba
 from strategy import simulate_etf_spot, calculate_metrics, sweep_optimal_threshold, compute_production_threshold, generate_positions

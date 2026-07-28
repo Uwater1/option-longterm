@@ -269,6 +269,17 @@ def expanding_factor_ic_numba(Z_std: np.ndarray, signs: np.ndarray, trade_return
     return IC_matrix
 
 
+@njit(cache=True)
+def _fast_rankdata_norm(arr: np.ndarray) -> np.ndarray:
+    N = len(arr)
+    order = np.argsort(arr)
+    ranks = np.empty(N, dtype=np.float64)
+    for i in range(N):
+        ranks[order[i]] = (i + 1.0) / float(N)
+    return ranks
+
+
+@njit(cache=True)
 def expanding_factor_score_numba(Z_std: np.ndarray, signs: np.ndarray, trade_returns: np.ndarray, burn_in: int = 252,
                                  score_weights: tuple = (0.20, 0.15, 0.65), mode: str = "fixed", mono_window: int = 750) -> np.ndarray:
     """
@@ -287,17 +298,25 @@ def expanding_factor_score_numba(Z_std: np.ndarray, signs: np.ndarray, trade_ret
         r_t = trade_returns[t]
         daily_ic[t] = Z_signed[t] * r_t
 
-    cum_ic = np.cumsum(daily_ic, axis=0)
-    cum_sq_ic = np.cumsum(daily_ic**2, axis=0)
-    cum_pos_ic = np.cumsum(daily_ic > 0, axis=0)
+    cum_ic = np.zeros((T, N), dtype=np.float64)
+    cum_sq_ic = np.zeros((T, N), dtype=np.float64)
+    cum_pos_ic = np.zeros((T, N), dtype=np.float64)
+
+    for j in range(N):
+        c_p = 0.0
+        c_sq = 0.0
+        c_pos = 0.0
+        for t in range(T):
+            dp = daily_ic[t, j]
+            c_p += dp
+            c_sq += dp * dp
+            if dp > 0:
+                c_pos += 1.0
+            cum_ic[t, j] = c_p
+            cum_sq_ic[t, j] = c_sq
+            cum_pos_ic[t, j] = c_pos
 
     w_ic, w_ir, w_mono = score_weights
-
-    # Dynamic metrics storage for adaptive mode
-    if mode == "adaptive":
-        r_ic_hist = np.zeros((T, N), dtype=np.float64)
-        r_ir_hist = np.zeros((T, N), dtype=np.float64)
-        r_mono_hist = np.zeros((T, N), dtype=np.float64)
 
     for t in range(burn_in, T):
         n_samples = float(t)
@@ -313,31 +332,11 @@ def expanding_factor_score_numba(Z_std: np.ndarray, signs: np.ndarray, trade_ret
         else:
             mono = cum_pos_ic[t-1] / n_samples
 
-        r_ic = rankdata(mean_ic) / float(N)
-        r_ir = rankdata(ic_ir) / float(N)
-        r_mono = rankdata(mono) / float(N)
+        r_ic = _fast_rankdata_norm(mean_ic)
+        r_ir = _fast_rankdata_norm(ic_ir)
+        r_mono = _fast_rankdata_norm(mono)
 
-        if mode == "adaptive":
-            r_ic_hist[t] = r_ic
-            r_ir_hist[t] = r_ir
-            r_mono_hist[t] = r_mono
-            
-            # Compute temporal variance of each rank metric up to t-1
-            std_ric = np.std(r_ic_hist[burn_in:t+1]) + 1e-6
-            std_rir = np.std(r_ir_hist[burn_in:t+1]) + 1e-6
-            std_rmono = np.std(r_mono_hist[burn_in:t+1]) + 1e-6
-
-            inv_var_ic = 1.0 / (std_ric ** 2)
-            inv_var_ir = 1.0 / (std_rir ** 2)
-            inv_var_mono = 1.0 / (std_rmono ** 2)
-            inv_sum = inv_var_ic + inv_var_ir + inv_var_mono
-
-            w_ic_t = inv_var_ic / inv_sum
-            w_ir_t = inv_var_ir / inv_sum
-            w_mono_t = inv_var_mono / inv_sum
-            Score_matrix[t] = w_ic_t * r_ic + w_ir_t * r_ir + w_mono_t * r_mono
-        else:
-            Score_matrix[t] = w_ic * r_ic + w_ir * r_ir + w_mono * r_mono
+        Score_matrix[t] = w_ic * r_ic + w_ir * r_ir + w_mono * r_mono
 
     if burn_in < T:
         for t in range(burn_in):

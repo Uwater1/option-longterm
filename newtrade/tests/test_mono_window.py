@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script to evaluate dynamic metric 'ic' (true_ic) with different EMA spans (10, 30, 60, 120, 252).
+Test script to evaluate monotonicity window lengths (W in [126, 252, 500, 750, 1000, 0]).
 """
 
 import sys
@@ -9,20 +9,22 @@ import numpy as np
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-REPO_ROOT = HERE.parent
+NEWTRADE_DIR = HERE.parent
+if str(NEWTRADE_DIR) not in sys.path:
+    sys.path.insert(0, str(NEWTRADE_DIR))
 
-from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_ic_numba
-from weighting import compute_rank_w
+from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_score_numba
+from weighting import compute_score_w
 from strategy import generate_positions, simulate_etf_spot, calculate_metrics, sweep_optimal_threshold, compute_production_threshold
 
 ETFS = ["300ETF", "500ETF", "159915ETF"]
-SPANS = [10, 30, 60, 120, 252]
+WINDOWS = [126, 252, 500, 750, 1000, 0]  # 0 = lifetime expanding
 START_DATE = "2022-01-01"
 END_DATE = "2026-01-01"
 FEE_BPS = 0.0008
 
 
-def run_span_test(etf: str, span: int):
+def run_window_test(etf: str, w_mono: int):
     pool = load_admitted_pool(etf, side="single", min_features=10)
     if not pool:
         return None
@@ -33,17 +35,18 @@ def run_span_test(etf: str, span: int):
     burn_in = 252 if len(df) > 500 else 100
     Z_std = expanding_zscore_numba(X_raw, burn_in=burn_in, clip=3.0)
 
-    exp_ic = expanding_factor_ic_numba(Z_std, signs, trade_ret, burn_in=burn_in)
+    score_weights = (0.20, 0.15, 0.65)
+    exp_mat = expanding_factor_score_numba(
+        Z_std, signs, trade_ret, burn_in=burn_in, score_weights=score_weights, mono_window=w_mono
+    )
 
     rank_kwargs = {
-        "w_min_ratio": 0.2,
-        "w_max_ratio": 1.8,
-        "mapping_shape": "linear",
-        "ic_ema_span": span,
-        "expanding_ic": exp_ic,
+        "ic_ema_span": 30,
+        "expanding_ic": exp_mat,
+        "score_weights": score_weights,
     }
 
-    Z_composite = compute_rank_w(Z_std, signs, pool=pool, **rank_kwargs)
+    Z_composite = compute_score_w(Z_std, signs, pool=pool, **rank_kwargs)
 
     t_start_ts = pd.Timestamp(START_DATE)
     train_mask = df["date"] < t_start_ts
@@ -66,34 +69,32 @@ def run_span_test(etf: str, span: int):
     net_ret, raw_ret, fees = simulate_etf_spot(ret_oos, pos_oos, fee_bps=FEE_BPS)
     m = calculate_metrics(net_ret, raw_ret, pos_oos, dates=df_oos["date"])
 
+    win_title = "Expanding" if w_mono == 0 else f"{w_mono}d ({w_mono/250:.1f}yr)"
+
     return {
         "etf": etf,
-        "span": span,
+        "window": win_title,
         "trades": m["n_trades"],
         "cost_sharpe": m["cost_sharpe"],
         "pnl": m["total_pnl"],
         "max_dd": m["max_drawdown"],
+        "win_rate": m["win_rate_pct"],
         "turnover": m["ann_turnover"],
     }
 
 
 def main():
     print("================================================================================")
-    print("TESTING DYNAMIC METRIC 'ic' WITH DIFFERENT EMA SPANS")
+    print("      EVALUATING MONOTONICITY WINDOW LENGTHS ACROSS ALL ETFS                   ")
     print("================================================================================")
-    results = []
     for etf in ETFS:
-        print(f"\n--- {etf} ---")
-        for s in SPANS:
-            res = run_span_test(etf, s)
+        print(f"\n>>> ETF: {etf}")
+        print(f"{'Window':<18} | {'Cost Sharpe':<11} | {'Total PnL':<10} | {'Max DD':<8} | {'Win Rate':<8} | {'Turnover':<8}")
+        print("-" * 75)
+        for w in WINDOWS:
+            res = run_window_test(etf, w)
             if res:
-                results.append(res)
-                print(f"  Span: {s:<4} | Cost Sharpe: {res['cost_sharpe']:.3f} | PnL: {res['pnl']:+.4f} | MaxDD: {res['max_dd']:.4f} | Trades: {res['trades']:<3} | Turnover: {res['turnover']:.1f}x")
-
-    df_res = pd.DataFrame(results)
-    out_csv = HERE / "artifacts" / "test_ema_span_results.csv"
-    df_res.to_csv(out_csv, index=False)
-
+                print(f"{res['window']:<18} | {res['cost_sharpe']:11.3f} | {res['pnl']:+10.4f} | {res['max_dd']:8.4f} | {res['win_rate']:7.1f}% | {res['turnover']:7.1f}x")
 
 if __name__ == "__main__":
     main()
