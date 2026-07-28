@@ -231,3 +231,100 @@ All V2 changes are in `glm.py` only (new parameters to existing functions). CLI 
 - `--ic-prior`: Enable IC-weighted Ridge prior (default: ON)
 - `--n-adaptive`: Enable N-adaptive alpha scaling (default: ON)
 - `--min-percentile P`: Percentile gate for trade frequency control
+
+---
+
+## 11. V3 Improvements — Britten-Jones Target Formulation (Sharpe Optimization)
+
+### 11.1 Motivation & Theoretical Basis
+
+Britten-Jones (1999) proved that regressing a constant vector $\mathbf{1}$ on asset excess returns $R$ recovers the mean-variance tangency portfolio weights directly:
+
+$$\hat{\beta}_{\text{BJ}} = \arg\min_{\beta} \|\mathbf{1} - R \beta\|_2^2 + \lambda \|\beta\|_2^2$$
+
+In `newtrade` GLM, the companion regression features are factor strategy returns $R_{s,i} = \tilde{Z}_{s,i} \cdot y_s$ (or $R_{s,i} = \tilde{Z}_{s,i} \cdot \text{sign}(y_s)$).
+
+Replacing standard return-predictor MSE ($\min_\beta \|y_s - \tilde{Z}_s^\top \beta\|^2$) with Britten-Jones companion regression aligns Ridge penalty directly with **Sharpe ratio maximization**, preventing noise-driven overtrading on volatile instruments like 159915ETF.
+
+### 11.2 Target Modes
+
+| Mode | Feature Matrix $X_{s}$ | Target Vector $y_s$ | Sample Weights | Optimization Target |
+|------|------------------------|---------------------|----------------|---------------------|
+| `return` (V1/V2) | $\tilde{Z}_s$ | Intraday return $r_s$ | None | Return prediction MSE |
+| `bj_return` | $\tilde{Z}_s \cdot r_s$ | Constant $1$ | None | Portfolio Sharpe Ratio |
+| `bj_sign` | $\tilde{Z}_s \cdot \text{sign}(r_s)$ | Constant $1$ | None | Directional Sharpe Ratio |
+| `bj_sortino` | $\tilde{Z}_s \cdot r_s$ | Constant $1$ | $w_s = 2.0$ if $r_s < 0$ else $1.0$ | Downside Sortino Ratio |
+
+### 11.3 Empirical Performance Summary (Spot ETF OOS 2022–2026)
+
+| ETF | Target Mode | Sharpe | PnL | MaxDD | WinRate | Trades | Gate Verdict |
+|-----|-------------|--------|-----|-------|---------|--------|--------------|
+| **300ETF** | `return` (MSE) | **0.919** | +0.1663 | 0.0469 | 63.0% | 54 | **PASS** |
+| | `bj_return` | 0.706 | +0.1640 | 0.0529 | 55.1% | 185 | FAIL |
+| | `bj_sign` | 0.680 | +0.0797 | **0.0243** | 69.2% | 13 | FAIL |
+| | `Rank` (Baseline) | 0.707 | +0.1447 | 0.0474 | 55.9% | 143 | - |
+| **500ETF** | `bj_sign` | **0.836** | **+0.3192** | 0.1232 | 58.3% | 290 | **PASS** |
+| | `bj_sortino` | **0.808** | +0.3184 | 0.1029 | 55.8% | 351 | **PASS** |
+| | `return` (MSE) | 0.711 | +0.2871 | 0.1030 | 57.0% | 328 | FAIL |
+| | `Rank` (Baseline) | 0.768 | +0.2799 | 0.1182 | 55.9% | 270 | - |
+| **159915ETF** | `bj_sign` | **1.502** | **+0.7879** | 0.1058 | 58.1% | 346 | **PASS** |
+| | `return` (MSE) | 1.056 | +0.6000 | 0.1121 | 56.1% | 628 (Overtrade) | FAIL |
+| | `Rank` (Baseline) | 1.460 | +0.6359 | 0.0910 | 61.1% | 239 | - |
+
+### 11.4 Key Insights & CLI Usage
+
+1. **`bj_sign` achieves 2/3 PASS rate** (`500ETF` & `159915ETF`), successfully solving `159915ETF` overtrading by regularizing return scale noise.
+2. **CLI invocation**:
+   ```bash
+   uv run python newtrade/glm_backtest.py -e all --target-mode bj_sign --compare
+   ```
+
+---
+
+## 12. V4 Improvements — Kozak-Nagel-Santosh (2020) Eigenstructure Prior
+
+### 12.1 Mathematical Specification
+
+Kozak, Nagel, & Santosh (JFE 2020) proposed shrinking SDF/portfolio coefficients in Principal Component (PC) space rather than raw feature space:
+
+Given factor Gram matrix $\Sigma_X = V \Lambda V^\top$ with eigenvalues $\lambda_1 \ge \lambda_2 \ge \ldots \ge \lambda_N > 0$:
+
+1. Project features into PC space: $Z_{\text{PC}} = X V$.
+2. Apply eigenvalue-scaled anisotropic penalty: $d_k \propto \frac{1}{\lambda_k^\gamma}$ ($\gamma = 1.0$ default).
+3. Diagonal solve in PC space:
+   $$\hat{b}_k = \frac{(Z_{\text{PC}}^\top y)_k}{\lambda_k + \alpha \cdot d_k}$$
+4. Inverse projection back to factor space: $\hat{\beta} = V \hat{b}$.
+
+### 12.2 Prior Modes
+
+| Prior Mode | Shrinkage Space | Penalty Diagonal $d_k$ | Applicable Scenario |
+|------------|-----------------|------------------------|---------------------|
+| `kns` | Principal Component Space | $d_k \propto \lambda_k^{-\gamma}$ | Correlated pools ($N=32$, 500ETF) |
+| `ic` | Feature Space | $d_i \propto \text{deflated\_ic}_i^{-1}$ | Metadata-weighted prior |
+| `iso` | Feature Space | $d_i = 1.0$ | Isotropic standard Ridge |
+
+### 12.3 Empirical Comparison across Prior Modes (`target-mode bj_sign`, Spot ETF OOS 2022–2026)
+
+| ETF | Metric | `ic` (Per-Feature IC) | `kns` ($\gamma=0.2$) | `kns` ($\gamma=1.0$) | `iso` (Isotropic) | Baseline `Rank` |
+|-----|--------|-----------------------|----------------------|----------------------|-------------------|-----------------|
+| **300ETF** | Sharpe | 0.680 | 0.680 | 0.680 | 0.680 | 0.707 |
+| | PnL | +0.0797 | +0.0797 | +0.0797 | +0.0797 | +0.1447 |
+| | MaxDD | **0.0243** | **0.0243** | **0.0243** | **0.0243** | 0.0474 |
+| | Trades | 13 | 13 | 13 | 13 | 143 |
+| **500ETF** | Sharpe | **0.836** (PASS) | **0.809** (PASS) | 0.433 | **0.809** (PASS) | 0.768 |
+| | PnL | **+0.3192** | +0.2938 | +0.1821 | +0.3113 | +0.2799 |
+| | Trades | 290 | 244 | 372 | 308 | 270 |
+| **159915ETF** | Sharpe | **1.502** (PASS) | 1.153 | 1.153 | 1.459 | 1.460 |
+| | PnL | **+0.7879** | +0.5316 | +0.5316 | +0.7618 | +0.6359 |
+| | Trades | 346 | 326 | 326 | 342 | 239 |
+
+### 12.4 Key Insights & CLI Usage
+
+1. `prior-mode ic` combined with `target-mode bj_sign` delivers optimal performance (2/3 PASS).
+2. Aggressive KNS eigen-shrinkage ($\gamma=1.0$) reveals that factor alpha is distributed across mid-spectrum PCs rather than concentrated purely in top market-level PCs. Mild KNS ($\gamma=0.2$) recovers performance (0.809 Sharpe on 500ETF).
+3. **CLI invocation**:
+   ```bash
+   uv run python newtrade/glm_backtest.py -e all --target-mode bj_sign --prior-mode kns --kns-gamma 0.2 --compare
+   ```
+
+

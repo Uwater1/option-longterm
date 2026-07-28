@@ -59,9 +59,12 @@ def run_glm_single(
     long_only: bool = False,
     use_future: bool = False,
     min_features: int = 10,
-    ic_prior: bool = True,
+    ic_prior: bool = None,
     n_adaptive: bool = True,
     min_percentile: float = 0.0,
+    target_mode: str = "bj_sign",
+    prior_mode: str = "ic",
+    kns_gamma: float = 1.0,
 ) -> dict:
     """Run GLM backtest for one ETF."""
     
@@ -120,6 +123,9 @@ def run_glm_single(
         ic_prior=ic_prior,
         n_adaptive=n_adaptive,
         min_percentile=min_percentile,
+        target_mode=target_mode,
+        prior_mode=prior_mode,
+        kns_gamma=kns_gamma,
     )
 
     # 9. Threshold determination
@@ -170,6 +176,9 @@ def run_glm_single(
         "glm_alpha": glm_info["alpha"],
         "glm_alpha_results": glm_info["alpha_selection_results"],
         "clamp_nonneg": clamp_nonneg,
+        "target_mode": target_mode,
+        "prior_mode": prior_mode,
+        "kns_gamma": kns_gamma,
     })
 
     return metrics
@@ -316,6 +325,14 @@ def main():
     parser.add_argument("-e", "--etf", type=str, default="all",
                         help="Target ETF (300ETF, 500ETF, 50ETF, 588000ETF, 159915ETF, or all)")
     parser.add_argument("-s", "--side", type=str, default="single", choices=["single", "long", "short"])
+    parser.add_argument("--target-mode", type=str, default="bj_sign",
+                        choices=["return", "bj_return", "bj_sign", "bj_sortino"],
+                        help="Target formulation: return (MSE), bj_return (Sharpe), bj_sign (Directional), bj_sortino (Sortino)")
+    parser.add_argument("--prior-mode", type=str, default="ic",
+                        choices=["kns", "ic", "iso"],
+                        help="Prior formulation: kns (Kozak-Nagel-Santosh eigenstructure), ic (per-feature IC), iso (isotropic)")
+    parser.add_argument("--kns-gamma", type=float, default=1.0,
+                        help="Eigenvalue penalty exponent for KNS prior (default: 1.0)")
     parser.add_argument("--compare", action="store_true",
                         help="Run Rank Bounded Weight alongside GLM and print acceptance table")
     parser.add_argument("--no-clamp", action="store_true",
@@ -346,13 +363,17 @@ def main():
     fee_bps = args.fee_bps / 10000.0
     alphas = [float(x) for x in args.alphas.split(",")] if args.alphas else None
     clamp = not args.no_clamp
-    ic_prior = not args.no_ic_prior
     n_adaptive = not args.no_n_adaptive
     min_percentile = args.min_percentile
 
+    # Legacy flag mapping
+    prior_mode = args.prior_mode
+    if args.no_ic_prior and prior_mode == "ic":
+        prior_mode = "iso"
+
     mode_label = "Future" if args.future else "Spot ETF"
     print("=" * 80)
-    print(f"NewTrade GLM Backtest (V2) | Mode={mode_label} | Clamp={clamp} | IC-Prior={ic_prior} | N-Adaptive={n_adaptive} | Pctl={min_percentile} | z_th={args.z_th} | OOS=[{args.start_date} ~ {args.end_date}]")
+    print(f"NewTrade GLM Backtest (V3/KNS) | Mode={mode_label} | Target={args.target_mode} | Prior={prior_mode} (γ={args.kns_gamma}) | Clamp={clamp} | z_th={args.z_th} | OOS=[{args.start_date} ~ {args.end_date}]")
     print("=" * 80)
 
     glm_results = []
@@ -370,8 +391,9 @@ def main():
             z_buffer=args.z_buffer, z_short_buffer=args.z_short_buffer,
             alphas=alphas, clamp_nonneg=clamp,
             long_only=args.long_only, use_future=args.future,
-            ic_prior=ic_prior, n_adaptive=n_adaptive,
-            min_percentile=min_percentile,
+            n_adaptive=n_adaptive, min_percentile=min_percentile,
+            target_mode=args.target_mode, prior_mode=prior_mode,
+            kns_gamma=args.kns_gamma,
         )
         glm_results.append(glm_m)
 
@@ -485,6 +507,49 @@ def main():
         csv_path = artifacts_dir / "glm_vs_rank.csv"
         csv_df.to_csv(csv_path, index=False)
         print(f"\nSaved comparison CSV to {csv_path}")
+
+        # Save REPORT_glm.md
+        report_lines = [
+            "# NewTrade Scheme 5 — Linear GLM OOS Backtest Report",
+            "",
+            f"- **OOS Evaluation Period**: `{args.start_date} ~ {args.end_date}`",
+            "- **Intraday Trade Session**: `10:00 AM Open -> 14:35 PM Close`",
+            "- **Scheme**: `Scheme 5 — Linear GLM (Expanding Ridge)`",
+            f"- **Target Formulation Mode**: `{args.target_mode}`",
+            f"- **Prior Mode**: `{prior_mode}`",
+            f"- **Conviction Threshold**: `{args.z_th}` (z_buffer = {args.z_buffer})",
+            f"- **Position Mode**: `{args.position_mode}`",
+            f"- **Transaction Friction**: `{args.fee_bps} bps`",
+            f"- **Instrument Mode**: `{'Futures' if args.future else 'Spot ETF'}`",
+            "",
+            "---",
+            "",
+            "## Executive Summary & Acceptance Gate Results",
+            "",
+            "| ETF | Asset | Side | Z_th | Features | Trades | GLM Sharpe | Rank Sharpe | GLM PnL | Rank PnL | GLM MaxDD | Rank MaxDD | GLM WR | Rank WR | Gate Verdict |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        ]
+        for i, etf in enumerate(etfs):
+            glm_m = glm_results[i]
+            rank_m = rank_results[i] if i < len(rank_results) else {}
+            if glm_m.get("status") == "SUCCESS" and rank_m.get("status") == "SUCCESS":
+                gate = check_acceptance(glm_m, rank_m)
+                report_lines.append(
+                    f"| {etf} | {glm_m['asset_type']} | {args.side} | L:{glm_m['z_th']:.2f}/S:{glm_m['z_th_short']:.2f} | "
+                    f"{glm_m['n_features']} | {glm_m.get('n_trades', 0)} | {glm_m['cost_sharpe']:.3f} | {rank_m['cost_sharpe']:.3f} | "
+                    f"{glm_m['total_pnl']:+.4f} | {rank_m['total_pnl']:+.4f} | {glm_m['max_drawdown']:.4f} | {rank_m['max_drawdown']:.4f} | "
+                    f"{glm_m['win_rate_pct']:.1f}% | {rank_m['win_rate_pct']:.1f}% | **{gate['verdict']}** |"
+                )
+            else:
+                report_lines.append(
+                    f"| {etf} | {'Future' if args.future else 'Spot ETF'} | {args.side} | N/A | {glm_m.get('n_features', 0)} | "
+                    f"N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | SKIP |"
+                )
+
+        report_path = HERE / "REPORT_glm.md"
+        with open(report_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(report_lines) + "\n")
+        print(f"Saved markdown report to {report_path}")
 
     # Final verdict
     if args.compare:

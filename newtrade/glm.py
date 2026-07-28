@@ -15,31 +15,145 @@ Design constraints (see plan_glm.md):
 import numpy as np
 
 
-def _ridge_fit(X: np.ndarray, y: np.ndarray, alpha: float, penalty_diag: np.ndarray = None) -> np.ndarray:
+def _ridge_fit(
+    X: np.ndarray,
+    y: np.ndarray,
+    alpha: float,
+    penalty_diag: np.ndarray = None,
+    sample_weights: np.ndarray = None,
+) -> np.ndarray:
     """
     Closed-form Ridge regression (no intercept).
-    beta = (X'X + alpha * D^{-1})^{-1} X'y
-    
-    Args:
-      X: (n_samples, n_features)
-      y: (n_samples,)
-      alpha: L2 penalty strength
-      penalty_diag: (n_features,) diagonal of penalty matrix D^{-1}.
-                    If None, uses identity (isotropic Ridge).
-                    Features with larger penalty_diag values are shrunk more.
-      
-    Returns:
-      beta: (n_features,)
+    beta = (X' W X + alpha * D^{-1})^{-1} X' W y
     """
     n_features = X.shape[1]
-    XtX = X.T @ X
-    Xty = X.T @ y
+    if sample_weights is not None:
+        sw_sqrt = np.sqrt(sample_weights)[:, None]
+        X_w = X * sw_sqrt
+        y_w = y * sample_weights
+        XtX = X_w.T @ X_w
+        Xty = X.T @ y_w
+    else:
+        XtX = X.T @ X
+        Xty = X.T @ y
+        
     if penalty_diag is not None:
         reg = alpha * np.diag(penalty_diag)
     else:
         reg = alpha * np.eye(n_features)
-    beta = np.linalg.solve(XtX + reg, Xty)
+        
+    try:
+        beta = np.linalg.solve(XtX + reg, Xty)
+    except np.linalg.LinAlgError:
+        beta = np.linalg.lstsq(XtX + reg, Xty, rcond=None)[0]
     return beta
+
+
+def _kns_ridge_fit(
+    X: np.ndarray,
+    y: np.ndarray,
+    alpha: float,
+    gamma: float = 1.0,
+    sample_weights: np.ndarray = None,
+) -> np.ndarray:
+    """
+    Kozak, Nagel, & Santosh (JFE 2020) PCA-space anisotropic Ridge fit.
+    
+    1. Eigen-decomposition of Gram matrix S = X' W X
+    2. Construct PC penalty d_k = 1 / max(lambda_k, floor)^gamma
+    3. Normalize d_k so mean(d_k) = 1.0 (preserves alpha scale)
+    4. Solve in PC space: b_k = (Z_pc' W y)_k / (lambda_k + alpha * d_k)
+    5. Transform back: beta = V @ b
+    """
+    n_samples, n_features = X.shape
+    if sample_weights is not None:
+        sw_sqrt = np.sqrt(sample_weights)[:, None]
+        X_w = X * sw_sqrt
+        y_w = y * sample_weights
+    else:
+        X_w = X
+        y_w = y
+
+    XtX = X_w.T @ X_w
+    Xty = X.T @ y_w
+
+    try:
+        eigvals, V = np.linalg.eigh(XtX)
+    except np.linalg.LinAlgError:
+        return _ridge_fit(X, y, alpha, sample_weights=sample_weights)
+
+    idx = np.argsort(eigvals)[::-1]
+    eigvals = eigvals[idx]
+    V = V[:, idx]
+
+    max_ev = max(float(eigvals[0]), 1e-12)
+    floored_eigvals = np.maximum(eigvals, max_ev * 1e-6)
+
+    # KNS penalty diagonal: d_k = 1 / (lambda_k ^ gamma)
+    penalty_pc = 1.0 / (floored_eigvals ** gamma)
+    penalty_pc = penalty_pc / penalty_pc.mean()
+
+    # Project into PC space
+    Xty_pc = V.T @ Xty
+
+    # Solve in PC space (diagonal system)
+    denom = eigvals + alpha * penalty_pc
+    b = Xty_pc / denom
+
+    # Transform back: beta = V @ b
+    beta = V @ b
+    return beta
+
+
+def _fit_model(
+    X: np.ndarray,
+    y: np.ndarray,
+    alpha: float,
+    prior_mode: str = "kns",
+    kns_gamma: float = 1.0,
+    penalty_diag: np.ndarray = None,
+    sample_weights: np.ndarray = None,
+) -> np.ndarray:
+    """Fit model under requested prior_mode ('kns', 'ic', 'iso')."""
+    if prior_mode == "kns":
+        return _kns_ridge_fit(X, y, alpha, gamma=kns_gamma, sample_weights=sample_weights)
+    elif prior_mode == "ic":
+        return _ridge_fit(X, y, alpha, penalty_diag=penalty_diag, sample_weights=sample_weights)
+    else:
+        return _ridge_fit(X, y, alpha, penalty_diag=None, sample_weights=sample_weights)
+
+
+def _prepare_regression_data(
+    Z_hist: np.ndarray,
+    ret_hist: np.ndarray,
+    target_mode: str = "bj_sign",
+) -> tuple:
+    """
+    Build X, y, sample_weights for expanding fit based on target_mode.
+    
+    Modes:
+      'return': Standard MSE regression (y = trade_returns, X = Z_signed)
+      'bj_return': Britten-Jones Sharpe regression (y = 1, X = Z_signed * trade_returns)
+      'bj_sign': Britten-Jones directional regression (y = 1, X = Z_signed * sign(trade_returns))
+      'bj_sortino': Britten-Jones downside-weighted Sortino regression (y = 1, X = Z_signed * trade_returns, sample_weights)
+    """
+    if target_mode == "return":
+        return Z_hist, ret_hist, None
+    elif target_mode == "bj_return":
+        X = Z_hist * ret_hist[:, None]
+        y = np.ones(len(Z_hist), dtype=np.float64)
+        return X, y, None
+    elif target_mode == "bj_sign":
+        X = Z_hist * np.sign(ret_hist)[:, None]
+        y = np.ones(len(Z_hist), dtype=np.float64)
+        return X, y, None
+    elif target_mode == "bj_sortino":
+        X = Z_hist * ret_hist[:, None]
+        y = np.ones(len(Z_hist), dtype=np.float64)
+        weights = np.where(ret_hist < 0, 2.0, 1.0)
+        return X, y, weights
+    else:
+        raise ValueError(f"Unknown target_mode: '{target_mode}'")
 
 
 def _compute_ic(pred: np.ndarray, ret: np.ndarray) -> float:
@@ -78,25 +192,12 @@ def select_best_alpha(
     fee_bps: float = 0.0008,
     clamp_nonneg: bool = True,
     penalty_diag: np.ndarray = None,
+    target_mode: str = "bj_sign",
+    prior_mode: str = "ic",
+    kns_gamma: float = 1.0,
 ) -> tuple:
     """
     Select best Ridge alpha via expanding-window IC evaluation on training portion.
-    
-    For each candidate alpha, runs expanding fit from burn_in to train_end_idx,
-    computes mean expanding IC (correlation of prediction with next-day return),
-    and picks the alpha with highest mean IC.
-    
-    Args:
-      Z_signed: (T, N) sign-aligned z-scores
-      trade_returns: (T,) target returns
-      alphas: list of candidate lambda values
-      burn_in: first day to start predicting
-      train_end_idx: end of training portion (exclusive). If None, uses full series.
-      fee_bps: transaction cost (unused, kept for interface compat)
-      clamp_nonneg: whether to clamp beta >= 0
-      
-    Returns:
-      (best_alpha, best_ic, alpha_results)
     """
     T, N = Z_signed.shape
     if train_end_idx is None:
@@ -122,9 +223,14 @@ def select_best_alpha(
         
         for t in range(effective_start, train_end_idx):
             if current_beta is None or (t - effective_start) % refit_cadence == 0:
-                X_hist = Z_signed[:t]
-                y_hist = trade_returns[:t]
-                current_beta = _ridge_fit(X_hist, y_hist, alpha, penalty_diag=penalty_diag)
+                X_fit, y_fit, weights = _prepare_regression_data(
+                    Z_signed[:t], trade_returns[:t], target_mode=target_mode
+                )
+                current_beta = _fit_model(
+                    X_fit, y_fit, alpha,
+                    prior_mode=prior_mode, kns_gamma=kns_gamma,
+                    penalty_diag=penalty_diag, sample_weights=weights,
+                )
                 if clamp_nonneg:
                     current_beta = np.maximum(0.0, current_beta)
             
@@ -173,12 +279,15 @@ def expanding_ridge_composite(
     refit_every: int = 1,
     fee_bps: float = 0.0008,
     pool: list = None,
-    ic_prior: bool = True,
+    ic_prior: bool = None,  # deprecated, use prior_mode instead
     n_adaptive: bool = True,
     min_percentile: float = 0.0,
+    target_mode: str = "bj_sign",
+    prior_mode: str = "ic",
+    kns_gamma: float = 1.0,
 ) -> tuple:
     """
-    Produce expanding-window Ridge composite signal (V2).
+    Produce expanding-window Ridge composite signal.
     
     If alpha is None, runs alpha selection on training portion first.
     
@@ -193,37 +302,45 @@ def expanding_ridge_composite(
       refit_every: refit cadence in days (1 = daily)
       fee_bps: transaction cost
       pool: admitted pool metadata (for IC-weighted prior)
-      ic_prior: use IC-weighted penalty diagonal (V2)
-      n_adaptive: scale alpha by N/10 (V2)
-      min_percentile: expanding percentile gate for |Z| (0=disabled, V2)
+      n_adaptive: scale alpha by N/10 (default False with KNS prior)
+      min_percentile: expanding percentile gate for |Z| (0=disabled)
+      target_mode: 'return' (MSE), 'bj_return' (Sharpe), 'bj_sign' (Directional), 'bj_sortino' (Sortino)
+      prior_mode: 'kns' (Kozak-Nagel-Santosh 2020 eigenstructure), 'ic' (per-feature IC), 'iso' (isotropic)
+      kns_gamma: eigenvalue penalty exponent for KNS prior (default 1.0)
       
     Returns:
       Z_composite: (T,) predicted signal
-      info: dict with metadata (chosen alpha, coefficient snapshots, etc.)
+      info: dict with metadata
     """
     T, N = Z_signed.shape
+    
+    # Handle backward-compat for ic_prior flag
+    if ic_prior is True:
+        prior_mode = "ic"
+    elif ic_prior is False and prior_mode == "ic":
+        prior_mode = "iso"
     
     if alphas is None:
         alphas = [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
     
-    # V2: Build IC-weighted penalty diagonal
+    # Build IC-weighted penalty diagonal if prior_mode == "ic"
     penalty_diag = None
-    if ic_prior and pool is not None and len(pool) >= N:
+    if prior_mode == "ic" and pool is not None and len(pool) >= N:
         penalty_diag = _build_ic_penalty_diag(pool, N)
     
-    # V2: N-adaptive alpha scaling
+    # N-adaptive alpha scaling (only if explicitly enabled)
     n_scale = (N / 10.0) if n_adaptive else 1.0
     
     # Alpha selection
     alpha_results = []
     if alpha is None:
-        # Scale candidate alphas by N-adaptive factor
         scaled_alphas = [a * n_scale for a in alphas]
         alpha, best_ic, alpha_results = select_best_alpha(
             Z_signed, trade_returns, scaled_alphas,
             burn_in=burn_in, train_end_idx=train_end_idx,
             fee_bps=fee_bps, clamp_nonneg=clamp_nonneg,
-            penalty_diag=penalty_diag,
+            penalty_diag=penalty_diag, target_mode=target_mode,
+            prior_mode=prior_mode, kns_gamma=kns_gamma,
         )
     else:
         alpha = alpha * n_scale
@@ -237,9 +354,14 @@ def expanding_ridge_composite(
     
     for t in range(effective_start, T):
         if current_beta is None or (t - effective_start) % refit_every == 0:
-            X_hist = Z_signed[:t]
-            y_hist = trade_returns[:t]
-            current_beta = _ridge_fit(X_hist, y_hist, alpha, penalty_diag=penalty_diag)
+            X_fit, y_fit, weights = _prepare_regression_data(
+                Z_signed[:t], trade_returns[:t], target_mode=target_mode
+            )
+            current_beta = _fit_model(
+                X_fit, y_fit, alpha,
+                prior_mode=prior_mode, kns_gamma=kns_gamma,
+                penalty_diag=penalty_diag, sample_weights=weights,
+            )
             if clamp_nonneg:
                 current_beta = np.maximum(0.0, current_beta)
             
@@ -249,10 +371,7 @@ def expanding_ridge_composite(
         
         Z_raw[t] = Z_signed[t] @ current_beta
     
-    # Re-standardize to unit variance (expanding) so output is comparable to
-    # Schemes 1-4 which produce signals with std ~ O(0.5-1.0).
-    # Without this, Ridge predicts actual returns (~0.0003 scale) and the
-    # threshold sweep in [0.2, 1.5] would never trigger.
+    # Re-standardize to unit variance (expanding)
     Z_composite = np.zeros(T, dtype=np.float64)
     sum_x = 0.0
     sum_sq = 0.0
@@ -270,13 +389,10 @@ def expanding_ridge_composite(
         sum_sq += val * val
         n_count += 1
     
-    # V2: Optional percentile gate to control trade frequency
+    # Optional percentile gate to control trade frequency
     if min_percentile > 0:
-        # Expanding percentile gate: zero out weak signals
         abs_vals = np.abs(Z_composite)
-        running_sorted = []
         for t in range(effective_start + 63, T):
-            # Use expanding window percentile
             history = abs_vals[effective_start:t]
             threshold = np.percentile(history[history > 0], min_percentile) if (history > 0).any() else 0.0
             if abs_vals[t] < threshold:
@@ -291,10 +407,14 @@ def expanding_ridge_composite(
         "n_features": N,
         "coef_history": coef_history,
         "raw_std": float(np.std(Z_raw[effective_start:T])) if T > effective_start else 0.0,
-        "ic_prior": ic_prior and penalty_diag is not None,
+        "prior_mode": prior_mode,
+        "kns_gamma": kns_gamma,
         "n_adaptive": n_adaptive,
         "n_scale": n_scale,
         "min_percentile": min_percentile,
+        "target_mode": target_mode,
     }
     
     return Z_composite, info
+
+

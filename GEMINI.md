@@ -49,6 +49,7 @@ data/                          # Parquet files
 backtest/                      # Model files, plots, artifacts
 validate/                      # Validation reports
 
+final.md                       # Comprehensive master synthesis report
 backtest_engine.py             # Core backtest engine
 backtest_strategies.py         # CallStrategy & PutStrategy definitions
 backtest_covered_call.py       # Covered call script

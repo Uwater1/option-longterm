@@ -29,6 +29,12 @@ uv run python newtrade/run_backtest.py -e all --scheme all --z-buffer 0.1
 uv run python newtrade/diagnose_rank_scheme.py -e 300ETF
 uv run python newtrade/diagnose_rank_scheme.py -e 300ETF --future
 uv run python newtrade/diagnose_rank_scheme.py -e all
+
+# Scheme 5 Linear GLM with Britten-Jones Sharpe Optimization (--target-mode bj_sign / bj_return)
+uv run python newtrade/glm_backtest.py -e 300ETF --target-mode bj_sign --compare
+uv run python newtrade/glm_backtest.py -e all --target-mode bj_sign --prior-mode kns --kns-gamma 0.2 --compare
+uv run python newtrade/glm_backtest.py -e all --target-mode bj_sign --compare
+uv run python newtrade/glm_backtest.py -e all --target-mode bj_sign --compare --future
 ```
 
 ## Architecture
@@ -36,12 +42,17 @@ uv run python newtrade/diagnose_rank_scheme.py -e all
 ```
 newtrade/
 ├── plan.md                  # Design document (weighting formulas, threshold logic, short buffer)
+├── plan_glm.md              # Scheme 5 GLM design document
+├── REPORT.md                # OOS backtest report for Schemes 1-4
+├── REPORT_glm.md            # OOS backtest report for Scheme 5 GLM vs Rank
 ├── utils.py                 # Data loading, recipe computation, expanding z-score, futures trade return mapper
 ├── weighting.py             # 4 weighting schemes: EW, ICW, Score, Rank (Moderate Tilt 0.2~1.8 default, dynamic IC)
+├── glm.py                   # Scheme 5 Expanding Ridge with Britten-Jones (1999) Sharpe/directional target modes
+├── glm_backtest.py          # Standalone Scheme 5 CLI runner & acceptance gate vs Rank Bounded Weight
 ├── strategy.py              # Threshold sweep, position sizing (binary/tanh/quadratic), ETF simulation, trade log builder
 ├── run_backtest.py          # CLI runner (--future, --scheme all, --z-th auto, --z-short-buffer, --dynamic-ic, CSV exporter)
 ├── diagnose_rank_scheme.py  # Dedicated Scheme 4 diagnosis suite
-├── artifacts/               # Equity charts & trade log CSVs (rank_bounded_trades.csv, trades_*.csv)
+├── artifacts/               # Equity charts & trade log CSVs (rank_bounded_trades.csv, glm_vs_rank.csv)
 └── data/                    # JSON result artifacts
 ```
 
