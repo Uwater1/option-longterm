@@ -22,7 +22,7 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
 
-from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_ic_numba, load_future_trade_returns
+from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_ic_numba, expanding_factor_score_numba, load_future_trade_returns
 from weighting import get_weighting_scheme
 from strategy import generate_positions, simulate_etf_spot, calculate_metrics, sweep_optimal_threshold, compute_production_threshold, build_trade_log_df
 
@@ -115,8 +115,12 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     
     extra_kwargs = rank_kwargs if (scheme_name == "rank" and rank_kwargs) else {}
     if dynamic_ic and scheme_name == "rank":
-        exp_ic_mat = expanding_factor_ic_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
-        extra_kwargs["expanding_ic"] = exp_ic_mat
+        metric_choice = extra_kwargs.get("dynamic_metric", "ic")
+        if metric_choice == "multi":
+            exp_mat = expanding_factor_score_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
+        else:
+            exp_mat = expanding_factor_ic_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
+        extra_kwargs["expanding_ic"] = exp_mat
 
     Z_composite = scheme_func(Z_std, signs, pool=pool, n_train=n_train, **extra_kwargs)
 
@@ -234,9 +238,13 @@ def main():
     parser.add_argument("--rank-mapping", type=str, default="linear", choices=["linear", "power", "softmax", "top_k"], help="Scheme 4 rank mapping shape")
     parser.add_argument("--rank-power", type=float, default=2.0, help="Power exponent for 'power' rank mapping shape")
     parser.add_argument("--rank-top-k", type=int, default=None, help="Top K factors truncation threshold for 'top_k' rank mapping shape")
-    parser.add_argument("--dynamic-ic", action="store_true", help="Enable zero-lookahead expanding rolling factor IC ranking")
-    parser.add_argument("--ic-ema-span", type=int, default=10, help="EMA span parameter for smoothing dynamic expanding factor ICs (default 10)")
-    parser.add_argument("--long-only", action="store_true", help="Restrict to long-only trades (Spot ETF mode). Default: False (allows short trades).")
+    parser.add_argument("--dynamic-ic", "--dynamic-score", dest="dynamic_ic", action="store_true", default=True, help="Enable zero-lookahead expanding factor ranking (default: True)")
+    parser.add_argument("--no-dynamic-ic", "--no-dynamic-score", dest="dynamic_ic", action="store_false", help="Disable dynamic ranking (use static pool metadata score)")
+    parser.add_argument("--dynamic-metric", type=str, default="multi", choices=["ic", "multi"], help="Dynamic factor ranking metric: 'multi' (IC + IC_IR + Monotonicity score default) or 'ic' (expanding factor IC)")
+    parser.add_argument("--ic-ema-span", type=int, default=10, help="EMA span parameter for smoothing dynamic expanding metrics (default 10)")
+    parser.add_argument("--weight-delta", type=float, default=None, help="Optional partial-adjustment delta parameter for smoothing daily target weight jumps (default: None)")
+    parser.add_argument("--long-only", dest="long_only", action="store_true", default=False, help="Restrict to long-only trades (Spot ETF mode). Default: False (allows shorting).")
+    parser.add_argument("--allow-short", dest="long_only", action="store_false", help="Allow short trades (default)")
     parser.add_argument("--future", action="store_true", help="Trade underlying Index Futures (IF88 for 300ETF, IC88 for 500ETF, IH88 for 50ETF) instead of Spot ETF.")
 
     args = parser.parse_args()
@@ -260,6 +268,8 @@ def main():
         "power": args.rank_power,
         "top_k": args.rank_top_k,
         "ic_ema_span": args.ic_ema_span,
+        "dynamic_metric": args.dynamic_metric,
+        "weight_delta": args.weight_delta,
     }
 
     results = []

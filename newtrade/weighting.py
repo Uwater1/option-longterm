@@ -205,7 +205,7 @@ def compute_rank_w(Z: np.ndarray, signs: np.ndarray, pool: list,
                    w_min_ratio: float = 0.2, w_max_ratio: float = 1.8,
                    mapping_shape: str = "linear", power: float = 2.0, softmax_tau: float = 1.0,
                    top_k: int = None, score_weights: tuple = (0.40, 0.35, 0.25),
-                   expanding_ic: np.ndarray = None, ic_ema_span: int = 10, **kwargs) -> np.ndarray:
+                   expanding_ic: np.ndarray = None, ic_ema_span: int = 10, weight_delta: float = None, **kwargs) -> np.ndarray:
     """
     Rank Bounded Weight Scheme (Scheme 4):
     Ranks factors by composite score, maps to weights using chosen mapping shape.
@@ -234,11 +234,23 @@ def compute_rank_w(Z: np.ndarray, signs: np.ndarray, pool: list,
         Z_composite = np.zeros(T, dtype=np.float64)
         w_min = w_min_ratio / N
         w_max = w_max_ratio / N
+        w_prev = np.ones(N, dtype=np.float64) / float(N)
         for t in range(T):
             ic_t = ic_mat[t]
             ranks_t = rankdata(ic_t, method="average")
-            weights_t = w_min + (w_max - w_min) * (ranks_t - 1.0) / (N - 1.0)
-            weights_t = weights_t / weights_t.sum()
+            w_target = w_min + (w_max - w_min) * (ranks_t - 1.0) / (N - 1.0)
+            w_target = w_target / w_target.sum()
+            
+            if weight_delta is not None and 0.0 < weight_delta < 1.0:
+                if t == 0:
+                    weights_t = w_target
+                else:
+                    weights_t = w_prev + weight_delta * (w_target - w_prev)
+                    weights_t = weights_t / weights_t.sum()
+                w_prev = weights_t
+            else:
+                weights_t = w_target
+
             Z_composite[t] = Z_signed[t] @ weights_t
         return Z_composite
 

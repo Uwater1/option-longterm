@@ -13,6 +13,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from numba import njit
+from scipy.stats import rankdata
 
 # Path resolution
 HERE = Path(__file__).resolve().parent
@@ -266,4 +267,45 @@ def expanding_factor_ic_numba(Z_std: np.ndarray, signs: np.ndarray, trade_return
             IC_matrix[t, :] = IC_matrix[burn_in, :]
 
     return IC_matrix
+
+
+def expanding_factor_score_numba(Z_std: np.ndarray, signs: np.ndarray, trade_returns: np.ndarray, burn_in: int = 252) -> np.ndarray:
+    """
+    Compute zero-lookahead expanding multi-metric factor score (IC + IC_IR + Monotonicity) over time.
+    Returns Score_matrix of shape (T, N) where row t contains score calculated using data up to t-1.
+    """
+    T, N = Z_std.shape
+    Score_matrix = np.zeros((T, N), dtype=np.float64)
+    if T < burn_in or N == 0:
+        return Score_matrix
+
+    Z_signed = Z_std * signs
+    daily_ic = np.zeros((T, N), dtype=np.float64)
+    for t in range(T):
+        r_t = trade_returns[t]
+        daily_ic[t] = Z_signed[t] * r_t
+
+    cum_ic = np.cumsum(daily_ic, axis=0)
+    cum_sq_ic = np.cumsum(daily_ic**2, axis=0)
+    cum_pos_ic = np.cumsum(daily_ic > 0, axis=0)
+
+    for t in range(burn_in, T):
+        n_samples = float(t)
+        mean_ic = cum_ic[t-1] / n_samples
+        var_ic = (cum_sq_ic[t-1] / n_samples) - mean_ic**2
+        std_ic = np.sqrt(np.maximum(1e-12, var_ic))
+        ic_ir = mean_ic / std_ic
+        mono = cum_pos_ic[t-1] / n_samples
+
+        r_ic = rankdata(mean_ic) / float(N)
+        r_ir = rankdata(ic_ir) / float(N)
+        r_mono = rankdata(mono) / float(N)
+        Score_matrix[t] = 0.40 * r_ic + 0.35 * r_ir + 0.25 * r_mono
+
+    if burn_in < T:
+        for t in range(burn_in):
+            Score_matrix[t, :] = Score_matrix[burn_in, :]
+
+    return Score_matrix
+
 

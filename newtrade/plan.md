@@ -43,7 +43,7 @@ $$w_i = w_{\min} + (w_{\max} - w_{\min}) \cdot \frac{\text{rank}(\text{score}_i)
 
 - **Moderate Tilt Default**: $w_{\min} = 0.2/N$, $w_{\max} = 1.8/N$ (top factor gets $9\times$ weight of bottom factor). Protects against pool tail noise while tilting heavily to top factors.
 - **Mapping Shapes**: Supports `linear`, `power` ($R^p$), `softmax` ($\exp(\tau R/N)$), and `top_k` truncation.
-- **Zero-Lookahead Expanding Rolling IC Ranking (`--dynamic-ic`)**: Dynamically updates factor rank scores $S_{i,t}$ on day $t$ using historical expanding factor IC calculated strictly on data up to $t-1$. Automatically downweights decaying factors OOS.
+- **Zero-Lookahead Dynamic Score Ranking (`--dynamic-score`, default `--dynamic-metric multi`)**: Dynamically updates factor rank scores $S_{i,t}$ on day $t$ using historical expanding multi-metric score ($0.40 \times \text{rank\_norm}(\mu_{\text{IC}}) + 0.35 \times \text{rank\_norm}(\text{IR}_{\text{IC}}) + 0.25 \times \text{rank\_norm}(\text{Mono})$) smoothed with 10d EMA (`--ic-ema-span 10`). Prevents single-metric raw IC whipsaws and stabilizes factor weights OOS. Supports `--dynamic-metric ic` as fallback option.
 
 ---
 
