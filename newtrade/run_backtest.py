@@ -113,9 +113,9 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     if n_train < 252:
         n_train = 1700  # fallback ~7 years
     
-    extra_kwargs = rank_kwargs if (scheme_name == "rank" and rank_kwargs) else {}
-    if dynamic_ic and scheme_name == "rank":
-        metric_choice = extra_kwargs.get("dynamic_metric", "ic")
+    extra_kwargs = rank_kwargs if (scheme_name in ("rank", "score") and rank_kwargs) else {}
+    if dynamic_ic and scheme_name in ("rank", "score"):
+        metric_choice = extra_kwargs.get("dynamic_metric", "multi")
         if metric_choice == "multi":
             sw = extra_kwargs.get("score_weights", (0.20, 0.15, 0.65))
             mw = extra_kwargs.get("mono_window", 750)
@@ -223,7 +223,7 @@ def main():
     parser = argparse.ArgumentParser(description="NewTrade Day-Model Factor Monetization Backtest Runner")
     parser.add_argument("-e", "--etf", type=str, default="all", help="Target ETF (300ETF, 500ETF, 50ETF, 588000ETF, 159915ETF, or all)")
     parser.add_argument("-s", "--side", type=str, default="single", choices=["single", "long", "short"], help="Trading side")
-    parser.add_argument("--scheme", type=str, default="ew", choices=["ew", "icw", "score", "rank", "glm", "all"], help="Factor weighting scheme ('all' runs ew/icw/score/rank)")
+    parser.add_argument("--scheme", type=str, default="score", choices=["ew", "icw", "score", "rank", "glm", "all"], help="Factor weighting scheme (default: score, or 'all' for all schemes)")
     parser.add_argument("--z-th", type=str, default="auto", help="Conviction threshold Z score. 'auto' = train-sweep + buffer, or float value for fixed.")
     parser.add_argument("--z-buffer", type=float, default=0.1, help="Production buffer added to train-optimal threshold for long (default 0.1)")
     parser.add_argument("--z-short-buffer", type=float, default=None, help="Production buffer for short threshold (default: z_buffer + 0.1)")

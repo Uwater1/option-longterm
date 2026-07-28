@@ -119,11 +119,37 @@ def compute_score_w(Z: np.ndarray, signs: np.ndarray, pool: list, score_weights:
     Score Weighted Scheme (B3-Inspired):
     w_i ∝ score_i = w_ic*rank_norm(deflated_ic) + w_ir*rank_norm(ic_ir) + w_mono*rank_norm(mono)
     
-    Multi-dimensional quality weighting using only pool metadata.
+    Multi-dimensional quality weighting. If expanding_ic is provided, uses dynamic daily score matrix.
     """
     T, N = Z.shape
     if N == 0:
         return np.zeros(T, dtype=np.float64)
+    if N == 1:
+        return Z[:, 0] * signs[0]
+
+    expanding_ic = kwargs.get("expanding_ic", None)
+    if expanding_ic is not None and expanding_ic.shape == Z.shape:
+        ic_ema_span = kwargs.get("ic_ema_span", 30)
+        if ic_ema_span and ic_ema_span > 1:
+            alpha = 2.0 / (ic_ema_span + 1.0)
+            score_mat = np.zeros_like(expanding_ic)
+            score_mat[0] = expanding_ic[0]
+            for t_idx in range(1, T):
+                score_mat[t_idx] = alpha * expanding_ic[t_idx] + (1.0 - alpha) * score_mat[t_idx - 1]
+        else:
+            score_mat = expanding_ic
+
+        Z_signed = Z * signs
+        Z_composite = np.zeros(T, dtype=np.float64)
+        for t in range(T):
+            w_t = score_mat[t]
+            w_sum = w_t.sum()
+            if w_sum < 1e-12:
+                w_t = np.ones(N, dtype=np.float64) / N
+            else:
+                w_t = w_t / w_sum
+            Z_composite[t] = Z_signed[t] @ w_t
+        return Z_composite
     
     scores = _compute_pool_scores(pool, score_weights=score_weights)
     
