@@ -1067,9 +1067,14 @@ def generate_report(results, suffix="", oos_years=None):
                 years_str = " | ".join(f"{yr}: {ic:+.3f}" for yr, ic in sorted(yearly.items()))
                 lines.extend([
                     f"**`{f['feature_name']}`** (Lock IC={f['lock_ic']:+.4f}, Sharpe={f['lock_sharpe']:+.4f})",
+                    f"- Admission: Train IC={f.get('overall_ic', 0):+.4f}, Deflated={f.get('deflated_ic', 0):+.4f}, "
+                    f"IR={f.get('ic_ir', 0):.2f}, Mono={f.get('monotonicity', 0):.2f}, p={f.get('p_value', 1):.4f}, MaxCorr={f.get('max_corr', 0):.2f}",
                     f"- Yearly ICs: {years_str}",
                     f"- IC CV={f.get('ic_cv', 0):.2f}, Neg years={f.get('n_negative_years', 0)}/{f.get('n_years', 0)}, "
                     f"Half ratio={f.get('half_ratio', 0):.2f}, Recency ratio={f.get('recency_ratio', 0):.2f}",
+                    f"- Early IC={f.get('early_ic', 0):+.4f}, Recent IC={f.get('recent_ic', 0):+.4f}, "
+                    f"1st-half IC={f.get('ic_first_half', 0):+.4f}, 2nd-half IC={f.get('ic_second_half', 0):+.4f}, "
+                    f"Neg regimes={f.get('n_negative_regimes', 0)}/5",
                 ])
                 if f.get("weak_link"):
                     lines.append(f"- Weak component: `{f['weak_link']}` (CV={f.get('weak_link_cv', 0):.2f}, neg years={f.get('weak_link_n_neg_years', 0)})")
@@ -1104,9 +1109,14 @@ def generate_report(results, suffix="", oos_years=None):
                 years_str = " | ".join(f"{yr}: {ic:+.3f}" for yr, ic in sorted(yearly.items()))
                 lines.extend([
                     f"**`{f['feature_name']}`** (Lock IC={f['lock_ic']:+.4f}, Sharpe={f['lock_sharpe']:+.4f})",
+                    f"- Admission: Train IC={f.get('overall_ic', 0):+.4f}, Deflated={f.get('deflated_ic', 0):+.4f}, "
+                    f"IR={f.get('ic_ir', 0):.2f}, Mono={f.get('monotonicity', 0):.2f}, p={f.get('p_value', 1):.4f}, MaxCorr={f.get('max_corr', 0):.2f}",
                     f"- Yearly ICs: {years_str}",
                     f"- IC CV={f.get('ic_cv', 0):.2f}, Neg years={f.get('n_negative_years', 0)}/{f.get('n_years', 0)}, "
                     f"Half ratio={f.get('half_ratio', 0):.2f}, Recency ratio={f.get('recency_ratio', 0):.2f}",
+                    f"- Early IC={f.get('early_ic', 0):+.4f}, Recent IC={f.get('recent_ic', 0):+.4f}, "
+                    f"1st-half IC={f.get('ic_first_half', 0):+.4f}, 2nd-half IC={f.get('ic_second_half', 0):+.4f}, "
+                    f"Neg regimes={f.get('n_negative_regimes', 0)}/5",
                 ])
                 if f.get("weak_link"):
                     lines.append(f"- Weak component: `{f['weak_link']}` (CV={f.get('weak_link_cv', 0):.2f})")
@@ -1140,12 +1150,20 @@ def generate_report(results, suffix="", oos_years=None):
                 years_str = " | ".join(f"{yr}: {ic:+.3f}" for yr, ic in sorted(yearly.items()))
                 lines.extend([
                     f"**`{f['feature_name']}`** (Lock IC={f['lock_ic']:+.4f}, Sharpe={f['lock_sharpe']:+.4f})",
+                    f"- Admission: Train IC={f.get('overall_ic', 0):+.4f}, Deflated={f.get('deflated_ic', 0):+.4f}, "
+                    f"IR={f.get('ic_ir', 0):.2f}, Mono={f.get('monotonicity', 0):.2f}, p={f.get('p_value', 1):.4f}, MaxCorr={f.get('max_corr', 0):.2f}",
                     f"- Yearly ICs: {years_str}",
                     f"- IC CV={f.get('ic_cv', 0):.2f}, Neg years={f.get('n_negative_years', 0)}/{f.get('n_years', 0)}, "
                     f"Half ratio={f.get('half_ratio', 0):.2f}, Recency ratio={f.get('recency_ratio', 0):.2f}",
+                    f"- Early IC={f.get('early_ic', 0):+.4f}, Recent IC={f.get('recent_ic', 0):+.4f}, "
+                    f"1st-half IC={f.get('ic_first_half', 0):+.4f}, 2nd-half IC={f.get('ic_second_half', 0):+.4f}, "
+                    f"Neg regimes={f.get('n_negative_regimes', 0)}/5",
                 ])
                 if f.get("weak_link"):
                     lines.append(f"- Weak component: `{f['weak_link']}` (CV={f.get('weak_link_cv', 0):.2f})")
+                if f.get("regime_ics"):
+                    regime_str = ", ".join(f"{k}={v:+.3f}" for k, v in f["regime_ics"].items())
+                    lines.append(f"- Regime ICs: {regime_str}")
                 lines.append("")
 
     # ─── Section 4b: Post-Discovery Decay Curve ────────────────────────────────
