@@ -36,7 +36,7 @@ MAX_FLIPS = 1 # Maybe 2 better logically, but 1 OOS performance better
 FDR_THRESHOLD = 0.20
 
 # Feature Selection Global Constants (easily fine-tuned)
-DEFAULT_THETA = 0.70          # Base correlation threshold for initial admission pass
+DEFAULT_THETA = 0.80          # Relaxed initial correlation threshold (B6b trims with TIGHT_THETA)
 MAX_POOL_SIZE = 15            # Target max admitted pool size
 TOP_PROTECTED_COUNT = 7       # Unconditionally protects top N features by S_train score
 TIGHT_THETA = 0.65            # Lower-tier correlation threshold for adaptive pool trimming
@@ -50,8 +50,8 @@ IR_THR_DIR = 0.15             # Rolling 90d IC_IR threshold for long/short sides
 # Temporal & Quality Gate Thresholds
 MAX_RECENCY_RATIO = 2.5       # Cap recent_ic / early_ic to prune late-training overfit spikes
 MIN_EARLY_IC_THRESHOLD = 0.05 # Minimum early IC to trigger recency ratio cap
-MAX_YEARLY_IC_CV = 0.85       # Max coefficient of variation for yearly ICs
-MAX_WEAK_LINK_CV = 1.00       # Max coefficient of variation for primitive components
+MAX_YEARLY_IC_CV = 1.50       # Max coefficient of variation for yearly ICs (relaxed: 0.85 killed 48-100% TP)
+# MAX_WEAK_LINK_CV removed — combo ops stabilize noisy primitives; gate had 76-100% TP collateral
 MIN_STABILITY_PRODUCT = 0.15  # Min product of ic_cv * weak_link_cv
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
@@ -1525,22 +1525,6 @@ def main():
                     "passes_rolling_guard": True,
                     "passes_fdr": True,
                     "verdict": "REJECTED_HIGH_YEARLY_IC_CV"
-                })
-                continue
-
-            if wl_cv is not None and wl_cv > MAX_WEAK_LINK_CV:
-                attempts_log.append({
-                    "feature_name": cand_name,
-                    "sign": cand["sign"],
-                    "raw_ic": cand["raw_ic"],
-                    "overall_ic": cand_ic,
-                    "deflated_ic": deflated_ic,
-                    "weak_link_cv": wl_cv,
-                    "ic_ir": cand["ic_ir"],
-                    "monotonicity": cand["monotonicity"],
-                    "passes_rolling_guard": True,
-                    "passes_fdr": True,
-                    "verdict": "REJECTED_UNSTABLE_COMPONENT"
                 })
                 continue
 

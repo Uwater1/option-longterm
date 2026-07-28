@@ -295,6 +295,13 @@ def main():
         except Exception as e:
             print(f"WARNING: filter_diagnosis subprocess failed: {e}")
 
+        print("\nRunning feature diagnostics (analyze_admitted_features.py)...")
+        cmd_feat = [sys.executable, str(HERE / "analyze_admitted_features.py")]
+        try:
+            subprocess.run(cmd_feat, cwd=str(REPO_ROOT), check=False)
+        except Exception as e:
+            print(f"WARNING: analyze_admitted_features subprocess failed: {e}")
+
 
 if __name__ == "__main__":
     main()

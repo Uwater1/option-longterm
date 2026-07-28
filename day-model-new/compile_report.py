@@ -137,9 +137,14 @@ def build_report(etfs, sides, suffix):
             fdr_survivors = temporal_survivors - counts.get("REJECTED_FDR_GATE", 0)
             # B3 Composite Floor rejects
             b3_survivors = fdr_survivors - counts.get("REJECTED_ADMISSION_FLOOR", 0)
-            # Stability Gate rejects
-            stab_survivors = b3_survivors - counts.get("REJECTED_STABILITY_GATE", 0)
-            # Quality Gate rejects
+            # B6 Stability Gates (yearly IC CV + unstable component + stability product)
+            b6_stab_rejects = (
+                counts.get("REJECTED_HIGH_YEARLY_IC_CV", 0)
+                + counts.get("REJECTED_UNSTABLE_COMPONENT", 0)
+                + counts.get("REJECTED_STABILITY_GATE", 0)
+            )
+            stab_survivors = b3_survivors - b6_stab_rejects
+            # B6 Quality Gate rejects
             qual_survivors = stab_survivors - counts.get("REJECTED_QUALITY_GATE", 0)
             # B4 Correlation Gate rejects
             admitted = counts.get("ADMITTED", 0) + counts.get("ADMITTED_REPLACED", 0)

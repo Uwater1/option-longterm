@@ -1335,5 +1335,19 @@
   "combo_z_sum__ma_alignment_score_5_10_20__roc10",
   "combo_z_diff__ma_alignment_score_5_10_20__roc10",
   "combo_sig_product__ma_alignment_score_5_10_20__roc10",
-  "combo_rel_diff__ma_alignment_score_5_10_20__roc10"
+  "combo_rel_diff__ma_alignment_score_5_10_20__roc10",
+  "combo_min__volume_differential_10d__yesterday_wavetrend_osc",
+  "combo_max__volume_differential_10d__yesterday_wavetrend_osc",
+  "combo_diff__volume_differential_10d__yesterday_wavetrend_osc",
+  "combo_mean__volume_differential_10d__yesterday_wavetrend_osc",
+  "combo_product__volume_differential_10d__yesterday_wavetrend_osc",
+  "combo_abs_diff__volume_differential_10d__yesterday_wavetrend_osc",
+  "combo_rank_min__volume_differential_10d__yesterday_wavetrend_osc",
+  "combo_rank_max__volume_differential_10d__yesterday_wavetrend_osc",
+  "combo_clamp_diff__volume_differential_10d__yesterday_wavetrend_osc",
+  "combo_z_sum__volume_differential_10d__yesterday_wavetrend_osc",
+  "combo_z_diff__volume_differential_10d__yesterday_wavetrend_osc",
+  "combo_sig_product__volume_differential_10d__yesterday_wavetrend_osc",
+  "combo_rel_diff__volume_differential_10d__yesterday_wavetrend_osc",
+  "combo_ratio__yesterday_wavetrend_osc__volume_differential_10d"
 ]

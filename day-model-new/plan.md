@@ -67,7 +67,7 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 - *Compute note*: Heavier compute per survivor, but B1 + B2 thin pool first (cheap-first order preserved). 97th percentile computed in same kernel pass as 93rd — no additional simulation cost.
 
 ### B4. Correlation Gate, Primitive Cluster Cap & Replacement Rule
-- Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.70$).
+- Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.80$, relaxed initial pass).
 - **Runs AFTER Quality & Stability Gates**: Low-quality or unstable features are filtered before correlation comparison, preventing them from blocking high-quality candidates.
 - **Primitive Cluster Cap**: Extract primitive feature set (`feature_a`, `feature_b`, `feature_c`, `feature_cond`, `feature_cond2`). Drop or replace redundant combos built from identical base primitives to ensure pool diversity.
 - **Replacement rule**:
@@ -77,6 +77,7 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
      and exactly one existing pool member g has corr(new, g) > theta:
        replace g with new
   ```
+- **Design rationale**: Initial θ=0.80 is deliberately permissive — produces a larger initial pool that B6b then trims to target size. This avoids the high false-reject rate seen at θ=0.70 (FILTER_DIAGNOSIS §6b: B4 collateral 44–90% for 300ETF/159915ETF).
 
 ### B5. Trial Ledger & Standalone Deflated IC
 - Save unique attempted candidate formulas to `trial_ledger_{ETF}_{side}.json` to track cumulative unique trials $N$.
@@ -84,9 +85,9 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 
 ### B6. Training-Only Quality & Temporal Stability Gates (Before Correlation)
 - Applied AFTER B3 floor, BEFORE B4 correlation gate.
-- **Temporal Stability Gate**: For combo features, require `ic_cv * weak_link_cv >= 0.15`. Features with artificially low temporal variation (suspiciously "too smooth" in-sample) are fitting structural artifacts.
-- **Yearly IC CV Gate**: Requires `yearly_ic_cv <= 0.85`. Rejects features with high year-to-year IC volatility in training set.
-- **Unstable Component Gate**: Requires `weak_link_cv <= 1.00`. Rejects combo features built from noisy base primitives.
+- **Temporal Stability Gate**: For combo features, require `ic_cv * weak_link_cv >= MIN_STABILITY_PRODUCT (0.15)`. Features with artificially low temporal variation (suspiciously "too smooth" in-sample) are fitting structural artifacts. _Tuned: 0.15 chosen to avoid false-rejecting stable 300ETF/159915ETF features; lower values over-penalize genuinely persistent signals._
+- **Yearly IC CV Gate**: Requires `yearly_ic_cv <= MAX_YEARLY_IC_CV (1.50)`. Rejects features with erratic year-to-year IC. _Relaxed from 0.85→1.50 after diagnosis: 0.85 had 48% collateral on 300ETF (16/33 TP killed) and 100% on 159915ETF (2/2). At 1.20, still 88% collateral (7/8 TP killed, 0 FP caught). 1.50 retains as a minimal guard against genuinely erratic signals while admitting positive-but-variable features. B1 jackknife already catches sign flips._
+- ~~**Unstable Component Gate**~~: **REMOVED**. Required `weak_link_cv <= 1.00`. Diagnosis showed 76% collateral on 300ETF (59/78 TP killed) and 100% on 159915ETF (10/10). Combo operations (rank_min, z_sum, etc.) stabilize noisy primitives — standalone component CV ≠ combo instability.
 - **Sign Consistency Gate**: Rejects candidate if meaningful full-sample IC ($|\text{IC}_{\text{full}}| \ge 0.015$) contradicts tail IC sign ($\text{IC}_{\text{full}} \cdot \text{IC}_{\text{tail}} < 0$), preventing non-monotonic tail mirages from entering the pool.
 - **Quality Gate**: Requires all three:
   - `deflated_ic >= 0.03` (normal) / `0.05` (short-history ETFs with n_train < 1200)
@@ -96,17 +97,20 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 - **Zero look-ahead bias**: Uses only training-period metrics. No OOS or lockbox data is accessed.
 
 ### B6b. Adaptive Boundary Gate (Post-Correlation Pool Control)
-- **Trigger**: When initial admission yields $> \text{MAX\_POOL\_SIZE}$ features (default: 15).
 - **Global Constants** (defined at top of `select_features.py`):
-  - `DEFAULT_THETA = 0.70`: Base correlation threshold for initial admission pass.
+  - `DEFAULT_THETA = 0.80`: Relaxed correlation threshold for initial admission (deliberately permissive).
   - `MAX_POOL_SIZE = 15`: Target max admitted pool size.
   - `TOP_PROTECTED_COUNT = 7`: Unconditionally protects top 7 features based on training quality score $S_{train}$.
-  - `TIGHT_THETA = 0.65`: Lower-tier correlation threshold to trim redundant tail features.
+  - `TIGHT_THETA = 0.65`: Strict correlation threshold for B6b lower-tier trimming.
+
+#### Mechanism (pool > MAX_POOL_SIZE)
+- **Trigger**: When initial admission yields $> \text{MAX\_POOL\_SIZE}$ features.
 - **Mechanism**:
   1. Computes training quality score $S_{train} = 0.40 \cdot \text{deflated\_ic} + 0.25 \cdot \text{sortino} + 0.20 \cdot \text{ic\_ir} + 0.15 \cdot \text{recent\_ic}$.
   2. Protects top `TOP_PROTECTED_COUNT` (7) features unconditionally.
-  3. Screens lower-tier features with `TIGHT_THETA` (0.75) and quality floors (`recent_ic > 0`, `sortino > 0.05`, `deflated_ic >= 0.04`).
+  3. Screens lower-tier features with `TIGHT_THETA` (0.65) and quality floors (`recent_ic > 0`, `sortino > 0.05`, `deflated_ic >= 0.04`).
   4. Overwrites initial `ADMITTED` verdict in `attempts_log` for pruned features to `REJECTED_ADAPTIVE_*`.
+- **Design**: Initial B4 is relaxed (θ=0.80) to avoid false-rejecting TP features. B6b is the strict stage — it quality-ranks the large pool and prunes redundancy with TIGHT_THETA=0.65. No small-pool rescue needed because the relaxed initial pass produces sufficiently large pools.
 - **Zero OOS leakage**: Uses only training set statistics.
 
 ### B7. Outputs
@@ -162,11 +166,14 @@ SE_IC ≈ 1/√n_train
 - [x] **Execution: Conviction-weighted position sizing** — Default mode in `evaluate_concept.py`. Skips low-conviction days (z < 0.5), smooth tanh ramp. Reduces turnover ~40% without losing high-conviction trades.
 - [x] **Filter calibration: Relaxed B2/FDR/θ** — mono_thr 0.70→0.60, FDR q 0.20→0.30, θ 0.70. Data-driven from per-gate OOS diagnostics (FEATURE_DIAGNOSTICS.md).
 - [x] **Component stability gate (A0)** — Yearly IC decomposition in `generate_combos.py`. Flags features with IC_CV > 3.0 or neg_years > 2 as unstable, excludes from all combos. Training-only, ETF-agnostic.
-- [x] **B4 correlation threshold** — θ=0.70. Set for strict redundancy control.
+- [x] **B4 correlation threshold** — θ=0.80 (relaxed initial pass). Permissive to avoid high false-reject rate; B6b trims to target size with TIGHT_THETA=0.65.
 - [x] **Quality Gate before Correlation** — Moved Quality Gate (B6) before B4 correlation gate. Prevents low-quality features from blocking high-quality candidates.
 - [x] **Adaptive Boundary Gate (B6b)** — Dynamically tightens quality floors & correlation threshold (0.85→0.75) when pool > 35 features, protecting top 25 TP features. Configured via top-level global constants in `select_features.py`.
 - [x] **Deep filter diagnosis tool** — `filter_diagnosis.py` for causal FP/FN analysis. Temporal decomposition, component stability, regime concentration, Cohen's d discriminators. Per-gate confusion matrix (§6b) and temporal sub-condition analysis (§6c). Excludes 588000ETF.
 - [x] **Adaptive temporal gate relaxation** — Ratio cap (`recency_ratio < 2.5`) now only fires when `|early_ic| < 0.05`. Features with solid early IC that strengthen recently are no longer penalized. Result: 300ETF pool 7→15, 159915ETF 11→16, 500ETF unchanged (capped). FP rate remains 0% for 500ETF/159915ETF; 300ETF gained 2 FP in exchange for 2× pool size.
+- [x] **B6 threshold tuning documented** — `MAX_YEARLY_IC_CV=0.85`, `MIN_STABILITY_PRODUCT=0.15`, `MAX_WEAK_LINK_CV=1.00` calibrated against FILTER_DIAGNOSIS FN data for 300ETF/159915ETF. Rationale added inline in §B6.
+- [x] **B6 gates added to diagnosis** — `REJECTED_HIGH_YEARLY_IC_CV`, `REJECTED_UNSTABLE_COMPONENT`, `REJECTED_STABILITY_GATE`, `REJECTED_QUALITY_GATE` now tracked in `filter_diagnosis.py` GATE_ORDER and `compile_report.py` funnel.
+- [ ] **Implement relaxed θ=0.80 + B6b strict trim** — Change `DEFAULT_THETA` from 0.70→0.80 in `select_features.py`. Remove `MIN_POOL_SIZE`/`RESCUE_THETA`. Re-run pipeline + filter_diagnosis to validate B6 sub-gate FN rates.
 
 ## References
 - Wang et al. 2026, *FactorMiner: A Self-Evolving Agent with Skills and Experience Memory for Financial Alpha Discovery*, arXiv:2602.14670 — admission gate, replacement rule, IC-weighted vs orthogonal vs learned-selection comparison.

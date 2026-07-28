@@ -103,6 +103,84 @@ def classify_alpha_family(feat_name: str, recipe: dict = None) -> str:
         return "Volatility & Oscillators"
     return "Other Technical"
 
+
+def compute_temporal_stability(train_df, feat_name, sign, recipe=None):
+    """Compute yearly IC decomposition and stability metrics for a feature.
+    
+    Returns dict with: ic_cv, neg_years, n_years, half_ratio, recency_ratio,
+    weak_component, weak_link_cv, yearly_ics.
+    """
+    y = train_df["trade_return"].values
+    pred = sign * train_df[feat_name].values
+    dates = train_df["date"].values
+    years = pd.DatetimeIndex(dates).year
+    unique_years = sorted(set(years))
+    
+    yearly_ics = {}
+    for yr in unique_years:
+        mask = years == yr
+        if mask.sum() < 20:
+            continue
+        yearly_ics[int(yr)] = _spearman_from_arrays(y[mask], pred[mask])
+    
+    if len(yearly_ics) < 3:
+        return None
+    
+    ic_values = list(yearly_ics.values())
+    mean_ic = np.mean(ic_values)
+    std_ic = np.std(ic_values)
+    ic_cv = std_ic / abs(mean_ic) if abs(mean_ic) > 1e-6 else 99.0
+    n_negative_years = sum(1 for ic in ic_values if ic < 0)
+    
+    # Half-split stability
+    n = len(pred)
+    half = n // 2
+    ic_first_half = _spearman_from_arrays(y[:half], pred[:half])
+    ic_second_half = _spearman_from_arrays(y[half:], pred[half:])
+    half_ratio = ic_second_half / ic_first_half if abs(ic_first_half) > 1e-6 else 99.0
+    
+    # Recency ratio (last 2 years vs first 2 years)
+    sorted_years = sorted(yearly_ics.keys())
+    early_ic = np.mean([yearly_ics[yr] for yr in sorted_years[:2]])
+    recent_ic = np.mean([yearly_ics[yr] for yr in sorted_years[-2:]])
+    recency_ratio = recent_ic / early_ic if abs(early_ic) > 1e-6 else (99.0 if recent_ic > 0 else -99.0)
+    
+    # Weak component analysis (for combo features)
+    weak_component = None
+    weak_link_cv = None
+    if recipe:
+        for key in ["feature_a", "feature_b", "feature_c", "feature_cond"]:
+            comp = recipe.get(key)
+            if comp and comp in train_df.columns:
+                comp_vals = train_df[comp].values.astype(np.float64)
+                comp_ic = _spearman_from_arrays(y, comp_vals)
+                comp_sign = 1.0 if comp_ic >= 0 else -1.0
+                comp_pred = comp_sign * comp_vals
+                comp_yearly = {}
+                for yr in unique_years:
+                    mask = years == yr
+                    if mask.sum() < 20:
+                        continue
+                    comp_yearly[int(yr)] = _spearman_from_arrays(y[mask], comp_pred[mask])
+                if len(comp_yearly) >= 3:
+                    cv_vals = list(comp_yearly.values())
+                    cv = np.std(cv_vals) / abs(np.mean(cv_vals)) if abs(np.mean(cv_vals)) > 1e-6 else 99.0
+                    if weak_link_cv is None or cv > weak_link_cv:
+                        weak_link_cv = cv
+                        weak_component = comp
+    
+    return {
+        "ic_cv": float(ic_cv),
+        "neg_years": n_negative_years,
+        "n_years": len(yearly_ics),
+        "half_ratio": float(half_ratio),
+        "recency_ratio": float(recency_ratio),
+        "weak_component": weak_component,
+        "weak_link_cv": float(weak_link_cv) if weak_link_cv is not None else None,
+        "yearly_ics": yearly_ics,
+    }
+
+
 def analyze_feature_standalone(y_true: np.ndarray, feat_val: np.ndarray, sign: int, side: str):
     pred = sign * feat_val
     overall_ic = _spearman_from_arrays(y_true, pred)
@@ -639,6 +717,9 @@ def main():
                     loo_delta_oos_ic = full_oos_ic
                     loo_delta_lock_ic = full_lock_ic
                     loo_delta_lock_sharpe = full_lock_sharpe
+                
+                # Temporal stability metrics (yearly IC decomposition)
+                temporal = compute_temporal_stability(train_df, feat_name, sign, recipe)
                     
                 feat_diagnostics.append({
                     "feature_name": feat_name,
@@ -652,7 +733,8 @@ def main():
                         "delta_oos_ic": float(loo_delta_oos_ic),
                         "delta_lock_ic": float(loo_delta_lock_ic),
                         "delta_lock_sharpe": float(loo_delta_lock_sharpe),
-                    }
+                    },
+                    "temporal": temporal,
                 })
                 
             results[etf][side] = {
@@ -789,8 +871,8 @@ def main():
             report_lines.extend([
                 f"### {etf} — `{side}` (Full Model Lockbox IC: {side_data['full_model']['lock_ic']:+.4f}, Sharpe: {side_data['full_model']['lock_sharpe']:+.4f})",
                 "",
-                "| Feature | Family | Sign | Train IC | OOS IC | Lock IC | Standalone Lock Net Sharpe | Annual Turnover | Avg Trade Ret (bps) | Friction Eff | LOO ΔLock IC | LOO ΔLock Sharpe |",
-                "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"
+                "| Feature | Family | Sign | Train IC | OOS IC | Lock IC | Lock Sharpe | IC CV | Neg Yrs | Half Ratio | Recency Ratio | Weak Component | LOO ΔLock IC | LOO ΔLock Sharpe |",
+                "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- | ---: | ---: |"
             ])
             
             for f in features:
@@ -798,13 +880,19 @@ def main():
                 o = f["oos"]
                 l = f["lockbox"]
                 loo = f["loo"]
+                temp = f.get("temporal")
+                
+                ic_cv_str = f"{temp['ic_cv']:.2f}" if temp else "N/A"
+                neg_yrs_str = f"{temp['neg_years']}/{temp['n_years']}" if temp else "N/A"
+                half_str = f"{temp['half_ratio']:.2f}" if temp else "N/A"
+                recency_str = f"{temp['recency_ratio']:.2f}" if temp else "N/A"
+                weak_str = f"`{temp['weak_component']}` ({temp['weak_link_cv']:.2f})" if temp and temp.get('weak_component') else "—"
                 
                 report_lines.append(
                     f"| `{f['feature_name']}` | {f['family']} | {f['sign']:+d} | "
                     f"{t['overall_ic']:+.4f} | {o['overall_ic']:+.4f} | {l['overall_ic']:+.4f} | "
-                    f"{l['cost_sharpe']:+.4f} | {l['annual_turnover']:.2f} | "
-                    f"{l['avg_trade_ret_bps']:+.1f} | {l['friction_eff']:.2f}x | "
-                    f"{loo['delta_lock_ic']:+.4f} | {loo['delta_lock_sharpe']:+.4f} |"
+                    f"{l['cost_sharpe']:+.4f} | {ic_cv_str} | {neg_yrs_str} | {half_str} | {recency_str} | "
+                    f"{weak_str} | {loo['delta_lock_ic']:+.4f} | {loo['delta_lock_sharpe']:+.4f} |"
                 )
             report_lines.append("")
             
