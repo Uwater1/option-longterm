@@ -87,7 +87,7 @@ def compute_icw(Z: np.ndarray, signs: np.ndarray, pool: list, n_train: int = 170
     return Z_composite
 
 
-def _compute_pool_scores(pool: list, score_weights: tuple = (0.40, 0.35, 0.25)) -> np.ndarray:
+def _compute_pool_scores(pool: list, score_weights: tuple = (0.20, 0.15, 0.65)) -> np.ndarray:
     """
     Compute B3-inspired composite quality scores from pool metadata.
     score_i = w_ic * rank_norm(deflated_ic) + w_ir * rank_norm(ic_ir) + w_mono * rank_norm(monotonicity)
@@ -114,7 +114,7 @@ def _compute_pool_scores(pool: list, score_weights: tuple = (0.40, 0.35, 0.25)) 
     return scores
 
 
-def compute_score_w(Z: np.ndarray, signs: np.ndarray, pool: list, score_weights: tuple = (0.40, 0.35, 0.25), **kwargs) -> np.ndarray:
+def compute_score_w(Z: np.ndarray, signs: np.ndarray, pool: list, score_weights: tuple = (0.20, 0.15, 0.65), **kwargs) -> np.ndarray:
     """
     Score Weighted Scheme (B3-Inspired):
     w_i ∝ score_i = w_ic*rank_norm(deflated_ic) + w_ir*rank_norm(ic_ir) + w_mono*rank_norm(mono)
@@ -143,7 +143,7 @@ def compute_score_w(Z: np.ndarray, signs: np.ndarray, pool: list, score_weights:
 
 def get_rank_weights(pool: list, w_min_ratio: float = 0.2, w_max_ratio: float = 1.8,
                      mapping_shape: str = "linear", power: float = 2.0, softmax_tau: float = 1.0,
-                     top_k: int = None, score_weights: tuple = (0.40, 0.35, 0.25), **kwargs) -> np.ndarray:
+                     top_k: int = None, score_weights: tuple = (0.20, 0.15, 0.65), **kwargs) -> np.ndarray:
     """
     Calculate Scheme 4 factor weights vector w_i for a pool.
     
@@ -204,7 +204,7 @@ def get_rank_weights(pool: list, w_min_ratio: float = 0.2, w_max_ratio: float = 
 def compute_rank_w(Z: np.ndarray, signs: np.ndarray, pool: list,
                    w_min_ratio: float = 0.2, w_max_ratio: float = 1.8,
                    mapping_shape: str = "linear", power: float = 2.0, softmax_tau: float = 1.0,
-                   top_k: int = None, score_weights: tuple = (0.40, 0.35, 0.25),
+                   top_k: int = None, score_weights: tuple = (0.20, 0.15, 0.65),
                    expanding_ic: np.ndarray = None, ic_ema_span: int = 10, weight_delta: float = None, **kwargs) -> np.ndarray:
     """
     Rank Bounded Weight Scheme (Scheme 4):

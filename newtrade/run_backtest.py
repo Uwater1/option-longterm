@@ -117,7 +117,9 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     if dynamic_ic and scheme_name == "rank":
         metric_choice = extra_kwargs.get("dynamic_metric", "ic")
         if metric_choice == "multi":
-            exp_mat = expanding_factor_score_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
+            sw = extra_kwargs.get("score_weights", (0.20, 0.15, 0.65))
+            mw = extra_kwargs.get("mono_window", 750)
+            exp_mat = expanding_factor_score_numba(Z_std, signs, full_trade_ret, burn_in=burn_in, score_weights=sw, mono_window=mw)
         else:
             exp_mat = expanding_factor_ic_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
         extra_kwargs["expanding_ic"] = exp_mat
@@ -240,8 +242,12 @@ def main():
     parser.add_argument("--rank-top-k", type=int, default=None, help="Top K factors truncation threshold for 'top_k' rank mapping shape")
     parser.add_argument("--dynamic-ic", "--dynamic-score", dest="dynamic_ic", action="store_true", default=True, help="Enable zero-lookahead expanding factor ranking (default: True)")
     parser.add_argument("--no-dynamic-ic", "--no-dynamic-score", dest="dynamic_ic", action="store_false", help="Disable dynamic ranking (use static pool metadata score)")
-    parser.add_argument("--dynamic-metric", type=str, default="multi", choices=["ic", "multi"], help="Dynamic factor ranking metric: 'multi' (IC + IC_IR + Monotonicity score default) or 'ic' (expanding factor IC)")
-    parser.add_argument("--ic-ema-span", type=int, default=10, help="EMA span parameter for smoothing dynamic expanding metrics (default 10)")
+    parser.add_argument("--dynamic-metric", type=str, default="multi", choices=["ic", "multi"], help="Dynamic factor ranking metric: 'multi' (default: IC + IC_IR + Monotonicity score) or 'ic' (single expanding IC)")
+    parser.add_argument("--mono-window", type=int, default=750, help="Rolling window for monotonicity calculation (default 750 trading days ~ 3 years, 0 for full expanding)")
+    parser.add_argument("--score-w-ic", type=float, default=0.20, help="Score weight for IC component (default 0.20)")
+    parser.add_argument("--score-w-ir", type=float, default=0.15, help="Score weight for IC_IR component (default 0.15)")
+    parser.add_argument("--score-w-mono", type=float, default=0.65, help="Score weight for Monotonicity component (default 0.65)")
+    parser.add_argument("--ic-ema-span", type=int, default=30, help="EMA span parameter for smoothing dynamic expanding metrics (default 30)")
     parser.add_argument("--weight-delta", type=float, default=None, help="Optional partial-adjustment delta parameter for smoothing daily target weight jumps (default: None)")
     parser.add_argument("--long-only", dest="long_only", action="store_true", default=False, help="Restrict to long-only trades (Spot ETF mode). Default: False (allows shorting).")
     parser.add_argument("--allow-short", dest="long_only", action="store_false", help="Allow short trades (default)")
@@ -270,6 +276,8 @@ def main():
         "ic_ema_span": args.ic_ema_span,
         "dynamic_metric": args.dynamic_metric,
         "weight_delta": args.weight_delta,
+        "score_weights": (args.score_w_ic, args.score_w_ir, args.score_w_mono),
+        "mono_window": args.mono_window,
     }
 
     results = []
@@ -363,8 +371,8 @@ def main():
             tr_l = r.get("z_th_train_long")
             tr_s = r.get("z_th_train_short")
             
-            if r.get("long_only", False) or z_l == z_s:
-                z_th_str = f"{z_l:.2f}"
+            if r.get("long_only", False):
+                z_th_str = f"L:{z_l:.2f}"
                 if tr_l is not None:
                     z_th_str += f" (train:{tr_l:.2f})"
             else:
@@ -372,7 +380,7 @@ def main():
                 if tr_l is not None and tr_s is not None:
                     z_th_str += f" (train L:{tr_l:.2f}/S:{tr_s:.2f})"
                 elif tr_l is not None:
-                    z_th_str += f" (train:{tr_l:.2f})"
+                    z_th_str += f" (train L:{tr_l:.2f})"
             
             n_l = r.get("n_long_trades", 0)
             n_s = r.get("n_short_trades", 0)

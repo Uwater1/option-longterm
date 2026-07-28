@@ -28,22 +28,20 @@ $$z_{i,t} = \frac{x_{i,t} - \hat{\mu}_{i, 1:t-1}}{\hat{\sigma}_{i, 1:t-1} + \eps
 | **4. Rank Bounded Weight** | Rank factors by $\text{score}_i$, map linearly $w_i \in [w_{\min}, w_{\max}]$ | Prevents single factor dominance, ensures diversification. |
 | **5. Simple Linear GLM** | $y_t = \sum w_i z_{i,t} + c$ (Ridge / Non-negative L2) | Expanding linear combination baseline. |
 
-#### Scheme 3 — Score Definition (B3-Inspired, Pool-Metadata-Only)
+#### Scheme 3 — Multi-Metric Dynamic Score Definition
 
-$$\text{score}_i = 0.40 \times \text{rank\_norm}(\text{deflated\_ic}_i) + 0.35 \times \text{rank\_norm}(\text{ic\_ir}_i) + 0.25 \times \text{rank\_norm}(\text{monotonicity}_i)$$
+$$\text{score}_{i,t} = 0.20 \times \text{rank\_norm}(\mu_{\text{IC}, t-1}) + 0.15 \times \text{rank\_norm}(\text{IC\_IR}_{t-1}) + 0.65 \times \text{rank\_norm}(\text{Monotonicity}_{750\text{d}, t-1})$$
 
-- `rank_norm(x_i) = rank(x_i) / N` — maps each metric to $[1/N, 1.0]$ within the pool.
-- Uses only fields already stored in `admitted_pools.py`: `deflated_ic`, `ic_ir`, `monotonicity`.
-- **Why not B3 directly?** B3 (`0.4×Mono + 0.3×Sortino + 0.2×|TailIC| + 0.1×|OverallIC|`) is an *admission gate* that requires per-candidate `simulate_returns()` for Sortino — expensive and not stored per pool item. `ic_ir` (mean IC / std IC) is the information-ratio analog capturing the same "risk-adjusted predictive power" concept.
-- **Design principle**: Admission (B3) decides IF a feature enters the pool; weighting decides HOW MUCH influence it gets. Different objectives → different formulas.
+- `rank_norm(x_i) = rank(x_i) / N` — rank-normalizes each metric to $[1/N, 1.0]$ across pool factors at day $t-1$.
+- **Monotonicity Heavy (65% Weight)**: Anchors factor quality on sustained directional consistency over a 3-year A-share market cycle window ($750\text{d}$), eliminating noisy daily IC whipsaws.
+- **Risk-Adjusted Stability (15% IC_IR)**: Penalizes volatile factors with inconsistent predictive power across regimes.
 
-#### Scheme 4 — Rank Bounded Mapping (Enhanced)
+#### Scheme 4 — Rank Bounded Mapping (Default Scheme)
 
-$$w_i = w_{\min} + (w_{\max} - w_{\min}) \cdot \frac{\text{rank}(\text{score}_i) - 1}{N - 1}$$
+$$w_i = w_{\min} + (w_{\max} - w_{\min}) \cdot \frac{\text{rank}(\text{score}_{i,t}) - 1}{N - 1}$$
 
 - **Moderate Tilt Default**: $w_{\min} = 0.2/N$, $w_{\max} = 1.8/N$ (top factor gets $9\times$ weight of bottom factor). Protects against pool tail noise while tilting heavily to top factors.
-- **Mapping Shapes**: Supports `linear`, `power` ($R^p$), `softmax` ($\exp(\tau R/N)$), and `top_k` truncation.
-- **Zero-Lookahead Dynamic Score Ranking (`--dynamic-score`, default `--dynamic-metric multi`)**: Dynamically updates factor rank scores $S_{i,t}$ on day $t$ using historical expanding multi-metric score ($0.40 \times \text{rank\_norm}(\mu_{\text{IC}}) + 0.35 \times \text{rank\_norm}(\text{IR}_{\text{IC}}) + 0.25 \times \text{rank\_norm}(\text{Mono})$) smoothed with 10d EMA (`--ic-ema-span 10`). Prevents single-metric raw IC whipsaws and stabilizes factor weights OOS. Supports `--dynamic-metric ic` as fallback option.
+- **Zero-Lookahead Dynamic Score Ranking (`--dynamic-score`, default `--dynamic-metric multi`)**: Dynamically updates factor rank scores $S_{i,t}$ on day $t$ using the 3-year trailing rolling monotonicity score, smoothed with 30d EMA (`--ic-ema-span 30`). Fully eliminates lookahead bias.
 
 ---
 

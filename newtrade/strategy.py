@@ -71,10 +71,12 @@ def generate_positions(Z_composite: np.ndarray, z_th: float = 0.5, mode: str = "
 
 def sweep_optimal_threshold(Z_composite_train: np.ndarray, trade_returns_train: np.ndarray,
                             mode: str = "binary", gamma: float = 1.5, long_only: bool = True,
-                            fee_bps: float = 0.0008, z_range: tuple = (0.2, 1.5), z_step: float = 0.1) -> dict:
+                            fee_bps: float = 0.0008, z_range: tuple = (0.5, 1.5), z_step: float = 0.1,
+                            min_active_pct: float = 8.0) -> dict:
     """
     Sweep conviction thresholds on training data for long and short sides independently.
     Finds optimal Z_th_long and Z_th_short that maximize cost-adjusted Sharpe ratio.
+    Enforces min_active_pct constraint to prevent low-sample overfitting & high-friction noise.
     """
     z_min, z_max = z_range
     thresholds = np.arange(z_min, z_max + z_step * 0.5, z_step)
@@ -91,15 +93,16 @@ def sweep_optimal_threshold(Z_composite_train: np.ndarray, trade_returns_train: 
         std_net = np.std(net_returns)
         sharpe = float((np.mean(net_returns) / std_net) * np.sqrt(252)) if std_net > 1e-12 else 0.0
         n_active = int((np.abs(positions) > 1e-5).sum())
+        active_pct = (n_active / len(positions) * 100.0) if len(positions) > 0 else 0.0
         
         sweep_results.append({
             "z_th": round(float(z_th), 2),
             "cost_sharpe": round(sharpe, 4),
             "n_active_days": n_active,
-            "active_pct": round(n_active / len(positions) * 100, 1) if len(positions) > 0 else 0.0,
+            "active_pct": round(active_pct, 1),
         })
         
-        if sharpe > best_sharpe_long:
+        if active_pct >= min_active_pct and sharpe > best_sharpe_long:
             best_sharpe_long = sharpe
             optimal_z_th_long = float(z_th)
 
@@ -124,8 +127,10 @@ def sweep_optimal_threshold(Z_composite_train: np.ndarray, trade_returns_train: 
         net_returns, _, _ = simulate_etf_spot(trade_returns_train, pos_short, fee_bps=fee_bps)
         std_net = np.std(net_returns)
         sharpe = float((np.mean(net_returns) / std_net) * np.sqrt(252)) if std_net > 1e-12 else 0.0
+        n_active = int((np.abs(pos_short) > 1e-5).sum())
+        active_pct = (n_active / len(pos_short) * 100.0) if len(pos_short) > 0 else 0.0
         
-        if sharpe > best_sharpe_short:
+        if active_pct >= min_active_pct and sharpe > best_sharpe_short:
             best_sharpe_short = sharpe
             optimal_z_th_short = float(z_th)
     
@@ -135,6 +140,11 @@ def sweep_optimal_threshold(Z_composite_train: np.ndarray, trade_returns_train: 
         for zl in thresholds:
             for zs in thresholds:
                 positions = generate_positions(Z_composite_train, z_th=zl, z_th_short=zs, mode=mode, gamma=gamma, long_only=False)
+                n_active = int((np.abs(positions) > 1e-5).sum())
+                active_pct = (n_active / len(positions) * 100.0) if len(positions) > 0 else 0.0
+                if active_pct < min_active_pct:
+                    continue
+                
                 net_returns, _, _ = simulate_etf_spot(trade_returns_train, positions, fee_bps=fee_bps)
                 std_net = np.std(net_returns)
                 sharpe = float((np.mean(net_returns) / std_net) * np.sqrt(252)) if std_net > 1e-12 else 0.0

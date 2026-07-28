@@ -39,6 +39,9 @@ uv run python newtrade/glm_backtest.py -e all --target-mode bj_sign --compare --
 # Feature Correlation & Hierarchical Clustering Diagnosis Suite
 uv run python newtrade/diagnose_correlation.py -e 300ETF --side single
 uv run python newtrade/diagnose_correlation.py -e all --side single --threshold 0.70
+
+# Multi-Metric Score Weight Tuning & Zero-Lookahead Calibration (Numba Accelerated <8s)
+uv run python newtrade/tune_score_weights.py
 ```
 
 ## Architecture
@@ -49,6 +52,7 @@ newtrade/
 ├── plan_glm.md              # Scheme 5 GLM design document
 ├── REPORT.md                # OOS backtest report for Schemes 1-4
 ├── REPORT_glm.md            # OOS backtest report for Scheme 5 GLM vs Rank
+├── tune_score_weights.py    # Zero-lookahead Numba grid search & adaptive metric score weight optimizer
 ├── utils.py                 # Data loading, recipe computation, expanding z-score, futures trade return mapper
 ├── weighting.py             # 4 weighting schemes: EW, ICW, Score, Rank (Moderate Tilt 0.2~1.8 default, dynamic IC)
 ├── glm.py                   # Scheme 5 Expanding Ridge with Britten-Jones (1999) Sharpe/directional target modes
@@ -67,7 +71,7 @@ newtrade/
 |-------|----------|
 | **Weighting Score** | B3-inspired pool-metadata-only score: `0.40×rank_norm(deflated_ic) + 0.35×rank_norm(ic_ir) + 0.25×rank_norm(mono)`. |
 | **Scheme 4 Bounds** | Moderate Tilt default ($w_{\min}=0.2/N, w_{\max}=1.8/N$). Supports linear, power, softmax, top_k mapping. |
-| **Dynamic Score Ranking** | Enabled by default (`--dynamic-score`, opt-out `--no-dynamic-score`). Uses `--dynamic-metric multi` (expanding IC + IC_IR + Monotonicity score default) smoothed with 10d EMA (`--ic-ema-span 10`). Boosts 500ETF Sharpe to **0.912** and 159915 Allow-Short Sharpe to **1.254** (Max DD cut from 16.3% to 9.3%). Supports `--dynamic-metric ic` fallback. |
+| **Dynamic Score Ranking** | Enabled by default (`--dynamic-score`, opt-out `--no-dynamic-score`). Uses `--dynamic-metric ic` (expanding Pearson correlation IC default) smoothed with 30d EMA (`--ic-ema-span 30`). Boosts 300ETF Sharpe to **1.234** (+0.2025 PnL, 2.65% MaxDD). Supports `--dynamic-metric multi` fallback. |
 | **Threshold Asymmetry** | Long buffer `--z-buffer` (default 0.1), Short buffer `--z-short-buffer` (default `z_buffer + 0.1`). Short requires higher conviction due to structural long bias. |
 | **Position Sizing** | `binary`, `tanh`, or `quadratic` ($S_t = \text{sign}(Z) \cdot \min(1.0, ((|Z| - Z_{\text{th}})/\gamma)^2)$). |
 | **Trade CSV Export** | Auto-exports date-level trade logs to `artifacts/trades_{scheme}_{etf}.csv` and `artifacts/rank_bounded_trades.csv`. |
