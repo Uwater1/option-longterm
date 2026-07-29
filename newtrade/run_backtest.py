@@ -245,7 +245,7 @@ def main():
     parser.add_argument("--z-buffer", type=float, default=0.1, help="Production buffer added to train-optimal threshold (default 0.1, walk-forward validated)")
     parser.add_argument("--z-short-buffer", type=float, default=None, help="Production buffer for short threshold (default: z_buffer + 0.1)")
     parser.add_argument("--position-mode", type=str, default="binary", choices=["binary", "tanh", "quadratic"], help="Position sizing mode")
-    parser.add_argument("--fee-bps", type=float, default=8.0, help="Transaction fee in basis points (default 8.0 = 0.0008)")
+    parser.add_argument("--fee-bps", type=float, default=None, help="Transaction fee in basis points (default: 8.0 for ETF, 4.0 for futures)")
     parser.add_argument("--start-date", type=str, default="2022-01-01", help="OOS Start Date (YYYY-MM-DD)")
     parser.add_argument("--end-date", type=str, default="2026-01-01", help="OOS End Date (YYYY-MM-DD)")
     parser.add_argument("-o", "--output", type=str, default=None, help="Output markdown report path (default: newtrade/REPORT.md)")
@@ -286,7 +286,9 @@ def main():
 
     etfs_to_run = AVAILABLE_ETFS if args.etf.lower() == "all" else [args.etf]
     schemes_to_run = ALL_SCHEMES if args.scheme.lower() == "all" else [args.scheme]
-    fee_bps = args.fee_bps / 10000.0
+    # Default fee: 8 bps for ETF (conservative slippage), 4 bps for futures (tighter spreads)
+    effective_fee_bps = args.fee_bps if args.fee_bps is not None else (4.0 if args.future else 8.0)
+    fee_bps = effective_fee_bps / 10000.0
 
     print("================================================================================")
     print(f"NewTrade Backtest Engine | Mode={'Future' if args.future else 'Spot ETF'} | Scheme={args.scheme.upper()} | z_th={args.z_th} | buffer={args.z_buffer} | LongOnly={args.long_only} | TopK={args.top_k} | OOS=[{args.start_date} ~ {args.end_date}]")
@@ -357,7 +359,7 @@ def main():
             cpcv = run_cpcv_backtest(Z_comp, trade_ret, dates_s,
                                       n_splits=args.cpcv_splits, n_test=args.cpcv_test,
                                       purge_gap=5, mode=r.get("position_mode", "binary"),
-                                      fee_bps=args.fee_bps / 10000.0,
+                                      fee_bps=effective_fee_bps / 10000.0,
                                       z_buffer=r.get("z_buffer", 0.1),
                                       long_only=r.get("long_only", False))
             r["cpcv"] = cpcv
@@ -395,7 +397,8 @@ def main():
                     dates = pd.to_datetime(r["dates"])
                     cum_pnl = r["cum_pnl"]
                     scheme_lbl = r.get('scheme', '').upper()
-                    ax.plot(dates, cum_pnl, label=f"{r['etf']} [{scheme_lbl}] ({r.get('asset_type', 'Spot ETF')}) (Sharpe: {r['cost_sharpe']:.3f}, PnL: {r['total_pnl']:+.4f})", linewidth=1.8)
+                    is_ew = (r.get('scheme') == 'ew')
+                    ax.plot(dates, cum_pnl, label=f"{r['etf']} [{scheme_lbl}] ({r.get('asset_type', 'Spot ETF')}) (Sharpe: {r['cost_sharpe']:.3f}, PnL: {r['total_pnl']:+.4f})", linewidth=1.0 if is_ew else 1.8, alpha=0.35 if is_ew else 1.0, linestyle='--' if is_ew else '-')
             
             mode_title = "Index Future" if args.future else "Spot ETF"
             scheme_title = args.scheme.upper()
@@ -546,8 +549,11 @@ def main():
         r_copy.pop("_dates_series", None)
         clean_results.append(r_copy)
 
-    # Save markdown report (default: REPORT.md in newtrade/)
-    out_path = Path(args.output) if args.output else HERE / "REPORT.md"
+    # Save markdown report (default: REPORT.md or REPORT_future.md in newtrade/)
+    if args.output:
+        out_path = Path(args.output)
+    else:
+        out_path = HERE / ("REPORT_future.md" if args.future else "REPORT.md")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         f.write("# NewTrade OOS Backtest Report\n\n")
@@ -556,7 +562,7 @@ def main():
         f.write(f"- **Scheme(s)**: `{args.scheme.upper()}`\n")
         f.write(f"- **Conviction Threshold**: `{args.z_th}` (buffer=+{args.z_buffer})\n")
         f.write(f"- **Position Mode**: `{args.position_mode}`\n")
-        f.write(f"- **Transaction Friction**: `{args.fee_bps} bps`\n")
+        f.write(f"- **Transaction Friction**: `{effective_fee_bps} bps`\n")
         f.write(f"- **Rank Mapping Options**: `mapping={args.rank_mapping}, min_ratio={args.rank_min_ratio}, max_ratio={args.rank_max_ratio}, power={args.rank_power}`\n\n")
         f.write(report_content + "\n")
         

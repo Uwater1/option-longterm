@@ -351,7 +351,7 @@ def main():
     parser.add_argument("--z-short-buffer", type=float, default=None)
     parser.add_argument("--position-mode", type=str, default="binary",
                         choices=["binary", "tanh", "quadratic"])
-    parser.add_argument("--fee-bps", type=float, default=8.0, help="Transaction fee in bps")
+    parser.add_argument("--fee-bps", type=float, default=None, help="Transaction fee in bps (default: 8.0 for ETF, 4.0 for futures)")
     parser.add_argument("--start-date", type=str, default="2022-01-01")
     parser.add_argument("--end-date", type=str, default="2026-01-01")
     parser.add_argument("--long-only", action="store_true")
@@ -360,7 +360,8 @@ def main():
     args = parser.parse_args()
 
     etfs = AVAILABLE_ETFS if args.etf.lower() == "all" else [args.etf]
-    fee_bps = args.fee_bps / 10000.0
+    effective_fee_bps = args.fee_bps if args.fee_bps is not None else (4.0 if args.future else 8.0)
+    fee_bps = effective_fee_bps / 10000.0
     alphas = [float(x) for x in args.alphas.split(",")] if args.alphas else None
     clamp = not args.no_clamp
     n_adaptive = not args.no_n_adaptive
