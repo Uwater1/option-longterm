@@ -6,7 +6,6 @@
 - **Conviction Threshold**: `auto` (buffer=+0.1)
 - **Position Mode**: `binary`
 - **Transaction Friction**: `8.0 bps`
-- **Rank Mapping Options**: `mapping=linear, min_ratio=0.2, max_ratio=1.8, power=2.0`
 
 ## IC Weight (ICW)
 

@@ -26,6 +26,7 @@ from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matri
 from weighting import get_weighting_scheme
 from strategy import generate_positions, simulate_etf_spot, calculate_metrics, sweep_optimal_threshold, compute_production_threshold, build_trade_log_df
 from robustness import deflated_sharpe_ratio, run_cpcv_backtest
+from option_strategy import simulate_option_portfolio
 
 AVAILABLE_ETFS = ["300ETF", "500ETF", "50ETF", "588000ETF", "159915ETF"]
 ALL_SCHEMES = ["icw", "ew"]  # leave only icw and ew for --scheme all
@@ -37,7 +38,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                         start_date: str = "2022-01-01", end_date: str = "2026-01-01",
                         z_buffer: float = 0.1, z_short_buffer: float = None, auto_threshold: bool = False,
                         rank_kwargs: dict = None, dynamic_ic: bool = False, long_only: bool = False,
-                        use_future: bool = False) -> dict:
+                        use_future: bool = False, use_option: bool = False) -> dict:
     """
     Run backtest for one ETF and side combination filtered to OOS date range.
     
@@ -179,7 +180,27 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
 
     # 9. Backtest Simulation on OOS slice
     trade_returns_oos = full_trade_ret[mask.values if isinstance(mask, pd.Series) else mask]
-    net_returns, raw_returns, fees = simulate_etf_spot(trade_returns_oos, positions_oos, fee_bps=fee_bps)
+    
+    option_result = None
+    if use_option:
+        # Option portfolio simulation mode
+        iv_series = df_oos["iv"].values if "iv" in df_oos.columns else None
+        option_result = simulate_option_portfolio(
+            etf=etf,
+            positions_oos=positions_oos,
+            dates_oos=df_oos["date"],
+            iv_series=iv_series,
+            initial_capital=100_000.0,
+            trade_budget=10_000.0,
+            commission_per_side=4.0,
+            min_days_to_maturity=7,
+        )
+        # Use option daily returns for metrics
+        net_returns = option_result["daily_returns"]
+        raw_returns = net_returns  # no separate raw for options
+        fees = np.zeros_like(net_returns)  # fees embedded in option P&L
+    else:
+        net_returns, raw_returns, fees = simulate_etf_spot(trade_returns_oos, positions_oos, fee_bps=fee_bps)
 
     # 10. Trade log DataFrame creation & CSV export
     trade_log_df = build_trade_log_df(
@@ -204,6 +225,17 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
 
     # 11. Calculate Metrics
     metrics = calculate_metrics(net_returns, raw_returns, positions_oos, dates=df_oos["date"])
+    
+    # Add option-specific metrics if in option mode
+    if use_option and option_result is not None:
+        metrics["option_final_capital"] = option_result["final_capital"]
+        metrics["option_n_trades"] = option_result["n_trades"]
+        metrics["option_bankrupt_day"] = option_result["bankrupt_day"]
+        metrics["option_initial_capital"] = option_result["initial_capital"]
+        metrics["option_trade_log_df"] = option_result["trade_log_df"]
+        # Total P&L in RMB for option mode
+        metrics["option_total_pnl_rmb"] = round(float(option_result["daily_pnl"].sum()), 2)
+    
     metrics.update({
         "etf": etf,
         "asset_type": asset_type,
@@ -270,6 +302,7 @@ def main():
     parser.add_argument("--long-only", dest="long_only", action="store_true", default=False, help="Restrict to long-only trades (Spot ETF mode). Default: False (allows shorting).")
     parser.add_argument("--allow-short", dest="long_only", action="store_false", help="Allow short trades (default)")
     parser.add_argument("--future", action="store_true", help="Trade underlying Index Futures (IF88 for 300ETF, IC88 for 500ETF, IH88 for 50ETF) instead of Spot ETF.")
+    parser.add_argument("--option", action="store_true", help="Simulate option portfolio (100k RMB, 10k per trade, nearest OTM, 7-day min DTM)")
 
     # Validation options
     parser.add_argument("--validate", dest="validate", action="store_true", default=True, help="Run DSR + CPCV validation on results (default: True)")
@@ -291,7 +324,10 @@ def main():
     fee_bps = effective_fee_bps / 10000.0
 
     print("================================================================================")
-    print(f"NewTrade Backtest Engine | Mode={'Future' if args.future else 'Spot ETF'} | Scheme={args.scheme.upper()} | z_th={args.z_th} | buffer={args.z_buffer} | LongOnly={args.long_only} | TopK={args.top_k} | OOS=[{args.start_date} ~ {args.end_date}]")
+    mode_str = "Option Portfolio" if args.option else ("Future" if args.future else "Spot ETF")
+    print(f"NewTrade Backtest Engine | Mode={mode_str} | Scheme={args.scheme.upper()} | z_th={args.z_th} | buffer={args.z_buffer} | LongOnly={args.long_only} | TopK={args.top_k} | OOS=[{args.start_date} ~ {args.end_date}]")
+    if args.option:
+        print(f"  Option Params: 100k RMB capital, 10k/trade, 4 RMB/side commission, >=7 DTM")
     print("================================================================================")
 
     rank_kwargs = {
@@ -326,6 +362,7 @@ def main():
                 dynamic_ic=args.dynamic_ic,
                 long_only=args.long_only,
                 use_future=args.future,
+                use_option=args.option,
             )
             results.append(res)
 
@@ -379,9 +416,21 @@ def main():
             artifacts_dir = HERE / "artifacts"
             artifacts_dir.mkdir(parents=True, exist_ok=True)
             fut_suffix = "_future" if args.future else ""
-            combined_csv = artifacts_dir / f"trade_log{fut_suffix}.csv"
+            opt_suffix = "_option" if args.option else ""
+            combined_csv = artifacts_dir / f"trade_log{fut_suffix}{opt_suffix}.csv"
             combined_df.to_csv(combined_csv, index=False)
             print(f"Saved primary trade log CSV to {combined_csv}")
+        
+        # Save option trade log CSV if in option mode
+        if args.option:
+            opt_dfs = [r["option_trade_log_df"] for r in plot_results if r.get("option_trade_log_df") is not None and not r["option_trade_log_df"].empty]
+            if opt_dfs:
+                combined_opt_df = pd.concat(opt_dfs, ignore_index=True)
+                artifacts_dir = HERE / "artifacts"
+                artifacts_dir.mkdir(parents=True, exist_ok=True)
+                opt_csv = artifacts_dir / "option_trades.csv"
+                combined_opt_df.to_csv(opt_csv, index=False)
+                print(f"Saved option trade log CSV to {opt_csv}")
 
     # Generate equity curve plot artifact
     chart_rel_path = None
@@ -400,7 +449,7 @@ def main():
                     is_ew = (r.get('scheme') == 'ew')
                     ax.plot(dates, cum_pnl, label=f"{r['etf']} [{scheme_lbl}] ({r.get('asset_type', 'Spot ETF')}) (Sharpe: {r['cost_sharpe']:.3f}, PnL: {r['total_pnl']:+.4f})", linewidth=1.0 if is_ew else 1.8, alpha=0.35 if is_ew else 1.0, linestyle='--' if is_ew else '-')
             
-            mode_title = "Index Future" if args.future else "Spot ETF"
+            mode_title = "Option Portfolio" if args.option else ("Index Future" if args.future else "Spot ETF")
             scheme_title = args.scheme.upper()
             ax.set_title(f"NewTrade {scheme_title} — {mode_title} OOS Net PnL (10:00 - 14:35 Intraday)", fontsize=11, fontweight='bold')
             ax.set_xlabel("Date", fontsize=9)
@@ -412,17 +461,19 @@ def main():
             artifacts_dir = HERE / "artifacts"
             artifacts_dir.mkdir(parents=True, exist_ok=True)
             fut_suffix = "_future" if args.future else ""
-            chart_path = artifacts_dir / f"equity_curve{fut_suffix}.png"
+            opt_suffix = "_option" if args.option else ""
+            chart_path = artifacts_dir / f"equity_curve{fut_suffix}{opt_suffix}.png"
             fig.savefig(chart_path)
             plt.close(fig)
-            chart_rel_path = f"artifacts/equity_curve{fut_suffix}.png"
+            chart_rel_path = f"artifacts/equity_curve{fut_suffix}{opt_suffix}.png"
             print(f"Saved equity curve chart to {chart_path}")
         except Exception as e:
             print(f"[WARNING] Failed to generate plot: {e}")
 
     # Print summary table
     print("\n================================================================================")
-    print(f"NEWTRADE OOS BACKTEST PERFORMANCE SUMMARY ({'INDEX FUTURE' if args.future else 'SPOT ETF'}) (10:00 - 14:35 Intraday Trades)")
+    summary_mode = "OPTION PORTFOLIO" if args.option else ("INDEX FUTURE" if args.future else "SPOT ETF")
+    print(f"NEWTRADE OOS BACKTEST PERFORMANCE SUMMARY ({summary_mode}) (10:00 - 14:35 Intraday Trades)")
     print("================================================================================")
     
     headers = ["ETF", "Asset", "Side", "OOS Period", "Z_th", "Features", "Trades", "Cost Sharpe", "Raw Sharpe", "Total PnL", "Long PnL", "Long Sharpe", "Short PnL", "Short Sharpe", "Max DD", "Win Rate", "Turnover"]
@@ -457,10 +508,20 @@ def main():
             n_l = r.get("n_long_trades", 0)
             n_s = r.get("n_short_trades", 0)
             trades_str = f"{r.get('n_trades', 0)} ({n_l}L/{n_s}S)"
+            
+            # Option mode: show option-specific trade count
+            if r.get("option_n_trades") is not None:
+                trades_str = f"{r['option_n_trades']} opt"
 
             win_l = f"{r['win_rate_long_pct']:.1f}%" if r.get("win_rate_long_pct") is not None else "N/A"
             win_s = f"{r['win_rate_short_pct']:.1f}%" if r.get("win_rate_short_pct") is not None else "N/A"
             win_str = f"{r['win_rate_pct']:.1f}% (L:{win_l}, S:{win_s})"
+            
+            # Total PnL display: RMB for option mode, percentage for spot/future
+            if r.get("option_total_pnl_rmb") is not None:
+                total_pnl_str = f"{r['option_total_pnl_rmb']:+,.0f} RMB"
+            else:
+                total_pnl_str = f"{r['total_pnl']:+.4f}"
 
             return [
                 r["etf"],
@@ -472,7 +533,7 @@ def main():
                 trades_str,
                 f"{r['cost_sharpe']:.3f}",
                 f"{r['raw_sharpe']:.3f}",
-                f"{r['total_pnl']:+.4f}",
+                total_pnl_str,
                 f"{r.get('long_pnl', 0):+.4f}",
                 f"{r.get('long_sharpe', 0):.3f}",
                 f"{r.get('short_pnl', 0):+.4f}",
@@ -551,13 +612,19 @@ def main():
         r_copy.pop("_Z_composite", None)
         r_copy.pop("_trade_returns", None)
         r_copy.pop("_dates_series", None)
+        r_copy.pop("option_trade_log_df", None)
         clean_results.append(r_copy)
 
-    # Save markdown report (default: REPORT.md or REPORT_future.md in newtrade/)
+    # Save markdown report (default: REPORT.md, REPORT_future.md, or REPORT_option.md in newtrade/)
     if args.output:
         out_path = Path(args.output)
     else:
-        out_path = HERE / ("REPORT_future.md" if args.future else "REPORT.md")
+        if args.option:
+            out_path = HERE / "REPORT_option.md"
+        elif args.future:
+            out_path = HERE / "REPORT_future.md"
+        else:
+            out_path = HERE / "REPORT.md"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         f.write("# NewTrade OOS Backtest Report\n\n")
@@ -566,8 +633,14 @@ def main():
         f.write(f"- **Scheme(s)**: `{args.scheme.upper()}`\n")
         f.write(f"- **Conviction Threshold**: `{args.z_th}` (buffer=+{args.z_buffer})\n")
         f.write(f"- **Position Mode**: `{args.position_mode}`\n")
-        f.write(f"- **Transaction Friction**: `{effective_fee_bps} bps`\n")
-        f.write(f"- **Rank Mapping Options**: `mapping={args.rank_mapping}, min_ratio={args.rank_min_ratio}, max_ratio={args.rank_max_ratio}, power={args.rank_power}`\n\n")
+        if args.option:
+            f.write(f"- **Mode**: `Option Portfolio`\n")
+            f.write(f"- **Initial Capital**: `100,000 RMB per ETF`\n")
+            f.write(f"- **Trade Budget**: `10,000 RMB per signal`\n")
+            f.write(f"- **Commission**: `4 RMB per side (8 RMB round-trip)`\n")
+            f.write(f"- **Option Selection**: `Nearest OTM, >=7 DTM`\n\n")
+        else:
+            f.write(f"- **Transaction Friction**: `{effective_fee_bps} bps`\n\n")
         f.write(report_content + "\n")
         
         # Append validation section if available
