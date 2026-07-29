@@ -72,12 +72,11 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 - **Primitive Cluster Cap**: Extract primitive feature set (`feature_a`, `feature_b`, `feature_c`, `feature_cond`, `feature_cond2`). Drop or replace redundant combos built from identical base primitives to ensure pool diversity.
 - **Replacement rule**:
   ```
-  replacement_mult = 1.15 if len(admitted_pool) < 10 else 1.30
-  if IC(new) >= 0.10 and IC(new) >= replacement_mult * IC(old)
-     and exactly one existing pool member g has corr(new, g) > theta:
-       replace g with new
+  q_score = 0.40 * deflated_ic + 0.25 * sortino + 0.20 * ic_ir + 0.15 * recent_ic
+  if candidate is correlated with exactly one existing pool member old_feature (corr >= theta):
+      replace old_feature with candidate if cand_q > old_q or cand_ic > old_ic
   ```
-- **Design rationale**: Initial θ=0.80 is deliberately permissive — produces a larger initial pool that B6b then trims to target size. This avoids the high false-reject rate seen at θ=0.70 (FILTER_DIAGNOSIS §6b: B4 collateral 44–90% for 300ETF/159915ETF).
+- **Design rationale**: Fine-tuned B4 replacement ensures that between any pair of correlated features A and B ($r \ge \theta$), the feature with the higher composite quality score ($q\_score$) ALWAYS survives, eliminating first-come, first-served iteration order bias. Initial θ=0.80 is deliberately permissive — produces a larger initial pool that B6b then trims to target size.
 
 ### B5. Trial Ledger & Standalone Deflated IC
 - Save unique attempted candidate formulas to `trial_ledger_{ETF}_{side}.json` to track cumulative unique trials $N$.

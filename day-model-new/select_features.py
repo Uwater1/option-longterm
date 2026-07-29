@@ -806,7 +806,7 @@ def apply_adaptive_boundary(admitted_pool, attempts_log, max_pool_size=MAX_POOL_
         ic_ir = cand.get("ic_ir", 0.0)
         mono = cand.get("monotonicity", 0.0)
         rec_ic = cand.get("recent_ic", 0.0)
-        cand["q_score"] = 0.40 * d_ic + 0.25 * max(0.0, sortino) + 0.20 * ic_ir + 0.15 * max(0.0, rec_ic)
+        cand["q_score"] = 0.40 * d_ic + 0.25 * sortino + 0.20 * ic_ir + 0.15 * rec_ic
 
     # Sort admitted pool by q_score descending (top TP features first)
     admitted_pool.sort(key=lambda c: c["q_score"], reverse=True)
@@ -1634,8 +1634,8 @@ def main():
                 
                 if old_idx != -1:
                     old_item = admitted_pool[old_idx]
-                    cand_q = 0.40 * deflated_ic + 0.25 * max(0.0, cand.get("sortino", 0.0)) + 0.20 * cand.get("ic_ir", 0.0) + 0.15 * max(0.0, cand.get("recent_ic", cand_ic))
-                    old_q = 0.40 * old_item.get("deflated_ic", old_item.get("overall_ic", 0.0)) + 0.25 * max(0.0, old_item.get("sortino", 0.0)) + 0.20 * old_item.get("ic_ir", 0.0) + 0.15 * max(0.0, old_item.get("recent_ic", old_item.get("overall_ic", 0.0)))
+                    cand_q = 0.40 * deflated_ic + 0.25 * cand.get("sortino", 0.0) + 0.20 * cand.get("ic_ir", 0.0) + 0.15 * cand.get("recent_ic", cand_ic)
+                    old_q = 0.40 * old_item.get("deflated_ic", old_item.get("overall_ic", 0.0)) + 0.25 * old_item.get("sortino", 0.0) + 0.20 * old_item.get("ic_ir", 0.0) + 0.15 * old_item.get("recent_ic", old_item.get("overall_ic", 0.0))
                     
                     if cand_q > old_q or cand_ic > old_item.get("overall_ic", 0.0):
                         admitted_pool[old_idx] = cand
