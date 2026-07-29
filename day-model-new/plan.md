@@ -53,7 +53,7 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 2. **Benjamini-Hochberg (BH-FDR) pre-filter**: Reject if empirical $p$-value fails Benjamini-Hochberg FDR at $q=0.20$ (standard screening threshold, via 5,000-trial single-feature block-shuffled simulation on compact survivor matrix `X_survivors`, cached per ETF/side).
    - **Full search-space correction**: Uses `m_total = len(eval_results)` (total candidates before any filtering) for rank denominator, properly accounting for pre-filter selection bias. This does NOT increase computation — FDR still runs only on survivors.
 
-### B3. Admission Floor (Composite score gate)
+### B3. Admission Floor (Composite score gate) & Deflated IC
 - **Rank-normalized Composite Score** (Sortino weight calibrated for fixed null formula):
   $$\text{score} = 0.3 \times \text{RollingMono}_{90\text{d}} + 0.5 \times \text{Sortino} + 0.15 \times |\text{Tail IC}| + 0.05 \times |\text{Overall IC}|$$
   - `RollingMono` (cached from B2) and `Sortino` consume locked `sign` from B1 (computed post sign-resolution, no $|\text{abs}|$ needed).
@@ -64,30 +64,16 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
   - Conditional 2-way combos & base features: $\text{composite\_score} \ge \text{empirical\_93rd}$
   - Symmetric 2-way combos (`max`, `min`, `mean`, `rank_max`, `rank_min`): $\text{composite\_score} \ge \text{empirical\_95th}$ (symmetric ops destroy regime conditioning)
   - 3-way combos (`combo_tri_*`): $\text{composite\_score} \ge \text{empirical\_97th}$ (stricter — more degrees of freedom = higher overfit risk)
+- **Standalone Deflated IC**: `deflated_ic = max(0.0, cand_ic - ic_null_mean)` where `ic_null_mean` is standalone empirical mean of raw overall IC under block-permutation null.
 - *Compute note*: Heavier compute per survivor, but B1 + B2 thin pool first (cheap-first order preserved). 97th percentile computed in same kernel pass as 93rd — no additional simulation cost.
 
-### B4. Correlation Gate, Primitive Cluster Cap & Replacement Rule
-- Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.80$, relaxed initial pass).
-- **Runs AFTER Quality & Stability Gates**: Low-quality or unstable features are filtered before correlation comparison, preventing them from blocking high-quality candidates.
-- **Primitive Cluster Cap**: Extract primitive feature set (`feature_a`, `feature_b`, `feature_c`, `feature_cond`, `feature_cond2`). Drop or replace redundant combos built from identical base primitives to ensure pool diversity.
-- **Replacement rule**:
-  ```
-  q_score = 0.40 * deflated_ic + 0.25 * sortino + 0.15 * ic_ir + 0.20 * recent_ic
-  if candidate is correlated with exactly one existing pool member old_feature (corr >= theta):
-      replace old_feature with candidate if cand_q > old_q or cand_ic > old_ic
-  ```
-- **Design rationale**: Fine-tuned B4 replacement ensures that between any pair of correlated features A and B ($r \ge \theta$), the feature with the higher composite quality score ($q\_score$) ALWAYS survives, eliminating first-come, first-served iteration order bias. Initial θ=0.80 is deliberately permissive — produces a larger initial pool that B6b then trims to target size.
-
-### B5. Trial Ledger & Standalone Deflated IC
-- Save unique attempted candidate formulas to `trial_ledger_{ETF}_{side}.json` to track cumulative unique trials $N$.
-- Compute standalone deflated IC: `deflated_ic = max(0.0, cand_ic - ic_null_mean)` where `ic_null_mean` is standalone empirical mean of raw overall IC under block-permutation null (bounded in $[0, 1]$, avoiding subtraction of negative composite score/sortino null mean).
-
-### B6. Training-Only Quality & Temporal Stability Gates (Before Correlation)
-- Applied AFTER B3 floor, BEFORE B4 correlation gate.
+### B4. Training-Only Quality & Temporal Stability Gates (Pre-Correlation)
+- Applied AFTER B3 floor, BEFORE B5 correlation gate.
 - **Temporal Stability Gate**: For combo features, require `ic_cv * weak_link_cv >= MIN_STABILITY_PRODUCT (0.15)`. Features with artificially low temporal variation (suspiciously "too smooth" in-sample) are fitting structural artifacts. _Tuned: 0.15 chosen to avoid false-rejecting stable 300ETF/159915ETF features; lower values over-penalize genuinely persistent signals._
 - **Yearly IC CV Gate**: Requires `yearly_ic_cv <= MAX_YEARLY_IC_CV (1.50)`. Rejects features with erratic year-to-year IC. _Relaxed from 0.85→1.50 after diagnosis: 0.85 had 48% collateral on 300ETF (16/33 TP killed) and 100% on 159915ETF (2/2). At 1.20, still 88% collateral (7/8 TP killed, 0 FP caught). 1.50 retains as a minimal guard against genuinely erratic signals while admitting positive-but-variable features. B1 jackknife already catches sign flips._
 - ~~**Unstable Component Gate**~~: **REMOVED**. Required `weak_link_cv <= 1.00`. Diagnosis showed 76% collateral on 300ETF (59/78 TP killed) and 100% on 159915ETF (10/10). Combo operations (rank_min, z_sum, etc.) stabilize noisy primitives — standalone component CV ≠ combo instability.
 - **Sign Consistency Gate**: Rejects candidate if meaningful full-sample IC ($|\text{IC}_{\text{full}}| \ge 0.015$) contradicts tail IC sign ($\text{IC}_{\text{full}} \cdot \text{IC}_{\text{tail}} < 0$), preventing non-monotonic tail mirages from entering the pool.
+- **Negative Vol-Regime Gate**: Rejects feature if IC is negative in $\ge 2$ vol-quintile regimes (`REJECTED_NEGATIVE_REGIMES`), catching regime-conditional signals that fail in transitional volatility environments.
 - **Quality Gate**: Requires all three:
   - `deflated_ic >= 0.03` (normal) / `0.05` (short-history ETFs with n_train < 1200)
   - `|raw_ic| >= 0.02` (normal) / `0.03` (short-history) — catches tail-only mirages
@@ -95,12 +81,24 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 - **Rationale for pre-correlation placement**: Prevents low-quality/unstable features from occupying pool slots and blocking higher-quality candidates via the correlation gate.
 - **Zero look-ahead bias**: Uses only training-period metrics. No OOS or lockbox data is accessed.
 
-### B6b. Adaptive Boundary Gate (Post-Correlation Pool Control)
+### B5. Initial Correlation Gate, Primitive Cluster Cap & Replacement Rule
+- Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.80$, relaxed initial pass).
+- **Runs AFTER B4 Quality & Stability Gates**: Low-quality or unstable features are filtered before correlation comparison, preventing them from blocking high-quality candidates.
+- **Primitive Cluster Cap**: Extract primitive feature set (`feature_a`, `feature_b`, `feature_c`, `feature_cond`, `feature_cond2`). Drop or replace redundant combos built from identical base primitives to ensure pool diversity.
+- **Replacement rule**:
+  ```
+  q_score = 0.40 * deflated_ic + 0.25 * sortino + 0.15 * ic_ir + 0.20 * recent_ic
+  if candidate is correlated with exactly one existing pool member old_feature (corr >= theta):
+      replace old_feature with candidate if cand_q > old_q or cand_ic > old_ic
+  ```
+- **Design rationale**: Fine-tuned B5 replacement ensures that between any pair of correlated features A and B ($r \ge \theta$), the feature with the higher composite quality score ($q\_score$) ALWAYS survives, eliminating first-come, first-served iteration order bias. Initial θ=0.80 is deliberately permissive — produces a larger initial pool that B6 then trims to target size.
+
+### B6. Adaptive Boundary Gate (Post-Correlation Pool Control)
 - **Global Constants** (defined at top of `select_features.py`):
   - `DEFAULT_THETA = 0.80`: Relaxed correlation threshold for initial admission (deliberately permissive).
   - `MAX_POOL_SIZE = 15`: Target max admitted pool size.
   - `TOP_PROTECTED_COUNT = 7`: Unconditionally protects top 7 features based on training quality score $S_{train}$.
-  - `TIGHT_THETA = 0.65`: Strict correlation threshold for B6b lower-tier trimming.
+  - `TIGHT_THETA = 0.65`: Strict correlation threshold for B6 lower-tier trimming.
 
 #### Mechanism (pool > MAX_POOL_SIZE)
 - **Trigger**: When initial admission yields $> \text{MAX\_POOL\_SIZE}$ features.
@@ -109,10 +107,11 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
   2. Protects top `TOP_PROTECTED_COUNT` (7) features unconditionally.
   3. Screens lower-tier features with `TIGHT_THETA` (0.65) and quality floors (`recent_ic > 0`, `sortino > 0.05`, `deflated_ic >= 0.04`).
   4. Overwrites initial `ADMITTED` verdict in `attempts_log` for pruned features to `REJECTED_ADAPTIVE_*`.
-- **Design**: Initial B4 is relaxed (θ=0.80) to avoid false-rejecting TP features. B6b is the strict stage — it quality-ranks the large pool and prunes redundancy with TIGHT_THETA=0.65. No small-pool rescue needed because the relaxed initial pass produces sufficiently large pools.
+- **Design**: Initial B5 is relaxed (θ=0.80) to avoid false-rejecting TP features. B6 is the strict stage — it quality-ranks the large pool and prunes redundancy with TIGHT_THETA=0.65.
 - **Zero OOS leakage**: Uses only training set statistics.
 
-### B7. Outputs
+### B7. Outputs & Trial Ledger
+- Save unique attempted candidate formulas to `trial_ledger_{ETF}_{side}.json` to track cumulative unique trials $N$.
 - Version-controlled admitted pools registry in [admitted_pools.py](file:///home/hallo/Documents/option-longterm/day-model-new/admitted_pools.py).
 - Detailed log of attempts in `data/mining_attempts_{ETF}_{side}.json`.
 
