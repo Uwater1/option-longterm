@@ -56,34 +56,43 @@ uv run python newtrade/glm_backtest.py -e all --target-mode bj_sign --compare --
 uv run python newtrade/diagnose_correlation.py -e 300ETF --side single
 uv run python newtrade/diagnose_correlation.py -e all --side single --threshold 0.70
 
-# Multi-Metric Score Weight Tuning & Zero-Lookahead Calibration (Numba Accelerated <8s)
-uv run python newtrade/tune_score_weights.py
+# Default production backtest (ICW scheme, Top-10 truncation, EMA30 IC, validated)
+uv run python newtrade/run_backtest.py -e all
+
+# Compare ICW and EW side-by-side
+uv run python newtrade/run_backtest.py -e all --scheme all
+
+# Top-K & Weighting Research Suite in newtrade/tests/
+uv run python newtrade/tests/test_top10_scoring.py
+uv run python newtrade/tests/test_top10_weighting.py
+uv run python newtrade/tests/test_score_w_ic_mono.py
+uv run python newtrade/tests/test_reweight_cadence.py
+uv run python newtrade/tests/test_750d_vs_30d_decay.py
 ```
 
 ## Architecture
 
 ```
 newtrade/
-├── plan.md                  # Design document (weighting formulas, threshold logic, short buffer)
+├── plan.md                  # Design document (weighting formulas, threshold logic, top-k selection)
 ├── plan_glm.md              # Scheme 5 GLM design document
-├── REPORT.md                # OOS backtest report for Schemes 1-4 (research)
+├── REPORT.md                # OOS backtest report for ICW & EW (default research report)
 ├── REPORT_production.md     # Production ensemble report (DSR-validated)
 ├── REPORT_glm.md            # OOS backtest report for Scheme 5 GLM vs Rank
 ├── run_production.py        # Production ensemble CLI (binary L+S, buffer=0.15, DSR)
 ├── portfolio_backtest.py    # Multi-ETF portfolio backtest + fee stress test
 ├── robustness.py            # DSR, CPCV, PBO, Ensemble, Sensitivity Grid
-├── tune_score_weights.py    # Zero-lookahead Numba grid search & adaptive metric score weight optimizer
 ├── utils.py                 # Data loading, recipe computation, expanding z-score, futures trade return mapper
-├── weighting.py             # 4 weighting schemes: EW, ICW, Score, Rank (Moderate Tilt 0.2~1.8 default, dynamic IC)
-├── glm.py                   # Scheme 5 Expanding Ridge with Britten-Jones (1999) Sharpe/directional target modes
-├── glm_backtest.py          # Standalone Scheme 5 CLI runner & acceptance gate vs Rank Bounded Weight
-├── strategy.py              # Threshold sweep, position sizing (binary/tanh/quadratic), ETF simulation, trade log builder
-├── run_backtest.py          # CLI runner (--future, --scheme all, --z-th auto, --z-short-buffer, --dynamic-ic, CSV exporter)
-├── diagnose_rank_scheme.py  # Dedicated Scheme 4 diagnosis suite
-├── diagnose_correlation.py  # Feature correlation & Ward linkage clustering diagnosis
-├── diagnose_short.py        # Short-side analysis & per-ETF optimal config diagnostic
-├── test_modes.py            # Position mode comparison (binary/tanh/quadratic) + DSR sensitivity
-├── artifacts/               # Equity charts, correlation PNGs, robustness_results.json
+├── weighting.py             # Weighting schemes: ICW (default), EW, Score, Rank, with Top-K truncation
+├── strategy.py              # Threshold sweep, position sizing (binary/tanh/quadratic), ETF simulation
+├── run_backtest.py          # CLI runner (defaults: --scheme icw --top-k 10 --dynamic-metric ic --ic-ema-span 30 --validate)
+├── tests/                   # Research & experimental test suite
+│   ├── test_top10_scoring.py
+│   ├── test_top10_weighting.py
+│   ├── test_score_w_ic_mono.py
+│   ├── test_reweight_cadence.py
+│   └── test_750d_vs_30d_decay.py
+├── artifacts/               # Equity charts, trade CSVs
 └── data/                    # JSON result artifacts
 ```
 
@@ -91,7 +100,9 @@ newtrade/
 
 | Topic | Decision |
 |-------|----------|
-| **Production Signal** | Ensemble (equal-weight avg of EW+ICW+Score+Rank). IC-only dynamic weighting. |
+| **Production Signal** | IC Weighted (`--scheme icw`) on Top-10 features selected by 30d EMA IC (`--top-k 10 --dynamic-metric ic --ic-ema-span 30`). |
+| **Scheme Comparison** | `--scheme all` evaluates `ICW` and `EW` side-by-side. |
+| **Top-K Truncation** | Default `--top-k 10`. Solves 500ETF 32-feature dilution (+0.113 Sharpe lift) while acting as a non-destructive floor for lean pools (159915ETF SR=1.497). |
 | **Production Sizing** | Binary L+S. Shorts add 30-40% of PnL. 61% WR on 159915ETF. |
 | **Production Buffer** | +0.10 above train-optimal. Walk-forward validated. |
 | **Validation** | Portfolio DSR=0.953 (SIGNIFICANT). CPCV 100% positive. PBO=40% (MODERATE). |

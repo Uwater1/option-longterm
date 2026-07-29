@@ -20,12 +20,12 @@ from scipy.stats import rankdata
 def compute_ew(Z: np.ndarray, signs: np.ndarray, **kwargs) -> np.ndarray:
     """
     Equal Weight Scheme (EW):
-    Each factor gets equal weight w_i = sign_i / N.
-    Z_composite = sum(w_i * z_i) = mean(sign_i * z_i).
+    Each factor gets equal weight w_i = sign_i / N (or top_k features get equal weight 1/K).
     
     Args:
       - Z: Standardized feature matrix shape (T, N)
       - signs: Array of factor signs (+1 or -1) shape (N,)
+      - top_k: Optional integer K to select top K factors by rolling IC or pool metadata.
       
     Returns:
       - Z_composite: Composite signal shape (T,)
@@ -33,6 +33,37 @@ def compute_ew(Z: np.ndarray, signs: np.ndarray, **kwargs) -> np.ndarray:
     T, N = Z.shape
     if N == 0:
         return np.zeros(T, dtype=np.float64)
+    
+    top_k = kwargs.get("top_k", None)
+    expanding_ic = kwargs.get("expanding_ic", None)
+    pool = kwargs.get("pool", None)
+    
+    if top_k is not None and 1 <= top_k < N:
+        Z_signed = Z * signs
+        if expanding_ic is not None and expanding_ic.shape == Z.shape:
+            ic_ema_span = kwargs.get("ic_ema_span", 30)
+            if ic_ema_span and ic_ema_span > 1:
+                alpha = 2.0 / (ic_ema_span + 1.0)
+                ic_mat = np.zeros_like(expanding_ic)
+                ic_mat[0] = expanding_ic[0]
+                for t_idx in range(1, T):
+                    ic_mat[t_idx] = alpha * expanding_ic[t_idx] + (1.0 - alpha) * ic_mat[t_idx - 1]
+            else:
+                ic_mat = expanding_ic
+            
+            Z_composite = np.zeros(T, dtype=np.float64)
+            for t in range(T):
+                top_idx = np.argsort(ic_mat[t])[-top_k:]
+                w_t = np.zeros(N, dtype=np.float64)
+                w_t[top_idx] = 1.0 / float(top_k)
+                Z_composite[t] = Z_signed[t] @ w_t
+            return Z_composite
+        elif pool and len(pool) == N:
+            deflated_ics = np.array([item.get("deflated_ic", 0.0) for item in pool], dtype=np.float64)
+            top_idx = np.argsort(deflated_ics)[-top_k:]
+            weights = np.zeros(N, dtype=np.float64)
+            weights[top_idx] = 1.0 / float(top_k)
+            return Z_signed @ weights
     
     # Apply sign alignment
     Z_signed = Z * signs
@@ -43,36 +74,60 @@ def compute_ew(Z: np.ndarray, signs: np.ndarray, **kwargs) -> np.ndarray:
     return Z_composite
 
 
-def compute_icw(Z: np.ndarray, signs: np.ndarray, pool: list, n_train: int = 1700, k: float = 1.0, **kwargs) -> np.ndarray:
+def compute_icw(Z: np.ndarray, signs: np.ndarray, pool: list = None, n_train: int = 1700, k: float = 1.0, **kwargs) -> np.ndarray:
     """
     IC Weighted Scheme (ICW) with Empirical Bayes Shrinkage:
     w_i ∝ max(0, deflated_ic_i - SE_IC)^k
     SE_IC = 1 / sqrt(n_train)
-    
-    Penalizes features with marginal IC estimates that are likely noise.
-    Falls back to equal weight if all weights shrink to zero.
-    
-    Args:
-      - Z: Standardized feature matrix shape (T, N)
-      - signs: Array of factor signs (+1 or -1) shape (N,)
-      - pool: List of pool item dicts with 'deflated_ic' field
-      - n_train: Training sample size for SE_IC calculation (default ~7 years)
-      - k: Exponent tilt toward higher-IC features (default 1.0)
-      
-    Returns:
-      - Z_composite: Composite signal shape (T,)
+    Supports optional top_k feature gating.
     """
     T, N = Z.shape
     if N == 0:
         return np.zeros(T, dtype=np.float64)
     
-    # Empirical Bayes shrinkage: subtract SE(IC) ≈ 1/√n
+    top_k = kwargs.get("top_k", None)
+    expanding_ic = kwargs.get("expanding_ic", None)
     se_ic = 1.0 / np.sqrt(n_train)
-    deflated_ics = np.array([item.get("deflated_ic", 0.0) for item in pool], dtype=np.float64)
+    Z_signed = Z * signs
+
+    if top_k is not None and 1 <= top_k < N and expanding_ic is not None and expanding_ic.shape == Z.shape:
+        ic_ema_span = kwargs.get("ic_ema_span", 30)
+        if ic_ema_span and ic_ema_span > 1:
+            alpha = 2.0 / (ic_ema_span + 1.0)
+            ic_mat = np.zeros_like(expanding_ic)
+            ic_mat[0] = expanding_ic[0]
+            for t_idx in range(1, T):
+                ic_mat[t_idx] = alpha * expanding_ic[t_idx] + (1.0 - alpha) * ic_mat[t_idx - 1]
+        else:
+            ic_mat = expanding_ic
+        
+        Z_composite = np.zeros(T, dtype=np.float64)
+        for t in range(T):
+            top_idx = np.argsort(ic_mat[t])[-top_k:]
+            w_t = np.zeros(N, dtype=np.float64)
+            raw_w = np.maximum(0.0, ic_mat[t, top_idx] - se_ic) ** k
+            w_sum = raw_w.sum()
+            if w_sum < 1e-12:
+                w_t[top_idx] = 1.0 / float(top_k)
+            else:
+                w_t[top_idx] = raw_w / w_sum
+            Z_composite[t] = Z_signed[t] @ w_t
+        return Z_composite
+
+    # Empirical Bayes shrinkage from pool
+    if pool is not None and len(pool) == N:
+        deflated_ics = np.array([item.get("deflated_ic", 0.0) for item in pool], dtype=np.float64)
+    else:
+        deflated_ics = np.ones(N, dtype=np.float64)
     
-    # Shrink and apply exponent
     weights = np.maximum(0.0, deflated_ics - se_ic) ** k
     
+    if top_k is not None and 1 <= top_k < N:
+        top_idx = np.argsort(deflated_ics)[-top_k:]
+        mask = np.zeros(N, dtype=bool)
+        mask[top_idx] = True
+        weights[~mask] = 0.0
+
     # Normalize or fall back to equal weight
     w_sum = weights.sum()
     if w_sum < 1e-12:
@@ -80,10 +135,7 @@ def compute_icw(Z: np.ndarray, signs: np.ndarray, pool: list, n_train: int = 170
     else:
         weights = weights / w_sum
     
-    # Apply sign alignment and weighted sum
-    Z_signed = Z * signs
     Z_composite = Z_signed @ weights
-    
     return Z_composite
 
 
@@ -114,12 +166,11 @@ def _compute_pool_scores(pool: list, score_weights: tuple = (0.20, 0.15, 0.65)) 
     return scores
 
 
-def compute_score_w(Z: np.ndarray, signs: np.ndarray, pool: list, score_weights: tuple = (0.20, 0.15, 0.65), **kwargs) -> np.ndarray:
+def compute_score_w(Z: np.ndarray, signs: np.ndarray, pool: list = None, score_weights: tuple = (0.20, 0.15, 0.65), **kwargs) -> np.ndarray:
     """
     Score Weighted Scheme (B3-Inspired):
     w_i ∝ score_i = w_ic*rank_norm(deflated_ic) + w_ir*rank_norm(ic_ir) + w_mono*rank_norm(mono)
-    
-    Multi-dimensional quality weighting. If expanding_ic is provided, uses dynamic daily score matrix.
+    Supports dynamic expanding score matrix and top_k feature filtering.
     """
     T, N = Z.shape
     if N == 0:
@@ -127,6 +178,7 @@ def compute_score_w(Z: np.ndarray, signs: np.ndarray, pool: list, score_weights:
     if N == 1:
         return Z[:, 0] * signs[0]
 
+    top_k = kwargs.get("top_k", None)
     expanding_ic = kwargs.get("expanding_ic", None)
     if expanding_ic is not None and expanding_ic.shape == Z.shape:
         ic_ema_span = kwargs.get("ic_ema_span", 30)
@@ -142,25 +194,42 @@ def compute_score_w(Z: np.ndarray, signs: np.ndarray, pool: list, score_weights:
         Z_signed = Z * signs
         Z_composite = np.zeros(T, dtype=np.float64)
         for t in range(T):
-            w_t = score_mat[t]
-            w_sum = w_t.sum()
-            if w_sum < 1e-12:
-                w_t = np.ones(N, dtype=np.float64) / N
+            s_t = score_mat[t]
+            w_t = np.zeros(N, dtype=np.float64)
+            if top_k is not None and 1 <= top_k < N:
+                top_idx = np.argsort(s_t)[-top_k:]
+                w_sub = s_t[top_idx]
+                w_sum = w_sub.sum()
+                if w_sum < 1e-12:
+                    w_t[top_idx] = 1.0 / float(top_k)
+                else:
+                    w_t[top_idx] = w_sub / w_sum
             else:
-                w_t = w_t / w_sum
+                w_sum = s_t.sum()
+                if w_sum < 1e-12:
+                    w_t = np.ones(N, dtype=np.float64) / N
+                else:
+                    w_t = s_t / w_sum
             Z_composite[t] = Z_signed[t] @ w_t
         return Z_composite
     
-    scores = _compute_pool_scores(pool, score_weights=score_weights)
-    
-    # Normalize weights
-    w_sum = scores.sum()
-    if w_sum < 1e-12:
-        weights = np.ones(N, dtype=np.float64) / N
+    scores = _compute_pool_scores(pool, score_weights=score_weights) if pool else np.ones(N, dtype=np.float64)
+    weights = np.zeros(N, dtype=np.float64)
+    if top_k is not None and 1 <= top_k < N:
+        top_idx = np.argsort(scores)[-top_k:]
+        sub_scores = scores[top_idx]
+        w_sum = sub_scores.sum()
+        if w_sum < 1e-12:
+            weights[top_idx] = 1.0 / float(top_k)
+        else:
+            weights[top_idx] = sub_scores / w_sum
     else:
-        weights = scores / w_sum
+        w_sum = scores.sum()
+        if w_sum < 1e-12:
+            weights = np.ones(N, dtype=np.float64) / N
+        else:
+            weights = scores / w_sum
     
-    # Apply sign alignment and weighted sum
     Z_signed = Z * signs
     Z_composite = Z_signed @ weights
     
@@ -172,12 +241,6 @@ def get_rank_weights(pool: list, w_min_ratio: float = 0.2, w_max_ratio: float = 
                      top_k: int = None, score_weights: tuple = (0.20, 0.15, 0.65), **kwargs) -> np.ndarray:
     """
     Calculate Scheme 4 factor weights vector w_i for a pool.
-    
-    Supported mapping shapes:
-      - 'linear': linear rank mapping between w_min and w_max
-      - 'power': (rank / N)^power mapping scaled to [w_min, w_max]
-      - 'softmax': exp(softmax_tau * norm_rank) / sum(...)
-      - 'top_k': keep only top_k factors by score, assign zero to the rest, rank-bound top_k
     """
     N = len(pool)
     if N == 0:
@@ -193,7 +256,7 @@ def get_rank_weights(pool: list, w_min_ratio: float = 0.2, w_max_ratio: float = 
 
     shape_clean = mapping_shape.lower()
 
-    if shape_clean == "top_k":
+    if shape_clean == "top_k" or (top_k is not None and 1 <= top_k < N):
         k = top_k if top_k is not None and 1 <= top_k <= N else N
         top_k_indices = np.argsort(scores)[-k:]  # indices of top k scores
         weights = np.zeros(N, dtype=np.float64)
@@ -227,7 +290,7 @@ def get_rank_weights(pool: list, w_min_ratio: float = 0.2, w_max_ratio: float = 
     return weights
 
 
-def compute_rank_w(Z: np.ndarray, signs: np.ndarray, pool: list,
+def compute_rank_w(Z: np.ndarray, signs: np.ndarray, pool: list = None,
                    w_min_ratio: float = 0.2, w_max_ratio: float = 1.8,
                    mapping_shape: str = "linear", power: float = 2.0, softmax_tau: float = 1.0,
                    top_k: int = None, score_weights: tuple = (0.20, 0.15, 0.65),
@@ -235,9 +298,7 @@ def compute_rank_w(Z: np.ndarray, signs: np.ndarray, pool: list,
     """
     Rank Bounded Weight Scheme (Scheme 4):
     Ranks factors by composite score, maps to weights using chosen mapping shape.
-    Default mapping bounds: w_min = 0.2/N, w_max = 1.8/N (Moderate Tilt).
-    
-    If expanding_ic matrix (T x N) is provided, uses dynamic zero-lookahead daily factor IC ranking.
+    Supports top_k feature selection both statically and dynamically.
     """
     T, N = Z.shape
     if N == 0:
@@ -258,14 +319,27 @@ def compute_rank_w(Z: np.ndarray, signs: np.ndarray, pool: list,
 
         Z_signed = Z * signs
         Z_composite = np.zeros(T, dtype=np.float64)
-        w_min = w_min_ratio / N
-        w_max = w_max_ratio / N
         w_prev = np.ones(N, dtype=np.float64) / float(N)
+        
         for t in range(T):
             ic_t = ic_mat[t]
-            ranks_t = rankdata(ic_t, method="average")
-            w_target = w_min + (w_max - w_min) * (ranks_t - 1.0) / (N - 1.0)
-            w_target = w_target / w_target.sum()
+            if top_k is not None and 1 <= top_k < N:
+                top_idx = np.argsort(ic_t)[-top_k:]
+                w_target = np.zeros(N, dtype=np.float64)
+                if top_k == 1:
+                    w_target[top_idx] = 1.0
+                else:
+                    sub_ranks = rankdata(ic_t[top_idx], method="average")
+                    sub_w_min = w_min_ratio / top_k
+                    sub_w_max = w_max_ratio / top_k
+                    w_target[top_idx] = sub_w_min + (sub_w_max - sub_w_min) * (sub_ranks - 1.0) / (top_k - 1.0)
+                    w_target = w_target / w_target.sum()
+            else:
+                w_min = w_min_ratio / N
+                w_max = w_max_ratio / N
+                ranks_t = rankdata(ic_t, method="average")
+                w_target = w_min + (w_max - w_min) * (ranks_t - 1.0) / (N - 1.0)
+                w_target = w_target / w_target.sum()
             
             if weight_delta is not None and 0.0 < weight_delta < 1.0:
                 if t == 0:
@@ -281,7 +355,7 @@ def compute_rank_w(Z: np.ndarray, signs: np.ndarray, pool: list,
         return Z_composite
 
     weights = get_rank_weights(
-        pool,
+        pool if pool else [],
         w_min_ratio=w_min_ratio,
         w_max_ratio=w_max_ratio,
         mapping_shape=mapping_shape,

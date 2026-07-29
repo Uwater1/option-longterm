@@ -28,8 +28,8 @@ from strategy import generate_positions, simulate_etf_spot, calculate_metrics, s
 from robustness import deflated_sharpe_ratio, run_cpcv_backtest
 
 AVAILABLE_ETFS = ["300ETF", "500ETF", "50ETF", "588000ETF", "159915ETF"]
-ALL_SCHEMES = ["ew", "icw", "score", "rank"]  # glm deferred
-ENSEMBLE_SCHEMES = ["ew", "icw", "score", "rank"]  # schemes averaged in ensemble
+ALL_SCHEMES = ["icw", "ew"]  # leave only icw and ew for --scheme all
+ENSEMBLE_SCHEMES = ["icw", "ew"]  # schemes averaged in ensemble
 
 
 def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew", z_th: float = 0.5, 
@@ -120,17 +120,16 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
         Z_composites = []
         for s_name in ENSEMBLE_SCHEMES:
             s_func = get_weighting_scheme(s_name)
-            s_kwargs = dict(rk) if s_name in ("rank", "score") else {}
-            if s_name in ("rank", "score"):
-                s_kwargs["expanding_ic"] = IC_mat
+            s_kwargs = dict(rk)
+            s_kwargs["expanding_ic"] = IC_mat
             Z_composites.append(s_func(Z_std, signs, pool=pool, n_train=n_train, **s_kwargs))
         Z_composite = np.mean(Z_composites, axis=0)
     else:
         scheme_func = get_weighting_scheme(scheme_name)
-        extra_kwargs = rank_kwargs if (scheme_name in ("rank", "score") and rank_kwargs) else {}
-        if dynamic_ic and scheme_name in ("rank", "score"):
+        extra_kwargs = dict(rank_kwargs) if rank_kwargs else {}
+        if dynamic_ic:
             metric_choice = extra_kwargs.get("dynamic_metric", "multi")
-            if metric_choice == "multi":
+            if metric_choice == "multi" and scheme_name == "score":
                 sw = extra_kwargs.get("score_weights", (0.20, 0.15, 0.65))
                 mw = extra_kwargs.get("mono_window", 750)
                 exp_mat = expanding_factor_score_numba(Z_std, signs, full_trade_ret, burn_in=burn_in, score_weights=sw, mono_window=mw)
@@ -241,7 +240,7 @@ def main():
     parser = argparse.ArgumentParser(description="NewTrade Day-Model Factor Monetization Backtest Runner")
     parser.add_argument("-e", "--etf", type=str, default="all", help="Target ETF (300ETF, 500ETF, 50ETF, 588000ETF, 159915ETF, or all)")
     parser.add_argument("-s", "--side", type=str, default="single", choices=["single", "long", "short"], help="Trading side")
-    parser.add_argument("--scheme", type=str, default="ensemble", choices=["ew", "icw", "score", "rank", "ensemble", "all"], help="Factor weighting scheme (default: ensemble = equal-weight average of all 4)")
+    parser.add_argument("--scheme", type=str, default="icw", choices=["ew", "icw", "score", "rank", "ensemble", "all"], help="Factor weighting scheme (default: icw)")
     parser.add_argument("--z-th", type=str, default="auto", help="Conviction threshold Z score. 'auto' = train-sweep + buffer, or float value for fixed.")
     parser.add_argument("--z-buffer", type=float, default=0.1, help="Production buffer added to train-optimal threshold (default 0.1, walk-forward validated)")
     parser.add_argument("--z-short-buffer", type=float, default=None, help="Production buffer for short threshold (default: z_buffer + 0.1)")
@@ -257,10 +256,11 @@ def main():
     parser.add_argument("--rank-max-ratio", type=float, default=1.8, help="Scheme 4 w_max ratio relative to 1/N (default 1.8)")
     parser.add_argument("--rank-mapping", type=str, default="linear", choices=["linear", "power", "softmax", "top_k"], help="Scheme 4 rank mapping shape")
     parser.add_argument("--rank-power", type=float, default=2.0, help="Power exponent for 'power' rank mapping shape")
+    parser.add_argument("--top-k", type=int, default=10, help="Top K factors feature truncation selection threshold (default: 10)")
     parser.add_argument("--rank-top-k", type=int, default=None, help="Top K factors truncation threshold for 'top_k' rank mapping shape")
     parser.add_argument("--dynamic-ic", "--dynamic-score", dest="dynamic_ic", action="store_true", default=True, help="Enable zero-lookahead expanding factor ranking (default: True)")
     parser.add_argument("--no-dynamic-ic", "--no-dynamic-score", dest="dynamic_ic", action="store_false", help="Disable dynamic ranking (use static pool metadata score)")
-    parser.add_argument("--dynamic-metric", type=str, default="multi", choices=["ic", "multi"], help="Dynamic factor ranking metric: 'multi' (default: IC + IC_IR + Monotonicity score) or 'ic' (single expanding IC)")
+    parser.add_argument("--dynamic-metric", type=str, default="ic", choices=["ic", "multi"], help="Dynamic factor ranking metric: 'ic' (default: single expanding IC) or 'multi'")
     parser.add_argument("--mono-window", type=int, default=750, help="Rolling window for monotonicity calculation (default 750 trading days ~ 3 years, 0 for full expanding)")
     parser.add_argument("--score-w-ic", type=float, default=0.20, help="Score weight for IC component (default 0.20)")
     parser.add_argument("--score-w-ir", type=float, default=0.15, help="Score weight for IC_IR component (default 0.15)")
@@ -272,7 +272,8 @@ def main():
     parser.add_argument("--future", action="store_true", help="Trade underlying Index Futures (IF88 for 300ETF, IC88 for 500ETF, IH88 for 50ETF) instead of Spot ETF.")
 
     # Validation options
-    parser.add_argument("--validate", action="store_true", help="Run DSR + CPCV validation on results")
+    parser.add_argument("--validate", dest="validate", action="store_true", default=True, help="Run DSR + CPCV validation on results (default: True)")
+    parser.add_argument("--no-validate", dest="validate", action="store_false", help="Disable DSR + CPCV validation")
     parser.add_argument("--trials", type=int, default=10, help="Number of trials for DSR correction (default: 10)")
     parser.add_argument("--cpcv-splits", type=int, default=6, help="CPCV number of splits (default: 6)")
     parser.add_argument("--cpcv-test", type=int, default=2, help="CPCV test chunks per fold (default: 2)")
@@ -288,7 +289,7 @@ def main():
     fee_bps = args.fee_bps / 10000.0
 
     print("================================================================================")
-    print(f"NewTrade Backtest Engine | Mode={'Future' if args.future else 'Spot ETF'} | Scheme={args.scheme.upper()} | z_th={args.z_th} | buffer={args.z_buffer} | LongOnly={args.long_only} | OOS=[{args.start_date} ~ {args.end_date}]")
+    print(f"NewTrade Backtest Engine | Mode={'Future' if args.future else 'Spot ETF'} | Scheme={args.scheme.upper()} | z_th={args.z_th} | buffer={args.z_buffer} | LongOnly={args.long_only} | TopK={args.top_k} | OOS=[{args.start_date} ~ {args.end_date}]")
     print("================================================================================")
 
     rank_kwargs = {
@@ -296,7 +297,7 @@ def main():
         "w_max_ratio": args.rank_max_ratio,
         "mapping_shape": args.rank_mapping,
         "power": args.rank_power,
-        "top_k": args.rank_top_k,
+        "top_k": args.top_k if args.top_k is not None else args.rank_top_k,
         "ic_ema_span": args.ic_ema_span,
         "dynamic_metric": args.dynamic_metric,
         "weight_delta": args.weight_delta,
@@ -367,36 +368,38 @@ def main():
                   f"({cpcv['pct_positive']:.0f}% pos)")
         print()
 
-    # Save aggregated Rank Bounded Weight trades CSV artifact
-    rank_results = [r for r in results if r.get("scheme") in ("rank", "ensemble") and r.get("status") == "SUCCESS"]
-    if rank_results:
-        all_rank_dfs = [r["trade_log_df"] for r in rank_results if r.get("trade_log_df") is not None]
-        if all_rank_dfs:
-            combined_rank_df = pd.concat(all_rank_dfs, ignore_index=True)
+    # Save aggregated trades CSV artifact
+    plot_results = [r for r in results if r.get("status") == "SUCCESS"]
+    if plot_results:
+        all_dfs = [r["trade_log_df"] for r in plot_results if r.get("trade_log_df") is not None]
+        if all_dfs:
+            combined_df = pd.concat(all_dfs, ignore_index=True)
             artifacts_dir = HERE / "artifacts"
             artifacts_dir.mkdir(parents=True, exist_ok=True)
             fut_suffix = "_future" if args.future else ""
-            combined_rank_csv = artifacts_dir / f"rank_bounded_trades{fut_suffix}.csv"
-            combined_rank_df.to_csv(combined_rank_csv, index=False)
-            print(f"Saved primary Rank Bounded trade log CSV to {combined_rank_csv}")
+            combined_csv = artifacts_dir / f"trade_log{fut_suffix}.csv"
+            combined_df.to_csv(combined_csv, index=False)
+            print(f"Saved primary trade log CSV to {combined_csv}")
 
-    # Generate Rank Bounded Weight plot artifact
+    # Generate equity curve plot artifact
     chart_rel_path = None
-    if rank_results:
+    if plot_results:
         try:
             import matplotlib
             matplotlib.use('Agg')
             import matplotlib.pyplot as plt
 
             fig, ax = plt.subplots(figsize=(10, 4.5), dpi=150)
-            for r in rank_results:
+            for r in plot_results:
                 if r.get("dates") and r.get("cum_pnl"):
                     dates = pd.to_datetime(r["dates"])
                     cum_pnl = r["cum_pnl"]
-                    ax.plot(dates, cum_pnl, label=f"{r['etf']} ({r.get('asset_type', 'Spot ETF')}) (Sharpe: {r['cost_sharpe']:.3f}, PnL: {r['total_pnl']:+.4f})", linewidth=1.8)
+                    scheme_lbl = r.get('scheme', '').upper()
+                    ax.plot(dates, cum_pnl, label=f"{r['etf']} [{scheme_lbl}] ({r.get('asset_type', 'Spot ETF')}) (Sharpe: {r['cost_sharpe']:.3f}, PnL: {r['total_pnl']:+.4f})", linewidth=1.8)
             
             mode_title = "Index Future" if args.future else "Spot ETF"
-            ax.set_title(f"Rank Bounded Weight ({args.rank_mapping.upper()}) — {mode_title} OOS Net PnL (10:00 - 14:35 Intraday)", fontsize=11, fontweight='bold')
+            scheme_title = args.scheme.upper()
+            ax.set_title(f"NewTrade {scheme_title} — {mode_title} OOS Net PnL (10:00 - 14:35 Intraday)", fontsize=11, fontweight='bold')
             ax.set_xlabel("Date", fontsize=9)
             ax.set_ylabel("Cumulative Net PnL", fontsize=9)
             ax.grid(True, linestyle="--", alpha=0.5)
@@ -406,11 +409,11 @@ def main():
             artifacts_dir = HERE / "artifacts"
             artifacts_dir.mkdir(parents=True, exist_ok=True)
             fut_suffix = "_future" if args.future else ""
-            chart_path = artifacts_dir / f"rank_bounded_equity{fut_suffix}.png"
+            chart_path = artifacts_dir / f"equity_curve{fut_suffix}.png"
             fig.savefig(chart_path)
             plt.close(fig)
-            chart_rel_path = f"artifacts/rank_bounded_equity{fut_suffix}.png"
-            print(f"Saved Rank Bounded equity chart to {chart_path}")
+            chart_rel_path = f"artifacts/equity_curve{fut_suffix}.png"
+            print(f"Saved equity curve chart to {chart_path}")
         except Exception as e:
             print(f"[WARNING] Failed to generate plot: {e}")
 

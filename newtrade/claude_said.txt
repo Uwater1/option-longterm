@@ -1,0 +1,28 @@
+User: Q1, should I reuse day-model/unified_model.md
+Q1 — unified_model manifold: good call, reuse it
+
+Yes, directly port to glm.py. Two reasons it's strictly better than current setup:
+
+Kills the exact failure mode I flagged last round (nonconvex adds hyperparam surface, risky on small N). Your 
+𝜌
+max
+⁡
+ρ
+max
+	​
+
+ kappa-cap already auto-throttles MCP aggressiveness when features collinear — exactly what 300ETF/159915 (small N, high pairwise corr per your dendrogram) need. Self-solving.
+Continuous manifold > categorical model-type switch: TPE surrogate learns smooth loss landscape across regimes instead of restarting cold each penalty familycoordinate descent algorithms generalize to nonconvex penalties by needing only gradient and prox info, letting a single generic solver span convex-to-nonconvex regimes. Confirms your instinct — "hard fall to Ridge cliff" was a real defect, manifold fixes it structurally, not just empirically. 
+arxiv
+
+Benefit of Optuna here: real. 4D continuous space, MCP's near-unbiased large-coefficient propertyMCP and SCAD enjoy the oracle property even in high-dimensional settings, avoiding the systematic bias Lasso imposes on large coefficients. — matches exactly what you want: strong-IC factors keep full weight, weak ones killed, no blanket shrinkage. 
+Pbreheny
+
+Cost: multiple-testing. 4 knobs × alpha grid × 3 active ETFs × however many Optuna trials = large trial count, and DSR math says significance threshold rises with trial countDSR corrects for selection bias under multiple testing and non-normal returns to separate legitimate findings from statistical flukes. Two concrete guards, both cheap to add: 
+arxiv
+
+Trial budget scaled to n_train per ETF (300ETF thin history → few trials; 500ETF deep history → more). Don't run same budget everywhere.
+After tuning, compute DSR treating trial count as the "number of independent trials" input, not 1. If DSR ≈ 0 → params memorized noise, fall back to plain KNS-ridge for that ETF.
+Your HARD_KAPPA prune already guards numerical blowup — good, keep, orthogonal to overfit guard above.
+
+Net: worth doing, but gate it by DSR post-hoc, don't just trust raw OOS Sharpe from Optuna's winning trial.
