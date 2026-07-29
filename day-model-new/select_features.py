@@ -53,6 +53,7 @@ MIN_EARLY_IC_THRESHOLD = 0.05 # Minimum early IC to trigger recency ratio cap
 MAX_YEARLY_IC_CV = 1.50       # Max coefficient of variation for yearly ICs (relaxed: 0.85 killed 48-100% TP)
 # MAX_WEAK_LINK_CV removed — combo ops stabilize noisy primitives; gate had 76-100% TP collateral
 MIN_STABILITY_PRODUCT = 0.15  # Min product of ic_cv * weak_link_cv
+MAX_NEGATIVE_REGIMES = 1      # Max vol-quintile regimes with negative IC (>=2 = regime-conditional signal)
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
@@ -1403,6 +1404,38 @@ def main():
     dates_years = pd.DatetimeIndex(dates_train.values).year.values
     unique_years = sorted(set(dates_years))
 
+    # Pre-compute vol20 regime masks for negative-regime gate
+    _vol20 = pd.Series(y_train).rolling(20).std().values
+    _vol_valid = ~np.isnan(_vol20)
+    if _vol_valid.sum() >= 100:
+        _vol_pcts = np.percentile(_vol20[_vol_valid], [20, 40, 60, 80])
+        _regime_masks = [
+            _vol_valid & (_vol20 <= _vol_pcts[0]),
+            _vol_valid & (_vol20 > _vol_pcts[0]) & (_vol20 <= _vol_pcts[1]),
+            _vol_valid & (_vol20 > _vol_pcts[1]) & (_vol20 <= _vol_pcts[2]),
+            _vol_valid & (_vol20 > _vol_pcts[2]) & (_vol20 <= _vol_pcts[3]),
+            _vol_valid & (_vol20 > _vol_pcts[3]),
+        ]
+    else:
+        _regime_masks = None
+
+    def _compute_n_negative_regimes(x_flipped_arr):
+        """Count vol-quintile regimes where feature IC is negative (training-only)."""
+        if _regime_masks is None:
+            return None
+        n_neg = 0
+        n_valid = 0
+        for mask in _regime_masks:
+            if mask.sum() < 20:
+                continue
+            n_valid += 1
+            ic = _spearman_from_arrays(x_flipped_arr[mask], y_train[mask])
+            if ic < 0:
+                n_neg += 1
+        if n_valid < 3:
+            return None
+        return n_neg
+
     def _compute_yearly_ic_cv(x_flipped_arr):
         """Compute coefficient of variation of yearly ICs (training-only)."""
         yearly_ics = []
@@ -1548,6 +1581,27 @@ def main():
                         "verdict": "REJECTED_STABILITY_GATE"
                     })
                     continue
+
+        # Negative Regime Gate: reject if feature IC is negative in >=2 vol-quintile regimes
+        # Catches regime-conditional signals that fail in transitional vol environments.
+        if is_combo:
+            n_neg_reg = _compute_n_negative_regimes(x_cand)
+            cand["n_negative_regimes"] = n_neg_reg
+            if n_neg_reg is not None and n_neg_reg > MAX_NEGATIVE_REGIMES:
+                attempts_log.append({
+                    "feature_name": cand_name,
+                    "sign": cand["sign"],
+                    "raw_ic": cand["raw_ic"],
+                    "overall_ic": cand_ic,
+                    "deflated_ic": deflated_ic,
+                    "n_negative_regimes": n_neg_reg,
+                    "ic_ir": cand["ic_ir"],
+                    "monotonicity": cand["monotonicity"],
+                    "passes_rolling_guard": True,
+                    "passes_fdr": True,
+                    "verdict": "REJECTED_NEGATIVE_REGIMES"
+                })
+                continue
 
         # Quality Gate (before correlation): minimum deflated IC + positive Sortino + minimum raw IC
         # Prevents low-quality features from entering correlation comparison.

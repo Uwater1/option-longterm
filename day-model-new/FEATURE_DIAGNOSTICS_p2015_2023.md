@@ -16,55 +16,59 @@ Cost assumption: **8 bps (0.0008)** per position state transition.
 
 ## Per-ETF Feature Diagnostics
 
-### 300ETF — `single` (Full Model Lockbox IC: +0.0727, Sharpe: +0.5090)
+### 300ETF — `single` (Full Model Lockbox IC: +0.0709, Sharpe: +0.3302)
 
 | Feature | Family | Sign | Train IC | OOS IC | Lock IC | Lock Sharpe | IC CV | Neg Yrs | Half Ratio | Recency Ratio | Weak Component | LOO ΔLock IC | LOO ΔLock Sharpe |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- | ---: | ---: |
-| `combo_rank_min__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio` | Other Technical | +1 | +0.1188 | +0.0703 | +0.0703 | +0.3240 | 0.90 | 1/8 | 0.73 | 0.73 | `rbreaker_sell_setup_proximity_early` (1.02) | -0.0001 | -0.0391 |
-| `combo_mean__rbreaker_sell_setup_proximity_early__max_up_ret` | Intraday Range Momentum | +1 | +0.1119 | +0.0543 | +0.0543 | +0.3473 | 0.77 | 1/8 | 0.75 | 0.80 | `rbreaker_sell_setup_proximity_early` (1.02) | -0.0026 | +0.2889 |
-| `combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__bar_body_rng_0` | Intraday Range Momentum | +1 | +0.1186 | +0.0755 | +0.0755 | +0.5654 | 0.70 | 0/8 | 0.53 | 0.48 | `rbreaker_sell_setup_proximity_early` (1.02) | +0.0013 | -0.0137 |
-| `combo_tri_median__rbreaker_sell_setup_proximity_early__first_bar_sentiment__bar_body_rng_0` | Gap / Overnight Reversal | +1 | +0.0999 | +0.0776 | +0.0776 | +0.8447 | 0.65 | 0/8 | 0.49 | 0.62 | `rbreaker_sell_setup_proximity_early` (1.02) | +0.0026 | -0.0528 |
-| `rbreaker_sell_setup_proximity_early` | Other Technical | +1 | +0.0965 | +0.0662 | +0.0662 | +0.0044 | 1.02 | 1/8 | 0.66 | 0.75 | — | -0.0034 | +0.0148 |
-| `combo_tri_min__max_up_ret__volume_weighted_price_position__bar_body_rng_0` | Intraday Range Momentum | +1 | +0.0941 | +0.0566 | +0.0566 | +0.3084 | 0.79 | 1/8 | 0.51 | 1.11 | `volume_weighted_price_position` (1.18) | +0.0011 | +0.1199 |
-| `combo_tri_max__max_up_ret__bar_ret_0__volume_weighted_price_position` | Intraday Range Momentum | +1 | +0.0811 | +0.0539 | +0.0539 | +0.0387 | 0.80 | 0/8 | 0.87 | 1.95 | `volume_weighted_price_position` (1.18) | +0.0017 | -0.0176 |
-| `combo_min__volume_weighted_price_position__double_bottom_bull_flag_early` | Volatility & Oscillators | +1 | +0.0354 | -0.0017 | -0.0017 | -0.6567 | 1.27 | 1/8 | 2.11 | -4.04 | `volume_weighted_price_position` (1.18) | +0.0011 | +0.0439 |
-| `combo_ratio__limit_down_proximity_early__volume_concentration` | Volatility & Oscillators | +1 | +0.0660 | +0.0417 | +0.0417 | -0.0329 | 0.79 | 1/8 | 1.45 | 1.93 | `limit_down_proximity_early` (1.45) | +0.0006 | +0.0045 |
-| `combo_rel_diff__rbreaker_sell_setup_proximity_early__bar_vol_0` | Volatility & Oscillators | +1 | +0.0742 | +0.0529 | +0.0529 | +0.5709 | 0.72 | 1/8 | 0.59 | 0.89 | `bar_vol_0` (1.91) | -0.0012 | +0.0730 |
-| `combo_ratio__bar_ret_0__volume_surge_direction` | Volatility & Oscillators | +1 | +0.0928 | +0.0383 | +0.0383 | +0.0933 | 0.58 | 1/8 | 0.54 | 0.79 | `volume_surge_direction` (0.97) | +0.0000 | +0.0000 |
-| `combo_clamp_diff__max_up_ret__early_vwap_acceleration` | Intraday Range Momentum | +1 | +0.0894 | +0.0701 | +0.0701 | +0.3915 | 0.73 | 0/8 | 0.63 | 1.10 | `early_vwap_acceleration` (1.17) | +0.0012 | +0.1314 |
+| `combo_rank_min__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio` | Other Technical | +1 | +0.1188 | +0.0703 | +0.0703 | +0.3240 | 0.90 | 1/8 | 0.73 | 0.73 | `rbreaker_sell_setup_proximity_early` (1.02) | -0.0001 | +0.0148 |
+| `combo_rank_min__rbreaker_sell_setup_proximity_early__bar_body_rng_0` | Other Technical | +1 | +0.1132 | +0.0876 | +0.0876 | +0.7186 | 0.79 | 1/8 | 0.71 | 0.71 | `rbreaker_sell_setup_proximity_early` (1.02) | +0.0027 | -0.1277 |
+| `combo_min__rbreaker_sell_setup_proximity_early__max_up_ret` | Intraday Range Momentum | +1 | +0.1156 | +0.0706 | +0.0706 | +0.8555 | 0.84 | 1/8 | 0.59 | 0.47 | `rbreaker_sell_setup_proximity_early` (1.02) | +0.0006 | -0.0158 |
+| `combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__first_bar_sentiment` | Gap / Overnight Reversal | +1 | +0.1216 | +0.0529 | +0.0529 | +0.3808 | 0.68 | 1/8 | 0.73 | 0.79 | `rbreaker_sell_setup_proximity_early` (1.02) | -0.0036 | +0.1054 |
+| `combo_tri_median__rbreaker_sell_setup_proximity_early__first_bar_sentiment__bar_body_rng_0` | Gap / Overnight Reversal | +1 | +0.0999 | +0.0776 | +0.0776 | +0.8447 | 0.65 | 0/8 | 0.49 | 0.62 | `rbreaker_sell_setup_proximity_early` (1.02) | +0.0020 | -0.0733 |
+| `combo_mean__max_up_ret__volume_weighted_price_position` | Intraday Range Momentum | +1 | +0.0872 | +0.0567 | +0.0567 | +0.4294 | 0.84 | 1/8 | 0.72 | 1.37 | `volume_weighted_price_position` (1.18) | +0.0027 | -0.3364 |
+| `combo_max__rbreaker_sell_setup_proximity_early__rbreaker_buy_setup_proximity_early` | Other Technical | +1 | +0.0931 | +0.0581 | +0.0581 | +0.1301 | 1.13 | 1/8 | 0.76 | 0.91 | `rbreaker_buy_setup_proximity_early` (1.45) | -0.0044 | -0.2466 |
+| `combo_min__volume_weighted_price_position__double_bottom_bull_flag_early` | Volatility & Oscillators | +1 | +0.0354 | -0.0017 | -0.0017 | -0.6567 | 1.27 | 1/8 | 2.11 | -4.04 | `volume_weighted_price_position` (1.18) | -0.0000 | -0.1911 |
+| `combo_ratio__first_bar_sentiment__volume_surge_direction` | Gap / Overnight Reversal | +1 | +0.0680 | +0.0048 | +0.0048 | -0.5873 | 0.81 | 1/8 | 0.58 | 0.79 | `volume_surge_direction` (0.97) | +0.0000 | +0.0000 |
+| `combo_rel_diff__rbreaker_sell_setup_proximity_early__bar_vol_0` | Volatility & Oscillators | +1 | +0.0742 | +0.0529 | +0.0529 | +0.5709 | 0.72 | 1/8 | 0.59 | 0.89 | `bar_vol_0` (1.91) | -0.0006 | -0.0108 |
+| `combo_rel_diff__limit_down_proximity_early__volume_concentration` | Volatility & Oscillators | +1 | +0.0665 | +0.0522 | +0.0522 | -0.1443 | 0.73 | 2/8 | 1.82 | 2.07 | `limit_down_proximity_early` (1.45) | -0.0005 | -0.0308 |
 
-### 500ETF — `single` (Full Model Lockbox IC: +0.1271, Sharpe: +0.5795)
-
-| Feature | Family | Sign | Train IC | OOS IC | Lock IC | Lock Sharpe | IC CV | Neg Yrs | Half Ratio | Recency Ratio | Weak Component | LOO ΔLock IC | LOO ΔLock Sharpe |
-| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- | ---: | ---: |
-| `combo_tri_min__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio__max_up_ret` | Intraday Range Momentum | +1 | +0.1763 | +0.1217 | +0.1217 | +0.8196 | 0.44 | 0/8 | 0.60 | 0.39 | `opening_drive_thrust_ratio` (0.42) | +0.0048 | -0.2169 |
-| `combo_sig_product__max_up_ret__close_vs_open_range` | Intraday Range Momentum | +1 | +0.1484 | +0.1175 | +0.1175 | +0.4851 | 0.42 | 0/8 | 0.58 | 0.52 | `close_vs_open_range` (0.47) | +0.0032 | -0.1471 |
-| `combo_tri_median__opening_drive_thrust_ratio__max_up_ret__net_volume_flow` | Intraday Range Momentum | +1 | +0.1650 | +0.1003 | +0.1003 | +0.4546 | 0.41 | 0/8 | 0.57 | 0.65 | `opening_drive_thrust_ratio` (0.42) | -0.0007 | -0.2075 |
-| `combo_clamp_diff__max_up_ret__early_late_momentum_divergence` | Intraday Range Momentum | +1 | +0.1725 | +0.0851 | +0.0851 | +0.4503 | 0.45 | 0/8 | 0.54 | 0.50 | `early_late_momentum_divergence` (0.70) | -0.0016 | -0.4048 |
-| `combo_rank_min__star50_limit_proximity_early__first_bar_return` | Gap / Overnight Reversal | +1 | +0.1447 | +0.0976 | +0.0976 | +0.9250 | 0.54 | 0/8 | 0.56 | 0.35 | `star50_limit_proximity_early` (0.61) | +0.0008 | -0.1665 |
-| `combo_min__star50_limit_proximity_early__max_down_ret` | Intraday Range Momentum | +1 | +0.1269 | +0.0958 | +0.0958 | +0.2125 | 0.61 | 0/8 | 0.58 | 0.47 | `star50_limit_proximity_early` (0.61) | +0.0055 | +0.1625 |
-| `combo_min__first_bar_sentiment__first_bar_return` | Gap / Overnight Reversal | +1 | +0.1456 | +0.0787 | +0.0787 | +0.4560 | 0.40 | 0/8 | 0.50 | 0.47 | `first_bar_sentiment` (0.45) | -0.0005 | -0.1213 |
-| `combo_sig_product__max_up_ret__volume_weighted_momentum_acceleration` | Intraday Range Momentum | +1 | +0.1489 | +0.1058 | +0.1058 | +1.1405 | 0.42 | 0/8 | 0.56 | 0.59 | `volume_weighted_momentum_acceleration` (0.57) | +0.0005 | -0.1504 |
-| `combo_max__star50_limit_proximity_early__bar_ret_0` | Other Technical | +1 | +0.1562 | +0.0990 | +0.0990 | +0.1521 | 0.37 | 0/8 | 0.51 | 0.53 | `star50_limit_proximity_early` (0.61) | -0.0005 | -0.3238 |
-| `combo_sig_product__max_up_ret__bar_ret_0` | Intraday Range Momentum | +1 | +0.1603 | +0.0792 | +0.0792 | +0.3953 | 0.43 | 0/8 | 0.52 | 0.66 | `bar_ret_0` (0.41) | -0.0006 | -0.3109 |
-| `combo_sig_product__star50_limit_proximity_early__bar_ret_0` | Other Technical | +1 | +0.1369 | +0.1223 | +0.1223 | +0.4818 | 0.39 | 0/8 | 0.72 | 0.83 | `star50_limit_proximity_early` (0.61) | +0.0038 | -0.1485 |
-| `combo_ratio__bar_ret_0__net_volume_flow` | Volatility & Oscillators | +1 | +0.1119 | +0.0500 | +0.0500 | +0.3938 | 0.52 | 0/8 | 0.53 | 0.67 | `bar_ret_0` (0.41) | +0.0011 | -0.0757 |
-| `combo_abs_diff__max_up_ret__close_vs_open_range` | Intraday Range Momentum | +1 | +0.0947 | -0.0211 | -0.0211 | -0.4893 | 0.85 | 1/8 | 0.50 | 0.17 | `close_vs_open_range` (0.47) | -0.0023 | -0.2380 |
-
-### 159915ETF — `single` (Full Model Lockbox IC: +0.1608, Sharpe: +1.7948)
+### 500ETF — `single` (Full Model Lockbox IC: +0.1178, Sharpe: +0.7859)
 
 | Feature | Family | Sign | Train IC | OOS IC | Lock IC | Lock Sharpe | IC CV | Neg Yrs | Half Ratio | Recency Ratio | Weak Component | LOO ΔLock IC | LOO ΔLock Sharpe |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- | ---: | ---: |
-| `combo_min__opening_drive_thrust_ratio__star50_limit_proximity_early` | Other Technical | +1 | +0.1376 | +0.1458 | +0.1458 | +1.3138 | 0.56 | 0/8 | 1.26 | 1.00 | `star50_limit_proximity_early` (0.69) | +0.0003 | +0.1975 |
-| `combo_tri_median__rbreaker_sell_setup_proximity_early__max_up_ret__first_bar_sentiment` | Gap / Overnight Reversal | +1 | +0.1603 | +0.1260 | +0.1260 | +1.3254 | 0.45 | 0/8 | 1.04 | 0.74 | `first_bar_sentiment` (0.75) | -0.0027 | +0.2054 |
-| `combo_min__star50_limit_proximity_early__yesterday_first_30min_return` | Intraday Range Momentum | +1 | +0.1072 | +0.1075 | +0.1075 | +0.3554 | 0.82 | 1/8 | 1.22 | 0.96 | `yesterday_first_30min_return` (0.92) | +0.0021 | -0.0627 |
-| `combo_rank_max__star50_limit_proximity_early__yesterday_first_30min_return` | Intraday Range Momentum | +1 | +0.1127 | +0.1302 | +0.1302 | +0.6763 | 0.66 | 1/8 | 0.77 | 0.68 | `yesterday_first_30min_return` (0.92) | +0.0082 | +0.1216 |
-| `combo_sig_product__rbreaker_sell_setup_proximity_early__max_up_ret` | Intraday Range Momentum | +1 | +0.1243 | +0.1277 | +0.1277 | +1.0889 | 0.38 | 0/8 | 1.18 | 1.34 | `rbreaker_sell_setup_proximity_early` (0.44) | +0.0021 | +0.1939 |
-| `combo_rel_diff__max_up_ret__late_bar_momentum` | Intraday Range Momentum | +1 | +0.1211 | +0.1169 | +0.1169 | +0.6278 | 0.49 | 0/8 | 1.04 | 0.68 | `late_bar_momentum` (0.82) | +0.0041 | +0.2901 |
-| `combo_tri_min__first_bar_sentiment__bar_body_rng_0__first_bar_return` | Gap / Overnight Reversal | +1 | +0.1374 | +0.0958 | +0.0958 | +0.8819 | 0.53 | 1/8 | 0.83 | 0.52 | `first_bar_sentiment` (0.75) | -0.0010 | +0.1812 |
-| `combo_ratio__star50_limit_proximity_early__volatility_expansion_trend_vector` | Volatility & Oscillators | +1 | +0.1095 | +0.1090 | +0.1090 | +0.3724 | 0.66 | 0/8 | 1.03 | 1.15 | `star50_limit_proximity_early` (0.69) | +0.0001 | -0.0698 |
-| `volatility_expansion_trend_vector` | Volatility & Oscillators | +1 | +0.0795 | +0.1157 | +0.1157 | +1.0095 | 0.69 | 0/8 | 1.44 | 1.58 | — | -0.0001 | +0.0683 |
-| `combo_abs_diff__max_up_ret__volatility_expansion_trend_vector` | Intraday Range Momentum | +1 | +0.0591 | -0.0132 | -0.0132 | -0.5256 | 0.84 | 2/8 | 0.53 | 0.98 | `volatility_expansion_trend_vector` (0.69) | +0.0006 | +0.4340 |
+| `combo_rank_max__opening_drive_thrust_ratio__trend_day_regime_conviction` | Other Technical | +1 | +0.1524 | +0.0889 | +0.0889 | +0.2828 | 0.47 | 0/8 | 0.59 | 0.54 | `trend_day_regime_conviction` (0.44) | -0.0008 | -0.1229 |
+| `combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__first_bar_sentiment` | Gap / Overnight Reversal | +1 | +0.1759 | +0.0883 | +0.0883 | +0.6113 | 0.43 | 0/8 | 0.53 | 0.40 | `first_bar_sentiment` (0.45) | +0.0009 | +0.0708 |
+| `combo_max__opening_drive_thrust_ratio__first_bar_sentiment` | Gap / Overnight Reversal | +1 | +0.1641 | +0.0912 | +0.0912 | +0.1026 | 0.38 | 0/8 | 0.61 | 0.68 | `first_bar_sentiment` (0.45) | -0.0022 | -0.1139 |
+| `combo_min__max_up_ret__first_bar_sentiment` | Gap / Overnight Reversal | +1 | +0.1702 | +0.0726 | +0.0726 | -0.7944 | 0.35 | 0/8 | 0.55 | 0.48 | `first_bar_sentiment` (0.45) | -0.0032 | +0.1569 |
+| `combo_mean__star50_limit_proximity_early__first_bar_return` | Gap / Overnight Reversal | +1 | +0.1624 | +0.0992 | +0.0992 | +0.5697 | 0.47 | 0/8 | 0.51 | 0.39 | `star50_limit_proximity_early` (0.61) | +0.0005 | -0.1437 |
+| `combo_rel_diff__max_up_ret__late_bar_momentum` | Intraday Range Momentum | +1 | +0.1709 | +0.0780 | +0.0780 | +0.1459 | 0.49 | 0/8 | 0.50 | 0.42 | `late_bar_momentum` (0.70) | -0.0022 | -0.0389 |
+| `combo_rank_min__opening_drive_thrust_ratio__star50_limit_proximity_early` | Other Technical | +1 | +0.1544 | +0.1215 | +0.1215 | +0.9205 | 0.53 | 0/8 | 0.69 | 0.52 | `star50_limit_proximity_early` (0.61) | +0.0033 | +0.2873 |
+| `combo_diff__opening_drive_thrust_ratio__double_bottom_bull_flag_early` | Other Technical | +1 | +0.1440 | +0.0862 | +0.0862 | -0.3387 | 0.48 | 0/8 | 0.82 | 0.59 | `double_bottom_bull_flag_early` (1.21) | -0.0003 | +0.0854 |
+| `combo_sig_product__max_up_ret__close_vs_open_range` | Intraday Range Momentum | +1 | +0.1484 | +0.1175 | +0.1175 | +0.4851 | 0.42 | 0/8 | 0.58 | 0.52 | `close_vs_open_range` (0.47) | +0.0026 | +0.0343 |
+| `combo_sig_product__max_up_ret__volume_weighted_momentum_acceleration` | Intraday Range Momentum | +1 | +0.1489 | +0.1058 | +0.1058 | +1.1405 | 0.42 | 0/8 | 0.56 | 0.59 | `volume_weighted_momentum_acceleration` (0.57) | +0.0010 | -0.0727 |
+| `combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__volume_weighted_momentum_acceleration` | Intraday Range Momentum | +1 | +0.0773 | +0.0475 | +0.0475 | -0.0575 | 1.25 | 2/8 | 0.12 | 0.06 | `volume_weighted_momentum_acceleration` (0.57) | -0.0002 | +0.1670 |
+| `combo_sig_product__star50_limit_proximity_early__max_down_ret` | Intraday Range Momentum | +1 | +0.1322 | +0.1300 | +0.1300 | +0.6068 | 0.44 | 0/8 | 0.66 | 0.67 | `star50_limit_proximity_early` (0.61) | +0.0028 | -0.0178 |
+| `combo_min__opening_drive_thrust_ratio__double_bottom_bull_flag_early` | Other Technical | +1 | +0.0671 | +0.0716 | +0.0716 | +0.0053 | 0.84 | 1/8 | 1.18 | 0.87 | `double_bottom_bull_flag_early` (1.21) | -0.0001 | +0.0085 |
+| `combo_sig_product__star50_limit_proximity_early__first_bar_return` | Gap / Overnight Reversal | +1 | +0.1369 | +0.1223 | +0.1223 | +0.4818 | 0.39 | 0/8 | 0.73 | 0.83 | `star50_limit_proximity_early` (0.61) | +0.0014 | +0.2370 |
+| `combo_sig_product__max_up_ret__bar_ret_0` | Intraday Range Momentum | +1 | +0.1603 | +0.0792 | +0.0792 | +0.3953 | 0.43 | 0/8 | 0.52 | 0.66 | `bar_ret_0` (0.41) | -0.0004 | +0.0247 |
+| `combo_ratio__bar_ret_0__net_volume_flow` | Volatility & Oscillators | +1 | +0.1119 | +0.0500 | +0.0500 | +0.3938 | 0.52 | 0/8 | 0.53 | 0.67 | `bar_ret_0` (0.41) | +0.0007 | +0.1102 |
+| `combo_sig_product__first_bar_sentiment__close_vs_open_range` | Gap / Overnight Reversal | +1 | +0.1316 | +0.0673 | +0.0673 | -0.4527 | 0.42 | 0/8 | 0.64 | 0.46 | `close_vs_open_range` (0.47) | +0.0001 | -0.0497 |
+| `combo_abs_diff__max_up_ret__close_vs_open_range` | Intraday Range Momentum | +1 | +0.0947 | -0.0211 | -0.0211 | -0.4893 | 0.85 | 1/8 | 0.50 | 0.17 | `close_vs_open_range` (0.47) | -0.0019 | +0.0139 |
+
+### 159915ETF — `single` (Full Model Lockbox IC: +0.1481, Sharpe: +1.6308)
+
+| Feature | Family | Sign | Train IC | OOS IC | Lock IC | Lock Sharpe | IC CV | Neg Yrs | Half Ratio | Recency Ratio | Weak Component | LOO ΔLock IC | LOO ΔLock Sharpe |
+| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- | ---: | ---: |
+| `combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__first_bar_sentiment` | Gap / Overnight Reversal | +1 | +0.1650 | +0.1008 | +0.1008 | +1.0903 | 0.54 | 1/8 | 0.80 | 0.42 | `first_bar_sentiment` (0.75) | -0.0027 | -0.0641 |
+| `combo_tri_median__max_up_ret__first_bar_sentiment__star50_limit_proximity_early` | Gap / Overnight Reversal | +1 | +0.1535 | +0.1236 | +0.1236 | +0.8616 | 0.53 | 0/8 | 1.08 | 0.76 | `first_bar_sentiment` (0.75) | -0.0008 | +0.2295 |
+| `combo_tri_min__rbreaker_sell_setup_proximity_early__yesterday_early_vwap_dev__yesterday_first_30min_return` | Intraday Range Momentum | +1 | +0.1299 | +0.0937 | +0.0937 | +0.6050 | 0.61 | 1/8 | 1.14 | 0.91 | `yesterday_early_vwap_dev` (1.10) | +0.0038 | -0.2511 |
+| `combo_min__opening_drive_thrust_ratio__star50_limit_proximity_early` | Other Technical | +1 | +0.1376 | +0.1458 | +0.1458 | +1.3138 | 0.56 | 0/8 | 1.26 | 1.00 | `star50_limit_proximity_early` (0.69) | +0.0050 | +0.1055 |
+| `combo_mean__star50_limit_proximity_early__bar_ret_0` | Other Technical | +1 | +0.1562 | +0.1219 | +0.1219 | +1.3598 | 0.48 | 0/8 | 0.95 | 0.87 | `star50_limit_proximity_early` (0.69) | -0.0013 | +0.0768 |
+| `combo_max__max_up_ret__bar_ret_0` | Intraday Range Momentum | +1 | +0.1416 | +0.0960 | +0.0960 | +0.2321 | 0.35 | 0/8 | 1.04 | 0.89 | `bar_ret_0` (0.44) | -0.0003 | +0.0534 |
+| `combo_mean__rbreaker_sell_setup_proximity_early__max_up_ret` | Intraday Range Momentum | +1 | +0.1532 | +0.1260 | +0.1260 | +1.0555 | 0.36 | 0/8 | 1.19 | 1.11 | `rbreaker_sell_setup_proximity_early` (0.44) | -0.0005 | +0.2198 |
+| `combo_rank_max__star50_limit_proximity_early__yesterday_first_30min_return` | Intraday Range Momentum | +1 | +0.1127 | +0.1302 | +0.1302 | +0.6763 | 0.66 | 1/8 | 0.77 | 0.68 | `yesterday_first_30min_return` (0.92) | +0.0089 | +0.3705 |
+| `combo_ratio__star50_limit_proximity_early__volatility_expansion_trend_vector` | Volatility & Oscillators | +1 | +0.1095 | +0.1090 | +0.1090 | +0.3724 | 0.66 | 0/8 | 1.03 | 1.15 | `star50_limit_proximity_early` (0.69) | +0.0002 | -0.0414 |
+| `combo_abs_diff__max_up_ret__volatility_expansion_trend_vector` | Intraday Range Momentum | +1 | +0.0591 | -0.0132 | -0.0132 | -0.5256 | 0.84 | 2/8 | 0.53 | 0.98 | `volatility_expansion_trend_vector` (0.69) | -0.0005 | +0.2174 |
 
 ---
 
@@ -77,7 +81,7 @@ Per-gate false positive/negative rates evaluated against lockbox (OOS) performan
 
 ### 300ETF — `single` Gate Effectiveness
 
-_Null Baseline (un-gated candidate pool): 69.0% lock IC > 0, 30.0% true FN rate (IC>0 & Sharpe>0), Mean Lock Sharpe = -0.3010_
+_Null Baseline (un-gated candidate pool): 79.0% lock IC > 0, 34.0% true FN rate (IC>0 & Sharpe>0), Mean Lock Sharpe = -0.2303_
 
 | Gate | N Rejected | N Sampled | % Lock IC > 0 | True FN Rate (IC>0 & Sharpe>0) | Mean Lock IC | Mean Lock Sharpe |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -85,9 +89,9 @@ _Null Baseline (un-gated candidate pool): 69.0% lock IC > 0, 30.0% true FN rate 
 | B2 Rolling Guard | 204 | 30 | 100.0% | 93.3% | +0.0554 | +0.3080 |
 | BH-FDR Gate | 5 | 5 | 100.0% | 0.0% | +0.0298 | -0.4561 |
 | B3 Composite Floor | 35 | 30 | 96.7% | 73.3% | +0.0500 | +0.2891 |
-| B4 Correlation Gate | 205 | 30 | 100.0% | 96.7% | +0.0670 | +0.4224 |
+| B4 Correlation Gate | 196 | 30 | 100.0% | 96.7% | +0.0659 | +0.3913 |
 
-**Admitted Pool Summary**: 12 features, False Positive Rate = 16.7% (admitted but negative lock IC/Sharpe), Mean Lock IC = +0.0548, Mean Lock Sharpe = +0.2163
+**Admitted Pool Summary**: 20 features, False Positive Rate = 15.0% (admitted but negative lock IC/Sharpe), Mean Lock IC = +0.0551, Mean Lock Sharpe = +0.2959
 
 **Top True False Negatives from 7-Year Jackknife Sign Stability** (rejected but lockbox IC > 0 AND Sharpe > 0):
 
@@ -115,11 +119,11 @@ _Null Baseline (un-gated candidate pool): 69.0% lock IC > 0, 30.0% true FN rate 
 
 **Top True False Negatives from B4 Correlation Gate** (rejected but lockbox IC > 0 AND Sharpe > 0):
 
-- `combo_rank_min__rbreaker_sell_setup_proximity_early__bar_body_rng_0`: Train IC=+0.2593, Lock IC=+0.0877, Lock Sharpe=+1.0876
 - `combo_rank_min__star50_limit_proximity_early__bar_body_rng_0`: Train IC=+0.2265, Lock IC=+0.0937, Lock Sharpe=+1.0629
-- `combo_min__rbreaker_sell_setup_proximity_early__max_up_ret`: Train IC=+0.2691, Lock IC=+0.0706, Lock Sharpe=+0.8555
 - `combo_tri_mean__star50_limit_proximity_early__bar_ret_0__bar_body_rng_0`: Train IC=+0.2347, Lock IC=+0.0717, Lock Sharpe=+0.5292
 - `combo_tri_z_mean__star50_limit_proximity_early__bar_ret_0__bar_body_rng_0`: Train IC=+0.2347, Lock IC=+0.0717, Lock Sharpe=+0.5292
+- `combo_tri_mean__star50_limit_proximity_early__first_bar_return__bar_body_rng_0`: Train IC=+0.2346, Lock IC=+0.0716, Lock Sharpe=+0.5292
+- `combo_tri_z_mean__star50_limit_proximity_early__first_bar_return__bar_body_rng_0`: Train IC=+0.2346, Lock IC=+0.0716, Lock Sharpe=+0.5292
 
 ### 300ETF — `long` Gate Effectiveness
 
@@ -245,32 +249,32 @@ _Null Baseline (un-gated candidate pool): 54.0% lock IC > 0, 10.0% true FN rate 
 
 ### 500ETF — `single` Gate Effectiveness
 
-_Null Baseline (un-gated candidate pool): 75.0% lock IC > 0, 40.0% true FN rate (IC>0 & Sharpe>0), Mean Lock Sharpe = -0.0571_
+_Null Baseline (un-gated candidate pool): 71.0% lock IC > 0, 51.0% true FN rate (IC>0 & Sharpe>0), Mean Lock Sharpe = +0.0377_
 
 | Gate | N Rejected | N Sampled | % Lock IC > 0 | True FN Rate (IC>0 & Sharpe>0) | Mean Lock IC | Mean Lock Sharpe |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 7-Year Jackknife Sign Stability | 1823 | 30 | 100.0% | 86.7% | +0.0932 | +0.4943 |
-| B2 Rolling Guard | 242 | 30 | 100.0% | 70.0% | +0.0753 | +0.2370 |
+| 7-Year Jackknife Sign Stability | 1823 | 30 | 100.0% | 96.7% | +0.0901 | +0.5392 |
+| B2 Rolling Guard | 221 | 30 | 100.0% | 70.0% | +0.0755 | +0.2347 |
 | BH-FDR Gate | 7 | 7 | 85.7% | 0.0% | +0.0145 | -0.6172 |
-| B3 Composite Floor | 156 | 30 | 100.0% | 100.0% | +0.0955 | +0.5158 |
-| B4 Correlation Gate | 629 | 30 | 100.0% | 100.0% | +0.1086 | +0.7037 |
+| B3 Composite Floor | 150 | 30 | 100.0% | 100.0% | +0.0922 | +0.4999 |
+| B4 Correlation Gate | 660 | 30 | 100.0% | 100.0% | +0.1071 | +0.6977 |
 
-**Admitted Pool Summary**: 13 features, False Positive Rate = 7.7% (admitted but negative lock IC/Sharpe), Mean Lock IC = +0.0872, Mean Lock Sharpe = +0.4356
+**Admitted Pool Summary**: 43 features, False Positive Rate = 14.0% (admitted but negative lock IC/Sharpe), Mean Lock IC = +0.0929, Mean Lock Sharpe = +0.4113
 
 **Top True False Negatives from 7-Year Jackknife Sign Stability** (rejected but lockbox IC > 0 AND Sharpe > 0):
 
-- `combo_rel_diff__star50_limit_proximity_early__body_size_progression`: Train IC=+0.2305, Lock IC=+0.1016, Lock Sharpe=+1.2136
+- `combo_rel_diff__star50_limit_proximity_early__body_size_progression`: Train IC=+0.2312, Lock IC=+0.1016, Lock Sharpe=+1.2136
 - `combo_clamp_diff__star50_limit_proximity_early__body_size_progression`: Train IC=+0.2364, Lock IC=+0.0979, Lock Sharpe=+1.0894
 - `combo_rel_diff__star50_limit_proximity_early__volume_weighted_momentum_acceleration`: Train IC=+0.2937, Lock IC=+0.1129, Lock Sharpe=+0.9464
 - `combo_tri_median__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio__max_up_ret`: Train IC=+0.2819, Lock IC=+0.1134, Lock Sharpe=+0.8586
-- `combo_min__rbreaker_sell_setup_proximity_early__max_up_ret`: Train IC=+0.2977, Lock IC=+0.1185, Lock Sharpe=+0.8115
+- `combo_min__rbreaker_sell_setup_proximity_early__max_up_ret`: Train IC=+0.2910, Lock IC=+0.1185, Lock Sharpe=+0.8115
 
 **Top True False Negatives from B2 Rolling Guard** (rejected but lockbox IC > 0 AND Sharpe > 0):
 
 - `combo_diff__body_size_progression__first_bar_return`: Train IC=+0.1879, Lock IC=+0.0787, Lock Sharpe=+0.7240
 - `combo_z_diff__body_size_progression__first_bar_return`: Train IC=+0.1879, Lock IC=+0.0787, Lock Sharpe=+0.7240
-- `combo_rel_diff__body_size_progression__first_bar_return`: Train IC=+0.1891, Lock IC=+0.0693, Lock Sharpe=+0.5882
-- `combo_rel_diff__body_size_progression__bar_ret_0`: Train IC=+0.1880, Lock IC=+0.0693, Lock Sharpe=+0.5882
+- `combo_rel_diff__body_size_progression__first_bar_return`: Train IC=+0.1888, Lock IC=+0.0693, Lock Sharpe=+0.5882
+- `combo_rel_diff__body_size_progression__bar_ret_0`: Train IC=+0.1881, Lock IC=+0.0693, Lock Sharpe=+0.5882
 - `combo_max__star50_limit_proximity_early__max_down_ret`: Train IC=+0.1971, Lock IC=+0.1086, Lock Sharpe=+0.5808
 
 **Top True False Negatives from B3 Composite Floor** (rejected but lockbox IC > 0 AND Sharpe > 0):
@@ -283,11 +287,11 @@ _Null Baseline (un-gated candidate pool): 75.0% lock IC > 0, 40.0% true FN rate 
 
 **Top True False Negatives from B4 Correlation Gate** (rejected but lockbox IC > 0 AND Sharpe > 0):
 
-- `combo_min__net_volume_flow__star50_limit_proximity_early`: Train IC=+0.2956, Lock IC=+0.1134, Lock Sharpe=+1.1317
 - `combo_min__opening_auction_imbalance__star50_limit_proximity_early`: Train IC=+0.2956, Lock IC=+0.1134, Lock Sharpe=+1.1317
+- `combo_tri_min__net_volume_flow__first_bar_sentiment__star50_limit_proximity_early`: Train IC=+0.2971, Lock IC=+0.1120, Lock Sharpe=+1.1041
+- `combo_tri_min__opening_auction_imbalance__first_bar_sentiment__star50_limit_proximity_early`: Train IC=+0.2971, Lock IC=+0.1120, Lock Sharpe=+1.1041
 - `combo_tri_min__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio__net_volume_flow`: Train IC=+0.2996, Lock IC=+0.1132, Lock Sharpe=+0.9985
 - `combo_tri_min__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio__opening_auction_imbalance`: Train IC=+0.2996, Lock IC=+0.1132, Lock Sharpe=+0.9985
-- `combo_tri_min__opening_drive_thrust_ratio__net_volume_flow__star50_limit_proximity_early`: Train IC=+0.3150, Lock IC=+0.1141, Lock Sharpe=+0.9327
 
 ### 500ETF — `long` Gate Effectiveness
 
@@ -357,49 +361,49 @@ _Null Baseline (un-gated candidate pool): 55.0% lock IC > 0, 24.0% true FN rate 
 
 ### 159915ETF — `single` Gate Effectiveness
 
-_Null Baseline (un-gated candidate pool): 86.0% lock IC > 0, 66.0% true FN rate (IC>0 & Sharpe>0), Mean Lock Sharpe = +0.3418_
+_Null Baseline (un-gated candidate pool): 75.0% lock IC > 0, 58.0% true FN rate (IC>0 & Sharpe>0), Mean Lock Sharpe = +0.2575_
 
 | Gate | N Rejected | N Sampled | % Lock IC > 0 | True FN Rate (IC>0 & Sharpe>0) | Mean Lock IC | Mean Lock Sharpe |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 7-Year Jackknife Sign Stability | 1181 | 30 | 100.0% | 93.3% | +0.0987 | +0.8258 |
-| B2 Rolling Guard | 312 | 30 | 100.0% | 96.7% | +0.1050 | +0.7043 |
+| 7-Year Jackknife Sign Stability | 1044 | 30 | 100.0% | 93.3% | +0.0918 | +0.6937 |
+| B2 Rolling Guard | 258 | 30 | 100.0% | 96.7% | +0.1052 | +0.5922 |
 | BH-FDR Gate | 2 | 2 | 0.0% | 0.0% | -0.0292 | -1.0342 |
-| B3 Composite Floor | 148 | 30 | 100.0% | 100.0% | +0.1138 | +1.0690 |
-| B4 Correlation Gate | 172 | 30 | 100.0% | 100.0% | +0.1273 | +1.3422 |
+| B3 Composite Floor | 161 | 30 | 100.0% | 100.0% | +0.1137 | +1.0091 |
+| B4 Correlation Gate | 179 | 30 | 100.0% | 100.0% | +0.1284 | +1.3572 |
 
-**Admitted Pool Summary**: 10 features, False Positive Rate = 10.0% (admitted but negative lock IC/Sharpe), Mean Lock IC = +0.1059, Mean Lock Sharpe = +0.6937
+**Admitted Pool Summary**: 22 features, False Positive Rate = 4.5% (admitted but negative lock IC/Sharpe), Mean Lock IC = +0.1105, Mean Lock Sharpe = +0.7971
 
 **Top True False Negatives from 7-Year Jackknife Sign Stability** (rejected but lockbox IC > 0 AND Sharpe > 0):
 
-- `combo_min__star50_limit_proximity_early__directional_volume_signature`: Train IC=+0.2086, Lock IC=+0.1325, Lock Sharpe=+1.9186
-- `combo_min__rbreaker_sell_setup_proximity_early__directional_volume_signature`: Train IC=+0.2246, Lock IC=+0.1331, Lock Sharpe=+1.8587
-- `combo_rank_min__first_bar_sentiment__star50_limit_proximity_early`: Train IC=+0.2421, Lock IC=+0.0980, Lock Sharpe=+1.7078
-- `combo_rank_min__bar_body_rng_0__limit_down_proximity_early`: Train IC=+0.2192, Lock IC=+0.1373, Lock Sharpe=+1.3789
+- `combo_rank_min__first_bar_sentiment__star50_limit_proximity_early`: Train IC=+0.2597, Lock IC=+0.0980, Lock Sharpe=+1.7078
 - `combo_rank_min__bar_body_rng_0__rbreaker_buy_setup_proximity_early`: Train IC=+0.2192, Lock IC=+0.1373, Lock Sharpe=+1.3789
+- `combo_rank_min__bar_body_rng_0__limit_down_proximity_early`: Train IC=+0.2192, Lock IC=+0.1373, Lock Sharpe=+1.3789
+- `combo_rank_min__rbreaker_sell_setup_proximity_early__first_bar_sentiment`: Train IC=+0.2935, Lock IC=+0.0960, Lock Sharpe=+1.3385
+- `combo_rank_min__first_bar_sentiment__rbreaker_buy_setup_proximity_early`: Train IC=+0.2615, Lock IC=+0.0906, Lock Sharpe=+1.3244
 
 **Top True False Negatives from B2 Rolling Guard** (rejected but lockbox IC > 0 AND Sharpe > 0):
 
 - `combo_tri_median__opening_drive_thrust_ratio__star50_limit_proximity_early__bar_body_rng_0`: Train IC=+0.2210, Lock IC=+0.1301, Lock Sharpe=+1.3582
-- `combo_diff__first_bar_return__demark_setup_reversal_early`: Train IC=+0.2299, Lock IC=+0.1187, Lock Sharpe=+1.1602
-- `combo_z_diff__first_bar_return__demark_setup_reversal_early`: Train IC=+0.2299, Lock IC=+0.1187, Lock Sharpe=+1.1602
-- `combo_rel_diff__first_bar_return__demark_setup_reversal_early`: Train IC=+0.2261, Lock IC=+0.1187, Lock Sharpe=+1.1071
-- `combo_rel_diff__bar_ret_0__demark_setup_reversal_early`: Train IC=+0.2236, Lock IC=+0.1199, Lock Sharpe=+1.1071
+- `combo_mean__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early`: Train IC=+0.1946, Lock IC=+0.1281, Lock Sharpe=+1.3297
+- `combo_tri_median__max_up_ret__first_bar_sentiment__bar_body_rng_0`: Train IC=+0.2326, Lock IC=+0.0999, Lock Sharpe=+1.0768
+- `combo_tri_median__star50_limit_proximity_early__impulse_bar_dominance__bar_body_rng_0`: Train IC=+0.2348, Lock IC=+0.1189, Lock Sharpe=+1.0159
+- `combo_rank_max__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early`: Train IC=+0.1987, Lock IC=+0.1327, Lock Sharpe=+0.7895
 
 **Top True False Negatives from B3 Composite Floor** (rejected but lockbox IC > 0 AND Sharpe > 0):
 
-- `combo_tri_mean__opening_drive_thrust_ratio__star50_limit_proximity_early__bar_body_rng_0`: Train IC=+0.2321, Lock IC=+0.1334, Lock Sharpe=+1.9776
-- `combo_tri_z_mean__opening_drive_thrust_ratio__star50_limit_proximity_early__bar_body_rng_0`: Train IC=+0.2321, Lock IC=+0.1334, Lock Sharpe=+1.9776
+- `combo_tri_min__star50_limit_proximity_early__impulse_bar_dominance__bar_body_rng_0`: Train IC=+0.2828, Lock IC=+0.1401, Lock Sharpe=+1.7039
 - `combo_tri_min__opening_drive_thrust_ratio__first_bar_sentiment__star50_limit_proximity_early`: Train IC=+0.3073, Lock IC=+0.1158, Lock Sharpe=+1.5577
-- `combo_tri_mean__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__first_bar_sentiment`: Train IC=+0.2324, Lock IC=+0.1197, Lock Sharpe=+1.5206
-- `combo_tri_z_mean__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__first_bar_sentiment`: Train IC=+0.2324, Lock IC=+0.1197, Lock Sharpe=+1.5206
+- `combo_min__rbreaker_sell_setup_proximity_early__volatility_expansion_trend_vector`: Train IC=+0.2419, Lock IC=+0.1379, Lock Sharpe=+1.4133
+- `combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__impulse_bar_dominance`: Train IC=+0.2699, Lock IC=+0.1278, Lock Sharpe=+1.3924
+- `combo_min__max_up_ret__star50_limit_proximity_early`: Train IC=+0.2419, Lock IC=+0.1373, Lock Sharpe=+1.3304
 
 **Top True False Negatives from B4 Correlation Gate** (rejected but lockbox IC > 0 AND Sharpe > 0):
 
 - `combo_tri_min__first_bar_sentiment__star50_limit_proximity_early__bar_body_rng_0`: Train IC=+0.2800, Lock IC=+0.1246, Lock Sharpe=+1.6742
 - `combo_min__star50_limit_proximity_early__bar_body_rng_0`: Train IC=+0.2774, Lock IC=+0.1366, Lock Sharpe=+1.6742
-- `combo_tri_median__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__first_bar_sentiment`: Train IC=+0.2819, Lock IC=+0.1269, Lock Sharpe=+1.6324
 - `combo_tri_mean__first_bar_sentiment__star50_limit_proximity_early__bar_body_rng_0`: Train IC=+0.2700, Lock IC=+0.1247, Lock Sharpe=+1.6287
 - `combo_tri_z_mean__first_bar_sentiment__star50_limit_proximity_early__bar_body_rng_0`: Train IC=+0.2700, Lock IC=+0.1247, Lock Sharpe=+1.6287
+- `combo_tri_min__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__impulse_bar_dominance`: Train IC=+0.2904, Lock IC=+0.1209, Lock Sharpe=+1.5937
 
 ### 159915ETF — `long` Gate Effectiveness
 
@@ -735,44 +739,44 @@ Optimal zone: high % positive lock IC with reasonable pool size.
 
 | Mono Thr | IR Thr | N Would Pass | Mean Lock IC | % Positive Lock IC |
 | ---: | ---: | ---: | ---: | ---: |
-| 0.45 | 0.10 | 1370 | +0.1119 | 100.0% |
-| 0.45 | 0.20 | 1350 | +0.1119 | 100.0% |
-| 0.45 | 0.30 | 1301 | +0.1119 | 100.0% |
-| 0.45 | 0.40 | 1170 | +0.1119 | 100.0% |
-| 0.45 | 0.50 | 920 | +0.1119 | 100.0% |
-| 0.50 | 0.15 | 1364 | +0.1119 | 100.0% |
-| 0.50 | 0.25 | 1332 | +0.1119 | 100.0% |
-| 0.50 | 0.35 | 1239 | +0.1119 | 100.0% |
-| 0.50 | 0.45 | 1063 | +0.1119 | 100.0% |
-| 0.55 | 0.10 | 1369 | +0.1119 | 100.0% |
-| 0.55 | 0.20 | 1350 | +0.1119 | 100.0% |
-| 0.55 | 0.30 | 1301 | +0.1119 | 100.0% |
-| 0.55 | 0.40 | 1170 | +0.1119 | 100.0% |
-| 0.55 | 0.50 | 920 | +0.1119 | 100.0% |
-| 0.60 | 0.15 | 1321 | +0.1119 | 100.0% |
-| 0.60 | 0.25 | 1317 | +0.1119 | 100.0% |
-| 0.60 | 0.35 | 1238 | +0.1119 | 100.0% |
-| 0.60 | 0.45 | 1063 | +0.1119 | 100.0% |
-| 0.65 | 0.10 | 1157 | +0.1119 | 100.0% |
-| 0.65 | 0.20 | 1157 | +0.1119 | 100.0% |
-| 0.65 | 0.30 | 1157 | +0.1119 | 100.0% |
-| 0.65 | 0.40 | 1117 | +0.1119 | 100.0% |
-| 0.65 | 0.50 | 920 | +0.1119 | 100.0% |
-| 0.70 | 0.15 | 824 | +0.1119 | 100.0% |
-| 0.70 | 0.25 | 824 | +0.1119 | 100.0% |
-| 0.70 | 0.35 | 824 | +0.1119 | 100.0% |
-| 0.70 | 0.45 | 824 | +0.1119 | 100.0% |
-| 0.75 | 0.10 | 410 | +0.1119 | 100.0% |
-| 0.75 | 0.20 | 410 | +0.1119 | 100.0% |
-| 0.75 | 0.30 | 410 | +0.1119 | 100.0% |
-| 0.75 | 0.40 | 410 | +0.1119 | 100.0% |
-| 0.75 | 0.50 | 410 | +0.1119 | 100.0% |
-| 0.80 | 0.15 | 141 | +0.1106 | 100.0% |
-| 0.80 | 0.25 | 141 | +0.1106 | 100.0% |
-| 0.80 | 0.35 | 141 | +0.1106 | 100.0% |
-| 0.80 | 0.45 | 141 | +0.1106 | 100.0% |
+| 0.45 | 0.10 | 1380 | +0.1125 | 100.0% |
+| 0.45 | 0.20 | 1363 | +0.1125 | 100.0% |
+| 0.45 | 0.30 | 1316 | +0.1125 | 100.0% |
+| 0.45 | 0.40 | 1193 | +0.1125 | 100.0% |
+| 0.45 | 0.50 | 971 | +0.1125 | 100.0% |
+| 0.50 | 0.15 | 1375 | +0.1125 | 100.0% |
+| 0.50 | 0.25 | 1344 | +0.1125 | 100.0% |
+| 0.50 | 0.35 | 1263 | +0.1125 | 100.0% |
+| 0.50 | 0.45 | 1100 | +0.1125 | 100.0% |
+| 0.55 | 0.10 | 1379 | +0.1125 | 100.0% |
+| 0.55 | 0.20 | 1363 | +0.1125 | 100.0% |
+| 0.55 | 0.30 | 1316 | +0.1125 | 100.0% |
+| 0.55 | 0.40 | 1193 | +0.1125 | 100.0% |
+| 0.55 | 0.50 | 971 | +0.1125 | 100.0% |
+| 0.60 | 0.15 | 1335 | +0.1125 | 100.0% |
+| 0.60 | 0.25 | 1329 | +0.1125 | 100.0% |
+| 0.60 | 0.35 | 1262 | +0.1125 | 100.0% |
+| 0.60 | 0.45 | 1100 | +0.1125 | 100.0% |
+| 0.65 | 0.10 | 1185 | +0.1125 | 100.0% |
+| 0.65 | 0.20 | 1185 | +0.1125 | 100.0% |
+| 0.65 | 0.30 | 1185 | +0.1125 | 100.0% |
+| 0.65 | 0.40 | 1145 | +0.1125 | 100.0% |
+| 0.65 | 0.50 | 971 | +0.1125 | 100.0% |
+| 0.70 | 0.15 | 876 | +0.1125 | 100.0% |
+| 0.70 | 0.25 | 876 | +0.1125 | 100.0% |
+| 0.70 | 0.35 | 876 | +0.1125 | 100.0% |
+| 0.70 | 0.45 | 876 | +0.1125 | 100.0% |
+| 0.75 | 0.10 | 456 | +0.1125 | 100.0% |
+| 0.75 | 0.20 | 456 | +0.1125 | 100.0% |
+| 0.75 | 0.30 | 456 | +0.1125 | 100.0% |
+| 0.75 | 0.40 | 456 | +0.1125 | 100.0% |
+| 0.75 | 0.50 | 456 | +0.1125 | 100.0% |
+| 0.80 | 0.15 | 162 | +0.1085 | 100.0% |
+| 0.80 | 0.25 | 162 | +0.1085 | 100.0% |
+| 0.80 | 0.35 | 162 | +0.1085 | 100.0% |
+| 0.80 | 0.45 | 162 | +0.1085 | 100.0% |
 
-**Optimal**: mono_thr=0.45, ir_thr=0.10 → 1370 candidates, mean lock IC=+0.1119, 100.0% positive
+**Optimal**: mono_thr=0.45, ir_thr=0.10 → 1380 candidates, mean lock IC=+0.1125, 100.0% positive
 
 ### 500ETF — `long` Threshold Sensitivity
 
@@ -864,44 +868,44 @@ Optimal zone: high % positive lock IC with reasonable pool size.
 
 | Mono Thr | IR Thr | N Would Pass | Mean Lock IC | % Positive Lock IC |
 | ---: | ---: | ---: | ---: | ---: |
-| 0.45 | 0.10 | 690 | +0.1325 | 100.0% |
-| 0.45 | 0.20 | 660 | +0.1325 | 100.0% |
-| 0.45 | 0.30 | 573 | +0.1325 | 100.0% |
-| 0.45 | 0.40 | 404 | +0.1325 | 100.0% |
-| 0.45 | 0.50 | 236 | +0.1325 | 100.0% |
-| 0.50 | 0.15 | 685 | +0.1325 | 100.0% |
-| 0.50 | 0.25 | 630 | +0.1325 | 100.0% |
-| 0.50 | 0.35 | 492 | +0.1325 | 100.0% |
-| 0.50 | 0.45 | 325 | +0.1325 | 100.0% |
-| 0.55 | 0.10 | 681 | +0.1325 | 100.0% |
-| 0.55 | 0.20 | 659 | +0.1325 | 100.0% |
-| 0.55 | 0.30 | 573 | +0.1325 | 100.0% |
-| 0.55 | 0.40 | 404 | +0.1325 | 100.0% |
-| 0.55 | 0.50 | 236 | +0.1325 | 100.0% |
-| 0.60 | 0.15 | 621 | +0.1325 | 100.0% |
-| 0.60 | 0.25 | 604 | +0.1325 | 100.0% |
-| 0.60 | 0.35 | 489 | +0.1325 | 100.0% |
-| 0.60 | 0.45 | 325 | +0.1325 | 100.0% |
-| 0.65 | 0.10 | 408 | +0.1325 | 100.0% |
-| 0.65 | 0.20 | 408 | +0.1325 | 100.0% |
-| 0.65 | 0.30 | 408 | +0.1325 | 100.0% |
-| 0.65 | 0.40 | 366 | +0.1325 | 100.0% |
-| 0.65 | 0.50 | 236 | +0.1325 | 100.0% |
-| 0.70 | 0.15 | 159 | +0.1325 | 100.0% |
-| 0.70 | 0.25 | 159 | +0.1325 | 100.0% |
-| 0.70 | 0.35 | 159 | +0.1325 | 100.0% |
-| 0.70 | 0.45 | 157 | +0.1325 | 100.0% |
-| 0.75 | 0.10 | 37 | +0.1179 | 100.0% |
-| 0.75 | 0.20 | 37 | +0.1179 | 100.0% |
-| 0.75 | 0.30 | 37 | +0.1179 | 100.0% |
-| 0.75 | 0.40 | 37 | +0.1179 | 100.0% |
-| 0.75 | 0.50 | 37 | +0.1179 | 100.0% |
+| 0.45 | 0.10 | 629 | +0.1271 | 100.0% |
+| 0.45 | 0.20 | 605 | +0.1271 | 100.0% |
+| 0.45 | 0.30 | 522 | +0.1271 | 100.0% |
+| 0.45 | 0.40 | 386 | +0.1271 | 100.0% |
+| 0.45 | 0.50 | 237 | +0.1271 | 100.0% |
+| 0.50 | 0.15 | 623 | +0.1271 | 100.0% |
+| 0.50 | 0.25 | 577 | +0.1271 | 100.0% |
+| 0.50 | 0.35 | 457 | +0.1271 | 100.0% |
+| 0.50 | 0.45 | 317 | +0.1271 | 100.0% |
+| 0.55 | 0.10 | 622 | +0.1271 | 100.0% |
+| 0.55 | 0.20 | 604 | +0.1271 | 100.0% |
+| 0.55 | 0.30 | 522 | +0.1271 | 100.0% |
+| 0.55 | 0.40 | 386 | +0.1271 | 100.0% |
+| 0.55 | 0.50 | 237 | +0.1271 | 100.0% |
+| 0.60 | 0.15 | 570 | +0.1271 | 100.0% |
+| 0.60 | 0.25 | 553 | +0.1271 | 100.0% |
+| 0.60 | 0.35 | 457 | +0.1271 | 100.0% |
+| 0.60 | 0.45 | 317 | +0.1271 | 100.0% |
+| 0.65 | 0.10 | 401 | +0.1271 | 100.0% |
+| 0.65 | 0.20 | 401 | +0.1271 | 100.0% |
+| 0.65 | 0.30 | 401 | +0.1271 | 100.0% |
+| 0.65 | 0.40 | 359 | +0.1271 | 100.0% |
+| 0.65 | 0.50 | 237 | +0.1271 | 100.0% |
+| 0.70 | 0.15 | 165 | +0.1271 | 100.0% |
+| 0.70 | 0.25 | 165 | +0.1271 | 100.0% |
+| 0.70 | 0.35 | 165 | +0.1271 | 100.0% |
+| 0.70 | 0.45 | 163 | +0.1271 | 100.0% |
+| 0.75 | 0.10 | 44 | +0.1229 | 100.0% |
+| 0.75 | 0.20 | 44 | +0.1229 | 100.0% |
+| 0.75 | 0.30 | 44 | +0.1229 | 100.0% |
+| 0.75 | 0.40 | 44 | +0.1229 | 100.0% |
+| 0.75 | 0.50 | 44 | +0.1229 | 100.0% |
 | 0.80 | 0.15 | 6 | +0.0417 | 66.7% |
 | 0.80 | 0.25 | 6 | +0.0417 | 66.7% |
 | 0.80 | 0.35 | 6 | +0.0417 | 66.7% |
 | 0.80 | 0.45 | 6 | +0.0417 | 66.7% |
 
-**Optimal**: mono_thr=0.45, ir_thr=0.10 → 690 candidates, mean lock IC=+0.1325, 100.0% positive
+**Optimal**: mono_thr=0.45, ir_thr=0.10 → 629 candidates, mean lock IC=+0.1271, 100.0% positive
 
 ### 159915ETF — `long` Threshold Sensitivity
 
@@ -1001,75 +1005,80 @@ Decay Ratio = Lock IC / Train IC. Values < 0.3 indicate severe signal degradatio
 | Feature | Train IC | OOS IC | Lock IC | Decay Ratio | Decay Date |
 | :--- | ---: | ---: | ---: | ---: | :--- |
 | `combo_rank_min__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio` | +0.1294 | +0.0000 | +0.0711 | 0.55x | 2016-08-24 |
-| `combo_mean__rbreaker_sell_setup_proximity_early__max_up_ret` | +0.1143 | +0.0000 | +0.0543 | 0.47x | 2017-05-09 |
-| `combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__bar_body_rng_0` | +0.1235 | +0.0000 | +0.0755 | 0.61x | 2017-07-10 |
+| `combo_rank_min__rbreaker_sell_setup_proximity_early__bar_body_rng_0` | +0.1127 | +0.0000 | +0.0885 | 0.79x | 2016-08-24 |
+| `combo_min__rbreaker_sell_setup_proximity_early__max_up_ret` | +0.1193 | +0.0000 | +0.0706 | 0.59x | 2017-06-09 |
+| `combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__first_bar_sentiment` | +0.1172 | +0.0000 | +0.0529 | 0.45x | 2015-02-06 |
 | `combo_tri_median__rbreaker_sell_setup_proximity_early__first_bar_sentiment__bar_body_rng_0` | +0.0965 | +0.0000 | +0.0776 | 0.80x | 2013-09-23 |
-| `rbreaker_sell_setup_proximity_early` | +0.0962 | +0.0000 | +0.0662 | 0.69x | 2016-08-24 |
-| `combo_tri_min__max_up_ret__volume_weighted_price_position__bar_body_rng_0` | +0.1103 | +0.0000 | +0.0566 | 0.51x | 2015-03-16 |
-| `combo_tri_max__max_up_ret__bar_ret_0__volume_weighted_price_position` | +0.0955 | +0.0000 | +0.0539 | 0.56x | 2015-02-06 |
+| `combo_mean__max_up_ret__volume_weighted_price_position` | +0.1093 | +0.0000 | +0.0567 | 0.52x | 2015-02-06 |
+| `combo_max__rbreaker_sell_setup_proximity_early__rbreaker_buy_setup_proximity_early` | +0.0930 | +0.0000 | +0.0581 | 0.63x | 2011-09-20 |
 | `combo_min__volume_weighted_price_position__double_bottom_bull_flag_early` | +0.0431 | +0.0000 | -0.0017 | -0.04x | 2010-10-15 |
-| `combo_ratio__limit_down_proximity_early__volume_concentration` | +0.0511 | +0.0000 | +0.0417 | 0.81x | 2012-10-09 |
+| `combo_ratio__first_bar_sentiment__volume_surge_direction` | +0.0571 | +0.0000 | +0.0048 | 0.08x | 2010-10-15 |
 | `combo_rel_diff__rbreaker_sell_setup_proximity_early__bar_vol_0` | +0.0655 | +0.0000 | +0.0529 | 0.81x | 2017-10-12 |
-| `combo_ratio__bar_ret_0__volume_surge_direction` | +0.0812 | +0.0000 | +0.0383 | 0.47x | 2010-10-15 |
-| `combo_clamp_diff__max_up_ret__early_vwap_acceleration` | +0.1120 | +0.0000 | +0.0701 | 0.63x | 2017-02-06 |
+| `combo_rel_diff__limit_down_proximity_early__volume_concentration` | +0.0575 | +0.0000 | +0.0522 | 0.91x | 2013-06-24 |
 
 ### 500ETF — `single` IC Decay
 
 | Feature | Train IC | OOS IC | Lock IC | Decay Ratio | Decay Date |
 | :--- | ---: | ---: | ---: | ---: | :--- |
-| `combo_tri_min__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio__max_up_ret` | +0.1976 | +0.0000 | +0.1217 | 0.62x | No decay |
+| `combo_rank_max__opening_drive_thrust_ratio__trend_day_regime_conviction` | +0.1798 | +0.0000 | +0.0890 | 0.49x | 2016-11-30 |
+| `combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__first_bar_sentiment` | +0.1729 | +0.0000 | +0.0883 | 0.51x | No decay |
+| `combo_max__opening_drive_thrust_ratio__first_bar_sentiment` | +0.1710 | +0.0000 | +0.0912 | 0.53x | 2020-01-06 |
+| `combo_min__max_up_ret__first_bar_sentiment` | +0.1707 | +0.0000 | +0.0726 | 0.43x | 2020-01-06 |
+| `combo_mean__star50_limit_proximity_early__first_bar_return` | +0.1690 | +0.0000 | +0.0992 | 0.59x | 2019-12-05 |
+| `combo_rel_diff__max_up_ret__late_bar_momentum` | +0.1730 | +0.0000 | +0.0780 | 0.45x | 2014-06-05 |
+| `combo_rank_min__opening_drive_thrust_ratio__star50_limit_proximity_early` | +0.1772 | +0.0000 | +0.1217 | 0.69x | 2016-08-24 |
+| `combo_diff__opening_drive_thrust_ratio__double_bottom_bull_flag_early` | +0.1513 | +0.0000 | +0.0862 | 0.57x | 2022-09-09 |
 | `combo_sig_product__max_up_ret__close_vs_open_range` | +0.1692 | +0.0000 | +0.1175 | 0.69x | 2020-01-06 |
-| `combo_tri_median__opening_drive_thrust_ratio__max_up_ret__net_volume_flow` | +0.1995 | +0.0000 | +0.1003 | 0.50x | 2016-11-30 |
-| `combo_clamp_diff__max_up_ret__early_late_momentum_divergence` | +0.1749 | +0.0000 | +0.0851 | 0.49x | 2019-12-05 |
-| `combo_rank_min__star50_limit_proximity_early__first_bar_return` | +0.1475 | +0.0000 | +0.0972 | 0.66x | 2016-08-24 |
-| `combo_min__star50_limit_proximity_early__max_down_ret` | +0.1473 | +0.0000 | +0.0958 | 0.65x | 2016-08-24 |
-| `combo_min__first_bar_sentiment__first_bar_return` | +0.1400 | +0.0000 | +0.0787 | 0.56x | 2013-09-23 |
 | `combo_sig_product__max_up_ret__volume_weighted_momentum_acceleration` | +0.1531 | +0.0000 | +0.1058 | 0.69x | No decay |
-| `combo_max__star50_limit_proximity_early__bar_ret_0` | +0.1677 | +0.0000 | +0.0990 | 0.59x | 2021-05-28 |
+| `combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__volume_weighted_momentum_acceleration` | +0.0760 | +0.0000 | +0.0475 | 0.62x | 2012-05-07 |
+| `combo_sig_product__star50_limit_proximity_early__max_down_ret` | +0.1461 | +0.0000 | +0.1300 | 0.89x | 2016-08-24 |
+| `combo_min__opening_drive_thrust_ratio__double_bottom_bull_flag_early` | +0.0991 | +0.0000 | +0.0716 | 0.72x | 2016-08-24 |
+| `combo_sig_product__star50_limit_proximity_early__first_bar_return` | +0.1397 | +0.0000 | +0.1223 | 0.88x | 2011-12-23 |
 | `combo_sig_product__max_up_ret__bar_ret_0` | +0.1680 | +0.0000 | +0.0792 | 0.47x | 2017-04-07 |
-| `combo_sig_product__star50_limit_proximity_early__bar_ret_0` | +0.1398 | +0.0000 | +0.1223 | 0.88x | 2011-12-23 |
 | `combo_ratio__bar_ret_0__net_volume_flow` | +0.1031 | +0.0000 | +0.0500 | 0.49x | 2013-09-23 |
+| `combo_sig_product__first_bar_sentiment__close_vs_open_range` | +0.1385 | +0.0000 | +0.0673 | 0.49x | 2020-01-06 |
 | `combo_abs_diff__max_up_ret__close_vs_open_range` | +0.0641 | +0.0000 | -0.0211 | -0.33x | 2010-10-15 |
 
 ### 159915ETF — `single` IC Decay
 
 | Feature | Train IC | OOS IC | Lock IC | Decay Ratio | Decay Date |
 | :--- | ---: | ---: | ---: | ---: | :--- |
+| `combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__first_bar_sentiment` | +0.1630 | +0.0000 | +0.1008 | 0.62x | 2017-04-28 |
+| `combo_tri_median__max_up_ret__first_bar_sentiment__star50_limit_proximity_early` | +0.1591 | +0.0000 | +0.1236 | 0.78x | 2017-04-28 |
+| `combo_tri_min__rbreaker_sell_setup_proximity_early__yesterday_early_vwap_dev__yesterday_first_30min_return` | +0.1188 | +0.0000 | +0.0937 | 0.79x | 2011-10-18 |
 | `combo_min__opening_drive_thrust_ratio__star50_limit_proximity_early` | +0.1538 | +0.0000 | +0.1458 | 0.95x | 2016-10-24 |
-| `combo_tri_median__rbreaker_sell_setup_proximity_early__max_up_ret__first_bar_sentiment` | +0.1666 | +0.0000 | +0.1260 | 0.76x | 2017-01-20 |
-| `combo_min__star50_limit_proximity_early__yesterday_first_30min_return` | +0.1021 | +0.0000 | +0.1075 | 1.05x | 2011-10-18 |
+| `combo_mean__star50_limit_proximity_early__bar_ret_0` | +0.1609 | +0.0000 | +0.1219 | 0.76x | 2017-01-20 |
+| `combo_max__max_up_ret__bar_ret_0` | +0.1537 | +0.0000 | +0.0960 | 0.62x | 2017-04-28 |
+| `combo_mean__rbreaker_sell_setup_proximity_early__max_up_ret` | +0.1649 | +0.0000 | +0.1260 | 0.76x | 2017-01-20 |
 | `combo_rank_max__star50_limit_proximity_early__yesterday_first_30min_return` | +0.1186 | +0.0000 | +0.1312 | 1.11x | 2017-01-20 |
-| `combo_sig_product__rbreaker_sell_setup_proximity_early__max_up_ret` | +0.1417 | +0.0000 | +0.1277 | 0.90x | 2017-01-20 |
-| `combo_rel_diff__max_up_ret__late_bar_momentum` | +0.1252 | +0.0000 | +0.1169 | 0.93x | 2011-03-11 |
-| `combo_tri_min__first_bar_sentiment__bar_body_rng_0__first_bar_return` | +0.1456 | +0.0000 | +0.0958 | 0.66x | 2017-02-27 |
 | `combo_ratio__star50_limit_proximity_early__volatility_expansion_trend_vector` | +0.1067 | +0.0000 | +0.1090 | 1.02x | 2011-10-18 |
-| `volatility_expansion_trend_vector` | +0.1263 | +0.0000 | +0.1157 | 0.92x | 2016-10-24 |
 | `combo_abs_diff__max_up_ret__volatility_expansion_trend_vector` | +0.0622 | +0.0000 | -0.0132 | -0.21x | 2012-02-22 |
 
 ---
 
 ## Actionable Recommendations for Filter Tuning
 
-1. **300ETF `single` — 7-Year Jackknife Sign Stability too strict**: 63.3% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 30.0%, mean lock Sharpe=+0.1497). Consider relaxing this gate.
-2. **300ETF `single` — B2 Rolling Guard too strict**: 93.3% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 30.0%, mean lock Sharpe=+0.3080). Consider relaxing this gate.
-3. **300ETF `single` — B3 Composite Floor too strict**: 73.3% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 30.0%, mean lock Sharpe=+0.2891). Consider relaxing this gate.
-4. **300ETF `single` — B4 Correlation Gate too strict**: 96.7% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 30.0%, mean lock Sharpe=+0.4224). Consider relaxing this gate.
+1. **300ETF `single` — 7-Year Jackknife Sign Stability too strict**: 63.3% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 34.0%, mean lock Sharpe=+0.1497). Consider relaxing this gate.
+2. **300ETF `single` — B2 Rolling Guard too strict**: 93.3% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 34.0%, mean lock Sharpe=+0.3080). Consider relaxing this gate.
+3. **300ETF `single` — B3 Composite Floor too strict**: 73.3% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 34.0%, mean lock Sharpe=+0.2891). Consider relaxing this gate.
+4. **300ETF `single` — B4 Correlation Gate too strict**: 96.7% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 34.0%, mean lock Sharpe=+0.3913). Consider relaxing this gate.
 5. **300ETF `short` — 7-Year Jackknife Sign Stability too strict**: 36.7% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 14.0%, mean lock Sharpe=-0.2417). Consider relaxing this gate.
 6. **300ETF `short` — BH-FDR Gate too strict**: 85.7% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 14.0%, mean lock Sharpe=+0.2273). Consider relaxing this gate.
 7. **300ETF `short` — B3 Composite Floor too strict**: 40.0% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 14.0%, mean lock Sharpe=-0.1028). Consider relaxing this gate.
 8. **50ETF `single` — 7-Year Jackknife Sign Stability too strict**: 53.3% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 19.0%, mean lock Sharpe=-0.0069). Consider relaxing this gate.
 9. **50ETF `short` — 7-Year Jackknife Sign Stability too strict**: 30.0% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 10.0%, mean lock Sharpe=-0.2106). Consider relaxing this gate.
 10. **50ETF `short` — BH-FDR Gate too strict**: 16.7% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 10.0%, mean lock Sharpe=-0.5453). Consider relaxing this gate.
-11. **500ETF `single` — 7-Year Jackknife Sign Stability too strict**: 86.7% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 40.0%, mean lock Sharpe=+0.4943). Consider relaxing this gate.
-12. **500ETF `single` — B2 Rolling Guard too strict**: 70.0% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 40.0%, mean lock Sharpe=+0.2370). Consider relaxing this gate.
-13. **500ETF `single` — B3 Composite Floor too strict**: 100.0% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 40.0%, mean lock Sharpe=+0.5158). Consider relaxing this gate.
-14. **500ETF `single` — B4 Correlation Gate too strict**: 100.0% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 40.0%, mean lock Sharpe=+0.7037). Consider relaxing this gate.
-15. **500ETF `long` — BH-FDR Gate too strict**: 30.0% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 18.0%, mean lock Sharpe=-0.1712). Consider relaxing this gate.
-16. **500ETF `short` — 7-Year Jackknife Sign Stability too strict**: 56.7% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 24.0%, mean lock Sharpe=+0.1404). Consider relaxing this gate.
-17. **159915ETF `single` — B3 Composite Floor too strict**: 100.0% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 66.0%, mean lock Sharpe=+1.0690). Consider relaxing this gate.
-18. **159915ETF `single` — B4 Correlation Gate too strict**: 100.0% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 66.0%, mean lock Sharpe=+1.3422). Consider relaxing this gate.
-19. **159915ETF `long` — BH-FDR Gate too strict**: 93.3% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 59.0%, mean lock Sharpe=+0.6527). Consider relaxing this gate.
-20. **159915ETF `short` — 7-Year Jackknife Sign Stability too strict**: 50.0% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 20.0%, mean lock Sharpe=-0.1320). Consider relaxing this gate.
+11. **500ETF `single` — 7-Year Jackknife Sign Stability too strict**: 96.7% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 51.0%, mean lock Sharpe=+0.5392). Consider relaxing this gate.
+12. **500ETF `single` — B3 Composite Floor too strict**: 100.0% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 51.0%, mean lock Sharpe=+0.4999). Consider relaxing this gate.
+13. **500ETF `single` — B4 Correlation Gate too strict**: 100.0% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 51.0%, mean lock Sharpe=+0.6977). Consider relaxing this gate.
+14. **500ETF `long` — BH-FDR Gate too strict**: 30.0% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 18.0%, mean lock Sharpe=-0.1712). Consider relaxing this gate.
+15. **500ETF `short` — 7-Year Jackknife Sign Stability too strict**: 56.7% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 24.0%, mean lock Sharpe=+0.1404). Consider relaxing this gate.
+16. **159915ETF `single` — 7-Year Jackknife Sign Stability too strict**: 93.3% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 58.0%, mean lock Sharpe=+0.6937). Consider relaxing this gate.
+17. **159915ETF `single` — B2 Rolling Guard too strict**: 96.7% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 58.0%, mean lock Sharpe=+0.5922). Consider relaxing this gate.
+18. **159915ETF `single` — B3 Composite Floor too strict**: 100.0% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 58.0%, mean lock Sharpe=+1.0091). Consider relaxing this gate.
+19. **159915ETF `single` — B4 Correlation Gate too strict**: 100.0% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 58.0%, mean lock Sharpe=+1.3572). Consider relaxing this gate.
+20. **159915ETF `long` — BH-FDR Gate too strict**: 93.3% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 59.0%, mean lock Sharpe=+0.6527). Consider relaxing this gate.
+21. **159915ETF `short` — 7-Year Jackknife Sign Stability too strict**: 50.0% of top rejects are true false negatives (lock IC > 0 AND Sharpe > 0 vs null baseline 20.0%, mean lock Sharpe=-0.1320). Consider relaxing this gate.
 
 ### General Recommendations:
 1. **Conviction Gate Sizing**: Implement threshold filter y_{\pred} > 8\text{ bps} to skip low-conviction days where expected trade return < friction.

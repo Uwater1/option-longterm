@@ -1,13 +1,26 @@
 [
   {
-    "feature_name": "combo_clamp_diff__max_up_ret__volume_weighted_momentum_acceleration",
+    "feature_name": "combo_mean__close_vs_open_range__bar_ret_0",
     "sign": 1,
-    "overall_ic": 0.304200679063797,
-    "deflated_ic": 0.3034352554129399,
-    "ic_ir": 0.8177065774550007,
-    "monotonicity": 0.7838394235717961,
+    "overall_ic": 0.2593516707420349,
+    "deflated_ic": 0.2588392087096081,
+    "ic_ir": 0.9535228293336078,
+    "monotonicity": 0.8183221821924859,
     "recipe": {
-      "op": "clamp_diff",
+      "op": "mean",
+      "feature_a": "close_vs_open_range",
+      "feature_b": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__max_up_ret__volume_weighted_momentum_acceleration",
+    "sign": 1,
+    "overall_ic": 0.2523891031742096,
+    "deflated_ic": 0.25158159897379634,
+    "ic_ir": 0.9968090718254904,
+    "monotonicity": 0.822439526505404,
+    "recipe": {
+      "op": "rel_diff",
       "feature_a": "max_up_ret",
       "feature_b": "volume_weighted_momentum_acceleration"
     }
@@ -27,28 +40,56 @@
     }
   },
   {
-    "feature_name": "combo_min__net_volume_flow__impulse_bar_dominance",
+    "feature_name": "combo_tri_median__rbreaker_sell_setup_proximity_early__max_up_ret__trend_bar_close_consistency",
     "sign": 1,
-    "overall_ic": 0.2687138617038727,
-    "deflated_ic": 0.26903228179280764,
-    "ic_ir": 0.7556578220498054,
-    "monotonicity": 0.7678847143592383,
+    "overall_ic": 0.2577230930328369,
+    "deflated_ic": 0.25637609718723814,
+    "ic_ir": 0.8678651519602829,
+    "monotonicity": 0.8080288214101904,
     "recipe": {
-      "op": "min",
-      "feature_a": "net_volume_flow",
-      "feature_b": "impulse_bar_dominance"
+      "op": "tri_median",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "max_up_ret",
+      "feature_c": "trend_bar_close_consistency"
     }
   },
   {
-    "feature_name": "combo_min__first_bar_sentiment__bar_ret_0",
+    "feature_name": "combo_tri_mean__star50_limit_proximity_early__trend_bar_close_consistency__volatility_expansion_trend_vector",
     "sign": 1,
-    "overall_ic": 0.21996253728866577,
-    "deflated_ic": 0.22016973988893587,
-    "ic_ir": 0.6467487606734929,
-    "monotonicity": 0.7267112712300566,
+    "overall_ic": 0.25024446845054626,
+    "deflated_ic": 0.24924413470581747,
+    "ic_ir": 0.7010241364355314,
+    "monotonicity": 0.7581060216160577,
     "recipe": {
-      "op": "min",
-      "feature_a": "first_bar_sentiment",
+      "op": "tri_mean",
+      "feature_a": "star50_limit_proximity_early",
+      "feature_b": "trend_bar_close_consistency",
+      "feature_c": "volatility_expansion_trend_vector"
+    }
+  },
+  {
+    "feature_name": "combo_max__max_up_ret__first_bar_sentiment",
+    "sign": 1,
+    "overall_ic": 0.20063751935958862,
+    "deflated_ic": 0.1998410643754526,
+    "ic_ir": 0.5016665427573167,
+    "monotonicity": 0.7004632012352033,
+    "recipe": {
+      "op": "max",
+      "feature_a": "max_up_ret",
+      "feature_b": "first_bar_sentiment"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__rbreaker_sell_setup_proximity_early__bar_ret_0",
+    "sign": 1,
+    "overall_ic": 0.22670787572860718,
+    "deflated_ic": 0.22605013834727436,
+    "ic_ir": 0.7036028004939336,
+    "monotonicity": 0.7828100874935666,
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
       "feature_b": "bar_ret_0"
     }
   },
@@ -66,68 +107,29 @@
     }
   },
   {
-    "feature_name": "combo_sig_product__opening_drive_thrust_ratio__trend_bar_close_consistency",
+    "feature_name": "combo_sig_product__max_up_ret__volume_weighted_momentum_acceleration",
     "sign": 1,
-    "overall_ic": 0.22727170586585999,
-    "deflated_ic": 0.2272386581719469,
-    "ic_ir": 0.58615786140308,
-    "monotonicity": 0.716932578486876,
+    "overall_ic": 0.18425485491752625,
+    "deflated_ic": 0.18286662635275056,
+    "ic_ir": 0.5820375583488094,
+    "monotonicity": 0.6937725167267113,
     "recipe": {
       "op": "sig_product",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "trend_bar_close_consistency"
+      "feature_a": "max_up_ret",
+      "feature_b": "volume_weighted_momentum_acceleration"
     }
   },
   {
-    "feature_name": "combo_rel_diff__star50_limit_proximity_early__body_size_progression",
+    "feature_name": "combo_sig_product__star50_limit_proximity_early__body_size_progression",
     "sign": 1,
-    "overall_ic": 0.2116306573152542,
-    "deflated_ic": 0.2100995860163671,
-    "ic_ir": 0.624278153544944,
-    "monotonicity": 0.7164179104477612,
+    "overall_ic": 0.1662396490573883,
+    "deflated_ic": 0.16399565100670227,
+    "ic_ir": 0.5196424937004115,
+    "monotonicity": 0.6803911477097272,
     "recipe": {
-      "op": "rel_diff",
+      "op": "sig_product",
       "feature_a": "star50_limit_proximity_early",
       "feature_b": "body_size_progression"
-    }
-  },
-  {
-    "feature_name": "combo_diff__max_up_ret__impulse_bar_dominance",
-    "sign": 1,
-    "overall_ic": 0.17861755192279816,
-    "deflated_ic": 0.17679919824580875,
-    "ic_ir": 0.5142572779865815,
-    "monotonicity": 0.6953165208440556,
-    "recipe": {
-      "op": "diff",
-      "feature_a": "max_up_ret",
-      "feature_b": "impulse_bar_dominance"
-    }
-  },
-  {
-    "feature_name": "combo_diff__opening_drive_thrust_ratio__impulse_bar_dominance",
-    "sign": 1,
-    "overall_ic": 0.19992031157016754,
-    "deflated_ic": 0.19908129561812815,
-    "ic_ir": 0.7081143289576984,
-    "monotonicity": 0.7539886773031395,
-    "recipe": {
-      "op": "diff",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "impulse_bar_dominance"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__star50_limit_proximity_early__close_vs_open_range",
-    "sign": 1,
-    "overall_ic": 0.21341249346733093,
-    "deflated_ic": 0.2111246966796654,
-    "ic_ir": 0.5497317494921233,
-    "monotonicity": 0.6654657745753989,
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "star50_limit_proximity_early",
-      "feature_b": "close_vs_open_range"
     }
   },
   {
