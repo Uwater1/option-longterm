@@ -269,6 +269,18 @@ def calculate_metrics(net_returns: np.ndarray, raw_returns: np.ndarray, position
     win_rate_long = float((net_returns[long_mask] > 0).sum() / n_long * 100.0) if n_long > 0 else 0.0
     win_rate_short = float((net_returns[short_mask] > 0).sum() / n_short * 100.0) if n_short > 0 else 0.0
 
+    # Long-side PnL & Sharpe
+    long_net = net_returns[long_mask]
+    long_pnl = float(long_net.sum()) if n_long > 0 else 0.0
+    long_std = float(np.std(long_net)) if n_long > 1 else 0.0
+    long_sharpe = float((np.mean(long_net) / long_std) * np.sqrt(252)) if long_std > 1e-12 else 0.0
+
+    # Short-side PnL & Sharpe
+    short_net = net_returns[short_mask]
+    short_pnl = float(short_net.sum()) if n_short > 0 else 0.0
+    short_std = float(np.std(short_net)) if n_short > 1 else 0.0
+    short_sharpe = float((np.mean(short_net) / short_std) * np.sqrt(252)) if short_std > 1e-12 else 0.0
+
     # Annualized Turnover (sum of turnover / years)
     pos_prev = np.roll(positions, 1)
     pos_prev[0] = 0.0
@@ -301,6 +313,10 @@ def calculate_metrics(net_returns: np.ndarray, raw_returns: np.ndarray, position
         "win_rate_pct": round(win_rate, 1),
         "win_rate_long_pct": round(win_rate_long, 1) if n_long > 0 else None,
         "win_rate_short_pct": round(win_rate_short, 1) if n_short > 0 else None,
+        "long_pnl": round(long_pnl, 4),
+        "long_sharpe": round(long_sharpe, 3),
+        "short_pnl": round(short_pnl, 4),
+        "short_sharpe": round(short_sharpe, 3),
         "profit_factor": round(profit_factor, 2),
         "ann_turnover": round(ann_turnover, 2),
     }

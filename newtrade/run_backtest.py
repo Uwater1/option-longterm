@@ -425,7 +425,7 @@ def main():
     print(f"NEWTRADE OOS BACKTEST PERFORMANCE SUMMARY ({'INDEX FUTURE' if args.future else 'SPOT ETF'}) (10:00 - 14:35 Intraday Trades)")
     print("================================================================================")
     
-    headers = ["ETF", "Asset", "Side", "OOS Period", "Z_th", "Features", "Trades", "Cost Sharpe", "Raw Sharpe", "Total PnL", "Max DD", "Win Rate", "Turnover"]
+    headers = ["ETF", "Asset", "Side", "OOS Period", "Z_th", "Features", "Trades", "Cost Sharpe", "Raw Sharpe", "Total PnL", "Long PnL", "Long Sharpe", "Short PnL", "Short Sharpe", "Max DD", "Win Rate", "Turnover"]
     
     SCHEME_TITLES = {
         "ensemble": "Ensemble (Equal-Weight Average)",
@@ -473,6 +473,10 @@ def main():
                 f"{r['cost_sharpe']:.3f}",
                 f"{r['raw_sharpe']:.3f}",
                 f"{r['total_pnl']:+.4f}",
+                f"{r.get('long_pnl', 0):+.4f}",
+                f"{r.get('long_sharpe', 0):.3f}",
+                f"{r.get('short_pnl', 0):+.4f}",
+                f"{r.get('short_sharpe', 0):.3f}",
                 f"{r['max_drawdown']:.4f}",
                 win_str,
                 f"{r['ann_turnover']:.1f}x",
@@ -485,7 +489,7 @@ def main():
                 r.get("period", "N/A"),
                 "N/A",
                 str(r["n_features"]),
-                "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"
+                "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"
             ]
 
     
