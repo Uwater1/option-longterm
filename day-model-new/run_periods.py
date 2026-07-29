@@ -5,6 +5,7 @@ Runs the feature selection + evaluation pipeline across multiple training window
 to produce a comprehensive cross-period FP rate comparison report.
 
 Periods:
+  P1: Train 2014-01-01 to 2022-01-01, OOS 2022-01-01 to present
   P2: Train 2015-01-01 to 2023-01-01, OOS 2023-01-01 to present
   P3: Train 2016-01-01 to 2024-01-01, OOS 2024-01-01 to present
   P4: Train 2017-01-01 to 2025-01-01, OOS 2025-01-01 to present
@@ -13,9 +14,9 @@ Uses OOS as ground truth (no lockbox). Jackknife uses n_chunks = training_years.
 588000ETF excluded (insufficient history for multi-period analysis).
 
 Usage:
-  python day-model-new/run_periods.py                    # All 3 periods, all ETFs/sides
+  python day-model-new/run_periods.py                    # All 4 periods, all ETFs/sides
   python day-model-new/run_periods.py -e 300ETF          # Single ETF
-  python day-model-new/run_periods.py --periods p2,p3    # Subset of periods
+  python day-model-new/run_periods.py --periods p1,p2    # Subset of periods
   python day-model-new/run_periods.py --compile-only     # Recompile report from existing JSONs
   python day-model-new/run_periods.py --max-parallel 4   # Parallel combos
 """
@@ -33,6 +34,7 @@ REPO_ROOT = HERE.parent
 
 # Period configurations: name -> (train_start, train_end)
 PERIODS = {
+    "p1": ("2014-01-01", "2022-01-01"),
     "p2": ("2015-01-01", "2023-01-01"),
     "p3": ("2016-01-01", "2024-01-01"),
     "p4": ("2017-01-01", "2025-01-01"),
