@@ -72,7 +72,7 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 - **Primitive Cluster Cap**: Extract primitive feature set (`feature_a`, `feature_b`, `feature_c`, `feature_cond`, `feature_cond2`). Drop or replace redundant combos built from identical base primitives to ensure pool diversity.
 - **Replacement rule**:
   ```
-  q_score = 0.40 * deflated_ic + 0.25 * sortino + 0.20 * ic_ir + 0.15 * recent_ic
+  q_score = 0.40 * deflated_ic + 0.25 * sortino + 0.15 * ic_ir + 0.20 * recent_ic
   if candidate is correlated with exactly one existing pool member old_feature (corr >= theta):
       replace old_feature with candidate if cand_q > old_q or cand_ic > old_ic
   ```
@@ -105,7 +105,7 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 #### Mechanism (pool > MAX_POOL_SIZE)
 - **Trigger**: When initial admission yields $> \text{MAX\_POOL\_SIZE}$ features.
 - **Mechanism**:
-  1. Computes training quality score $S_{train} = 0.40 \cdot \text{deflated\_ic} + 0.25 \cdot \text{sortino} + 0.20 \cdot \text{ic\_ir} + 0.15 \cdot \text{recent\_ic}$.
+  1. Computes training quality score $S_{train} = 0.40 \cdot \text{deflated\_ic} + 0.25 \cdot \text{sortino} + 0.20 \cdot \text{recent\_ic} + 0.15 \cdot \text{ic\_ir}$.
   2. Protects top `TOP_PROTECTED_COUNT` (7) features unconditionally.
   3. Screens lower-tier features with `TIGHT_THETA` (0.65) and quality floors (`recent_ic > 0`, `sortino > 0.05`, `deflated_ic >= 0.04`).
   4. Overwrites initial `ADMITTED` verdict in `attempts_log` for pruned features to `REJECTED_ADAPTIVE_*`.
