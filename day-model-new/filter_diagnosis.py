@@ -150,67 +150,83 @@ def evaluate_feature(df, feat_name, recipe, sign, side, train_means, train_stds,
 # ─── Deep WHY Analysis Functions ──────────────────────────────────────────────
 
 
-def temporal_ic_decomposition(train_df, feat_name, recipe, sign, side, train_means, train_stds, train_medians):
-    """Decompose training IC by year to detect era-concentrated signals.
+def temporal_ic_decomposition(train_df, feat_name, recipe, sign, side, train_means, train_stds, train_medians, full_df=None):
+    """Decompose training & OOS IC by year (2015-2025+) to track signal evolution.
     
-    Returns per-year ICs and stability metrics. A feature whose IC is driven by
-    a single year/regime is more likely to fail OOS.
+    `yearly_ics` and `yearly_tail_ics` span the full timeline (including OOS years).
+    Stability discriminators (ic_cv, recency_ratio, half_ratio) remain training-only.
     """
-    vals = compute_feature_values(train_df, feat_name, recipe, train_means, train_stds, train_medians)
+    eval_df = full_df if full_df is not None else train_df
+    vals = compute_feature_values(eval_df, feat_name, recipe, train_means, train_stds, train_medians)
     if vals is None:
         return None
 
     pred = sign * vals
-    y = train_df["trade_return"].values
-    dates = train_df["date"].values
+    y = eval_df["trade_return"].values
+    dates = eval_df["date"].values
 
-    # Yearly decomposition
+    # Multi-year breakdown across timeline (2015 - present)
     years = pd.DatetimeIndex(dates).year
-    unique_years = sorted(set(years))
+    unique_years = [yr for yr in sorted(set(years)) if yr >= 2015]
     yearly_ics = {}
+    yearly_tail_ics = {}
     for yr in unique_years:
         mask = years == yr
         if mask.sum() < 20:
             continue
         yearly_ics[int(yr)] = _spearman(y[mask], pred[mask])
+        yearly_tail_ics[int(yr)] = compute_tail_ic(y[mask], pred[mask], side)
 
     if len(yearly_ics) < 3:
         return None
 
-    ic_values = list(yearly_ics.values())
-    mean_ic = np.mean(ic_values)
-    std_ic = np.std(ic_values)
-    
-    # Stability metrics (TRAINING-ONLY discriminators)
-    ic_cv = std_ic / abs(mean_ic) if abs(mean_ic) > 1e-6 else 99.0  # Coefficient of variation
-    n_negative_years = sum(1 for ic in ic_values if ic < 0)
-    min_ic = min(ic_values)
-    max_ic = max(ic_values)
-    
-    # Recent vs early ratio (last 2 years vs first 2 years)
-    sorted_years = sorted(yearly_ics.keys())
-    early_years = sorted_years[:2]
-    recent_years = sorted_years[-2:]
-    early_ic = np.mean([yearly_ics[y] for y in early_years])
-    recent_ic = np.mean([yearly_ics[y] for y in recent_years])
-    recency_ratio = recent_ic / early_ic if abs(early_ic) > 1e-6 else (99.0 if recent_ic > 0 else -99.0)
-    
-    # Half-split stability
-    n = len(pred)
-    half = n // 2
-    ic_first_half = _spearman(y[:half], pred[:half])
-    ic_second_half = _spearman(y[half:], pred[half:])
-    half_ratio = ic_second_half / ic_first_half if abs(ic_first_half) > 1e-6 else 99.0
+    # Compute training-period stability discriminators strictly on train_df (no look-ahead)
+    train_vals = compute_feature_values(train_df, feat_name, recipe, train_means, train_stds, train_medians)
+    if train_vals is not None:
+        train_pred = sign * train_vals
+        train_y = train_df["trade_return"].values
+        train_dates = train_df["date"].values
+        train_years_idx = pd.DatetimeIndex(train_dates).year
+        train_unique_years = sorted(set(train_years_idx))
+        
+        train_yearly_ics = []
+        train_yearly_tail_ics = []
+        for yr in train_unique_years:
+            m = train_years_idx == yr
+            if m.sum() >= 20:
+                train_yearly_ics.append(_spearman(train_y[m], train_pred[m]))
+                train_yearly_tail_ics.append(compute_tail_ic(train_y[m], train_pred[m], side))
+
+        mean_ic = np.mean(train_yearly_ics) if train_yearly_ics else 0.0
+        std_ic = np.std(train_yearly_ics) if train_yearly_ics else 0.0
+        ic_cv = std_ic / abs(mean_ic) if abs(mean_ic) > 1e-6 else 99.0
+        n_negative_years = sum(1 for ic in train_yearly_ics if ic < 0)
+        n_negative_tail_years = sum(1 for ic in train_yearly_tail_ics if ic < 0)
+
+        early_ic = np.mean(train_yearly_ics[:2]) if len(train_yearly_ics) >= 2 else mean_ic
+        recent_ic = np.mean(train_yearly_ics[-2:]) if len(train_yearly_ics) >= 2 else mean_ic
+        recency_ratio = recent_ic / early_ic if abs(early_ic) > 1e-6 else (99.0 if recent_ic > 0 else -99.0)
+
+        n_tr = len(train_pred)
+        half_tr = n_tr // 2
+        ic_first_half = _spearman(train_y[:half_tr], train_pred[:half_tr])
+        ic_second_half = _spearman(train_y[half_tr:], train_pred[half_tr:])
+        half_ratio = ic_second_half / ic_first_half if abs(ic_first_half) > 1e-6 else 99.0
+    else:
+        mean_ic, std_ic, ic_cv = 0.0, 0.0, 99.0
+        n_negative_years, n_negative_tail_years = 0, 0
+        early_ic, recent_ic, recency_ratio = 0.0, 0.0, 99.0
+        ic_first_half, ic_second_half, half_ratio = 0.0, 0.0, 99.0
 
     return {
         "yearly_ics": yearly_ics,
+        "yearly_tail_ics": yearly_tail_ics,
         "mean_ic": float(mean_ic),
         "std_ic": float(std_ic),
         "ic_cv": float(ic_cv),
         "n_negative_years": n_negative_years,
-        "n_years": len(yearly_ics),
-        "min_ic": float(min_ic),
-        "max_ic": float(max_ic),
+        "n_negative_tail_years": n_negative_tail_years,
+        "n_years": len(train_unique_years) if train_vals is not None else len(yearly_ics),
         "early_ic": float(early_ic),
         "recent_ic": float(recent_ic),
         "recency_ratio": float(recency_ratio),
@@ -702,7 +718,8 @@ def main():
             for entry in all_features_for_analysis:
                 temporal = temporal_ic_decomposition(
                     train_df, entry["feature_name"], entry["recipe"],
-                    entry["sign"], side, train_means, train_stds, train_medians
+                    entry["sign"], side, train_means, train_stds, train_medians,
+                    full_df=df
                 )
                 if temporal:
                     entry.update(temporal)
@@ -1062,15 +1079,21 @@ def generate_report(results, suffix="", oos_years=None):
 
             for f in sorted(fp_features, key=lambda x: x["lock_sharpe"]):
                 yearly = f.get("yearly_ics", {})
+                yearly_tail = f.get("yearly_tail_ics", {})
                 if not yearly:
                     continue
                 years_str = " | ".join(f"{yr}: {ic:+.3f}" for yr, ic in sorted(yearly.items()))
+                years_tail_str = " | ".join(f"{yr}: {ic:+.3f}" for yr, ic in sorted(yearly_tail.items())) if yearly_tail else ""
                 lines.extend([
                     f"**`{f['feature_name']}`** (Lock IC={f['lock_ic']:+.4f}, Sharpe={f['lock_sharpe']:+.4f})",
                     f"- Admission: Train IC={f.get('overall_ic', 0):+.4f}, Deflated={f.get('deflated_ic', 0):+.4f}, "
                     f"IR={f.get('ic_ir', 0):.2f}, Mono={f.get('monotonicity', 0):.2f}, p={f.get('p_value', 1):.4f}, MaxCorr={f.get('max_corr', 0):.2f}",
-                    f"- Yearly ICs: {years_str}",
-                    f"- IC CV={f.get('ic_cv', 0):.2f}, Neg years={f.get('n_negative_years', 0)}/{f.get('n_years', 0)}, "
+                    f"- Yearly Linear ICs: {years_str}",
+                ])
+                if years_tail_str:
+                    lines.append(f"- Yearly Tail ICs:   {years_tail_str}")
+                lines.extend([
+                    f"- IC CV={f.get('ic_cv', 0):.2f}, Neg years (linear/tail)={f.get('n_negative_years', 0)}/{f.get('n_negative_tail_years', 0)} of {f.get('n_years', 0)}, "
                     f"Half ratio={f.get('half_ratio', 0):.2f}, Recency ratio={f.get('recency_ratio', 0):.2f}",
                     f"- Early IC={f.get('early_ic', 0):+.4f}, Recent IC={f.get('recent_ic', 0):+.4f}, "
                     f"1st-half IC={f.get('ic_first_half', 0):+.4f}, 2nd-half IC={f.get('ic_second_half', 0):+.4f}, "
@@ -1104,15 +1127,21 @@ def generate_report(results, suffix="", oos_years=None):
 
             for f in sorted(median_features, key=lambda x: -x["lock_ic"]):
                 yearly = f.get("yearly_ics", {})
+                yearly_tail = f.get("yearly_tail_ics", {})
                 if not yearly:
                     continue
                 years_str = " | ".join(f"{yr}: {ic:+.3f}" for yr, ic in sorted(yearly.items()))
+                years_tail_str = " | ".join(f"{yr}: {ic:+.3f}" for yr, ic in sorted(yearly_tail.items())) if yearly_tail else ""
                 lines.extend([
                     f"**`{f['feature_name']}`** (Lock IC={f['lock_ic']:+.4f}, Sharpe={f['lock_sharpe']:+.4f})",
                     f"- Admission: Train IC={f.get('overall_ic', 0):+.4f}, Deflated={f.get('deflated_ic', 0):+.4f}, "
                     f"IR={f.get('ic_ir', 0):.2f}, Mono={f.get('monotonicity', 0):.2f}, p={f.get('p_value', 1):.4f}, MaxCorr={f.get('max_corr', 0):.2f}",
-                    f"- Yearly ICs: {years_str}",
-                    f"- IC CV={f.get('ic_cv', 0):.2f}, Neg years={f.get('n_negative_years', 0)}/{f.get('n_years', 0)}, "
+                    f"- Yearly Linear ICs: {years_str}",
+                ])
+                if years_tail_str:
+                    lines.append(f"- Yearly Tail ICs:   {years_tail_str}")
+                lines.extend([
+                    f"- IC CV={f.get('ic_cv', 0):.2f}, Neg years (linear/tail)={f.get('n_negative_years', 0)}/{f.get('n_negative_tail_years', 0)} of {f.get('n_years', 0)}, "
                     f"Half ratio={f.get('half_ratio', 0):.2f}, Recency ratio={f.get('recency_ratio', 0):.2f}",
                     f"- Early IC={f.get('early_ic', 0):+.4f}, Recent IC={f.get('recent_ic', 0):+.4f}, "
                     f"1st-half IC={f.get('ic_first_half', 0):+.4f}, 2nd-half IC={f.get('ic_second_half', 0):+.4f}, "
@@ -1145,15 +1174,21 @@ def generate_report(results, suffix="", oos_years=None):
 
             for f in sorted(tp_features, key=lambda x: -x["lock_sharpe"]):
                 yearly = f.get("yearly_ics", {})
+                yearly_tail = f.get("yearly_tail_ics", {})
                 if not yearly:
                     continue
                 years_str = " | ".join(f"{yr}: {ic:+.3f}" for yr, ic in sorted(yearly.items()))
+                years_tail_str = " | ".join(f"{yr}: {ic:+.3f}" for yr, ic in sorted(yearly_tail.items())) if yearly_tail else ""
                 lines.extend([
                     f"**`{f['feature_name']}`** (Lock IC={f['lock_ic']:+.4f}, Sharpe={f['lock_sharpe']:+.4f})",
                     f"- Admission: Train IC={f.get('overall_ic', 0):+.4f}, Deflated={f.get('deflated_ic', 0):+.4f}, "
                     f"IR={f.get('ic_ir', 0):.2f}, Mono={f.get('monotonicity', 0):.2f}, p={f.get('p_value', 1):.4f}, MaxCorr={f.get('max_corr', 0):.2f}",
-                    f"- Yearly ICs: {years_str}",
-                    f"- IC CV={f.get('ic_cv', 0):.2f}, Neg years={f.get('n_negative_years', 0)}/{f.get('n_years', 0)}, "
+                    f"- Yearly Linear ICs: {years_str}",
+                ])
+                if years_tail_str:
+                    lines.append(f"- Yearly Tail ICs:   {years_tail_str}")
+                lines.extend([
+                    f"- IC CV={f.get('ic_cv', 0):.2f}, Neg years (linear/tail)={f.get('n_negative_years', 0)}/{f.get('n_negative_tail_years', 0)} of {f.get('n_years', 0)}, "
                     f"Half ratio={f.get('half_ratio', 0):.2f}, Recency ratio={f.get('recency_ratio', 0):.2f}",
                     f"- Early IC={f.get('early_ic', 0):+.4f}, Recent IC={f.get('recent_ic', 0):+.4f}, "
                     f"1st-half IC={f.get('ic_first_half', 0):+.4f}, 2nd-half IC={f.get('ic_second_half', 0):+.4f}, "
