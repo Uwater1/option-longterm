@@ -19,16 +19,16 @@ Candidate counts at each admission gate. Shows where features get pruned.
 
 | ETF | Side | Total Candidates | 7Y-Jackknife Pass | B2 Rolling Guard | Temporal Gate | BH-FDR Pass | B3 Composite Floor | Stability Gate | Quality Gate | B4 Correlation | Final Admitted |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 300ETF | single | 1,285 | 410 | 304 | 232 | 221 | 220 | 220 | 220 | 2 | 2 |
+| 300ETF | single | 1,285 | 410 | 304 | 232 | 221 | 220 | 61 | 61 | 2 | 2 |
 | 300ETF | long | 586 | 58 | 10 | 10 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 300ETF | short | 587 | 69 | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 50ETF | single | 1,244 | 342 | 302 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 50ETF | single | 1,231 | 347 | 310 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 50ETF | long | 368 | 43 | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 50ETF | short | 321 | 46 | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 500ETF | single | 3,222 | 1,339 | 934 | 813 | 806 | 800 | 613 | 613 | 12 | 12 |
+| 500ETF | single | 3,222 | 1,339 | 934 | 813 | 806 | 800 | 541 | 541 | 12 | 12 |
 | 500ETF | long | 1,350 | 96 | 37 | 37 | 2 | 0 | 0 | 0 | 0 | 0 |
 | 500ETF | short | 428 | 51 | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 |
-| 159915ETF | single | 1,901 | 712 | 491 | 456 | 454 | 364 | 353 | 353 | 12 | 12 |
+| 159915ETF | single | 1,901 | 712 | 491 | 456 | 454 | 364 | 267 | 267 | 12 | 12 |
 | 159915ETF | long | 1,120 | 214 | 130 | 130 | 11 | 0 | 0 | 0 | 0 | 0 |
 | 159915ETF | short | 299 | 52 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 

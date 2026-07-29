@@ -2,14 +2,332 @@
   "300ETF": {
     "single": {
       "full_model": {
-        "train_ic": 0.12273565301740648,
-        "oos_ic": 0.06303104737199236,
-        "lock_ic": 0.06303104737199236,
-        "train_sharpe": 1.0710199786841075,
-        "oos_sharpe": 0.44329599942700243,
-        "lock_sharpe": 0.44329599942700243
+        "train_ic": 0.1331000089440669,
+        "oos_ic": 0.07267895262486634,
+        "lock_ic": 0.07267895262486634,
+        "train_sharpe": 1.3470398103293468,
+        "oos_sharpe": 0.5089814635392665,
+        "lock_sharpe": 0.5089814635392665
       },
       "features": [
+        {
+          "feature_name": "combo_rank_min__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio",
+          "sign": 1,
+          "family": "Other Technical",
+          "recipe": {
+            "op": "rank_min",
+            "feature_a": "rbreaker_sell_setup_proximity_early",
+            "feature_b": "opening_drive_thrust_ratio"
+          },
+          "train": {
+            "overall_ic": 0.11884382277145447,
+            "tail_ic": 0.27641871492186254,
+            "mono": 0.8787878787878788,
+            "raw_ann_ret": 0.15371776169461532,
+            "raw_sharpe": 1.757799740589815,
+            "cost_ann_ret": 0.11481812122209346,
+            "cost_sharpe": 1.3279937275599707,
+            "sortino": 2.469298146427151,
+            "max_dd": 0.08806092649840544,
+            "annual_turnover": 86.34617360041088,
+            "avg_trade_ret_bps": 31.6131994696865,
+            "friction_eff": 3.951649933710812,
+            "win_rate": 0.6005154639175257
+          },
+          "oos": {
+            "overall_ic": 0.07034387744203176,
+            "tail_ic": 0.12846835679340587,
+            "mono": 0.6121212121212121,
+            "raw_ann_ret": 0.058958150026308866,
+            "raw_sharpe": 0.93990446676103,
+            "cost_ann_ret": 0.020191794886121942,
+            "cost_sharpe": 0.3239913667895037,
+            "sortino": 0.5118305794028805,
+            "max_dd": 0.13287298466516734,
+            "annual_turnover": 87.50934579439253,
+            "avg_trade_ret_bps": 12.166869918640401,
+            "friction_eff": 1.5208587398300502,
+            "win_rate": 0.5470588235294118
+          },
+          "lockbox": {
+            "overall_ic": 0.07034387744203176,
+            "tail_ic": 0.12846835679340587,
+            "mono": 0.6121212121212121,
+            "raw_ann_ret": 0.058958150026308866,
+            "raw_sharpe": 0.93990446676103,
+            "cost_ann_ret": 0.020191794886121942,
+            "cost_sharpe": 0.3239913667895037,
+            "sortino": 0.5118305794028805,
+            "max_dd": 0.13287298466516734,
+            "annual_turnover": 87.50934579439253,
+            "avg_trade_ret_bps": 12.166869918640401,
+            "friction_eff": 1.5208587398300502,
+            "win_rate": 0.5470588235294118
+          },
+          "loo": {
+            "delta_oos_ic": -0.00010688124878202587,
+            "delta_lock_ic": -0.00010688124878202587,
+            "delta_lock_sharpe": -0.03905215079656976
+          },
+          "temporal": {
+            "ic_cv": 0.9007919173678315,
+            "neg_years": 1,
+            "n_years": 8,
+            "half_ratio": 0.7336829495283689,
+            "recency_ratio": 0.7270040335391083,
+            "weak_component": "rbreaker_sell_setup_proximity_early",
+            "weak_link_cv": 1.0164263419091615,
+            "yearly_ics": {
+              "2015": 0.2327852811719732,
+              "2016": 0.06298402785522224,
+              "2017": -0.06888510317359336,
+              "2018": 0.20336503873079612,
+              "2019": 0.12208633301529477,
+              "2020": 0.057407706700483015,
+              "2021": 0.17250961722667865,
+              "2022": 0.042515863433167406
+            }
+          }
+        },
+        {
+          "feature_name": "combo_mean__rbreaker_sell_setup_proximity_early__max_up_ret",
+          "sign": 1,
+          "family": "Intraday Range Momentum",
+          "recipe": {
+            "op": "mean",
+            "feature_a": "rbreaker_sell_setup_proximity_early",
+            "feature_b": "max_up_ret"
+          },
+          "train": {
+            "overall_ic": 0.11194721390570975,
+            "tail_ic": 0.2634187950957739,
+            "mono": 0.8181818181818182,
+            "raw_ann_ret": 0.14872898105358817,
+            "raw_sharpe": 1.6855294490014676,
+            "cost_ann_ret": 0.10982934058106635,
+            "cost_sharpe": 1.258137571111899,
+            "sortino": 2.3658571576190943,
+            "max_dd": 0.07075291981245388,
+            "annual_turnover": 84.46635850025682,
+            "avg_trade_ret_bps": 30.58721967544112,
+            "friction_eff": 3.82340245943014,
+            "win_rate": 0.6030927835051546
+          },
+          "oos": {
+            "overall_ic": 0.05428315244852044,
+            "tail_ic": 0.16664295323245712,
+            "mono": 0.7696969696969697,
+            "raw_ann_ret": 0.06373312162764777,
+            "raw_sharpe": 0.8817893349959289,
+            "cost_ann_ret": 0.024966766487460868,
+            "cost_sharpe": 0.34732715998517133,
+            "sortino": 0.5342082726626343,
+            "max_dd": 0.0790930070789705,
+            "annual_turnover": 86.36915887850468,
+            "avg_trade_ret_bps": 13.152254607827027,
+            "friction_eff": 1.6440318259783784,
+            "win_rate": 0.5647058823529412
+          },
+          "lockbox": {
+            "overall_ic": 0.05428315244852044,
+            "tail_ic": 0.16664295323245712,
+            "mono": 0.7696969696969697,
+            "raw_ann_ret": 0.06373312162764777,
+            "raw_sharpe": 0.8817893349959289,
+            "cost_ann_ret": 0.024966766487460868,
+            "cost_sharpe": 0.34732715998517133,
+            "sortino": 0.5342082726626343,
+            "max_dd": 0.0790930070789705,
+            "annual_turnover": 86.36915887850468,
+            "avg_trade_ret_bps": 13.152254607827027,
+            "friction_eff": 1.6440318259783784,
+            "win_rate": 0.5647058823529412
+          },
+          "loo": {
+            "delta_oos_ic": -0.0026486901073135005,
+            "delta_lock_ic": -0.0026486901073135005,
+            "delta_lock_sharpe": 0.2888653480635179
+          },
+          "temporal": {
+            "ic_cv": 0.7666963288797802,
+            "neg_years": 1,
+            "n_years": 8,
+            "half_ratio": 0.7456400512060293,
+            "recency_ratio": 0.8042052972506817,
+            "weak_component": "rbreaker_sell_setup_proximity_early",
+            "weak_link_cv": 1.0164263419091615,
+            "yearly_ics": {
+              "2015": 0.19659740034447296,
+              "2016": 0.10891457979670313,
+              "2017": -0.07415668149469867,
+              "2018": 0.16657968992792638,
+              "2019": 0.08603562858051539,
+              "2020": 0.07543853743565505,
+              "2021": 0.15126226116666872,
+              "2022": 0.09443209163641018
+            }
+          }
+        },
+        {
+          "feature_name": "combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__bar_body_rng_0",
+          "sign": 1,
+          "family": "Intraday Range Momentum",
+          "recipe": {
+            "op": "tri_min",
+            "feature_a": "rbreaker_sell_setup_proximity_early",
+            "feature_b": "max_up_ret",
+            "feature_c": "bar_body_rng_0"
+          },
+          "train": {
+            "overall_ic": 0.11862515862398529,
+            "tail_ic": 0.2793013147715231,
+            "mono": 0.9272727272727272,
+            "raw_ann_ret": 0.14517187474905416,
+            "raw_sharpe": 1.629135635914652,
+            "cost_ann_ret": 0.10627223427653235,
+            "cost_sharpe": 1.2048820854068683,
+            "sortino": 2.3195920243592694,
+            "max_dd": 0.09153221095972253,
+            "annual_turnover": 87.72470467385722,
+            "avg_trade_ret_bps": 29.85567434261539,
+            "friction_eff": 3.731959292826924,
+            "win_rate": 0.5824742268041238
+          },
+          "oos": {
+            "overall_ic": 0.07554675030106914,
+            "tail_ic": 0.19810992387727439,
+            "mono": 0.503030303030303,
+            "raw_ann_ret": 0.07705687593662419,
+            "raw_sharpe": 1.128776374818181,
+            "cost_ann_ret": 0.03829052079643726,
+            "cost_sharpe": 0.5654071066190117,
+            "sortino": 1.0180246183833959,
+            "max_dd": 0.18380582594735426,
+            "annual_turnover": 85.22897196261682,
+            "avg_trade_ret_bps": 15.901804677374713,
+            "friction_eff": 1.987725584671839,
+            "win_rate": 0.5352941176470588
+          },
+          "lockbox": {
+            "overall_ic": 0.07554675030106914,
+            "tail_ic": 0.19810992387727439,
+            "mono": 0.503030303030303,
+            "raw_ann_ret": 0.07705687593662419,
+            "raw_sharpe": 1.128776374818181,
+            "cost_ann_ret": 0.03829052079643726,
+            "cost_sharpe": 0.5654071066190117,
+            "sortino": 1.0180246183833959,
+            "max_dd": 0.18380582594735426,
+            "annual_turnover": 85.22897196261682,
+            "avg_trade_ret_bps": 15.901804677374713,
+            "friction_eff": 1.987725584671839,
+            "win_rate": 0.5352941176470588
+          },
+          "loo": {
+            "delta_oos_ic": 0.001332433131688196,
+            "delta_lock_ic": 0.001332433131688196,
+            "delta_lock_sharpe": -0.013673963922459453
+          },
+          "temporal": {
+            "ic_cv": 0.7040893506306088,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 0.5338338946002625,
+            "recency_ratio": 0.4819805554943911,
+            "weak_component": "rbreaker_sell_setup_proximity_early",
+            "weak_link_cv": 1.0164263419091615,
+            "yearly_ics": {
+              "2015": 0.25467640994470686,
+              "2016": 0.09612034249036591,
+              "2017": 0.009247074664717131,
+              "2018": 0.18360287759194863,
+              "2019": 0.11647772624680171,
+              "2020": 0.04235859473466557,
+              "2021": 0.13183727548312696,
+              "2022": 0.03723993812115784
+            }
+          }
+        },
+        {
+          "feature_name": "combo_tri_median__rbreaker_sell_setup_proximity_early__first_bar_sentiment__bar_body_rng_0",
+          "sign": 1,
+          "family": "Gap / Overnight Reversal",
+          "recipe": {
+            "op": "tri_median",
+            "feature_a": "rbreaker_sell_setup_proximity_early",
+            "feature_b": "first_bar_sentiment",
+            "feature_c": "bar_body_rng_0"
+          },
+          "train": {
+            "overall_ic": 0.09988234913412496,
+            "tail_ic": 0.22253877768661356,
+            "mono": 0.793939393939394,
+            "raw_ann_ret": 0.13261503079663384,
+            "raw_sharpe": 1.5500474316075068,
+            "cost_ann_ret": 0.093715390324112,
+            "cost_sharpe": 1.106387717413603,
+            "sortino": 2.0216363246750384,
+            "max_dd": 0.1054506661097876,
+            "annual_turnover": 82.46122239342577,
+            "avg_trade_ret_bps": 27.27326611469559,
+            "friction_eff": 3.4091582643369485,
+            "win_rate": 0.6030927835051546
+          },
+          "oos": {
+            "overall_ic": 0.07763760842643735,
+            "tail_ic": 0.24911915980886368,
+            "mono": 0.6848484848484848,
+            "raw_ann_ret": 0.08930681020364836,
+            "raw_sharpe": 1.4742283328392927,
+            "cost_ann_ret": 0.05054045506346142,
+            "cost_sharpe": 0.8446766639196829,
+            "sortino": 1.5800571040362315,
+            "max_dd": 0.05911217486032783,
+            "annual_turnover": 77.8177570093458,
+            "avg_trade_ret_bps": 18.42975639689561,
+            "friction_eff": 2.303719549611951,
+            "win_rate": 0.5588235294117647
+          },
+          "lockbox": {
+            "overall_ic": 0.07763760842643735,
+            "tail_ic": 0.24911915980886368,
+            "mono": 0.6848484848484848,
+            "raw_ann_ret": 0.08930681020364836,
+            "raw_sharpe": 1.4742283328392927,
+            "cost_ann_ret": 0.05054045506346142,
+            "cost_sharpe": 0.8446766639196829,
+            "sortino": 1.5800571040362315,
+            "max_dd": 0.05911217486032783,
+            "annual_turnover": 77.8177570093458,
+            "avg_trade_ret_bps": 18.42975639689561,
+            "friction_eff": 2.303719549611951,
+            "win_rate": 0.5588235294117647
+          },
+          "loo": {
+            "delta_oos_ic": 0.0025538524898047893,
+            "delta_lock_ic": 0.0025538524898047893,
+            "delta_lock_sharpe": -0.05275612017595932
+          },
+          "temporal": {
+            "ic_cv": 0.6492177237252235,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 0.4885593307344335,
+            "recency_ratio": 0.6179503714010854,
+            "weak_component": "rbreaker_sell_setup_proximity_early",
+            "weak_link_cv": 1.0164263419091615,
+            "yearly_ics": {
+              "2015": 0.16777762649190975,
+              "2016": 0.09674143913199187,
+              "2017": 0.05236885544155507,
+              "2018": 0.19861272243346026,
+              "2019": 0.09029600808218628,
+              "2020": 0.00015307655080892683,
+              "2021": 0.12632514632560887,
+              "2022": 0.03713450851934922
+            }
+          }
+        },
         {
           "feature_name": "rbreaker_sell_setup_proximity_early",
           "sign": 1,
@@ -61,125 +379,583 @@
             "win_rate": 0.5529411764705883
           },
           "loo": {
-            "delta_oos_ic": 0.0020337471684045913,
-            "delta_lock_ic": 0.0020337471684045913,
-            "delta_lock_sharpe": -0.05835101163530215
+            "delta_oos_ic": -0.003409543404044618,
+            "delta_lock_ic": -0.003409543404044618,
+            "delta_lock_sharpe": 0.014836941720024144
+          },
+          "temporal": {
+            "ic_cv": 1.0164263419091615,
+            "neg_years": 1,
+            "n_years": 8,
+            "half_ratio": 0.6576554438186815,
+            "recency_ratio": 0.7527757132323517,
+            "weak_component": null,
+            "weak_link_cv": null,
+            "yearly_ics": {
+              "2015": 0.20015860624759924,
+              "2016": 0.07115474252397679,
+              "2017": -0.09294078287052526,
+              "2018": 0.12858841770913307,
+              "2019": 0.0672697008372262,
+              "2020": 0.04074986509194222,
+              "2021": 0.09491969804837233,
+              "2022": 0.10931840158260862
+            }
           }
         },
         {
-          "feature_name": "combo_min__max_up_ret__bar_body_rng_0",
+          "feature_name": "combo_tri_min__max_up_ret__volume_weighted_price_position__bar_body_rng_0",
           "sign": 1,
           "family": "Intraday Range Momentum",
           "recipe": {
-            "op": "min",
+            "op": "tri_min",
             "feature_a": "max_up_ret",
-            "feature_b": "bar_body_rng_0"
+            "feature_b": "volume_weighted_price_position",
+            "feature_c": "bar_body_rng_0"
           },
           "train": {
-            "overall_ic": 0.09113199673015906,
-            "tail_ic": 0.2173227760866488,
-            "mono": 0.7696969696969697,
-            "raw_ann_ret": 0.1107895548091786,
-            "raw_sharpe": 1.3685115154102416,
-            "cost_ann_ret": 0.07188991433665676,
-            "cost_sharpe": 0.8960449443255405,
-            "sortino": 1.5259695170592713,
-            "max_dd": 0.09280382614337503,
-            "annual_turnover": 85.97021058038007,
-            "avg_trade_ret_bps": 22.784694863684166,
-            "friction_eff": 2.8480868579605203,
-            "win_rate": 0.5902061855670103
+            "overall_ic": 0.09411068604455979,
+            "tail_ic": 0.24022851709800214,
+            "mono": 0.7333333333333333,
+            "raw_ann_ret": 0.11055393105444576,
+            "raw_sharpe": 1.5226308845931253,
+            "cost_ann_ret": 0.07165429058192392,
+            "cost_sharpe": 0.9979857050517452,
+            "sortino": 1.6220059575098489,
+            "max_dd": 0.16481373547922532,
+            "annual_turnover": 83.21314843348742,
+            "avg_trade_ret_bps": 22.736237088368878,
+            "friction_eff": 2.8420296360461097,
+            "win_rate": 0.6108247422680413
           },
           "oos": {
-            "overall_ic": 0.05915340450936979,
-            "tail_ic": 0.1699370910956788,
-            "mono": 0.793939393939394,
-            "raw_ann_ret": 0.0657063979034319,
-            "raw_sharpe": 1.0429386140964032,
-            "cost_ann_ret": 0.026940042763244975,
-            "cost_sharpe": 0.4308474194544388,
-            "sortino": 0.7301736288981062,
-            "max_dd": 0.18699869502777347,
+            "overall_ic": 0.056637193335118775,
+            "tail_ic": 0.10831054600467337,
+            "mono": 0.7818181818181819,
+            "raw_ann_ret": 0.05728722161759889,
+            "raw_sharpe": 0.9476861320759143,
+            "cost_ann_ret": 0.018520866477411965,
+            "cost_sharpe": 0.3084434996613287,
+            "sortino": 0.5166676728639987,
+            "max_dd": 0.10554308205940952,
             "annual_turnover": 86.9392523364486,
-            "avg_trade_ret_bps": 13.559468805529823,
-            "friction_eff": 1.694933600691228,
-            "win_rate": 0.5705882352941176
+            "avg_trade_ret_bps": 11.822049591288488,
+            "friction_eff": 1.477756198911061,
+            "win_rate": 0.5588235294117647
           },
           "lockbox": {
-            "overall_ic": 0.05915340450936979,
-            "tail_ic": 0.1699370910956788,
-            "mono": 0.793939393939394,
-            "raw_ann_ret": 0.0657063979034319,
-            "raw_sharpe": 1.0429386140964032,
-            "cost_ann_ret": 0.026940042763244975,
-            "cost_sharpe": 0.4308474194544388,
-            "sortino": 0.7301736288981062,
-            "max_dd": 0.18699869502777347,
+            "overall_ic": 0.056637193335118775,
+            "tail_ic": 0.10831054600467337,
+            "mono": 0.7818181818181819,
+            "raw_ann_ret": 0.05728722161759889,
+            "raw_sharpe": 0.9476861320759143,
+            "cost_ann_ret": 0.018520866477411965,
+            "cost_sharpe": 0.3084434996613287,
+            "sortino": 0.5166676728639987,
+            "max_dd": 0.10554308205940952,
             "annual_turnover": 86.9392523364486,
-            "avg_trade_ret_bps": 13.559468805529823,
-            "friction_eff": 1.694933600691228,
-            "win_rate": 0.5705882352941176
+            "avg_trade_ret_bps": 11.822049591288488,
+            "friction_eff": 1.477756198911061,
+            "win_rate": 0.5588235294117647
           },
           "loo": {
-            "delta_oos_ic": -0.0019466009304488774,
-            "delta_lock_ic": -0.0019466009304488774,
-            "delta_lock_sharpe": -0.13095631155815374
+            "delta_oos_ic": 0.0011314030195290203,
+            "delta_lock_ic": 0.0011314030195290203,
+            "delta_lock_sharpe": 0.1198683829427783
+          },
+          "temporal": {
+            "ic_cv": 0.78733947732634,
+            "neg_years": 1,
+            "n_years": 8,
+            "half_ratio": 0.5127853469822248,
+            "recency_ratio": 1.1066288187505684,
+            "weak_component": "volume_weighted_price_position",
+            "weak_link_cv": 1.176917769014169,
+            "yearly_ics": {
+              "2015": 0.10458968724790589,
+              "2016": 0.08497248862547394,
+              "2017": 0.040969976332973994,
+              "2018": 0.22266147370506423,
+              "2019": 0.06508556063591192,
+              "2020": -0.02712844330396579,
+              "2021": 0.1441992807264105,
+              "2022": 0.06557568604013529
+            }
           }
         },
         {
-          "feature_name": "opening_drive_thrust_ratio",
+          "feature_name": "combo_tri_max__max_up_ret__bar_ret_0__volume_weighted_price_position",
           "sign": 1,
-          "family": "Other Technical",
-          "recipe": null,
+          "family": "Intraday Range Momentum",
+          "recipe": {
+            "op": "tri_max",
+            "feature_a": "max_up_ret",
+            "feature_b": "bar_ret_0",
+            "feature_c": "volume_weighted_price_position"
+          },
           "train": {
-            "overall_ic": 0.08227527713279958,
-            "tail_ic": 0.14774560289915323,
-            "mono": 0.8181818181818182,
-            "raw_ann_ret": 0.07404236458686764,
-            "raw_sharpe": 0.937877693264922,
-            "cost_ann_ret": 0.03514272411434579,
-            "cost_sharpe": 0.4476637460253081,
-            "sortino": 0.6740211262842173,
-            "max_dd": 0.15885084405401498,
-            "annual_turnover": 87.72470467385722,
-            "avg_trade_ret_bps": 15.22736224550356,
-            "friction_eff": 1.9034202806879448,
-            "win_rate": 0.5618556701030928
+            "overall_ic": 0.08108888872540918,
+            "tail_ic": 0.2171983312035401,
+            "mono": 0.7696969696969697,
+            "raw_ann_ret": 0.11444352120699051,
+            "raw_sharpe": 1.2790977405363921,
+            "cost_ann_ret": 0.0755438807344687,
+            "cost_sharpe": 0.8508213529778801,
+            "sortino": 1.3828289396197593,
+            "max_dd": 0.11373042377052212,
+            "annual_turnover": 86.09553158705701,
+            "avg_trade_ret_bps": 23.536160194145104,
+            "friction_eff": 2.942020024268138,
+            "win_rate": 0.5876288659793815
           },
           "oos": {
-            "overall_ic": 0.05638237952366899,
-            "tail_ic": 0.13121637550823836,
-            "mono": 0.806060606060606,
-            "raw_ann_ret": 0.03374939545743056,
-            "raw_sharpe": 0.5962532841079692,
-            "cost_ann_ret": -0.005016959682756365,
-            "cost_sharpe": -0.08889094509881518,
-            "sortino": -0.13328962435380431,
-            "max_dd": 0.11284661609920224,
-            "annual_turnover": 88.36448598130842,
-            "avg_trade_ret_bps": 6.96467755823543,
-            "friction_eff": 0.8705846947794288,
+            "overall_ic": 0.0539035635440429,
+            "tail_ic": 0.08712426833481489,
+            "mono": 0.41818181818181815,
+            "raw_ann_ret": 0.041042396292925706,
+            "raw_sharpe": 0.6955877830777987,
+            "cost_ann_ret": 0.0022760411527387777,
+            "cost_sharpe": 0.03872919980444661,
+            "sortino": 0.06078192632847013,
+            "max_dd": 0.11657552124197185,
+            "annual_turnover": 89.2196261682243,
+            "avg_trade_ret_bps": 8.4696941240946,
+            "friction_eff": 1.0587117655118248,
+            "win_rate": 0.5117647058823529
+          },
+          "lockbox": {
+            "overall_ic": 0.0539035635440429,
+            "tail_ic": 0.08712426833481489,
+            "mono": 0.41818181818181815,
+            "raw_ann_ret": 0.041042396292925706,
+            "raw_sharpe": 0.6955877830777987,
+            "cost_ann_ret": 0.0022760411527387777,
+            "cost_sharpe": 0.03872919980444661,
+            "sortino": 0.06078192632847013,
+            "max_dd": 0.11657552124197185,
+            "annual_turnover": 89.2196261682243,
+            "avg_trade_ret_bps": 8.4696941240946,
+            "friction_eff": 1.0587117655118248,
+            "win_rate": 0.5117647058823529
+          },
+          "loo": {
+            "delta_oos_ic": 0.0016702861652945628,
+            "delta_lock_ic": 0.0016702861652945628,
+            "delta_lock_sharpe": -0.017613762485218953
+          },
+          "temporal": {
+            "ic_cv": 0.7972981062340824,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 0.8672572794209679,
+            "recency_ratio": 1.9450521858850611,
+            "weak_component": "volume_weighted_price_position",
+            "weak_link_cv": 1.176917769014169,
+            "yearly_ics": {
+              "2015": 0.09263621804215236,
+              "2016": 0.02952106183804055,
+              "2017": 0.04016910568568493,
+              "2018": 0.1503711986325095,
+              "2019": 0.044893073304365164,
+              "2020": 0.009861898298586658,
+              "2021": 0.19239852843748637,
+              "2022": 0.04520375581525606
+            }
+          }
+        },
+        {
+          "feature_name": "combo_min__volume_weighted_price_position__double_bottom_bull_flag_early",
+          "sign": 1,
+          "family": "Volatility & Oscillators",
+          "recipe": {
+            "op": "min",
+            "feature_a": "volume_weighted_price_position",
+            "feature_b": "double_bottom_bull_flag_early"
+          },
+          "train": {
+            "overall_ic": 0.035406692677763134,
+            "tail_ic": 0.11073861645269996,
+            "mono": 0.1393939393939394,
+            "raw_ann_ret": 0.03132163357152231,
+            "raw_sharpe": 0.448560102683828,
+            "cost_ann_ret": -0.007578006900999522,
+            "cost_sharpe": -0.10869502332691273,
+            "sortino": -0.15307082098417762,
+            "max_dd": 0.1691491877693776,
+            "annual_turnover": 83.71443246019517,
+            "avg_trade_ret_bps": 6.441526593264528,
+            "friction_eff": 0.8051908241580659,
+            "win_rate": 0.5283505154639175
+          },
+          "oos": {
+            "overall_ic": -0.0017355539059857354,
+            "tail_ic": 0.05338891039740989,
+            "mono": -0.01818181818181818,
+            "raw_ann_ret": 0.0088450611074446,
+            "raw_sharpe": 0.19474874582831797,
+            "cost_ann_ret": -0.029921294032742327,
+            "cost_sharpe": -0.6566537035617885,
+            "sortino": -0.8635445105854515,
+            "max_dd": 0.14471530801167357,
+            "annual_turnover": 85.79906542056075,
+            "avg_trade_ret_bps": 1.8253067280551039,
+            "friction_eff": 0.22816334100688798,
             "win_rate": 0.5352941176470588
           },
           "lockbox": {
-            "overall_ic": 0.05638237952366899,
-            "tail_ic": 0.13121637550823836,
-            "mono": 0.806060606060606,
-            "raw_ann_ret": 0.03374939545743056,
-            "raw_sharpe": 0.5962532841079692,
-            "cost_ann_ret": -0.005016959682756365,
-            "cost_sharpe": -0.08889094509881518,
-            "sortino": -0.13328962435380431,
-            "max_dd": 0.11284661609920224,
-            "annual_turnover": 88.36448598130842,
-            "avg_trade_ret_bps": 6.96467755823543,
-            "friction_eff": 0.8705846947794288,
+            "overall_ic": -0.0017355539059857354,
+            "tail_ic": 0.05338891039740989,
+            "mono": -0.01818181818181818,
+            "raw_ann_ret": 0.0088450611074446,
+            "raw_sharpe": 0.19474874582831797,
+            "cost_ann_ret": -0.029921294032742327,
+            "cost_sharpe": -0.6566537035617885,
+            "sortino": -0.8635445105854515,
+            "max_dd": 0.14471530801167357,
+            "annual_turnover": 85.79906542056075,
+            "avg_trade_ret_bps": 1.8253067280551039,
+            "friction_eff": 0.22816334100688798,
             "win_rate": 0.5352941176470588
           },
           "loo": {
-            "delta_oos_ic": 0.0014198092461046447,
-            "delta_lock_ic": 0.0014198092461046447,
-            "delta_lock_sharpe": 0.07429779720688684
+            "delta_oos_ic": 0.0011474835152958385,
+            "delta_lock_ic": 0.0011474835152958385,
+            "delta_lock_sharpe": 0.043924479052979304
+          },
+          "temporal": {
+            "ic_cv": 1.2703043315792155,
+            "neg_years": 1,
+            "n_years": 8,
+            "half_ratio": 2.111224779531947,
+            "recency_ratio": -4.037529195245609,
+            "weak_component": "volume_weighted_price_position",
+            "weak_link_cv": 1.176917769014169,
+            "yearly_ics": {
+              "2015": -0.0392094639183933,
+              "2016": 0.010975696567319079,
+              "2017": 0.010935691972487857,
+              "2018": 0.10397771591262656,
+              "2019": 0.06579663560682059,
+              "2020": 0.01689979292609924,
+              "2021": 0.09258815010392124,
+              "2022": 0.021406509867813214
+            }
+          }
+        },
+        {
+          "feature_name": "combo_ratio__limit_down_proximity_early__volume_concentration",
+          "sign": 1,
+          "family": "Volatility & Oscillators",
+          "recipe": {
+            "op": "ratio",
+            "feature_a": "limit_down_proximity_early",
+            "feature_b": "volume_concentration"
+          },
+          "train": {
+            "overall_ic": 0.06596441390569102,
+            "tail_ic": 0.18583471060712362,
+            "mono": 0.7090909090909091,
+            "raw_ann_ret": 0.10789572968427256,
+            "raw_sharpe": 1.1731049134022735,
+            "cost_ann_ret": 0.06899608921175075,
+            "cost_sharpe": 0.7552407570536416,
+            "sortino": 1.2270332576191463,
+            "max_dd": 0.08436552875511,
+            "annual_turnover": 75.19260400616332,
+            "avg_trade_ret_bps": 22.189558232136086,
+            "friction_eff": 2.773694779017011,
+            "win_rate": 0.5592783505154639
+          },
+          "oos": {
+            "overall_ic": 0.041666295983171064,
+            "tail_ic": 0.10973260242834418,
+            "mono": 0.5272727272727272,
+            "raw_ann_ret": 0.036505972093625265,
+            "raw_sharpe": 0.5303848752775464,
+            "cost_ann_ret": -0.0022603830465616633,
+            "cost_sharpe": -0.03291682623540713,
+            "sortino": -0.05001484426909548,
+            "max_dd": 0.15299380247114255,
+            "annual_turnover": 82.3785046728972,
+            "avg_trade_ret_bps": 7.533537153361433,
+            "friction_eff": 0.9416921441701791,
+            "win_rate": 0.5058823529411764
+          },
+          "lockbox": {
+            "overall_ic": 0.041666295983171064,
+            "tail_ic": 0.10973260242834418,
+            "mono": 0.5272727272727272,
+            "raw_ann_ret": 0.036505972093625265,
+            "raw_sharpe": 0.5303848752775464,
+            "cost_ann_ret": -0.0022603830465616633,
+            "cost_sharpe": -0.03291682623540713,
+            "sortino": -0.05001484426909548,
+            "max_dd": 0.15299380247114255,
+            "annual_turnover": 82.3785046728972,
+            "avg_trade_ret_bps": 7.533537153361433,
+            "friction_eff": 0.9416921441701791,
+            "win_rate": 0.5058823529411764
+          },
+          "loo": {
+            "delta_oos_ic": 0.0005803136199868802,
+            "delta_lock_ic": 0.0005803136199868802,
+            "delta_lock_sharpe": 0.0044625922472192325
+          },
+          "temporal": {
+            "ic_cv": 0.7876997384010074,
+            "neg_years": 1,
+            "n_years": 8,
+            "half_ratio": 1.447756895752454,
+            "recency_ratio": 1.929018603261106,
+            "weak_component": "limit_down_proximity_early",
+            "weak_link_cv": 1.449763066268587,
+            "yearly_ics": {
+              "2015": 0.10011358520335882,
+              "2016": 0.016861000623686027,
+              "2017": -0.009226422809560982,
+              "2018": 0.11232627650908823,
+              "2019": 0.06759352192607462,
+              "2020": 0.0011235891627797432,
+              "2021": 0.12968783485283925,
+              "2022": 0.09595831731629316
+            }
+          }
+        },
+        {
+          "feature_name": "combo_rel_diff__rbreaker_sell_setup_proximity_early__bar_vol_0",
+          "sign": 1,
+          "family": "Volatility & Oscillators",
+          "recipe": {
+            "op": "rel_diff",
+            "feature_a": "rbreaker_sell_setup_proximity_early",
+            "feature_b": "bar_vol_0"
+          },
+          "train": {
+            "overall_ic": 0.07422401826886163,
+            "tail_ic": 0.19333460159472635,
+            "mono": 0.9151515151515152,
+            "raw_ann_ret": 0.0953944982258158,
+            "raw_sharpe": 1.131781331008321,
+            "cost_ann_ret": 0.056494857753293964,
+            "cost_sharpe": 0.6749049231945873,
+            "sortino": 1.1370433685139996,
+            "max_dd": 0.23001653713934733,
+            "annual_turnover": 79.5788392398562,
+            "avg_trade_ret_bps": 19.618587126675607,
+            "friction_eff": 2.452323390834451,
+            "win_rate": 0.5489690721649485
+          },
+          "oos": {
+            "overall_ic": 0.052924412735417176,
+            "tail_ic": 0.14482342538640314,
+            "mono": 0.40606060606060607,
+            "raw_ann_ret": 0.06921627037059482,
+            "raw_sharpe": 1.283331697301096,
+            "cost_ann_ret": 0.0304499152304079,
+            "cost_sharpe": 0.5708734209975026,
+            "sortino": 0.9693722356905208,
+            "max_dd": 0.11633273525919942,
+            "annual_turnover": 81.80841121495328,
+            "avg_trade_ret_bps": 14.283781927972317,
+            "friction_eff": 1.7854727409965394,
+            "win_rate": 0.5705882352941176
+          },
+          "lockbox": {
+            "overall_ic": 0.052924412735417176,
+            "tail_ic": 0.14482342538640314,
+            "mono": 0.40606060606060607,
+            "raw_ann_ret": 0.06921627037059482,
+            "raw_sharpe": 1.283331697301096,
+            "cost_ann_ret": 0.0304499152304079,
+            "cost_sharpe": 0.5708734209975026,
+            "sortino": 0.9693722356905208,
+            "max_dd": 0.11633273525919942,
+            "annual_turnover": 81.80841121495328,
+            "avg_trade_ret_bps": 14.283781927972317,
+            "friction_eff": 1.7854727409965394,
+            "win_rate": 0.5705882352941176
+          },
+          "loo": {
+            "delta_oos_ic": -0.0011678782904147034,
+            "delta_lock_ic": -0.0011678782904147034,
+            "delta_lock_sharpe": 0.07301964160771895
+          },
+          "temporal": {
+            "ic_cv": 0.7231320442390811,
+            "neg_years": 1,
+            "n_years": 8,
+            "half_ratio": 0.5874647409998613,
+            "recency_ratio": 0.8882927764384986,
+            "weak_component": "bar_vol_0",
+            "weak_link_cv": 1.9141337391921818,
+            "yearly_ics": {
+              "2015": 0.12909061621005416,
+              "2016": 0.08521616296791941,
+              "2017": 0.014135781817280646,
+              "2018": 0.12729798397955377,
+              "2019": 0.03796967481588871,
+              "2020": -0.015752828783118154,
+              "2021": 0.12112647492049546,
+              "2022": 0.06924068896509894
+            }
+          }
+        },
+        {
+          "feature_name": "combo_ratio__bar_ret_0__volume_surge_direction",
+          "sign": 1,
+          "family": "Volatility & Oscillators",
+          "recipe": {
+            "op": "ratio",
+            "feature_a": "bar_ret_0",
+            "feature_b": "volume_surge_direction"
+          },
+          "train": {
+            "overall_ic": 0.0928010903416779,
+            "tail_ic": 0.16570367493423124,
+            "mono": 0.9636363636363636,
+            "raw_ann_ret": 0.09014529550574603,
+            "raw_sharpe": 1.0121248892968768,
+            "cost_ann_ret": 0.051245655033224195,
+            "cost_sharpe": 0.5786842254751049,
+            "sortino": 0.9098606345977953,
+            "max_dd": 0.10053783537833519,
+            "annual_turnover": 84.71700051361067,
+            "avg_trade_ret_bps": 18.539049597524876,
+            "friction_eff": 2.317381199690609,
+            "win_rate": 0.5618556701030928
+          },
+          "oos": {
+            "overall_ic": 0.038345362711362,
+            "tail_ic": 0.04999603080098436,
+            "mono": 0.47878787878787876,
+            "raw_ann_ret": 0.04472854424509039,
+            "raw_sharpe": 0.6971713864029798,
+            "cost_ann_ret": 0.005962189104903467,
+            "cost_sharpe": 0.09330003849370755,
+            "sortino": 0.17018458867985836,
+            "max_dd": 0.10487170808556154,
+            "annual_turnover": 87.50934579439253,
+            "avg_trade_ret_bps": 9.230384251156552,
+            "friction_eff": 1.1537980313945688,
+            "win_rate": 0.5117647058823529
+          },
+          "lockbox": {
+            "overall_ic": 0.038345362711362,
+            "tail_ic": 0.04999603080098436,
+            "mono": 0.47878787878787876,
+            "raw_ann_ret": 0.04472854424509039,
+            "raw_sharpe": 0.6971713864029798,
+            "cost_ann_ret": 0.005962189104903467,
+            "cost_sharpe": 0.09330003849370755,
+            "sortino": 0.17018458867985836,
+            "max_dd": 0.10487170808556154,
+            "annual_turnover": 87.50934579439253,
+            "avg_trade_ret_bps": 9.230384251156552,
+            "friction_eff": 1.1537980313945688,
+            "win_rate": 0.5117647058823529
+          },
+          "loo": {
+            "delta_oos_ic": 0.0,
+            "delta_lock_ic": 0.0,
+            "delta_lock_sharpe": 0.0
+          },
+          "temporal": {
+            "ic_cv": 0.5829108416818818,
+            "neg_years": 1,
+            "n_years": 8,
+            "half_ratio": 0.5375256126711199,
+            "recency_ratio": 0.7901694541438774,
+            "weak_component": "volume_surge_direction",
+            "weak_link_cv": 0.9706221445009364,
+            "yearly_ics": {
+              "2015": 0.11487883556579888,
+              "2016": 0.11313829721323866,
+              "2017": 0.0725301413826004,
+              "2018": 0.15548011996099428,
+              "2019": 0.08152361126600002,
+              "2020": -0.00923375358857547,
+              "2021": 0.14333022851273547,
+              "2022": 0.03684194483072865
+            }
+          }
+        },
+        {
+          "feature_name": "combo_clamp_diff__max_up_ret__early_vwap_acceleration",
+          "sign": 1,
+          "family": "Intraday Range Momentum",
+          "recipe": {
+            "op": "clamp_diff",
+            "feature_a": "max_up_ret",
+            "feature_b": "early_vwap_acceleration"
+          },
+          "train": {
+            "overall_ic": 0.08943492023715414,
+            "tail_ic": 0.1466591802861456,
+            "mono": 0.8787878787878788,
+            "raw_ann_ret": 0.08280503328797001,
+            "raw_sharpe": 0.9603044231630011,
+            "cost_ann_ret": 0.04390539281544817,
+            "cost_sharpe": 0.5119807130549221,
+            "sortino": 0.8332048003192201,
+            "max_dd": 0.08110084985767396,
+            "annual_turnover": 86.97277863379558,
+            "avg_trade_ret_bps": 17.029470150802517,
+            "friction_eff": 2.1286837688503146,
+            "win_rate": 0.5798969072164949
+          },
+          "oos": {
+            "overall_ic": 0.07005274003306078,
+            "tail_ic": 0.1023252557199525,
+            "mono": 0.6606060606060606,
+            "raw_ann_ret": 0.06166017795594068,
+            "raw_sharpe": 1.0462636951376905,
+            "cost_ann_ret": 0.022893822815753747,
+            "cost_sharpe": 0.39153506407668065,
+            "sortino": 0.6994196981603845,
+            "max_dd": 0.065948643946438,
+            "annual_turnover": 88.93457943925233,
+            "avg_trade_ret_bps": 12.724472596500776,
+            "friction_eff": 1.5905590745625968,
+            "win_rate": 0.5294117647058824
+          },
+          "lockbox": {
+            "overall_ic": 0.07005274003306078,
+            "tail_ic": 0.1023252557199525,
+            "mono": 0.6606060606060606,
+            "raw_ann_ret": 0.06166017795594068,
+            "raw_sharpe": 1.0462636951376905,
+            "cost_ann_ret": 0.022893822815753747,
+            "cost_sharpe": 0.39153506407668065,
+            "sortino": 0.6994196981603845,
+            "max_dd": 0.065948643946438,
+            "annual_turnover": 88.93457943925233,
+            "avg_trade_ret_bps": 12.724472596500776,
+            "friction_eff": 1.5905590745625968,
+            "win_rate": 0.5294117647058824
+          },
+          "loo": {
+            "delta_oos_ic": 0.0012298852943174454,
+            "delta_lock_ic": 0.0012298852943174454,
+            "delta_lock_sharpe": 0.13139970067936185
+          },
+          "temporal": {
+            "ic_cv": 0.7347344816943141,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 0.6305806229968223,
+            "recency_ratio": 1.1010481736333435,
+            "weak_component": "early_vwap_acceleration",
+            "weak_link_cv": 1.1743430450173125,
+            "yearly_ics": {
+              "2015": 0.09768608484929764,
+              "2016": 0.06808609718831773,
+              "2017": 0.03469541517673447,
+              "2018": 0.19378700580744754,
+              "2019": 0.043098253200152044,
+              "2020": 0.04281260131532914,
+              "2021": 0.16624592674849797,
+              "2022": 0.016277231523232575
+            }
           }
         }
       ]
@@ -256,6 +1032,25 @@
             "delta_oos_ic": 0.004847010002002813,
             "delta_lock_ic": 0.004847010002002813,
             "delta_lock_sharpe": -0.2169214852924659
+          },
+          "temporal": {
+            "ic_cv": 0.44344327422183416,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 0.6016427872020945,
+            "recency_ratio": 0.3906615830702329,
+            "weak_component": "opening_drive_thrust_ratio",
+            "weak_link_cv": 0.42007841201307894,
+            "yearly_ics": {
+              "2015": 0.2800799227621313,
+              "2016": 0.12118056767418399,
+              "2017": 0.22291162718272559,
+              "2018": 0.18424098578097584,
+              "2019": 0.1720626189159917,
+              "2020": 0.17301291272228397,
+              "2021": 0.142416494472902,
+              "2022": 0.014340563944486993
+            }
           }
         },
         {
@@ -316,6 +1111,25 @@
             "delta_oos_ic": 0.003245373334615123,
             "delta_lock_ic": 0.003245373334615123,
             "delta_lock_sharpe": -0.14710969814626695
+          },
+          "temporal": {
+            "ic_cv": 0.4206579631227742,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 0.5821864844309189,
+            "recency_ratio": 0.5193904715224353,
+            "weak_component": "close_vs_open_range",
+            "weak_link_cv": 0.4665612842876412,
+            "yearly_ics": {
+              "2015": 0.2664328876662991,
+              "2016": 0.17816272835788838,
+              "2017": 0.07886530447030057,
+              "2018": 0.13316473227054448,
+              "2019": 0.07789631942637407,
+              "2020": 0.1272068256668356,
+              "2021": 0.1104479134782165,
+              "2022": 0.12047081316539383
+            }
           }
         },
         {
@@ -377,6 +1191,25 @@
             "delta_oos_ic": -0.0006746618242898517,
             "delta_lock_ic": -0.0006746618242898517,
             "delta_lock_sharpe": -0.2074989074669219
+          },
+          "temporal": {
+            "ic_cv": 0.41059620102047695,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 0.5725828640319783,
+            "recency_ratio": 0.6482423789060958,
+            "weak_component": "opening_drive_thrust_ratio",
+            "weak_link_cv": 0.42007841201307894,
+            "yearly_ics": {
+              "2015": 0.26612724020998807,
+              "2016": 0.0791579102171669,
+              "2017": 0.22248321767071053,
+              "2018": 0.2153853487683592,
+              "2019": 0.11417501954494183,
+              "2020": 0.13109052750276518,
+              "2021": 0.1320648362766896,
+              "2022": 0.09176363103715847
+            }
           }
         },
         {
@@ -405,38 +1238,57 @@
           },
           "oos": {
             "overall_ic": 0.08511004322216807,
-            "tail_ic": 0.10093520844079137,
+            "tail_ic": 0.10021168871368923,
             "mono": 0.9393939393939394,
-            "raw_ann_ret": 0.07531475644118643,
-            "raw_sharpe": 0.9343673427429213,
-            "cost_ann_ret": 0.036548401300999504,
-            "cost_sharpe": 0.4559489557905135,
-            "sortino": 0.7755553798982843,
-            "max_dd": 0.08678522026397716,
+            "raw_ann_ret": 0.07483906821968482,
+            "raw_sharpe": 0.9290715282764557,
+            "cost_ann_ret": 0.03607271307949791,
+            "cost_sharpe": 0.4502900768047292,
+            "sortino": 0.7654612979081722,
+            "max_dd": 0.07921100651510457,
             "annual_turnover": 87.22429906542057,
-            "avg_trade_ret_bps": 15.542293036078974,
-            "friction_eff": 1.9427866295098717,
+            "avg_trade_ret_bps": 15.444127867900242,
+            "friction_eff": 1.93051598348753,
             "win_rate": 0.5470588235294118
           },
           "lockbox": {
             "overall_ic": 0.08511004322216807,
-            "tail_ic": 0.10093520844079137,
+            "tail_ic": 0.10021168871368923,
             "mono": 0.9393939393939394,
-            "raw_ann_ret": 0.07531475644118643,
-            "raw_sharpe": 0.9343673427429213,
-            "cost_ann_ret": 0.036548401300999504,
-            "cost_sharpe": 0.4559489557905135,
-            "sortino": 0.7755553798982843,
-            "max_dd": 0.08678522026397716,
+            "raw_ann_ret": 0.07483906821968482,
+            "raw_sharpe": 0.9290715282764557,
+            "cost_ann_ret": 0.03607271307949791,
+            "cost_sharpe": 0.4502900768047292,
+            "sortino": 0.7654612979081722,
+            "max_dd": 0.07921100651510457,
             "annual_turnover": 87.22429906542057,
-            "avg_trade_ret_bps": 15.542293036078974,
-            "friction_eff": 1.9427866295098717,
+            "avg_trade_ret_bps": 15.444127867900242,
+            "friction_eff": 1.93051598348753,
             "win_rate": 0.5470588235294118
           },
           "loo": {
             "delta_oos_ic": -0.0015925298280676514,
             "delta_lock_ic": -0.0015925298280676514,
             "delta_lock_sharpe": -0.4048348074746161
+          },
+          "temporal": {
+            "ic_cv": 0.4475751561157472,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 0.5429801632956363,
+            "recency_ratio": 0.4973616105312077,
+            "weak_component": "early_late_momentum_divergence",
+            "weak_link_cv": 0.6994124345306065,
+            "yearly_ics": {
+              "2015": 0.312939342196192,
+              "2016": 0.10773213541737875,
+              "2017": 0.1869378145743677,
+              "2018": 0.21511111358641372,
+              "2019": 0.1199565172953337,
+              "2020": 0.1429267080112681,
+              "2021": 0.14985773954721057,
+              "2022": 0.05936810406321789
+            }
           }
         },
         {
@@ -497,6 +1349,25 @@
             "delta_oos_ic": 0.0008113218101364894,
             "delta_lock_ic": 0.0008113218101364894,
             "delta_lock_sharpe": -0.16648541809342632
+          },
+          "temporal": {
+            "ic_cv": 0.5402176894320425,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 0.5640676587410414,
+            "recency_ratio": 0.35090079060079704,
+            "weak_component": "star50_limit_proximity_early",
+            "weak_link_cv": 0.611286564384916,
+            "yearly_ics": {
+              "2015": 0.28823215989492335,
+              "2016": 0.0680966011176784,
+              "2017": 0.19385813827656137,
+              "2018": 0.15097823741638944,
+              "2019": 0.1717499142948011,
+              "2020": 0.117053127733704,
+              "2021": 0.09124027156814042,
+              "2022": 0.033795772384984005
+            }
           }
         },
         {
@@ -557,6 +1428,25 @@
             "delta_oos_ic": 0.005480624087298699,
             "delta_lock_ic": 0.005480624087298699,
             "delta_lock_sharpe": 0.16248629361580175
+          },
+          "temporal": {
+            "ic_cv": 0.6060551735542886,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 0.5828875807806508,
+            "recency_ratio": 0.47049351552313345,
+            "weak_component": "star50_limit_proximity_early",
+            "weak_link_cv": 0.611286564384916,
+            "yearly_ics": {
+              "2015": 0.28192881580222245,
+              "2016": 0.04309374841787233,
+              "2017": 0.23255908087611524,
+              "2018": 0.104841063718094,
+              "2019": 0.11384406213653471,
+              "2020": 0.10059614017477701,
+              "2021": 0.07114034126692577,
+              "2022": 0.08178066759733005
+            }
           }
         },
         {
@@ -570,53 +1460,72 @@
           },
           "train": {
             "overall_ic": 0.14562953969134185,
-            "tail_ic": 0.23491866339946582,
-            "mono": 0.9151515151515152,
-            "raw_ann_ret": 0.15799683381490515,
-            "raw_sharpe": 1.553107718956978,
-            "cost_ann_ret": 0.11909719334238332,
-            "cost_sharpe": 1.1808954397101215,
-            "sortino": 2.1827643216292256,
-            "max_dd": 0.11876113327569593,
-            "annual_turnover": 77.94966615305599,
-            "avg_trade_ret_bps": 32.49322243510439,
-            "friction_eff": 4.061652804388049,
-            "win_rate": 0.5979381443298969
+            "tail_ic": 0.21659388952051933,
+            "mono": 0.9757575757575757,
+            "raw_ann_ret": 0.1580973126158738,
+            "raw_sharpe": 1.4625220921380373,
+            "cost_ann_ret": 0.11919767214335195,
+            "cost_sharpe": 1.1111479521671652,
+            "sortino": 2.0206356908173864,
+            "max_dd": 0.15964194101748097,
+            "annual_turnover": 78.45095017976374,
+            "avg_trade_ret_bps": 32.513886646855056,
+            "friction_eff": 4.064235830856882,
+            "win_rate": 0.5824742268041238
           },
           "oos": {
             "overall_ic": 0.07872723842712952,
-            "tail_ic": 0.11444207776393597,
-            "mono": 0.7333333333333333,
-            "raw_ann_ret": 0.10492919735459663,
-            "raw_sharpe": 1.0500598856038887,
-            "cost_ann_ret": 0.06616284221440973,
-            "cost_sharpe": 0.6657795661376994,
-            "sortino": 1.1893231422692427,
-            "max_dd": 0.2452456379711346,
-            "annual_turnover": 76.67757009345794,
-            "avg_trade_ret_bps": 21.653662713484742,
-            "friction_eff": 2.7067078391855928,
-            "win_rate": 0.5647058823529412
+            "tail_ic": 0.13164725753530732,
+            "mono": 0.7454545454545455,
+            "raw_ann_ret": 0.0789839520865476,
+            "raw_sharpe": 0.8912203290267301,
+            "cost_ann_ret": 0.04021759694636071,
+            "cost_sharpe": 0.4560217312626144,
+            "sortino": 0.6884477961467573,
+            "max_dd": 0.19531619925821664,
+            "annual_turnover": 78.38785046728972,
+            "avg_trade_ret_bps": 16.299484808602887,
+            "friction_eff": 2.037435601075361,
+            "win_rate": 0.5941176470588235
           },
           "lockbox": {
             "overall_ic": 0.07872723842712952,
-            "tail_ic": 0.11444207776393597,
-            "mono": 0.7333333333333333,
-            "raw_ann_ret": 0.10492919735459663,
-            "raw_sharpe": 1.0500598856038887,
-            "cost_ann_ret": 0.06616284221440973,
-            "cost_sharpe": 0.6657795661376994,
-            "sortino": 1.1893231422692427,
-            "max_dd": 0.2452456379711346,
-            "annual_turnover": 76.67757009345794,
-            "avg_trade_ret_bps": 21.653662713484742,
-            "friction_eff": 2.7067078391855928,
-            "win_rate": 0.5647058823529412
+            "tail_ic": 0.13164725753530732,
+            "mono": 0.7454545454545455,
+            "raw_ann_ret": 0.0789839520865476,
+            "raw_sharpe": 0.8912203290267301,
+            "cost_ann_ret": 0.04021759694636071,
+            "cost_sharpe": 0.4560217312626144,
+            "sortino": 0.6884477961467573,
+            "max_dd": 0.19531619925821664,
+            "annual_turnover": 78.38785046728972,
+            "avg_trade_ret_bps": 16.299484808602887,
+            "friction_eff": 2.037435601075361,
+            "win_rate": 0.5941176470588235
           },
           "loo": {
             "delta_oos_ic": -0.000500130014002037,
             "delta_lock_ic": -0.000500130014002037,
             "delta_lock_sharpe": -0.12128383012968647
+          },
+          "temporal": {
+            "ic_cv": 0.3959029515718447,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 0.5002510137352809,
+            "recency_ratio": 0.4704622287799864,
+            "weak_component": "first_bar_sentiment",
+            "weak_link_cv": 0.45016825606393185,
+            "yearly_ics": {
+              "2015": 0.2196331666104942,
+              "2016": 0.12747833300023895,
+              "2017": 0.14134757401575324,
+              "2018": 0.22675341691400164,
+              "2019": 0.14484385051784662,
+              "2020": 0.08728557367648546,
+              "2021": 0.09810118853995994,
+              "2022": 0.06520166120206898
+            }
           }
         },
         {
@@ -645,38 +1554,57 @@
           },
           "oos": {
             "overall_ic": 0.10584977582176373,
-            "tail_ic": 0.2347698287189522,
-            "mono": 0.7818181818181819,
-            "raw_ann_ret": 0.11103193252082541,
-            "raw_sharpe": 1.6684334223323445,
-            "cost_ann_ret": 0.07226557738063849,
-            "cost_sharpe": 1.1006070374321502,
-            "sortino": 2.058539675156292,
-            "max_dd": 0.05810507077589642,
-            "annual_turnover": 89.2196261682243,
-            "avg_trade_ret_bps": 22.91305068414334,
-            "friction_eff": 2.8641313355179174,
-            "win_rate": 0.5941176470588235
+            "tail_ic": 0.23374710582260552,
+            "mono": 0.7696969696969697,
+            "raw_ann_ret": 0.11350844737147762,
+            "raw_sharpe": 1.708266634270415,
+            "cost_ann_ret": 0.0747420922312907,
+            "cost_sharpe": 1.1405419310783538,
+            "sortino": 2.1379171906343157,
+            "max_dd": 0.06240831485621302,
+            "annual_turnover": 88.07943925233644,
+            "avg_trade_ret_bps": 23.424115465280817,
+            "friction_eff": 2.928014433160102,
+            "win_rate": 0.6
           },
           "lockbox": {
             "overall_ic": 0.10584977582176373,
-            "tail_ic": 0.2347698287189522,
-            "mono": 0.7818181818181819,
-            "raw_ann_ret": 0.11103193252082541,
-            "raw_sharpe": 1.6684334223323445,
-            "cost_ann_ret": 0.07226557738063849,
-            "cost_sharpe": 1.1006070374321502,
-            "sortino": 2.058539675156292,
-            "max_dd": 0.05810507077589642,
-            "annual_turnover": 89.2196261682243,
-            "avg_trade_ret_bps": 22.91305068414334,
-            "friction_eff": 2.8641313355179174,
-            "win_rate": 0.5941176470588235
+            "tail_ic": 0.23374710582260552,
+            "mono": 0.7696969696969697,
+            "raw_ann_ret": 0.11350844737147762,
+            "raw_sharpe": 1.708266634270415,
+            "cost_ann_ret": 0.0747420922312907,
+            "cost_sharpe": 1.1405419310783538,
+            "sortino": 2.1379171906343157,
+            "max_dd": 0.06240831485621302,
+            "annual_turnover": 88.07943925233644,
+            "avg_trade_ret_bps": 23.424115465280817,
+            "friction_eff": 2.928014433160102,
+            "win_rate": 0.6
           },
           "loo": {
             "delta_oos_ic": 0.0005252694822090176,
             "delta_lock_ic": 0.0005252694822090176,
             "delta_lock_sharpe": -0.1503743173839701
+          },
+          "temporal": {
+            "ic_cv": 0.4157469195334193,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 0.5641816252286856,
+            "recency_ratio": 0.5908847658862546,
+            "weak_component": "volume_weighted_momentum_acceleration",
+            "weak_link_cv": 0.5714299802580338,
+            "yearly_ics": {
+              "2015": 0.26626708890151995,
+              "2016": 0.12110916824832117,
+              "2017": 0.10542556921367484,
+              "2018": 0.19873361673484669,
+              "2019": 0.0895568629011068,
+              "2020": 0.10730977626068534,
+              "2021": 0.1379857894641734,
+              "2022": 0.09090893955170405
+            }
           }
         },
         {
@@ -737,6 +1665,25 @@
             "delta_oos_ic": -0.0005001204479943566,
             "delta_lock_ic": -0.0005001204479943566,
             "delta_lock_sharpe": -0.32381194361150123
+          },
+          "temporal": {
+            "ic_cv": 0.3717276074813912,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 0.5070417215948,
+            "recency_ratio": 0.5347452944390448,
+            "weak_component": "star50_limit_proximity_early",
+            "weak_link_cv": 0.611286564384916,
+            "yearly_ics": {
+              "2015": 0.23021035979662052,
+              "2016": 0.11150019206225295,
+              "2017": 0.2019090574906344,
+              "2018": 0.19689191969370806,
+              "2019": 0.10991165136364199,
+              "2020": 0.12713155733523343,
+              "2021": 0.06277295224140729,
+              "2022": 0.11995515742529449
+            }
           }
         },
         {
@@ -797,6 +1744,25 @@
             "delta_oos_ic": -0.0005839856374047769,
             "delta_lock_ic": -0.0005839856374047769,
             "delta_lock_sharpe": -0.3109405992490156
+          },
+          "temporal": {
+            "ic_cv": 0.42583545356774,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 0.5229267025884144,
+            "recency_ratio": 0.6615198037964575,
+            "weak_component": "bar_ret_0",
+            "weak_link_cv": 0.4083857581186752,
+            "yearly_ics": {
+              "2015": 0.20638885791110614,
+              "2016": 0.11539926231573382,
+              "2017": 0.1093722249069634,
+              "2018": 0.2808746514658089,
+              "2019": 0.095898954603092,
+              "2020": 0.13026355624467895,
+              "2021": 0.10077844181172547,
+              "2022": 0.11209077234476456
+            }
           }
         },
         {
@@ -857,6 +1823,25 @@
             "delta_oos_ic": 0.003782265516166422,
             "delta_lock_ic": 0.003782265516166422,
             "delta_lock_sharpe": -0.14847350465677667
+          },
+          "temporal": {
+            "ic_cv": 0.38849755738880093,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 0.7248207837294154,
+            "recency_ratio": 0.8268006654340087,
+            "weak_component": "star50_limit_proximity_early",
+            "weak_link_cv": 0.611286564384916,
+            "yearly_ics": {
+              "2015": 0.1746890863206242,
+              "2016": 0.06310050431830291,
+              "2017": 0.22319533763717994,
+              "2018": 0.10118572711717272,
+              "2019": 0.1742380498040139,
+              "2020": 0.10952963983267014,
+              "2021": 0.09015724390786488,
+              "2022": 0.10644734786568057
+            }
           }
         },
         {
@@ -917,6 +1902,25 @@
             "delta_oos_ic": 0.0010575030180157152,
             "delta_lock_ic": 0.0010575030180157152,
             "delta_lock_sharpe": -0.07574206144431184
+          },
+          "temporal": {
+            "ic_cv": 0.5248369177807709,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 0.5340533263927111,
+            "recency_ratio": 0.6727238444424029,
+            "weak_component": "bar_ret_0",
+            "weak_link_cv": 0.4083857581186752,
+            "yearly_ics": {
+              "2015": 0.17999248272472315,
+              "2016": 0.054882718114568234,
+              "2017": 0.10625627300100368,
+              "2018": 0.1926325684398213,
+              "2019": 0.12012605892387312,
+              "2020": 0.06012768854298909,
+              "2021": 0.13774104683195593,
+              "2022": 0.02026510124083367
+            }
           }
         },
         {
@@ -977,6 +1981,25 @@
             "delta_oos_ic": -0.0022721468443404613,
             "delta_lock_ic": -0.0022721468443404613,
             "delta_lock_sharpe": -0.23802969801512774
+          },
+          "temporal": {
+            "ic_cv": 0.8450929850868112,
+            "neg_years": 1,
+            "n_years": 8,
+            "half_ratio": 0.5045733640239112,
+            "recency_ratio": 0.17171590130217465,
+            "weak_component": "close_vs_open_range",
+            "weak_link_cv": 0.4665612842876412,
+            "yearly_ics": {
+              "2015": 0.14422346959427365,
+              "2016": 0.04830716743285049,
+              "2017": 0.10025732211524561,
+              "2018": 0.18517849466682054,
+              "2019": 0.05934186667988385,
+              "2020": 0.09874954211764941,
+              "2021": -0.06902106007918228,
+              "2022": 0.10208163194457674
+            }
           }
         }
       ]
@@ -1052,6 +2075,25 @@
             "delta_oos_ic": 0.00031968776571986157,
             "delta_lock_ic": 0.00031968776571986157,
             "delta_lock_sharpe": 0.19750613325373712
+          },
+          "temporal": {
+            "ic_cv": 0.5648322814103097,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 1.2598176623290265,
+            "recency_ratio": 1.0007843448160296,
+            "weak_component": "star50_limit_proximity_early",
+            "weak_link_cv": 0.6937426203003564,
+            "yearly_ics": {
+              "2015": 0.19100837949898405,
+              "2016": 0.0462634694008637,
+              "2017": 0.007720489531574622,
+              "2018": 0.12545140091091408,
+              "2019": 0.23527961275285864,
+              "2020": 0.12631241340220106,
+              "2021": 0.14160398487273798,
+              "2022": 0.09585396697178415
+            }
           }
         },
         {
@@ -1066,53 +2108,72 @@
           },
           "train": {
             "overall_ic": 0.16034626354916046,
-            "tail_ic": 0.27621899729748395,
+            "tail_ic": 0.28557888349074695,
             "mono": 0.9151515151515152,
-            "raw_ann_ret": 0.19101948284011586,
-            "raw_sharpe": 1.6535747719661185,
-            "cost_ann_ret": 0.15211984236759402,
-            "cost_sharpe": 1.3278180365958412,
-            "sortino": 2.2285539056284125,
-            "max_dd": 0.1503499146475047,
-            "annual_turnover": 82.46122239342577,
-            "avg_trade_ret_bps": 39.28457549113841,
-            "friction_eff": 4.910571936392301,
-            "win_rate": 0.6365979381443299
+            "raw_ann_ret": 0.19823566555136013,
+            "raw_sharpe": 1.7410042387021984,
+            "cost_ann_ret": 0.15933602507883826,
+            "cost_sharpe": 1.4118959936286228,
+            "sortino": 2.390791890544484,
+            "max_dd": 0.13047698230084742,
+            "annual_turnover": 82.96250642013354,
+            "avg_trade_ret_bps": 40.76863706571089,
+            "friction_eff": 5.096079633213861,
+            "win_rate": 0.6391752577319587
           },
           "oos": {
             "overall_ic": 0.12597459804639302,
-            "tail_ic": 0.21632601224211032,
+            "tail_ic": 0.2289722267812969,
             "mono": 0.7333333333333333,
-            "raw_ann_ret": 0.15196358480300626,
-            "raw_sharpe": 1.4140892878061844,
-            "cost_ann_ret": 0.11319722966281938,
-            "cost_sharpe": 1.0611905896818805,
-            "sortino": 1.8836373714675467,
-            "max_dd": 0.11270218240716584,
+            "raw_ann_ret": 0.18114810169460327,
+            "raw_sharpe": 1.671298571868472,
+            "cost_ann_ret": 0.14238174655441635,
+            "cost_sharpe": 1.3253872798835813,
+            "sortino": 2.4067949879370865,
+            "max_dd": 0.09199861216757271,
             "annual_turnover": 81.23831775700934,
-            "avg_trade_ret_bps": 31.359891174390874,
-            "friction_eff": 3.9199863967988593,
-            "win_rate": 0.5647058823529412
+            "avg_trade_ret_bps": 37.382539790400294,
+            "friction_eff": 4.672817473800036,
+            "win_rate": 0.6
           },
           "lockbox": {
             "overall_ic": 0.12597459804639302,
-            "tail_ic": 0.21632601224211032,
+            "tail_ic": 0.2289722267812969,
             "mono": 0.7333333333333333,
-            "raw_ann_ret": 0.15196358480300626,
-            "raw_sharpe": 1.4140892878061844,
-            "cost_ann_ret": 0.11319722966281938,
-            "cost_sharpe": 1.0611905896818805,
-            "sortino": 1.8836373714675467,
-            "max_dd": 0.11270218240716584,
+            "raw_ann_ret": 0.18114810169460327,
+            "raw_sharpe": 1.671298571868472,
+            "cost_ann_ret": 0.14238174655441635,
+            "cost_sharpe": 1.3253872798835813,
+            "sortino": 2.4067949879370865,
+            "max_dd": 0.09199861216757271,
             "annual_turnover": 81.23831775700934,
-            "avg_trade_ret_bps": 31.359891174390874,
-            "friction_eff": 3.9199863967988593,
-            "win_rate": 0.5647058823529412
+            "avg_trade_ret_bps": 37.382539790400294,
+            "friction_eff": 4.672817473800036,
+            "win_rate": 0.6
           },
           "loo": {
             "delta_oos_ic": -0.002726888141725975,
             "delta_lock_ic": -0.002726888141725975,
             "delta_lock_sharpe": 0.20544922941819777
+          },
+          "temporal": {
+            "ic_cv": 0.445194901098907,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 1.0378702349938085,
+            "recency_ratio": 0.7425214515054955,
+            "weak_component": "first_bar_sentiment",
+            "weak_link_cv": 0.7544925376053516,
+            "yearly_ics": {
+              "2015": 0.2522501212283741,
+              "2016": 0.13185788287506867,
+              "2017": 0.0355188224626917,
+              "2018": 0.0776421331711739,
+              "2019": 0.20556915047932448,
+              "2020": 0.15032583055132775,
+              "2021": 0.15393916155454912,
+              "2022": 0.13126927118721804
+            }
           }
         },
         {
@@ -1173,6 +2234,25 @@
             "delta_oos_ic": 0.0020988675095324483,
             "delta_lock_ic": 0.0020988675095324483,
             "delta_lock_sharpe": -0.06273669339465249
+          },
+          "temporal": {
+            "ic_cv": 0.8161839496768641,
+            "neg_years": 1,
+            "n_years": 8,
+            "half_ratio": 1.215300663059593,
+            "recency_ratio": 0.9592287616946996,
+            "weak_component": "yesterday_first_30min_return",
+            "weak_link_cv": 0.9177535389524045,
+            "yearly_ics": {
+              "2015": 0.17128400844247837,
+              "2016": 0.05073004307976985,
+              "2017": -0.05003696682072951,
+              "2018": 0.07955611755909818,
+              "2019": 0.1323759133282943,
+              "2020": 0.10042551696799089,
+              "2021": 0.0349420684741102,
+              "2022": 0.1780201952463992
+            }
           }
         },
         {
@@ -1233,6 +2313,25 @@
             "delta_oos_ic": 0.008176388401620133,
             "delta_lock_ic": 0.008176388401620133,
             "delta_lock_sharpe": 0.12162226070989446
+          },
+          "temporal": {
+            "ic_cv": 0.6579484697095321,
+            "neg_years": 1,
+            "n_years": 8,
+            "half_ratio": 0.7672998285379872,
+            "recency_ratio": 0.6831146395399872,
+            "weak_component": "yesterday_first_30min_return",
+            "weak_link_cv": 0.9177535389524045,
+            "yearly_ics": {
+              "2015": 0.18440003973418145,
+              "2016": 0.10191277482456249,
+              "2017": -0.03518663081504612,
+              "2018": 0.09609006106770637,
+              "2019": 0.08932340392137425,
+              "2020": 0.07781407383990593,
+              "2021": 0.06422646735612458,
+              "2022": 0.13135800775685097
+            }
           }
         },
         {
@@ -1293,6 +2392,25 @@
             "delta_oos_ic": 0.0021305024310212806,
             "delta_lock_ic": 0.0021305024310212806,
             "delta_lock_sharpe": 0.19390557541743103
+          },
+          "temporal": {
+            "ic_cv": 0.3783080499403028,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 1.1780118924769676,
+            "recency_ratio": 1.3430019075520794,
+            "weak_component": "rbreaker_sell_setup_proximity_early",
+            "weak_link_cv": 0.43653383655314576,
+            "yearly_ics": {
+              "2015": 0.13227603294349266,
+              "2016": 0.10133186264493808,
+              "2017": 0.04049286188813491,
+              "2018": 0.08789854142232331,
+              "2019": 0.14393619353926224,
+              "2020": 0.062334486879270935,
+              "2021": 0.14663299572998356,
+              "2022": 0.16710285366450592
+            }
           }
         },
         {
@@ -1353,6 +2471,25 @@
             "delta_oos_ic": 0.004129175151417308,
             "delta_lock_ic": 0.004129175151417308,
             "delta_lock_sharpe": 0.29010893304031815
+          },
+          "temporal": {
+            "ic_cv": 0.48516280924794325,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 1.0389306583877855,
+            "recency_ratio": 0.6844675766910803,
+            "weak_component": "late_bar_momentum",
+            "weak_link_cv": 0.8215389186253796,
+            "yearly_ics": {
+              "2015": 0.19382096493728032,
+              "2016": 0.08850559045719077,
+              "2017": 0.025932947556679017,
+              "2018": 0.08109660941255577,
+              "2019": 0.19475525486454448,
+              "2020": 0.10585821788007581,
+              "2021": 0.09523618366141963,
+              "2022": 0.09800718954497403
+            }
           }
         },
         {
@@ -1367,53 +2504,72 @@
           },
           "train": {
             "overall_ic": 0.13739353164011664,
-            "tail_ic": 0.18546539040574267,
-            "mono": 0.8424242424242424,
-            "raw_ann_ret": 0.15408877325571968,
-            "raw_sharpe": 1.3626628719369889,
-            "cost_ann_ret": 0.1151891327831979,
-            "cost_sharpe": 1.0256003147473247,
-            "sortino": 1.8228149578420851,
-            "max_dd": 0.1724277511998718,
-            "annual_turnover": 84.96764252696455,
-            "avg_trade_ret_bps": 31.689500753008947,
-            "friction_eff": 3.9611875941261183,
-            "win_rate": 0.5798969072164949
+            "tail_ic": 0.20129616261983613,
+            "mono": 0.9393939393939394,
+            "raw_ann_ret": 0.16438932774458154,
+            "raw_sharpe": 1.4399602966538259,
+            "cost_ann_ret": 0.12548968727205972,
+            "cost_sharpe": 1.107136086294888,
+            "sortino": 1.9715184070431813,
+            "max_dd": 0.1520349741912494,
+            "annual_turnover": 83.71443246019517,
+            "avg_trade_ret_bps": 33.807886293592645,
+            "friction_eff": 4.225985786699081,
+            "win_rate": 0.5850515463917526
           },
           "oos": {
             "overall_ic": 0.09579595033971461,
-            "tail_ic": 0.20827658195199886,
-            "mono": 0.696969696969697,
-            "raw_ann_ret": 0.13185730756011296,
-            "raw_sharpe": 1.2547751031109038,
-            "cost_ann_ret": 0.09309095241992607,
-            "cost_sharpe": 0.8917103523582834,
-            "sortino": 1.7183035588301738,
-            "max_dd": 0.1769349154152432,
-            "annual_turnover": 84.08878504672897,
-            "avg_trade_ret_bps": 27.210669062549837,
-            "friction_eff": 3.4013336328187296,
-            "win_rate": 0.5823529411764706
+            "tail_ic": 0.187437245733599,
+            "mono": 0.6606060606060606,
+            "raw_ann_ret": 0.1434894617478417,
+            "raw_sharpe": 1.20161530988601,
+            "cost_ann_ret": 0.1047231066076548,
+            "cost_sharpe": 0.8819112827761495,
+            "sortino": 1.7085217468102787,
+            "max_dd": 0.22942665296398207,
+            "annual_turnover": 83.51869158878505,
+            "avg_trade_ret_bps": 29.61113289685451,
+            "friction_eff": 3.7013916121068138,
+            "win_rate": 0.5647058823529412
           },
           "lockbox": {
             "overall_ic": 0.09579595033971461,
-            "tail_ic": 0.20827658195199886,
-            "mono": 0.696969696969697,
-            "raw_ann_ret": 0.13185730756011296,
-            "raw_sharpe": 1.2547751031109038,
-            "cost_ann_ret": 0.09309095241992607,
-            "cost_sharpe": 0.8917103523582834,
-            "sortino": 1.7183035588301738,
-            "max_dd": 0.1769349154152432,
-            "annual_turnover": 84.08878504672897,
-            "avg_trade_ret_bps": 27.210669062549837,
-            "friction_eff": 3.4013336328187296,
-            "win_rate": 0.5823529411764706
+            "tail_ic": 0.187437245733599,
+            "mono": 0.6606060606060606,
+            "raw_ann_ret": 0.1434894617478417,
+            "raw_sharpe": 1.20161530988601,
+            "cost_ann_ret": 0.1047231066076548,
+            "cost_sharpe": 0.8819112827761495,
+            "sortino": 1.7085217468102787,
+            "max_dd": 0.22942665296398207,
+            "annual_turnover": 83.51869158878505,
+            "avg_trade_ret_bps": 29.61113289685451,
+            "friction_eff": 3.7013916121068138,
+            "win_rate": 0.5647058823529412
           },
           "loo": {
             "delta_oos_ic": -0.0010401833861301002,
             "delta_lock_ic": -0.0010401833861301002,
             "delta_lock_sharpe": 0.1812440531901942
+          },
+          "temporal": {
+            "ic_cv": 0.5327814902340872,
+            "neg_years": 1,
+            "n_years": 8,
+            "half_ratio": 0.8294371552033468,
+            "recency_ratio": 0.5227674078658302,
+            "weak_component": "first_bar_sentiment",
+            "weak_link_cv": 0.7544925376053516,
+            "yearly_ics": {
+              "2015": 0.20939411950232764,
+              "2016": 0.16634118567812295,
+              "2017": -0.008627781287203203,
+              "2018": 0.13036892117308085,
+              "2019": 0.18681768131545218,
+              "2020": 0.12745043690057986,
+              "2021": 0.1434486248484351,
+              "2022": 0.05297354668442572
+            }
           }
         },
         {
@@ -1474,6 +2630,25 @@
             "delta_oos_ic": 8.203842960033403e-05,
             "delta_lock_ic": 8.203842960033403e-05,
             "delta_lock_sharpe": -0.06982862113896404
+          },
+          "temporal": {
+            "ic_cv": 0.662047674267113,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 1.0311624552449075,
+            "recency_ratio": 1.1519853564206173,
+            "weak_component": "star50_limit_proximity_early",
+            "weak_link_cv": 0.6937426203003564,
+            "yearly_ics": {
+              "2015": 0.18689433271790806,
+              "2016": 0.009226422809560982,
+              "2017": 0.0105985320661355,
+              "2018": 0.08959273142084866,
+              "2019": 0.13037020515552913,
+              "2020": 0.05508136506646193,
+              "2021": 0.08710804016318174,
+              "2022": 0.13882019829461045
+            }
           }
         },
         {
@@ -1530,6 +2705,25 @@
             "delta_oos_ic": -0.00010012782679882926,
             "delta_lock_ic": -0.00010012782679882926,
             "delta_lock_sharpe": 0.06833856304603181
+          },
+          "temporal": {
+            "ic_cv": 0.686576295061795,
+            "neg_years": 0,
+            "n_years": 8,
+            "half_ratio": 1.4428857444645031,
+            "recency_ratio": 1.5837319306800421,
+            "weak_component": null,
+            "weak_link_cv": null,
+            "yearly_ics": {
+              "2015": 0.12736621161069073,
+              "2016": 0.01631269324959288,
+              "2017": 0.028462362892054307,
+              "2018": 0.00859226721399207,
+              "2019": 0.10069172668388642,
+              "2020": 0.04666913256371665,
+              "2021": 0.13833186499327993,
+              "2022": 0.08921700439909114
+            }
           }
         },
         {
@@ -1590,6 +2784,25 @@
             "delta_oos_ic": 0.0006492094290177497,
             "delta_lock_ic": 0.0006492094290177497,
             "delta_lock_sharpe": 0.4339817916883342
+          },
+          "temporal": {
+            "ic_cv": 0.841120293974907,
+            "neg_years": 2,
+            "n_years": 8,
+            "half_ratio": 0.5299391281029424,
+            "recency_ratio": 0.9797699821498435,
+            "weak_component": "volatility_expansion_trend_vector",
+            "weak_link_cv": 0.686576295061795,
+            "yearly_ics": {
+              "2015": 0.026250463641265806,
+              "2016": 0.052527361962851356,
+              "2017": 0.09674101044314805,
+              "2018": 0.12764589093451487,
+              "2019": -0.015217942170250536,
+              "2020": 0.09371644915952915,
+              "2021": 0.08242885888191402,
+              "2022": -0.005244710095964664
+            }
           }
         }
       ]
