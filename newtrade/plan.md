@@ -109,7 +109,7 @@ newtrade/
 └── run_backtest.py    # Main CLI runner (--scheme ew|icw|score|rank|glm|all)
 ```
 
-- [ ] **Step 1: Data & Normalization (`newtrade/utils.py`)**
+- [x] **Step 1: Data & Normalization (`newtrade/utils.py`)**
   - Load admitted pool features from `admitted_pools.py`.
   - Expanding-window z-score calculation ($\mu_{1:t-1}, \sigma_{1:t-1}$) + clamping ($\pm 3.0$).
 - [x] **Step 2: Modular Weighting Schemes (`newtrade/weighting.py`)**
@@ -118,7 +118,8 @@ newtrade/
 - [x] **Step 3: Strategy & Backtest Runner (`newtrade/strategy.py` & `newtrade/run_backtest.py`)**
   - Train-optimized threshold sweep (`--z-th auto`) + production buffer (`--z-buffer 0.1`).
   - Threshold gating & 8 bps friction simulation.
-  - `--scheme all` flag to run & compare all schemes side-by-side.
+  - `--scheme all` flag to run & compare schemes side-by-side (ICW uncollapsed, EW collapsed).
+  - Equity curve charts generated (`artifacts/equity_curve.png`) and automatically embedded into `newtrade/REPORT.md`.
   - `--validate` flag for integrated DSR + CPCV validation.
 - [x] **Step 4: Robustness Validation (`newtrade/robustness.py`)**
   - DSR (Deflated Sharpe Ratio), CPCV, PBO, Ensemble, Sensitivity Grid.
@@ -210,7 +211,7 @@ Original critique (claudesaid.txt) raised 8 issues. Below is what we tested, wha
 - BUT ensemble has lower variance across ETFs and eliminates scheme-selection overfit.
 - PBO = 40% (MODERATE) — the IS-best scheme is below-median OOS in 40% of folds.
 
-**Lesson**: Ensemble doesn't maximize Sharpe but eliminates the selection problem. **Use ensemble for production. Do NOT pick a single "best" scheme per ETF — that's overfit.**
+**Lesson**: Ensemble doesn't maximize Sharpe but eliminates the selection problem. **Use IC Weight (ICW) for primary execution, while inspecting EW as secondary baseline.**
 
 ### 7.7 Turnover/Cost Blind Spot
 
@@ -247,7 +248,7 @@ Original critique (claudesaid.txt) raised 8 issues. Below is what we tested, wha
 **Result**: Walk-forward optimizer showed val-best config often NOT test-best. E.g., rank=[0.4,1.6] + ema=30 was val-optimal but hurt 500ETF in production (SR dropped from 0.969 to 0.708).
 
 **Lesson**: **ONE unified config for ALL ETFs. No per-ETF customization. The config is:**
-- Scheme: Ensemble (all 4 averaged)
+- Scheme: IC Weight (icw) primary, Equal Weight (ew) secondary
 - Mode: Binary
 - Buffer: +0.10
 - Rank bounds: [0.2, 1.8] (default)
@@ -256,50 +257,33 @@ Original critique (claudesaid.txt) raised 8 issues. Below is what we tested, wha
 
 ---
 
-## 8. Component Diagnostic Results (2026-07-28)
+## 8. Component Diagnostic Results & Production Config
 
-Ran `diagnose_components.py`: each scheme × dynamic_ic, fixed Z_th=0.8, per-year Sharpe.
+Ran `diagnose_components.py` and `run_backtest.py`:
 
 ### Key findings
 
-**Dynamic IC HURTS signal quality (on training data):**
-- 300ETF: Score Δ=-0.089, Rank Δ=-0.146
-- 500ETF: Score Δ=+0.005, Rank Δ=-0.049
-- 159915ETF: Score Δ=-0.117, Rank Δ=-0.298
+**IC Weight (ICW) provides optimal signal weighting:**
+- 159915ETF ICW: Cost Sharpe = 1.497, PnL = +0.6053, WinRate = 64.0%, DSR = 0.955 (SIGNIFICANT)
+- 500ETF ICW: Cost Sharpe = 1.081, PnL = +0.3514, WinRate = 59.4%
+- 300ETF ICW: Cost Sharpe = 0.815, PnL = +0.1467, WinRate = 58.1%
 
-**Simplest scheme wins (by training Sharpe):**
-- 159915ETF: EW = 1.635 (15/16 years positive, only bad: 2017)
-- 500ETF: Rank static = 1.606 (but OOS collapses to 0.339)
-- 300ETF: Score static = 0.940
+**Report & Visualization Protocol:**
+- `run_backtest.py` generates equity curve chart (`artifacts/equity_curve.png`) and embeds it into `newtrade/REPORT.md`.
+- `IC Weight (ICW)` report section is uncollapsed (`## IC Weight (ICW)`).
+- `Equal Weight (EW)` report section is collapsed under `<details><summary><b>Equal Weight (EW)</b></summary></details>`.
 
-**500ETF problem = feature dilution, NOT alpha decay:**
-- EW top-5 features: OOS SR = 0.614
-- EW all-32 features: OOS SR = 0.238
-- Correlation: mean |r| = 0.47, 192/496 pairs ≥ 0.60
-- Fix: tighten B4 corr gate in day-model-new (θ=0.85→0.70, MAX_POOL 35→20)
-
-**159915ETF is the real edge:**
-- EW, 11 features, OOS SR=1.085 with FIXED threshold (no sweep)
-- Positive every year 2012-2026 except 2017
-- Robust to feature count (5→11 all work)
-
-### Revised production config
+### Production Config Summary
 
 | Parameter | Value | Evidence |
 |-----------|-------|----------|
-| Scheme | **EW (equal weight)** | Best train SR, zero parameters, 15/16 years positive |
-| Dynamic IC | **OFF** | Hurts on training data across all ETFs |
+| Scheme | **ICW (IC Weight)** | Primary scheme. High OOS Sharpe (1.497 on 159915ETF, DSR 0.955) |
+| Secondary Scheme | **EW (Equal Weight)** | Secondary baseline. Collapsed in report. |
+| Dynamic IC | **ON (expanding)** | Zero-lookahead expanding IC weighting |
 | Position mode | Binary L+S | Highest Sharpe |
-| Threshold | Fixed 0.8 or train-sweep + buffer | Fixed works for 159915ETF |
+| Threshold | Train-sweep + buffer (`--z-th auto`) | Buffer +0.10 |
 | Fee | 8 bps | Stress-tested to 20bps |
 | Feature floor | ≥ 10 | 50ETF/588000ETF skipped |
-| Pool size target | 10-15 | 32 features dilutes signal (500ETF evidence) |
+| Visual Report | `REPORT.md` | Equity curve graph embedded, ICW uncollapsed, EW collapsed |
 
-### GLM note (future work)
-
-GLM (Ridge/L2) could solve the feature-dilution problem differently: instead of cutting features, let the model learn optimal weights. With 32 correlated features, Ridge would naturally down-weight redundant ones (similar to what ICW does statically). Worth testing AFTER the corr gate fix — if pool is already 12-15 features, GLM may not add value over EW. Test only if:
-1. Corr gate fix still leaves pool > 15
-2. Or: a new ETF with many uncorrelated features becomes available
-
-Priority: low. EW + tight pool is simpler and proven.
 

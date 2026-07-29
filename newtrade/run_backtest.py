@@ -240,7 +240,7 @@ def main():
     parser = argparse.ArgumentParser(description="NewTrade Day-Model Factor Monetization Backtest Runner")
     parser.add_argument("-e", "--etf", type=str, default="all", help="Target ETF (300ETF, 500ETF, 50ETF, 588000ETF, 159915ETF, or all)")
     parser.add_argument("-s", "--side", type=str, default="single", choices=["single", "long", "short"], help="Trading side")
-    parser.add_argument("--scheme", type=str, default="icw", choices=["ew", "icw", "score", "rank", "ensemble", "all"], help="Factor weighting scheme (default: icw)")
+    parser.add_argument("--scheme", type=str, default="all", choices=["ew", "icw", "score", "rank", "ensemble", "all"], help="Factor weighting scheme (default: all)")
     parser.add_argument("--z-th", type=str, default="auto", help="Conviction threshold Z score. 'auto' = train-sweep + buffer, or float value for fixed.")
     parser.add_argument("--z-buffer", type=float, default=0.1, help="Production buffer added to train-optimal threshold (default 0.1, walk-forward validated)")
     parser.add_argument("--z-short-buffer", type=float, default=None, help="Production buffer for short threshold (default: z_buffer + 0.1)")
@@ -494,32 +494,40 @@ def main():
             lines.append("| " + " | ".join(row) + " |")
         return "\n".join(lines)
     
-    # Group results by scheme (ensure 'ensemble' is first, then 'rank')
+    # Group results by scheme (icw first, other schemes next, ew last)
     from collections import OrderedDict
     scheme_groups = OrderedDict()
-    if "ensemble" in [r.get("scheme") for r in results]:
-        scheme_groups["ensemble"] = [r for r in results if r.get("scheme") == "ensemble"]
-    if "rank" in [r.get("scheme") for r in results]:
-        scheme_groups["rank"] = [r for r in results if r.get("scheme") == "rank"]
+    if "icw" in [r.get("scheme") for r in results]:
+        scheme_groups["icw"] = [r for r in results if r.get("scheme") == "icw"]
     for r in results:
         s = r.get("scheme", "?")
-        if s not in ("rank", "ensemble"):
+        if s not in ("icw", "ew"):
             scheme_groups.setdefault(s, []).append(r)
+    if "ew" in [r.get("scheme") for r in results]:
+        scheme_groups["ew"] = [r for r in results if r.get("scheme") == "ew"]
     
     # Build report sections
     report_sections = []
+    chart_img_included = False
     for scheme_key, scheme_results in scheme_groups.items():
         rows = [_format_row(r) for r in scheme_results]
         title = SCHEME_TITLES.get(scheme_key, scheme_key.upper())
         table_md = _render_table(rows)
         
-        if scheme_key in ("ensemble", "rank") and scheme_key not in [sg for sg in scheme_groups if scheme_groups[scheme_key] != scheme_results]:
-            # Uncollapsed main section with chart for primary scheme
-            img_md = f"![Cumulative Equity]({chart_rel_path})\n\n" if chart_rel_path and scheme_key == list(scheme_groups.keys())[0] else ""
-            section = f"## {title}\n\n{img_md}{table_md}"
+        if scheme_key == "ew":
+            # Collapsed details block ONLY for Equal Weight (EW)
+            prefix = ""
+            if chart_rel_path and not chart_img_included:
+                prefix = f"![Cumulative Equity]({chart_rel_path})\n\n"
+                chart_img_included = True
+            section = f"{prefix}<details>\n<summary><b>{title}</b> (click to expand)</summary>\n\n{table_md}\n\n</details>"
         else:
-            # Collapsed details block for secondary schemes
-            section = f"<details>\n<summary><b>{title}</b> (click to expand)</summary>\n\n{table_md}\n\n</details>"
+            # Uncollapsed main section for IC Weight (ICW) and other schemes
+            img_md = ""
+            if chart_rel_path and not chart_img_included:
+                img_md = f"![Cumulative Equity]({chart_rel_path})\n\n"
+                chart_img_included = True
+            section = f"## {title}\n\n{img_md}{table_md}"
         report_sections.append(section)
     
     report_content = "\n\n".join(report_sections)
