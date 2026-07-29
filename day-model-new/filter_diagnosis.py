@@ -628,10 +628,8 @@ def main():
         df = df.sort_values("date").reset_index(drop=True)
 
         train_df = df[(df["date"] >= train_start) & (df["date"] < train_end)].reset_index(drop=True)
-        if multi_period:
-            lockbox_df = df[df["date"] >= oos_start].reset_index(drop=True)  # OOS as ground truth
-        else:
-            lockbox_df = df[df["date"] >= lockbox_start].reset_index(drop=True)
+        # Full OOS (train_end onwards, e.g. 2022-2026) as ground truth for Lock IC/Sharpe
+        lockbox_df = df[df["date"] >= train_end].reset_index(drop=True)
 
         # Fill NaNs
         col_med_train = train_df[FEATURES].median().fillna(0.0)

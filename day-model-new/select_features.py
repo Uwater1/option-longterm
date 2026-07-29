@@ -1623,9 +1623,8 @@ def main():
             high_corr_members = [item for item in corrs if item[1] >= args.theta]
             
             replaced = False
-            # P3: Relax replacement multiplier for small pools (< 10 features)
-            replacement_mult = 1.15 if len(admitted_pool) < 10 else 1.30
-            if cand_ic >= 0.10 and len(high_corr_members) == 1:
+            # Fine-tuned B4 replacement: replace if candidate has higher quality q_score than old correlated feature
+            if len(high_corr_members) == 1:
                 old_feature_name, _ = high_corr_members[0]
                 old_idx = -1
                 for idx, p in enumerate(admitted_pool):
@@ -1634,8 +1633,11 @@ def main():
                         break
                 
                 if old_idx != -1:
-                    old_ic = admitted_pool[old_idx]["overall_ic"]
-                    if cand_ic >= replacement_mult * old_ic:
+                    old_item = admitted_pool[old_idx]
+                    cand_q = 0.40 * deflated_ic + 0.25 * max(0.0, cand.get("sortino", 0.0)) + 0.20 * cand.get("ic_ir", 0.0) + 0.15 * max(0.0, cand.get("recent_ic", cand_ic))
+                    old_q = 0.40 * old_item.get("deflated_ic", old_item.get("overall_ic", 0.0)) + 0.25 * max(0.0, old_item.get("sortino", 0.0)) + 0.20 * old_item.get("ic_ir", 0.0) + 0.15 * max(0.0, old_item.get("recent_ic", old_item.get("overall_ic", 0.0)))
+                    
+                    if cand_q > old_q or cand_ic > old_item.get("overall_ic", 0.0):
                         admitted_pool[old_idx] = cand
                         replaced = True
                         attempts_log.append({
