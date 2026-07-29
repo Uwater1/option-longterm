@@ -189,27 +189,25 @@ def compute_production_threshold(train_sweep_result: dict, z_buffer: float = 0.1
 
 def simulate_etf_spot(trade_returns: np.ndarray, positions: np.ndarray, fee_bps: float = 0.0008) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Simulate ETF spot backtest with per-entry state transition fee.
+    Simulate ETF spot backtest with intraday round-trip fee.
+    
+    Each active day is a complete round trip (enter 10:00, exit 14:35).
+    Fee = |position| * fee_bps * 2 (entry + exit) charged on active days only.
     
     Args:
-      - trade_returns: Intraday trade return (10:00 -> 14:35/Close) array shape (T,)
+      - trade_returns: Intraday trade return (10:00 -> 14:35) array shape (T,)
       - positions: S_t array shape (T,)
-      - fee_bps: Friction per unit position change (default 8 bps = 0.0008)
+      - fee_bps: One-way friction (default 8 bps = 0.0008); round trip = 2x
       
     Returns:
       - net_returns: Daily net returns after fee shape (T,)
       - raw_returns: Daily gross returns before fee shape (T,)
       - fees: Daily transaction fees shape (T,)
     """
-    T = len(trade_returns)
     raw_returns = positions * trade_returns
     
-    # Calculate state transition fee: fee_t = |S_t - S_{t-1}| * fee_bps
-    pos_prev = np.roll(positions, 1)
-    pos_prev[0] = 0.0
-    
-    turnover = np.abs(positions - pos_prev)
-    fees = turnover * fee_bps
+    # Intraday round-trip fee: charged on active days (entry + exit same day)
+    fees = np.abs(positions) * fee_bps * 2.0
     
     net_returns = raw_returns - fees
     
@@ -219,6 +217,8 @@ def simulate_etf_spot(trade_returns: np.ndarray, positions: np.ndarray, fee_bps:
 def calculate_metrics(net_returns: np.ndarray, raw_returns: np.ndarray, positions: np.ndarray, dates: pd.Series = None) -> dict:
     """
     Calculate comprehensive performance metrics.
+    With the intraday round-trip fee model, all fees are on active days,
+    so long_pnl + short_pnl == total_pnl naturally.
     """
     T = len(net_returns)
     if T == 0:
@@ -269,15 +269,14 @@ def calculate_metrics(net_returns: np.ndarray, raw_returns: np.ndarray, position
     win_rate_long = float((net_returns[long_mask] > 0).sum() / n_long * 100.0) if n_long > 0 else 0.0
     win_rate_short = float((net_returns[short_mask] > 0).sum() / n_short * 100.0) if n_short > 0 else 0.0
 
-    # Long-side PnL & Sharpe
+    # Long-side PnL & Sharpe (fees already on active days, so L+S == Total)
     long_net = net_returns[long_mask]
+    short_net = net_returns[short_mask]
     long_pnl = float(long_net.sum()) if n_long > 0 else 0.0
+    short_pnl = float(short_net.sum()) if n_short > 0 else 0.0
+
     long_std = float(np.std(long_net)) if n_long > 1 else 0.0
     long_sharpe = float((np.mean(long_net) / long_std) * np.sqrt(252)) if long_std > 1e-12 else 0.0
-
-    # Short-side PnL & Sharpe
-    short_net = net_returns[short_mask]
-    short_pnl = float(short_net.sum()) if n_short > 0 else 0.0
     short_std = float(np.std(short_net)) if n_short > 1 else 0.0
     short_sharpe = float((np.mean(short_net) / short_std) * np.sqrt(252)) if short_std > 1e-12 else 0.0
 

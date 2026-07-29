@@ -135,8 +135,7 @@ def fast_eval_signal(Z_comp: np.ndarray, trade_ret: np.ndarray, z_th_long: float
     for t in range(T):
         p = pos[t]
         raw_r = p * trade_ret[t]
-        turnover = np.abs(p - pos_prev)
-        fee = turnover * fee_bps
+        fee = np.abs(p) * fee_bps * 2.0  # intraday round-trip
         net_returns[t] = raw_r - fee
         raw_returns[t] = raw_r
         pos_prev = p
@@ -194,7 +193,7 @@ def fast_sweep_thresholds(Z_comp_train: np.ndarray, trade_ret_train: np.ndarray,
             p = pos[t]
             if p > 0:
                 n_active += 1
-            r = p * trade_ret_train[t] - np.abs(p - pos_prev) * fee_bps
+            r = p * trade_ret_train[t] - np.abs(p) * fee_bps * 2.0
             r_sum += r
             sq_sum += r * r
             pos_prev = p
@@ -225,7 +224,7 @@ def fast_sweep_thresholds(Z_comp_train: np.ndarray, trade_ret_train: np.ndarray,
             p = pos[t]
             if p < 0:
                 n_active += 1
-            r = p * trade_ret_train[t] - np.abs(p - pos_prev) * fee_bps
+            r = p * trade_ret_train[t] - np.abs(p) * fee_bps * 2.0
             r_sum += r
             sq_sum += r * r
             pos_prev = p
