@@ -353,6 +353,15 @@ def main():
         args.end_date = f"{args.year + 1}-01-01"
         if not args.output:
             args.output = str(HERE / f"REPORT_{args.year}.md")
+    elif args.pool_period and args.start_date == "2022-01-01":
+        import re
+        match = re.search(r'_p\d{4}_(\d{4})', args.pool_period)
+        if match:
+            pool_end_yr = match.group(1)
+            args.start_date = f"{pool_end_yr}-01-01"
+            if not args.output:
+                args.output = str(HERE / f"REPORT_{args.pool_period.lstrip('_')}.md")
+            print(f"  [AUTO OOS] Inferred OOS start_date={args.start_date} from pool_period '{args.pool_period}' (running till {args.end_date})")
 
     # --pool-period: load period-specific pool override
     pool_period_override = None
@@ -594,6 +603,17 @@ def main():
                 combined_opt_df.to_csv(opt_csv, index=False)
                 print(f"Saved option trade log CSV to {opt_csv}")
 
+    # Resolve target markdown output path
+    if args.output:
+        out_path = Path(args.output)
+    else:
+        if args.option:
+            out_path = HERE / "REPORT_option.md"
+        elif args.future:
+            out_path = HERE / "REPORT_future.md"
+        else:
+            out_path = HERE / "REPORT.md"
+
     # Generate equity curve plot artifact
     chart_rel_path = None
     if plot_results:
@@ -622,15 +642,22 @@ def main():
 
             artifacts_dir = HERE / "artifacts"
             artifacts_dir.mkdir(parents=True, exist_ok=True)
-            fut_suffix = "_future" if args.future else ""
-            opt_suffix = "_option" if args.option else ""
-            # Unique chart name when using --year or --pool-period
-            yr_suffix = f"_{args.year}" if args.year else ""
-            pool_suffix = f"{args.pool_period}" if args.pool_period else ""
-            chart_path = artifacts_dir / f"equity_curve{yr_suffix}{pool_suffix}{fut_suffix}{opt_suffix}.png"
+            
+            # Derive chart filename stem directly from out_path.stem
+            stem = out_path.stem
+            if stem.upper() == "REPORT":
+                chart_stem = "equity_curve"
+            elif stem.upper().startswith("REPORT_"):
+                chart_stem = "equity_curve_" + stem[7:]
+            elif "REPORT" in stem.upper():
+                chart_stem = stem.replace("REPORT", "equity_curve").replace("report", "equity_curve")
+            else:
+                chart_stem = f"equity_curve_{stem}"
+
+            chart_path = artifacts_dir / f"{chart_stem}.png"
             fig.savefig(chart_path)
             plt.close(fig)
-            chart_rel_path = f"artifacts/equity_curve{yr_suffix}{pool_suffix}{fut_suffix}{opt_suffix}.png"
+            chart_rel_path = f"artifacts/{chart_stem}.png"
             print(f"Saved equity curve chart to {chart_path}")
         except Exception as e:
             print(f"[WARNING] Failed to generate plot: {e}")
@@ -780,16 +807,7 @@ def main():
         r_copy.pop("option_trade_log_df", None)
         clean_results.append(r_copy)
 
-    # Save markdown report (default: REPORT.md, REPORT_future.md, or REPORT_option.md in newtrade/)
-    if args.output:
-        out_path = Path(args.output)
-    else:
-        if args.option:
-            out_path = HERE / "REPORT_option.md"
-        elif args.future:
-            out_path = HERE / "REPORT_future.md"
-        else:
-            out_path = HERE / "REPORT.md"
+    # Save markdown report
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         f.write("# NewTrade OOS Backtest Report\n\n")

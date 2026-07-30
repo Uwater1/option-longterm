@@ -24,8 +24,10 @@ python newtrade/robustness.py -e 500ETF --cpcv --n-splits 6 --n-test 2
 # Run single ETF with auto threshold (train-sweep + buffer)
 uv run python newtrade/run_backtest.py -e 300ETF --scheme ew
 
-# Per-year backtest with period-specific pool (full report + graph)
-uv run python newtrade/run_backtest.py -e all --year 2024 --pool-period _p2016_2024 --no-stoploss
+# Period-pool backtest (auto OOS start from pool cutoff 2024-01 through 2026-01)
+uv run python newtrade/run_backtest.py -e all --pool-period _p2016_2024 --no-stoploss
+
+# Single-year isolated backtest (caps evaluation to 2022 calendar year)
 uv run python newtrade/run_backtest.py -e all --year 2022 --pool-period old --no-stoploss -o newtrade/REPORT_2022_old.md
 
 # Pool decay analysis: test one pool across all future years
