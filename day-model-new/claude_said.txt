@@ -1,0 +1,33 @@
+User:when developing a quant trading,  I encountered this problem: my complex filter filter out some features, highly correlated, I used to do correlation with threshold 0.8, and remove the feature that get worse score (scored based on IC, icir, monotonistic ...) However I find it not benefiting the model below it. I want to use the later model picking (pick with EMA 30d rolling ic)  but let it only pick one feature from each "group" so I want to build the group system. Can you do research and tell me how to do it
+Claude: 
+Pairwise threshold correl-prune got transitivity bug. A-B=0.85, B-C=0.85, A-C=0.3 → threshold kill order-dependent, arbitrary. Clustering fix this — group by full structure, not pairs.
+
+**Standard method: de Prado ONC (Optimal Number of Clusters)**
+
+Paper: López de Prado & Lewis, "Detection of False Investment Strategies Using Unsupervised Learning" (also condensed in *Advances in Financial ML* ch.4, and slide deck "Clustered Feature Importance", SSRN 3517595).
+
+Steps:
+1. Corr matrix → angular distance: `d(i,j) = sqrt(0.5*(1-corr(i,j)))`. Proper metric (satisfies triangle ineq), corr threshold don't.
+2. K-Means on distance matrix, sweep K, pick by silhouette score.
+3. Recursive re-clustering: any cluster w/ below-avg silhouette gets re-split. Kills the "K-Means got unlucky init" problem.
+4. Output: hard partition of features into clusters. No feature straddle two groups (caveat: if one feature genuinely combo of two clusters, silhouette stays low forever — flag manually, maybe drop or duplicate).
+
+mlfinlab has working impl (`onc` module) if you want reference code instead of raw paper math.
+
+**Wiring into your rolling-IC picker**
+
+Group assignment is separate stage from picker, not fused:
+- Fit ONC once (or every N days, see below) → get `cluster_id: [features]` map.
+- Each day/rebal: compute your EMA-30d rolling IC (or IC+ICIR+monotonic composite score, whatever you already use) per feature.
+- Within each cluster_id, argmax the composite score → 1 feature survives, rest masked to zero-weight for that period.
+- Selected set = one per cluster, size = num clusters, varies day to day as winner rotates inside each group.
+
+**Static vs rolling cluster refresh**
+
+- Static (fit once, freeze): stable groups, no lookahead bias risk, but stale if factor correlation regime shifts (crowding effects, macro regime change).
+- Rolling refresh (refit ONC every M days on trailing window): adapts, but cluster membership can flip → picked feature discontinuity, needs hysteresis or your feature "group" itself becomes noisy meta-parameter.
+- Compromise most alpha shops use: refit clusters quarterly/monthly (slow), rolling-IC picker inside stays daily (fast). Group boundary ~ slow signal, feature selection inside group ~ fast signal. Matches your dual-speed structure already (IC:30d EMA fast, corr-structure: slower).
+
+**One thing worth checking**: correlation used for clustering should be Spearman or distance-correlation (nonlinear dependence), not Pearson, if your features have nonlinear/monotonic-but-not-linear relations — common in alpha factors. de Prado's slides address this too (a "codependence" module in mlfinlab handles distance-corr / mutual-info variants for exactly this).
+
+Want the ONC pseudocode / actual python impl, or the composite-score picker logic spelled out?
