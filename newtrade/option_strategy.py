@@ -3,7 +3,7 @@
 Option Portfolio Simulation for NewTrade framework (optimized).
 Simulates a capital-constrained option portfolio:
 - 100k RMB initial capital per ETF
-- Each signal deploys 10k RMB into nearest OTM option (call=long, put=short)
+- Each signal deploys 10% of current portfolio capital into nearest OTM option (call=long, put=short)
 - Nearest expiry with >= 7 days to maturity
 - Fractional contracts allowed
 - 4 RMB commission per side (buy + sell)
@@ -238,7 +238,8 @@ def simulate_option_portfolio(
     dates_oos: pd.Series,
     iv_series: np.ndarray = None,
     initial_capital: float = 100_000.0,
-    trade_budget: float = 10_000.0,
+    trade_budget: float = None,
+    trade_budget_pct: float = 0.10,
     commission_per_side: float = 4.0,
     min_days_to_maturity: int = 7,
 ) -> dict:
@@ -253,6 +254,7 @@ def simulate_option_portfolio(
     
     T = len(positions_oos)
     daily_pnl = np.zeros(T, dtype=np.float32)
+    daily_gross_pnl = np.zeros(T, dtype=np.float32)
     capital = initial_capital
     bankrupt_day = None
     trade_records = []
@@ -315,7 +317,8 @@ def simulate_option_portfolio(
         cost_per_contract = entry_px * multiplier
         if cost_per_contract <= 0:
             continue
-        contracts = trade_budget / cost_per_contract
+        budget_for_trade = capital * trade_budget_pct if trade_budget_pct is not None else trade_budget
+        contracts = budget_for_trade / cost_per_contract
         
         # P&L calculation
         gross_pnl = (exit_px - entry_px) * contracts * multiplier
@@ -324,6 +327,7 @@ def simulate_option_portfolio(
         # Update capital
         capital += net_pnl
         daily_pnl[i] = net_pnl
+        daily_gross_pnl[i] = gross_pnl
         n_trades += 1
         
         trade_records.append({
@@ -357,10 +361,13 @@ def simulate_option_portfolio(
     
     # Daily returns relative to initial capital (for Sharpe calculation)
     daily_returns = daily_pnl.astype(np.float64) / initial_capital
+    daily_gross_returns = daily_gross_pnl.astype(np.float64) / initial_capital
     
     return {
         "daily_pnl": daily_pnl.astype(np.float64),
+        "daily_gross_pnl": daily_gross_pnl.astype(np.float64),
         "daily_returns": daily_returns,
+        "daily_gross_returns": daily_gross_returns,
         "trade_log_df": trade_log_df,
         "final_capital": round(capital, 2),
         "n_trades": n_trades,

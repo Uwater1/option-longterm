@@ -198,8 +198,8 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
         )
         # Use option daily returns for metrics
         net_returns = option_result["daily_returns"]
-        raw_returns = net_returns  # no separate raw for options
-        fees = np.zeros_like(net_returns)  # fees embedded in option P&L
+        raw_returns = option_result["daily_gross_returns"]
+        fees = (option_result["daily_gross_pnl"] - option_result["daily_pnl"]) / option_result["initial_capital"]
     elif use_stoploss:
         bars_dict = load_intraday_bars_dict(etf)
         if bars_dict:
@@ -657,7 +657,7 @@ def main():
         if args.option:
             f.write(f"- **Mode**: `Option Portfolio`\n")
             f.write(f"- **Initial Capital**: `100,000 RMB per ETF`\n")
-            f.write(f"- **Trade Budget**: `10,000 RMB per signal`\n")
+            f.write(f"- **Trade Budget**: `10% of portfolio capital per signal`\n")
             f.write(f"- **Commission**: `4 RMB per side (8 RMB round-trip)`\n")
             f.write(f"- **Option Selection**: `Nearest OTM, >=7 DTM`\n\n")
         else:
