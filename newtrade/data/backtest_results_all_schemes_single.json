@@ -8,16 +8,25 @@
     "trade_window": "10:00-14:35",
     "period": "2022-01 ~ 2025-12",
     "active_pct": 6.4,
-    "total_pnl": 0.2022,
-    "raw_total_pnl": 0.2022,
-    "cost_sharpe": 1.115,
-    "raw_sharpe": 1.115,
-    "max_drawdown": 0.0473,
-    "win_rate_pct": 58.1,
+    "total_pnl": 0.7772,
+    "raw_total_pnl": 0.7772,
+    "cost_sharpe": 1.341,
+    "raw_sharpe": 1.341,
+    "max_drawdown": 0.0959,
+    "win_rate_pct": 56.5,
     "win_rate_long_pct": 70.0,
-    "win_rate_short_pct": 52.4,
-    "profit_factor": 2.32,
+    "win_rate_short_pct": 50.0,
+    "long_pnl": 0.4878,
+    "long_sharpe": 9.188,
+    "short_pnl": 0.2894,
+    "short_sharpe": 3.609,
+    "profit_factor": 2.54,
     "ann_turnover": 31.21,
+    "option_final_capital": 177724.4,
+    "option_n_trades": 62,
+    "option_bankrupt_day": null,
+    "option_initial_capital": 100000.0,
+    "option_total_pnl_rmb": 77724.4,
     "etf": "300ETF",
     "asset_type": "Spot ETF",
     "side": "single",
@@ -34,23 +43,23 @@
     "use_future": false,
     "position_mode": "binary",
     "dsr": {
-      "observed_sr_annual": 1.1154,
+      "observed_sr_annual": 1.3408,
       "n_trials": 10,
       "n_obs": 969,
-      "skewness": 7.8066,
-      "kurtosis_excess": 125.1497,
-      "expected_max_sr_annual": 0.6267,
-      "dsr": 0.8903,
-      "dsr_pct": "89.0%",
-      "verdict": "NOT_SIGNIFICANT"
+      "skewness": 5.4854,
+      "kurtosis_excess": 59.0318,
+      "expected_max_sr_annual": 0.6455,
+      "dsr": 0.9551,
+      "dsr_pct": "95.5%",
+      "verdict": "SIGNIFICANT"
     },
     "cpcv": {
       "n_folds": 15,
-      "sharpe_mean": 0.8535,
-      "sharpe_median": 0.8617,
-      "sharpe_std": 0.2386,
-      "sharpe_min": 0.3661,
-      "sharpe_max": 1.2053,
+      "sharpe_mean": 0.8475,
+      "sharpe_median": 0.8512,
+      "sharpe_std": 0.2389,
+      "sharpe_min": 0.3573,
+      "sharpe_max": 1.1949,
       "pct_positive": 100.0,
       "fold_details": [
         {
@@ -59,9 +68,9 @@
           "n_test": 1318,
           "z_th_long": 1.4,
           "z_th_short": 1.0,
-          "cost_sharpe": 0.7185,
+          "cost_sharpe": 0.7004,
           "n_active": 110,
-          "total_pnl": 0.2849
+          "total_pnl": 0.2745
         },
         {
           "fold": 1,
@@ -69,9 +78,9 @@
           "n_test": 1318,
           "z_th_long": 1.4,
           "z_th_short": 1.0,
-          "cost_sharpe": 0.3661,
+          "cost_sharpe": 0.3573,
           "n_active": 85,
-          "total_pnl": 0.093
+          "total_pnl": 0.0898
         },
         {
           "fold": 2,
@@ -79,9 +88,9 @@
           "n_test": 1318,
           "z_th_long": 1.4,
           "z_th_short": 1.1,
-          "cost_sharpe": 0.5196,
+          "cost_sharpe": 0.5186,
           "n_active": 71,
-          "total_pnl": 0.1272
+          "total_pnl": 0.1256
         },
         {
           "fold": 3,
@@ -89,9 +98,9 @@
           "n_test": 1318,
           "z_th_long": 1.3,
           "z_th_short": 1.0,
-          "cost_sharpe": 0.8308,
+          "cost_sharpe": 0.8345,
           "n_active": 98,
-          "total_pnl": 0.2014
+          "total_pnl": 0.1982
         },
         {
           "fold": 4,
@@ -99,9 +108,9 @@
           "n_test": 1318,
           "z_th_long": 1.3,
           "z_th_short": 1.0,
-          "cost_sharpe": 0.6329,
+          "cost_sharpe": 0.631,
           "n_active": 73,
-          "total_pnl": 0.1672
+          "total_pnl": 0.164
         },
         {
           "fold": 5,
@@ -109,9 +118,9 @@
           "n_test": 1318,
           "z_th_long": 1.4,
           "z_th_short": 1.0,
-          "cost_sharpe": 0.7388,
+          "cost_sharpe": 0.723,
           "n_active": 117,
-          "total_pnl": 0.2926
+          "total_pnl": 0.283
         },
         {
           "fold": 6,
@@ -119,9 +128,9 @@
           "n_test": 1318,
           "z_th_long": 1.2,
           "z_th_short": 1.1,
-          "cost_sharpe": 1.2053,
+          "cost_sharpe": 1.1871,
           "n_active": 141,
-          "total_pnl": 0.547
+          "total_pnl": 0.531
         },
         {
           "fold": 7,
@@ -129,9 +138,9 @@
           "n_test": 1318,
           "z_th_long": 1.3,
           "z_th_short": 1.0,
-          "cost_sharpe": 1.1141,
+          "cost_sharpe": 1.1046,
           "n_active": 135,
-          "total_pnl": 0.4458
+          "total_pnl": 0.4346
         },
         {
           "fold": 8,
@@ -139,9 +148,9 @@
           "n_test": 1318,
           "z_th_long": 1.3,
           "z_th_short": 1.0,
-          "cost_sharpe": 0.9947,
+          "cost_sharpe": 0.9827,
           "n_active": 110,
-          "total_pnl": 0.4116
+          "total_pnl": 0.4004
         },
         {
           "fold": 9,
@@ -149,9 +158,9 @@
           "n_test": 1318,
           "z_th_long": 1.3,
           "z_th_short": 1.1,
-          "cost_sharpe": 0.8617,
+          "cost_sharpe": 0.8512,
           "n_active": 94,
-          "total_pnl": 0.2514
+          "total_pnl": 0.245
         },
         {
           "fold": 10,
@@ -159,9 +168,9 @@
           "n_test": 1318,
           "z_th_long": 1.3,
           "z_th_short": 1.0,
-          "cost_sharpe": 0.8944,
+          "cost_sharpe": 0.8947,
           "n_active": 107,
-          "total_pnl": 0.2153
+          "total_pnl": 0.2105
         },
         {
           "fold": 11,
@@ -169,9 +178,9 @@
           "n_test": 1318,
           "z_th_long": 1.3,
           "z_th_short": 1.0,
-          "cost_sharpe": 0.6895,
+          "cost_sharpe": 0.6837,
           "n_active": 82,
-          "total_pnl": 0.1811
+          "total_pnl": 0.1763
         },
         {
           "fold": 12,
@@ -179,9 +188,9 @@
           "n_test": 1318,
           "z_th_long": 1.3,
           "z_th_short": 1.0,
-          "cost_sharpe": 1.2031,
+          "cost_sharpe": 1.1949,
           "n_active": 129,
-          "total_pnl": 0.3582
+          "total_pnl": 0.3486
         },
         {
           "fold": 13,
@@ -189,9 +198,9 @@
           "n_test": 1318,
           "z_th_long": 1.3,
           "z_th_short": 1.1,
-          "cost_sharpe": 0.9507,
+          "cost_sharpe": 0.9494,
           "n_active": 79,
-          "total_pnl": 0.2853
+          "total_pnl": 0.2805
         },
         {
           "fold": 14,
@@ -199,455 +208,9 @@
           "n_test": 1318,
           "z_th_long": 1.3,
           "z_th_short": 1.0,
-          "cost_sharpe": 1.0827,
+          "cost_sharpe": 1.0999,
           "n_active": 89,
-          "total_pnl": 0.2615
-        }
-      ]
-    }
-  },
-  {
-    "n_days": 969,
-    "n_active_days": 219,
-    "n_trades": 219,
-    "n_long_trades": 195,
-    "n_short_trades": 24,
-    "trade_window": "10:00-14:35",
-    "period": "2022-01 ~ 2025-12",
-    "active_pct": 22.6,
-    "total_pnl": 0.4543,
-    "raw_total_pnl": 0.4543,
-    "cost_sharpe": 1.451,
-    "raw_sharpe": 1.451,
-    "max_drawdown": 0.078,
-    "win_rate_pct": 57.1,
-    "win_rate_long_pct": 56.4,
-    "win_rate_short_pct": 62.5,
-    "profit_factor": 1.75,
-    "ann_turnover": 91.02,
-    "etf": "500ETF",
-    "asset_type": "Spot ETF",
-    "side": "single",
-    "scheme": "icw",
-    "status": "SUCCESS",
-    "n_features": 32,
-    "z_th": 0.8,
-    "z_th_long": 0.8,
-    "z_th_short": 1.3,
-    "z_th_train_long": 0.7,
-    "z_th_train_short": 1.2,
-    "z_buffer": 0.1,
-    "long_only": false,
-    "use_future": false,
-    "position_mode": "binary",
-    "dsr": {
-      "observed_sr_annual": 1.4511,
-      "n_trials": 10,
-      "n_obs": 969,
-      "skewness": 3.5754,
-      "kurtosis_excess": 33.2564,
-      "expected_max_sr_annual": 0.6943,
-      "dsr": 0.9569,
-      "dsr_pct": "95.7%",
-      "verdict": "SIGNIFICANT"
-    },
-    "cpcv": {
-      "n_folds": 15,
-      "sharpe_mean": 1.3206,
-      "sharpe_median": 1.2604,
-      "sharpe_std": 0.5585,
-      "sharpe_min": 0.3149,
-      "sharpe_max": 2.3154,
-      "pct_positive": 100.0,
-      "fold_details": [
-        {
-          "fold": 0,
-          "n_train": 2632,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.3,
-          "cost_sharpe": 1.9542,
-          "n_active": 276,
-          "total_pnl": 0.9154
-        },
-        {
-          "fold": 1,
-          "n_train": 2624,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.4,
-          "cost_sharpe": 1.6133,
-          "n_active": 196,
-          "total_pnl": 0.6302
-        },
-        {
-          "fold": 2,
-          "n_train": 2624,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.4,
-          "cost_sharpe": 1.2604,
-          "n_active": 205,
-          "total_pnl": 0.49
-        },
-        {
-          "fold": 3,
-          "n_train": 2624,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.3,
-          "cost_sharpe": 0.7842,
-          "n_active": 198,
-          "total_pnl": 0.2688
-        },
-        {
-          "fold": 4,
-          "n_train": 2628,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.4,
-          "cost_sharpe": 0.8573,
-          "n_active": 253,
-          "total_pnl": 0.398
-        },
-        {
-          "fold": 5,
-          "n_train": 2628,
-          "n_test": 1318,
-          "z_th_long": 0.7,
-          "z_th_short": 1.3,
-          "cost_sharpe": 2.3154,
-          "n_active": 347,
-          "total_pnl": 1.2581
-        },
-        {
-          "fold": 6,
-          "n_train": 2620,
-          "n_test": 1318,
-          "z_th_long": 0.7,
-          "z_th_short": 1.4,
-          "cost_sharpe": 2.1893,
-          "n_active": 333,
-          "total_pnl": 1.044
-        },
-        {
-          "fold": 7,
-          "n_train": 2620,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.3,
-          "cost_sharpe": 1.5529,
-          "n_active": 286,
-          "total_pnl": 0.6711
-        },
-        {
-          "fold": 8,
-          "n_train": 2624,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.3,
-          "cost_sharpe": 1.5275,
-          "n_active": 370,
-          "total_pnl": 0.8381
-        },
-        {
-          "fold": 9,
-          "n_train": 2628,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.4,
-          "cost_sharpe": 1.665,
-          "n_active": 235,
-          "total_pnl": 0.6607
-        },
-        {
-          "fold": 10,
-          "n_train": 2620,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.2,
-          "cost_sharpe": 0.9914,
-          "n_active": 255,
-          "total_pnl": 0.4293
-        },
-        {
-          "fold": 11,
-          "n_train": 2624,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.4,
-          "cost_sharpe": 1.204,
-          "n_active": 283,
-          "total_pnl": 0.5671
-        },
-        {
-          "fold": 12,
-          "n_train": 2628,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.4,
-          "cost_sharpe": 0.6673,
-          "n_active": 219,
-          "total_pnl": 0.2271
-        },
-        {
-          "fold": 13,
-          "n_train": 2624,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.4,
-          "cost_sharpe": 0.9124,
-          "n_active": 292,
-          "total_pnl": 0.4285
-        },
-        {
-          "fold": 14,
-          "n_train": 2632,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.4,
-          "cost_sharpe": 0.3149,
-          "n_active": 267,
-          "total_pnl": 0.1336
-        }
-      ]
-    }
-  },
-  {
-    "etf": "50ETF",
-    "side": "single",
-    "scheme": "icw",
-    "asset_type": "Spot ETF",
-    "status": "SKIPPED_FEAT_FLOOR",
-    "n_features": 0,
-    "period": "2022-01 ~ 2026-01",
-    "n_trades": 0,
-    "cost_sharpe": 0.0,
-    "raw_sharpe": 0.0,
-    "total_pnl": 0.0,
-    "max_drawdown": 0.0,
-    "win_rate_pct": 0.0,
-    "ann_turnover": 0.0
-  },
-  {
-    "etf": "588000ETF",
-    "side": "single",
-    "scheme": "icw",
-    "asset_type": "Spot ETF",
-    "status": "SKIPPED_FEAT_FLOOR",
-    "n_features": 0,
-    "period": "2022-01 ~ 2026-01",
-    "n_trades": 0,
-    "cost_sharpe": 0.0,
-    "raw_sharpe": 0.0,
-    "total_pnl": 0.0,
-    "max_drawdown": 0.0,
-    "win_rate_pct": 0.0,
-    "ann_turnover": 0.0
-  },
-  {
-    "n_days": 969,
-    "n_active_days": 203,
-    "n_trades": 203,
-    "n_long_trades": 115,
-    "n_short_trades": 88,
-    "trade_window": "10:00-14:35",
-    "period": "2022-01 ~ 2025-12",
-    "active_pct": 20.9,
-    "total_pnl": 0.75,
-    "raw_total_pnl": 0.75,
-    "cost_sharpe": 1.818,
-    "raw_sharpe": 1.818,
-    "max_drawdown": 0.0506,
-    "win_rate_pct": 65.5,
-    "win_rate_long_pct": 62.6,
-    "win_rate_short_pct": 69.3,
-    "profit_factor": 2.11,
-    "ann_turnover": 92.58,
-    "etf": "159915ETF",
-    "asset_type": "Spot ETF",
-    "side": "single",
-    "scheme": "icw",
-    "status": "SUCCESS",
-    "n_features": 11,
-    "z_th": 1.0,
-    "z_th_long": 1.0,
-    "z_th_short": 1.1,
-    "z_th_train_long": 0.9,
-    "z_th_train_short": 1.0,
-    "z_buffer": 0.1,
-    "long_only": false,
-    "use_future": false,
-    "position_mode": "binary",
-    "dsr": {
-      "observed_sr_annual": 1.8175,
-      "n_trials": 10,
-      "n_obs": 969,
-      "skewness": 5.1432,
-      "kurtosis_excess": 74.3497,
-      "expected_max_sr_annual": 0.6534,
-      "dsr": 0.9975,
-      "dsr_pct": "99.7%",
-      "verdict": "SIGNIFICANT"
-    },
-    "cpcv": {
-      "n_folds": 15,
-      "sharpe_mean": 1.0292,
-      "sharpe_median": 1.026,
-      "sharpe_std": 0.377,
-      "sharpe_min": 0.4246,
-      "sharpe_max": 1.9576,
-      "pct_positive": 100.0,
-      "fold_details": [
-        {
-          "fold": 0,
-          "n_train": 2564,
-          "n_test": 1284,
-          "z_th_long": 1.1,
-          "z_th_short": 1.5,
-          "cost_sharpe": 1.0199,
-          "n_active": 174,
-          "total_pnl": 0.5422
-        },
-        {
-          "fold": 1,
-          "n_train": 2556,
-          "n_test": 1284,
-          "z_th_long": 1.1,
-          "z_th_short": 0.7,
-          "cost_sharpe": 0.5027,
-          "n_active": 297,
-          "total_pnl": 0.2812
-        },
-        {
-          "fold": 2,
-          "n_train": 2556,
-          "n_test": 1284,
-          "z_th_long": 1.0,
-          "z_th_short": 1.1,
-          "cost_sharpe": 1.9576,
-          "n_active": 205,
-          "total_pnl": 0.856
-        },
-        {
-          "fold": 3,
-          "n_train": 2556,
-          "n_test": 1284,
-          "z_th_long": 0.9,
-          "z_th_short": 0.7,
-          "cost_sharpe": 1.0918,
-          "n_active": 430,
-          "total_pnl": 0.6178
-        },
-        {
-          "fold": 4,
-          "n_train": 2560,
-          "n_test": 1284,
-          "z_th_long": 1.0,
-          "z_th_short": 0.7,
-          "cost_sharpe": 0.7337,
-          "n_active": 371,
-          "total_pnl": 0.4586
-        },
-        {
-          "fold": 5,
-          "n_train": 2560,
-          "n_test": 1284,
-          "z_th_long": 1.1,
-          "z_th_short": 1.2,
-          "cost_sharpe": 0.8645,
-          "n_active": 243,
-          "total_pnl": 0.5454
-        },
-        {
-          "fold": 6,
-          "n_train": 2552,
-          "n_test": 1284,
-          "z_th_long": 1.1,
-          "z_th_short": 1.6,
-          "cost_sharpe": 1.2081,
-          "n_active": 194,
-          "total_pnl": 0.6489
-        },
-        {
-          "fold": 7,
-          "n_train": 2552,
-          "n_test": 1284,
-          "z_th_long": 1.1,
-          "z_th_short": 1.6,
-          "cost_sharpe": 1.0563,
-          "n_active": 197,
-          "total_pnl": 0.5748
-        },
-        {
-          "fold": 8,
-          "n_train": 2556,
-          "n_test": 1284,
-          "z_th_long": 1.1,
-          "z_th_short": 1.2,
-          "cost_sharpe": 0.7651,
-          "n_active": 273,
-          "total_pnl": 0.5121
-        },
-        {
-          "fold": 9,
-          "n_train": 2560,
-          "n_test": 1284,
-          "z_th_long": 1.0,
-          "z_th_short": 0.7,
-          "cost_sharpe": 1.1643,
-          "n_active": 396,
-          "total_pnl": 0.6965
-        },
-        {
-          "fold": 10,
-          "n_train": 2552,
-          "n_test": 1284,
-          "z_th_long": 1.0,
-          "z_th_short": 0.7,
-          "cost_sharpe": 0.7665,
-          "n_active": 447,
-          "total_pnl": 0.4508
-        },
-        {
-          "fold": 11,
-          "n_train": 2556,
-          "n_test": 1284,
-          "z_th_long": 1.0,
-          "z_th_short": 0.7,
-          "cost_sharpe": 0.4246,
-          "n_active": 418,
-          "total_pnl": 0.2802
-        },
-        {
-          "fold": 12,
-          "n_train": 2560,
-          "n_test": 1284,
-          "z_th_long": 0.7,
-          "z_th_short": 1.1,
-          "cost_sharpe": 1.4101,
-          "n_active": 372,
-          "total_pnl": 0.7572
-        },
-        {
-          "fold": 13,
-          "n_train": 2556,
-          "n_test": 1284,
-          "z_th_long": 1.0,
-          "z_th_short": 1.1,
-          "cost_sharpe": 1.4463,
-          "n_active": 260,
-          "total_pnl": 0.7966
-        },
-        {
-          "fold": 14,
-          "n_train": 2564,
-          "n_test": 1284,
-          "z_th_long": 1.0,
-          "z_th_short": 1.1,
-          "cost_sharpe": 1.026,
-          "n_active": 275,
-          "total_pnl": 0.5529
+          "total_pnl": 0.2583
         }
       ]
     }
@@ -661,16 +224,25 @@
     "trade_window": "10:00-14:35",
     "period": "2022-01 ~ 2025-12",
     "active_pct": 4.9,
-    "total_pnl": 0.1798,
-    "raw_total_pnl": 0.1798,
-    "cost_sharpe": 1.009,
-    "raw_sharpe": 1.009,
-    "max_drawdown": 0.061,
-    "win_rate_pct": 57.4,
+    "total_pnl": 0.6179,
+    "raw_total_pnl": 0.6179,
+    "cost_sharpe": 1.117,
+    "raw_sharpe": 1.117,
+    "max_drawdown": 0.1862,
+    "win_rate_pct": 55.3,
     "win_rate_long_pct": 70.0,
-    "win_rate_short_pct": 48.1,
-    "profit_factor": 2.31,
+    "win_rate_short_pct": 44.4,
+    "long_pnl": 0.4878,
+    "long_sharpe": 9.188,
+    "short_pnl": 0.1301,
+    "short_sharpe": 2.222,
+    "profit_factor": 2.34,
     "ann_turnover": 23.41,
+    "option_final_capital": 161787.47,
+    "option_n_trades": 47,
+    "option_bankrupt_day": null,
+    "option_initial_capital": 100000.0,
+    "option_total_pnl_rmb": 61787.47,
     "etf": "300ETF",
     "asset_type": "Spot ETF",
     "side": "single",
@@ -687,23 +259,23 @@
     "use_future": false,
     "position_mode": "binary",
     "dsr": {
-      "observed_sr_annual": 1.0094,
+      "observed_sr_annual": 1.1166,
       "n_trials": 10,
       "n_obs": 969,
-      "skewness": 8.1817,
-      "kurtosis_excess": 134.4651,
-      "expected_max_sr_annual": 0.6314,
-      "dsr": 0.8271,
-      "dsr_pct": "82.7%",
+      "skewness": 5.8812,
+      "kurtosis_excess": 69.1282,
+      "expected_max_sr_annual": 0.6597,
+      "dsr": 0.8622,
+      "dsr_pct": "86.2%",
       "verdict": "NOT_SIGNIFICANT"
     },
     "cpcv": {
       "n_folds": 15,
-      "sharpe_mean": 0.6991,
-      "sharpe_median": 0.7341,
-      "sharpe_std": 0.2669,
-      "sharpe_min": 0.1346,
-      "sharpe_max": 1.2141,
+      "sharpe_mean": 0.6806,
+      "sharpe_median": 0.705,
+      "sharpe_std": 0.2571,
+      "sharpe_min": 0.1285,
+      "sharpe_max": 1.0938,
       "pct_positive": 100.0,
       "fold_details": [
         {
@@ -712,9 +284,9 @@
           "n_test": 1318,
           "z_th_long": 1.3,
           "z_th_short": 1.0,
-          "cost_sharpe": 0.5823,
+          "cost_sharpe": 0.5651,
           "n_active": 86,
-          "total_pnl": 0.2218
+          "total_pnl": 0.213
         },
         {
           "fold": 1,
@@ -722,9 +294,9 @@
           "n_test": 1318,
           "z_th_long": 1.2,
           "z_th_short": 1.0,
-          "cost_sharpe": 0.1346,
+          "cost_sharpe": 0.1285,
           "n_active": 68,
-          "total_pnl": 0.0314
+          "total_pnl": 0.0298
         },
         {
           "fold": 2,
@@ -732,9 +304,9 @@
           "n_test": 1318,
           "z_th_long": 1.2,
           "z_th_short": 1.0,
-          "cost_sharpe": 0.5282,
+          "cost_sharpe": 0.5215,
           "n_active": 88,
-          "total_pnl": 0.1542
+          "total_pnl": 0.151
         },
         {
           "fold": 3,
@@ -742,9 +314,9 @@
           "n_test": 1318,
           "z_th_long": 1.2,
           "z_th_short": 1.0,
-          "cost_sharpe": 0.3658,
+          "cost_sharpe": 0.3628,
           "n_active": 72,
-          "total_pnl": 0.0795
+          "total_pnl": 0.0779
         },
         {
           "fold": 4,
@@ -752,9 +324,9 @@
           "n_test": 1318,
           "z_th_long": 1.2,
           "z_th_short": 1.0,
-          "cost_sharpe": 0.3554,
+          "cost_sharpe": 0.3528,
           "n_active": 54,
-          "total_pnl": 0.0879
+          "total_pnl": 0.0863
         },
         {
           "fold": 5,
@@ -762,9 +334,9 @@
           "n_test": 1318,
           "z_th_long": 1.3,
           "z_th_short": 0.9,
-          "cost_sharpe": 0.8984,
+          "cost_sharpe": 0.8862,
           "n_active": 118,
-          "total_pnl": 0.365
+          "total_pnl": 0.3554
         },
         {
           "fold": 6,
@@ -772,9 +344,9 @@
           "n_test": 1318,
           "z_th_long": 0.8,
           "z_th_short": 1.3,
-          "cost_sharpe": 0.9026,
+          "cost_sharpe": 0.8367,
           "n_active": 177,
-          "total_pnl": 0.3998
+          "total_pnl": 0.3662
         },
         {
           "fold": 7,
@@ -782,19 +354,19 @@
           "n_test": 1318,
           "z_th_long": 1.2,
           "z_th_short": 0.8,
-          "cost_sharpe": 0.7663,
+          "cost_sharpe": 0.705,
           "n_active": 194,
-          "total_pnl": 0.3312
+          "total_pnl": 0.3008
         },
         {
           "fold": 8,
           "n_train": 2624,
           "n_test": 1318,
           "z_th_long": 1.1,
-          "z_th_short": 0.8,
-          "cost_sharpe": 0.8883,
-          "n_active": 162,
-          "total_pnl": 0.4066
+          "z_th_short": 1.0,
+          "cost_sharpe": 1.0938,
+          "n_active": 102,
+          "total_pnl": 0.4563
         },
         {
           "fold": 9,
@@ -802,9 +374,9 @@
           "n_test": 1318,
           "z_th_long": 0.8,
           "z_th_short": 1.2,
-          "cost_sharpe": 0.6292,
+          "cost_sharpe": 0.5802,
           "n_active": 138,
-          "total_pnl": 0.201
+          "total_pnl": 0.1834
         },
         {
           "fold": 10,
@@ -812,9 +384,9 @@
           "n_test": 1318,
           "z_th_long": 1.2,
           "z_th_short": 1.0,
-          "cost_sharpe": 0.7341,
+          "cost_sharpe": 0.7345,
           "n_active": 80,
-          "total_pnl": 0.1583
+          "total_pnl": 0.1551
         },
         {
           "fold": 11,
@@ -822,19 +394,19 @@
           "n_test": 1318,
           "z_th_long": 1.2,
           "z_th_short": 1.0,
-          "cost_sharpe": 0.6782,
+          "cost_sharpe": 0.6774,
           "n_active": 62,
-          "total_pnl": 0.1666
+          "total_pnl": 0.1634
         },
         {
           "fold": 12,
           "n_train": 2628,
           "n_test": 1318,
           "z_th_long": 1.2,
-          "z_th_short": 0.8,
-          "cost_sharpe": 1.2141,
-          "n_active": 208,
-          "total_pnl": 0.4196
+          "z_th_short": 1.0,
+          "cost_sharpe": 1.013,
+          "n_active": 100,
+          "total_pnl": 0.2762
         },
         {
           "fold": 13,
@@ -842,9 +414,9 @@
           "n_test": 1318,
           "z_th_long": 1.1,
           "z_th_short": 1.0,
-          "cost_sharpe": 0.9106,
+          "cost_sharpe": 0.9044,
           "n_active": 96,
-          "total_pnl": 0.2885
+          "total_pnl": 0.2821
         },
         {
           "fold": 14,
@@ -852,455 +424,9 @@
           "n_test": 1318,
           "z_th_long": 1.2,
           "z_th_short": 0.8,
-          "cost_sharpe": 0.8988,
+          "cost_sharpe": 0.8472,
           "n_active": 147,
-          "total_pnl": 0.2516
-        }
-      ]
-    }
-  },
-  {
-    "n_days": 969,
-    "n_active_days": 218,
-    "n_trades": 218,
-    "n_long_trades": 193,
-    "n_short_trades": 25,
-    "trade_window": "10:00-14:35",
-    "period": "2022-01 ~ 2025-12",
-    "active_pct": 22.5,
-    "total_pnl": 0.4369,
-    "raw_total_pnl": 0.4369,
-    "cost_sharpe": 1.405,
-    "raw_sharpe": 1.405,
-    "max_drawdown": 0.078,
-    "win_rate_pct": 56.9,
-    "win_rate_long_pct": 56.5,
-    "win_rate_short_pct": 60.0,
-    "profit_factor": 1.73,
-    "ann_turnover": 91.02,
-    "etf": "500ETF",
-    "asset_type": "Spot ETF",
-    "side": "single",
-    "scheme": "ew",
-    "status": "SUCCESS",
-    "n_features": 32,
-    "z_th": 0.8,
-    "z_th_long": 0.8,
-    "z_th_short": 1.3,
-    "z_th_train_long": 0.7,
-    "z_th_train_short": 1.2,
-    "z_buffer": 0.1,
-    "long_only": false,
-    "use_future": false,
-    "position_mode": "binary",
-    "dsr": {
-      "observed_sr_annual": 1.4054,
-      "n_trials": 10,
-      "n_obs": 969,
-      "skewness": 3.6117,
-      "kurtosis_excess": 34.1575,
-      "expected_max_sr_annual": 0.6963,
-      "dsr": 0.9456,
-      "dsr_pct": "94.6%",
-      "verdict": "MARGINAL"
-    },
-    "cpcv": {
-      "n_folds": 15,
-      "sharpe_mean": 1.3346,
-      "sharpe_median": 1.1804,
-      "sharpe_std": 0.5707,
-      "sharpe_min": 0.4299,
-      "sharpe_max": 2.3327,
-      "pct_positive": 100.0,
-      "fold_details": [
-        {
-          "fold": 0,
-          "n_train": 2632,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.3,
-          "cost_sharpe": 2.0014,
-          "n_active": 274,
-          "total_pnl": 0.9406
-        },
-        {
-          "fold": 1,
-          "n_train": 2624,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.4,
-          "cost_sharpe": 1.444,
-          "n_active": 188,
-          "total_pnl": 0.5407
-        },
-        {
-          "fold": 2,
-          "n_train": 2624,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.4,
-          "cost_sharpe": 1.1804,
-          "n_active": 196,
-          "total_pnl": 0.4333
-        },
-        {
-          "fold": 3,
-          "n_train": 2624,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.3,
-          "cost_sharpe": 0.717,
-          "n_active": 189,
-          "total_pnl": 0.2375
-        },
-        {
-          "fold": 4,
-          "n_train": 2628,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.4,
-          "cost_sharpe": 0.7357,
-          "n_active": 246,
-          "total_pnl": 0.3287
-        },
-        {
-          "fold": 5,
-          "n_train": 2628,
-          "n_test": 1318,
-          "z_th_long": 0.7,
-          "z_th_short": 1.3,
-          "cost_sharpe": 2.3251,
-          "n_active": 347,
-          "total_pnl": 1.2611
-        },
-        {
-          "fold": 6,
-          "n_train": 2620,
-          "n_test": 1318,
-          "z_th_long": 0.7,
-          "z_th_short": 1.3,
-          "cost_sharpe": 2.3327,
-          "n_active": 359,
-          "total_pnl": 1.1842
-        },
-        {
-          "fold": 7,
-          "n_train": 2620,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.3,
-          "cost_sharpe": 1.6723,
-          "n_active": 289,
-          "total_pnl": 0.7317
-        },
-        {
-          "fold": 8,
-          "n_train": 2624,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.3,
-          "cost_sharpe": 1.6118,
-          "n_active": 376,
-          "total_pnl": 0.8944
-        },
-        {
-          "fold": 9,
-          "n_train": 2628,
-          "n_test": 1318,
-          "z_th_long": 0.6,
-          "z_th_short": 1.2,
-          "cost_sharpe": 1.6742,
-          "n_active": 367,
-          "total_pnl": 0.9048
-        },
-        {
-          "fold": 10,
-          "n_train": 2620,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.2,
-          "cost_sharpe": 0.9879,
-          "n_active": 254,
-          "total_pnl": 0.4254
-        },
-        {
-          "fold": 11,
-          "n_train": 2624,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.3,
-          "cost_sharpe": 1.1251,
-          "n_active": 314,
-          "total_pnl": 0.599
-        },
-        {
-          "fold": 12,
-          "n_train": 2628,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.3,
-          "cost_sharpe": 0.8412,
-          "n_active": 233,
-          "total_pnl": 0.2968
-        },
-        {
-          "fold": 13,
-          "n_train": 2624,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.4,
-          "cost_sharpe": 0.9396,
-          "n_active": 292,
-          "total_pnl": 0.4404
-        },
-        {
-          "fold": 14,
-          "n_train": 2632,
-          "n_test": 1318,
-          "z_th_long": 0.8,
-          "z_th_short": 1.3,
-          "cost_sharpe": 0.4299,
-          "n_active": 291,
-          "total_pnl": 0.1905
-        }
-      ]
-    }
-  },
-  {
-    "etf": "50ETF",
-    "side": "single",
-    "scheme": "ew",
-    "asset_type": "Spot ETF",
-    "status": "SKIPPED_FEAT_FLOOR",
-    "n_features": 0,
-    "period": "2022-01 ~ 2026-01",
-    "n_trades": 0,
-    "cost_sharpe": 0.0,
-    "raw_sharpe": 0.0,
-    "total_pnl": 0.0,
-    "max_drawdown": 0.0,
-    "win_rate_pct": 0.0,
-    "ann_turnover": 0.0
-  },
-  {
-    "etf": "588000ETF",
-    "side": "single",
-    "scheme": "ew",
-    "asset_type": "Spot ETF",
-    "status": "SKIPPED_FEAT_FLOOR",
-    "n_features": 0,
-    "period": "2022-01 ~ 2026-01",
-    "n_trades": 0,
-    "cost_sharpe": 0.0,
-    "raw_sharpe": 0.0,
-    "total_pnl": 0.0,
-    "max_drawdown": 0.0,
-    "win_rate_pct": 0.0,
-    "ann_turnover": 0.0
-  },
-  {
-    "n_days": 969,
-    "n_active_days": 311,
-    "n_trades": 311,
-    "n_long_trades": 174,
-    "n_short_trades": 137,
-    "trade_window": "10:00-14:35",
-    "period": "2022-01 ~ 2025-12",
-    "active_pct": 32.1,
-    "total_pnl": 0.6956,
-    "raw_total_pnl": 0.6956,
-    "cost_sharpe": 1.522,
-    "raw_sharpe": 1.522,
-    "max_drawdown": 0.0985,
-    "win_rate_pct": 57.9,
-    "win_rate_long_pct": 54.0,
-    "win_rate_short_pct": 62.8,
-    "profit_factor": 1.64,
-    "ann_turnover": 136.79,
-    "etf": "159915ETF",
-    "asset_type": "Spot ETF",
-    "side": "single",
-    "scheme": "ew",
-    "status": "SUCCESS",
-    "n_features": 11,
-    "z_th": 0.8,
-    "z_th_long": 0.8,
-    "z_th_short": 1.0,
-    "z_th_train_long": 0.7,
-    "z_th_train_short": 0.9,
-    "z_buffer": 0.1,
-    "long_only": false,
-    "use_future": false,
-    "position_mode": "binary",
-    "dsr": {
-      "observed_sr_annual": 1.5219,
-      "n_trials": 10,
-      "n_obs": 969,
-      "skewness": 3.9114,
-      "kurtosis_excess": 50.2405,
-      "expected_max_sr_annual": 0.6935,
-      "dsr": 0.97,
-      "dsr_pct": "97.0%",
-      "verdict": "SIGNIFICANT"
-    },
-    "cpcv": {
-      "n_folds": 15,
-      "sharpe_mean": 0.9788,
-      "sharpe_median": 0.9677,
-      "sharpe_std": 0.3281,
-      "sharpe_min": 0.4156,
-      "sharpe_max": 1.688,
-      "pct_positive": 100.0,
-      "fold_details": [
-        {
-          "fold": 0,
-          "n_train": 2564,
-          "n_test": 1284,
-          "z_th_long": 1.1,
-          "z_th_short": 1.5,
-          "cost_sharpe": 0.9677,
-          "n_active": 169,
-          "total_pnl": 0.5059
-        },
-        {
-          "fold": 1,
-          "n_train": 2556,
-          "n_test": 1284,
-          "z_th_long": 0.9,
-          "z_th_short": 0.7,
-          "cost_sharpe": 0.5301,
-          "n_active": 346,
-          "total_pnl": 0.307
-        },
-        {
-          "fold": 2,
-          "n_train": 2556,
-          "n_test": 1284,
-          "z_th_long": 0.9,
-          "z_th_short": 1.1,
-          "cost_sharpe": 1.688,
-          "n_active": 219,
-          "total_pnl": 0.7382
-        },
-        {
-          "fold": 3,
-          "n_train": 2556,
-          "n_test": 1284,
-          "z_th_long": 0.9,
-          "z_th_short": 1.1,
-          "cost_sharpe": 1.1659,
-          "n_active": 240,
-          "total_pnl": 0.4872
-        },
-        {
-          "fold": 4,
-          "n_train": 2560,
-          "n_test": 1284,
-          "z_th_long": 0.8,
-          "z_th_short": 0.7,
-          "cost_sharpe": 0.7476,
-          "n_active": 441,
-          "total_pnl": 0.4997
-        },
-        {
-          "fold": 5,
-          "n_train": 2560,
-          "n_test": 1284,
-          "z_th_long": 1.1,
-          "z_th_short": 1.2,
-          "cost_sharpe": 0.8499,
-          "n_active": 234,
-          "total_pnl": 0.5355
-        },
-        {
-          "fold": 6,
-          "n_train": 2552,
-          "n_test": 1284,
-          "z_th_long": 1.1,
-          "z_th_short": 1.5,
-          "cost_sharpe": 1.1905,
-          "n_active": 196,
-          "total_pnl": 0.6513
-        },
-        {
-          "fold": 7,
-          "n_train": 2552,
-          "n_test": 1284,
-          "z_th_long": 1.1,
-          "z_th_short": 1.5,
-          "cost_sharpe": 0.9875,
-          "n_active": 198,
-          "total_pnl": 0.5445
-        },
-        {
-          "fold": 8,
-          "n_train": 2556,
-          "n_test": 1284,
-          "z_th_long": 1.1,
-          "z_th_short": 1.5,
-          "cost_sharpe": 0.8035,
-          "n_active": 210,
-          "total_pnl": 0.5037
-        },
-        {
-          "fold": 9,
-          "n_train": 2560,
-          "n_test": 1284,
-          "z_th_long": 0.9,
-          "z_th_short": 0.6,
-          "cost_sharpe": 1.129,
-          "n_active": 466,
-          "total_pnl": 0.7112
-        },
-        {
-          "fold": 10,
-          "n_train": 2552,
-          "n_test": 1284,
-          "z_th_long": 0.9,
-          "z_th_short": 0.6,
-          "cost_sharpe": 0.695,
-          "n_active": 516,
-          "total_pnl": 0.4307
-        },
-        {
-          "fold": 11,
-          "n_train": 2556,
-          "n_test": 1284,
-          "z_th_long": 1.0,
-          "z_th_short": 0.7,
-          "cost_sharpe": 0.4156,
-          "n_active": 413,
-          "total_pnl": 0.2738
-        },
-        {
-          "fold": 12,
-          "n_train": 2560,
-          "n_test": 1284,
-          "z_th_long": 0.9,
-          "z_th_short": 1.5,
-          "cost_sharpe": 1.4294,
-          "n_active": 171,
-          "total_pnl": 0.5386
-        },
-        {
-          "fold": 13,
-          "n_train": 2556,
-          "n_test": 1284,
-          "z_th_long": 0.9,
-          "z_th_short": 0.7,
-          "cost_sharpe": 1.2632,
-          "n_active": 483,
-          "total_pnl": 0.8533
-        },
-        {
-          "fold": 14,
-          "n_train": 2564,
-          "n_test": 1284,
-          "z_th_long": 0.8,
-          "z_th_short": 0.7,
-          "cost_sharpe": 0.8185,
-          "n_active": 583,
-          "total_pnl": 0.5635
+          "total_pnl": 0.2316
         }
       ]
     }
