@@ -91,24 +91,23 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
   if candidate is correlated with exactly one existing pool member old_feature (corr >= theta):
       replace old_feature with candidate if cand_q > old_q or cand_ic > old_ic
   ```
-- **Design rationale**: Fine-tuned B5 replacement ensures that between any pair of correlated features A and B ($r \ge \theta$), the feature with the higher composite quality score ($q\_score$) ALWAYS survives, eliminating first-come, first-served iteration order bias. Initial θ=0.80 is deliberately permissive — produces a larger initial pool that B6 then trims to target size.
+- **Design rationale**: Fine-tuned B5 replacement ensures that between any pair of correlated features A and B ($r \ge \theta$), the feature with the higher composite quality score ($q\_score$) ALWAYS survives, eliminating first-come, first-served iteration order bias. θ=0.95 only rejects near-perfect duplicates — pool size is unconstrained.
 
-### B6. Adaptive Boundary Gate (Post-Correlation Pool Control)
-- **Global Constants** (defined at top of `select_features.py`):
-  - `DEFAULT_THETA = 0.80`: Relaxed correlation threshold for initial admission (deliberately permissive).
-  - `MAX_POOL_SIZE = 15`: Target max admitted pool size.
-  - `TOP_PROTECTED_COUNT = 7`: Unconditionally protects top 7 features based on training quality score $S_{train}$.
-  - `TIGHT_THETA = 0.65`: Strict correlation threshold for B6 lower-tier trimming.
+### B6. ONC Feature Clustering (Downstream Diversity Control)
+- **Global Constant** (defined at top of `select_features.py`):
+  - `DEFAULT_THETA = 0.95`: Near-duplicate correlation threshold (only rejects exact duplicates).
 
-#### Mechanism (pool > MAX_POOL_SIZE)
-- **Trigger**: When initial admission yields $> \text{MAX\_POOL\_SIZE}$ features.
-- **Mechanism**:
-  1. Computes training quality score $S_{train} = 0.40 \cdot \text{deflated\_ic} + 0.25 \cdot \text{sortino} + 0.20 \cdot \text{recent\_ic} + 0.15 \cdot \text{ic\_ir}$.
-  2. Protects top `TOP_PROTECTED_COUNT` (7) features unconditionally.
-  3. Screens lower-tier features with `TIGHT_THETA` (0.65) and quality floors (`recent_ic > 0`, `sortino > 0.05`, `deflated_ic >= 0.04`).
-  4. Overwrites initial `ADMITTED` verdict in `attempts_log` for pruned features to `REJECTED_ADAPTIVE_*`.
-- **Design**: Initial B5 is relaxed (θ=0.80) to avoid false-rejecting TP features. B6 is the strict stage — it quality-ranks the large pool and prunes redundancy with TIGHT_THETA=0.65.
-- **Zero OOS leakage**: Uses only training set statistics.
+#### Mechanism (diversity enforced in newtrade)
+- **Pool size**: Unconstrained. All features passing gates 1-7 + B4 (θ=0.95) are admitted.
+- **ONC Clustering** (`feature_clusters.py`):
+  1. Computes Spearman rank correlation matrix on training-period feature values.
+  2. Converts to angular distance: $d(i,j) = \sqrt{0.5 \cdot (1 - \rho_{ij})}$.
+  3. K-Means sweep $K \in [2, \min(10, N-1)]$, select by silhouette score.
+  4. Recursive re-split: clusters with below-average silhouette get re-clustered.
+  5. Outputs `data/cluster_assignments_{etf}_{side}.json`.
+- **newtrade group-constrained top-K**: At selection time, picks max 1 feature per cluster per day (greedy by EMA-30d rolling IC). Ensures diversity across feature families.
+- **Design**: Replaces the old Adaptive Boundary Gate (removed). Diversity is now a downstream concern, not an admission-time prune. This preserves more features for the dynamic selector to choose from.
+- **Zero OOS leakage**: Clustering uses only training set statistics.
 
 ### B7. Outputs & Trial Ledger
 - Save unique attempted candidate formulas to `trial_ledger_{ETF}_{side}.json` to track cumulative unique trials $N$.
@@ -164,17 +163,17 @@ SE_IC ≈ 1/√n_train
 - [x] **Execution: Conviction-weighted position sizing** — Default mode in `evaluate_concept.py`. Skips low-conviction days (z < 0.5), smooth tanh ramp. Reduces turnover ~40% without losing high-conviction trades.
 - [x] **Filter calibration: Relaxed B2/FDR/θ** — mono_thr 0.70→0.60, FDR q 0.20→0.30, θ 0.70. Data-driven from per-gate OOS diagnostics (FEATURE_DIAGNOSTICS.md).
 - [x] **Component stability gate (A0)** — Yearly IC decomposition in `generate_combos.py`. Flags features with IC_CV > 3.0 or neg_years > 2 as unstable, excludes from all combos. Training-only, ETF-agnostic.
-- [x] **B4 correlation threshold** — θ=0.80 (relaxed initial pass). Permissive to avoid high false-reject rate; B6b trims to target size with TIGHT_THETA=0.65.
+- [x] **B4 correlation threshold** — θ=0.95 (near-duplicate only). Pool size unconstrained; diversity enforced downstream by ONC clustering + newtrade group-constrained top-K.
 - [x] **Quality Gate before Correlation** — Moved Quality Gate (B6) before B4 correlation gate. Prevents low-quality features from blocking high-quality candidates.
-- [x] **Adaptive Boundary Gate (B6b)** — Dynamically tightens quality floors & correlation threshold (0.85→0.75) when pool > 35 features, protecting top 25 TP features. Configured via top-level global constants in `select_features.py`.
+- [x] **ONC Feature Clustering** — `feature_clusters.py` implements de Prado ONC (angular distance + K-Means + silhouette). Outputs cluster assignments for newtrade group-constrained selection. Replaces old Adaptive Boundary Gate.
 - [x] **Deep filter diagnosis tool** — `filter_diagnosis.py` for causal FP/FN analysis. Temporal decomposition, component stability, regime concentration, Cohen's d discriminators. Per-gate confusion matrix (§6b) and temporal sub-condition analysis (§6c). Excludes 588000ETF.
 - [x] **Adaptive temporal gate relaxation** — Ratio cap (`recency_ratio < 2.5`) now only fires when `|early_ic| < 0.05`. Features with solid early IC that strengthen recently are no longer penalized. Result: 300ETF pool 7→15, 159915ETF 11→16, 500ETF unchanged (capped). FP rate remains 0% for 500ETF/159915ETF; 300ETF gained 2 FP in exchange for 2× pool size.
 - [x] **B6 threshold tuning documented** — `MAX_YEARLY_IC_CV=0.85`, `MIN_STABILITY_PRODUCT=0.15`, `MAX_WEAK_LINK_CV=1.00` calibrated against FILTER_DIAGNOSIS FN data for 300ETF/159915ETF. Rationale added inline in §B6.
 - [x] **B6 gates added to diagnosis** — `REJECTED_HIGH_YEARLY_IC_CV`, `REJECTED_UNSTABLE_COMPONENT`, `REJECTED_STABILITY_GATE`, `REJECTED_QUALITY_GATE` now tracked in `filter_diagnosis.py` GATE_ORDER and `compile_report.py` funnel.
-- [ ] **Implement relaxed θ=0.80 + B6b strict trim** — Change `DEFAULT_THETA` from 0.70→0.80 in `select_features.py`. Remove `MIN_POOL_SIZE`/`RESCUE_THETA`. Re-run pipeline + filter_diagnosis to validate B6 sub-gate FN rates.
 
 ## References
 - Wang et al. 2026, *FactorMiner: A Self-Evolving Agent with Skills and Experience Memory for Financial Alpha Discovery*, arXiv:2602.14670 — admission gate, replacement rule, IC-weighted vs orthogonal vs learned-selection comparison.
 - Dobriban 2026, *No Universal Multiplicative FDR Bound for BH with Correlated Two-Sided Gaussian Tests*, arXiv:2607.14812 — FDR control failure under high candidate correlation; justification for BY-FDR.
 - Bailey & López de Prado 2014, *The Deflated Sharpe Ratio: Correcting for Selection Bias, Backtest Overfitting and Non-Normality*, Journal of Portfolio Management 40(5) — deflate IC/Sharpe by trial count.
+- López de Prado & Lewis 2019, *Detection of False Investment Strategies Using Unsupervised Learning*, SSRN 3517595 — ONC clustering (angular distance + K-Means + silhouette) for feature group definition.
 - `day-model_plan.md` (this repo, v2) — chronological split design, CSS+VIF mechanics, block-bootstrap CI reporting, all reused as-is where noted above.

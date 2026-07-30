@@ -43,6 +43,27 @@ $$w_i = w_{\min} + (w_{\max} - w_{\min}) \cdot \frac{\text{rank}(\text{score}_{i
 - **Moderate Tilt Default**: $w_{\min} = 0.2/N$, $w_{\max} = 1.8/N$ (top factor gets $9\times$ weight of bottom factor). Protects against pool tail noise while tilting heavily to top factors.
 - **Zero-Lookahead Dynamic Score Ranking (`--dynamic-score`, default `--dynamic-metric multi`)**: Dynamically updates factor rank scores $S_{i,t}$ on day $t$ using the 3-year trailing rolling monotonicity score, smoothed with 30d EMA (`--ic-ema-span 30`). Fully eliminates lookahead bias.
 
+#### ONC Group-Constrained Feature Selection
+
+When `--group-constraint` is enabled (auto-detects from cluster file), Top-K selection enforces diversity across ONC clusters:
+
+**Algorithm** (`_select_top_k_grouped` in `weighting.py`):
+1. Sort features by score (EMA-30d rolling IC) descending.
+2. Greedily select features: accept only if cluster has $<$ `max_per_group` representatives.
+3. Stop when `top_k` features selected OR all clusters exhausted.
+
+**ONC Clustering** (de Prado & Lewis 2019):
+- Computed offline by `day-model-new/feature_clusters.py` on training-period Spearman correlation.
+- Angular distance: $d(i,j) = \sqrt{0.5 \cdot (1 - \rho_{ij})}$.
+- K-Means sweep with silhouette selection + recursive re-split of weak clusters.
+- Output: `day-model-new/data/cluster_assignments_{etf}_{side}.json`.
+
+**CLI**:
+- `--group-constraint` / `--no-group-constraint`: Enable/disable (default: auto-detect).
+- `--max-per-group N`: Max features per cluster (default: 1).
+
+**Design Rationale**: Replaces admission-time correlation pruning (old B4 gate θ=0.80) with selection-time diversity control. Pool size is now unconstrained (B4 θ=0.95 only removes near-duplicates); ONC ensures the dynamic Top-K picker spreads across feature families.
+
 ---
 
 ## 3. Threshold Tuning & Position Sizing

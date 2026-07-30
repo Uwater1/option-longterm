@@ -98,6 +98,31 @@ def load_admitted_pool(etf: str, side: str = "single", min_features: int = 10) -
     return pool
 
 
+def load_cluster_assignments(etf: str, side: str = "single", suffix: str = "") -> dict | None:
+    """
+    Load ONC cluster assignments for group-constrained feature selection.
+
+    Returns:
+        dict mapping {feature_name: cluster_id} or None if file not found.
+    """
+    import json
+    cluster_path = REPO_ROOT / "day-model-new" / "data" / f"cluster_assignments_{etf}_{side}{suffix}.json"
+    if not cluster_path.exists():
+        return None
+
+    with open(cluster_path, "r") as f:
+        data = json.load(f)
+
+    # Convert {cluster_id: [feature_names]} to {feature_name: cluster_id}
+    feature_to_cluster = {}
+    for cluster_id, members in data.get("clusters", {}).items():
+        cid = int(cluster_id)
+        for feat_name in members:
+            feature_to_cluster[feat_name] = cid
+
+    return feature_to_cluster
+
+
 def load_etf_dataset(etf: str) -> pd.DataFrame:
     """
     Load raw ETF features dataset from day-model/data/features_{etf}.parquet.

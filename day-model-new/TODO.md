@@ -87,8 +87,12 @@ Feature ranking stability (500ETF top-5 year-over-year overlap): **0-3/5**. Rank
 
 #### Summary of Recommendations for day-model-new
 
-1. **θ=0.70, MAX_POOL_SIZE=15** — hits the 7-12 sweet spot
-2. **Quality-first, then prune redundancy** — don't sacrifice IC for diversity
+> **NOTE (Jul 2026)**: Recommendations 1-2 below are SUPERSEDED by the ONC clustering approach.
+> Current design: θ=0.95 (near-duplicate only), unconstrained pool size, diversity enforced downstream
+> by ONC clustering (`feature_clusters.py`) + newtrade group-constrained top-K selection.
+
+1. ~~**θ=0.70, MAX_POOL_SIZE=15** — hits the 7-12 sweet spot~~ → Now θ=0.95, pool unconstrained, ONC handles diversity
+2. ~~**Quality-first, then prune redundancy** — don't sacrifice IC for diversity~~ → Now quality gates 1-7 first, B4 only removes duplicates, ONC groups for downstream selection
 3. **No adaptive/rolling selection downstream** — rankings are unstable
 4. **Small pools (≤12) are ideal** — 159915ETF (11 features) is the gold standard
 5. **GLM/Ridge: low priority** — if pool is already 10-12, EW or ICW suffices

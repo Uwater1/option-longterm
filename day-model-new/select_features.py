@@ -36,10 +36,9 @@ MAX_FLIPS = 1 # Cross-period test: MAX_FLIPS=1 creates systematic false negative
 FDR_THRESHOLD = 0.20
 
 # Feature Selection Global Constants (easily fine-tuned)
-DEFAULT_THETA = 0.80          # Relaxed initial correlation threshold (B6b trims with TIGHT_THETA)
-MAX_POOL_SIZE = 15            # Target max admitted pool size
-TOP_PROTECTED_COUNT = 7       # Unconditionally protects top N features by S_train score
-TIGHT_THETA = 0.65            # Lower-tier correlation threshold for adaptive pool trimming
+# B4 Correlation Gate: single threshold, only reject near-perfect duplicates.
+# Diversity is enforced downstream by ONC clustering + newtrade group-constrained top-K.
+DEFAULT_THETA = 0.95          # Near-duplicate correlation threshold (B4 gate)
 
 # B2 Rolling Guard Defaults
 MONO_THR_SINGLE = 0.65        # Rolling 90d monotonicity threshold for single side
@@ -788,91 +787,15 @@ def compute_batched_candidate_nulls(X_survivors_flipped: np.ndarray, y: np.ndarr
     )
     return out_p93, out_p97, out_mean, out_ic_mean
 
-def apply_adaptive_boundary(admitted_pool, attempts_log, max_pool_size=MAX_POOL_SIZE, theta=DEFAULT_THETA):
-    """
-    If admitted_pool size > max_pool_size, dynamically tighten training-only quality floors
-    and correlation redundancy thresholds to prune weak/low-performing features down to ~max_pool_size,
-    while protecting top-tier True Positive (TP) features. Zero OOS data leakage.
-    """
-    if len(admitted_pool) <= max_pool_size:
-        return admitted_pool
-
-    n_initial = len(admitted_pool)
-    print(f"\n[Adaptive Boundary] Admitted pool size ({n_initial}) > target max ({max_pool_size}). Tightening training quality boundary...")
-
-    # Compute training quality score for sorting (training-only)
-    for cand in admitted_pool:
-        d_ic = cand.get("deflated_ic", 0.0)
-        sortino = cand.get("sortino", 0.0)
-        ic_ir = cand.get("ic_ir", 0.0)
-        mono = cand.get("monotonicity", 0.0)
-        rec_ic = cand.get("recent_ic", 0.0)
-        cand["q_score"] = 0.40 * d_ic + 0.25 * sortino + 0.20 * rec_ic + 0.15 * ic_ir
-
-    # Sort admitted pool by q_score descending (top TP features first)
-    admitted_pool.sort(key=lambda c: c["q_score"], reverse=True)
-
-    # Pass 1: Keep top TOP_PROTECTED_COUNT features unconditionally (protect top TP features)
-    top_protected_count = min(TOP_PROTECTED_COUNT, len(admitted_pool))
-    protected_pool = admitted_pool[:top_protected_count]
-    candidates_to_screen = admitted_pool[top_protected_count:]
-
-    # Pass 2: Screen lower-tier features with tighter quality & redundancy criteria
-    tight_theta = min(theta, TIGHT_THETA)  # preserve TP features while trimming high-redundancy tail
-    
-    current_pool = list(protected_pool)
-    pruned_verdicts = {}
-
-    for cand in candidates_to_screen:
-        cand_name = cand["feature_name"]
-        d_ic = cand.get("deflated_ic", 0.0)
-        sortino = cand.get("sortino", 0.0)
-        rec_ic = cand.get("recent_ic", 0.0)
-
-        # Quality check 1: Weak/decaying training IC or marginal deflated IC
-        if rec_ic <= 0.0 or sortino <= 0.05 or d_ic < 0.04:
-            pruned_verdicts[cand_name] = "REJECTED_ADAPTIVE_QUALITY_FLOOR"
-            continue
-
-        # Quality check 2: Tighter correlation check with currently accepted features
-        x_cand = cand["x_flipped"]
-        too_correlated = False
-        for p in current_pool:
-            c = abs(np.corrcoef(x_cand, p["x_flipped"])[0, 1])
-            if c >= tight_theta:
-                too_correlated = True
-                pruned_verdicts[cand_name] = "REJECTED_ADAPTIVE_REDUNDANCY"
-                break
-        
-        if not too_correlated:
-            current_pool.append(cand)
-
-    # Pass 3: If still > max_pool_size, trim bottom candidates unless deflated_ic >= 0.08 (exceptionally strong)
-    if len(current_pool) > max_pool_size:
-        final_pool = []
-        for idx, cand in enumerate(current_pool):
-            if idx < max_pool_size or cand.get("deflated_ic", 0.0) >= 0.08:
-                final_pool.append(cand)
-            else:
-                pruned_verdicts[cand["feature_name"]] = "REJECTED_ADAPTIVE_CAP_TRIM"
-        current_pool = final_pool
-
-    # Overwrite initial ADMITTED verdict in attempts_log for pruned candidates
-    for att in attempts_log:
-        feat = att.get("feature_name")
-        if feat in pruned_verdicts and att.get("verdict", "").startswith("ADMITTED"):
-            att["verdict"] = pruned_verdicts[feat]
-
-    n_pruned = n_initial - len(current_pool)
-    print(f"[Adaptive Boundary] Pruned {n_pruned} weak/redundant features. Final pool size: {len(current_pool)} (was {n_initial}).")
-    return current_pool
+# NOTE: Adaptive Boundary Gate (gate 9) removed.
+# Pool size is now unconstrained. Diversity is enforced downstream by
+# ONC clustering (feature_clusters.py) + newtrade group-constrained top-K selection.
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-e", "--etf", required=True, choices=["300ETF", "50ETF", "500ETF", "588000ETF", "159915ETF"])
     parser.add_argument("-s", "--side", required=True, choices=["single", "long", "short"])
-    parser.add_argument("--theta", type=float, default=DEFAULT_THETA, help="Max absolute correlation threshold")
-    parser.add_argument("--max-pool-size", type=int, default=MAX_POOL_SIZE, help="Target max admitted pool size before adaptive boundary tightening")
+    parser.add_argument("--theta", type=float, default=DEFAULT_THETA, help="Max absolute correlation threshold (near-duplicate rejection)")
     parser.add_argument("--mono-thr", type=float, default=None, help="Rolling tail IC positivity threshold (monotonicity)")
     parser.add_argument("--ir-thr", type=float, default=None, help="Rolling tail IC Information Ratio threshold")
     parser.add_argument("--early", action="store_true", help="Use early window return dataset")
@@ -1733,11 +1656,7 @@ def main():
 
     n_quality_rejects = sum(1 for a in attempts_log if a.get("verdict") == "REJECTED_QUALITY_GATE")
     n_stability_rejects = sum(1 for a in attempts_log if a.get("verdict") == "REJECTED_STABILITY_GATE")
-    print(f"Initial admitted pool size: {len(admitted_pool)} (Quality Gate rejected {n_quality_rejects}, Stability Gate rejected {n_stability_rejects} pre-correlation)")
-
-    # Apply adaptive boundary tightening if pool size exceeds max_pool_size (> 30)
-    admitted_pool = apply_adaptive_boundary(admitted_pool, attempts_log, max_pool_size=args.max_pool_size, theta=args.theta)
-    print(f"Final admitted pool size: {len(admitted_pool)}")
+    print(f"Final admitted pool size: {len(admitted_pool)} (Quality Gate rejected {n_quality_rejects}, Stability Gate rejected {n_stability_rejects} pre-correlation)")
 
     # Free x_flipped arrays from non-admitted results to reclaim memory
     admitted_names_set = {item["feature_name"] for item in admitted_pool}

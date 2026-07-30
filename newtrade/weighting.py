@@ -11,10 +11,53 @@ Implemented:
 
 Placeholder / Empty for future implementation:
   - Simple Linear GLM
+
+Group-Constrained Selection:
+  When cluster_ids is provided (from ONC clustering), top-K selection enforces
+  max_per_group features per cluster, ensuring diversity across feature groups.
 """
 
 import numpy as np
 from scipy.stats import rankdata
+
+
+def _select_top_k_grouped(scores: np.ndarray, top_k: int, cluster_ids: np.ndarray,
+                          max_per_group: int = 1) -> np.ndarray:
+    """
+    Greedy top-K selection with per-cluster cap.
+
+    Args:
+        scores: (N,) array of feature scores (higher = better)
+        top_k: number of features to select
+        cluster_ids: (N,) array of cluster assignments (int per feature)
+        max_per_group: max features allowed per cluster (default 1)
+
+    Returns:
+        np.ndarray of selected feature indices
+    """
+    order = np.argsort(scores)[::-1]  # descending
+    selected = []
+    group_counts = {}
+    for idx in order:
+        g = int(cluster_ids[idx])
+        if group_counts.get(g, 0) >= max_per_group:
+            continue
+        selected.append(idx)
+        group_counts[g] = group_counts.get(g, 0) + 1
+        if len(selected) >= top_k:
+            break
+    return np.array(selected, dtype=np.int64)
+
+
+def _get_top_k_indices(scores: np.ndarray, top_k: int, cluster_ids: np.ndarray = None,
+                       max_per_group: int = 1) -> np.ndarray:
+    """
+    Unified top-K selection: group-constrained if cluster_ids provided, else unconstrained.
+    """
+    if cluster_ids is not None and len(cluster_ids) == len(scores):
+        return _select_top_k_grouped(scores, top_k, cluster_ids, max_per_group)
+    else:
+        return np.argsort(scores)[-top_k:]
 
 
 def compute_ew(Z: np.ndarray, signs: np.ndarray, **kwargs) -> np.ndarray:
@@ -26,6 +69,8 @@ def compute_ew(Z: np.ndarray, signs: np.ndarray, **kwargs) -> np.ndarray:
       - Z: Standardized feature matrix shape (T, N)
       - signs: Array of factor signs (+1 or -1) shape (N,)
       - top_k: Optional integer K to select top K factors by rolling IC or pool metadata.
+      - cluster_ids: Optional (N,) array of ONC cluster assignments for group-constrained selection.
+      - max_per_group: Max features per cluster (default 1).
       
     Returns:
       - Z_composite: Composite signal shape (T,)
@@ -37,6 +82,8 @@ def compute_ew(Z: np.ndarray, signs: np.ndarray, **kwargs) -> np.ndarray:
     top_k = kwargs.get("top_k", None)
     expanding_ic = kwargs.get("expanding_ic", None)
     pool = kwargs.get("pool", None)
+    cluster_ids = kwargs.get("cluster_ids", None)
+    max_per_group = kwargs.get("max_per_group", 1)
     
     if top_k is not None and 1 <= top_k < N:
         Z_signed = Z * signs
@@ -53,16 +100,16 @@ def compute_ew(Z: np.ndarray, signs: np.ndarray, **kwargs) -> np.ndarray:
             
             Z_composite = np.zeros(T, dtype=np.float64)
             for t in range(T):
-                top_idx = np.argsort(ic_mat[t])[-top_k:]
+                top_idx = _get_top_k_indices(ic_mat[t], top_k, cluster_ids, max_per_group)
                 w_t = np.zeros(N, dtype=np.float64)
-                w_t[top_idx] = 1.0 / float(top_k)
+                w_t[top_idx] = 1.0 / float(len(top_idx))
                 Z_composite[t] = Z_signed[t] @ w_t
             return Z_composite
         elif pool and len(pool) == N:
             deflated_ics = np.array([item.get("deflated_ic", 0.0) for item in pool], dtype=np.float64)
-            top_idx = np.argsort(deflated_ics)[-top_k:]
+            top_idx = _get_top_k_indices(deflated_ics, top_k, cluster_ids, max_per_group)
             weights = np.zeros(N, dtype=np.float64)
-            weights[top_idx] = 1.0 / float(top_k)
+            weights[top_idx] = 1.0 / float(len(top_idx))
             return Z_signed @ weights
     
     # Apply sign alignment
@@ -79,7 +126,7 @@ def compute_icw(Z: np.ndarray, signs: np.ndarray, pool: list = None, n_train: in
     IC Weighted Scheme (ICW) with Empirical Bayes Shrinkage:
     w_i ∝ max(0, deflated_ic_i - SE_IC)^k
     SE_IC = 1 / sqrt(n_train)
-    Supports optional top_k feature gating.
+    Supports optional top_k feature gating with group constraint.
     """
     T, N = Z.shape
     if N == 0:
@@ -87,6 +134,8 @@ def compute_icw(Z: np.ndarray, signs: np.ndarray, pool: list = None, n_train: in
     
     top_k = kwargs.get("top_k", None)
     expanding_ic = kwargs.get("expanding_ic", None)
+    cluster_ids = kwargs.get("cluster_ids", None)
+    max_per_group = kwargs.get("max_per_group", 1)
     se_ic = 1.0 / np.sqrt(n_train)
     Z_signed = Z * signs
 
@@ -103,12 +152,12 @@ def compute_icw(Z: np.ndarray, signs: np.ndarray, pool: list = None, n_train: in
         
         Z_composite = np.zeros(T, dtype=np.float64)
         for t in range(T):
-            top_idx = np.argsort(ic_mat[t])[-top_k:]
+            top_idx = _get_top_k_indices(ic_mat[t], top_k, cluster_ids, max_per_group)
             w_t = np.zeros(N, dtype=np.float64)
             raw_w = np.maximum(0.0, ic_mat[t, top_idx] - se_ic) ** k
             w_sum = raw_w.sum()
             if w_sum < 1e-12:
-                w_t[top_idx] = 1.0 / float(top_k)
+                w_t[top_idx] = 1.0 / float(len(top_idx))
             else:
                 w_t[top_idx] = raw_w / w_sum
             Z_composite[t] = Z_signed[t] @ w_t
@@ -123,7 +172,7 @@ def compute_icw(Z: np.ndarray, signs: np.ndarray, pool: list = None, n_train: in
     weights = np.maximum(0.0, deflated_ics - se_ic) ** k
     
     if top_k is not None and 1 <= top_k < N:
-        top_idx = np.argsort(deflated_ics)[-top_k:]
+        top_idx = _get_top_k_indices(deflated_ics, top_k, cluster_ids, max_per_group)
         mask = np.zeros(N, dtype=bool)
         mask[top_idx] = True
         weights[~mask] = 0.0
@@ -170,7 +219,7 @@ def compute_score_w(Z: np.ndarray, signs: np.ndarray, pool: list = None, score_w
     """
     Score Weighted Scheme (B3-Inspired):
     w_i ∝ score_i = w_ic*rank_norm(deflated_ic) + w_ir*rank_norm(ic_ir) + w_mono*rank_norm(mono)
-    Supports dynamic expanding score matrix and top_k feature filtering.
+    Supports dynamic expanding score matrix and top_k feature filtering with group constraint.
     """
     T, N = Z.shape
     if N == 0:
@@ -180,6 +229,8 @@ def compute_score_w(Z: np.ndarray, signs: np.ndarray, pool: list = None, score_w
 
     top_k = kwargs.get("top_k", None)
     expanding_ic = kwargs.get("expanding_ic", None)
+    cluster_ids = kwargs.get("cluster_ids", None)
+    max_per_group = kwargs.get("max_per_group", 1)
     if expanding_ic is not None and expanding_ic.shape == Z.shape:
         ic_ema_span = kwargs.get("ic_ema_span", 30)
         if ic_ema_span and ic_ema_span > 1:
@@ -197,11 +248,11 @@ def compute_score_w(Z: np.ndarray, signs: np.ndarray, pool: list = None, score_w
             s_t = score_mat[t]
             w_t = np.zeros(N, dtype=np.float64)
             if top_k is not None and 1 <= top_k < N:
-                top_idx = np.argsort(s_t)[-top_k:]
+                top_idx = _get_top_k_indices(s_t, top_k, cluster_ids, max_per_group)
                 w_sub = s_t[top_idx]
                 w_sum = w_sub.sum()
                 if w_sum < 1e-12:
-                    w_t[top_idx] = 1.0 / float(top_k)
+                    w_t[top_idx] = 1.0 / float(len(top_idx))
                 else:
                     w_t[top_idx] = w_sub / w_sum
             else:
@@ -216,11 +267,11 @@ def compute_score_w(Z: np.ndarray, signs: np.ndarray, pool: list = None, score_w
     scores = _compute_pool_scores(pool, score_weights=score_weights) if pool else np.ones(N, dtype=np.float64)
     weights = np.zeros(N, dtype=np.float64)
     if top_k is not None and 1 <= top_k < N:
-        top_idx = np.argsort(scores)[-top_k:]
+        top_idx = _get_top_k_indices(scores, top_k, cluster_ids, max_per_group)
         sub_scores = scores[top_idx]
         w_sum = sub_scores.sum()
         if w_sum < 1e-12:
-            weights[top_idx] = 1.0 / float(top_k)
+            weights[top_idx] = 1.0 / float(len(top_idx))
         else:
             weights[top_idx] = sub_scores / w_sum
     else:
@@ -241,12 +292,16 @@ def get_rank_weights(pool: list, w_min_ratio: float = 0.2, w_max_ratio: float = 
                      top_k: int = None, score_weights: tuple = (0.20, 0.15, 0.65), **kwargs) -> np.ndarray:
     """
     Calculate Scheme 4 factor weights vector w_i for a pool.
+    Supports group-constrained top-K selection via cluster_ids.
     """
     N = len(pool)
     if N == 0:
         return np.empty(0, dtype=np.float64)
     if N == 1:
         return np.ones(1, dtype=np.float64)
+
+    cluster_ids = kwargs.get("cluster_ids", None)
+    max_per_group = kwargs.get("max_per_group", 1)
 
     scores = _compute_pool_scores(pool, score_weights=score_weights)
     ranks = rankdata(scores, method="average")  # [1, N]
@@ -258,15 +313,16 @@ def get_rank_weights(pool: list, w_min_ratio: float = 0.2, w_max_ratio: float = 
 
     if shape_clean == "top_k" or (top_k is not None and 1 <= top_k < N):
         k = top_k if top_k is not None and 1 <= top_k <= N else N
-        top_k_indices = np.argsort(scores)[-k:]  # indices of top k scores
+        top_k_indices = _get_top_k_indices(scores, k, cluster_ids, max_per_group)
+        k_actual = len(top_k_indices)
         weights = np.zeros(N, dtype=np.float64)
-        if k == 1:
+        if k_actual == 1:
             weights[top_k_indices] = 1.0
         else:
             sub_ranks = rankdata(scores[top_k_indices], method="average")
-            sub_w_min = w_min_ratio / k
-            sub_w_max = w_max_ratio / k
-            sub_w = sub_w_min + (sub_w_max - sub_w_min) * (sub_ranks - 1.0) / (k - 1.0)
+            sub_w_min = w_min_ratio / k_actual
+            sub_w_max = w_max_ratio / k_actual
+            sub_w = sub_w_min + (sub_w_max - sub_w_min) * (sub_ranks - 1.0) / (k_actual - 1.0)
             weights[top_k_indices] = sub_w
     elif shape_clean == "power":
         norm_ranks = (ranks - 1.0) / (N - 1.0)  # [0, 1]
@@ -298,7 +354,7 @@ def compute_rank_w(Z: np.ndarray, signs: np.ndarray, pool: list = None,
     """
     Rank Bounded Weight Scheme (Scheme 4):
     Ranks factors by composite score, maps to weights using chosen mapping shape.
-    Supports top_k feature selection both statically and dynamically.
+    Supports top_k feature selection both statically and dynamically with group constraint.
     """
     T, N = Z.shape
     if N == 0:
@@ -307,6 +363,9 @@ def compute_rank_w(Z: np.ndarray, signs: np.ndarray, pool: list = None,
     if N == 1:
         return Z[:, 0] * signs[0]
     
+    cluster_ids = kwargs.get("cluster_ids", None)
+    max_per_group = kwargs.get("max_per_group", 1)
+
     if expanding_ic is not None and expanding_ic.shape == Z.shape:
         if ic_ema_span and ic_ema_span > 1:
             alpha = 2.0 / (ic_ema_span + 1.0)
@@ -324,15 +383,16 @@ def compute_rank_w(Z: np.ndarray, signs: np.ndarray, pool: list = None,
         for t in range(T):
             ic_t = ic_mat[t]
             if top_k is not None and 1 <= top_k < N:
-                top_idx = np.argsort(ic_t)[-top_k:]
+                top_idx = _get_top_k_indices(ic_t, top_k, cluster_ids, max_per_group)
+                k_actual = len(top_idx)
                 w_target = np.zeros(N, dtype=np.float64)
-                if top_k == 1:
+                if k_actual == 1:
                     w_target[top_idx] = 1.0
                 else:
                     sub_ranks = rankdata(ic_t[top_idx], method="average")
-                    sub_w_min = w_min_ratio / top_k
-                    sub_w_max = w_max_ratio / top_k
-                    w_target[top_idx] = sub_w_min + (sub_w_max - sub_w_min) * (sub_ranks - 1.0) / (top_k - 1.0)
+                    sub_w_min = w_min_ratio / k_actual
+                    sub_w_max = w_max_ratio / k_actual
+                    w_target[top_idx] = sub_w_min + (sub_w_max - sub_w_min) * (sub_ranks - 1.0) / (k_actual - 1.0)
                     w_target = w_target / w_target.sum()
             else:
                 w_min = w_min_ratio / N
@@ -363,6 +423,8 @@ def compute_rank_w(Z: np.ndarray, signs: np.ndarray, pool: list = None,
         softmax_tau=softmax_tau,
         top_k=top_k,
         score_weights=score_weights,
+        cluster_ids=cluster_ids,
+        max_per_group=max_per_group,
     )
     
     # Apply sign alignment and weighted sum

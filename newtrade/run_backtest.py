@@ -22,7 +22,7 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
 
-from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_ic_numba, expanding_factor_score_numba, load_future_trade_returns
+from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_ic_numba, expanding_factor_score_numba, load_future_trade_returns, load_cluster_assignments
 from weighting import get_weighting_scheme
 from strategy import generate_positions, simulate_etf_spot, calculate_metrics, sweep_optimal_threshold, compute_production_threshold, build_trade_log_df
 from robustness import deflated_sharpe_ratio, run_cpcv_backtest
@@ -41,7 +41,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                         rank_kwargs: dict = None, dynamic_ic: bool = False, long_only: bool = False,
                         use_future: bool = False, use_option: bool = False, use_stoploss: bool = True,
                         stoploss_mode: str = "time_decay_trailing", stoploss_param: float = 0.03,
-                        pool_override: list = None) -> dict:
+                        pool_override: list = None, group_constraint: bool = None, max_per_group: int = 1) -> dict:
     """
     Run backtest for one ETF and side combination filtered to OOS date range.
     
@@ -107,6 +107,21 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     # 3. Build raw feature matrix & signs
     X_raw, signs, feat_names = build_pool_feature_matrix(df, pool)
     
+    # 3b. Build cluster_ids for group-constrained selection (if enabled)
+    cluster_ids = None
+    if group_constraint is not False:  # None (auto) or True
+        feat_to_cluster = load_cluster_assignments(etf, side)
+        if feat_to_cluster is not None:
+            # Build cluster_ids array aligned with feat_names
+            cluster_ids = np.array([feat_to_cluster.get(fn, -1) for fn in feat_names], dtype=np.int64)
+            # Only use if all features have cluster assignments
+            if (cluster_ids < 0).any():
+                n_missing = (cluster_ids < 0).sum()
+                print(f"    [INFO] {n_missing}/{len(feat_names)} features missing cluster assignments. Disabling group constraint.")
+                cluster_ids = None
+            elif group_constraint is None:
+                print(f"    [INFO] Group constraint auto-enabled: {len(set(cluster_ids))} ONC clusters detected.")
+    
     # 4. Zero-lookahead expanding z-score standardizer on full history
     burn_in = 252 if len(df) > 500 else 100
     Z_std = expanding_zscore_numba(X_raw, burn_in=burn_in, clip=3.0)
@@ -121,7 +136,11 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     if scheme_name == "ensemble":
         # Ensemble: equal-weight average of all 4 schemes
         IC_mat = expanding_factor_ic_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
-        rk = rank_kwargs if rank_kwargs else {}
+        rk = dict(rank_kwargs) if rank_kwargs else {}
+        # Inject group constraint params
+        if cluster_ids is not None:
+            rk["cluster_ids"] = cluster_ids
+            rk["max_per_group"] = max_per_group
         Z_composites = []
         for s_name in ENSEMBLE_SCHEMES:
             s_func = get_weighting_scheme(s_name)
@@ -132,6 +151,10 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     else:
         scheme_func = get_weighting_scheme(scheme_name)
         extra_kwargs = dict(rank_kwargs) if rank_kwargs else {}
+        # Inject group constraint params
+        if cluster_ids is not None:
+            extra_kwargs["cluster_ids"] = cluster_ids
+            extra_kwargs["max_per_group"] = max_per_group
         if dynamic_ic:
             metric_choice = extra_kwargs.get("dynamic_metric", "multi")
             if metric_choice == "multi" and scheme_name == "score":
@@ -318,10 +341,18 @@ def main():
     parser.add_argument("--option", action="store_true", help="Simulate option portfolio (100k RMB, 10k per trade, nearest OTM, 7-day min DTM)")
 
     # Stop-Loss options
-    parser.add_argument("--stoploss", dest="stoploss", action="store_true", default=True, help="Enable 3% time decay trailing stop-loss (default: True).")
+    parser.add_argument("--stoploss", dest="stoploss", action="store_true", default=True, help="Enable 3%% time decay trailing stop-loss (default: True).")
     parser.add_argument("--no-stoploss", dest="stoploss", action="store_false", help="Disable stop-loss (hold position to 14:35 PM close).")
     parser.add_argument("--stoploss-mode", type=str, default="time_decay_trailing", help="Stop-loss mode (default: time_decay_trailing).")
-    parser.add_argument("--stoploss-param", type=float, default=0.03, help="Stop-loss threshold parameter (default: 0.03 = 3.0%).")
+    parser.add_argument("--stoploss-param", type=float, default=0.03, help="Stop-loss threshold parameter (default: 0.03 = 3.0%%).")
+
+    # Group-Constrained Feature Selection (ONC clustering)
+    parser.add_argument("--group-constraint", dest="group_constraint", action="store_true", default=None,
+                        help="Enable ONC group-constrained top-K selection (max 1 feature per cluster). Default: auto-detect from cluster file.")
+    parser.add_argument("--no-group-constraint", dest="group_constraint", action="store_false",
+                        help="Disable group constraint (use unconstrained top-K).")
+    parser.add_argument("--max-per-group", type=int, default=1,
+                        help="Max features allowed per ONC cluster (default: 1).")
 
     # Validation options
     parser.add_argument("--validate", dest="validate", action="store_true", default=True, help="Run DSR + CPCV validation on results (default: True)")
@@ -467,6 +498,7 @@ def main():
                     rank_kwargs=rank_kwargs, dynamic_ic=True,
                     long_only=args.long_only, use_stoploss=False,
                     pool_override=_pool_ov,
+                    group_constraint=args.group_constraint, max_per_group=args.max_per_group,
                 )
                 yr_results.append(res)
             decay_results.append((yr, yr_results))
@@ -560,6 +592,8 @@ def main():
                 stoploss_mode=args.stoploss_mode,
                 stoploss_param=args.stoploss_param,
                 pool_override=_pool_ov,
+                group_constraint=args.group_constraint,
+                max_per_group=args.max_per_group,
             )
             results.append(res)
 
