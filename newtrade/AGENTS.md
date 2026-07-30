@@ -27,7 +27,10 @@ uv run python newtrade/run_backtest.py -e 300ETF --scheme ew
 # Period-pool backtest (auto OOS start from pool cutoff 2024-01 through 2026-01)
 uv run python newtrade/run_backtest.py -e all --pool-period _p2016_2024 --no-stoploss
 
-# Single-year isolated backtest (caps evaluation to 2022 calendar year)
+# Run all pool vintages sequentially (old, _p2016_2024, _p2018_2026) for full benchmark comparison
+uv run python newtrade/run_backtest.py -e all --pool-period all
+
+# Start-year backtest (runs from 2022-01-01 through 2026-01-01)
 uv run python newtrade/run_backtest.py -e all --year 2022 --pool-period old --no-stoploss -o newtrade/REPORT_2022_old.md
 
 # Pool decay analysis: test one pool across all future years
@@ -104,7 +107,9 @@ newtrade/
 | Topic | Decision |
 |-------|----------|
 | **Pool Migration** | 2-year cadence via `run_periods.py`. IC gate (candidate > current + min delta) → Sharpe validation → percentile P75 transition → rollback guard. See [MIGRATION_PLAN.md](MIGRATION_PLAN.md). |
-| **Per-Year Diagnosis** | `--year 2024 --pool-period _p2016_2024` generates full REPORT_2024.md with unique chart. `--decay` tests pool across all future years. |
+| **Per-Year Diagnosis** | `--year 2022` sets start date to `2022-01-01` and runs through `2026-01-01` with unique chart. `--pool-period _p2016_2024` auto-infers OOS start date `2024-01-01`. `--decay` tests pool across future years. |
+| **Full Pool Benchmark** | `--pool-period all` sequentially executes backtests for all pool vintages (`old`, `_p2016_2024`, `_p2018_2026`) and generates dedicated reports/charts. |
+| **Active ETF Scope** | `300ETF`, `500ETF`, `50ETF`, `159915ETF`. `588000ETF` is **disabled** (trained on 2021-2025 during market regime change). |
 | **Production Signal** | IC Weighted (`--scheme icw`) on Top-10 features selected by 30d EMA IC (`--top-k 10 --dynamic-metric ic --ic-ema-span 30`). |
 | **Scheme Comparison** | `--scheme all` evaluates `ICW` and `EW` side-by-side. |
 | **Top-K Truncation** | Default `--top-k 10`. Solves 500ETF 32-feature dilution (+0.113 Sharpe lift) while acting as a non-destructive floor for lean pools (159915ETF SR=1.497). |

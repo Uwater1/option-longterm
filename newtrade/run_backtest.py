@@ -29,7 +29,7 @@ from robustness import deflated_sharpe_ratio, run_cpcv_backtest
 from option_strategy import simulate_option_portfolio
 from research_stoploss import load_intraday_bars_dict, simulate_full_series
 
-AVAILABLE_ETFS = ["300ETF", "500ETF", "50ETF", "588000ETF", "159915ETF"]
+AVAILABLE_ETFS = ["300ETF", "500ETF", "50ETF", "159915ETF"]
 ALL_SCHEMES = ["icw", "ew"]  # leave only icw and ew for --scheme all
 ENSEMBLE_SCHEMES = ["icw", "ew"]  # schemes averaged in ensemble
 
@@ -347,23 +347,49 @@ def main():
     effective_fee_bps = args.fee_bps if args.fee_bps is not None else (4.0 if args.future else 8.0)
     fee_bps = effective_fee_bps / 10000.0
 
-    # --year: override start/end dates and output path
+    # --year: set OOS start date from year (runs through end_date) and output path
     if args.year:
         args.start_date = f"{args.year}-01-01"
-        args.end_date = f"{args.year + 1}-01-01"
         if not args.output:
             args.output = str(HERE / f"REPORT_{args.year}.md")
     elif args.pool_period and args.start_date == "2022-01-01":
         import re
         match = re.search(r'_p\d{4}_(\d{4})', args.pool_period)
         if match:
-            pool_end_yr = match.group(1)
-            args.start_date = f"{pool_end_yr}-01-01"
+            pool_end_yr = int(match.group(1))
+            start_yr = min(pool_end_yr, 2025)
+            args.start_date = f"{start_yr}-01-01"
             if not args.output:
-                args.output = str(HERE / f"REPORT_{args.pool_period.lstrip('_')}.md")
-            print(f"  [AUTO OOS] Inferred OOS start_date={args.start_date} from pool_period '{args.pool_period}' (running till {args.end_date})")
+                args.output = str(HERE / f"REPORT_{pool_end_yr}.md")
+            print(f"  [AUTO OOS] Inferred OOS start_date={args.start_date} from pool_period '{args.pool_period}' -> output REPORT_{pool_end_yr}.md")
 
-    # --pool-period: load period-specific pool override
+    # --pool-period: load period-specific pool override or handle 'all'
+    if args.pool_period and args.pool_period.lower() == "all":
+        periods = ["old", "_p2015_2023", "_p2016_2024", "_p2017_2025", "_p2018_2026"]
+        print("================================================================================")
+        print(f"FULL POOL PERIOD BENCHMARK | Running periods: {periods}")
+        print("================================================================================\n")
+        argv_clean = []
+        skip_next = False
+        for arg in sys.argv[1:]:
+            if skip_next:
+                skip_next = False
+                continue
+            if arg == "--pool-period":
+                skip_next = True
+                continue
+            if arg.startswith("--pool-period="):
+                continue
+            argv_clean.append(arg)
+
+        for p_name in periods:
+            print(f"\n" + "=" * 80)
+            print(f"  >>> RUNNING POOL PERIOD: {p_name} <<<")
+            print("=" * 80 + "\n")
+            sys.argv = [sys.argv[0]] + argv_clean + ["--pool-period", p_name]
+            main()
+        return
+
     pool_period_override = None
     if args.pool_period:
         import json as _json

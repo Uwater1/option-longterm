@@ -651,7 +651,7 @@ def main():
         run_sensitivity = args.sensitivity
     
     # ETF list
-    ALL_ETFS = ["300ETF", "500ETF", "50ETF", "588000ETF", "159915ETF"]
+    ALL_ETFS = ["300ETF", "500ETF", "50ETF", "159915ETF"]
     etfs = ALL_ETFS if args.etf == "all" else [args.etf]
     
     fee_bps = args.fee_bps / 10000.0  # convert from bps to decimal

@@ -23,7 +23,7 @@ OLD_POOLS = mod.POOLS
 # Updated 2026-07-30: 159915ETF migrates to p2018_2026 (approved by migration protocol)
 USE_NEW_PIPELINE = {"159915ETF"}
 NEW_PERIOD_SUFFIX = "_p2018_2026"  # Latest approved period
-ETFS = ["300ETF", "50ETF", "500ETF", "588000ETF", "159915ETF"]
+ETFS = ["300ETF", "50ETF", "500ETF", "159915ETF"]
 SIDES = ["single", "long", "short"]
 
 

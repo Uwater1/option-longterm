@@ -1,6 +1,6 @@
 # NewTrade OOS Backtest Report
 
-- **OOS Evaluation Period**: `2023-01-01 ~ 2024-01-01`
+- **OOS Evaluation Period**: `2023-01-01 ~ 2026-01-01`
 - **Intraday Trade Session**: `10:00 AM Open -> 14:35 PM Close`
 - **Scheme(s)**: `ALL`
 - **Conviction Threshold**: `auto` (buffer=+0.1)
@@ -14,22 +14,20 @@
 
 | ETF | Asset | Side | OOS Period | Z_th | Features | Trades | Cost Sharpe | Raw Sharpe | Total PnL | Long PnL | Long Sharpe | Short PnL | Short Sharpe | Max DD | Win Rate | Turnover |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 300ETF | Spot ETF | single | 2023-01 ~ 2023-12 | L:1.30/S:1.00 (train L:1.20/S:0.90) | 10 | 17 (3L/14S) | -0.035 | 0.429 | -0.0010 | +0.0102 | 6.023 | -0.0112 | -1.877 | 0.0325 | 58.8% (L:66.7%, S:57.1%) | 35.4x |
-| 500ETF | Spot ETF | single | 2023-01 ~ 2023-12 | L:0.80/S:1.40 (train L:0.70/S:1.30) | 32 | 37 (37L/0S) | 0.540 | 1.393 | +0.0182 | +0.0182 | 1.384 | +0.0000 | 0.000 | 0.0272 | 54.1% (L:54.1%, S:N/A) | 63.5x |
-| 50ETF | Spot ETF | single | 2023-01 ~ 2024-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
-| 588000ETF | Spot ETF | single | 2023-01 ~ 2024-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
-| 159915ETF | Spot ETF | single | 2023-01 ~ 2023-12 | L:0.90/S:0.80 (train L:0.80/S:0.70) | 12 | 60 (19L/41S) | 2.275 | 2.909 | +0.1580 | +0.0863 | 7.339 | +0.0718 | 3.376 | 0.0454 | 61.7% (L:57.9%, S:63.4%) | 108.3x |
+| 300ETF | Spot ETF | single | 2023-01 ~ 2025-12 | L:1.30/S:1.10 (train L:1.20/S:1.00) | 11 | 57 (15L/42S) | 0.596 | 0.921 | +0.0819 | +0.0527 | 3.423 | +0.0292 | 1.467 | 0.0358 | 57.9% (L:66.7%, S:54.8%) | 37.4x |
+| 500ETF | Spot ETF | single | 2023-01 ~ 2025-12 | L:0.80/S:1.20 (train L:0.70/S:1.10) | 18 | 168 (153L/15S) | 1.304 | 1.805 | +0.3432 | +0.2744 | 2.396 | +0.0689 | 6.697 | 0.0935 | 57.1% (L:56.2%, S:66.7%) | 95.0x |
+| 50ETF | Spot ETF | single | 2023-01 ~ 2026-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
+| 159915ETF | Spot ETF | single | 2023-01 ~ 2025-12 | L:0.70/S:1.20 (train L:0.60/S:1.10) | 10 | 119 (113L/6S) | 1.816 | 2.093 | +0.5942 | +0.4945 | 4.153 | +0.0997 | 13.939 | 0.0843 | 58.0% (L:56.6%, S:83.3%) | 67.2x |
 
 <details>
 <summary><b>Equal Weight (EW)</b> (click to expand)</summary>
 
 | ETF | Asset | Side | OOS Period | Z_th | Features | Trades | Cost Sharpe | Raw Sharpe | Total PnL | Long PnL | Long Sharpe | Short PnL | Short Sharpe | Max DD | Win Rate | Turnover |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 300ETF | Spot ETF | single | 2023-01 ~ 2023-12 | L:1.20/S:1.00 (train L:1.10/S:0.90) | 10 | 10 (3L/7S) | -0.518 | -0.233 | -0.0147 | +0.0102 | 6.023 | -0.0249 | -6.802 | 0.0390 | 40.0% (L:66.7%, S:28.6%) | 20.8x |
-| 500ETF | Spot ETF | single | 2023-01 ~ 2023-12 | L:0.80/S:1.30 (train L:0.70/S:1.20) | 32 | 39 (37L/2S) | 0.922 | 1.747 | +0.0332 | +0.0182 | 1.384 | +0.0150 | 21.780 | 0.0272 | 56.4% (L:54.1%, S:100.0%) | 67.7x |
-| 50ETF | Spot ETF | single | 2023-01 ~ 2024-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
-| 588000ETF | Spot ETF | single | 2023-01 ~ 2024-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
-| 159915ETF | Spot ETF | single | 2023-01 ~ 2023-12 | L:0.80/S:0.70 (train L:0.70/S:0.60) | 12 | 88 (25L/63S) | 2.329 | 3.215 | +0.1747 | +0.0980 | 6.947 | +0.0767 | 2.593 | 0.0440 | 60.2% (L:60.0%, S:60.3%) | 149.9x |
+| 300ETF | Spot ETF | single | 2023-01 ~ 2025-12 | L:1.20/S:1.10 (train L:1.10/S:1.00) | 11 | 63 (12L/51S) | 0.800 | 1.171 | +0.1040 | +0.0691 | 5.552 | +0.0349 | 1.652 | 0.0387 | 58.7% (L:66.7%, S:56.9%) | 41.6x |
+| 500ETF | Spot ETF | single | 2023-01 ~ 2025-12 | L:0.90/S:1.60 (train L:0.80/S:1.50) | 18 | 129 (129L/0S) | 0.698 | 1.164 | +0.1549 | +0.1549 | 1.665 | +0.0000 | 0.000 | 0.0888 | 54.3% (L:54.3%, S:N/A) | 72.8x |
+| 50ETF | Spot ETF | single | 2023-01 ~ 2026-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
+| 159915ETF | Spot ETF | single | 2023-01 ~ 2025-12 | L:0.90/S:1.50 (train L:0.80/S:1.40) | 10 | 49 (49L/0S) | 1.008 | 1.162 | +0.2518 | +0.2518 | 3.994 | +0.0000 | 0.000 | 0.0531 | 57.1% (L:57.1%, S:N/A) | 28.4x |
 
 </details>
 
@@ -42,10 +40,10 @@
 
 | ETF | Scheme | Sharpe | DSR | Verdict | CPCV Median | CPCV Std | % Positive |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 300ETF | icw | -0.035 | 0.054 | NOT_SIGNIFICANT | 0.895 | 0.220 | 100% |
-| 500ETF | icw | 0.540 | 0.151 | NOT_SIGNIFICANT | 1.005 | 0.414 | 100% |
-| 159915ETF | icw | 2.275 | 0.776 | NOT_SIGNIFICANT | 1.054 | 0.336 | 100% |
-| 300ETF | ew | -0.518 | 0.017 | NOT_SIGNIFICANT | 0.705 | 0.257 | 100% |
-| 500ETF | ew | 0.922 | 0.269 | NOT_SIGNIFICANT | 0.967 | 0.404 | 100% |
-| 159915ETF | ew | 2.329 | 0.783 | NOT_SIGNIFICANT | 0.839 | 0.269 | 100% |
+| 300ETF | icw | 0.596 | 0.334 | NOT_SIGNIFICANT | 0.727 | 0.184 | 100% |
+| 500ETF | icw | 1.304 | 0.862 | NOT_SIGNIFICANT | 0.907 | 0.497 | 100% |
+| 159915ETF | icw | 1.816 | 0.996 | SIGNIFICANT | 1.273 | 0.360 | 100% |
+| 300ETF | ew | 0.800 | 0.536 | NOT_SIGNIFICANT | 0.508 | 0.277 | 100% |
+| 500ETF | ew | 0.698 | 0.393 | NOT_SIGNIFICANT | 0.911 | 0.527 | 100% |
+| 159915ETF | ew | 1.008 | 0.813 | NOT_SIGNIFICANT | 0.832 | 0.434 | 100% |
 

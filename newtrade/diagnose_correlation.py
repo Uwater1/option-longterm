@@ -382,7 +382,7 @@ def main():
     args = parser.parse_args()
 
     if args.etf.lower() == "all":
-        etfs = ["300ETF", "500ETF", "50ETF", "588000ETF", "159915ETF"]
+        etfs = ["300ETF", "500ETF", "50ETF", "159915ETF"]
     else:
         norm_etf = ETF_ALIAS_MAP.get(args.etf.lower(), args.etf)
         etfs = [norm_etf]
