@@ -27,6 +27,7 @@ from weighting import get_weighting_scheme
 from strategy import generate_positions, simulate_etf_spot, calculate_metrics, sweep_optimal_threshold, compute_production_threshold, build_trade_log_df
 from robustness import deflated_sharpe_ratio, run_cpcv_backtest
 from option_strategy import simulate_option_portfolio
+from research_stoploss import load_intraday_bars_dict, simulate_full_series
 
 AVAILABLE_ETFS = ["300ETF", "500ETF", "50ETF", "588000ETF", "159915ETF"]
 ALL_SCHEMES = ["icw", "ew"]  # leave only icw and ew for --scheme all
@@ -38,7 +39,8 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                         start_date: str = "2022-01-01", end_date: str = "2026-01-01",
                         z_buffer: float = 0.1, z_short_buffer: float = None, auto_threshold: bool = False,
                         rank_kwargs: dict = None, dynamic_ic: bool = False, long_only: bool = False,
-                        use_future: bool = False, use_option: bool = False) -> dict:
+                        use_future: bool = False, use_option: bool = False, use_stoploss: bool = True,
+                        stoploss_mode: str = "time_decay_trailing", stoploss_param: float = 0.03) -> dict:
     """
     Run backtest for one ETF and side combination filtered to OOS date range.
     
@@ -180,7 +182,6 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
 
     # 9. Backtest Simulation on OOS slice
     trade_returns_oos = full_trade_ret[mask.values if isinstance(mask, pd.Series) else mask]
-    
     option_result = None
     if use_option:
         # Option portfolio simulation mode
@@ -199,6 +200,17 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
         net_returns = option_result["daily_returns"]
         raw_returns = net_returns  # no separate raw for options
         fees = np.zeros_like(net_returns)  # fees embedded in option P&L
+    elif use_stoploss:
+        bars_dict = load_intraday_bars_dict(etf)
+        if bars_dict:
+            net_returns, stop_hits, trig_pct = simulate_full_series(
+                df_oos["date"], positions_oos, bars_dict, method=stoploss_mode, param=stoploss_param, fee_bps=fee_bps
+            )
+            raw_returns = net_returns
+            fees = np.where(stop_hits, fee_bps + 0.0002, np.where(np.abs(positions_oos) > 1e-5, fee_bps, 0.0))
+        else:
+            print(f"    [WARNING] Could not load 1m bars for {etf}. Falling back to baseline simulation.")
+            net_returns, raw_returns, fees = simulate_etf_spot(trade_returns_oos, positions_oos, fee_bps=fee_bps)
     else:
         net_returns, raw_returns, fees = simulate_etf_spot(trade_returns_oos, positions_oos, fee_bps=fee_bps)
 
@@ -304,6 +316,12 @@ def main():
     parser.add_argument("--future", action="store_true", help="Trade underlying Index Futures (IF88 for 300ETF, IC88 for 500ETF, IH88 for 50ETF) instead of Spot ETF.")
     parser.add_argument("--option", action="store_true", help="Simulate option portfolio (100k RMB, 10k per trade, nearest OTM, 7-day min DTM)")
 
+    # Stop-Loss options
+    parser.add_argument("--stoploss", dest="stoploss", action="store_true", default=True, help="Enable 3% time decay trailing stop-loss (default: True).")
+    parser.add_argument("--no-stoploss", dest="stoploss", action="store_false", help="Disable stop-loss (hold position to 14:35 PM close).")
+    parser.add_argument("--stoploss-mode", type=str, default="time_decay_trailing", help="Stop-loss mode (default: time_decay_trailing).")
+    parser.add_argument("--stoploss-param", type=float, default=0.03, help="Stop-loss threshold parameter (default: 0.03 = 3.0%).")
+
     # Validation options
     parser.add_argument("--validate", dest="validate", action="store_true", default=True, help="Run DSR + CPCV validation on results (default: True)")
     parser.add_argument("--no-validate", dest="validate", action="store_false", help="Disable DSR + CPCV validation")
@@ -325,7 +343,8 @@ def main():
 
     print("================================================================================")
     mode_str = "Option Portfolio" if args.option else ("Future" if args.future else "Spot ETF")
-    print(f"NewTrade Backtest Engine | Mode={mode_str} | Scheme={args.scheme.upper()} | z_th={args.z_th} | buffer={args.z_buffer} | LongOnly={args.long_only} | TopK={args.top_k} | OOS=[{args.start_date} ~ {args.end_date}]")
+    stoploss_info = f" | StopLoss={args.stoploss} ({args.stoploss_mode}={args.stoploss_param})" if not args.option else ""
+    print(f"NewTrade Backtest Engine | Mode={mode_str} | Scheme={args.scheme.upper()} | z_th={args.z_th} | buffer={args.z_buffer}{stoploss_info} | LongOnly={args.long_only} | TopK={args.top_k} | OOS=[{args.start_date} ~ {args.end_date}]")
     if args.option:
         print(f"  Option Params: 100k RMB capital, 10k/trade, 4 RMB/side commission, >=7 DTM")
     print("================================================================================")
@@ -363,6 +382,9 @@ def main():
                 long_only=args.long_only,
                 use_future=args.future,
                 use_option=args.option,
+                use_stoploss=args.stoploss,
+                stoploss_mode=args.stoploss_mode,
+                stoploss_param=args.stoploss_param,
             )
             results.append(res)
 

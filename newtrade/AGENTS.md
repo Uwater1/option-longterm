@@ -68,6 +68,8 @@ uv run python newtrade/tests/test_top10_weighting.py
 uv run python newtrade/tests/test_score_w_ic_mono.py
 uv run python newtrade/tests/test_reweight_cadence.py
 uv run python newtrade/tests/test_750d_vs_30d_decay.py
+# Research intraday stop-loss methods (Fixed, Today High/Low Anchor, Trailing, Vol ATR, Time Decay)
+uv run python newtrade/research_stoploss.py -e all --scheme all --report
 ```
 
 ## Architecture
@@ -79,9 +81,11 @@ newtrade/
 ├── REPORT.md                # OOS backtest report for ICW & EW (default research report)
 ├── REPORT_production.md     # Production ensemble report (DSR-validated)
 ├── REPORT_glm.md            # OOS backtest report for Scheme 5 GLM vs Rank
+├── STOPLOSS_RESEARCH_REPORT.md # Intraday stop-loss evaluation report
 ├── run_production.py        # Production ensemble CLI (binary L+S, buffer=0.15, DSR)
 ├── portfolio_backtest.py    # Multi-ETF portfolio backtest + fee stress test
 ├── robustness.py            # DSR, CPCV, PBO, Ensemble, Sensitivity Grid
+├── research_stoploss.py     # 1m intraday stop-loss simulator & Train/OOS benchmark
 ├── utils.py                 # Data loading, recipe computation, expanding z-score, futures trade return mapper
 ├── weighting.py             # Weighting schemes: ICW (default), EW, Score, Rank, with Top-K truncation
 ├── strategy.py              # Threshold sweep, position sizing (binary/tanh/quadratic), ETF simulation
@@ -117,6 +121,7 @@ newtrade/
 | **Friction** | 8 bps per position state transition. Stress-tested to 20bps. |
 | **Instrument** | Long-Short enabled by default. Use `--long-only` for Spot ETF long-only. Use `--future` for Index Futures. |
 | **Trade Window** | 10:00 entry → 14:35 exit (intraday). |
+| **Intraday Stop-Loss** | **Omitted**. Benchmarked 5 methods across 1m bars (2022-2026 OOS). Intraday stop-losses degrade Sharpe by -0.337 on avg due to premature exits on noisy local extremes & friction. |
 
 ## Data Dependencies
 
