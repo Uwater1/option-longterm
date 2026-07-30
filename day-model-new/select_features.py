@@ -32,7 +32,7 @@ sys.path.append(str(HERE / "mining"))
 from build_features import FEATURES
 from mining.recipe_utils import simulate_returns
 
-MAX_FLIPS = 1 # Maybe 2 better logically, but 1 OOS performance better
+MAX_FLIPS = 1 # Cross-period test: MAX_FLIPS=1 creates systematic false negatives (OOS IC 0.08-0.11 rejected)
 FDR_THRESHOLD = 0.20
 
 # Feature Selection Global Constants (easily fine-tuned)
@@ -52,7 +52,7 @@ MAX_RECENCY_RATIO = 2.5       # Cap recent_ic / early_ic to prune late-training 
 MIN_EARLY_IC_THRESHOLD = 0.05 # Minimum early IC to trigger recency ratio cap
 MAX_YEARLY_IC_CV = 1.50       # Max coefficient of variation for yearly ICs (relaxed: 0.85 killed 48-100% TP)
 # MAX_WEAK_LINK_CV removed — combo ops stabilize noisy primitives; gate had 76-100% TP collateral
-MIN_STABILITY_PRODUCT = 0.15  # Min product of ic_cv * weak_link_cv
+MIN_STABILITY_PRODUCT = 0.09  # Relaxed from 0.15: FILTER_DIAGNOSIS shows 0% precision, 90% TP collateral at 0.15
 MAX_NEGATIVE_REGIMES = 1      # Max vol-quintile regimes with negative IC (>=2 = regime-conditional signal)
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
