@@ -203,10 +203,9 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     elif use_stoploss:
         bars_dict = load_intraday_bars_dict(etf)
         if bars_dict:
-            net_returns, stop_hits, trig_pct = simulate_full_series(
+            net_returns, raw_returns, stop_hits, trig_pct = simulate_full_series(
                 df_oos["date"], positions_oos, bars_dict, method=stoploss_mode, param=stoploss_param, fee_bps=fee_bps
             )
-            raw_returns = net_returns
             fees = np.where(stop_hits, fee_bps + 0.0002, np.where(np.abs(positions_oos) > 1e-5, fee_bps, 0.0))
         else:
             print(f"    [WARNING] Could not load 1m bars for {etf}. Falling back to baseline simulation.")
@@ -662,7 +661,12 @@ def main():
             f.write(f"- **Commission**: `4 RMB per side (8 RMB round-trip)`\n")
             f.write(f"- **Option Selection**: `Nearest OTM, >=7 DTM`\n\n")
         else:
-            f.write(f"- **Transaction Friction**: `{effective_fee_bps} bps`\n\n")
+            if args.stoploss:
+                f.write(f"- **Stop-Loss Execution**: `Enabled ({args.stoploss_mode}={args.stoploss_param})`\n")
+                f.write(f"- **Transaction Friction**: `{effective_fee_bps} bps (+ 2.0 bps stop-loss execution slippage)`\n\n")
+            else:
+                f.write(f"- **Stop-Loss Execution**: `Disabled (Hold to 14:35 Close)`\n")
+                f.write(f"- **Transaction Friction**: `{effective_fee_bps} bps`\n\n")
         f.write(report_content + "\n")
         
         # Append validation section if available
