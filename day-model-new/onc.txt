@@ -1,0 +1,53 @@
+Confirmed. mlfinlab open-source repo dead (old TF/numba dep hell, no real activity), the maintained version now behind paywall (Hudson & Thames commercial product, license fee). Skip it entirely — don't pull dead/paywalled dep for a 40-line algo. Just implement ONC raw, scipy+sklearn only, no TF.
+
+```python
+import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_samples
+
+def onc(corr, max_clusters=10, n_init=10, random_state=0):
+    """
+    corr: pandas DataFrame, feature correlation matrix (Spearman or distance-corr)
+    returns: dict {cluster_id: [feature names]}
+    """
+    dist = np.sqrt(0.5 * (1 - corr))  # angular distance, real metric
+    feats = corr.columns.tolist()
+
+    best_kmeans, best_sil = None, -1
+    for k in range(2, min(max_clusters, len(feats) - 1) + 1):
+        km = KMeans(n_clusters=k, n_init=n_init, random_state=random_state).fit(dist)
+        sil = silhouette_samples(dist, km.labels_)
+        score = sil.mean()
+        if score > best_sil:
+            best_sil, best_kmeans, best_sil_samples = score, km, sil
+
+    clusters = {i: [] for i in range(best_kmeans.n_clusters)}
+    for f, lbl in zip(feats, best_kmeans.labels_):
+        clusters[lbl].append(f)
+
+    # recursive re-split: any cluster whose avg silhouette < global avg gets redone
+    global_avg = best_sil_samples.mean()
+    out = {}
+    cid = 0
+    for lbl, members in clusters.items():
+        member_sil = best_sil_samples[[feats.index(m) for m in members]].mean()
+        if member_sil < global_avg and len(members) > 2:
+            sub = onc(corr.loc[members, members], max_clusters=min(len(members)-1, max_clusters))
+            for sub_members in sub.values():
+                out[cid] = sub_members
+                cid += 1
+        else:
+            out[cid] = members
+            cid += 1
+    return out
+```
+
+Notes on this:
+- `max_clusters` cap, sweep is O(k) KMeans fits — fine unless feature count huge (100s), then cap k-sweep range tighter or use elbow pre-filter.
+- Recursion terminate condition `len(members) > 2` — prevent infinite split on 2-feature cluster (can't silhouette meaningfully below that).
+- random_state fix — KMeans init randomness was literally the problem de Prado's paper solve, don't reintroduce it by leaving seed unset.
+- Feed Spearman corr or distance-corr matrix in, not raw Pearson, if you got nonlinear factor relations (your alpha factors likely do — rank-based signals, monotonic not linear).
+
+Alternative if you don't even want KMeans sweep: scipy `linkage` (Ward, on same angular dist) + `fcluster` w/ distance threshold — simpler, deterministic, no K search needed, closer to classic dendrogram-cut approach. Trade-off: no silhouette-driven re-split, cut point chosen by eye/heuristic instead of optimized.
+
+Want the linkage/dendrogram version instead, or good with KMeans-ONC as is?
