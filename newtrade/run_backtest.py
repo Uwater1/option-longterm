@@ -40,15 +40,17 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                         z_buffer: float = 0.1, z_short_buffer: float = None, auto_threshold: bool = False,
                         rank_kwargs: dict = None, dynamic_ic: bool = False, long_only: bool = False,
                         use_future: bool = False, use_option: bool = False, use_stoploss: bool = True,
-                        stoploss_mode: str = "time_decay_trailing", stoploss_param: float = 0.03) -> dict:
+                        stoploss_mode: str = "time_decay_trailing", stoploss_param: float = 0.03,
+                        pool_override: list = None) -> dict:
     """
     Run backtest for one ETF and side combination filtered to OOS date range.
     
     If auto_threshold=True, sweeps Z_th on training data and applies production buffer.
     If use_future=True, trades underlying Index Futures (IF88 for 300ETF, IC88 for 500ETF, IH88 for 50ETF).
+    If pool_override is provided, uses that pool instead of admitted_pools.py.
     """
     # 1. Load admitted pool
-    pool = load_admitted_pool(etf, side=side, min_features=min_features)
+    pool = pool_override if pool_override else load_admitted_pool(etf, side=side, min_features=min_features)
     if not pool:
         print(f"    [SKIP] Pool size {len(pool)} < {min_features} threshold.")
         return {
@@ -328,6 +330,11 @@ def main():
     parser.add_argument("--cpcv-splits", type=int, default=6, help="CPCV number of splits (default: 6)")
     parser.add_argument("--cpcv-test", type=int, default=2, help="CPCV test chunks per fold (default: 2)")
 
+    # Per-year pool evaluation
+    parser.add_argument("--year", type=int, default=None, help="Run single-year backtest (e.g. --year 2024). Auto-sets start/end dates and output to REPORT_{year}.md")
+    parser.add_argument("--pool-period", type=str, default=None, help="Use period-specific pool (e.g. '_p2016_2024', 'original' for baseline, 'old' for old vintage)")
+    parser.add_argument("--decay", action="store_true", help="Decay analysis: run pool on each year from --year through 2025, generate multi-year chart")
+
     args = parser.parse_args()
 
     # Parse z_th: 'auto' or float
@@ -339,6 +346,30 @@ def main():
     # Default fee: 8 bps for ETF (conservative slippage), 4 bps for futures (tighter spreads)
     effective_fee_bps = args.fee_bps if args.fee_bps is not None else (4.0 if args.future else 8.0)
     fee_bps = effective_fee_bps / 10000.0
+
+    # --year: override start/end dates and output path
+    if args.year:
+        args.start_date = f"{args.year}-01-01"
+        args.end_date = f"{args.year + 1}-01-01"
+        if not args.output:
+            args.output = str(HERE / f"REPORT_{args.year}.md")
+
+    # --pool-period: load period-specific pool override
+    pool_period_override = None
+    if args.pool_period:
+        import json as _json
+        dm_data = REPO_ROOT / "day-model-new" / "data"
+        if args.pool_period == "old":
+            # Load old vintage from backup
+            import importlib.util
+            spec = importlib.util.spec_from_file_location("_old", HERE / "data" / "old_admitted_pools_backup.py")
+            _mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(_mod)
+            pool_period_override = _mod.POOLS  # dict: etf -> {side -> [pool]}
+        elif args.pool_period == "original":
+            pool_period_override = "__original__"  # sentinel: load per-ETF from selected_pool_{etf}_single.json
+        else:
+            pool_period_override = args.pool_period  # suffix string like "_p2016_2024"
 
     print("================================================================================")
     mode_str = "Option Portfolio" if args.option else ("Future" if args.future else "Spot ETF")
@@ -361,9 +392,118 @@ def main():
         "mono_window": args.mono_window,
     }
 
+    # ─── Decay Mode: run pool across all future years ───
+    if args.decay:
+        if not args.pool_period:
+            print("ERROR: --decay requires --pool-period")
+            return
+        start_year = args.year if args.year else 2022
+        years = list(range(start_year, 2026))
+        print(f"\n  DECAY ANALYSIS: pool='{args.pool_period}' across {years}")
+        print(f"  {'Year':<6} | {'Sharpe':>8} {'PnL':>10} {'WR%':>6} {'Trades':>7}")
+        print(f"  {'-'*6}-+-{'-'*34}")
+
+        decay_results = []
+        for yr in years:
+            # Override dates for this year
+            _start = f"{yr}-01-01"
+            _end = f"{yr+1}-01-01"
+            yr_results = []
+            for etf in etfs_to_run:
+                _pool_ov = None
+                if isinstance(pool_period_override, dict):
+                    _pool_ov = pool_period_override.get(etf, {}).get(args.side, [])
+                elif pool_period_override == "__original__":
+                    _fpath = REPO_ROOT / "day-model-new" / "data" / f"selected_pool_{etf}_{args.side}.json"
+                    if _fpath.exists():
+                        with open(_fpath, "r", encoding="utf-8") as _f:
+                            _pool_ov = _json.load(_f)
+                else:
+                    _fpath = REPO_ROOT / "day-model-new" / "data" / f"selected_pool_{etf}_{args.side}{pool_period_override}.json"
+                    if _fpath.exists():
+                        with open(_fpath, "r", encoding="utf-8") as _f:
+                            _pool_ov = _json.load(_f)
+
+                res = run_single_backtest(
+                    etf=etf, side=args.side, scheme_name="icw", z_th=0.5,
+                    position_mode="binary", fee_bps=fee_bps,
+                    start_date=_start, end_date=_end,
+                    z_buffer=args.z_buffer, auto_threshold=True,
+                    rank_kwargs=rank_kwargs, dynamic_ic=True,
+                    long_only=args.long_only, use_stoploss=False,
+                    pool_override=_pool_ov,
+                )
+                yr_results.append(res)
+            decay_results.append((yr, yr_results))
+
+        # Print decay table per ETF
+        for etf in etfs_to_run:
+            print(f"\n  {etf} decay (pool={args.pool_period}):")
+            print(f"    {'Year':<6} | {'Sharpe':>8} {'PnL':>10} {'WR%':>6} {'Trades':>7}")
+            print(f"    {'-'*6}-+-{'-'*34}")
+            for yr, yr_results in decay_results:
+                r = next((x for x in yr_results if x.get("etf") == etf), None)
+                if r and r.get("status") == "SUCCESS":
+                    print(f"    {yr:<6} | {r['cost_sharpe']:>8.3f} {r['total_pnl']:>+10.4f} {r['win_rate_pct']:>6.1f} {r['n_trades']:>7}")
+                else:
+                    print(f"    {yr:<6} | {'SKIP':>8}")
+
+        # Generate decay chart
+        try:
+            import matplotlib
+            matplotlib.use('Agg')
+            import matplotlib.pyplot as plt
+            n_etfs = len([e for e in etfs_to_run if any(r.get('etf') == e and r.get('status') == 'SUCCESS' for _, yrs in decay_results for r in yrs)])
+            if n_etfs > 0:
+                fig, axes = plt.subplots(n_etfs, 1, figsize=(11, 3.5 * n_etfs), dpi=150, squeeze=False)
+                plot_idx = 0
+                for etf in etfs_to_run:
+                    has_data = any(r.get('etf') == etf and r.get('status') == 'SUCCESS' for _, yrs in decay_results for r in yrs)
+                    if not has_data:
+                        continue
+                    ax = axes[plot_idx, 0]
+                    for yr, yr_results in decay_results:
+                        r = next((x for x in yr_results if x.get('etf') == etf and x.get('status') == 'SUCCESS'), None)
+                        if r and r.get('dates') and r.get('cum_pnl'):
+                            ax.plot(r['dates'], r['cum_pnl'], label=f"{yr} (SR={r['cost_sharpe']:.2f})", linewidth=1.3)
+                    ax.set_title(f"{etf} — Pool Decay ({args.pool_period})", fontsize=10, fontweight='bold')
+                    ax.set_ylabel("Cum PnL")
+                    ax.legend(fontsize=8, loc='upper left')
+                    ax.grid(True, alpha=0.3)
+                    plot_idx += 1
+                fig.tight_layout()
+                artifacts_dir = HERE / "artifacts"
+                artifacts_dir.mkdir(parents=True, exist_ok=True)
+                chart_path = artifacts_dir / f"decay{args.pool_period}.png"
+                fig.savefig(chart_path)
+                plt.close(fig)
+                print(f"\n  Saved decay chart: {chart_path}")
+        except Exception as e:
+            print(f"  [WARNING] Decay chart failed: {e}")
+        return
+
     results = []
     for scheme in schemes_to_run:
         for etf in etfs_to_run:
+            # Resolve pool override for this ETF
+            _pool_ov = None
+            if pool_period_override is not None:
+                if isinstance(pool_period_override, dict):
+                    # 'old' mode: dict of pools
+                    _pool_ov = pool_period_override.get(etf, {}).get(args.side, [])
+                elif pool_period_override == "__original__":
+                    _fpath = REPO_ROOT / "day-model-new" / "data" / f"selected_pool_{etf}_{args.side}.json"
+                    if _fpath.exists():
+                        with open(_fpath, "r", encoding="utf-8") as _f:
+                            _pool_ov = _json.load(_f)
+                else:
+                    _fpath = REPO_ROOT / "day-model-new" / "data" / f"selected_pool_{etf}_{args.side}{pool_period_override}.json"
+                    if _fpath.exists():
+                        with open(_fpath, "r", encoding="utf-8") as _f:
+                            _pool_ov = _json.load(_f)
+                if _pool_ov is not None:
+                    print(f"  [POOL] {etf}: using period pool '{args.pool_period}' ({len(_pool_ov)} features)")
+
             res = run_single_backtest(
                 etf=etf,
                 side=args.side,
@@ -384,6 +524,7 @@ def main():
                 use_stoploss=args.stoploss,
                 stoploss_mode=args.stoploss_mode,
                 stoploss_param=args.stoploss_param,
+                pool_override=_pool_ov,
             )
             results.append(res)
 
@@ -483,10 +624,13 @@ def main():
             artifacts_dir.mkdir(parents=True, exist_ok=True)
             fut_suffix = "_future" if args.future else ""
             opt_suffix = "_option" if args.option else ""
-            chart_path = artifacts_dir / f"equity_curve{fut_suffix}{opt_suffix}.png"
+            # Unique chart name when using --year or --pool-period
+            yr_suffix = f"_{args.year}" if args.year else ""
+            pool_suffix = f"{args.pool_period}" if args.pool_period else ""
+            chart_path = artifacts_dir / f"equity_curve{yr_suffix}{pool_suffix}{fut_suffix}{opt_suffix}.png"
             fig.savefig(chart_path)
             plt.close(fig)
-            chart_rel_path = f"artifacts/equity_curve{fut_suffix}{opt_suffix}.png"
+            chart_rel_path = f"artifacts/equity_curve{yr_suffix}{pool_suffix}{fut_suffix}{opt_suffix}.png"
             print(f"Saved equity curve chart to {chart_path}")
         except Exception as e:
             print(f"[WARNING] Failed to generate plot: {e}")

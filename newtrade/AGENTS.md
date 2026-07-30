@@ -24,6 +24,14 @@ python newtrade/robustness.py -e 500ETF --cpcv --n-splits 6 --n-test 2
 # Run single ETF with auto threshold (train-sweep + buffer)
 uv run python newtrade/run_backtest.py -e 300ETF --scheme ew
 
+# Per-year backtest with period-specific pool (full report + graph)
+uv run python newtrade/run_backtest.py -e all --year 2024 --pool-period _p2016_2024 --no-stoploss
+uv run python newtrade/run_backtest.py -e all --year 2022 --pool-period old --no-stoploss -o newtrade/REPORT_2022_old.md
+
+# Pool decay analysis: test one pool across all future years
+uv run python newtrade/run_backtest.py -e 159915ETF --decay --pool-period _p2015_2023 --year 2023
+uv run python newtrade/run_backtest.py -e all --decay --pool-period old --year 2022
+
 # Trade underlying Index Futures (IF88 for 300ETF, IC88 for 500ETF)
 uv run python newtrade/run_backtest.py -e 300ETF --future --scheme rank
 uv run python newtrade/run_backtest.py -e 500ETF --future --scheme rank
@@ -31,45 +39,30 @@ uv run python newtrade/run_backtest.py -e 500ETF --future --scheme rank
 # Compare all weighting schemes side-by-side (auto exports trades CSVs)
 uv run python newtrade/run_backtest.py -e 500ETF --scheme all
 
-# Scheme 4 with dynamic zero-lookahead IC ranking & quadratic position sizing
-uv run python newtrade/run_backtest.py -e 300ETF --scheme rank --dynamic-ic --position-mode quadratic
-
-# Custom long/short threshold buffers (long buffer=0.1, short buffer=0.2 default)
-uv run python newtrade/run_backtest.py -e all --scheme rank --z-buffer 0.1 --z-short-buffer 0.25
-
-# All ETFs, all schemes, tanh sizing, custom buffer
-uv run python newtrade/run_backtest.py -e all --scheme all --z-buffer 0.1
-# --z-buffer 0.1 chosen because of a little sweep, little look ahead but logically correct
-
-# Scheme 4 Dedicated Diagnostic Suite (sensitivity sweep, factor rank PnL, conviction bins)
-uv run python newtrade/diagnose_rank_scheme.py -e 300ETF
-uv run python newtrade/diagnose_rank_scheme.py -e 300ETF --future
-uv run python newtrade/diagnose_rank_scheme.py -e all
-
-# Scheme 5 Linear GLM with Britten-Jones Sharpe Optimization (--target-mode bj_sign / bj_return)
-uv run python newtrade/glm_backtest.py -e 300ETF --target-mode bj_sign --compare
-uv run python newtrade/glm_backtest.py -e all --target-mode bj_sign --prior-mode kns --kns-gamma 0.2 --compare
-uv run python newtrade/glm_backtest.py -e all --target-mode bj_sign --compare
-uv run python newtrade/glm_backtest.py -e all --target-mode bj_sign --compare --future
-
-# Feature Correlation & Hierarchical Clustering Diagnosis Suite
-uv run python newtrade/diagnose_correlation.py -e 300ETF --side single
-uv run python newtrade/diagnose_correlation.py -e all --side single --threshold 0.70
-
 # Default production backtest (ICW scheme, Top-10 truncation, EMA30 IC, validated)
 uv run python newtrade/run_backtest.py -e all
 
-# Compare ICW and EW side-by-side
-uv run python newtrade/run_backtest.py -e all --scheme all
+# Feature Correlation & Hierarchical Clustering Diagnosis Suite
+uv run python newtrade/diagnose_correlation.py -e 300ETF --side single
 
-# Top-K & Weighting Research Suite in newtrade/tests/
-uv run python newtrade/tests/test_top10_scoring.py
-uv run python newtrade/tests/test_top10_weighting.py
-uv run python newtrade/tests/test_score_w_ic_mono.py
-uv run python newtrade/tests/test_reweight_cadence.py
-uv run python newtrade/tests/test_750d_vs_30d_decay.py
-# Research intraday stop-loss methods (Fixed, Today High/Low Anchor, Trailing, Vol ATR, Time Decay)
+# Research intraday stop-loss methods
 uv run python newtrade/research_stoploss.py -e all --scheme all --report
+```
+
+## Pool Migration Commands
+
+```bash
+# Quarterly IC monitoring (alerts on degradation)
+python newtrade/run_migration.py --monitor
+
+# Evaluate migration candidate (dry run)
+python newtrade/run_migration.py --candidate-period _p2018_2026
+
+# Regenerate admitted_pools.py from pipeline output
+python newtrade/regenerate_admitted_pools.py
+
+# Run p5 reselection (train 2018-2026)
+python day-model-new/run_periods.py --periods p5
 ```
 
 ## Architecture
@@ -78,32 +71,38 @@ uv run python newtrade/research_stoploss.py -e all --scheme all --report
 newtrade/
 ├── plan.md                  # Design document (weighting formulas, threshold logic, top-k selection)
 ├── plan_glm.md              # Scheme 5 GLM design document
-├── REPORT.md                # OOS backtest report for ICW & EW (default research report)
+├── MIGRATION_PLAN.md        # Pool switching protocol (2-year cadence, IC gate, rollback)
+├── TODO.md                  # Research notes and experiment results
+├── REPORT.md                # OOS backtest report (default full-period)
+├── REPORT_{year}.md         # Per-year reports (generated via --year flag)
 ├── REPORT_production.md     # Production ensemble report (DSR-validated)
-├── REPORT_glm.md            # OOS backtest report for Scheme 5 GLM vs Rank
-├── STOPLOSS_RESEARCH_REPORT.md # Intraday stop-loss evaluation report
 ├── run_production.py        # Production ensemble CLI (binary L+S, buffer=0.15, DSR)
+├── run_backtest.py          # CLI runner (--year, --pool-period, --decay, --scheme, --validate)
+├── run_migration.py         # Pool migration protocol (--monitor, --candidate-period)
+├── regenerate_admitted_pools.py  # Regenerate admitted_pools.py from pipeline output
 ├── portfolio_backtest.py    # Multi-ETF portfolio backtest + fee stress test
 ├── robustness.py            # DSR, CPCV, PBO, Ensemble, Sensitivity Grid
 ├── research_stoploss.py     # 1m intraday stop-loss simulator & Train/OOS benchmark
 ├── utils.py                 # Data loading, recipe computation, expanding z-score, futures trade return mapper
 ├── weighting.py             # Weighting schemes: ICW (default), EW, Score, Rank, with Top-K truncation
 ├── strategy.py              # Threshold sweep, position sizing (binary/tanh/quadratic), ETF simulation
-├── run_backtest.py          # CLI runner (defaults: --scheme icw --top-k 10 --dynamic-metric ic --ic-ema-span 30 --validate)
 ├── tests/                   # Research & experimental test suite
-│   ├── test_top10_scoring.py
-│   ├── test_top10_weighting.py
-│   ├── test_score_w_ic_mono.py
-│   ├── test_reweight_cadence.py
-│   └── test_750d_vs_30d_decay.py
-├── artifacts/               # Equity charts, trade CSVs
-└── data/                    # JSON result artifacts
+│   ├── walkforward_migration.py   # Walk-forward protocol validation (4 switch attempts)
+│   ├── research_pool_comparison.py # 3-way comparison (Old/New/Yearly × Auto/P75)
+│   ├── research_switching_protocol.py # Gated switching backtest
+│   ├── run_ab_test_yearly_reselection.py # Initial A/B test
+│   ├── investigate_gates.py       # Pipeline gate FN/FP analysis
+│   └── ...                        # Top-K, scoring, cadence tests
+├── artifacts/               # Equity charts, decay charts, trade CSVs
+└── data/                    # JSON result artifacts, old pool backup
 ```
 
 ## Key Design Decisions
 
 | Topic | Decision |
 |-------|----------|
+| **Pool Migration** | 2-year cadence via `run_periods.py`. IC gate (candidate > current + min delta) → Sharpe validation → percentile P75 transition → rollback guard. See [MIGRATION_PLAN.md](MIGRATION_PLAN.md). |
+| **Per-Year Diagnosis** | `--year 2024 --pool-period _p2016_2024` generates full REPORT_2024.md with unique chart. `--decay` tests pool across all future years. |
 | **Production Signal** | IC Weighted (`--scheme icw`) on Top-10 features selected by 30d EMA IC (`--top-k 10 --dynamic-metric ic --ic-ema-span 30`). |
 | **Scheme Comparison** | `--scheme all` evaluates `ICW` and `EW` side-by-side. |
 | **Top-K Truncation** | Default `--top-k 10`. Solves 500ETF 32-feature dilution (+0.113 Sharpe lift) while acting as a non-destructive floor for lean pools (159915ETF SR=1.497). |

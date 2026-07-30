@@ -36,6 +36,7 @@ PERIODS = {
     "p2": ("2015-01-01", "2023-01-01"),
     "p3": ("2016-01-01", "2024-01-01"),
     "p4": ("2017-01-01", "2025-01-01"),
+    "p5": ("2018-01-01", "2026-01-01"),
 }
 
 # 588000ETF excluded — insufficient history for multi-period
@@ -371,7 +372,7 @@ def main():
     print(f"ETFs={etfs_to_run}, Sides={sides_to_run}, max_parallel={args.max_parallel}")
 
     if args.max_parallel <= 1:
-        inner_n_jobs = args.n_jobs if args.n_jobs > 0 else total_cpus
+        inner_n_jobs = args.n_jobs if args.n_jobs > 0 else min(total_cpus, 6)  # Cap at 6 to avoid FDR sim crashes
         results = []
         for idx, (etf, side, pname) in enumerate(tasks, 1):
             print(f"\n===== [{idx}/{len(tasks)}] {etf} {side} {pname} =====")
