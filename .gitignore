@@ -5,12 +5,20 @@ __pycache__/
 *.so
 .eggs/
 *.egg-info/
+.pytest_cache/
+
+# Numba cache files
+*.nbc
+*.nbi
 
 # Virtual env
 venv/
 .venv/
 
-# Temp / research artifacts
+# Temp / research logs & artifacts
+*.log
+*.pdf
+day-model-new/mining/*.json
 
 # day-model-new caches (large, regenerable)
 day-model-new/data/recipe_cache_*.parquet
