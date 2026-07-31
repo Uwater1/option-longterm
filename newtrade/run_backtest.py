@@ -113,13 +113,20 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
         feat_to_cluster = load_cluster_assignments(etf, side)
         if feat_to_cluster is not None:
             # Build cluster_ids array aligned with feat_names
-            cluster_ids = np.array([feat_to_cluster.get(fn, -1) for fn in feat_names], dtype=np.int64)
-            # Only use if all features have cluster assignments
-            if (cluster_ids < 0).any():
-                n_missing = (cluster_ids < 0).sum()
-                print(f"    [INFO] {n_missing}/{len(feat_names)} features missing cluster assignments. Disabling group constraint.")
-                cluster_ids = None
-            elif group_constraint is None:
+            cids = []
+            next_unassigned_cid = (max(feat_to_cluster.values()) + 1) if feat_to_cluster else 1000
+            n_missing = 0
+            for fn in feat_names:
+                if fn in feat_to_cluster:
+                    cids.append(feat_to_cluster[fn])
+                else:
+                    cids.append(next_unassigned_cid)
+                    next_unassigned_cid += 1
+                    n_missing += 1
+            cluster_ids = np.array(cids, dtype=np.int64)
+            if n_missing > 0:
+                print(f"    [INFO] {n_missing}/{len(feat_names)} features missing cluster assignments (assigned unique fallback IDs). Group constraint enabled.")
+            elif group_constraint is None or group_constraint is True:
                 print(f"    [INFO] Group constraint auto-enabled: {len(set(cluster_ids))} ONC clusters detected.")
     
     # 4. Zero-lookahead expanding z-score standardizer on full history

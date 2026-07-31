@@ -260,6 +260,7 @@ def expanding_factor_ic_numba(Z_std: np.ndarray, signs: np.ndarray, trade_return
     """
     Compute expanding zero-lookahead IC (correlation) for each factor over time.
     Returns IC_matrix of shape (T, N) where row t contains IC calculated using data up to t-1.
+    Uses O(TN) running sum online updates instead of O(T^2 N) re-computation.
     """
     T, N = Z_std.shape
     IC_matrix = np.zeros((T, N), dtype=np.float64)
@@ -271,20 +272,48 @@ def expanding_factor_ic_numba(Z_std: np.ndarray, signs: np.ndarray, trade_return
     for j in range(N):
         Z_signed[:, j] = Z_std[:, j] * signs[j]
 
-    for t in range(burn_in, T):
-        ret_sub = trade_returns[:t]
-        mean_ret = np.mean(ret_sub)
-        std_ret = np.std(ret_sub)
-        if std_ret < 1e-12:
-            continue
+    sum_y = 0.0
+    sum_y2 = 0.0
+    sum_z = np.zeros(N, dtype=np.float64)
+    sum_z2 = np.zeros(N, dtype=np.float64)
+    sum_zy = np.zeros(N, dtype=np.float64)
 
+    # Initialize burn_in accumulation
+    for t in range(burn_in):
+        y_val = trade_returns[t]
+        sum_y += y_val
+        sum_y2 += y_val * y_val
         for j in range(N):
-            z_sub = Z_signed[:t, j]
-            mean_z = np.mean(z_sub)
-            std_z = np.std(z_sub)
-            if std_z > 1e-12:
-                cov = np.mean((z_sub - mean_z) * (ret_sub - mean_ret))
-                IC_matrix[t, j] = cov / (std_z * std_ret)
+            z_val = Z_signed[t, j]
+            sum_z[j] += z_val
+            sum_z2[j] += z_val * z_val
+            sum_zy[j] += z_val * y_val
+
+    # Expanding window calculation for t >= burn_in
+    for t in range(burn_in, T):
+        n_count = float(t)
+        mean_y = sum_y / n_count
+        var_y = (sum_y2 / n_count) - (mean_y * mean_y)
+        std_y = np.sqrt(var_y) if var_y > 1e-12 else 0.0
+
+        if std_y > 1e-12:
+            for j in range(N):
+                mean_z = sum_z[j] / n_count
+                var_z = (sum_z2[j] / n_count) - (mean_z * mean_z)
+                std_z = np.sqrt(var_z) if var_z > 1e-12 else 0.0
+                if std_z > 1e-12:
+                    cov_zy = (sum_zy[j] / n_count) - (mean_z * mean_y)
+                    IC_matrix[t, j] = cov_zy / (std_z * std_y)
+
+        # Update running sums with current step t data (for t+1)
+        y_val = trade_returns[t]
+        sum_y += y_val
+        sum_y2 += y_val * y_val
+        for j in range(N):
+            z_val = Z_signed[t, j]
+            sum_z[j] += z_val
+            sum_z2[j] += z_val * z_val
+            sum_zy[j] += z_val * y_val
 
     # For burn-in period, fill with first computed IC
     if burn_in < T:
