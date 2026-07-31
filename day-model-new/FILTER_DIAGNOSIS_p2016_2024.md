@@ -4830,24 +4830,24 @@ Per-primitive FP rate across all combo features. Flag primitives with FP rate â‰
 | `bar_ret_0` | 1 | 28 | 29 | 3% |  |
 | `volatility_expansion_trend_vector` | 1 | 41 | 42 | 2% |  |
 | `bar_body_rng_0` | 1 | 51 | 52 | 2% |  |
-| `early_body_momentum` | 0 | 12 | 12 | 0% |  |
-| `max_down_ret` | 0 | 21 | 21 | 0% |  |
 | `close_vs_open_range` | 0 | 20 | 20 | 0% |  |
-| `yesterday_first_30min_return` | 0 | 12 | 12 | 0% |  |
-| `impulse_bar_dominance` | 0 | 7 | 7 | 0% |  |
-| `demark_setup_reversal_early` | 0 | 7 | 7 | 0% |  |
-| `star50_limit_proximity_early` | 0 | 58 | 58 | 0% |  |
-| `body_size_progression` | 0 | 7 | 7 | 0% |  |
-| `volume_surge_direction` | 0 | 7 | 7 | 0% |  |
-| `yesterday_early_momentum` | 0 | 2 | 2 | 0% |  |
-| `net_volume_flow` | 0 | 29 | 29 | 0% |  |
-| `trend_day_regime_conviction` | 0 | 6 | 6 | 0% |  |
-| `early_vwap_acceleration` | 0 | 2 | 2 | 0% |  |
-| `trend_bar_close_consistency` | 0 | 15 | 15 | 0% |  |
-| `yesterday_early_vwap_dev` | 0 | 4 | 4 | 0% |  |
-| `limit_down_proximity_early` | 0 | 15 | 15 | 0% |  |
-| `rbreaker_buy_setup_proximity_early` | 0 | 6 | 6 | 0% |  |
 | `rbreaker_sell_setup_proximity_early` | 0 | 101 | 101 | 0% |  |
+| `early_body_momentum` | 0 | 12 | 12 | 0% |  |
+| `net_volume_flow` | 0 | 29 | 29 | 0% |  |
+| `volume_surge_direction` | 0 | 7 | 7 | 0% |  |
+| `trend_day_regime_conviction` | 0 | 6 | 6 | 0% |  |
+| `star50_limit_proximity_early` | 0 | 58 | 58 | 0% |  |
+| `rbreaker_buy_setup_proximity_early` | 0 | 6 | 6 | 0% |  |
+| `limit_down_proximity_early` | 0 | 15 | 15 | 0% |  |
+| `yesterday_first_30min_return` | 0 | 12 | 12 | 0% |  |
+| `yesterday_early_vwap_dev` | 0 | 4 | 4 | 0% |  |
+| `early_vwap_acceleration` | 0 | 2 | 2 | 0% |  |
+| `impulse_bar_dominance` | 0 | 7 | 7 | 0% |  |
+| `max_down_ret` | 0 | 21 | 21 | 0% |  |
+| `trend_bar_close_consistency` | 0 | 15 | 15 | 0% |  |
+| `body_size_progression` | 0 | 7 | 7 | 0% |  |
+| `demark_setup_reversal_early` | 0 | 7 | 7 | 0% |  |
+| `yesterday_early_momentum` | 0 | 2 | 2 | 0% |  |
 
 ---
 
