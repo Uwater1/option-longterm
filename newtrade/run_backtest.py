@@ -34,6 +34,13 @@ ALL_SCHEMES = ["icw", "ew"]  # leave only icw and ew for --scheme all
 ENSEMBLE_SCHEMES = ["icw", "ew"]  # schemes averaged in ensemble
 
 
+def resolve_ic_ema_span(etf: str, user_span: int | None = None) -> int:
+    """Resolve ETF-adaptive EMA span: 30d for 300ETF/50ETF, 90d for 500ETF/159915ETF."""
+    if user_span is not None:
+        return user_span
+    return 30 if etf in ["300ETF", "50ETF"] else 90
+
+
 def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew", z_th: float = 0.5, 
                         position_mode: str = "binary", fee_bps: float = 0.0008, min_features: int = 10,
                         start_date: str = "2022-01-01", end_date: str = "2026-01-01",
@@ -41,7 +48,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                         rank_kwargs: dict = None, dynamic_ic: bool = False, long_only: bool = False,
                         use_future: bool = False, use_option: bool = False, use_stoploss: bool = True,
                         stoploss_mode: str = "time_decay_trailing", stoploss_param: float = 0.03,
-                        pool_override: list = None, group_constraint: bool = None, max_per_group: int = 1) -> dict:
+                        pool_override: list = None, cluster_suffix: str = "", group_constraint: bool = None, max_per_group: int = 1) -> dict:
     """
     Run backtest for one ETF and side combination filtered to OOS date range.
     
@@ -110,7 +117,9 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     # 3b. Build cluster_ids for group-constrained selection (if enabled)
     cluster_ids = None
     if group_constraint is not False:  # None (auto) or True
-        feat_to_cluster = load_cluster_assignments(etf, side)
+        feat_to_cluster = load_cluster_assignments(etf, side, suffix=cluster_suffix)
+        if feat_to_cluster is None and cluster_suffix:
+            feat_to_cluster = load_cluster_assignments(etf, side, suffix="")
         if feat_to_cluster is not None:
             # Build cluster_ids array aligned with feat_names
             cids = []
@@ -340,7 +349,7 @@ def main():
     parser.add_argument("--score-w-ic", type=float, default=0.20, help="Score weight for IC component (default 0.20)")
     parser.add_argument("--score-w-ir", type=float, default=0.15, help="Score weight for IC_IR component (default 0.15)")
     parser.add_argument("--score-w-mono", type=float, default=0.65, help="Score weight for Monotonicity component (default 0.65)")
-    parser.add_argument("--ic-ema-span", type=int, default=30, help="EMA span parameter for smoothing dynamic expanding metrics (default 30)")
+    parser.add_argument("--ic-ema-span", type=int, default=None, help="EMA span parameter for smoothing dynamic expanding metrics (default: auto, 30d for 300ETF/50ETF, 90d for 500ETF/159915ETF)")
     parser.add_argument("--weight-delta", type=float, default=None, help="Optional partial-adjustment delta parameter for smoothing daily target weight jumps (default: None)")
     parser.add_argument("--long-only", dest="long_only", action="store_true", default=False, help="Restrict to long-only trades (Spot ETF mode). Default: False (allows shorting).")
     parser.add_argument("--allow-short", dest="long_only", action="store_false", help="Allow short trades (default)")
@@ -497,14 +506,17 @@ def main():
                         with open(_fpath, "r", encoding="utf-8") as _f:
                             _pool_ov = _json.load(_f)
 
+                _cluster_suf = pool_period_override if isinstance(pool_period_override, str) and pool_period_override.startswith("_p") else ""
+                _rank_kw = dict(rank_kwargs)
+                _rank_kw["ic_ema_span"] = resolve_ic_ema_span(etf, args.ic_ema_span)
                 res = run_single_backtest(
                     etf=etf, side=args.side, scheme_name="icw", z_th=0.5,
                     position_mode="binary", fee_bps=fee_bps,
                     start_date=_start, end_date=_end,
                     z_buffer=args.z_buffer, auto_threshold=True,
-                    rank_kwargs=rank_kwargs, dynamic_ic=True,
+                    rank_kwargs=_rank_kw, dynamic_ic=True,
                     long_only=args.long_only, use_stoploss=False,
-                    pool_override=_pool_ov,
+                    pool_override=_pool_ov, cluster_suffix=_cluster_suf,
                     group_constraint=args.group_constraint, max_per_group=args.max_per_group,
                 )
                 yr_results.append(res)
@@ -578,6 +590,9 @@ def main():
                 if _pool_ov is not None:
                     print(f"  [POOL] {etf}: using period pool '{args.pool_period}' ({len(_pool_ov)} features)")
 
+            _cluster_suf = pool_period_override if isinstance(pool_period_override, str) and pool_period_override.startswith("_p") else ""
+            _rank_kw = dict(rank_kwargs)
+            _rank_kw["ic_ema_span"] = resolve_ic_ema_span(etf, args.ic_ema_span)
             res = run_single_backtest(
                 etf=etf,
                 side=args.side,
@@ -590,7 +605,7 @@ def main():
                 z_buffer=args.z_buffer,
                 z_short_buffer=args.z_short_buffer,
                 auto_threshold=auto_threshold,
-                rank_kwargs=rank_kwargs,
+                rank_kwargs=_rank_kw,
                 dynamic_ic=args.dynamic_ic,
                 long_only=args.long_only,
                 use_future=args.future,
@@ -599,6 +614,7 @@ def main():
                 stoploss_mode=args.stoploss_mode,
                 stoploss_param=args.stoploss_param,
                 pool_override=_pool_ov,
+                cluster_suffix=_cluster_suf,
                 group_constraint=args.group_constraint,
                 max_per_group=args.max_per_group,
             )

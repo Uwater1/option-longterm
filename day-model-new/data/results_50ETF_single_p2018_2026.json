@@ -1,0 +1,9 @@
+{
+  "etf": "50ETF",
+  "side": "single",
+  "early": false,
+  "k": 1.0,
+  "features_selected": [],
+  "training_metrics": null,
+  "oos_metrics": null
+}

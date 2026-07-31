@@ -8,14 +8,15 @@ Periods:
   P2: Train 2015-01-01 to 2023-01-01, OOS 2023-01-01 to present
   P3: Train 2016-01-01 to 2024-01-01, OOS 2024-01-01 to present
   P4: Train 2017-01-01 to 2025-01-01, OOS 2025-01-01 to present
+  P5: Train 2018-01-01 to 2026-01-01, OOS 2026-01-01 to present
 
 Uses OOS as ground truth (no lockbox). Jackknife uses n_chunks = training_years.
 588000ETF excluded (insufficient history for multi-period analysis).
 
 Usage:
-  python day-model-new/run_periods.py                    # All 3 periods, all ETFs/sides
+  python day-model-new/run_periods.py                    # All periods, all ETFs/sides
   python day-model-new/run_periods.py -e 300ETF          # Single ETF
-  python day-model-new/run_periods.py --periods p2,p3    # Subset of periods
+  python day-model-new/run_periods.py --periods p5       # Run period 5 (2018-2026)
   python day-model-new/run_periods.py --compile-only     # Recompile report from existing JSONs
   python day-model-new/run_periods.py --max-parallel 4   # Parallel combos
 """
@@ -329,7 +330,7 @@ def compile_cross_period_report(periods_to_run, etfs_to_run, sides_to_run):
                 if pname not in period_data:
                     continue
                 pdata = period_data[pname].get(etf, {}).get(side, {})
-                gate_eff = pdata.get("gate_effectiveness", {})
+                gate_eff = pdata.get("gate_effectiveness") or {}
                 for gname in gate_eff:
                     if not gname.startswith("_"):
                         gate_names.add(gname)
@@ -372,7 +373,7 @@ def main():
     parser = argparse.ArgumentParser(description="Multi-period training orchestrator")
     parser.add_argument("-e", "--etf", default="all", help="ETF to run (or 'all')")
     parser.add_argument("-s", "--side", default="all", help="Side to run (or 'all')")
-    parser.add_argument("--periods", default="p2,p3,p4", help="Comma-separated period names (p2,p3,p4)")
+    parser.add_argument("--periods", default="p2,p3,p4,p5", help="Comma-separated period names (p2,p3,p4,p5)")
     parser.add_argument("--compile-only", action="store_true", help="Only compile the cross-period report")
     parser.add_argument("--max-parallel", type=int, default=1, help="Max concurrent combos")
     parser.add_argument("--n-jobs", type=int, default=-1, help="Inner worker count for select_features")
@@ -410,7 +411,7 @@ def main():
     print(f"ETFs={etfs_to_run}, Sides={sides_to_run}, max_parallel={args.max_parallel}")
 
     if args.max_parallel <= 1:
-        inner_n_jobs = args.n_jobs if args.n_jobs > 0 else min(total_cpus, 6)  # Cap at 6 to avoid FDR sim crashes
+        inner_n_jobs = args.n_jobs if args.n_jobs > 0 else min(total_cpus, 4)  # Cap at 4 to avoid FDR sim crashes
         results = []
         for idx, (etf, side, pname) in enumerate(tasks, 1):
             print(f"\n===== [{idx}/{len(tasks)}] {etf} {side} {pname} =====")

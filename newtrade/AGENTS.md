@@ -115,10 +115,10 @@ newtrade/
 | **Per-Year Diagnosis** | `--year 2022` sets start date to `2022-01-01` and runs through `2026-01-01` with unique chart. `--pool-period _p2016_2024` auto-infers OOS start date `2024-01-01`. `--decay` tests pool across future years. |
 | **Full Pool Benchmark** | `--pool-period all` sequentially executes backtests for all pool vintages (`old`, `_p2016_2024`, `_p2018_2026`) and generates dedicated reports/charts. |
 | **Active ETF Scope** | `300ETF`, `500ETF`, `50ETF`, `159915ETF`. `588000ETF` is **disabled** (trained on 2021-2025 during market regime change). |
-| **Production Signal** | IC Weighted (`--scheme icw`) on Top-10 features selected by 30d EMA IC (`--top-k 10 --dynamic-metric ic --ic-ema-span 30`). |
+| **Production Signal** | IC Weighted (`--scheme icw`) on Top-10 features selected by ETF-adaptive EMA IC (`--ic-ema-span`: 30d for 300ETF/50ETF, 90d for 500ETF/159915ETF). |
 | **Scheme Comparison** | `--scheme all` evaluates `ICW` and `EW` side-by-side. |
 | **Top-K Truncation** | Default `--top-k 10`. Solves 500ETF 32-feature dilution (+0.113 Sharpe lift) while acting as a non-destructive floor for lean pools (159915ETF SR=1.497). |
-| **ONC Group Constraint** | `--group-constraint` enables ONC cluster-based diversity (max 1 feature per cluster per day). Auto-detects from `day-model-new/data/cluster_assignments_{etf}_{side}.json`. Use `--max-per-group N` to allow N features per cluster. |
+| **ONC Group Constraint** | `--group-constraint` enables ONC cluster-based diversity (max 1 feature per cluster per day). Auto-detects period cluster file `day-model-new/data/cluster_assignments_{etf}_{side}{suffix}.json` matching `--pool-period`. Use `--max-per-group N` to allow N features per cluster. |
 | **Production Sizing** | Binary L+S. Shorts add 30-40% of PnL. 61% WR on 159915ETF. |
 | **Production Buffer** | +0.10 above train-optimal. Walk-forward validated. |
 | **Validation** | Portfolio DSR=0.953 (SIGNIFICANT). CPCV 100% positive. PBO=40% (MODERATE). |
