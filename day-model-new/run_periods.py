@@ -280,8 +280,8 @@ def compile_cross_period_report(periods_to_run, etfs_to_run, sides_to_run):
             report_lines.append("")
 
             # Collect admitted pool summary across periods
-            header = "| Period | Pool Size | FP Rate | Mean OOS IC | Mean OOS Sharpe |"
-            sep = "| :--- | ---: | ---: | ---: | ---: |"
+            header = "| Period | Pool Size | Clusters | Cluster Sizes | FP Rate | Mean OOS IC | Mean OOS Sharpe |"
+            sep = "| :--- | ---: | ---: | :--- | ---: | ---: | ---: |"
             report_lines.append(header)
             report_lines.append(sep)
 
@@ -298,8 +298,27 @@ def compile_cross_period_report(periods_to_run, etfs_to_run, sides_to_run):
                 mean_ic = adm.get("mean_lock_ic", 0.0)
                 mean_sharpe = adm.get("mean_lock_sharpe", 0.0)
                 label = period_labels.get(pname, pname)
+
+                psuffix = "" if pname == "original" else period_suffix(pname)
+                cpath = data_dir / f"cluster_assignments_{etf}_{side}{psuffix}.json"
+                n_clusters_str = "-"
+                sizes_str = "-"
+                if cpath.exists():
+                    try:
+                        with open(cpath, "r", encoding="utf-8") as f:
+                            cdata = json.load(f)
+                        cdict = cdata.get("clusters", {})
+                        n_clusters_str = str(cdata.get("n_clusters", len(cdict)))
+                        sizes = sorted([len(m) for m in cdict.values()], reverse=True)
+                        if len(sizes) <= 15:
+                            sizes_str = str(sizes)
+                        else:
+                            sizes_str = f"[{', '.join(map(str, sizes[:12]))}, ... ({len(sizes)} clusters)]"
+                    except Exception:
+                        pass
+
                 report_lines.append(
-                    f"| {label} | {n_features} | {fp_rate:.1%} | {mean_ic:+.4f} | {mean_sharpe:+.4f} |"
+                    f"| {label} | {n_features} | {n_clusters_str} | `{sizes_str}` | {fp_rate:.1%} | {mean_ic:+.4f} | {mean_sharpe:+.4f} |"
                 )
 
             report_lines.append("")

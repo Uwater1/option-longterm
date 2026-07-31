@@ -47,9 +47,9 @@ IR_THR_SINGLE = 0.30          # Rolling 90d IC_IR threshold for single side
 IR_THR_DIR = 0.15             # Rolling 90d IC_IR threshold for long/short sides
 
 # Temporal & Quality Gate Thresholds
-MAX_RECENCY_RATIO = 2.5       # Cap recent_ic / early_ic to prune late-training overfit spikes
+MAX_RECENCY_RATIO = 2.2       # Cap recent_ic / early_ic to prune late-training overfit spikes (tuned: 2.5->2.2)
 MIN_EARLY_IC_THRESHOLD = 0.05 # Minimum early IC to trigger recency ratio cap
-MAX_YEARLY_IC_CV = 1.50       # Max coefficient of variation for yearly ICs (relaxed: 0.85 killed 48-100% TP)
+MAX_YEARLY_IC_CV = 1.20       # Max coefficient of variation for yearly ICs (tuned: 1.50->1.20 to prune high-CV noise)
 # MAX_WEAK_LINK_CV removed — combo ops stabilize noisy primitives; gate had 76-100% TP collateral
 MIN_STABILITY_PRODUCT = 0.09  # Relaxed from 0.15: FILTER_DIAGNOSIS shows 0% precision, 90% TP collateral at 0.15
 MAX_NEGATIVE_REGIMES = 1      # Max vol-quintile regimes with negative IC (>=2 = regime-conditional signal)

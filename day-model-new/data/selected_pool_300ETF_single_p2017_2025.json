@@ -787,20 +787,6 @@
     }
   },
   {
-    "feature_name": "combo_tri_median__smooth_momentum_structure__max_up_ret__volume_weighted_price_position",
-    "sign": 1,
-    "overall_ic": 0.19539067628022522,
-    "deflated_ic": 0.19625828896146613,
-    "ic_ir": 0.6150029204528131,
-    "monotonicity": 0.7133299022130726,
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "smooth_momentum_structure",
-      "feature_b": "max_up_ret",
-      "feature_c": "volume_weighted_price_position"
-    }
-  },
-  {
     "feature_name": "combo_rank_max__volume_weighted_price_position__opening_drive_thrust_ratio",
     "sign": 1,
     "overall_ic": 0.19301632460742155,
@@ -997,19 +983,6 @@
     }
   },
   {
-    "feature_name": "combo_product__max_up_ret__opening_drive_thrust_ratio",
-    "sign": 1,
-    "overall_ic": 0.18138852716496304,
-    "deflated_ic": 0.17997736684789412,
-    "ic_ir": 0.49522581172388785,
-    "monotonicity": 0.6536284096757591,
-    "recipe": {
-      "op": "product",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_drive_thrust_ratio"
-    }
-  },
-  {
     "feature_name": "combo_rank_min__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early",
     "sign": 1,
     "overall_ic": 0.1810784498528161,
@@ -1033,6 +1006,19 @@
       "op": "min",
       "feature_a": "first_bar_return",
       "feature_b": "volume_surge_direction"
+    }
+  },
+  {
+    "feature_name": "combo_max__volume_weighted_price_position__first_bar_sentiment",
+    "sign": 1,
+    "overall_ic": 0.1777954915753145,
+    "deflated_ic": 0.17721283104982566,
+    "ic_ir": 0.560425210878072,
+    "monotonicity": 0.7318579516212044,
+    "recipe": {
+      "op": "max",
+      "feature_a": "volume_weighted_price_position",
+      "feature_b": "first_bar_sentiment"
     }
   },
   {
@@ -1243,20 +1229,6 @@
     }
   },
   {
-    "feature_name": "combo_tri_sig_max__volume_weighted_momentum_acceleration__max_up_ret__bar_body_rng_0",
-    "sign": 1,
-    "overall_ic": 0.16292089301545157,
-    "deflated_ic": 0.16173646331931446,
-    "ic_ir": 0.7542751589046125,
-    "monotonicity": 0.7261966031909418,
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "volume_weighted_momentum_acceleration",
-      "feature_b": "max_up_ret",
-      "feature_c": "bar_body_rng_0"
-    }
-  },
-  {
     "feature_name": "combo_tri_median__max_up_ret__bar_body_rng_0__opening_drive_thrust_ratio",
     "sign": 1,
     "overall_ic": 0.16242738358880202,
@@ -1325,19 +1297,6 @@
     }
   },
   {
-    "feature_name": "combo_max__volume_weighted_price_position__first_bar_sentiment",
-    "sign": 1,
-    "overall_ic": 0.1483761118592714,
-    "deflated_ic": 0.14779345133378258,
-    "ic_ir": 0.560425210878072,
-    "monotonicity": 0.7318579516212044,
-    "recipe": {
-      "op": "max",
-      "feature_a": "volume_weighted_price_position",
-      "feature_b": "first_bar_sentiment"
-    }
-  },
-  {
     "feature_name": "combo_ratio__rbreaker_buy_setup_proximity_early__volume_concentration",
     "sign": 1,
     "overall_ic": 0.14506417594374155,
@@ -1361,20 +1320,6 @@
       "op": "ratio",
       "feature_a": "first_bar_sentiment",
       "feature_b": "volume_weighted_price_position"
-    }
-  },
-  {
-    "feature_name": "combo_tri_mean__smooth_momentum_structure__max_up_ret__volume_weighted_price_position",
-    "sign": 1,
-    "overall_ic": 0.14086658684563966,
-    "deflated_ic": 0.14149261163957663,
-    "ic_ir": 0.4671712189792756,
-    "monotonicity": 0.6850231600617601,
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "smooth_momentum_structure",
-      "feature_b": "max_up_ret",
-      "feature_c": "volume_weighted_price_position"
     }
   },
   {
@@ -1448,19 +1393,6 @@
       "op": "max",
       "feature_a": "first_bar_sentiment",
       "feature_b": "volume_surge_direction"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__max_up_ret__first_bar_sentiment",
-    "sign": 1,
-    "overall_ic": 0.10497042853561393,
-    "deflated_ic": 0.10654321945355363,
-    "ic_ir": 0.4661808684971825,
-    "monotonicity": 0.698919197117859,
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "max_up_ret",
-      "feature_b": "first_bar_sentiment"
     }
   }
 ]

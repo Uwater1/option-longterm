@@ -48,13 +48,14 @@ ADAPTIVE_DATES = {
 ALL_ETFS = ["300ETF", "500ETF", "50ETF", "588000ETF", "159915ETF"]
 
 
-def onc(corr: pd.DataFrame, max_clusters: int = 10, n_init: int = 10, random_state: int = 0) -> dict:
+def onc(corr: pd.DataFrame, max_clusters: int = 25, max_cluster_size: int = 20, n_init: int = 10, random_state: int = 0) -> dict:
     """
     Optimal Number of Clusters (ONC) algorithm.
 
     Args:
         corr: pandas DataFrame, feature correlation matrix (Spearman recommended)
         max_clusters: maximum K to sweep
+        max_cluster_size: maximum allowed cluster size before recursive re-splitting
         n_init: KMeans restarts per K
         random_state: fixed seed for reproducibility
 
@@ -69,10 +70,18 @@ def onc(corr: pd.DataFrame, max_clusters: int = 10, n_init: int = 10, random_sta
         # Cannot cluster meaningfully below 3 features
         return {0: feats}
 
-    best_kmeans, best_sil, best_sil_samples = None, -1.0, None
-    k_max = min(max_clusters, n_feats - 1)
+    # Adaptive search range: k_min scales with pool size N up to floor(N/10)+1 (max 10)
+    k_min_calc = int(n_feats // 10) + 1
+    k_min = max(2, min(k_min_calc, 10))
+    k_min = min(k_min, n_feats - 1)
 
-    for k in range(2, k_max + 1):
+    k_max = min(max(max_clusters, 25), n_feats - 1)
+    if k_min > k_max:
+        k_min = k_max
+
+    best_kmeans, best_sil, best_sil_samples = None, -1.0, None
+
+    for k in range(k_min, k_max + 1):
         km = KMeans(n_clusters=k, n_init=n_init, random_state=random_state).fit(dist)
         sil = silhouette_samples(dist, km.labels_)
         score = sil.mean()
@@ -87,16 +96,18 @@ def onc(corr: pd.DataFrame, max_clusters: int = 10, n_init: int = 10, random_sta
     for f, lbl in zip(feats, best_kmeans.labels_):
         clusters[lbl].append(f)
 
-    # Recursive re-split: any cluster whose avg silhouette < global avg gets re-clustered
-    global_avg = best_sil_samples.mean()
+    # Recursive re-split: any cluster with avg silhouette < global avg or size > max_cluster_size gets re-clustered
+    global_avg = best_sil_samples.mean() if best_sil_samples is not None else 0.0
     out = {}
     cid = 0
     for lbl, members in clusters.items():
         member_indices = [feats.index(m) for m in members]
-        member_sil = best_sil_samples[member_indices].mean()
-        if member_sil < global_avg and len(members) > 2:
+        member_sil = best_sil_samples[member_indices].mean() if best_sil_samples is not None else 0.0
+        should_split = (len(members) > max_cluster_size) or (member_sil < global_avg and len(members) > 2)
+        if should_split and len(members) > 2:
             sub_corr = corr.loc[members, members]
-            sub = onc(sub_corr, max_clusters=min(len(members) - 1, max_clusters),
+            sub_k = min(len(members) - 1, max(2, int(np.ceil(len(members) / max_cluster_size))))
+            sub = onc(sub_corr, max_clusters=sub_k, max_cluster_size=max_cluster_size,
                       n_init=n_init, random_state=random_state)
             for sub_members in sub.values():
                 out[cid] = sub_members

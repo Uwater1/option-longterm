@@ -63,7 +63,29 @@ def _fmt_metric_with_ci(value, ci, span_zero_flag=True):
     return s, _fmt_ci(ci[0], ci[1])
 
 
-def _metrics_row(etf, side, n_feats, metrics):
+def _load_cluster_info(etf, side, suffix):
+    cluster_path = DATA_DIR / f"cluster_assignments_{etf}_{side}{suffix}.json"
+    cdata = _load_json(cluster_path)
+    if not cdata or "clusters" not in cdata:
+        return {"n_clusters": "-", "sizes_str": "-", "avg_sil_str": "-"}
+    clusters_dict = cdata["clusters"]
+    n_clusters = cdata.get("n_clusters", len(clusters_dict))
+    sizes = sorted([len(m) for m in clusters_dict.values()], reverse=True)
+    if len(sizes) <= 15:
+        sizes_str = str(sizes)
+    else:
+        sizes_str = f"[{', '.join(map(str, sizes[:12]))}, ... ({len(sizes)} clusters)]"
+    avg_sil = cdata.get("avg_silhouette", None)
+    avg_sil_str = f"{avg_sil:.4f}" if avg_sil is not None else "N/A"
+    return {
+        "n_clusters": n_clusters,
+        "sizes_str": sizes_str,
+        "avg_sil_str": avg_sil_str,
+        "sizes_raw": sizes,
+    }
+
+
+def _metrics_row(etf, side, n_feats, n_clusters, sizes_str, metrics):
     """Build one row of a metrics table."""
     o_ic, o_ci = _fmt_metric_with_ci(metrics["overall_ic"], metrics["overall_ic_ci"])
     t_ic, t_ci = _fmt_metric_with_ci(metrics["tail_ic"], metrics["tail_ic_ci"])
@@ -75,7 +97,7 @@ def _metrics_row(etf, side, n_feats, metrics):
     cost_ann_str = f"{metrics['ann_ret'] * 100:.2f}%"
     cost_sharpe_str = f"{metrics['sharpe']:.4f}"
     return (
-        f"| {etf} | {side} | {n_feats} | "
+        f"| {etf} | {side} | {n_feats} | {n_clusters} | `{sizes_str}` | "
         f"{o_ic} | {o_ci} | "
         f"{t_ic} | {t_ci} | "
         f"{mono:+.4f} | "
@@ -117,8 +139,8 @@ def build_report(etfs, sides, suffix):
         "",
         "Candidate counts at each admission gate. Shows where features get pruned.",
         "",
-        "| ETF | Side | Total Candidates | 7Y-Jackknife Pass | B2 Rolling Guard | Temporal Gate | BH-FDR Pass | B3 Composite Floor | Stability Gate | Quality Gate | B4 Correlation | Final Admitted |",
-        "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| ETF | Side | Total Candidates | 7Y-Jackknife Pass | B2 Rolling Guard | Temporal Gate | BH-FDR Pass | B3 Composite Floor | Stability Gate | Quality Gate | B4 Correlation | Final Admitted | Clusters | Cluster Sizes |",
+        "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- |",
     ])
     for etf in etfs:
         for side in sides:
@@ -149,9 +171,11 @@ def build_report(etfs, sides, suffix):
             # B4 Correlation Gate rejects
             admitted = counts.get("ADMITTED", 0) + counts.get("ADMITTED_REPLACED", 0)
             final_pool = admitted - counts.get("DROPPED_REPLACED", 0)
+            cinfo = _load_cluster_info(etf, side, suffix)
             lines.append(
                 f"| {etf} | {side} | {total:,} | {sh_pass:,} | {rg_survivors:,} | {temporal_survivors:,} | {fdr_survivors:,} "
-                f"| {b3_survivors:,} | {stab_survivors:,} | {qual_survivors:,} | {admitted:,} | {final_pool} |"
+                f"| {b3_survivors:,} | {stab_survivors:,} | {qual_survivors:,} | {admitted:,} | {final_pool} | "
+                f"{cinfo['n_clusters']} | `{cinfo['sizes_str']}` |"
             )
 
     # ── Section 2: Training-Period Metrics ─────────────────────────────
@@ -161,8 +185,8 @@ def build_report(etfs, sides, suffix):
         "",
         "IC-weighted combination model on the training window. Useful for sanity-checking fit.",
         "",
-        "| ETF | Side | Features | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Raw Ann. Ret | Raw Sharpe | Cost Ann. Ret | Cost Sharpe | Sortino | Max DD |",
-        "| :--- | :--- | ---: | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| ETF | Side | Features | Clusters | Cluster Sizes | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Raw Ann. Ret | Raw Sharpe | Cost Ann. Ret | Cost Sharpe | Sortino | Max DD |",
+        "| :--- | :--- | ---: | ---: | :--- | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ])
     for etf in etfs:
         for side in sides:
@@ -172,7 +196,8 @@ def build_report(etfs, sides, suffix):
             if not res.get("training_metrics"):
                 continue
             n_feats = len(res["features_selected"])
-            lines.append(_metrics_row(etf, side, n_feats, res["training_metrics"]))
+            cinfo = _load_cluster_info(etf, side, suffix)
+            lines.append(_metrics_row(etf, side, n_feats, cinfo["n_clusters"], cinfo["sizes_str"], res["training_metrics"]))
 
     # ── Section 3: Holdout OOS Metrics ─────────────────────────────────
     lines.extend([
@@ -181,8 +206,8 @@ def build_report(etfs, sides, suffix):
         "",
         "Out-of-sample from holdout start to present.",
         "",
-        "| ETF | Side | Features | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Raw Ann. Ret | Raw Sharpe | Cost Ann. Ret | Cost Sharpe | Sortino | Max DD |",
-        "| :--- | :--- | ---: | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| ETF | Side | Features | Clusters | Cluster Sizes | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Raw Ann. Ret | Raw Sharpe | Cost Ann. Ret | Cost Sharpe | Sortino | Max DD |",
+        "| :--- | :--- | ---: | ---: | :--- | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ])
     for etf in etfs:
         for side in sides:
@@ -192,7 +217,8 @@ def build_report(etfs, sides, suffix):
             if not res.get("oos_metrics"):
                 continue
             n_feats = len(res["features_selected"])
-            lines.append(_metrics_row(etf, side, n_feats, res["oos_metrics"]))
+            cinfo = _load_cluster_info(etf, side, suffix)
+            lines.append(_metrics_row(etf, side, n_feats, cinfo["n_clusters"], cinfo["sizes_str"], res["oos_metrics"]))
 
     # ── Section 4: Lockbox Metrics ─────────────────────────────────────
     lines.extend([
@@ -201,8 +227,8 @@ def build_report(etfs, sides, suffix):
         "",
         "Most recent OOS window (lockbox start to present). Strictest generalization test.",
         "",
-        "| ETF | Side | Features | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Raw Ann. Ret | Raw Sharpe | Cost Ann. Ret | Cost Sharpe | Sortino | Max DD |",
-        "| :--- | :--- | ---: | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| ETF | Side | Features | Clusters | Cluster Sizes | Overall IC | Overall IC 95% CI | Tail IC | Tail IC 95% CI | Monotonicity | Raw Ann. Ret | Raw Sharpe | Cost Ann. Ret | Cost Sharpe | Sortino | Max DD |",
+        "| :--- | :--- | ---: | ---: | :--- | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ])
     for etf in etfs:
         for side in sides:
@@ -212,7 +238,8 @@ def build_report(etfs, sides, suffix):
             if not res.get("lockbox_metrics"):
                 continue
             n_feats = len(res["features_selected"])
-            lines.append(_metrics_row(etf, side, n_feats, res["lockbox_metrics"]))
+            cinfo = _load_cluster_info(etf, side, suffix)
+            lines.append(_metrics_row(etf, side, n_feats, cinfo["n_clusters"], cinfo["sizes_str"], res["lockbox_metrics"]))
 
     # ── Section 5: Admitted Features (full details) ────────────────────
     lines.extend([
@@ -278,6 +305,25 @@ def build_report(etfs, sides, suffix):
         "",
         "Optimal Number of Clusters (ONC) feature groupings calculated on training data.",
         "Enforces diversity downstream (max 1 feature per cluster selected per rebalance).",
+        "",
+        "### Cluster Overview per ETF / Side",
+        "",
+        "| ETF | Side | Total Features | Clusters | Avg Silhouette | Cluster Sizes |",
+        "| :--- | :--- | ---: | ---: | ---: | :--- |",
+    ])
+    for etf in etfs:
+        for side in sides:
+            cinfo = _load_cluster_info(etf, side, suffix)
+            if cinfo["n_clusters"] == "-":
+                continue
+            pool_path = DATA_DIR / f"selected_pool_{etf}_{side}{suffix}.json"
+            pool = _load_json(pool_path) or []
+            lines.append(
+                f"| {etf} | {side} | {len(pool)} | {cinfo['n_clusters']} | {cinfo['avg_sil_str']} | `{cinfo['sizes_str']}` |"
+            )
+    lines.extend([
+        "",
+        "### Cluster Breakdown Details",
         "",
         "| ETF | Side | Cluster ID | Features | Silhouette | Primary Feature | Other Members |",
         "| :--- | :--- | ---: | ---: | ---: | :--- | :--- |",

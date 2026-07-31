@@ -963,6 +963,33 @@ def main():
     generate_report(all_results, suffix=suffix, oos_years=oos_years)
 
 
+def _load_cluster_info(etf, side, suffix):
+    cluster_path = HERE / "data" / f"cluster_assignments_{etf}_{side}{suffix}.json"
+    cdata = None
+    try:
+        with open(cluster_path, "r", encoding="utf-8") as f:
+            cdata = json.load(f)
+    except Exception:
+        pass
+    if not cdata or "clusters" not in cdata:
+        return {"n_clusters": "-", "sizes_str": "-", "avg_sil_str": "-"}
+    clusters_dict = cdata["clusters"]
+    n_clusters = cdata.get("n_clusters", len(clusters_dict))
+    sizes = sorted([len(m) for m in clusters_dict.values()], reverse=True)
+    if len(sizes) <= 15:
+        sizes_str = str(sizes)
+    else:
+        sizes_str = f"[{', '.join(map(str, sizes[:12]))}, ... ({len(sizes)} clusters)]"
+    avg_sil = cdata.get("avg_silhouette", None)
+    avg_sil_str = f"{avg_sil:.4f}" if avg_sil is not None else "N/A"
+    return {
+        "n_clusters": n_clusters,
+        "sizes_str": sizes_str,
+        "avg_sil_str": avg_sil_str,
+        "sizes_raw": sizes,
+    }
+
+
 def generate_report(results, suffix="", oos_years=None):
     """Generate FILTER_DIAGNOSIS.md with deep causal analysis."""
     lines = [
@@ -990,8 +1017,8 @@ def generate_report(results, suffix="", oos_years=None):
         lines.append(f"> **Caveat**: Lockbox spans ~{oos_years:.1f}y. Sharpe-based TP/Median split has high variance at this horizon; some Median features may flip to TP with more data.")
         lines.append("")
     lines.extend([
-        "| ETF | Side | Admitted | FP | Median | TP | FP Rate | Prod Score |",
-        "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| ETF | Side | Admitted | Clusters | Cluster Sizes | Avg Sil | FP | Median | TP | FP Rate | Prod Score |",
+        "| :--- | :--- | ---: | ---: | :--- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ])
     # Decay multipliers (production retraining context)
     DECAY_MULT = {"persistent": 1.0, "gradual": 0.75, "fast": 0.25, "immediate": 0.0}
@@ -1017,7 +1044,11 @@ def generate_report(results, suffix="", oos_years=None):
                 prod_scores.append(tier_s * decay_m)
             prod_score = sum(prod_scores) / len(prod_scores) if prod_scores else 0.0
 
-            lines.append(f"| {etf} | {side} | {total} | {n_fp} | {n_median} | {n_tp} | {fp_rate:.0%} | {prod_score:.2f} |")
+            cinfo = _load_cluster_info(etf, side, suffix)
+            lines.append(
+                f"| {etf} | {side} | {total} | {cinfo['n_clusters']} | `{cinfo['sizes_str']}` | {cinfo['avg_sil_str']} | "
+                f"{n_fp} | {n_median} | {n_tp} | {fp_rate:.0%} | {prod_score:.2f} |"
+            )
     lines.append("")
 
     # ─── Section 2: Training-Only Discriminators ──────────────────────────────
