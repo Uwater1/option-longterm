@@ -918,14 +918,14 @@
     }
   },
   {
-    "feature_name": "combo_mean__opening_drive_thrust_ratio__volatility_expansion_trend_vector",
+    "feature_name": "combo_min__opening_drive_thrust_ratio__volatility_expansion_trend_vector",
     "sign": 1,
-    "overall_ic": 0.20162698351262948,
-    "deflated_ic": 0.20073427482733142,
-    "ic_ir": 0.5742702724358663,
-    "monotonicity": 0.6997429305912597,
+    "overall_ic": 0.21309168353641814,
+    "deflated_ic": 0.21218847844553512,
+    "ic_ir": 0.6113226550423981,
+    "monotonicity": 0.7444730077120822,
     "recipe": {
-      "op": "mean",
+      "op": "min",
       "feature_a": "opening_drive_thrust_ratio",
       "feature_b": "volatility_expansion_trend_vector"
     }
@@ -1258,6 +1258,19 @@
     }
   },
   {
+    "feature_name": "combo_rank_max__opening_drive_thrust_ratio__volatility_expansion_trend_vector",
+    "sign": 1,
+    "overall_ic": 0.18702614757137823,
+    "deflated_ic": 0.18613223718371333,
+    "ic_ir": 0.4876269206482182,
+    "monotonicity": 0.6956298200514138,
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "volatility_expansion_trend_vector"
+    }
+  },
+  {
     "feature_name": "combo_mean__star50_limit_proximity_early__volatility_expansion_trend_vector",
     "sign": 1,
     "overall_ic": 0.1854022840209787,
@@ -1501,27 +1514,6 @@
     }
   },
   {
-    "feature_name": "combo_z_sum__impulse_bar_dominance__volatility_expansion_trend_vector",
-    "sign": 1,
-    "overall_ic": 0.1524677741736128,
-    "deflated_ic": 0.15220497808249775,
-    "ic_ir": 0.4787125072489649,
-    "monotonicity": 0.7007712082262211,
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "impulse_bar_dominance",
-      "feature_b": "volatility_expansion_trend_vector"
-    }
-  },
-  {
-    "feature_name": "volatility_expansion_trend_vector",
-    "sign": 1,
-    "overall_ic": 0.16369449870147265,
-    "deflated_ic": 0.16314292810500985,
-    "ic_ir": 0.46547312666877844,
-    "monotonicity": 0.6982005141388175
-  },
-  {
     "feature_name": "combo_max__first_bar_return__rbreaker_buy_setup_proximity_early",
     "sign": 1,
     "overall_ic": 0.15338601137819796,
@@ -1532,6 +1524,19 @@
       "op": "max",
       "feature_a": "first_bar_return",
       "feature_b": "rbreaker_buy_setup_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__impulse_bar_dominance__volatility_expansion_trend_vector",
+    "sign": 1,
+    "overall_ic": 0.1524677741736128,
+    "deflated_ic": 0.15220497808249775,
+    "ic_ir": 0.4787125072489649,
+    "monotonicity": 0.7007712082262211,
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "impulse_bar_dominance",
+      "feature_b": "volatility_expansion_trend_vector"
     }
   },
   {
