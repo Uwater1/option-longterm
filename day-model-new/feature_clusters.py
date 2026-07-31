@@ -61,7 +61,7 @@ def onc(corr: pd.DataFrame, max_clusters: int = 10, n_init: int = 10, random_sta
     Returns:
         dict {cluster_id: [feature_names]}
     """
-    dist = np.sqrt(0.5 * (1 - corr.values))  # angular distance, proper metric
+    dist = np.sqrt(0.5 * np.clip(1.0 - corr.values, 0.0, 2.0))  # angular distance, proper metric
     feats = corr.columns.tolist()
     n_feats = len(feats)
 
@@ -118,12 +118,12 @@ def load_pool(etf: str, side: str, suffix: str = "") -> list:
         return json.load(f)
 
 
-def build_feature_matrix(df: pd.DataFrame, pool: list) -> tuple:
+def build_feature_matrix(df: pd.DataFrame, pool: list, train_end_ts: pd.Timestamp = None) -> tuple:
     """
     Build feature matrix for pool features (handles recipe combos).
     Returns (X_df: pd.DataFrame with feature columns, feature_names: list).
     """
-    train_end = pd.Timestamp("2022-01-01")
+    train_end = train_end_ts if train_end_ts is not None else pd.Timestamp("2022-01-01")
     train_mask = df["date"] < train_end
     train_df = df[train_mask] if train_mask.sum() > 252 else df.iloc[:500]
 
@@ -157,7 +157,8 @@ def build_feature_matrix(df: pd.DataFrame, pool: list) -> tuple:
     return X_df, feature_names
 
 
-def run_clustering(etf: str, side: str, suffix: str = "", max_clusters: int = 10) -> dict:
+def run_clustering(etf: str, side: str, suffix: str = "", max_clusters: int = 10,
+                   train_start_str: str = None, train_end_str: str = None) -> dict:
     """
     Full ONC pipeline for one ETF/side.
 
@@ -167,6 +168,16 @@ def run_clustering(etf: str, side: str, suffix: str = "", max_clusters: int = 10
     if len(pool) < 3:
         print(f"[SKIP] {etf} ({side}) has < 3 features. Clustering not meaningful.")
         return None
+
+    # Determine training window dates
+    if not train_start_str or not train_end_str:
+        # Check if suffix encodes period (e.g., _p2015_2023)
+        import re
+        m = re.match(r".*_p(\d{4})_(\d{4})", suffix)
+        if m:
+            train_start_str, train_end_str = f"{m.group(1)}-01-01", f"{m.group(2)}-01-01"
+        else:
+            train_start_str, train_end_str = ADAPTIVE_DATES.get(etf, ADAPTIVE_DATES["_default"])
 
     # Load feature dataset
     features_path = REPO_ROOT / "day-model" / "data" / f"features_{etf}.parquet"
@@ -186,16 +197,16 @@ def run_clustering(etf: str, side: str, suffix: str = "", max_clusters: int = 10
         base_med = df[base_cols].median().fillna(0.0)
         df[base_cols] = df[base_cols].ffill().fillna(base_med)
 
+    train_start = pd.Timestamp(train_start_str)
+    train_end = pd.Timestamp(train_end_str)
+
     # Build feature matrix
-    X_df, feature_names = build_feature_matrix(df, pool)
+    X_df, feature_names = build_feature_matrix(df, pool, train_end_ts=train_end)
     if len(feature_names) < 3:
         print(f"[SKIP] {etf} ({side}) has < 3 valid features after build.")
         return None
 
     # Restrict to training period only (no lookahead)
-    train_start_str, train_end_str = ADAPTIVE_DATES.get(etf, ADAPTIVE_DATES["_default"])
-    train_start = pd.Timestamp(train_start_str)
-    train_end = pd.Timestamp(train_end_str)
     train_mask = (df["date"] >= train_start) & (df["date"] < train_end)
     X_train = X_df[train_mask.values]
 
@@ -208,10 +219,12 @@ def run_clustering(etf: str, side: str, suffix: str = "", max_clusters: int = 10
 
     # Handle NaN/inf in correlation (constant features)
     corr_matrix = corr_matrix.fillna(0.0)
-    np.fill_diagonal(corr_matrix.values, 1.0)
+    corr_vals = corr_matrix.to_numpy().copy()
+    np.fill_diagonal(corr_vals, 1.0)
+    corr_matrix = pd.DataFrame(corr_vals, index=corr_matrix.index, columns=corr_matrix.columns)
 
     print(f"\n{'='*60}")
-    print(f"ONC Clustering: {etf} ({side})")
+    print(f"ONC Clustering: {etf} ({side}){suffix}")
     print(f"  Features: {len(feature_names)}")
     print(f"  Training rows: {len(X_train)} ({train_start_str} to {train_end_str})")
     print(f"  Max clusters sweep: {max_clusters}")
@@ -249,7 +262,7 @@ def run_clustering(etf: str, side: str, suffix: str = "", max_clusters: int = 10
     out_path = HERE / "data" / f"cluster_assignments_{etf}_{side}{suffix}.json"
     with open(out_path, "w") as f:
         json.dump(output, f, indent=2)
-    print(f"\n  Saved: {out_path}")
+    print(f"  Saved cluster assignments to {out_path}")
 
     return output
 
@@ -257,7 +270,7 @@ def run_clustering(etf: str, side: str, suffix: str = "", max_clusters: int = 10
 def _compute_avg_silhouette(corr: pd.DataFrame, clusters: dict) -> float:
     """Compute average silhouette score for final clustering."""
     feats = corr.columns.tolist()
-    dist = np.sqrt(0.5 * (1 - corr.values))
+    dist = np.sqrt(0.5 * np.clip(1.0 - corr.values, 0.0, 2.0))
     labels = np.zeros(len(feats), dtype=int)
     for cid, members in clusters.items():
         for m in members:
@@ -280,13 +293,24 @@ def main():
                         help="Max clusters to sweep in ONC (default: 10)")
     parser.add_argument("--suffix", type=str, default="",
                         help="Pool file suffix for multi-period runs (e.g., _p2015_2023)")
+    parser.add_argument("--train-start", type=str, default=None,
+                        help="Optional training start date (YYYY-MM-DD)")
+    parser.add_argument("--train-end", type=str, default=None,
+                        help="Optional training end date (YYYY-MM-DD)")
     args = parser.parse_args()
 
     etfs = ALL_ETFS if args.etf == "all" else [args.etf]
 
     results = {}
     for etf in etfs:
-        result = run_clustering(etf, args.side, suffix=args.suffix, max_clusters=args.max_clusters)
+        result = run_clustering(
+            etf,
+            args.side,
+            suffix=args.suffix,
+            max_clusters=args.max_clusters,
+            train_start_str=args.train_start,
+            train_end_str=args.train_end,
+        )
         if result:
             results[etf] = result
 

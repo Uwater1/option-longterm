@@ -1,0 +1,43 @@
+{
+  "etf": "500ETF",
+  "side": "single",
+  "n_features": 19,
+  "n_clusters": 5,
+  "avg_silhouette": 0.2161,
+  "max_clusters_param": 10,
+  "train_period": [
+    "2015-01-01",
+    "2022-01-01"
+  ],
+  "clusters": {
+    "0": [
+      "combo_rank_min__first_bar_sentiment__early_body_momentum",
+      "combo_ratio__max_down_ret__volume_weighted_momentum_acceleration",
+      "combo_ratio__max_down_ret__net_volume_flow",
+      "combo_ratio__max_down_ret__volatility_expansion_trend_vector"
+    ],
+    "1": [
+      "combo_tri_median__opening_drive_thrust_ratio__max_up_ret__smooth_momentum_structure",
+      "combo_rel_diff__max_up_ret__smooth_momentum_structure",
+      "combo_rel_diff__max_up_ret__late_bar_momentum",
+      "combo_sig_product__max_up_ret__close_vs_open_range",
+      "combo_sig_product__opening_drive_thrust_ratio__first_bar_return",
+      "vwap_trend_channel_slope"
+    ],
+    "2": [
+      "combo_min__opening_drive_thrust_ratio__double_bottom_bull_flag_early"
+    ],
+    "3": [
+      "combo_rel_diff__star50_limit_proximity_early__volume_weighted_momentum_acceleration",
+      "combo_rel_diff__star50_limit_proximity_early__body_size_progression",
+      "combo_mean__star50_limit_proximity_early__bar_ret_0",
+      "combo_sig_product__star50_limit_proximity_early__max_down_ret",
+      "combo_tri_median__opening_drive_thrust_ratio__star50_limit_proximity_early__body_size_progression",
+      "combo_sig_product__star50_limit_proximity_early__bar_ret_0"
+    ],
+    "4": [
+      "combo_rel_diff__max_up_ret__trend_bar_close_consistency",
+      "combo_clamp_diff__opening_drive_thrust_ratio__trend_bar_close_consistency"
+    ]
+  }
+}

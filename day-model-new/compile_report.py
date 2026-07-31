@@ -243,10 +243,19 @@ def build_report(etfs, sides, suffix):
                 if a.get("verdict", "").startswith("ADMITTED") and "feature_name" in a:
                     admitted_lookup[a["feature_name"]] = a
 
+            # Load cluster assignments if available
+            cluster_path = DATA_DIR / f"cluster_assignments_{etf}_{side}{suffix}.json"
+            cluster_data = _load_json(cluster_path)
+            feat_to_cluster = {}
+            if cluster_data and "clusters" in cluster_data:
+                for cid, members in cluster_data["clusters"].items():
+                    for m in members:
+                        feat_to_cluster[m] = cid
+
             lines.extend([
                 "",
-                "| Feature | Sign | Raw IC | Overall IC | Deflated IC | p-value | IC IR | Monotonicity | Max Corr |",
-                "| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+                "| Feature | Cluster | Sign | Raw IC | Overall IC | Deflated IC | p-value | IC IR | Monotonicity | Max Corr |",
+                "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
             ])
             for item in sorted(pool, key=lambda x: -x.get("overall_ic", 0)):
                 fname = item["feature_name"]
@@ -254,12 +263,44 @@ def build_report(etfs, sides, suffix):
                 raw_ic = extra.get("raw_ic", float("nan"))
                 p_val = extra.get("p_value", float("nan"))
                 max_corr = extra.get("max_corr", 0.0)
+                cid_str = f"Cluster {feat_to_cluster[fname]}" if fname in feat_to_cluster else "-"
                 lines.append(
-                    f"| `{fname}` | {item['sign']:+d} | "
+                    f"| `{fname}` | {cid_str} | {item['sign']:+d} | "
                     f"{raw_ic:+.4f} | {item['overall_ic']:+.4f} | {item['deflated_ic']:+.4f} | "
                     f"{p_val:.4f} | {item['ic_ir']:+.4f} | {item['monotonicity']:+.4f} | {max_corr:.3f} |"
                 )
             lines.append("")
+
+    # ── Section 5b: ONC Feature Clusters Summary ─────────────────────
+    lines.extend([
+        "",
+        "## 5b. ONC Feature Clusters Summary",
+        "",
+        "Optimal Number of Clusters (ONC) feature groupings calculated on training data.",
+        "Enforces diversity downstream (max 1 feature per cluster selected per rebalance).",
+        "",
+        "| ETF | Side | Cluster ID | Features | Silhouette | Primary Feature | Other Members |",
+        "| :--- | :--- | ---: | ---: | ---: | :--- | :--- |",
+    ])
+    has_clusters = False
+    for etf in etfs:
+        for side in sides:
+            cluster_path = DATA_DIR / f"cluster_assignments_{etf}_{side}{suffix}.json"
+            cdata = _load_json(cluster_path)
+            if not cdata or "clusters" not in cdata:
+                continue
+            has_clusters = True
+            sil = cdata.get("avg_silhouette", 0.0)
+            clusters_dict = cdata["clusters"]
+            for cid, members in sorted(clusters_dict.items(), key=lambda x: int(x[0])):
+                primary = f"`{members[0]}`" if members else "_(none)_"
+                others = ", ".join(f"`{m}`" for m in members[1:]) if len(members) > 1 else "_(none)_"
+                lines.append(
+                    f"| {etf} | {side} | Cluster {cid} | {len(members)} | {sil:.4f} | {primary} | {others} |"
+                )
+    if not has_clusters:
+        lines.append("| _(none)_ | _(none)_ | - | - | - | No cluster assignments found | - |")
+    lines.append("")
 
     # ── Section 6: Recipe Definitions ──────────────────────────────────
     lines.extend([

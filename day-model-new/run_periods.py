@@ -107,6 +107,25 @@ def run_combo(etf: str, side: str, period_name: str, inner_n_jobs: int) -> tuple
     if result_a.returncode not in (0, None):
         return False, f"select_features failed for {etf} {side} {period_name} (exit {result_a.returncode})"
 
+    # Stage A2: ONC Feature Clustering
+    cmd_ac = [
+        sys.executable,
+        str(HERE / "feature_clusters.py"),
+        "-e", etf,
+        "-s", side,
+        "--suffix", suffix,
+        "--train-start", train_start,
+        "--train-end", train_end,
+    ]
+
+    print(f"\n>>> [Stage A2] feature_clusters: ETF={etf}, Side={side}, Period={period_name}")
+    try:
+        result_ac = subprocess.run(
+            cmd_ac, cwd=str(REPO_ROOT), text=True, encoding="utf-8", errors="replace",
+        )
+    except Exception as e:
+        print(f"WARNING: feature_clusters failed to launch for {etf} {side} {period_name}: {e}")
+
     # Stage B: Evaluation (OOS-only, no lockbox)
     cmd_b = [
         sys.executable,

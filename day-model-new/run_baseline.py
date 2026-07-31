@@ -107,6 +107,28 @@ def run_combination(etf: str, side: str, early: bool, inner_n_jobs: int, verbose
     if result_a.returncode not in (0, None):
         return False, f"select_features failed for {etf} {side} (exit code {result_a.returncode})"
 
+    # --- Stage A2: ONC Feature Clustering ---
+    cmd_ac = [
+        sys.executable,
+        str(HERE / "feature_clusters.py"),
+        "-e", etf,
+        "-s", side,
+    ]
+    if early:
+        cmd_ac.extend(["--suffix", "_early"])
+
+    print(f"\n>>> [Stage A2] feature_clusters: ETF={etf}, Side={side}")
+    try:
+        result_ac = subprocess.run(
+            cmd_ac,
+            cwd=str(REPO_ROOT),
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except Exception as e:
+        print(f"WARNING: feature_clusters failed to launch for {etf} {side}: {e}")
+
     # --- Stage B: Evaluation ---
     cmd_b = [
         sys.executable,

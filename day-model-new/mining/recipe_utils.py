@@ -59,26 +59,26 @@ def fast_ecdf_interp_float32(x: np.ndarray, xp: np.ndarray, fp: np.ndarray) -> n
 
 def compute_recipe(df: pd.DataFrame, recipe: dict, train_means: dict = None, train_stds: dict = None, train_medians: dict = None, train_ecdfs: dict = None) -> np.ndarray:
     """
-    Dynamically compute feature values from a recipe dictionary.
+    Dynamically compute feature values from a recipe dictionary in FP32 single precision.
     Aligns scale by standardizing inputs for min/max/diff/ifelse using train_means/train_stds/train_ecdfs if provided.
 
     Supported 2-way ops: min, max, diff, ratio, ifelse, mean, product, abs_diff,
-                         rank_min, rank_max, clamp_diff
-    Supported 3-way ops: tri_mean, tri_min, tri_max, tri_median, tri_ifelse
+                         rank_min, rank_max, clamp_diff, z_sum, z_diff, sig_product, rel_diff
+    Supported 3-way ops: tri_mean, tri_z_mean, tri_sig_max, tri_min, tri_max, tri_median, tri_ifelse
     """
     op = recipe["op"]
 
-    # Helper to get standardized column
+    # Helper to get standardized column in float32
     def get_std_col(col_name):
-        val = df[col_name].values.astype(np.float64)
+        val = df[col_name].values.astype(np.float32)
         if train_means is not None and col_name in train_means:
-            mean = train_means[col_name]
-            std = train_stds[col_name]
+            mean = np.float32(train_means[col_name])
+            std = np.float32(train_stds[col_name])
         else:
-            mean = np.nanmean(val)
-            std = np.nanstd(val)
-        if std < 1e-12:
-            std = 1.0
+            mean = np.nanmean(val).astype(np.float32)
+            std = np.nanstd(val).astype(np.float32)
+        if std < 1e-7:
+            std = np.float32(1.0)
         return (val - mean) / std
 
     def get_rank_col(col_name):
@@ -88,7 +88,7 @@ def compute_recipe(df: pd.DataFrame, recipe: dict, train_means: dict = None, tra
             xp, fp = train_ecdfs[col_name]
         else:
             xp, fp = build_ecdf_grid_float32(val32, n_knots=128)
-        return fast_ecdf_interp_float32(val32, xp, fp).astype(np.float64)
+        return fast_ecdf_interp_float32(val32, xp, fp)
 
 
     # ─── 2-way operations ───────────────────────────────────────────────
@@ -110,19 +110,19 @@ def compute_recipe(df: pd.DataFrame, recipe: dict, train_means: dict = None, tra
 
     elif op == "ratio":
         # Ratio uses raw values because B is assumed to be a positive-only scaling feature (vol/volume)
-        a_val = df[recipe["feature_a"]].values.astype(np.float64)
-        b_val = df[recipe["feature_b"]].values.astype(np.float64)
-        return a_val / (np.abs(b_val) + 1e-5)
+        a_val = df[recipe["feature_a"]].values.astype(np.float32)
+        b_val = df[recipe["feature_b"]].values.astype(np.float32)
+        return a_val / (np.abs(b_val) + np.float32(1e-5))
 
     elif op == "ifelse":
         cond_col = recipe["feature_cond"]
-        cond_val = df[cond_col].values.astype(np.float64)
+        cond_val = df[cond_col].values.astype(np.float32)
 
         # Get threshold (median of condition column)
         if train_medians is not None and cond_col in train_medians:
-            thresh = train_medians[cond_col]
+            thresh = np.float32(train_medians[cond_col])
         else:
-            thresh = np.nanmedian(cond_val)
+            thresh = np.nanmedian(cond_val).astype(np.float32)
 
         a_std = get_std_col(recipe["feature_a"])
         b_std = get_std_col(recipe["feature_b"])
@@ -131,7 +131,7 @@ def compute_recipe(df: pd.DataFrame, recipe: dict, train_means: dict = None, tra
     elif op == "mean":
         a_std = get_std_col(recipe["feature_a"])
         b_std = get_std_col(recipe["feature_b"])
-        return (a_std + b_std) / 2.0
+        return (a_std + b_std) * np.float32(0.5)
 
     elif op == "product":
         a_std = get_std_col(recipe["feature_a"])
@@ -156,7 +156,7 @@ def compute_recipe(df: pd.DataFrame, recipe: dict, train_means: dict = None, tra
     elif op == "clamp_diff":
         a_std = get_std_col(recipe["feature_a"])
         b_std = get_std_col(recipe["feature_b"])
-        return np.clip(a_std - b_std, -2.0, 2.0)
+        return np.clip(a_std - b_std, np.float32(-2.0), np.float32(2.0))
 
     elif op == "z_sum":
         a_std = get_std_col(recipe["feature_a"])
@@ -176,7 +176,7 @@ def compute_recipe(df: pd.DataFrame, recipe: dict, train_means: dict = None, tra
     elif op == "rel_diff":
         a_std = get_std_col(recipe["feature_a"])
         b_std = get_std_col(recipe["feature_b"])
-        return (a_std - b_std) / (np.abs(a_std) + np.abs(b_std) + 1e-5)
+        return (a_std - b_std) / (np.abs(a_std) + np.abs(b_std) + np.float32(1e-5))
 
     # ─── 3-way operations ───────────────────────────────────────────────
 
@@ -184,13 +184,13 @@ def compute_recipe(df: pd.DataFrame, recipe: dict, train_means: dict = None, tra
         a_std = get_std_col(recipe["feature_a"])
         b_std = get_std_col(recipe["feature_b"])
         c_std = get_std_col(recipe["feature_c"])
-        return (a_std + b_std + c_std) / 3.0
+        return (a_std + b_std + c_std) / np.float32(3.0)
 
     elif op == "tri_z_mean":
         a_std = get_std_col(recipe["feature_a"])
         b_std = get_std_col(recipe["feature_b"])
         c_std = get_std_col(recipe["feature_c"])
-        return (a_std + b_std + c_std) / 3.0
+        return (a_std + b_std + c_std) / np.float32(3.0)
 
     elif op == "tri_sig_max":
         a_std = get_std_col(recipe["feature_a"])
@@ -216,24 +216,24 @@ def compute_recipe(df: pd.DataFrame, recipe: dict, train_means: dict = None, tra
         b_std = get_std_col(recipe["feature_b"])
         c_std = get_std_col(recipe["feature_c"])
         stacked = np.stack([a_std, b_std, c_std], axis=0)
-        return np.median(stacked, axis=0)
+        return np.median(stacked, axis=0).astype(np.float32)
 
     elif op == "tri_ifelse":
         # Nested regime: IfElse(cond1, A, IfElse(cond2, B, C))
         cond1_col = recipe["feature_cond"]
         cond2_col = recipe["feature_cond2"]
-        cond1_val = df[cond1_col].values.astype(np.float64)
-        cond2_val = df[cond2_col].values.astype(np.float64)
+        cond1_val = df[cond1_col].values.astype(np.float32)
+        cond2_val = df[cond2_col].values.astype(np.float32)
 
         if train_medians is not None and cond1_col in train_medians:
-            thresh1 = train_medians[cond1_col]
+            thresh1 = np.float32(train_medians[cond1_col])
         else:
-            thresh1 = np.nanmedian(cond1_val)
+            thresh1 = np.nanmedian(cond1_val).astype(np.float32)
 
         if train_medians is not None and cond2_col in train_medians:
-            thresh2 = train_medians[cond2_col]
+            thresh2 = np.float32(train_medians[cond2_col])
         else:
-            thresh2 = np.nanmedian(cond2_val)
+            thresh2 = np.nanmedian(cond2_val).astype(np.float32)
 
         a_std = get_std_col(recipe["feature_a"])
         b_std = get_std_col(recipe["feature_b"])

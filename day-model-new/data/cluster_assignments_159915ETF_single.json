@@ -1,0 +1,26 @@
+{
+  "etf": "159915ETF",
+  "side": "single",
+  "n_features": 8,
+  "n_clusters": 2,
+  "avg_silhouette": 0.3466,
+  "max_clusters_param": 10,
+  "train_period": [
+    "2015-01-01",
+    "2022-01-01"
+  ],
+  "clusters": {
+    "0": [
+      "combo_min__opening_drive_thrust_ratio__star50_limit_proximity_early",
+      "combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__first_bar_sentiment",
+      "combo_tri_median__rbreaker_sell_setup_proximity_early__first_bar_sentiment__bar_body_rng_0",
+      "combo_min__star50_limit_proximity_early__bar_ret_0",
+      "combo_tri_mean__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__first_bar_return",
+      "combo_max__max_up_ret__first_bar_return"
+    ],
+    "1": [
+      "combo_z_sum__star50_limit_proximity_early__yesterday_first_30min_return",
+      "combo_ratio__star50_limit_proximity_early__volatility_expansion_trend_vector"
+    ]
+  }
+}
