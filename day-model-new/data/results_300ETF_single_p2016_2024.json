@@ -45,18 +45,17 @@
     "combo_tri_median__star50_limit_proximity_early__bar_body_rng_0__opening_drive_thrust_ratio",
     "combo_tri_min__max_up_ret__first_bar_return__volume_weighted_price_position",
     "combo_sig_product__star50_limit_proximity_early__opening_drive_thrust_ratio",
+    "combo_rank_min__max_up_ret__first_bar_sentiment",
     "combo_tri_median__rbreaker_sell_setup_proximity_early__max_up_ret__first_bar_return",
     "combo_tri_median__rbreaker_sell_setup_proximity_early__first_bar_return__bar_body_rng_0",
     "combo_tri_max__rbreaker_sell_setup_proximity_early__max_up_ret__bar_ret_0",
     "combo_rank_min__bar_body_rng_0__volume_surge_direction",
-    "combo_rank_min__max_up_ret__first_bar_sentiment",
     "combo_rank_max__volume_weighted_price_position__opening_drive_thrust_ratio",
     "combo_tri_median__rbreaker_sell_setup_proximity_early__max_up_ret__opening_drive_thrust_ratio",
     "combo_min__opening_drive_thrust_ratio__volume_surge_direction",
     "max_up_ret",
     "combo_max__max_up_ret__first_bar_sentiment",
     "combo_rank_max__max_up_ret__opening_drive_thrust_ratio",
-    "combo_max__opening_drive_thrust_ratio__first_bar_sentiment",
     "combo_min__bar_body_rng_0__limit_down_proximity_early",
     "combo_sig_product__volume_weighted_price_position__opening_drive_thrust_ratio",
     "combo_max__first_bar_return__first_bar_sentiment",
@@ -74,6 +73,7 @@
     "combo_max__volume_weighted_price_position__volume_surge_direction",
     "combo_tri_min__first_bar_return__volume_weighted_price_position__opening_drive_thrust_ratio",
     "combo_sig_product__first_bar_return__volume_weighted_price_position",
+    "combo_tri_mean__smooth_momentum_structure__volume_weighted_price_position__opening_drive_thrust_ratio",
     "combo_rank_min__opening_drive_thrust_ratio__limit_down_proximity_early",
     "combo_rank_min__max_up_ret__volume_weighted_price_position",
     "combo_tri_median__volume_weighted_momentum_acceleration__bar_ret_0__volume_weighted_price_position",
@@ -81,71 +81,75 @@
     "combo_rank_max__rbreaker_sell_setup_proximity_early__max_up_ret",
     "combo_tri_max__rbreaker_sell_setup_proximity_early__bar_ret_0__opening_drive_thrust_ratio",
     "combo_ratio__first_bar_return__volume_weighted_price_position",
+    "combo_tri_mean__smooth_momentum_structure__max_up_ret__volume_weighted_price_position",
     "combo_min__opening_drive_thrust_ratio__limit_down_proximity_early",
     "combo_diff__rbreaker_sell_setup_proximity_early__bar_vol_0",
     "combo_sig_product__bar_body_rng_0__opening_drive_thrust_ratio",
     "combo_sig_product__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio",
     "combo_tri_max__rbreaker_sell_setup_proximity_early__max_up_ret__opening_drive_thrust_ratio",
+    "combo_min__volume_weighted_price_position__volume_surge_direction",
     "combo_rank_max__volume_weighted_price_position__first_bar_sentiment",
     "combo_tri_mean__smooth_momentum_structure__first_bar_return__bar_body_rng_0",
     "combo_rel_diff__rbreaker_sell_setup_proximity_early__bar_vol_0",
+    "combo_rank_min__first_bar_return__first_bar_sentiment",
     "combo_rel_diff__max_up_ret__early_vwap_acceleration",
     "first_bar_return",
     "combo_ratio__first_bar_return__volume_surge_direction",
     "always_in_trend_persistence",
     "combo_ratio__first_bar_sentiment__volume_weighted_price_position",
     "combo_min__volume_weighted_price_position__double_bottom_bull_flag_early",
+    "combo_max__opening_drive_thrust_ratio__first_bar_sentiment",
     "net_volume_flow",
-    "combo_rank_min__first_bar_return__first_bar_sentiment",
+    "combo_rank_min__volume_weighted_price_position__first_bar_sentiment",
     "combo_tri_max__rbreaker_sell_setup_proximity_early__bar_body_rng_0__opening_drive_thrust_ratio",
     "first_30min_return",
     "combo_max__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio",
     "vwap_close_divergence_trend"
   ],
   "training_metrics": {
-    "overall_ic": 0.11010168963727764,
+    "overall_ic": 0.10948153204094083,
     "overall_ic_ci": [
-      0.06715838379200748,
-      0.15115816890699296
+      0.06640142339957553,
+      0.15077769293929527
     ],
-    "tail_ic": 0.23087229542829707,
+    "tail_ic": 0.22868291307969532,
     "tail_ic_ci": [
-      0.13048628911792917,
-      0.32986472474795875
+      0.13237905072298076,
+      0.32948942354450084
     ],
-    "monotonicity": 0.806060606060606,
+    "monotonicity": 0.8303030303030303,
     "monotonicity_ci": [
-      0.5148484848484849,
-      0.9272727272727272
+      0.4909090909090909,
+      0.9151515151515152
     ],
-    "ann_ret": 0.032630275996305615,
-    "raw_ann_ret": 0.04855180897852613,
-    "raw_sharpe": 1.574053773592066,
-    "sharpe": 1.076633327454104,
-    "sortino": 2.080604615068648,
-    "max_dd": 0.030437033652549517
+    "ann_ret": 0.033496409716126906,
+    "raw_ann_ret": 0.049411128398863094,
+    "raw_sharpe": 1.6090334286883836,
+    "sharpe": 1.1103534885401534,
+    "sortino": 2.145379236127063,
+    "max_dd": 0.028926543787900685
   },
   "oos_metrics": {
-    "overall_ic": 0.025114592355864683,
+    "overall_ic": 0.024595241454277817,
     "overall_ic_ci": [
-      -0.06505667503603954,
-      0.11510989807837936
+      -0.0654781941180412,
+      0.11518095199337569
     ],
-    "tail_ic": 0.07583463034542176,
+    "tail_ic": 0.07580158549364373,
     "tail_ic_ci": [
-      -0.1293628003344117,
-      0.24707356726730792
+      -0.1277413001741452,
+      0.2409076039005885
     ],
-    "monotonicity": 0.503030303030303,
+    "monotonicity": 0.4666666666666667,
     "monotonicity_ci": [
-      -0.24878787878787875,
-      0.7699999999999997
+      -0.2606060606060606,
+      0.7818181818181819
     ],
-    "ann_ret": 0.009733336473934096,
-    "raw_ann_ret": 0.025363311617715403,
-    "raw_sharpe": 0.6749063149879829,
-    "sharpe": 0.2615978657223011,
-    "sortino": 0.5698718377633409,
-    "max_dd": 0.049221858131312995
+    "ann_ret": 0.009529586061950483,
+    "raw_ann_ret": 0.02517970668243064,
+    "raw_sharpe": 0.6713458308979264,
+    "sharpe": 0.25662806141511874,
+    "sortino": 0.5599947196651063,
+    "max_dd": 0.048542993152279064
   }
 }

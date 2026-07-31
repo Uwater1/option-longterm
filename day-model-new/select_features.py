@@ -47,9 +47,12 @@ IR_THR_SINGLE = 0.30          # Rolling 90d IC_IR threshold for single side
 IR_THR_DIR = 0.15             # Rolling 90d IC_IR threshold for long/short sides
 
 # Temporal & Quality Gate Thresholds
-MAX_RECENCY_RATIO = 2.2       # Cap recent_ic / early_ic to prune late-training overfit spikes (tuned: 2.5->2.2)
-MIN_EARLY_IC_THRESHOLD = 0.05 # Minimum early IC to trigger recency ratio cap
-MAX_YEARLY_IC_CV = 1.20       # Max coefficient of variation for yearly ICs (tuned: 1.50->1.20 to prune high-CV noise)
+MAX_RECENCY_RATIO = 2.5       # Cap recent_ic / early_ic to prune late-training overfit spikes
+MAX_HALF_RATIO = 2.00          # Cap ic_second / early_ic to prune late-training half spikes
+MAX_EXTREME_RECENCY_RATIO = 4.0 # Universal cap for extreme recency spikes regardless of early IC
+MAX_EXTREME_HALF_RATIO = 3.0   # Universal cap for extreme half-ratio spikes regardless of early IC
+MIN_EARLY_IC_THRESHOLD = 0.03 # Minimum early IC to trigger recency ratio cap (prevents dividing by tiny early ICs)
+MAX_YEARLY_IC_CV = 1.15       # Max coefficient of variation for yearly ICs (tuned: 1.30->1.15 to prune high-CV noise)
 # MAX_WEAK_LINK_CV removed — combo ops stabilize noisy primitives; gate had 76-100% TP collateral
 MIN_STABILITY_PRODUCT = 0.09  # Relaxed from 0.15: FILTER_DIAGNOSIS shows 0% precision, 90% TP collateral at 0.15
 MAX_NEGATIVE_REGIMES = 1      # Max vol-quintile regimes with negative IC (>=2 = regime-conditional signal)
@@ -1134,18 +1137,24 @@ def main():
 
     print(f"B2 Rolling Guard: {len(guard_survivors)} / {len(stable_results)} candidates passed (dropped {len(guard_rejects)} guard).")
 
-    # 3d. Temporal Validation Gate: require positive tail IC in recent training AND cap recency_ratio
+    # 3d. Temporal Validation Gate: require positive tail IC in recent training AND cap recency_ratio & half_ratio
     # This catches features whose signal decayed or was artificially concentrated in late training.
     temporal_survivors = []
     temporal_rejects = []
     for item in guard_survivors:
         recent_ic = item.get("recent_ic", 0.0)
         ic_first = item.get("split_half_ic_first", 0.0)
-        recency_ratio = recent_ic / (abs(ic_first) + 1e-5) if abs(ic_first) > 1e-4 else 99.0
+        ic_second = item.get("split_half_ic_second", 0.0)
+        denom = abs(ic_first) + 1e-4
+        recency_ratio = recent_ic / denom
+        half_ratio = ic_second / denom
         item["recency_ratio"] = float(recency_ratio)
-        
-        # Pass if recent IC > 0 AND signal is not excessively concentrated in late training (only cap recency_ratio when early IC < MIN_EARLY_IC_THRESHOLD)
-        is_late_spike = (abs(ic_first) < MIN_EARLY_IC_THRESHOLD) and (recency_ratio >= MAX_RECENCY_RATIO)
+        item["half_ratio"] = float(half_ratio)
+
+        # Pass if recent IC > 0 AND signal is not excessively concentrated in late training
+        is_extreme_spike = (recency_ratio >= MAX_EXTREME_RECENCY_RATIO) or (half_ratio >= MAX_EXTREME_HALF_RATIO)
+        is_moderate_spike = (abs(ic_first) < MIN_EARLY_IC_THRESHOLD) and ((recency_ratio >= MAX_RECENCY_RATIO) or (half_ratio >= MAX_HALF_RATIO))
+        is_late_spike = is_extreme_spike or is_moderate_spike
         passes_temporal = (recent_ic > 0.0) and (not is_late_spike)
         if passes_temporal:
             temporal_survivors.append(item)
@@ -1154,7 +1163,7 @@ def main():
             temporal_rejects.append(item)
 
     if temporal_rejects:
-        print(f"Temporal Validation Gate (recent 30% IC > 0 & recency_ratio < {MAX_RECENCY_RATIO}): rejected {len(temporal_rejects)} / {len(guard_survivors)} candidates (signal decayed or late-concentrated).")
+        print(f"Temporal Validation Gate (recent IC > 0 & recency_ratio < {MAX_RECENCY_RATIO} & half_ratio < {MAX_HALF_RATIO}): rejected {len(temporal_rejects)} / {len(guard_survivors)} candidates (signal decayed or late-concentrated).")
     else:
         print(f"Temporal Validation Gate: all {len(guard_survivors)} candidates passed.")
     guard_survivors = temporal_survivors
@@ -1271,6 +1280,7 @@ def main():
             "composite_score": item["composite_score"],
             "recent_ic": item.get("recent_ic", 0.0),
             "recency_ratio": item.get("recency_ratio", 0.0),
+            "half_ratio": item.get("half_ratio", 0.0),
             "ic_ir": item["ic_ir"],
             "monotonicity": item["monotonicity"],
             "passes_split_half": True,
