@@ -52,6 +52,10 @@ uv run python newtrade/run_backtest.py -e 300ETF --group-constraint
 uv run python newtrade/run_backtest.py -e all --group-constraint --max-per-group 1
 uv run python newtrade/run_backtest.py -e 300ETF --no-group-constraint  # disable
 
+# Rolling Tail IC mode (480d window, top/bottom 10% Spearman)
+uv run python newtrade/run_backtest.py -e all --ic-mode rolling_tail
+uv run python newtrade/run_backtest.py -e 500ETF --ic-mode rolling_tail --tail-window 480
+
 # Feature Correlation & Hierarchical Clustering Diagnosis Suite
 uv run python newtrade/diagnose_correlation.py -e 300ETF --side single
 
@@ -116,6 +120,7 @@ newtrade/
 | **Full Pool Benchmark** | `--pool-period all` sequentially executes backtests for all pool vintages (`old`, `_p2016_2024`, `_p2018_2026`) and generates dedicated reports/charts. |
 | **Active ETF Scope** | `300ETF`, `500ETF`, `50ETF`, `159915ETF`. `588000ETF` is **disabled** (trained on 2021-2025 during market regime change). |
 | **Production Signal** | IC Weighted (`--scheme icw`) on Top-10 features selected by ETF-adaptive EMA IC (`--ic-ema-span`: 30d for 300ETF/50ETF, 90d for 500ETF/159915ETF). |
+| **IC Mode** | `--ic-mode expanding` (default): full-history Pearson. `--ic-mode rolling_tail`: 480d rolling Spearman on top/bottom 10% tail. Benefits large stale pools (N>100). Default TBD. |
 | **Scheme Comparison** | `--scheme all` evaluates `ICW` and `EW` side-by-side. |
 | **Top-K Truncation** | Default `--top-k 10`. Solves 500ETF 32-feature dilution (+0.113 Sharpe lift) while acting as a non-destructive floor for lean pools (159915ETF SR=1.497). |
 | **ONC Group Constraint** | `--group-constraint` enables ONC cluster-based diversity (max 1 feature per cluster per day). Auto-detects period cluster file `day-model-new/data/cluster_assignments_{etf}_{side}{suffix}.json` matching `--pool-period`. Use `--max-per-group N` to allow N features per cluster. |

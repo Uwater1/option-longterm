@@ -18,10 +18,10 @@ import pandas as pd
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE))
+NEWTRADE_DIR = HERE.parent
+sys.path.insert(0, str(NEWTRADE_DIR))
 
 from run_backtest import run_single_backtest
-from robustness import deflated_sharpe_ratio, run_cpcv_backtest
 
 AVAILABLE_ETFS = ["300ETF", "500ETF", "159915ETF"]
 TOP_K_VALUES = [5, 8, 10, 12, 15]

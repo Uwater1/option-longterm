@@ -5174,24 +5174,24 @@ Per-primitive FP rate across all combo features. Flag primitives with FP rate �
 
 | Primitive | FP | TP | Total | FP Rate | Flag |
 | :--- | ---: | ---: | ---: | ---: | :--- |
-| `early_body_momentum` | 5 | 0 | 5 | 100% | ⚠ TOXIC |
-| `high_low_sequence_momentum` | 2 | 0 | 2 | 100% |  |
 | `volume_surge_direction` | 24 | 0 | 24 | 100% | ⚠ TOXIC |
+| `high_low_sequence_momentum` | 2 | 0 | 2 | 100% |  |
+| `early_body_momentum` | 5 | 0 | 5 | 100% | ⚠ TOXIC |
 | `max_up_ret` | 81 | 8 | 89 | 91% | ⚠ TOXIC |
 | `impulse_bar_dominance` | 14 | 2 | 16 | 88% | ⚠ TOXIC |
 | `volatility_expansion_trend_vector` | 37 | 6 | 43 | 86% | ⚠ TOXIC |
 | `volume_weighted_price_position` | 45 | 8 | 53 | 85% | ⚠ TOXIC |
 | `first_bar_return` | 51 | 10 | 61 | 84% | ⚠ TOXIC |
-| `net_volume_flow` | 10 | 2 | 12 | 83% | ⚠ TOXIC |
 | `bar_ret_0` | 35 | 7 | 42 | 83% | ⚠ TOXIC |
 | `body_size_progression` | 5 | 1 | 6 | 83% | ⚠ TOXIC |
+| `net_volume_flow` | 10 | 2 | 12 | 83% | ⚠ TOXIC |
 | `opening_drive_thrust_ratio` | 88 | 21 | 109 | 81% | ⚠ TOXIC |
 | `trend_bar_close_consistency` | 9 | 3 | 12 | 75% |  |
 | `first_bar_sentiment` | 29 | 10 | 39 | 74% |  |
 | `bar_body_rng_0` | 48 | 22 | 70 | 69% |  |
 | `smooth_momentum_structure` | 2 | 1 | 3 | 67% |  |
-| `demark_setup_reversal_early` | 3 | 2 | 5 | 60% |  |
 | `close_vs_open_range` | 6 | 4 | 10 | 60% |  |
+| `demark_setup_reversal_early` | 3 | 2 | 5 | 60% |  |
 | `max_down_ret` | 7 | 5 | 12 | 58% |  |
 | `double_bottom_bull_flag_early` | 1 | 1 | 2 | 50% |  |
 | `volume_weighted_momentum_acceleration` | 4 | 4 | 8 | 50% |  |
@@ -5199,8 +5199,8 @@ Per-primitive FP rate across all combo features. Flag primitives with FP rate �
 | `rbreaker_buy_setup_proximity_early` | 2 | 6 | 8 | 25% |  |
 | `limit_down_proximity_early` | 3 | 13 | 16 | 19% |  |
 | `star50_limit_proximity_early` | 5 | 34 | 39 | 13% |  |
-| `trend_day_regime_conviction` | 0 | 2 | 2 | 0% |  |
 | `yesterday_first_30min_return` | 0 | 5 | 5 | 0% |  |
+| `trend_day_regime_conviction` | 0 | 2 | 2 | 0% |  |
 
 ---
 

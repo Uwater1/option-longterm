@@ -64,6 +64,13 @@ When `--group-constraint` is enabled (auto-detects from cluster file), Top-K sel
 
 **Design Rationale**: Replaces admission-time correlation pruning (old B4 gate θ=0.80) with selection-time diversity control. Pool size is now unconstrained (B4 θ=0.95 only removes near-duplicates); ONC ensures the dynamic Top-K picker spreads across feature families.
 
+**Top-K = 10 (Fixed)**: A/B testing (K ∈ {5,8,10,12,15} × 3 ETFs, OOS 2022–2026) showed cross-K Sharpe gaps ≤ 0.03–0.15, within selection noise for 16 trials. Per-ETF K tuning on OOS constitutes overfitting. Fixed K=10 is retained as a principled, non-optimized default.
+
+**IC Mode (Expanding default, Rolling Tail optional)**: Two IC computation modes available via `--ic-mode`:
+- `expanding` (default): Full-history Pearson IC. Works well for fresh pools and small N.
+- `rolling_tail`: 480d rolling Spearman on top/bottom 10% tail. Aligns with admission criteria. Benefits large pools (N>100) with stale training data. Validated optimal window: 480d (peak of {240,360,480,600,720}). Tail 10% > 15%. EMA not needed at 480d.
+- Default remains `expanding`; whether to switch is TBD pending further pool refresh cycles.
+
 ---
 
 ## 3. Threshold Tuning & Position Sizing

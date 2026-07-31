@@ -22,7 +22,7 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
 
-from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_ic_numba, expanding_factor_score_numba, load_future_trade_returns, load_cluster_assignments
+from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_ic_numba, expanding_factor_score_numba, rolling_tail_ic_numba, load_future_trade_returns, load_cluster_assignments
 from weighting import get_weighting_scheme
 from strategy import generate_positions, simulate_etf_spot, calculate_metrics, sweep_optimal_threshold, compute_production_threshold, build_trade_log_df
 from robustness import deflated_sharpe_ratio, run_cpcv_backtest
@@ -48,7 +48,8 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                         rank_kwargs: dict = None, dynamic_ic: bool = False, long_only: bool = False,
                         use_future: bool = False, use_option: bool = False, use_stoploss: bool = True,
                         stoploss_mode: str = "time_decay_trailing", stoploss_param: float = 0.03,
-                        pool_override: list = None, cluster_suffix: str = "", group_constraint: bool = None, max_per_group: int = 1) -> dict:
+                        pool_override: list = None, cluster_suffix: str = "", group_constraint: bool = None, max_per_group: int = 1,
+                        ic_mode: str = "expanding", tail_window: int = 252, tail_pct: float = 0.10) -> dict:
     """
     Run backtest for one ETF and side combination filtered to OOS date range.
     
@@ -57,7 +58,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     If pool_override is provided, uses that pool instead of admitted_pools.py.
     """
     # 1. Load admitted pool
-    pool = pool_override if pool_override else load_admitted_pool(etf, side=side, min_features=min_features)
+    pool = pool_override if pool_override else load_admitted_pool(etf, side=side, min_features=min_features, suffix=cluster_suffix)
     if not pool:
         print(f"    [SKIP] Pool size {len(pool)} < {min_features} threshold.")
         return {
@@ -151,7 +152,10 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     
     if scheme_name == "ensemble":
         # Ensemble: equal-weight average of all 4 schemes
-        IC_mat = expanding_factor_ic_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
+        if ic_mode == "rolling_tail":
+            IC_mat = rolling_tail_ic_numba(Z_std, signs, full_trade_ret, window=tail_window, tail_pct=tail_pct, burn_in=burn_in)
+        else:
+            IC_mat = expanding_factor_ic_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
         rk = dict(rank_kwargs) if rank_kwargs else {}
         # Inject group constraint params
         if cluster_ids is not None:
@@ -177,6 +181,8 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                 sw = extra_kwargs.get("score_weights", (0.20, 0.15, 0.65))
                 mw = extra_kwargs.get("mono_window", 750)
                 exp_mat = expanding_factor_score_numba(Z_std, signs, full_trade_ret, burn_in=burn_in, score_weights=sw, mono_window=mw)
+            elif ic_mode == "rolling_tail":
+                exp_mat = rolling_tail_ic_numba(Z_std, signs, full_trade_ret, window=tail_window, tail_pct=tail_pct, burn_in=burn_in)
             else:
                 exp_mat = expanding_factor_ic_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
             extra_kwargs["expanding_ic"] = exp_mat
@@ -345,6 +351,9 @@ def main():
     parser.add_argument("--dynamic-ic", "--dynamic-score", dest="dynamic_ic", action="store_true", default=True, help="Enable zero-lookahead expanding factor ranking (default: True)")
     parser.add_argument("--no-dynamic-ic", "--no-dynamic-score", dest="dynamic_ic", action="store_false", help="Disable dynamic ranking (use static pool metadata score)")
     parser.add_argument("--dynamic-metric", type=str, default="ic", choices=["ic", "multi"], help="Dynamic factor ranking metric: 'ic' (default: single expanding IC) or 'multi'")
+    parser.add_argument("--ic-mode", type=str, default="expanding", choices=["expanding", "rolling_tail"], help="IC computation mode: 'expanding' (total history Pearson) or 'rolling_tail' (rolling window tail Spearman)")
+    parser.add_argument("--tail-window", type=int, default=480, help="Rolling window size in trading days for rolling_tail IC mode (default: 480 = 2 China years)")
+    parser.add_argument("--tail-pct", type=float, default=0.10, help="Tail fraction per side for rolling_tail IC mode (default: 0.10)")
     parser.add_argument("--mono-window", type=int, default=750, help="Rolling window for monotonicity calculation (default 750 trading days ~ 3 years, 0 for full expanding)")
     parser.add_argument("--score-w-ic", type=float, default=0.20, help="Score weight for IC component (default 0.20)")
     parser.add_argument("--score-w-ir", type=float, default=0.15, help="Score weight for IC_IR component (default 0.15)")
@@ -617,6 +626,9 @@ def main():
                 cluster_suffix=_cluster_suf,
                 group_constraint=args.group_constraint,
                 max_per_group=args.max_per_group,
+                ic_mode=args.ic_mode,
+                tail_window=args.tail_window,
+                tail_pct=args.tail_pct,
             )
             results.append(res)
 

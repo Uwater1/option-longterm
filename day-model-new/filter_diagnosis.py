@@ -963,7 +963,7 @@ def main():
     generate_report(all_results, suffix=suffix, oos_years=oos_years)
 
 
-def _load_cluster_info(etf, side, suffix):
+def _load_cluster_info(etf, side, suffix, admitted_features=None):
     cluster_path = HERE / "data" / f"cluster_assignments_{etf}_{side}{suffix}.json"
     cdata = None
     try:
@@ -974,8 +974,20 @@ def _load_cluster_info(etf, side, suffix):
     if not cdata or "clusters" not in cdata:
         return {"n_clusters": "-", "sizes_str": "-", "avg_sil_str": "-"}
     clusters_dict = cdata["clusters"]
-    n_clusters = cdata.get("n_clusters", len(clusters_dict))
-    sizes = sorted([len(m) for m in clusters_dict.values()], reverse=True)
+    # Filter to only admitted features if provided
+    if admitted_features is not None:
+        admitted_set = set(admitted_features)
+        filtered_clusters = {
+            k: [f for f in members if f in admitted_set]
+            for k, members in clusters_dict.items()
+        }
+        # Keep only clusters with at least one admitted feature
+        filtered_clusters = {k: v for k, v in filtered_clusters.items() if v}
+        n_clusters = len(filtered_clusters)
+        sizes = sorted([len(m) for m in filtered_clusters.values()], reverse=True)
+    else:
+        n_clusters = cdata.get("n_clusters", len(clusters_dict))
+        sizes = sorted([len(m) for m in clusters_dict.values()], reverse=True)
     if len(sizes) <= 15:
         sizes_str = str(sizes)
     else:
@@ -1044,7 +1056,8 @@ def generate_report(results, suffix="", oos_years=None):
                 prod_scores.append(tier_s * decay_m)
             prod_score = sum(prod_scores) / len(prod_scores) if prod_scores else 0.0
 
-            cinfo = _load_cluster_info(etf, side, suffix)
+            admitted_names = [f.get("feature_name", "") for f in all_feats]
+            cinfo = _load_cluster_info(etf, side, suffix, admitted_features=admitted_names)
             lines.append(
                 f"| {etf} | {side} | {total} | {cinfo['n_clusters']} | `{cinfo['sizes_str']}` | {cinfo['avg_sil_str']} | "
                 f"{n_fp} | {n_median} | {n_tp} | {fp_rate:.0%} | {prod_score:.2f} |"

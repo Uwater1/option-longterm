@@ -83,13 +83,29 @@ def load_future_trade_returns(etf: str, df_etf: pd.DataFrame) -> tuple[np.ndarra
     return combined, True, fut_name
 
 
-def load_admitted_pool(etf: str, side: str = "single", min_features: int = 10) -> list:
+def load_admitted_pool(etf: str, side: str = "single", min_features: int = 10, suffix: str = "") -> list:
     """
     Load admitted feature pool for given ETF and side.
-    Enforces feature count floor (min_features).
+    Reads directly from day-model-new pipeline output (single source of truth).
+    Falls back to admitted_pools.py only if pipeline JSON not found.
+
+    Args:
+        etf: ETF name (e.g., '300ETF')
+        side: Trading side ('single', 'long', 'short')
+        min_features: Minimum pool size floor
+        suffix: Pool period suffix (e.g., '_p2017_2025', '' for original)
     """
-    etf_pools = POOLS.get(etf, {})
-    pool = etf_pools.get(side, [])
+    import json as _json
+
+    # Primary: load from pipeline JSON output
+    pool_path = REPO_ROOT / "day-model-new" / "data" / f"selected_pool_{etf}_{side}{suffix}.json"
+    if pool_path.exists():
+        with open(pool_path, "r", encoding="utf-8") as f:
+            pool = _json.load(f)
+    else:
+        # Fallback: admitted_pools.py (legacy)
+        etf_pools = POOLS.get(etf, {})
+        pool = etf_pools.get(side, [])
 
     if len(pool) < min_features:
         print(f"[GUARDRAIL WARNING] {etf} ({side}) has only {len(pool)} features (< {min_features} minimum). Skipping execution.")
@@ -319,6 +335,115 @@ def expanding_factor_ic_numba(Z_std: np.ndarray, signs: np.ndarray, trade_return
     if burn_in < T:
         for t in range(burn_in):
             IC_matrix[t, :] = IC_matrix[burn_in, :]
+
+    return IC_matrix
+
+
+@njit(cache=True)
+def _spearman_subset(x: np.ndarray, y: np.ndarray, indices: np.ndarray) -> float:
+    """Compute Spearman rank correlation on a subset of indices."""
+    n = len(indices)
+    if n < 5:
+        return 0.0
+    x_sub = np.empty(n, dtype=np.float64)
+    y_sub = np.empty(n, dtype=np.float64)
+    for i in range(n):
+        x_sub[i] = x[indices[i]]
+        y_sub[i] = y[indices[i]]
+    # Rank x_sub
+    order_x = np.argsort(x_sub)
+    rank_x = np.empty(n, dtype=np.float64)
+    for i in range(n):
+        rank_x[order_x[i]] = float(i + 1)
+    # Rank y_sub
+    order_y = np.argsort(y_sub)
+    rank_y = np.empty(n, dtype=np.float64)
+    for i in range(n):
+        rank_y[order_y[i]] = float(i + 1)
+    # Pearson on ranks
+    mean_rx = 0.0
+    mean_ry = 0.0
+    for i in range(n):
+        mean_rx += rank_x[i]
+        mean_ry += rank_y[i]
+    mean_rx /= n
+    mean_ry /= n
+    cov = 0.0
+    var_x = 0.0
+    var_y = 0.0
+    for i in range(n):
+        dx = rank_x[i] - mean_rx
+        dy = rank_y[i] - mean_ry
+        cov += dx * dy
+        var_x += dx * dx
+        var_y += dy * dy
+    denom = np.sqrt(var_x * var_y)
+    if denom < 1e-12:
+        return 0.0
+    return cov / denom
+
+
+@njit(cache=True)
+def rolling_tail_ic_numba(Z_std: np.ndarray, signs: np.ndarray, trade_returns: np.ndarray,
+                          window: int = 252, tail_pct: float = 0.10, burn_in: int = 252) -> np.ndarray:
+    """
+    Compute zero-lookahead rolling tail IC for each factor over time.
+    At day t, uses data from [t-window, t-1] only.
+    Tail IC = Spearman correlation on top/bottom tail_pct of feature values.
+    Matches day-model-new admission criteria (single side: two-sided 10% tail).
+
+    Args:
+        Z_std: Standardized feature matrix (T, N)
+        signs: Sign alignment array (N,)
+        trade_returns: Daily trade returns (T,)
+        window: Rolling lookback window in trading days (default 252)
+        tail_pct: Fraction per tail (default 0.10 = top 10% + bottom 10%)
+        burn_in: Minimum days before producing output (default 252)
+
+    Returns:
+        IC_matrix (T, N) where row t = rolling tail IC computed on [t-window, t-1]
+    """
+    T, N = Z_std.shape
+    IC_matrix = np.zeros((T, N), dtype=np.float64)
+    effective_start = max(burn_in, window)
+    if T < effective_start or N == 0:
+        return IC_matrix
+
+    # Pre-align signs
+    Z_signed = np.zeros((T, N), dtype=np.float64)
+    for j in range(N):
+        Z_signed[:, j] = Z_std[:, j] * signs[j]
+
+    n_tail = max(5, int(window * tail_pct))
+    n_tail_total = n_tail * 2  # top + bottom
+
+    for t in range(effective_start, T):
+        win_start = t - window
+        # For each feature, compute tail IC on [win_start, t-1]
+        for j in range(N):
+            # Extract window data
+            x_win = np.empty(window, dtype=np.float64)
+            y_win = np.empty(window, dtype=np.float64)
+            for i in range(window):
+                x_win[i] = Z_signed[win_start + i, j]
+                y_win[i] = trade_returns[win_start + i]
+
+            # Sort by feature value to find tails
+            order = np.argsort(x_win)
+
+            # Collect bottom tail + top tail indices
+            tail_indices = np.empty(n_tail_total, dtype=np.int64)
+            for i in range(n_tail):
+                tail_indices[i] = order[i]  # bottom
+            for i in range(n_tail):
+                tail_indices[n_tail + i] = order[window - n_tail + i]  # top
+
+            IC_matrix[t, j] = _spearman_subset(x_win, y_win, tail_indices)
+
+    # Fill burn-in with first valid row
+    if effective_start < T:
+        for t in range(effective_start):
+            IC_matrix[t, :] = IC_matrix[effective_start, :]
 
     return IC_matrix
 
