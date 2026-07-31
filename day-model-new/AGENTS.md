@@ -96,6 +96,7 @@ python3 day-model-new/run_periods.py --max-parallel 4   # Parallel combos
 | 4 | BH-FDR | q=0.30, 5000 block-shuffled sims | Multiple-testing correction |
 | 5 | B3 Composite Floor | 93rd (cond) / 95th (symmetric) / 97th (3-way) | Beat empirical null |
 | 6 | Temporal Stability Gate | ic_cv × weak_link_cv ≥ 0.15 (combo features) | Kill artificially smooth mirages |
+| 6b | Regime Uniformity Gate | ic_std_across_regimes < 0.030 AND ic_cv > 0.85 (combo) | Kill uniform-regime + unstable-yearly overfits |
 | 7 | Quality Gate | deflated_ic≥0.03/0.05, raw_ic≥0.02/0.03, sortino>0 | Kill tail-only mirages |
 | 8 | B4 Correlation Gate | θ=0.95 (near-duplicate only) | Reject exact duplicates |
 

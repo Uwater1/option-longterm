@@ -74,6 +74,7 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 - ~~**Unstable Component Gate**~~: **REMOVED**. Required `weak_link_cv <= 1.00`. Diagnosis showed 76% collateral on 300ETF (59/78 TP killed) and 100% on 159915ETF (10/10). Combo operations (rank_min, z_sum, etc.) stabilize noisy primitives — standalone component CV ≠ combo instability.
 - **Sign Consistency Gate**: Rejects candidate if meaningful full-sample IC ($|\text{IC}_{\text{full}}| \ge 0.015$) contradicts tail IC sign ($\text{IC}_{\text{full}} \cdot \text{IC}_{\text{tail}} < 0$), preventing non-monotonic tail mirages from entering the pool.
 - **Negative Vol-Regime Gate**: Rejects feature if IC is negative in $\ge 2$ vol-quintile regimes (`REJECTED_NEGATIVE_REGIMES`), catching regime-conditional signals that fail in transitional volatility environments.
+- **Regime Uniformity Gate**: Rejects combo features with suspiciously uniform IC across vol regimes AND unstable yearly ICs (`REJECTED_REGIME_UNIFORMITY`). Combined condition: `ic_std_across_regimes < 0.030 AND ic_cv > 0.85`. Catches "too good to be true" features that appear stable across regimes but have erratic year-to-year performance (overfit signature). Based on FILTER_DIAGNOSIS discriminators: ic_std Cohen's d = -0.86, ic_cv Cohen's d = +0.85 for 300ETF FPs.
 - **Quality Gate**: Requires all three:
   - `deflated_ic >= 0.03` (normal) / `0.05` (short-history ETFs with n_train < 1200)
   - `|raw_ic| >= 0.02` (normal) / `0.03` (short-history) — catches tail-only mirages
@@ -170,6 +171,7 @@ SE_IC ≈ 1/√n_train
 - [x] **Adaptive temporal gate relaxation** — Ratio cap (`recency_ratio < 2.5`) now only fires when `|early_ic| < 0.05`. Features with solid early IC that strengthen recently are no longer penalized. Result: 300ETF pool 7→15, 159915ETF 11→16, 500ETF unchanged (capped). FP rate remains 0% for 500ETF/159915ETF; 300ETF gained 2 FP in exchange for 2× pool size.
 - [x] **B6 threshold tuning documented** — `MAX_YEARLY_IC_CV=0.85`, `MIN_STABILITY_PRODUCT=0.15`, `MAX_WEAK_LINK_CV=1.00` calibrated against FILTER_DIAGNOSIS FN data for 300ETF/159915ETF. Rationale added inline in §B6.
 - [x] **B6 gates added to diagnosis** — `REJECTED_HIGH_YEARLY_IC_CV`, `REJECTED_UNSTABLE_COMPONENT`, `REJECTED_STABILITY_GATE`, `REJECTED_QUALITY_GATE` now tracked in `filter_diagnosis.py` GATE_ORDER and `compile_report.py` funnel.
+- [x] **Regime Uniformity Gate (B4)** — Rejects combo features with `ic_std_across_regimes < 0.030 AND ic_cv > 0.85`. Catches "too good to be true" overfit pattern (uniform across vol regimes BUT unstable yearly). Based on FILTER_DIAGNOSIS discriminators: ic_std Cohen's d=-0.86, ic_cv Cohen's d=+0.85. Rejects ~8 features for 300ETF p2016_2024. Training-only, zero look-ahead.
 
 ## References
 - Wang et al. 2026, *FactorMiner: A Self-Evolving Agent with Skills and Experience Memory for Financial Alpha Discovery*, arXiv:2602.14670 — admission gate, replacement rule, IC-weighted vs orthogonal vs learned-selection comparison.

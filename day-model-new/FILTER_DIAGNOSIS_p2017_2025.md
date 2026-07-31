@@ -18,7 +18,7 @@ Lockbox is used solely for labeling TP/FP — all proposed fixes are training-on
 
 | ETF | Side | Admitted | Clusters | Cluster Sizes | Avg Sil | FP | Median | TP | FP Rate | Prod Score |
 | :--- | :--- | ---: | ---: | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 300ETF | single | 128 | 33 | `[12, 10, 10, 8, 6, 5, 4, 3, 3, 3, 3, 2, ... (33 clusters)]` | 0.2343 | 60 | 59 | 9 | 47% | 0.12 |
+| 300ETF | single | 125 | 41 | `[8, 7, 6, 5, 5, 5, 4, 3, 2, 2, 2, 2, ... (41 clusters)]` | 0.2737 | 58 | 58 | 9 | 46% | 0.13 |
 | 500ETF | single | 206 | 47 | `[12, 10, 9, 8, 8, 8, 7, 7, 6, 6, 5, 5, ... (47 clusters)]` | 0.2603 | 3 | 147 | 56 | 1% | 0.43 |
 | 159915ETF | single | 183 | 48 | `[12, 12, 10, 9, 7, 6, 5, 5, 5, 4, 4, 3, ... (48 clusters)]` | 0.2140 | 1 | 52 | 130 | 1% | 0.67 |
 
@@ -31,17 +31,17 @@ Metrics computable at admission time that separate future FP from future TP.
 
 Positive Cohen's d means FP has HIGHER value (more unstable/concentrated).
 
-### 300ETF — `single` (FP=60, TP=9)
+### 300ETF — `single` (FP=58, TP=9)
 
 | Metric | FP Mean | TP Mean | FP Median | TP Median | Cohen's d | Best Threshold | Accuracy |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| weak_link_cv | 1.114 | 1.663 | 1.104 | 1.209 | -1.23 | 0.930 | 85% |
-| ic_std_across_regimes | 0.052 | 0.070 | 0.054 | 0.064 | -1.21 | 0.015 | 86% |
-| half_ratio | 1.896 | 1.184 | 1.551 | 1.044 | +0.85 | 1.067 | 88% |
-| n_negative_regimes | 0.150 | 0.333 | 0.000 | 0.000 | -0.44 | 0.000 | 86% |
-| n_negative_years | 0.867 | 0.778 | 1.000 | 1.000 | +0.16 | 0.000 | 86% |
-| ic_cv | 0.883 | 0.868 | 0.876 | 0.863 | +0.12 | 0.648 | 86% |
-| recency_ratio | 1.088 | 1.048 | 1.241 | 0.845 | +0.03 | -6.449 | 86% |
+| weak_link_cv | 1.110 | 1.663 | 1.104 | 1.209 | -1.24 | 0.930 | 84% |
+| ic_std_across_regimes | 0.053 | 0.070 | 0.054 | 0.064 | -1.19 | 0.031 | 85% |
+| half_ratio | 1.828 | 1.184 | 1.551 | 1.044 | +0.93 | 1.067 | 90% |
+| n_negative_regimes | 0.155 | 0.333 | 0.000 | 0.000 | -0.42 | 0.000 | 85% |
+| n_negative_years | 0.828 | 0.778 | 1.000 | 1.000 | +0.09 | 0.000 | 85% |
+| ic_cv | 0.877 | 0.868 | 0.869 | 0.863 | +0.07 | 0.648 | 85% |
+| recency_ratio | 1.074 | 1.048 | 1.241 | 0.845 | +0.02 | -6.449 | 85% |
 
 ### 500ETF — `single` (FP=3, TP=56)
 
@@ -82,15 +82,6 @@ Per-year training IC for each FP feature. Look for:
 - Early IC=+0.0376, Recent IC=+0.1086, 1st-half IC=+0.0380, 2nd-half IC=+0.1053, Neg regimes=1/5
 - Weak component: `max_up_ret` (CV=0.94, neg years=1)
 - Regime ICs: Q1_low_vol=+0.019, Q2=+0.059, Q3_mid=-0.001, Q4=+0.071, Q5_high_vol=+0.177
-
-**`combo_ratio__first_bar_sentiment__volume_weighted_price_position`** (Lock IC=-0.0437, Sharpe=-2.0688)
-- Admission: Train IC=+0.1434, Deflated=+0.1427, IR=0.50, Mono=0.66, p=0.0048, MaxCorr=0.91
-- Yearly Linear ICs: 2015: +0.071 | 2016: +0.044 | 2017: +0.038 | 2018: +0.137 | 2019: +0.148 | 2020: -0.008 | 2021: +0.138 | 2022: +0.020 | 2023: +0.120 | 2024: -0.036 | 2025: +0.017 | 2026: -0.159
-- Yearly Tail ICs:   2015: +0.044 | 2016: -0.163 | 2017: +0.113 | 2018: +0.071 | 2019: +0.364 | 2020: +0.033 | 2021: +0.287 | 2022: +0.167 | 2023: +0.149 | 2024: +0.001 | 2025: -0.185 | 2026: -0.356
-- IC CV=1.00, Neg years (linear/tail)=2/0 of 8, Half ratio=0.77, Recency ratio=0.48
-- Early IC=+0.0879, Recent IC=+0.0420, 1st-half IC=+0.0809, 2nd-half IC=+0.0625, Neg regimes=0/5
-- Weak component: `volume_weighted_price_position` (CV=1.24, neg years=2)
-- Regime ICs: Q1_low_vol=+0.086, Q2=+0.082, Q3_mid=+0.066, Q4=+0.068, Q5_high_vol=+0.068
 
 **`combo_ratio__bar_ret_0__volume_weighted_price_position`** (Lock IC=-0.0136, Sharpe=-1.9227)
 - Admission: Train IC=+0.2100, Deflated=+0.2102, IR=0.71, Mono=0.75, p=0.0002, MaxCorr=0.88
@@ -369,15 +360,6 @@ Per-year training IC for each FP feature. Look for:
 - Early IC=+0.0690, Recent IC=+0.0860, 1st-half IC=+0.0648, 2nd-half IC=+0.1072, Neg regimes=0/5
 - Weak component: `first_bar_sentiment` (CV=1.06, neg years=2)
 - Regime ICs: Q1_low_vol=+0.048, Q2=+0.118, Q3_mid=+0.013, Q4=+0.084, Q5_high_vol=+0.151
-
-**`combo_tri_mean__smooth_momentum_structure__first_bar_return__volume_weighted_price_position`** (Lock IC=-0.0036, Sharpe=-1.0259)
-- Admission: Train IC=+0.1519, Deflated=+0.1528, IR=0.54, Mono=0.72, p=0.0028, MaxCorr=0.85
-- Yearly Linear ICs: 2015: +0.056 | 2016: +0.025 | 2017: -0.009 | 2018: +0.074 | 2019: +0.023 | 2020: -0.041 | 2021: +0.081 | 2022: +0.070 | 2023: +0.130 | 2024: +0.033 | 2025: +0.095 | 2026: -0.165
-- Yearly Tail ICs:   2015: +0.187 | 2016: -0.084 | 2017: +0.065 | 2018: +0.370 | 2019: -0.031 | 2020: +0.170 | 2021: +0.267 | 2022: +0.351 | 2023: +0.076 | 2024: +0.020 | 2025: +0.201 | 2026: -0.377
-- IC CV=1.13, Neg years (linear/tail)=2/1 of 8, Half ratio=6.96, Recency ratio=2.50
-- Early IC=+0.0327, Recent IC=+0.0817, 1st-half IC=+0.0116, 2nd-half IC=+0.0804, Neg regimes=0/5
-- Weak component: `volume_weighted_price_position` (CV=1.24, neg years=2)
-- Regime ICs: Q1_low_vol=+0.067, Q2=+0.069, Q3_mid=+0.011, Q4=+0.070, Q5_high_vol=+0.056
 
 **`combo_rank_max__max_up_ret__volume_weighted_price_position`** (Lock IC=-0.0388, Sharpe=-0.9976)
 - Admission: Train IC=+0.2042, Deflated=+0.2050, IR=0.89, Mono=0.83, p=0.0002, MaxCorr=0.90
@@ -1107,22 +1089,13 @@ These contribute signal to IC-weighted ensembles but aren't profitable standalon
 - Regime ICs: Q1_low_vol=+0.026, Q2=+0.092, Q3_mid=+0.037, Q4=+0.068, Q5_high_vol=+0.211
 
 **`combo_tri_max__first_bar_return__volume_weighted_price_position__bar_body_rng_0`** (Lock IC=+0.0037, Sharpe=-1.3784)
-- Admission: Train IC=+0.2221, Deflated=+0.2230, IR=0.61, Mono=0.73, p=0.0002, MaxCorr=0.91
+- Admission: Train IC=+0.2221, Deflated=+0.2231, IR=0.61, Mono=0.73, p=0.0002, MaxCorr=0.91
 - Yearly Linear ICs: 2015: +0.094 | 2016: +0.075 | 2017: +0.066 | 2018: +0.202 | 2019: +0.059 | 2020: -0.012 | 2021: +0.169 | 2022: +0.057 | 2023: +0.177 | 2024: +0.011 | 2025: +0.100 | 2026: -0.148
 - Yearly Tail ICs:   2015: +0.131 | 2016: -0.019 | 2017: +0.161 | 2018: +0.513 | 2019: +0.186 | 2020: +0.218 | 2021: +0.351 | 2022: +0.216 | 2023: +0.213 | 2024: +0.118 | 2025: +0.197 | 2026: -0.330
 - IC CV=0.83, Neg years (linear/tail)=1/0 of 8, Half ratio=1.38, Recency ratio=0.70
 - Early IC=+0.1339, Recent IC=+0.0940, 1st-half IC=+0.0772, 2nd-half IC=+0.1068, Neg regimes=0/5
 - Weak component: `volume_weighted_price_position` (CV=1.24)
 - Regime ICs: Q1_low_vol=+0.080, Q2=+0.122, Q3_mid=+0.052, Q4=+0.053, Q5_high_vol=+0.148
-
-**`combo_ratio__volume_surge_direction__volume_weighted_price_position`** (Lock IC=+0.0027, Sharpe=-0.6766)
-- Admission: Train IC=+0.1128, Deflated=+0.1108, IR=0.50, Mono=0.65, p=0.0250, MaxCorr=0.89
-- Yearly Linear ICs: 2015: +0.095 | 2016: +0.026 | 2017: -0.042 | 2018: +0.171 | 2019: +0.146 | 2020: +0.020 | 2021: +0.075 | 2022: +0.043 | 2023: +0.154 | 2024: -0.009 | 2025: +0.081 | 2026: -0.119
-- Yearly Tail ICs:   2015: +0.196 | 2016: -0.135 | 2017: -0.002 | 2018: +0.160 | 2019: +0.165 | 2020: +0.169 | 2021: +0.191 | 2022: -0.027 | 2023: +0.159 | 2024: +0.165 | 2025: +0.220 | 2026: -0.269
-- IC CV=1.07, Neg years (linear/tail)=2/2 of 8, Half ratio=0.84, Recency ratio=1.13
-- Early IC=+0.0645, Recent IC=+0.0726, 1st-half IC=+0.0795, 2nd-half IC=+0.0669, Neg regimes=0/5
-- Weak component: `volume_weighted_price_position` (CV=1.24)
-- Regime ICs: Q1_low_vol=+0.061, Q2=+0.102, Q3_mid=+0.031, Q4=+0.084, Q5_high_vol=+0.084
 
 **`combo_tri_max__max_up_ret__bar_body_rng_0__opening_drive_thrust_ratio`** (Lock IC=+0.0025, Sharpe=-1.0214)
 - Admission: Train IC=+0.1816, Deflated=+0.1821, IR=0.62, Mono=0.75, p=0.0004, MaxCorr=0.94
@@ -4763,7 +4736,6 @@ Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies la
 | `combo_max__volume_weighted_price_position__volume_surge_direction` | FP | fast | +0.0957 | -0.1478 | -0.1478 | 1y |
 | `combo_rank_max__volume_weighted_price_position__volume_surge_direction` | FP | fast | +0.0956 | -0.1539 | -0.1539 | 1y |
 | `combo_tri_mean__max_up_ret__first_bar_return__volume_weighted_price_position` | FP | fast | +0.0948 | -0.1679 | -0.1679 | 1y |
-| `combo_tri_mean__smooth_momentum_structure__first_bar_return__volume_weighted_price_position` | FP | fast | +0.0946 | -0.1647 | -0.1647 | 1y |
 | `combo_rank_min__rbreaker_sell_setup_proximity_early__bar_body_rng_0` | Median | persistent | +0.0945 | +0.0032 | +0.0032 | 1y |
 | `combo_tri_min__max_up_ret__volume_weighted_price_position__opening_drive_thrust_ratio` | FP | fast | +0.0942 | -0.1429 | -0.1429 | 1y |
 | `combo_tri_min__first_bar_return__volume_weighted_price_position__bar_body_rng_0` | Median | fast | +0.0938 | -0.0625 | -0.0625 | 1y |
@@ -4784,7 +4756,6 @@ Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies la
 | `combo_mean__max_up_ret__volume_surge_direction` | FP | fast | +0.0822 | -0.1159 | -0.1159 | 1y |
 | `combo_tri_min__rbreaker_sell_setup_proximity_early__first_bar_return__opening_drive_thrust_ratio` | Median | fast | +0.0816 | -0.0708 | -0.0708 | 1y |
 | `combo_tri_mean__rbreaker_sell_setup_proximity_early__bar_ret_0__opening_drive_thrust_ratio` | Median | fast | +0.0814 | -0.0621 | -0.0621 | 1y |
-| `combo_ratio__volume_surge_direction__volume_weighted_price_position` | Median | fast | +0.0813 | -0.1192 | -0.1192 | 1y |
 | `combo_rank_max__first_bar_return__volume_surge_direction` | Median | fast | +0.0812 | -0.0880 | -0.0880 | 1y |
 | `combo_tri_mean__rbreaker_sell_setup_proximity_early__first_bar_return__opening_drive_thrust_ratio` | Median | fast | +0.0811 | -0.0619 | -0.0619 | 1y |
 | `combo_min__first_bar_return__volume_surge_direction` | Median | fast | +0.0778 | -0.0723 | -0.0723 | 1y |
@@ -4857,20 +4828,18 @@ Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies la
 | `combo_min__max_up_ret__bar_body_rng_0` | FP | fast | +0.0216 | -0.0774 | -0.0774 | 1y |
 | `combo_sig_product__volume_weighted_price_position__opening_drive_thrust_ratio` | FP | fast | +0.0207 | -0.0951 | -0.0951 | 1y |
 | `combo_sig_product__max_up_ret__opening_drive_thrust_ratio` | FP | fast | +0.0191 | -0.1068 | -0.1068 | 1y |
-| `combo_ratio__first_bar_sentiment__volume_weighted_price_position` | FP | fast | +0.0173 | -0.1589 | -0.1589 | 1y |
 | `combo_rel_diff__max_up_ret__early_vwap_acceleration` | FP | fast | +0.0145 | -0.0880 | -0.0880 | 1y |
 | `combo_sig_product__bar_ret_0__opening_drive_thrust_ratio` | FP | fast | +0.0039 | -0.0842 | -0.0842 | ∞ |
 | `combo_tri_median__smooth_momentum_structure__max_up_ret__bar_ret_0` | FP | immediate | -0.0003 | -0.1319 | -0.1319 | ∞ |
 | `combo_sig_product__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio` | Median | immediate | -0.0086 | +0.0735 | +0.0735 | ∞ |
 
-**Decay distribution**: immediate=2, fast(1-2y)=114, gradual=0, persistent=12
+**Decay distribution**: immediate=2, fast(1-2y)=111, gradual=0, persistent=12
 
 **FP decay trajectories:**
 
 - `combo_tri_median__smooth_momentum_structure__max_up_ret__bar_ret_0`: Y1:-0.000 → Y2:-0.132
 - `combo_sig_product__bar_ret_0__opening_drive_thrust_ratio`: Y1:+0.004 → Y2:-0.084
 - `combo_rel_diff__max_up_ret__early_vwap_acceleration`: Y1:+0.015 → Y2:-0.088
-- `combo_ratio__first_bar_sentiment__volume_weighted_price_position`: Y1:+0.017 → Y2:-0.159
 - `combo_sig_product__max_up_ret__opening_drive_thrust_ratio`: Y1:+0.019 → Y2:-0.107
 - `combo_sig_product__volume_weighted_price_position__opening_drive_thrust_ratio`: Y1:+0.021 → Y2:-0.095
 - `combo_min__max_up_ret__bar_body_rng_0`: Y1:+0.022 → Y2:-0.077
@@ -4915,7 +4884,6 @@ Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies la
 - `open_to_current_return`: Y1:+0.091 → Y2:-0.187
 - `combo_rank_max__max_up_ret__volume_weighted_price_position`: Y1:+0.092 → Y2:-0.197
 - `combo_tri_min__max_up_ret__volume_weighted_price_position__opening_drive_thrust_ratio`: Y1:+0.094 → Y2:-0.143
-- `combo_tri_mean__smooth_momentum_structure__first_bar_return__volume_weighted_price_position`: Y1:+0.095 → Y2:-0.165
 - `combo_tri_mean__max_up_ret__first_bar_return__volume_weighted_price_position`: Y1:+0.095 → Y2:-0.168
 - `combo_rank_max__volume_weighted_price_position__volume_surge_direction`: Y1:+0.096 → Y2:-0.154
 - `combo_max__volume_weighted_price_position__volume_surge_direction`: Y1:+0.096 → Y2:-0.148
@@ -5351,13 +5319,13 @@ How FP features' gate metrics compare to TP features. High overlap = gate cannot
 
 | Metric | FP Mean±Std | TP Mean±Std | Overlap | Verdict |
 | :--- | :--- | :--- | ---: | :--- |
-| monotonicity | 0.735±0.038 | 0.713±0.035 | 72% | WEAK |
-| ic_ir | 0.631±0.124 | 0.551±0.076 | 42% | USEFUL |
-| p_value | 0.002±0.004 | 0.001±0.001 | 22% | USEFUL |
-| max_corr | 0.899±0.131 | 0.877±0.200 | 70% | WEAK |
-| deflated_ic | 0.198±0.034 | 0.206±0.025 | 57% | WEAK |
-| overall_ic | 0.197±0.034 | 0.206±0.025 | 58% | WEAK |
-| raw_ic | 0.084±0.012 | 0.086±0.014 | 84% | USELESS |
+| monotonicity | 0.736±0.037 | 0.713±0.035 | 72% | WEAK |
+| ic_ir | 0.635±0.125 | 0.551±0.076 | 42% | USEFUL |
+| p_value | 0.001±0.004 | 0.001±0.001 | 22% | USEFUL |
+| max_corr | 0.900±0.133 | 0.877±0.200 | 70% | WEAK |
+| deflated_ic | 0.199±0.033 | 0.206±0.025 | 57% | WEAK |
+| overall_ic | 0.199±0.033 | 0.206±0.025 | 58% | WEAK |
+| raw_ic | 0.085±0.011 | 0.086±0.014 | 94% | USELESS |
 
 ### 500ETF — `single`
 
@@ -5482,7 +5450,7 @@ Stratified sample of ALL rejects per gate evaluated on lockbox.
 | BH-FDR Gate | 2 | 2 | 1 | 1 | 0 | 50% | 0% |
 | B6 Yearly IC CV Gate | 21 | 21 | 18 | 3 | 0 | 86% | 0% |
 | B6 Quality Gate | 1 | 1 | 0 | 1 | 0 | 0% | 0% |
-| B4 Correlation Gate | 206 | 78 | 38 | 26 | 14 | 49% | 18% |
+| B4 Correlation Gate | 201 | 78 | 37 | 27 | 14 | 47% | 18% |
 
 **7-Year Jackknife** — top TP casualties:
 - `combo_ratio__limit_down_proximity_early__volume_concentration`: Train IC=+0.1720, Lock IC=+0.1235, Sharpe=+0.9843
@@ -5612,15 +5580,15 @@ Breakdown of temporal gate rejects by condition:
 
 **Strong training-only discriminators (Cohen's d > 0.5):**
 
-- `weak_link_cv`: FP is lower (d=-1.23). Threshold 0.930 → 85% accuracy.
-- `ic_std_across_regimes`: FP is lower (d=-1.21). Threshold 0.015 → 86% accuracy.
-- `half_ratio`: FP is higher (d=+0.85). Threshold 1.067 → 88% accuracy.
+- `weak_link_cv`: FP is lower (d=-1.24). Threshold 0.930 → 84% accuracy.
+- `ic_std_across_regimes`: FP is lower (d=-1.19). Threshold 0.031 → 85% accuracy.
+- `half_ratio`: FP is higher (d=+0.93). Threshold 1.067 → 90% accuracy.
 
 **Failure pattern counts:**
-- Era-concentrated (IC CV > 1.5): 0/60
-- Decaying signal (half ratio < 0.3): 0/60
-- Weak component (CV > 2.0): 0/60
-- Regime-dependent (≥2 negative regimes): 0/60
+- Era-concentrated (IC CV > 1.5): 0/58
+- Decaying signal (half ratio < 0.3): 0/58
+- Weak component (CV > 2.0): 0/58
+- Regime-dependent (≥2 negative regimes): 0/58
 
 ### 500ETF — `single`
 
@@ -5648,36 +5616,36 @@ Per-primitive FP rate across all combo features. Flag primitives with FP rate �
 | :--- | ---: | ---: | ---: | ---: | :--- |
 | `early_vwap_acceleration` | 2 | 0 | 2 | 100% |  |
 | `volume_surge_direction` | 7 | 1 | 8 | 88% | ⚠ TOXIC |
-| `smooth_momentum_structure` | 4 | 1 | 5 | 80% | ⚠ TOXIC |
-| `volume_weighted_price_position` | 26 | 13 | 39 | 67% |  |
+| `smooth_momentum_structure` | 3 | 1 | 4 | 75% |  |
+| `volume_weighted_price_position` | 24 | 13 | 37 | 65% |  |
 | `bar_ret_0` | 14 | 14 | 28 | 50% |  |
 | `max_up_ret` | 35 | 36 | 71 | 49% |  |
 | `opening_drive_thrust_ratio` | 23 | 49 | 72 | 32% |  |
-| `first_bar_return` | 14 | 32 | 46 | 30% |  |
+| `first_bar_return` | 13 | 32 | 45 | 29% |  |
 | `bar_body_rng_0` | 5 | 32 | 37 | 14% |  |
-| `first_bar_sentiment` | 4 | 26 | 30 | 13% |  |
+| `first_bar_sentiment` | 3 | 26 | 29 | 10% |  |
 | `volatility_expansion_trend_vector` | 1 | 17 | 18 | 6% |  |
 | `rbreaker_sell_setup_proximity_early` | 2 | 57 | 59 | 3% |  |
+| `star50_limit_proximity_early` | 0 | 52 | 52 | 0% |  |
+| `yesterday_first_30min_return` | 0 | 7 | 7 | 0% |  |
 | `volume_weighted_momentum_acceleration` | 0 | 7 | 7 | 0% |  |
 | `yesterday_early_vwap_dev` | 0 | 2 | 2 | 0% |  |
-| `net_volume_flow` | 0 | 6 | 6 | 0% |  |
-| `demark_setup_reversal_early` | 0 | 7 | 7 | 0% |  |
-| `rbreaker_buy_setup_proximity_early` | 0 | 6 | 6 | 0% |  |
-| `yesterday_first_30min_return` | 0 | 7 | 7 | 0% |  |
 | `early_late_momentum_divergence` | 0 | 2 | 2 | 0% |  |
-| `max_down_ret` | 0 | 17 | 17 | 0% |  |
-| `limit_down_proximity_early` | 0 | 12 | 12 | 0% |  |
-| `impulse_bar_dominance` | 0 | 11 | 11 | 0% |  |
-| `star50_limit_proximity_early` | 0 | 52 | 52 | 0% |  |
-| `trend_bar_close_consistency` | 0 | 2 | 2 | 0% |  |
 | `body_size_progression` | 0 | 9 | 9 | 0% |  |
+| `demark_setup_reversal_early` | 0 | 7 | 7 | 0% |  |
+| `net_volume_flow` | 0 | 6 | 6 | 0% |  |
+| `limit_down_proximity_early` | 0 | 12 | 12 | 0% |  |
+| `max_down_ret` | 0 | 17 | 17 | 0% |  |
 | `late_bar_momentum` | 0 | 2 | 2 | 0% |  |
+| `impulse_bar_dominance` | 0 | 11 | 11 | 0% |  |
+| `trend_bar_close_consistency` | 0 | 2 | 2 | 0% |  |
+| `rbreaker_buy_setup_proximity_early` | 0 | 6 | 6 | 0% |  |
 
 ---
 
 ## 9. Operator Class FP Rate
 
 - **Symmetric** (`max, mean, min, rank_max, rank_min`): FP=24, TP=108, FP rate=18%
-- **Conditional** (`abs_diff, clamp_diff, diff, ifelse, product, ratio`): FP=7, TP=18, FP rate=28%
-- **3-way** (`tri_ifelse, tri_max, tri_mean, tri_median, tri_min`): FP=22, TP=42, FP rate=34%
+- **Conditional** (`abs_diff, clamp_diff, diff, ifelse, product, ratio`): FP=6, TP=18, FP rate=25%
+- **3-way** (`tri_ifelse, tri_max, tri_mean, tri_median, tri_min`): FP=21, TP=42, FP rate=33%
 

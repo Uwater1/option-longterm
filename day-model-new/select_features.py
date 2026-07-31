@@ -56,6 +56,11 @@ MAX_YEARLY_IC_CV = 1.15       # Max coefficient of variation for yearly ICs (tun
 # MAX_WEAK_LINK_CV removed — combo ops stabilize noisy primitives; gate had 76-100% TP collateral
 MIN_STABILITY_PRODUCT = 0.09  # Relaxed from 0.15: FILTER_DIAGNOSIS shows 0% precision, 90% TP collateral at 0.15
 MAX_NEGATIVE_REGIMES = 1      # Max vol-quintile regimes with negative IC (>=2 = regime-conditional signal)
+# Regime Uniformity Gate: catches "too good to be true" features that are suspiciously
+# uniform across vol regimes AND have unstable yearly ICs (overfit signature).
+# Conservative thresholds based on general principle: real signals have natural regime variance.
+MIN_IC_STD_REGIMES = 0.030    # Min std of IC across vol regimes (below = suspiciously uniform)
+MAX_IC_CV_FOR_UNIFORM = 0.85  # Max yearly IC CV to trigger uniformity check (above = unstable)
 
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
@@ -1369,6 +1374,24 @@ def main():
             return None
         return n_neg
 
+    def _compute_ic_std_across_regimes(x_flipped_arr):
+        """Compute std of IC across vol-quintile regimes (training-only).
+        
+        Low std = suspiciously uniform across regimes (overfit signature).
+        FILTER_DIAGNOSIS: FP mean=0.040 vs TP mean=0.051, Cohen's d=-0.86.
+        """
+        if _regime_masks is None:
+            return None
+        regime_ics = []
+        for mask in _regime_masks:
+            if mask.sum() < 20:
+                continue
+            ic = _spearman_from_arrays(x_flipped_arr[mask], y_train[mask])
+            regime_ics.append(ic)
+        if len(regime_ics) < 3:
+            return None
+        return float(np.std(regime_ics))
+
     def _compute_yearly_ic_cv(x_flipped_arr):
         """Compute coefficient of variation of yearly ICs (training-only)."""
         yearly_ics = []
@@ -1535,6 +1558,37 @@ def main():
                     "verdict": "REJECTED_NEGATIVE_REGIMES"
                 })
                 continue
+
+        # Regime Uniformity Gate: reject combo features with suspiciously uniform regime ICs
+        # combined with high yearly IC variability (overfit signature).
+        # FP pattern: low ic_std_across_regimes (uniform) + high ic_cv (unstable yearly).
+        # FILTER_DIAGNOSIS: ic_std Cohen's d=-0.86, ic_cv Cohen's d=+0.85 for 300ETF FPs.
+        if is_combo:
+            ic_std_reg = _compute_ic_std_across_regimes(x_cand)
+            cand["ic_std_across_regimes"] = ic_std_reg
+            # Use ic_cv from stability gate if available, else compute
+            ic_cv_val = cand.get("ic_cv")
+            if ic_cv_val is None:
+                ic_cv_val = _compute_yearly_ic_cv(x_cand)
+                cand["ic_cv"] = ic_cv_val
+            if ic_std_reg is not None and ic_cv_val is not None:
+                # Combined condition: suspiciously uniform across regimes AND unstable yearly
+                if ic_std_reg < MIN_IC_STD_REGIMES and ic_cv_val > MAX_IC_CV_FOR_UNIFORM:
+                    attempts_log.append({
+                        "feature_name": cand_name,
+                        "sign": cand["sign"],
+                        "raw_ic": cand["raw_ic"],
+                        "overall_ic": cand_ic,
+                        "deflated_ic": deflated_ic,
+                        "ic_std_across_regimes": ic_std_reg,
+                        "ic_cv": ic_cv_val,
+                        "ic_ir": cand["ic_ir"],
+                        "monotonicity": cand["monotonicity"],
+                        "passes_rolling_guard": True,
+                        "passes_fdr": True,
+                        "verdict": "REJECTED_REGIME_UNIFORMITY"
+                    })
+                    continue
 
         # Quality Gate (before correlation): minimum deflated IC + positive Sortino + minimum raw IC
         # Prevents low-quality features from entering correlation comparison.
