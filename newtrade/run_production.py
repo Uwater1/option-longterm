@@ -60,7 +60,7 @@ DEFAULT_FEE_BPS = 8.0
 DEFAULT_Z_BUFFER = 0.10  # Walk-forward validated
 DEFAULT_BURN_IN = 252
 DEFAULT_START = "2022-01-01"
-DEFAULT_END = "2026-01-01"
+DEFAULT_END = None
 DEFAULT_SCORE_WEIGHTS = (0.35, 0.00, 0.65)  # IC / IC_IR / Monotonicity (for multi-metric mode)
 DEFAULT_MONO_WINDOW = 750  # ~3 years rolling (for multi-metric mode)
 DEFAULT_DYNAMIC_METRIC = "ic"  # IC-only (best in production with full training data)
@@ -118,9 +118,12 @@ def run_production_backtest(etf: str, side: str = "single", mode: str = DEFAULT_
     
     # 6. Train/OOS split
     t_start = pd.Timestamp(start_date)
-    t_end = pd.Timestamp(end_date)
     train_mask = df["date"] < t_start
-    oos_mask = (df["date"] >= t_start) & (df["date"] < t_end)
+    if end_date:
+        t_end = pd.Timestamp(end_date)
+        oos_mask = (df["date"] >= t_start) & (df["date"] < t_end)
+    else:
+        oos_mask = df["date"] >= t_start
     
     if not oos_mask.any():
         result["status"] = "NO_OOS_DATA"
@@ -264,7 +267,7 @@ def generate_report(results: list, args, path: Path):
         "",
         f"- **Signal**: Ensemble (equal-weight average of EW + ICW + Score + Rank)",
         f"- **Position Sizing**: `{args.mode}`",
-        f"- **OOS Period**: `{args.start_date} ~ {args.end_date}`",
+        f"- **OOS Period**: `{args.start_date} ~ {args.end_date if args.end_date else 'present'}`",
         f"- **Trade Session**: `10:00 AM → 14:35 PM`",
         f"- **Fee**: `{args.fee_bps} bps`",
         f"- **Threshold Buffer**: `{args.z_buffer}` (conservative)",

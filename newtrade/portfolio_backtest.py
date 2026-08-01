@@ -29,7 +29,7 @@ MODE = "binary"
 Z_BUFFER = 0.15
 BURN_IN = 252
 START_DATE = "2022-01-01"
-END_DATE = "2026-01-01"
+END_DATE = None
 N_TRIALS = 10  # 4 schemes × 3 ETFs, pre-committed to ensemble
 
 
@@ -37,7 +37,6 @@ def run_portfolio(fee_bps: float = 0.0008, verbose: bool = True) -> dict:
     """Run multi-ETF portfolio backtest."""
     
     t_start = pd.Timestamp(START_DATE)
-    t_end = pd.Timestamp(END_DATE)
     
     etf_results = {}
     all_dates = {}
@@ -53,7 +52,11 @@ def run_portfolio(fee_bps: float = 0.0008, verbose: bool = True) -> dict:
         Z_ens = compute_ensemble_composite(Z_composites)
         
         train_mask = df["date"] < t_start
-        oos_mask = (df["date"] >= t_start) & (df["date"] < t_end)
+        if END_DATE:
+            t_end = pd.Timestamp(END_DATE)
+            oos_mask = (df["date"] >= t_start) & (df["date"] < t_end)
+        else:
+            oos_mask = df["date"] >= t_start
         
         ret_train = trade_returns[train_mask.values]
         ret_oos = trade_returns[oos_mask.values]

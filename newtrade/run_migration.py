@@ -94,9 +94,12 @@ def trailing_ic(Z_comp, returns, dates, as_of_date, window=IC_GATE_WINDOW):
     return float(np.corrcoef(z[valid], r[valid])[0, 1])
 
 
-def eval_sharpe(Z_comp, full_trade_ret, dates, start, end, method="auto"):
+def eval_sharpe(Z_comp, full_trade_ret, dates, start, end=None, method="auto"):
     """Evaluate Sharpe for a period."""
-    oos = (dates >= start) & (dates < end)
+    if end:
+        oos = (dates >= start) & (dates < end)
+    else:
+        oos = dates >= start
     if oos.sum() < 20:
         return 0.0
     if method == "auto":
@@ -169,7 +172,7 @@ def step2_sharpe_validation(etf, current_pool, candidate_pool, df, full_trade_re
 
     # Evaluate on recent 2 years
     start = "2024-01-01"
-    end = "2026-01-01"
+    end = None
     sr_current_auto = eval_sharpe(Z_current, full_trade_ret, dates, start, end, "auto")
     sr_candidate_auto = eval_sharpe(Z_candidate, full_trade_ret, dates, start, end, "auto")
     sr_current_pct = eval_sharpe(Z_current, full_trade_ret, dates, start, end, "pct")

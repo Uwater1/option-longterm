@@ -351,7 +351,7 @@ def compute_ensemble_composite(Z_composites: dict, weights: dict = None) -> np.n
 
 def run_sensitivity_grid(etf: str, side: str = "single", min_features: int = 10,
                          fee_bps_list: list = None, burn_in_list: list = None,
-                         start_date: str = "2022-01-01", end_date: str = "2026-01-01",
+                         start_date: str = "2022-01-01", end_date: str = None,
                          mode: str = "binary", z_buffer: float = 0.1) -> pd.DataFrame:
     """
     Run sensitivity grid across fee levels and burn-in periods.
@@ -370,7 +370,7 @@ def run_sensitivity_grid(etf: str, side: str = "single", min_features: int = 10,
     X_raw, signs, feat_names = build_pool_feature_matrix(df, pool)
     
     t_start = pd.Timestamp(start_date)
-    t_end = pd.Timestamp(end_date)
+    t_end = pd.Timestamp(end_date) if end_date else None
     
     rows = []
     for burn_in in burn_in_list:
@@ -457,7 +457,7 @@ def build_all_composites(etf: str, side: str = "single", min_features: int = 10,
 def run_full_robustness(etf: str, side: str = "single", n_trials: int = 50,
                         n_splits: int = 6, n_test: int = 2, purge_gap: int = 5,
                         mode: str = "binary", fee_bps: float = 0.0008,
-                        start_date: str = "2022-01-01", end_date: str = "2026-01-01",
+                        start_date: str = "2022-01-01", end_date: str = None,
                         z_buffer: float = 0.1, run_dsr: bool = True,
                         run_cpcv_flag: bool = True, run_pbo: bool = True,
                         run_ensemble: bool = True, run_sensitivity: bool = True) -> dict:
@@ -481,8 +481,11 @@ def run_full_robustness(etf: str, side: str = "single", n_trials: int = 50,
     results["n_obs"] = len(trade_returns)
     
     t_start = pd.Timestamp(start_date)
-    t_end = pd.Timestamp(end_date)
-    oos_mask = (df["date"] >= t_start) & (df["date"] < t_end)
+    if end_date:
+        t_end = pd.Timestamp(end_date)
+        oos_mask = (df["date"] >= t_start) & (df["date"] < t_end)
+    else:
+        oos_mask = df["date"] >= t_start
     n_oos = int(oos_mask.sum())
     
     # --- DSR ---
@@ -627,7 +630,7 @@ def main():
     parser.add_argument("--mode", type=str, default="binary", choices=["binary", "tanh", "quadratic"])
     parser.add_argument("--fee-bps", type=float, default=8.0, help="Base fee in bps (default: 8)")
     parser.add_argument("--start-date", type=str, default="2022-01-01")
-    parser.add_argument("--end-date", type=str, default="2026-01-01")
+    parser.add_argument("--end-date", type=str, default=None)
     parser.add_argument("--z-buffer", type=float, default=0.1)
     
     # Select which analyses to run

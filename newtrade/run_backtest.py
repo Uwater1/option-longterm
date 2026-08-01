@@ -43,7 +43,7 @@ def resolve_ic_ema_span(etf: str, user_span: int | None = None) -> int:
 
 def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew", z_th: float = 0.5, 
                         position_mode: str = "binary", fee_bps: float = 0.0008, min_features: int = 10,
-                        start_date: str = "2022-01-01", end_date: str = "2026-01-01",
+                        start_date: str = "2022-01-01", end_date: str = None,
                         z_buffer: float = 0.1, z_short_buffer: float = None, auto_threshold: bool = False,
                         rank_kwargs: dict = None, dynamic_ic: bool = False, long_only: bool = False,
                         use_future: bool = False, use_option: bool = False, use_stoploss: bool = True,
@@ -68,7 +68,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
             "asset_type": "Future" if use_future else "Spot ETF",
             "status": "SKIPPED_FEAT_FLOOR",
             "n_features": len(pool),
-            "period": f"{start_date[:7]} ~ {end_date[:7]}",
+            "period": f"{start_date[:7]} ~ {end_date[:7]}" if end_date else f"{start_date[:7]} ~ present",
             "n_trades": 0,
             "cost_sharpe": 0.0,
             "raw_sharpe": 0.0,
@@ -95,7 +95,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                 "asset_type": "Future (N/A)",
                 "status": "SKIPPED_NO_FUTURE",
                 "n_features": len(pool),
-                "period": f"{start_date[:7]} ~ {end_date[:7]}",
+                "period": f"{start_date[:7]} ~ {end_date[:7]}" if end_date else f"{start_date[:7]} ~ present",
                 "n_trades": 0,
                 "cost_sharpe": 0.0,
                 "raw_sharpe": 0.0,
@@ -216,11 +216,14 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
 
     # 8. Date Filtering to OOS Evaluation Period
     t_start = pd.Timestamp(start_date)
-    t_end = pd.Timestamp(end_date)
+    if end_date:
+        t_end = pd.Timestamp(end_date)
+        mask = (df["date"] >= t_start) & (df["date"] < t_end)
+    else:
+        mask = df["date"] >= t_start
     
-    mask = (df["date"] >= t_start) & (df["date"] < t_end)
     if not mask.any():
-        print(f"    [WARNING] No data available for date range {start_date} to {end_date}. Falling back to recent history.")
+        print(f"    [WARNING] No data available for date range starting {start_date}. Falling back to recent history.")
         mask = df["date"] >= df["date"].iloc[-1000]
 
     df_oos = df[mask].reset_index(drop=True)
@@ -337,7 +340,7 @@ def main():
     parser.add_argument("--position-mode", type=str, default="binary", choices=["binary", "tanh", "quadratic"], help="Position sizing mode")
     parser.add_argument("--fee-bps", type=float, default=None, help="Transaction fee in basis points (default: 8.0 for ETF, 4.0 for futures)")
     parser.add_argument("--start-date", type=str, default="2022-01-01", help="OOS Start Date (YYYY-MM-DD)")
-    parser.add_argument("--end-date", type=str, default="2026-01-01", help="OOS End Date (YYYY-MM-DD)")
+    parser.add_argument("--end-date", type=str, default=None, help="OOS End Date (YYYY-MM-DD), default: end of available data")
     parser.add_argument("-o", "--output", type=str, default=None, help="Output markdown report path (default: newtrade/REPORT.md)")
 
     
@@ -413,7 +416,7 @@ def main():
         match = re.search(r'_p\d{4}_(\d{4})', args.pool_period)
         if match:
             pool_end_yr = int(match.group(1))
-            start_yr = min(pool_end_yr, 2025)
+            start_yr = pool_end_yr
             args.start_date = f"{start_yr}-01-01"
             if not args.output:
                 args.output = str(HERE / f"REPORT_{pool_end_yr}.md")
@@ -489,7 +492,7 @@ def main():
             print("ERROR: --decay requires --pool-period")
             return
         start_year = args.year if args.year else 2022
-        years = list(range(start_year, 2026))
+        years = list(range(start_year, 2027))
         print(f"\n  DECAY ANALYSIS: pool='{args.pool_period}' across {years}")
         print(f"  {'Year':<6} | {'Sharpe':>8} {'PnL':>10} {'WR%':>6} {'Trades':>7}")
         print(f"  {'-'*6}-+-{'-'*34}")
@@ -906,7 +909,8 @@ def main():
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         f.write("# NewTrade OOS Backtest Report\n\n")
-        f.write(f"- **OOS Evaluation Period**: `{args.start_date} ~ {args.end_date}`\n")
+        end_date_disp = args.end_date if args.end_date else (results[0]["dates"][-1] if results and results[0].get("dates") else "present")
+        f.write(f"- **OOS Evaluation Period**: `{args.start_date} ~ {end_date_disp}`\n")
         f.write(f"- **Intraday Trade Session**: `10:00 AM Open -> 14:35 PM Close`\n")
         f.write(f"- **Scheme(s)**: `{args.scheme.upper()}`\n")
         f.write(f"- **Conviction Threshold**: `{args.z_th}` (buffer=+{args.z_buffer})\n")
