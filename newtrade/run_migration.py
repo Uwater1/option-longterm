@@ -172,7 +172,7 @@ def step2_sharpe_validation(etf, current_pool, candidate_pool, df, full_trade_re
 
     # Evaluate on recent 2 years
     start = "2024-01-01"
-    end = None
+    end = "2026-01-01"
     sr_current_auto = eval_sharpe(Z_current, full_trade_ret, dates, start, end, "auto")
     sr_candidate_auto = eval_sharpe(Z_candidate, full_trade_ret, dates, start, end, "auto")
     sr_current_pct = eval_sharpe(Z_current, full_trade_ret, dates, start, end, "pct")

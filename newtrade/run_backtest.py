@@ -43,7 +43,7 @@ def resolve_ic_ema_span(etf: str, user_span: int | None = None) -> int:
 
 def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew", z_th: float = 0.5, 
                         position_mode: str = "binary", fee_bps: float = 0.0008, min_features: int = 10,
-                        start_date: str = "2022-01-01", end_date: str = None,
+                        start_date: str = "2022-01-01", end_date: str = "2026-01-01",
                         z_buffer: float = 0.1, z_short_buffer: float = None, auto_threshold: bool = False,
                         rank_kwargs: dict = None, dynamic_ic: bool = False, long_only: bool = False,
                         use_future: bool = False, use_option: bool = False, use_stoploss: bool = True,
@@ -340,7 +340,7 @@ def main():
     parser.add_argument("--position-mode", type=str, default="binary", choices=["binary", "tanh", "quadratic"], help="Position sizing mode")
     parser.add_argument("--fee-bps", type=float, default=None, help="Transaction fee in basis points (default: 8.0 for ETF, 4.0 for futures)")
     parser.add_argument("--start-date", type=str, default="2022-01-01", help="OOS Start Date (YYYY-MM-DD)")
-    parser.add_argument("--end-date", type=str, default=None, help="OOS End Date (YYYY-MM-DD), default: end of available data")
+    parser.add_argument("--end-date", type=str, default="2026-01-01", help="OOS End Date (YYYY-MM-DD)")
     parser.add_argument("-o", "--output", type=str, default=None, help="Output markdown report path (default: newtrade/REPORT.md)")
 
     
@@ -424,7 +424,7 @@ def main():
 
     # --pool-period: load period-specific pool override or handle 'all'
     if args.pool_period and args.pool_period.lower() == "all":
-        periods = ["old", "_p2015_2023", "_p2016_2024", "_p2017_2025", "_p2018_2026"]
+        periods = ["old", "_p2015_2023", "_p2016_2024", "_p2017_2025"]
         print("================================================================================")
         print(f"FULL POOL PERIOD BENCHMARK | Running periods: {periods}")
         print("================================================================================\n")
@@ -492,7 +492,7 @@ def main():
             print("ERROR: --decay requires --pool-period")
             return
         start_year = args.year if args.year else 2022
-        years = list(range(start_year, 2027))
+        years = list(range(start_year, 2026))
         print(f"\n  DECAY ANALYSIS: pool='{args.pool_period}' across {years}")
         print(f"  {'Year':<6} | {'Sharpe':>8} {'PnL':>10} {'WR%':>6} {'Trades':>7}")
         print(f"  {'-'*6}-+-{'-'*34}")

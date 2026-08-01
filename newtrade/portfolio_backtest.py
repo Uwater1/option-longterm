@@ -29,7 +29,7 @@ MODE = "binary"
 Z_BUFFER = 0.15
 BURN_IN = 252
 START_DATE = "2022-01-01"
-END_DATE = None
+END_DATE = "2026-01-01"
 N_TRIALS = 10  # 4 schemes × 3 ETFs, pre-committed to ensemble
 
 
