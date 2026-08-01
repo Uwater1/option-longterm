@@ -177,7 +177,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
             extra_kwargs["max_per_group"] = max_per_group
         if dynamic_ic:
             metric_choice = extra_kwargs.get("dynamic_metric", "multi")
-            if metric_choice == "multi" and scheme_name == "score":
+            if metric_choice == "multi" and scheme_name in ("score", "icw", "rank", "ew"):
                 sw = extra_kwargs.get("score_weights", (0.20, 0.15, 0.65))
                 mw = extra_kwargs.get("mono_window", 750)
                 exp_mat = expanding_factor_score_numba(Z_std, signs, full_trade_ret, burn_in=burn_in, score_weights=sw, mono_window=mw)

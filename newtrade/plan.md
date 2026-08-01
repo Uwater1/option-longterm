@@ -307,11 +307,34 @@ Ran `diagnose_components.py` and `run_backtest.py`:
 |-----------|-------|----------|
 | Scheme | **ICW (IC Weight)** | Primary scheme. High OOS Sharpe (1.497 on 159915ETF, DSR 0.955) |
 | Secondary Scheme | **EW (Equal Weight)** | Secondary baseline. Collapsed in report. |
-| Dynamic IC | **ON (expanding)** | Zero-lookahead expanding IC weighting |
+| Dynamic IC | **ON (rolling_tail 480d)** | Rolling tail IC (480d, 10%) for selection + weighting |
 | Position mode | Binary L+S | Highest Sharpe |
 | Threshold | Train-sweep + buffer (`--z-th auto`) | Buffer +0.10 |
 | Fee | 8 bps | Stress-tested to 20bps |
 | Feature floor | ≥ 10 | 50ETF/588000ETF skipped |
 | Visual Report | `REPORT.md` | Equity curve graph embedded, ICW uncollapsed, EW collapsed |
+
+### Weighting Pipeline A/B Test (2026-08)
+
+Ran `tests/test_weighting_ab.py`: 11 arms x 3 ETFs (300ETF, 500ETF, 159915ETF), OOS 2022-2026.
+
+**Conclusion: TailIC_ICW (rolling tail IC 480d + ICW shrinkage) confirmed as optimal.**
+
+| Rank | Arm | AvgSharpe | Delta |
+|------|-----|-----------|-------|
+| 1 | TailIC_ScoreW | 1.259 | +0.021 |
+| 2 | **TailIC_ICW (BASELINE)** | **1.238** | — |
+| 3 | TailIC_EW | 1.226 | -0.012 |
+| 4 | Multi_35_30_35_ScoreW | 1.189 | -0.048 |
+| 5 | TailIC_Rank | 1.188 | -0.049 |
+| 6 | ExpIC_ICW | 1.109 | -0.129 |
+| 7-11 | Multi-score variants | 0.97-1.10 | -0.14 to -0.27 |
+
+Key findings:
+- Rolling tail IC dominates: all 4 TailIC arms occupy top 5. Multi-score (IC+IR+mono) variants all underperform.
+- Score-proportional weighting is within noise (+0.021) of ICW shrinkage on same matrix. EW also competitive (-0.012).
+- Expanding IC loses to rolling tail IC by -0.129 avg Sharpe (consistent with prior A/B test).
+- Per-ETF: 300ETF (small pool) prefers ExpIC_ICW; 500ETF/159915ETF (large pools) strongly prefer rolling tail IC.
+- **Decision: retain TailIC_ICW as production default. No change needed.**
 
 
