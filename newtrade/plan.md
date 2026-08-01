@@ -1,154 +1,215 @@
-# NewTrade Framework — Day-Model Factor Monetization Plan
+# NewTrade Framework — Day-Model Factor Monetization
 
-## 1. Executive Summary & Objective
+## 1. Executive Summary
 
-Monetize admitted factors from `day-model-new` into intraday ETF spot and index futures trading signals.
+NewTrade converts admitted alpha factors from `day-model-new` into intraday ETF trading signals. Each day, a composite Z-score is built from the top-10 features (selected by rolling tail IC with hysteresis), and a binary trading decision is made: go long, go short, or stay flat.
 
-### Core Focus & Scope
-- **Factor Aggregation**: Combine admitted features ($N \ge 10$) into normalized composite signal $Z_{\text{composite}}$.
-- **Active ETF Scope**: `300ETF`, `500ETF`, `50ETF`, `159915ETF` (`588000ETF` disabled due to 2021–2025 regime shift).
-- **Mandatory Feature Floor**: $\ge 10$ admitted features per ETF/side. Skip trading if count floor unfulfilled.
-- **Zero Lookahead**: Enforce strict expanding-window parameter estimation ($\mu_{1:t-1}, \sigma_{1:t-1}$ standardizer, expanding/rolling IC at $t-1$, train-swept thresholds).
-- **Intraday Trade Window**: Enter 10:00 AM signal evaluation $\rightarrow$ Exit 14:35 PM / Close.
-- **Friction-Adjusted**: 8 bps (0.0008) flat transaction fee per position state transition. Stress-tested up to 20 bps.
+### Core Design
+- **Signal**: Weighted average of top-10 z-scored features, where weights come from Empirical Bayes-shrunk IC estimates.
+- **Trade**: Enter at 10:00 AM, exit at 14:35 PM same day. Round-trip fee = 16 bps (8bp buy and 8 bp sell).
+- **Gate**: Trade only when |Z_composite| exceeds a train-swept conviction threshold.
+- **Scope**: 300ETF, 500ETF, 159915ETF (50ETF/588000ETF disabled — insufficient features).
+- **Zero Lookahead**: All parameters estimated from data available at $t-1$.
 
----
+### Production OOS Performance (2022-01 ~ 2025-12, 8 bps fee + stoploss) (check REPORT.md)
 
-## 2. Preprocessing, Selection & Weighting Schemes
-
-### 2.1 Dynamic Expanding Standardization
-
-Standardize raw factor $x_{i,t}$ using historical expanding statistics up to day $t-1$:
-
-$$z_{i,t} = \text{clamp}\left(\frac{x_{i,t} - \hat{\mu}_{i, 1:t-1}}{\hat{\sigma}_{i, 1:t-1} + \epsilon}, -3.0, 3.0\right)$$
-
-### 2.2 Top-K Selection & ONC Diversity Control
-
-- **Top-K Truncation ($K=10$ Default)**: Select top $K=10$ features dynamically by rolling IC or score. Prevents feature dilution on large pools (e.g. 500ETF with 32 features) while preserving non-destructive performance on lean pools (159915ETF with 11 features).
-- **ONC Group Constraint (`--group-constraint`)**: Greedy top-$K$ selection enforcing maximum `max_per_group` features per cluster, using Optimal Number of Clusters (ONC, de Prado 2019).
-  - Angular distance: $d(i,j) = \sqrt{0.5 \cdot (1 - \rho_{ij})}$.
-  - Cluster files auto-detected per pool vintage (`day-model-new/data/cluster_assignments_{etf}_{side}{suffix}.json`).
-
-### 2.3 Weighting Schemes
-
-Given $N$ factors standardized to $z_{i,t}$:
-
-| Scheme | Formula / Logic | Status / Description |
-|---|---|---|
-| **1. IC Weight (ICW)** | $w_i = \max(0, \text{IC}_{i,t-1} - SE_{\text{IC}})^k \cdot \text{sign}_i$ | **Production Default**. Empirical Bayes shrinkage. High OOS Sharpe. |
-| **2. Equal Weight (EW)** | $w_i = \frac{1}{K} \cdot \text{sign}_i$ across top $K$ features | **Secondary Baseline**. Zero parameter risk. |
-| **3. Score Weighted (ScoreW)** | $w_i \propto \text{score}_i$ | *Deprecated / Research Only*. Underperformed ICW/EW in OOS testing; excluded from `ALL_SCHEMES` and `REPORT.md`. |
-| **4. Rank Bounded Weight (RankW)** | Rank factors by $\text{score}_i$, map linearly to $[w_{\min}, w_{\max}]$ | *Deprecated / Research Only*. Underperformed in dynamic tail IC mode; excluded from `ALL_SCHEMES` and `REPORT.md`. |
-
-> Note: `run_backtest.py` limits active benchmark schemes to `ALL_SCHEMES = ["icw", "ew"]`. `score` and `rank` schemes remain in `weighting.py` for legacy research comparison only.
-
-### 2.4 IC Estimation Modes
-
-- `expanding` (default baseline): Full-history Pearson IC from day 1 to $t-1$.
-- `rolling_tail` (`TailIC_ICW`, production optimal): 480d rolling Spearman IC calculated on top/bottom 10% tail. Dominates A/B testing across multi-year OOS evaluation.
+| ETF | Asset | Side | OOS Period | Z_th | Features | Trades | Cost Sharpe | Raw Sharpe | Total PnL | Long PnL | Long Sharpe | Short PnL | Short Sharpe | Max DD | Win Rate | Turnover |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 300ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:1.10/S:1.30 (train L:1.00/S:1.20) | 22 | 118 (76L/42S) | 1.021 | 1.415 | +0.2337 | +0.1591 | 3.042 | +0.0746 | 2.837 | 0.0532 | 55.9% (L:56.6%, S:54.8%) | 59.8x |
+| 500ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:0.70/S:1.10 (train L:0.60/S:1.00) | 193 | 383 (253L/130S) | 1.390 | 2.220 | +0.5091 | +0.1559 | 1.084 | +0.3532 | 4.235 | 0.0814 | 54.8% (L:53.4%, S:57.7%) | 161.2x |
+| 50ETF | Spot ETF | single | 2022-01 ~ 2026-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
+| 159915ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:0.90/S:1.10 (train L:0.80/S:1.00) | 27 | 253 (154L/99S) | 1.562 | 1.950 | +0.8057 | +0.5079 | 3.012 | +0.2978 | 3.295 | 0.0777 | 58.1% (L:53.9%, S:64.6%) | 115.7x |
 
 ---
 
-## 3. Threshold Tuning & Position Sizing
+## 2. Upstream: Feature Selection (day-model-new)
 
-### 3.1 Conviction Threshold Selection (Train-Sweep + Buffer)
+NewTrade consumes features from `day-model-new`'s admission pipeline. Features are intraday alpha factors predicting the 10:00→14:35 ETF return.
 
-1. **Training Sweep**: On expanding pre-OOS dataset, sweep $Z_{\text{th}} \in [0.2, 1.5]$ step 0.1:
-   $$Z_{\text{th}}^{\text{train}*} = \arg\max_{Z_{\text{th}}} \text{CostAdjustedSharpe}(Z_{\text{th}})$$
-2. **Production Threshold & Asymmetric Short Gating**:
-   $$Z_{\text{th}}^{\text{long}} = Z_{\text{th}}^{\text{train}*} + \Delta_{\text{buffer}}, \quad Z_{\text{th}}^{\text{short}} = Z_{\text{th}}^{\text{long}} + \Delta_{\text{short\_buffer}}$$
-   - Default long buffer: $\Delta_{\text{buffer}} = +0.10$ (`--z-buffer 0.10`).
-   - Default short buffer: $\Delta_{\text{short\_buffer}} = +0.10$ (filters A-share intraday noise given structural long bias).
+### Feature Generation
+- **Base features**: ~200 intraday technical indicators computed from 1-minute bars (opening drive, VWAP acceleration, volume momentum, bar structure, etc.)
+- **Combinators**: Pairwise and triple combinations via operations (diff, ratio, rank_min, clamp, z-score). Produces 1,500–3,000 candidates per ETF.
 
-### 3.2 Position Sizing Modes
+### 8-Gate Admission Pipeline (all training-only, zero OOS leakage)
 
-- **Binary Mode (Production Default)**:
-  $$S_t = \begin{cases} +1 & \text{if } Z_{\text{composite},t} > Z_{\text{th}}^{\text{long}} \\ -1 & \text{if } Z_{\text{composite},t} < -Z_{\text{th}}^{\text{short}} \\ 0 & \text{otherwise} \end{cases}$$
-- **Tanh Mode (Smooth Conviction)**: $S_t = \tanh((|Z| - Z_{\text{th}})/\gamma) \cdot \text{sign}(Z)$.
-- **Quadratic Mode (Steep Conviction)**: $S_t = \min(1.0, ((|Z| - Z_{\text{th}})/\gamma)^2) \cdot \text{sign}(Z)$.
+| Gate | Purpose | Key Parameter |
+|------|---------|---------------|
+| 1. Jackknife Sign Stability | Reject sign-flipping features | 7 yearly chunks, max 1 flip |
+| 2. Rolling Guard | Reject unstable rolling IC | mono ≥ 0.60, IR ≥ 0.30 |
+| 3. Temporal Validation | Reject decayed signals | recent_ic > 0 |
+| 4. BH-FDR | Multiple-testing correction | q = 0.30, 5000 block-shuffled sims |
+| 5. Composite Floor (B3) | Beat empirical null | 93rd–97th percentile of null |
+| 6. Temporal Stability | Kill artificial mirages | ic_cv × weak_link_cv ≥ 0.15 |
+| 7. Quality Gate | Minimum signal strength | deflated_ic ≥ 0.03, sortino > 0 |
+| 8. Correlation (B4) | Remove near-duplicates | θ = 0.95 |
 
----
-
-## 4. Execution Protocol & Intraday Stop-Loss Findings
-
-### 4.1 Execution Protocol
-- **Trade Window**: Signal calculated at 10:00 AM $\rightarrow$ position entered $\rightarrow$ exited at 14:35 PM / Close.
-- **Instruments**:
-  - ETF Spot: Binary Long-Short simulation or `--long-only` spot constraint.
-  - Index Futures: Continuous CFFEX futures (`--future`, IF88 for 300ETF, IC88 for 500ETF, IH88 for 50ETF).
-- **Friction**: 8 bps (0.0008) flat transaction fee per position state transition.
-
-### 4.2 Intraday Stop-Loss Research Finding: REJECTED
-- Benchmarked 5 intraday 1m stop-loss methods (Fixed %, Trailing %, Volatility ATR, Time-Decay, Intraday Reversal) in `research_stoploss.py`.
-- **Result**: Intraday stop-losses degrade net Sharpe by $-0.337$ on average across all ETFs.
-- **Reason**: Intraday noise triggers premature exits on temporary pullbacks before 14:35 edge materializes, while doubling transaction friction.
-- **Decision**: Intraday stop-loss **omitted**. Trade full 10:00 $\rightarrow$ 14:35 holding window.
+### Output
+- Per-ETF admitted pool (22–193 features for `single` side)
+- ONC cluster assignments (de Prado 2019) for downstream diversity control
+- Pool vintages re-trained every 2 years (`_p2015_2023`, `_p2016_2024`, `_p2017_2025`)
 
 ---
 
-## 5. Multi-Period Pool Management & Migration Protocol
+## 3. Signal Construction Pipeline
 
-### 5.1 Pool Vintages & Auto-Cutoff
-- Supported pool vintages: `old` (2010–2023 train), `_p2016_2024` (2016–2024 train), `_p2018_2026` (2018–2026 train).
-- CLI flags: `--pool-period` (`old`, `_p2016_2024`, `_p2018_2026`, `all`), `--year` (OOS start year), `--decay` (evaluates pool decay over future years).
-- Dynamic OOS start auto-inferred from pool cutoff date.
+The daily signal construction follows this sequence:
 
-### 5.2 Automated Pool Migration Protocol (`run_migration.py`)
-- **Cadence**: 2-year scheduled pool re-selection via `day-model-new/run_periods.py`.
-- **Quarterly Monitor**: `--monitor` tracks rolling 60d IC of pool factors; alerts on signal decay.
-- **Switching Gate**: Candidate pool accepted ONLY if Candidate OOS Sharpe $>$ Current OOS Sharpe + min threshold.
-- **Transition**: Percentile P75 threshold smoothing during pool transition + automatic rollback guard. See [MIGRATION_PLAN.md](MIGRATION_PLAN.md).
+```
+Raw features → Expanding Z-score → IC Matrix (rolling tail 480d)
+    → EMA smoothing → Hysteresis Top-10 Selection (cluster-constrained)
+    → ICW Shrinkage Weighting → Z_composite
+```
+
+### 3.1 Expanding Z-Score Standardization
+
+$$z_{i,t} = \text{clamp}\left(\frac{x_{i,t} - \hat{\mu}_{i, 1:t-1}}{\hat{\sigma}_{i, 1:t-1}}, -3.0, 3.0\right)$$
+
+Burn-in: 252 days. Zero lookahead (uses only data up to $t-1$).
+
+### 3.2 IC Estimation: Rolling Tail IC (480d)
+
+For each feature $i$ at time $t$, compute Spearman rank correlation between $z_i$ and trade returns using only the top/bottom 10% tail observations within a trailing 480-day window:
+
+$$\text{IC}_{i,t} = \text{SpearmanCorr}(z_i[\text{tail}], r[\text{tail}]) \quad \text{over } [t-480, t-1]$$
+
+- **Why tail**: Focuses on extreme signal days where alpha is strongest.
+- **Why rolling 480d**: 2 China trading years. Balances recency vs stability. Validated optimal vs expanding IC and longer windows (600d, 720d).
+- **EMA smoothing**: Span = 30d (300ETF/50ETF) or 90d (500ETF/159915ETF) to reduce daily ranking noise.
+
+### 3.3 Feature Selection: Hysteresis + ONC Cluster Constraint
+
+**Problem**: Daily top-10 reselection causes feature churn → Z_composite distribution shifts → threshold instability.
+
+**Solution**: Hysteresis (sticky selection) with adaptive exit rank:
+
+- **Enter**: Feature enters active set when IC rank ≤ 10 AND its ONC cluster is unoccupied.
+- **Exit**: Feature exits only when IC rank > `exit_rank` (wider gate than entry).
+- **Adaptive exit_rank**: $\min\left(10 + \frac{N - 10}{2},\ 25\right)$ where $N$ = pool size.
+  - 300ETF (N=22): exit_rank = 16
+  - 159915ETF (N=27): exit_rank = 18
+  - 500ETF (N=193): exit_rank = 25 (hard cap)
+- **Cluster constraint**: Max 1 feature per ONC cluster in the active set. Ensures diversity across feature families.
+
+**Validated impact**: +26% Sharpe on 300ETF, +12% on 159915ETF vs no-hysteresis baseline.
+
+### 3.4 ICW Shrinkage Weighting
+
+Given the active feature set $\mathcal{A}$ (up to 10 features):
+
+$$w_i = \frac{\max(0, \text{IC}_{i,t} - SE_{\text{IC}})}{\sum_{j \in \mathcal{A}} \max(0, \text{IC}_{j,t} - SE_{\text{IC}})}, \quad SE_{\text{IC}} = \frac{1}{\sqrt{n_{\text{train}}}}$$
+
+Features with IC below the standard error floor get zero weight (Empirical Bayes shrinkage).
+
+### 3.5 Composite Signal
+
+$$Z_{\text{composite},t} = \sum_{i \in \mathcal{A}} w_i \cdot z_{i,t} \cdot \text{sign}_i$$
 
 ---
 
-## 6. Architecture & File Inventory
+## 4. Threshold & Position Sizing
+
+### 4.1 Conviction Threshold (Train-Sweep + Buffer)
+
+1. **Training sweep**: On pre-OOS data, sweep $Z_{\text{th}} \in [0.5, 1.5]$ step 0.1. Pick the threshold maximizing cost-adjusted Sharpe (with ≥ 8% active days constraint).
+2. **Production buffer**: $Z_{\text{th}}^{\text{prod}} = Z_{\text{th}}^{\text{train}} + 0.10$
+3. **Asymmetric short**: Short threshold gets additional +0.10 buffer (A-share structural long bias).
+
+### 4.2 Position Sizing (Binary)
+
+$$S_t = \begin{cases} +1 & \text{if } Z_t > Z_{\text{th}}^{\text{long}} \\ -1 & \text{if } Z_t < -Z_{\text{th}}^{\text{short}} \\ 0 & \text{otherwise} \end{cases}$$
+
+Alternative modes (tanh, quadratic) exist but binary is production default.
+
+---
+
+## 5. Execution & Stop-Loss
+
+### 5.1 Trade Protocol
+- **Window**: Signal at 10:00 → enter → exit at 14:35.
+- **Instruments**: ETF spot (default) or index futures (`--future`: IF88/IC88/IH88).
+- **Friction**: 8 bps per side (16 bps round-trip) + 2 bps stop-loss slippage when triggered.
+
+### 5.2 Intraday Stop-Loss: Time-Decay Trailing (3%)
+
+Production uses `time_decay_trailing` with param=0.03:
+- Trails the high-water mark of intraday P&L.
+- Stop threshold decays over time (tighter near close, looser early).
+- Triggered on ~30-40% of active trading days.
+- Adds +2 bps execution slippage on stop days.
+
+Enabled by default (`--stoploss`). Disable with `--no-stoploss`.
+
+---
+
+## 6. Production Configuration
+
+| Parameter | Value | Evidence |
+|-----------|-------|----------|
+| Scheme | ICW (IC Weight) | Highest OOS Sharpe, DSR-validated |
+| IC Mode | Rolling Tail (480d, 10%) | Wins A/B test vs expanding IC (+12% avg) |
+| EMA Span | 30d (300/50), 90d (500/159915) | Pool-size adaptive smoothing |
+| Top-K | 10 | Fixed; prevents dilution on large pools |
+| Hysteresis | ON (adaptive exit rank) | +26% on small pools, +12% on medium |
+| Exit Rank | min(10 + (N-10)//2, 25) | Pool-adaptive cap |
+| ONC Cluster | Max 1 per cluster | Diversity across feature families |
+| Position | Binary L+S | Highest Sharpe |
+| Threshold | Train-sweep + 0.10 buffer | Robust across regimes |
+| Stop-Loss | time_decay_trailing=0.03 | Cuts intraday losers |
+| Fee | 8 bps | Stress-tested to 20 bps |
+| Feature Floor | ≥ 10 | 50ETF/588000ETF disabled |
+
+**CLI**: `python newtrade/run_backtest.py --scheme icw` (all defaults are production-optimal)
+
+---
+
+## 7. Key Empirical Findings
+
+1. **Rolling Tail IC > Expanding IC**: 480d tail Spearman dominates full-history Pearson, especially for large pools (500ETF: +64%). The "tail" component is key, not just "rolling."
+2. **Hysteresis > Threshold Adaptation**: Feature churn is the real problem. Stabilizing selection beats all threshold adaptations (percentile, walk-forward, variance-scaled).
+3. **ICW > Multi-Score**: Pure IC weighting with shrinkage beats composite scores (IC+IR+Monotonicity). Adding IR introduces noise.
+4. **Fixed K=10**: Cross-K Sharpe differences ≤ 0.15 (noise). Per-ETF K tuning = overfitting.
+5. **Unified Config**: Single parameter set across ETFs prevents selection bias.
+6. **CPCV 100% Positive**: All active ETFs show 100% positive folds in combinatorial purged cross-validation.
+7. **DSR Significant**: 159915ETF achieves DSR = 0.965 (SIGNIFICANT at 10 trials). 500ETF marginal (0.934).
+
+---
+
+## 8. Architecture
 
 ```
 newtrade/
-├── plan.md                  # Master strategy design document
-├── plan_glm.md              # Scheme 5 GLM experimental design document
-├── MIGRATION_PLAN.md        # Pool switching protocol & migration gates
-├── TODO.md                  # Experiment logs & A/B test results
-├── REPORT.md                # Default OOS backtest report (ICW & EW)
-├── REPORT_production.md     # Production ensemble robustness report
+├── plan.md                  # This document
+├── REPORT.md                # Latest OOS backtest report (auto-generated)
+├── run_backtest.py          # Main CLI (--scheme, --ic-mode, --hysteresis, --year, --decay)
 ├── run_production.py        # Production ensemble CLI (DSR & CPCV validated)
-├── run_backtest.py          # Main CLI runner (--year, --pool-period, --decay, --scheme, --ic-mode)
-├── run_migration.py         # Pool migration monitor & switching CLI
-├── regenerate_admitted_pools.py  # Pool registry code generator
-├── portfolio_backtest.py    # Multi-ETF portfolio backtest & fee stress test
-├── robustness.py            # DSR, CPCV, PBO, Ensemble, Sensitivity module
+├── weighting.py             # ICW, EW, hysteresis, adaptive_exit_rank, ONC selection
+├── strategy.py              # Threshold sweep, position sizing, ETF simulation
+├── utils.py                 # Data loaders, expanding z-score, rolling tail IC (Numba)
+├── robustness.py            # DSR, CPCV, PBO, sensitivity analysis
 ├── research_stoploss.py     # 1m intraday stop-loss simulator
-├── utils.py                 # Data loader, recipe calculator, expanding standardizer, futures mapper
-├── weighting.py             # ICW, EW, ScoreW, RankW weighting & Top-K/ONC selection
-├── strategy.py              # Threshold optimizer, position sizer, ETF spot simulator
-└── tests/                   # Verification & research A/B test suite
+├── glm.py / glm_backtest.py # Experimental Ridge GLM scheme
+└── tests/                   # A/B test suite
+    ├── test_weighting_ab.py       # 11-arm weighting pipeline comparison
+    ├── test_zthreshold_ab.py      # 7-arm threshold system comparison
+    ├── test_hysteresis_sweep.py   # Exit-rank × threshold grid search
+    └── run_ab_test_tail_ic.py     # Rolling tail IC window comparison
 ```
 
----
-
-## 7. Key Empirical Lessons
-
-1. **TailIC_ICW Optimal**: 480d rolling tail IC + ICW shrinkage dominates multi-metric scoring across multi-year OOS A/B tests (Avg Sharpe 1.238 vs 0.97–1.18).
-2. **Portfolio DSR vs Single-ETF Conservatism**: Single-ETF DSR is highly conservative at 50+ trials, but multi-ETF equal-weight portfolio achieves DSR = 0.953 (SIGNIFICANT).
-3. **CPCV Validation**: 100% positive folds across 6-split 2-test CPCV for all active ETFs.
-4. **Cost Sensitivity**: 159915ETF is robust up to 20 bps fee (SR 0.49). 500ETF and 300ETF require fee $\le 12$ bps.
-5. **Score Weights & IC_IR**: Adding IC_IR or static score weights introduces noise in daily weighting; IC-only / TailIC is cleaner and superior.
-6. **Top-K Truncation**: Fixed $K=10$ provides robust dilution protection without per-ETF overfitting.
-7. **Unified Configuration**: Single parameter set across ETFs prevents selection bias overfit.
+### Data Dependencies
+- `day-model-new/data/selected_pool_{ETF}_{side}.json` — admitted feature pools
+- `day-model-new/data/cluster_assignments_{ETF}_{side}.json` — ONC clusters
+- `data/{ETF}_1d.parquet` — daily ETF prices
+- `data/{ETF}_1m.parquet` — 1-minute bars (for stoploss simulation)
 
 ---
 
-## 8. Production System Configuration
+## 9. A/B Test History
 
-| Parameter | Default Value | Rationale / Evidence |
-|---|---|---|
-| **Primary Scheme** | `icw` (IC Weight) | Highest OOS Sharpe, DSR-validated |
-| **Secondary Scheme** | `ew` (Equal Weight) | Non-parameterized secondary baseline |
-| **IC Mode** | `rolling_tail` (480d window, 10% tail) | TailIC_ICW rank #1 in A/B testing |
-| **Top-K Truncation** | $K=10$ | Solves feature dilution on large pools |
-| **ONC Group Constraint** | `--group-constraint` | Enforces 1 feature per cluster for diversity |
-| **Position Sizing** | `binary` (Long-Short) | Highest Sharpe (+1 / 0 / -1) |
-| **Threshold Buffer** | $\Delta_{\text{buffer}} = +0.10$ | Prevents IC decay overfitting |
-| **Friction** | 8 bps (0.0008) | Real ETF friction simulation |
-| **Feature Floor** | $\ge 10$ features | 588000ETF disabled |
-| **Trade Window** | 10:00 entry $\rightarrow$ 14:35 exit | Intraday spot / index futures |
+### Weighting Pipeline (2026-08)
+11 arms × 3 ETFs. TailIC_ICW confirmed optimal. Multi-score variants all underperform. See `tests/test_weighting_ab.py`.
+
+### Z-Threshold System (2026-08)
+7 arms × 3 ETFs (with stoploss). Baseline threshold is robust. Hysteresis beats all threshold adaptations. See `tests/test_zthreshold_ab.py`.
+
+### Hysteresis Exit-Rank Sweep (2026-08)
+Adaptive ER formula validated. Wider = better up to cap. RollPct480 adds no value on top of hysteresis. See `tests/test_hysteresis_sweep.py`.

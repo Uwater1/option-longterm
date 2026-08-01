@@ -23,7 +23,7 @@ HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
 
 from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_ic_numba, expanding_factor_score_numba, rolling_tail_ic_numba, load_future_trade_returns, load_cluster_assignments
-from weighting import get_weighting_scheme
+from weighting import get_weighting_scheme, compute_icw_hysteresis, adaptive_exit_rank
 from strategy import generate_positions, simulate_etf_spot, calculate_metrics, sweep_optimal_threshold, compute_production_threshold, build_trade_log_df
 from robustness import deflated_sharpe_ratio, run_cpcv_backtest
 from option_strategy import simulate_option_portfolio
@@ -49,7 +49,8 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                         use_future: bool = False, use_option: bool = False, use_stoploss: bool = True,
                         stoploss_mode: str = "time_decay_trailing", stoploss_param: float = 0.03,
                         pool_override: list = None, cluster_suffix: str = "", group_constraint: bool = None, max_per_group: int = 1,
-                        ic_mode: str = "expanding", tail_window: int = 252, tail_pct: float = 0.10) -> dict:
+                        ic_mode: str = "expanding", tail_window: int = 252, tail_pct: float = 0.10,
+                        hysteresis: bool = True, exit_rank: int = None) -> dict:
     """
     Run backtest for one ETF and side combination filtered to OOS date range.
     
@@ -186,7 +187,29 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
             else:
                 exp_mat = expanding_factor_ic_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
             extra_kwargs["expanding_ic"] = exp_mat
-        Z_composite = scheme_func(Z_std, signs, pool=pool, n_train=n_train, **extra_kwargs)
+        # Hysteresis path: use sticky feature selection for ICW scheme
+        if hysteresis and scheme_name == "icw" and dynamic_ic and "expanding_ic" in extra_kwargs:
+            ic_ema_span = extra_kwargs.get("ic_ema_span", 30)
+            raw_ic = extra_kwargs["expanding_ic"]
+            # Build EMA-smoothed IC matrix for ranking
+            T_z, N_z = Z_std.shape
+            if ic_ema_span and ic_ema_span > 1:
+                alpha_e = 2.0 / (ic_ema_span + 1.0)
+                ic_smoothed = np.zeros_like(raw_ic)
+                ic_smoothed[0] = raw_ic[0]
+                for t_i in range(1, T_z):
+                    ic_smoothed[t_i] = alpha_e * raw_ic[t_i] + (1.0 - alpha_e) * ic_smoothed[t_i - 1]
+            else:
+                ic_smoothed = raw_ic
+            er = exit_rank if exit_rank is not None else adaptive_exit_rank(N_z, extra_kwargs.get("top_k", 10))
+            Z_composite = compute_icw_hysteresis(
+                Z_std, signs, ic_smoothed,
+                cluster_ids=extra_kwargs.get("cluster_ids", None),
+                n_train=n_train, top_k=extra_kwargs.get("top_k", 10),
+                exit_rank=er, max_per_group=extra_kwargs.get("max_per_group", 1)
+            )
+        else:
+            Z_composite = scheme_func(Z_std, signs, pool=pool, n_train=n_train, **extra_kwargs)
 
     # 6. Threshold Determination (auto-sweep or fixed)
     sweep_info = None
@@ -354,7 +377,7 @@ def main():
     parser.add_argument("--dynamic-ic", "--dynamic-score", dest="dynamic_ic", action="store_true", default=True, help="Enable zero-lookahead expanding factor ranking (default: True)")
     parser.add_argument("--no-dynamic-ic", "--no-dynamic-score", dest="dynamic_ic", action="store_false", help="Disable dynamic ranking (use static pool metadata score)")
     parser.add_argument("--dynamic-metric", type=str, default="ic", choices=["ic", "multi"], help="Dynamic factor ranking metric: 'ic' (default: single expanding IC) or 'multi'")
-    parser.add_argument("--ic-mode", type=str, default="expanding", choices=["expanding", "rolling_tail"], help="IC computation mode: 'expanding' (total history Pearson) or 'rolling_tail' (rolling window tail Spearman)")
+    parser.add_argument("--ic-mode", type=str, default="rolling_tail", choices=["expanding", "rolling_tail"], help="IC computation mode: 'rolling_tail' (default: 480d rolling window tail Spearman) or 'expanding' (total history Pearson)")
     parser.add_argument("--tail-window", type=int, default=480, help="Rolling window size in trading days for rolling_tail IC mode (default: 480 = 2 China years)")
     parser.add_argument("--tail-pct", type=float, default=0.10, help="Tail fraction per side for rolling_tail IC mode (default: 0.10)")
     parser.add_argument("--mono-window", type=int, default=750, help="Rolling window for monotonicity calculation (default 750 trading days ~ 3 years, 0 for full expanding)")
@@ -381,6 +404,14 @@ def main():
                         help="Disable group constraint (use unconstrained top-K).")
     parser.add_argument("--max-per-group", type=int, default=1,
                         help="Max features allowed per ONC cluster (default: 1).")
+
+    # Feature Selection Hysteresis
+    parser.add_argument("--hysteresis", dest="hysteresis", action="store_true", default=True,
+                        help="Enable sticky feature selection (enter top-10, exit at adaptive rank). Default: True.")
+    parser.add_argument("--no-hysteresis", dest="hysteresis", action="store_false",
+                        help="Disable hysteresis (use standard daily top-K reselection).")
+    parser.add_argument("--exit-rank", type=int, default=None,
+                        help="Override exit rank for hysteresis (default: adaptive = min(10+(N-10)//2, 25)).")
 
     # Validation options
     parser.add_argument("--validate", dest="validate", action="store_true", default=True, help="Run DSR + CPCV validation on results (default: True)")
@@ -530,6 +561,7 @@ def main():
                     long_only=args.long_only, use_stoploss=False,
                     pool_override=_pool_ov, cluster_suffix=_cluster_suf,
                     group_constraint=args.group_constraint, max_per_group=args.max_per_group,
+                    hysteresis=args.hysteresis, exit_rank=args.exit_rank,
                 )
                 yr_results.append(res)
             decay_results.append((yr, yr_results))
@@ -632,6 +664,8 @@ def main():
                 ic_mode=args.ic_mode,
                 tail_window=args.tail_window,
                 tail_pct=args.tail_pct,
+                hysteresis=args.hysteresis,
+                exit_rank=args.exit_rank,
             )
             results.append(res)
 

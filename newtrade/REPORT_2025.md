@@ -14,10 +14,10 @@
 
 | ETF | Asset | Side | OOS Period | Z_th | Features | Trades | Cost Sharpe | Raw Sharpe | Total PnL | Long PnL | Long Sharpe | Short PnL | Short Sharpe | Max DD | Win Rate | Turnover |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 300ETF | Spot ETF | single | 2025-01 ~ 2025-12 | L:1.50/S:1.50 (train L:1.40/S:1.40) | 95 | 6 (3L/3S) | 1.392 | 1.604 | +0.0196 | +0.0151 | 12.606 | +0.0045 | 21.372 | 0.0038 | 66.7% (L:66.7%, S:66.7%) | 12.4x |
-| 500ETF | Spot ETF | single | 2025-01 ~ 2025-12 | L:1.00/S:1.30 (train L:0.90/S:1.20) | 159 | 52 (35L/17S) | 0.280 | 1.147 | +0.0133 | +0.0204 | 1.424 | -0.0070 | -0.915 | 0.0356 | 51.9% (L:54.3%, S:47.1%) | 93.3x |
+| 300ETF | Spot ETF | single | 2025-01 ~ 2025-12 | L:1.50/S:1.20 (train L:1.40/S:1.10) | 95 | 20 (5L/15S) | 0.368 | 1.052 | +0.0083 | +0.0066 | 2.877 | +0.0017 | 0.446 | 0.0165 | 40.0% (L:60.0%, S:33.3%) | 37.3x |
+| 500ETF | Spot ETF | single | 2025-01 ~ 2025-12 | L:0.80/S:1.30 (train L:0.70/S:1.20) | 159 | 76 (59L/17S) | 1.091 | 2.126 | +0.0624 | +0.0574 | 2.413 | +0.0050 | 0.632 | 0.0368 | 56.6% (L:57.6%, S:52.9%) | 132.7x |
 | 50ETF | Spot ETF | single | 2025-01 ~ 2026-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
-| 159915ETF | Spot ETF | single | 2025-01 ~ 2025-12 | L:1.10/S:1.60 (train L:1.00/S:1.50) | 146 | 29 (28L/1S) | 1.826 | 2.109 | +0.1359 | +0.0903 | 4.614 | +0.0457 | 0.000 | 0.0203 | 62.1% (L:60.7%, S:100.0%) | 53.9x |
+| 159915ETF | Spot ETF | single | 2025-01 ~ 2025-12 | L:1.00/S:1.20 (train L:0.90/S:1.10) | 146 | 54 (41L/13S) | 2.109 | 2.572 | +0.1864 | +0.1156 | 4.485 | +0.0708 | 5.310 | 0.0406 | 61.1% (L:58.5%, S:69.2%) | 101.6x |
 
 <details>
 <summary><b>Equal Weight (EW)</b> (click to expand)</summary>
@@ -40,9 +40,9 @@
 
 | ETF | Scheme | Sharpe | DSR | Verdict | CPCV Median | CPCV Std | % Positive |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 300ETF | icw | 1.392 | 0.721 | NOT_SIGNIFICANT | 0.085 | 0.310 | 60% |
-| 500ETF | icw | 0.280 | 0.097 | NOT_SIGNIFICANT | 0.642 | 0.518 | 93% |
-| 159915ETF | icw | 1.826 | 0.744 | NOT_SIGNIFICANT | 0.891 | 0.369 | 100% |
+| 300ETF | icw | 0.368 | 0.114 | NOT_SIGNIFICANT | 0.356 | 0.263 | 80% |
+| 500ETF | icw | 1.091 | 0.312 | NOT_SIGNIFICANT | 0.769 | 0.466 | 93% |
+| 159915ETF | icw | 2.109 | 0.802 | NOT_SIGNIFICANT | 0.905 | 0.364 | 100% |
 | 300ETF | ew | 0.698 | 0.193 | NOT_SIGNIFICANT | 0.152 | 0.281 | 67% |
 | 500ETF | ew | 0.280 | 0.097 | NOT_SIGNIFICANT | 0.680 | 0.499 | 87% |
 | 159915ETF | ew | 1.892 | 0.697 | NOT_SIGNIFICANT | 0.815 | 0.392 | 100% |
