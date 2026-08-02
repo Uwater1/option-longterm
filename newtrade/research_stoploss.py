@@ -126,7 +126,7 @@ def load_intraday_bars_dict(etf: str) -> dict:
 
 
 def simulate_stoploss_day(day_data: dict, pos: float, method: str, param: float, 
-                          fee_bps: float = 0.0008, slip_bps: float = 0.0002) -> tuple[float, float, bool, float]:
+                          fee_bps: float = 0.0008, slip_bps: float = 0.0) -> tuple[float, float, bool, float]:
     """
     Simulate intraday stoploss for a single day and position.
     
@@ -262,7 +262,7 @@ def simulate_stoploss_day(day_data: dict, pos: float, method: str, param: float,
 
 
 def simulate_full_series(df_dates: pd.Series, positions: np.ndarray, bars_dict: dict, 
-                         method: str, param: float, fee_bps: float = 0.0008, slip_bps: float = 0.0002) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float]:
+                         method: str, param: float, fee_bps: float = 0.0008, slip_bps: float = 0.0) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float]:
     """
     Simulate intraday stoploss across an entire series of trading dates.
     

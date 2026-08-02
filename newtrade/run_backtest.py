@@ -42,7 +42,7 @@ def resolve_ic_ema_span(etf: str, user_span: int | None = None) -> int:
 
 
 def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew", z_th: float = 0.5, 
-                        position_mode: str = "fast_ramp_linear", fee_bps: float = 0.0008, min_features: int = 10,
+                        position_mode: str = "fast_ramp_quadratic", fee_bps: float = 0.0008, min_features: int = 10,
                         start_date: str = "2022-01-01", end_date: str = "2026-01-01",
                         z_buffer: float = 0.1, z_short_buffer: float = None, auto_threshold: bool = False,
                         rank_kwargs: dict = None, dynamic_ic: bool = False, long_only: bool = False,
@@ -50,7 +50,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                         stoploss_mode: str = "time_decay_trailing", stoploss_param: float = 0.03,
                         pool_override: list = None, cluster_suffix: str = "", group_constraint: bool = None, max_per_group: int = 1,
                         ic_mode: str = "expanding", tail_window: int = 252, tail_pct: float = 0.10,
-                        hysteresis: bool = True, exit_rank: int = None, min_pos: float = 0.5, delta_z_full: float = 0.3) -> dict:
+                        hysteresis: bool = True, exit_rank: int = None, min_pos: float = 0.7, delta_z_full: float = 0.4) -> dict:
     """
     Run backtest for one ETF and side combination filtered to OOS date range.
     
@@ -387,11 +387,11 @@ def main():
     parser.add_argument("--z-th", type=str, default="auto", help="Conviction threshold Z score. 'auto' = train-sweep + buffer, or float value for fixed.")
     parser.add_argument("--z-buffer", type=float, default=0.1, help="Production buffer added to train-optimal threshold (default 0.1, walk-forward validated)")
     parser.add_argument("--z-short-buffer", type=float, default=None, help="Production buffer for short threshold (default: z_buffer + 0.1)")
-    parser.add_argument("--position-mode", type=str, default="fast_ramp_linear",
+    parser.add_argument("--position-mode", type=str, default="fast_ramp_quadratic",
                         choices=["binary", "fast_ramp_linear", "fast_ramp_quadratic", "fast_ramp_tanh", "quadratic", "tanh", "tanh_tuned"],
-                        help="Position sizing mode (default: fast_ramp_linear)")
-    parser.add_argument("--min-pos", type=float, default=0.5, help="Minimum position size floor when passing conviction threshold (default: 0.5)")
-    parser.add_argument("--delta-z-full", type=float, default=0.3, help="Excess Z margin above threshold to reach full 1.0 position size (default: 0.3)")
+                        help="Position sizing mode (default: fast_ramp_quadratic)")
+    parser.add_argument("--min-pos", type=float, default=0.7, help="Minimum position size floor when passing conviction threshold (default: 0.7)")
+    parser.add_argument("--delta-z-full", type=float, default=0.4, help="Excess Z margin above threshold to reach full 1.0 position size (default: 0.4)")
     parser.add_argument("--fee-bps", type=float, default=None, help="Transaction fee in basis points (default: 8.0 for ETF, 4.0 for futures)")
     parser.add_argument("--start-date", type=str, default="2022-01-01", help="OOS Start Date (YYYY-MM-DD)")
     parser.add_argument("--end-date", type=str, default="2026-01-01", help="OOS End Date (YYYY-MM-DD)")
@@ -996,7 +996,7 @@ def main():
         else:
             if args.stoploss:
                 f.write(f"- **Stop-Loss Execution**: `Enabled ({args.stoploss_mode}={args.stoploss_param})`\n")
-                f.write(f"- **Transaction Friction**: `{effective_fee_bps} bps (+ 2.0 bps stop-loss execution slippage)`\n\n")
+                f.write(f"- **Transaction Friction**: `{effective_fee_bps * 2.0:.1f} bps roundtrip ({effective_fee_bps:.1f} bps/leg)`\n\n")
             else:
                 f.write(f"- **Stop-Loss Execution**: `Disabled (Hold to 14:35 Close)`\n")
                 f.write(f"- **Transaction Friction**: `{effective_fee_bps} bps`\n\n")

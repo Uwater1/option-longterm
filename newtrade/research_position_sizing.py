@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-NewTrade — Comprehensive Bug-Free Position Sizing A/B Benchmark
+NewTrade — Audited Position Sizing Master Benchmark (Updated with Threshold Sweep Fix & 16bps Roundtrip Fee)
 
-Evaluates clean, zero-lookahead position sizing rules against Binary Baseline across:
-  - 300ETF, 500ETF, 159915ETF
-  - OOS Window: 2022-01-01 ~ 2026-01-01 (1000 trading days)
+Evaluates position sizing rules with:
+  - Fixed short-side threshold sweep for fast_ramp_linear/quadratic/tanh
+  - Matched training-set min_pos and delta_z_full in threshold sweep
+  - 16.0 bps round-trip transaction friction (8.0 bps entry + 8.0 bps exit)
   - Intraday 1m Stop-Loss: time_decay_trailing = 0.03
-  - Friction: 8.0 bps proportional transaction cost
 """
 
 import sys
@@ -41,7 +41,7 @@ TOP_K = 10
 def evaluate_arm_positions(dates_oos: pd.Series, positions_oos: np.ndarray,
                            ret_oos: np.ndarray, bars_dict: dict, fee_bps: float) -> dict:
     if bars_dict:
-        net_returns, raw_returns, stop_hits, trig_pct = simulate_full_series(
+        net_returns, raw_returns, fees, stop_hits, trig_pct = simulate_full_series(
             dates_oos, positions_oos, bars_dict, method="time_decay_trailing",
             param=0.03, fee_bps=fee_bps
         )
@@ -58,81 +58,9 @@ def main():
     fee_bps = FEE_BPS_DEFAULT / 10000.0
 
     print("=" * 95)
-    print("NEWTRADE POSITION SIZING MASTER BENCHMARK (BUG-FREE AUDITED VERIFICATION)")
-    print(f"OOS Window: [2022-01-01 ~ 2026-01-01] | Intraday Stop-Loss: 3.0% Time-Decay | Friction: {FEE_BPS_DEFAULT} bps")
+    print("NEWTRADE POSITION SIZING MASTER BENCHMARK (UPDATED WITH THRESHOLD SWEEP FIX & 16BPS ROUNDTRIP FEE)")
+    print(f"OOS Window: [2022-01-01 ~ 2026-01-01] | Intraday Stop-Loss: 3.0% Time-Decay | Friction: {FEE_BPS_DEFAULT} bps/leg (16 bps roundtrip)")
     print("=" * 95)
-
-    etf_data = {}
-    baselines = {}
-
-    for etf in AVAILABLE_ETFS:
-        pool = load_admitted_pool(etf, side="single", min_features=10)
-        df = load_etf_dataset(etf)
-        full_trade_ret = (df["trade_return"].values.astype(np.float64)
-                         if "trade_return" in df.columns
-                         else df["close"].pct_change().fillna(0.0).values)
-
-        X_raw, signs, feat_names = build_pool_feature_matrix(df, pool)
-        burn_in = 252 if len(df) > 500 else 100
-        Z_std = expanding_zscore_numba(X_raw, burn_in=burn_in, clip=3.0)
-
-        feat_to_cluster = load_cluster_assignments(etf, "single")
-        cluster_ids = None
-        if feat_to_cluster:
-            cids = [feat_to_cluster.get(fn, 1000 + i) for i, fn in enumerate(feat_names)]
-            cluster_ids = np.array(cids, dtype=np.int64)
-
-        ic_raw = rolling_tail_ic_numba(Z_std, signs, full_trade_ret, window=TAIL_WINDOW, tail_pct=TAIL_PCT, burn_in=burn_in)
-        ema_span = resolve_ic_ema_span(etf, None)
-        T_z, N_z = Z_std.shape
-        alpha_e = 2.0 / (ema_span + 1.0)
-        ic_smoothed = np.zeros_like(ic_raw)
-        ic_smoothed[0] = ic_raw[0]
-        for t_i in range(1, T_z):
-            ic_smoothed[t_i] = alpha_e * ic_raw[t_i] + (1.0 - alpha_e) * ic_smoothed[t_i - 1]
-
-        n_train_ts = pd.Timestamp("2022-01-01")
-        train_mask = (df["date"] < n_train_ts).values
-        n_train = int(train_mask.sum())
-        if n_train < 252:
-            n_train = 1700
-
-        er = adaptive_exit_rank(N_z, TOP_K)
-        Z_composite = compute_icw_hysteresis(
-            Z_std, signs, ic_smoothed,
-            cluster_ids=cluster_ids,
-            n_train=n_train, top_k=TOP_K,
-            exit_rank=er, max_per_group=1
-        )
-
-        t_start = pd.Timestamp("2022-01-01")
-        t_end = pd.Timestamp("2026-01-01")
-        oos_mask = ((df["date"] >= t_start) & (df["date"] < t_end)).values
-        bars_dict = load_intraday_bars_dict(etf)
-
-        Z_train = Z_composite[train_mask]
-        ret_train = full_trade_ret[train_mask]
-        sweep_info = sweep_optimal_threshold(Z_train, ret_train, mode="binary", fee_bps=fee_bps, long_only=False)
-
-        etf_data[etf] = {
-            "df": df,
-            "full_trade_ret": full_trade_ret,
-            "Z_composite": Z_composite,
-            "train_mask": train_mask,
-            "oos_mask": oos_mask,
-            "sweep_info": sweep_info,
-            "bars_dict": bars_dict,
-        }
-
-        # Calculate baseline
-        df_oos = df[oos_mask].reset_index(drop=True)
-        dates_oos = df_oos["date"]
-        Z_oos = Z_composite[oos_mask]
-        ret_oos = full_trade_ret[oos_mask]
-        z_prod_l, z_prod_s = compute_production_threshold(sweep_info, z_buffer=0.10)
-        pos_a = generate_positions(Z_oos, z_th=z_prod_l, z_th_short=z_prod_s, mode="binary", long_only=False)
-        met_a = evaluate_arm_positions(dates_oos, pos_a, ret_oos, bars_dict, fee_bps)
-        baselines[etf] = met_a
 
     candidate_rules = [
         ("Binary Baseline (m=1.00)", "binary", 1.00, 0.00),
@@ -151,23 +79,79 @@ def main():
     results = []
 
     for rule_label, mode, m, dz in candidate_rules:
-        for etf, d in etf_data.items():
-            df_oos = d["df"][d["oos_mask"]].reset_index(drop=True)
+        for etf in AVAILABLE_ETFS:
+            pool = load_admitted_pool(etf, side="single", min_features=10)
+            df = load_etf_dataset(etf)
+            full_trade_ret = (df["trade_return"].values.astype(np.float64)
+                             if "trade_return" in df.columns
+                             else df["close"].pct_change().fillna(0.0).values)
+
+            X_raw, signs, feat_names = build_pool_feature_matrix(df, pool)
+            burn_in = 252 if len(df) > 500 else 100
+            Z_std = expanding_zscore_numba(X_raw, burn_in=burn_in, clip=3.0)
+
+            feat_to_cluster = load_cluster_assignments(etf, "single")
+            cluster_ids = None
+            if feat_to_cluster:
+                cids = [feat_to_cluster.get(fn, 1000 + i) for i, fn in enumerate(feat_names)]
+                cluster_ids = np.array(cids, dtype=np.int64)
+
+            ic_raw = rolling_tail_ic_numba(Z_std, signs, full_trade_ret, window=TAIL_WINDOW, tail_pct=TAIL_PCT, burn_in=burn_in)
+            ema_span = resolve_ic_ema_span(etf, None)
+            T_z, N_z = Z_std.shape
+            alpha_e = 2.0 / (ema_span + 1.0)
+            ic_smoothed = np.zeros_like(ic_raw)
+            ic_smoothed[0] = ic_raw[0]
+            for t_i in range(1, T_z):
+                ic_smoothed[t_i] = alpha_e * ic_raw[t_i] + (1.0 - alpha_e) * ic_smoothed[t_i - 1]
+
+            n_train_ts = pd.Timestamp("2022-01-01")
+            train_mask = (df["date"] < n_train_ts).values
+            n_train = int(train_mask.sum())
+            if n_train < 252:
+                n_train = 1700
+
+            er = adaptive_exit_rank(N_z, TOP_K)
+            Z_composite = compute_icw_hysteresis(
+                Z_std, signs, ic_smoothed,
+                cluster_ids=cluster_ids,
+                n_train=n_train, top_k=TOP_K,
+                exit_rank=er, max_per_group=1
+            )
+
+            t_start = pd.Timestamp("2022-01-01")
+            t_end = pd.Timestamp("2026-01-01")
+            oos_mask = ((df["date"] >= t_start) & (df["date"] < t_end)).values
+            bars_dict = load_intraday_bars_dict(etf)
+
+            Z_train = Z_composite[train_mask]
+            ret_train = full_trade_ret[train_mask]
+            
+            # Sweep with matched min_pos and delta_z_full
+            sweep_info = sweep_optimal_threshold(
+                Z_train, ret_train, mode=mode, fee_bps=fee_bps, long_only=False,
+                min_pos=m, delta_z_full=dz
+            )
+
+            df_oos = df[oos_mask].reset_index(drop=True)
             dates_oos = df_oos["date"]
-            Z_oos = d["Z_composite"][d["oos_mask"]]
-            ret_oos = d["full_trade_ret"][d["oos_mask"]]
-            z_prod_l, z_prod_s = compute_production_threshold(d["sweep_info"], z_buffer=0.10)
+            Z_oos = Z_composite[oos_mask]
+            ret_oos = full_trade_ret[oos_mask]
+
+            z_prod_l, z_prod_s = compute_production_threshold(sweep_info, z_buffer=0.10)
 
             if mode == "binary":
                 pos = generate_positions(Z_oos, z_th=z_prod_l, z_th_short=z_prod_s, mode="binary", long_only=False)
             else:
                 pos = generate_positions(Z_oos, z_th=z_prod_l, z_th_short=z_prod_s, mode=mode, long_only=False, min_pos=m, delta_z_full=dz)
 
-            met = evaluate_arm_positions(dates_oos, pos, ret_oos, d["bars_dict"], fee_bps)
+            met = evaluate_arm_positions(dates_oos, pos, ret_oos, bars_dict, fee_bps)
 
             results.append({
                 "Rule": rule_label,
                 "ETF": etf,
+                "ProdZLong": z_prod_l,
+                "ProdZShort": z_prod_s,
                 "CostSharpe": met["cost_sharpe"],
                 "TotalPnL": met["total_pnl"],
                 "MaxDD": met["max_drawdown"],
@@ -206,15 +190,17 @@ def main():
     print("=" * 95)
     for etf in AVAILABLE_ETFS:
         sub = df_res[df_res["ETF"] == etf].sort_values("CostSharpe", ascending=False)
-        base_sr = baselines[etf]["cost_sharpe"]
-        base_dd = baselines[etf]["max_drawdown"]
+        base_row = sub[sub["Rule"] == "Binary Baseline (m=1.00)"].iloc[0]
+        base_sr = base_row["CostSharpe"]
+        base_dd = base_row["MaxDD"]
         print(f"\n--- {etf} (Baseline Sharpe: {base_sr:.3f}, Baseline MaxDD: {base_dd:.4f}) ---")
-        print(f"{'Rule':<45} {'CostSharpe':>10} {'Delta':>8} {'TotalPnL':>10} {'MaxDD':>8} {'WR%':>6} {'AvgPos':>8}")
-        print("-" * 105)
+        print(f"{'Rule':<45} {'Prod Z_th':<18} {'CostSharpe':>10} {'Delta':>8} {'TotalPnL':>10} {'MaxDD':>8} {'WR%':>6} {'Trades':>6} {'AvgPos':>7}")
+        print("-" * 125)
         for _, r in sub.iterrows():
             sr_delta = r["CostSharpe"] - base_sr
+            z_str = f"L:{r['ProdZLong']:.2f}/S:{r['ProdZShort']:.2f}"
             marker = " *" if r["Rule"] == "Binary Baseline (m=1.00)" else ""
-            print(f"{r['Rule']:<45} {r['CostSharpe']:>10.3f} {sr_delta:>+8.3f} {r['TotalPnL']:>10.4f} {r['MaxDD']:>8.4f} {r['WinRate']:>6.1f} {r['AvgPos']:>8.2f}{marker}")
+            print(f"{r['Rule']:<45} {z_str:<18} {r['CostSharpe']:>10.3f} {sr_delta:>+8.3f} {r['TotalPnL']:>10.4f} {r['MaxDD']:>8.4f} {r['WinRate']:>6.1f} {r['Trades']:>6} {r['AvgPos']:>7.2f}{marker}")
 
 
 if __name__ == "__main__":
