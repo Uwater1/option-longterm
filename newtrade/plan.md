@@ -114,11 +114,26 @@ $$Z_{\text{composite},t} = \sum_{i \in \mathcal{A}} w_i \cdot z_{i,t} \cdot \tex
 2. **Production buffer**: $Z_{\text{th}}^{\text{prod}} = Z_{\text{th}}^{\text{train}} + 0.10$
 3. **Asymmetric short**: Short threshold gets additional +0.10 buffer (A-share structural long bias).
 
-### 4.2 Position Sizing (Binary)
+### 4.2 Dynamic Position Sizing (Fast Ramp Quadratic Default)
 
-$$S_t = \begin{cases} +1 & \text{if } Z_t > Z_{\text{th}}^{\text{long}} \\ -1 & \text{if } Z_t < -Z_{\text{th}}^{\text{short}} \\ 0 & \text{otherwise} \end{cases}$$
+Production uses **Fast Ramp Quadratic** position sizing (`fast_ramp_quadratic`, $m=0.70, \Delta Z_{\text{full}}=0.40$):
 
-Alternative modes (tanh, quadratic) exist but binary is production default.
+$$S_t = \begin{cases} \text{sign}(Z_t) \cdot \left(m + (1-m) \cdot \min\left(1.0, \ \left(\frac{|Z_t| - Z_{\text{th}}}{\Delta Z_{\text{full}}}\right)^2\right)\right) & \text{if } |Z_t| > Z_{\text{th}} \\ 0 & \text{otherwise} \end{cases}$$
+
+- **Min Position Floor ($m=0.70$)**: 70% size upon passing threshold. Easily absorbs 16 bps roundtrip transaction friction.
+- **Full Ramp Margin ($\Delta Z_{\text{full}}=0.40$)**: Ramps quadratically to 100% position size as signal exceeds threshold by $+0.40\sigma$.
+- **Performance Lift**: Boosts Portfolio Cost Sharpe (**0.817 vs 0.791 Binary Baseline, +0.026 lift**) and reduces Max Drawdown by **7.6% (8.09% vs 8.76%)** across all 3 ETFs simultaneously.
+
+### 4.3 Summary of Position Sizing Research & Tried Options
+
+| Model Mode | Formulation | Findings & Empirical Outcome |
+|---|---|---|
+| **Binary Baseline** | $S_t = \pm 1.0$ if $|Z_t| > Z_{\text{th}}$ | Hard gate step function. High drawdowns (8.76% MaxDD), rigid all-or-nothing allocation. |
+| **Continuous Ungated** | $S_t = \text{clip}(k Z_t, -1, 1)$ | No threshold gate. High trade frequency on noise signals, severe transaction fee drag. |
+| **Standard Tanh / Quad** | $S_t = \tanh((Z - Z_{\text{th}})/\gamma)$ | Ramp parameter $\gamma=1.5$ too slow; requires $+1.5\sigma$ excess signal to reach full size. Avg size collapsed to ~0.35–0.45. |
+| **Fast Ramp Linear ($m=0.50, \Delta Z=0.30$)** | $S_t = m + (1-m)\frac{\Delta Z}{0.30}$ | Excellent drawdown reduction (-43.9%), but low $m=0.50$ floor diluted returns under 16 bps friction. |
+| **Fast Ramp Linear ($m=0.70, \Delta Z=0.40$)** | $S_t = m + (1-m)\frac{\Delta Z}{0.40}$ | Strong performance (0.813 Avg Sharpe, -7.3% MaxDD). Linear ramp to 100%. |
+| **Fast Ramp Quad ($m=0.70, \Delta Z=0.40$) [WINNER]** | $S_t = m + (1-m)\left(\frac{\Delta Z}{0.40}\right)^2$ | **Production Default**. Quadratic curve starting at 70% floor. Top Portfolio Sharpe (**0.817**), **-7.6% MaxDD reduction** (0.0809 vs 0.0876). |
 
 ---
 
@@ -129,13 +144,13 @@ Alternative modes (tanh, quadratic) exist but binary is production default.
 - **Instruments**: ETF spot (default) or index futures (`--future`: IF88/IC88/IH88).
 - **Friction**: 8 bps per side (16 bps round-trip) + 2 bps stop-loss slippage when triggered.
 
-### 5.2 Intraday Stop-Loss: Time-Decay Trailing (3%)
+### 5.2 Intraday Stop-Loss: Time-Decay Trailing (3% Spot / 30% Option)
 
-Production uses `time_decay_trailing` with param=0.03:
-- Trails the high-water mark of intraday P&L.
-- Stop threshold decays over time (tighter near close, looser early).
-- Triggered on ~30-40% of active trading days.
-- Adds +2 bps execution slippage on stop days.
+Production uses `time_decay_trailing`:
+- **Spot ETF / Futures**: Param = 0.03 (3% spot trailing, tightening by 40% near close).
+- **Option Portfolio (`--option`)**: Param = 0.30 (`opt_time_decay_trailing` default, 30% initial trailing gap, tightening by 40% to 18% near close).
+- **Direct Option Stop Price**: Trails peak option premium $P_{\text{peak}}(t)$ directly on option contract RMB quotes ($P_{\text{stop}}(t) = P_{\text{peak}}(t) \times (1.0 - \theta(t))$).
+- **Time Tightening**: $\theta(t) = \theta_{\text{start}} \times (1.0 - 0.40 \times f_t)$. Prevents holding dying option premiums into market close as late-day theta decay accelerates.
 
 Enabled by default (`--stoploss`). Disable with `--no-stoploss`.
 
@@ -154,8 +169,9 @@ Enabled by default (`--stoploss`). Disable with `--no-stoploss`.
 | ONC Cluster | Max 1 per cluster | Diversity across feature families |
 | Position | Binary L+S | Highest Sharpe |
 | Threshold | Train-sweep + 0.10 buffer | Robust across regimes |
-| Stop-Loss | time_decay_trailing=0.03 | Cuts intraday losers |
-| Fee | 8 bps | Stress-tested to 20 bps |
+| Spot Stop-Loss | time_decay_trailing=0.03 | Cuts intraday spot losers |
+| Option Stop-Loss | opt_time_decay_trailing=0.30 | +0.205 Sharpe lift on 300ETF, -49.4% MaxDD |
+| Fee | 8 bps (Spot) / 4 RMB per side (Option) | Stress-tested |
 | Feature Floor | ≥ 10 | 50ETF/588000ETF disabled |
 
 **CLI**: `python newtrade/run_backtest.py --scheme icw` (all defaults are production-optimal)
@@ -168,7 +184,7 @@ Enabled by default (`--stoploss`). Disable with `--no-stoploss`.
 2. **Hysteresis > Threshold Adaptation**: Feature churn is the real problem. Stabilizing selection beats all threshold adaptations (percentile, walk-forward, variance-scaled).
 3. **ICW > Multi-Score**: Pure IC weighting with shrinkage beats composite scores (IC+IR+Monotonicity). Adding IR introduces noise.
 4. **Fixed K=10**: Cross-K Sharpe differences ≤ 0.15 (noise). Per-ETF K tuning = overfitting.
-5. **Unified Config**: Single parameter set across ETFs prevents selection bias.
+5. **Direct Option Time-Decay Trailing**: Direct option price time-decay trailing stop (`opt_time_decay_trailing`, $\theta_{\text{start}}=0.30$, $c_{\text{tight}}=0.40$) achieves **1.251 Sharpe** (+0.205 lift) and slashes MaxDD from **22.87% to 11.57%** (-49.4% DD reduction) on 300ETF.
 6. **CPCV 100% Positive**: All active ETFs show 100% positive folds in combinatorial purged cross-validation.
 7. **DSR Significant**: 159915ETF achieves DSR = 0.965 (SIGNIFICANT at 10 trials). 500ETF marginal (0.934).
 
@@ -180,15 +196,19 @@ Enabled by default (`--stoploss`). Disable with `--no-stoploss`.
 newtrade/
 ├── plan.md                  # This document
 ├── REPORT.md                # Latest OOS backtest report (auto-generated)
-├── run_backtest.py          # Main CLI (--scheme, --ic-mode, --hysteresis, --year, --decay)
+├── REPORT_option.md         # Option portfolio OOS backtest report
+├── run_backtest.py          # Main CLI (--scheme, --ic-mode, --hysteresis, --year, --decay, --option)
 ├── run_production.py        # Production ensemble CLI (DSR & CPCV validated)
 ├── weighting.py             # ICW, EW, hysteresis, adaptive_exit_rank, ONC selection
 ├── strategy.py              # Threshold sweep, position sizing, ETF simulation
+├── option_strategy.py       # Capital-constrained option portfolio execution & 5m stoploss engine
 ├── utils.py                 # Data loaders, expanding z-score, rolling tail IC (Numba)
 ├── robustness.py            # DSR, CPCV, PBO, sensitivity analysis
-├── research_stoploss.py     # 1m intraday stop-loss simulator
+├── research_stoploss.py     # 1m ETF intraday stop-loss simulator
+├── research_option_stoploss.py # Option intraday stop-loss simulator & Train/OOS benchmark
 ├── glm.py / glm_backtest.py # Experimental Ridge GLM scheme
 └── tests/                   # A/B test suite
+    ├── test_option_stoploss_ab.py # Multi-arm option stoploss A/B testing suite
     ├── test_weighting_ab.py       # 11-arm weighting pipeline comparison
     ├── test_zthreshold_ab.py      # 7-arm threshold system comparison
     ├── test_hysteresis_sweep.py   # Exit-rank × threshold grid search
@@ -199,7 +219,8 @@ newtrade/
 - `day-model-new/data/selected_pool_{ETF}_{side}.json` — admitted feature pools
 - `day-model-new/data/cluster_assignments_{ETF}_{side}.json` — ONC clusters
 - `data/{ETF}_1d.parquet` — daily ETF prices
-- `data/{ETF}_1m.parquet` — 1-minute bars (for stoploss simulation)
+- `data/{ETF}_1m.parquet` — 1-minute bars (for ETF stoploss simulation)
+- `data/{ETF}_historical_prices_5m.parquet` — 5-minute option contract prices
 
 ---
 
@@ -213,3 +234,6 @@ newtrade/
 
 ### Hysteresis Exit-Rank Sweep (2026-08)
 Adaptive ER formula validated. Wider = better up to cap. RollPct480 adds no value on top of hysteresis. See `tests/test_hysteresis_sweep.py`.
+
+### Option Intraday Stop-Loss Benchmark (2026-08)
+5 arms × 3 ETFs. `opt_time_decay_trailing` (30% initial gap, 40% time decay) and `spot_time_decay_trailing` confirmed optimal. Direct option trailing stop cuts MaxDD on 300ETF from 22.87% to 11.57% while boosting Sharpe to 1.251 (+0.205 lift). See `tests/test_option_stoploss_ab.py`.

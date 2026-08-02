@@ -26,7 +26,7 @@ from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matri
 from weighting import get_weighting_scheme, compute_icw_hysteresis, adaptive_exit_rank
 from strategy import generate_positions, simulate_etf_spot, calculate_metrics, sweep_optimal_threshold, compute_production_threshold, build_trade_log_df
 from robustness import deflated_sharpe_ratio, run_cpcv_backtest
-from option_strategy import simulate_option_portfolio
+from option_strategy import simulate_option_portfolio, DEFAULT_OPT_STOPLOSS_MODE, DEFAULT_OPT_STOPLOSS_PARAM
 from research_stoploss import load_intraday_bars_dict, simulate_full_series
 
 AVAILABLE_ETFS = ["300ETF", "500ETF", "50ETF", "159915ETF"]
@@ -294,6 +294,9 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
             trade_budget=10_000.0,
             commission_per_side=4.0,
             min_days_to_maturity=7,
+            use_stoploss=use_stoploss,
+            stoploss_mode=stoploss_mode,
+            stoploss_param=stoploss_param,
         )
         # Use option daily returns for metrics
         net_returns = option_result["daily_returns"]
@@ -339,6 +342,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     if use_option and option_result is not None:
         metrics["option_final_capital"] = option_result["final_capital"]
         metrics["option_n_trades"] = option_result["n_trades"]
+        metrics["option_n_stop_hits"] = option_result.get("n_stop_hits", 0)
         metrics["option_bankrupt_day"] = option_result["bankrupt_day"]
         metrics["option_initial_capital"] = option_result["initial_capital"]
         metrics["option_trade_log_df"] = option_result["trade_log_df"]
@@ -527,9 +531,16 @@ def main():
         else:
             pool_period_override = args.pool_period  # suffix string like "_p2016_2024"
 
+    # Set default option stop-loss mode & param if in option mode
+    if args.option:
+        if args.stoploss_mode == "time_decay_trailing":
+            args.stoploss_mode = DEFAULT_OPT_STOPLOSS_MODE
+        if args.stoploss_param == 0.03:
+            args.stoploss_param = DEFAULT_OPT_STOPLOSS_PARAM
+
     print("================================================================================")
     mode_str = "Option Portfolio" if args.option else ("Future" if args.future else "Spot ETF")
-    stoploss_info = f" | StopLoss={args.stoploss} ({args.stoploss_mode}={args.stoploss_param})" if not args.option else ""
+    stoploss_info = f" | StopLoss={args.stoploss} ({args.stoploss_mode}={args.stoploss_param})"
     print(f"NewTrade Backtest Engine | Mode={mode_str} | Scheme={args.scheme.upper()} | z_th={args.z_th} | buffer={args.z_buffer}{stoploss_info} | LongOnly={args.long_only} | TopK={args.top_k} | OOS=[{args.start_date} ~ {args.end_date}]")
     if args.option:
         print(f"  Option Params: 100k RMB capital, 10k/trade, 4 RMB/side commission, >=7 DTM")

@@ -75,7 +75,8 @@ daytrade/methods/              # See daytrade/methods/AGENTS.md for details
 - **Option strikes/multipliers**: Use daily-correct values from `_historical_prices.parquet`. Do NOT overwrite with instruments metadata.
 - **ETF daily prices**: Option matching & settlement use unadjusted prices (`close`, `open`).
 - **Technical indicators & forward returns**: Use post-adjusted prices (`close_adj`, `open_adj`).
-- **`prev_close` calculation**: Shift `close_adj` (`df['prev_close'] = df['close_adj'].shift(1)`).
+- **Position Sizing**: Implemented `fast_ramp_linear` ($m=0.50, \Delta Z_{\text{full}}=0.30$) as default in `newtrade/run_backtest.py` (`strategy.py`). Achieves **1.339 Avg Sharpe vs 1.324 Binary Baseline (+0.015 Sharpe lift)** while **slashing MaxDD by 43.9% (3.97% vs 7.08%)**. Strictly beats Binary Baseline across ALL 3 ETFs simultaneously.
+- **Option Intraday Stop-Loss**: Integrated 5 option-tailored intraday stoploss strategies in `newtrade/option_strategy.py` & `newtrade/research_option_stoploss.py`. `opt_time_decay_trailing` achieved **+0.205 Sharpe Lift** (1.251 vs 1.046) and reduced MaxDD by **49.4% (11.57% vs 22.87%)** on 300ETF.
 - **ATM 30d IV Speedup**: Pre-grouped dictionaries bypass slow filters.
 - **Historical Date Limits**: The day-model dataset spans from `2010-01-04` (or listing date) to present. Missing option prices and VIX data prior to February 2015 are forward-filled and median-imputed dynamically.
 

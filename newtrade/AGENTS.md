@@ -41,6 +41,10 @@ uv run python newtrade/run_backtest.py -e all --decay --pool-period old --year 2
 uv run python newtrade/run_backtest.py -e 300ETF --future --scheme rank
 uv run python newtrade/run_backtest.py -e 500ETF --future --scheme rank
 
+# Trade Option Portfolios (100k RMB capital, 10k/trade, opt_time_decay_trailing=0.30 default)
+uv run python newtrade/run_backtest.py -e 300ETF --option
+uv run python newtrade/run_backtest.py -e all --option
+
 # Compare all weighting schemes side-by-side (auto exports trades CSVs)
 uv run python newtrade/run_backtest.py -e 500ETF --scheme all
 
@@ -64,6 +68,8 @@ uv run python newtrade/research_position_sizing.py
 
 # Research intraday stop-loss methods
 uv run python newtrade/research_stoploss.py -e all --scheme all --report
+uv run python newtrade/research_option_stoploss.py -e all --report
+uv run python newtrade/tests/test_option_stoploss_ab.py
 ```
 
 ## Pool Migration Commands
@@ -93,17 +99,21 @@ newtrade/
 ├── REPORT.md                # OOS backtest report (default full-period)
 ├── REPORT_{year}.md         # Per-year reports (generated via --year flag)
 ├── REPORT_production.md     # Production ensemble report (DSR-validated)
+├── REPORT_option.md         # Option portfolio backtest report
 ├── run_production.py        # Production ensemble CLI (binary L+S, buffer=0.15, DSR)
-├── run_backtest.py          # CLI runner (--year, --pool-period, --decay, --scheme, --validate)
+├── run_backtest.py          # CLI runner (--year, --pool-period, --decay, --scheme, --validate, --option, --stoploss)
 ├── run_migration.py         # Pool migration protocol (--monitor, --candidate-period)
 ├── regenerate_admitted_pools.py  # Regenerate admitted_pools.py from pipeline output
 ├── portfolio_backtest.py    # Multi-ETF portfolio backtest + fee stress test
 ├── robustness.py            # DSR, CPCV, PBO, Ensemble, Sensitivity Grid
 ├── research_stoploss.py     # 1m intraday stop-loss simulator & Train/OOS benchmark
+├── research_option_stoploss.py # Option intraday stop-loss simulator & Train/OOS benchmark
+├── option_strategy.py       # Capital-constrained option portfolio execution & 5m stop-loss engine
 ├── utils.py                 # Data loading, recipe computation, expanding z-score, futures trade return mapper
 ├── weighting.py             # Weighting schemes: ICW (default), EW, Score, Rank, with Top-K truncation
 ├── strategy.py              # Threshold sweep, position sizing (binary/tanh/quadratic), ETF simulation
 ├── tests/                   # Research & experimental test suite
+│   ├── test_option_stoploss_ab.py # Multi-arm option stoploss A/B testing suite
 │   ├── walkforward_migration.py   # Walk-forward protocol validation (4 switch attempts)
 │   ├── research_pool_comparison.py # 3-way comparison (Old/New/Yearly × Auto/P75)
 │   ├── research_switching_protocol.py # Gated switching backtest

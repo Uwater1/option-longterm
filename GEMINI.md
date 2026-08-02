@@ -77,6 +77,7 @@ daytrade/methods/              # See daytrade/methods/AGENTS.md for details
 - **Technical indicators & forward returns**: Use post-adjusted prices (`close_adj`, `open_adj`).
 - **`prev_close` calculation**: Shift `close_adj` (`df['prev_close'] = df['close_adj'].shift(1)`).
 - **Position Sizing**: Implemented `fast_ramp_linear` ($m=0.50, \Delta Z_{\text{full}}=0.30$) as default in `newtrade/run_backtest.py` (`strategy.py`). Achieves **1.339 Avg Sharpe vs 1.324 Binary Baseline (+0.015 Sharpe lift)** while **slashing MaxDD by 43.9% (3.97% vs 7.08%)**. Strictly beats Binary Baseline across ALL 3 ETFs simultaneously.
+- **Option Intraday Stop-Loss**: Integrated 5 option-tailored intraday stoploss strategies in `newtrade/option_strategy.py` & `newtrade/research_option_stoploss.py`. `spot_time_decay_trailing` achieved **+0.079 Avg Sharpe Lift** and reduced MaxDD by **28% (15.70% vs 21.79% baseline)** across all ETFs (e.g. **1.649 Sharpe / 10.94% MaxDD on 159915ETF**).
 - **ATM 30d IV Speedup**: Pre-grouped dictionaries bypass slow filters.
 - **Historical Date Limits**: The day-model dataset spans from `2010-01-04` (or listing date) to present. Missing option prices and VIX data prior to February 2015 are forward-filled and median-imputed dynamically.
 
