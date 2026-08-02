@@ -163,7 +163,8 @@ def cpcv_splits(n_samples: int, n_splits: int = 6, n_test: int = 2, purge_gap: i
 def run_cpcv_backtest(Z_composite: np.ndarray, trade_returns: np.ndarray, dates: pd.Series,
                       n_splits: int = 6, n_test: int = 2, purge_gap: int = 5,
                       mode: str = "binary", fee_bps: float = 0.0008,
-                      z_buffer: float = 0.1, long_only: bool = False) -> dict:
+                      z_buffer: float = 0.1, long_only: bool = False,
+                      min_pos: float = 0.0, delta_z_full: float = 0.20) -> dict:
     """
     Run CPCV on a composite signal. For each fold:
       - Train: sweep optimal threshold
@@ -185,12 +186,12 @@ def run_cpcv_backtest(Z_composite: np.ndarray, trade_returns: np.ndarray, dates:
         ret_test = trade_returns[test_idx]
         
         # Train threshold
-        sweep_info = sweep_optimal_threshold(Z_train, ret_train, mode=mode, fee_bps=fee_bps, long_only=long_only)
+        sweep_info = sweep_optimal_threshold(Z_train, ret_train, mode=mode, fee_bps=fee_bps, long_only=long_only, min_pos=min_pos, delta_z_full=delta_z_full)
         z_th_long, z_th_short = compute_production_threshold(sweep_info, z_buffer=z_buffer)
         
         # Test
         positions = generate_positions(Z_test, z_th=z_th_long, z_th_short=z_th_short,
-                                       mode=mode, long_only=long_only)
+                                       mode=mode, long_only=long_only, min_pos=min_pos, delta_z_full=delta_z_full)
         net_ret, raw_ret, fees = simulate_etf_spot(ret_test, positions, fee_bps=fee_bps)
         
         std_net = np.std(net_ret)

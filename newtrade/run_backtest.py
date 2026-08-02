@@ -42,7 +42,7 @@ def resolve_ic_ema_span(etf: str, user_span: int | None = None) -> int:
 
 
 def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew", z_th: float = 0.5, 
-                        position_mode: str = "binary", fee_bps: float = 0.0008, min_features: int = 10,
+                        position_mode: str = "fast_ramp_linear", fee_bps: float = 0.0008, min_features: int = 10,
                         start_date: str = "2022-01-01", end_date: str = "2026-01-01",
                         z_buffer: float = 0.1, z_short_buffer: float = None, auto_threshold: bool = False,
                         rank_kwargs: dict = None, dynamic_ic: bool = False, long_only: bool = False,
@@ -50,7 +50,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                         stoploss_mode: str = "time_decay_trailing", stoploss_param: float = 0.03,
                         pool_override: list = None, cluster_suffix: str = "", group_constraint: bool = None, max_per_group: int = 1,
                         ic_mode: str = "expanding", tail_window: int = 252, tail_pct: float = 0.10,
-                        hysteresis: bool = True, exit_rank: int = None) -> dict:
+                        hysteresis: bool = True, exit_rank: int = None, min_pos: float = 0.5, delta_z_full: float = 0.3) -> dict:
     """
     Run backtest for one ETF and side combination filtered to OOS date range.
     
@@ -164,10 +164,31 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
             rk["max_per_group"] = max_per_group
         Z_composites = []
         for s_name in ENSEMBLE_SCHEMES:
-            s_func = get_weighting_scheme(s_name)
-            s_kwargs = dict(rk)
-            s_kwargs["expanding_ic"] = IC_mat
-            Z_composites.append(s_func(Z_std, signs, pool=pool, n_train=n_train, **s_kwargs))
+            if hysteresis and s_name == "icw":
+                ic_ema_span = rk.get("ic_ema_span", 30)
+                raw_ic = IC_mat
+                T_z, N_z = Z_std.shape
+                if ic_ema_span and ic_ema_span > 1:
+                    alpha_e = 2.0 / (ic_ema_span + 1.0)
+                    ic_smoothed = np.zeros_like(raw_ic)
+                    ic_smoothed[0] = raw_ic[0]
+                    for t_i in range(1, T_z):
+                        ic_smoothed[t_i] = alpha_e * raw_ic[t_i] + (1.0 - alpha_e) * ic_smoothed[t_i - 1]
+                else:
+                    ic_smoothed = raw_ic
+                er = exit_rank if exit_rank is not None else adaptive_exit_rank(N_z, rk.get("top_k", 10))
+                Z_comp_icw = compute_icw_hysteresis(
+                    Z_std, signs, ic_smoothed,
+                    cluster_ids=rk.get("cluster_ids", None),
+                    n_train=n_train, top_k=rk.get("top_k", 10),
+                    exit_rank=er, max_per_group=rk.get("max_per_group", 1)
+                )
+                Z_composites.append(Z_comp_icw)
+            else:
+                s_func = get_weighting_scheme(s_name)
+                s_kwargs = dict(rk)
+                s_kwargs["expanding_ic"] = IC_mat
+                Z_composites.append(s_func(Z_std, signs, pool=pool, n_train=n_train, **s_kwargs))
         Z_composite = np.mean(Z_composites, axis=0)
     else:
         scheme_func = get_weighting_scheme(scheme_name)
@@ -222,7 +243,8 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
         # Sweep on training data
         sweep_info = sweep_optimal_threshold(
             Z_composite_train, trade_returns_train,
-            mode=position_mode, fee_bps=fee_bps, long_only=long_only
+            mode=position_mode, fee_bps=fee_bps, long_only=long_only,
+            min_pos=min_pos, delta_z_full=delta_z_full
         )
         z_th_prod, z_th_short = compute_production_threshold(sweep_info, z_buffer=z_buffer, z_short_buffer=z_short_buffer)
         eff_short_buf = z_short_buffer if z_short_buffer is not None else z_buffer
@@ -235,7 +257,11 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
         z_th_short = z_th + (eff_short_buf - z_buffer if z_short_buffer is not None else 0.0)
 
     # 7. Position Sizing with production thresholds
-    positions_full = generate_positions(Z_composite, z_th=z_th_prod, z_th_short=z_th_short, mode=position_mode, long_only=long_only)
+    positions_full = generate_positions(
+        Z_composite, z_th=z_th_prod, z_th_short=z_th_short,
+        mode=position_mode, long_only=long_only,
+        min_pos=min_pos, delta_z_full=delta_z_full
+    )
 
     # 8. Date Filtering to OOS Evaluation Period
     t_start = pd.Timestamp(start_date)
@@ -250,7 +276,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
         mask = df["date"] >= df["date"].iloc[-1000]
 
     df_oos = df[mask].reset_index(drop=True)
-    positions_oos = positions_full[mask]
+    positions_oos = positions_full[mask.values if isinstance(mask, pd.Series) else mask]
     Z_composite_oos = Z_composite[mask.values if isinstance(mask, pd.Series) else mask]
 
     # 9. Backtest Simulation on OOS slice
@@ -276,10 +302,9 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     elif use_stoploss:
         bars_dict = load_intraday_bars_dict(etf)
         if bars_dict:
-            net_returns, raw_returns, stop_hits, trig_pct = simulate_full_series(
+            net_returns, raw_returns, fees, stop_hits, trig_pct = simulate_full_series(
                 df_oos["date"], positions_oos, bars_dict, method=stoploss_mode, param=stoploss_param, fee_bps=fee_bps
             )
-            fees = np.where(stop_hits, fee_bps + 0.0002, np.where(np.abs(positions_oos) > 1e-5, fee_bps, 0.0))
         else:
             print(f"    [WARNING] Could not load 1m bars for {etf}. Falling back to baseline simulation.")
             net_returns, raw_returns, fees = simulate_etf_spot(trade_returns_oos, positions_oos, fee_bps=fee_bps)
@@ -336,6 +361,8 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
         "long_only": long_only,
         "use_future": use_future,
         "position_mode": position_mode,
+        "min_pos": min_pos,
+        "delta_z_full": delta_z_full,
         "dates": df_oos["date"].dt.strftime("%Y-%m-%d").tolist() if "date" in df_oos.columns else [],
         "cum_pnl": np.cumsum(net_returns).tolist(),
         "trade_log_df": trade_log_df,
@@ -360,7 +387,11 @@ def main():
     parser.add_argument("--z-th", type=str, default="auto", help="Conviction threshold Z score. 'auto' = train-sweep + buffer, or float value for fixed.")
     parser.add_argument("--z-buffer", type=float, default=0.1, help="Production buffer added to train-optimal threshold (default 0.1, walk-forward validated)")
     parser.add_argument("--z-short-buffer", type=float, default=None, help="Production buffer for short threshold (default: z_buffer + 0.1)")
-    parser.add_argument("--position-mode", type=str, default="binary", choices=["binary", "tanh", "quadratic"], help="Position sizing mode")
+    parser.add_argument("--position-mode", type=str, default="fast_ramp_linear",
+                        choices=["binary", "fast_ramp_linear", "fast_ramp_quadratic", "fast_ramp_tanh", "quadratic", "tanh", "tanh_tuned"],
+                        help="Position sizing mode (default: fast_ramp_linear)")
+    parser.add_argument("--min-pos", type=float, default=0.5, help="Minimum position size floor when passing conviction threshold (default: 0.5)")
+    parser.add_argument("--delta-z-full", type=float, default=0.3, help="Excess Z margin above threshold to reach full 1.0 position size (default: 0.3)")
     parser.add_argument("--fee-bps", type=float, default=None, help="Transaction fee in basis points (default: 8.0 for ETF, 4.0 for futures)")
     parser.add_argument("--start-date", type=str, default="2022-01-01", help="OOS Start Date (YYYY-MM-DD)")
     parser.add_argument("--end-date", type=str, default="2026-01-01", help="OOS End Date (YYYY-MM-DD)")
@@ -554,14 +585,17 @@ def main():
                 _rank_kw["ic_ema_span"] = resolve_ic_ema_span(etf, args.ic_ema_span)
                 res = run_single_backtest(
                     etf=etf, side=args.side, scheme_name="icw", z_th=0.5,
-                    position_mode="binary", fee_bps=fee_bps,
+                    position_mode=args.position_mode, fee_bps=fee_bps,
                     start_date=_start, end_date=_end,
-                    z_buffer=args.z_buffer, auto_threshold=True,
-                    rank_kwargs=_rank_kw, dynamic_ic=True,
-                    long_only=args.long_only, use_stoploss=False,
+                    z_buffer=args.z_buffer, z_short_buffer=args.z_short_buffer, auto_threshold=True,
+                    rank_kwargs=_rank_kw, dynamic_ic=True, ic_mode=args.ic_mode,
+                    tail_window=args.tail_window, tail_pct=args.tail_pct,
+                    long_only=args.long_only, use_stoploss=args.stoploss,
+                    stoploss_mode=args.stoploss_mode, stoploss_param=args.stoploss_param,
                     pool_override=_pool_ov, cluster_suffix=_cluster_suf,
                     group_constraint=args.group_constraint, max_per_group=args.max_per_group,
                     hysteresis=args.hysteresis, exit_rank=args.exit_rank,
+                    min_pos=args.min_pos, delta_z_full=args.delta_z_full,
                 )
                 yr_results.append(res)
             decay_results.append((yr, yr_results))
@@ -666,6 +700,8 @@ def main():
                 tail_pct=args.tail_pct,
                 hysteresis=args.hysteresis,
                 exit_rank=args.exit_rank,
+                min_pos=args.min_pos,
+                delta_z_full=args.delta_z_full,
             )
             results.append(res)
 
@@ -701,7 +737,9 @@ def main():
                                       purge_gap=5, mode=r.get("position_mode", "binary"),
                                       fee_bps=effective_fee_bps / 10000.0,
                                       z_buffer=r.get("z_buffer", 0.1),
-                                      long_only=r.get("long_only", False))
+                                      long_only=r.get("long_only", False),
+                                      min_pos=r.get("min_pos", 0.5),
+                                      delta_z_full=r.get("delta_z_full", 0.3))
             r["cpcv"] = cpcv
             
             print(f"  {r['etf']} ({r['scheme']}): SR={obs_sr:.3f}, "

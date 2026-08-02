@@ -154,14 +154,16 @@ def simulate_stoploss_day(day_data: dict, pos: float, method: str, param: float,
     if P_open <= 0:
         return 0.0, 0.0, False, 0.0
 
-    # Entry fee friction (8 bps entry/exit transition)
-    base_fee = fee_bps
+    # Intraday round-trip fee (entry + exit transition)
+    abs_pos = abs(pos)
+    base_fee = fee_bps * 2.0
     
     if method == "baseline":
         P_close = closes[i_1435]
         raw_ret = pos * (P_close - P_open) / P_open
-        net_ret = raw_ret - base_fee
-        return net_ret, raw_ret, False, base_fee
+        total_fee = abs_pos * base_fee
+        net_ret = raw_ret - total_fee
+        return net_ret, raw_ret, False, total_fee
         
     # Intraday tracking from 10:00 to 14:35
     n_bars = i_1435 - i_1000 + 1
@@ -202,17 +204,18 @@ def simulate_stoploss_day(day_data: dict, pos: float, method: str, param: float,
             if bar_l <= L_stop_curr:
                 # Stop triggered! Exit price is min of bar_open and L_stop_curr
                 P_stop = min(bar_o, L_stop_curr)
-                # Raw return at stop price without fee/slippage
-                raw_ret = (P_stop - P_open) / P_open
-                total_fee = base_fee + slip_bps
+                # Raw return at stop price with position scaling
+                raw_ret = pos * (P_stop - P_open) / P_open
+                total_fee = abs_pos * (base_fee + slip_bps)
                 net_ret = raw_ret - total_fee
                 return net_ret, raw_ret, True, total_fee
                 
         # If no stop triggered, exit at 14:35 close
         P_close = closes[i_1435]
-        raw_ret = (P_close - P_open) / P_open
-        net_ret = raw_ret - base_fee
-        return net_ret, raw_ret, False, base_fee
+        raw_ret = pos * (P_close - P_open) / P_open
+        total_fee = abs_pos * base_fee
+        net_ret = raw_ret - total_fee
+        return net_ret, raw_ret, False, total_fee
 
     else:  # SHORT (pos < 0)
         running_trough = lows[i_1000]
@@ -245,31 +248,35 @@ def simulate_stoploss_day(day_data: dict, pos: float, method: str, param: float,
                 
             if bar_h >= H_stop_curr:
                 P_stop = max(bar_o, H_stop_curr)
-                raw_ret = -1.0 * (P_stop - P_open) / P_open
-                total_fee = base_fee + slip_bps
+                # Short return: pos * (P_stop - P_open) / P_open, where pos < 0
+                raw_ret = pos * (P_stop - P_open) / P_open
+                total_fee = abs_pos * (base_fee + slip_bps)
                 net_ret = raw_ret - total_fee
                 return net_ret, raw_ret, True, total_fee
                 
         P_close = closes[i_1435]
-        raw_ret = -1.0 * (P_close - P_open) / P_open
-        net_ret = raw_ret - base_fee
-        return net_ret, raw_ret, False, base_fee
+        raw_ret = pos * (P_close - P_open) / P_open
+        total_fee = abs_pos * base_fee
+        net_ret = raw_ret - total_fee
+        return net_ret, raw_ret, False, total_fee
 
 
 def simulate_full_series(df_dates: pd.Series, positions: np.ndarray, bars_dict: dict, 
-                         method: str, param: float, fee_bps: float = 0.0008, slip_bps: float = 0.0002) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
+                         method: str, param: float, fee_bps: float = 0.0008, slip_bps: float = 0.0002) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float]:
     """
     Simulate intraday stoploss across an entire series of trading dates.
     
     Returns:
       - net_returns: np.ndarray shape (T,)
       - raw_returns: np.ndarray shape (T,)
+      - fees: np.ndarray shape (T,)
       - stop_hits: np.ndarray shape (T,) boolean mask
       - trigger_rate_pct: Percentage of active trading days where stop was hit
     """
     T = len(positions)
     net_returns = np.zeros(T, dtype=np.float64)
     raw_returns = np.zeros(T, dtype=np.float64)
+    fees = np.zeros(T, dtype=np.float64)
     stop_hits = np.zeros(T, dtype=bool)
     
     n_active = 0
@@ -286,15 +293,16 @@ def simulate_full_series(df_dates: pd.Series, positions: np.ndarray, bars_dict: 
         d_str = date_strs[t]
         day_data = bars_dict.get(d_str, None)
         
-        net_ret, raw_ret, is_hit, _ = simulate_stoploss_day(day_data, pos, method, param, fee_bps=fee_bps, slip_bps=slip_bps)
+        net_ret, raw_ret, is_hit, fee_cost = simulate_stoploss_day(day_data, pos, method, param, fee_bps=fee_bps, slip_bps=slip_bps)
         net_returns[t] = net_ret
         raw_returns[t] = raw_ret
+        fees[t] = fee_cost
         stop_hits[t] = is_hit
         if is_hit:
             n_stops += 1
             
     trig_pct = (n_stops / n_active * 100.0) if n_active > 0 else 0.0
-    return net_returns, raw_returns, stop_hits, round(trig_pct, 1)
+    return net_returns, raw_returns, fees, stop_hits, round(trig_pct, 1)
 
 
 # Expanded grid search parameters (from tight 0.3% up to wide protective 5.0%)
@@ -317,7 +325,7 @@ def sweep_train_optimal_stoploss(df_train: pd.DataFrame, positions_train: np.nda
       - tail_risk_protective: Parameter preserving >= 90% of Baseline Train Sharpe with minimal trigger rate.
     """
     if method == "baseline":
-        net_ret, raw_ret, _, _ = simulate_full_series(df_train["date"], positions_train, bars_dict, "baseline", 0.0, fee_bps=fee_bps)
+        net_ret, raw_ret, _, _, _ = simulate_full_series(df_train["date"], positions_train, bars_dict, "baseline", 0.0, fee_bps=fee_bps)
         std_ret = np.std(net_ret)
         sharpe = float(np.mean(net_ret) / std_ret * np.sqrt(252)) if std_ret > 1e-12 else 0.0
         return 0.0, {"param": 0.0, "sharpe": sharpe, "trigger_rate": 0.0}
@@ -325,7 +333,7 @@ def sweep_train_optimal_stoploss(df_train: pd.DataFrame, positions_train: np.nda
     grid = PARAM_GRIDS.get(method, [0.005])
     
     # Calculate baseline train sharpe for relative filtering
-    net_ret_base, raw_ret_base, _, _ = simulate_full_series(df_train["date"], positions_train, bars_dict, "baseline", 0.0, fee_bps=fee_bps)
+    net_ret_base, raw_ret_base, _, _, _ = simulate_full_series(df_train["date"], positions_train, bars_dict, "baseline", 0.0, fee_bps=fee_bps)
     std_base = np.std(net_ret_base)
     base_train_sharpe = float(np.mean(net_ret_base) / std_base * np.sqrt(252)) if std_base > 1e-12 else 0.0
     
@@ -336,7 +344,7 @@ def sweep_train_optimal_stoploss(df_train: pd.DataFrame, positions_train: np.nda
     sweep_details = []
     
     for param in grid:
-        net_ret, raw_ret, _, trig_pct = simulate_full_series(df_train["date"], positions_train, bars_dict, method, param, fee_bps=fee_bps)
+        net_ret, raw_ret, _, _, trig_pct = simulate_full_series(df_train["date"], positions_train, bars_dict, method, param, fee_bps=fee_bps)
         std_ret = np.std(net_ret)
         sharpe = float(np.mean(net_ret) / std_ret * np.sqrt(252)) if std_ret > 1e-12 else 0.0
         tot_pnl = float(np.sum(net_ret))
@@ -435,8 +443,8 @@ def run_etf_stoploss_experiment(etf: str, scheme: str = "icw", fee_bps: float = 
     print(f"  1m bars loaded for {len(bars_dict)} trading days.")
     
     # 5. Baseline (No Stoploss) Evaluation
-    net_ret_base_train, raw_ret_base_train, _, _ = simulate_full_series(df_train["date"], pos_train, bars_dict, "baseline", 0.0, fee_bps=fee_bps)
-    net_ret_base_oos, raw_ret_base_oos, _, _ = simulate_full_series(df_oos["date"], pos_oos, bars_dict, "baseline", 0.0, fee_bps=fee_bps)
+    net_ret_base_train, raw_ret_base_train, _, _, _ = simulate_full_series(df_train["date"], pos_train, bars_dict, "baseline", 0.0, fee_bps=fee_bps)
+    net_ret_base_oos, raw_ret_base_oos, _, _, _ = simulate_full_series(df_oos["date"], pos_oos, bars_dict, "baseline", 0.0, fee_bps=fee_bps)
     
     base_metrics_train = calculate_metrics(net_ret_base_train, raw_ret_base_train, pos_train, df_train["date"])
     base_metrics_oos = calculate_metrics(net_ret_base_oos, raw_ret_base_oos, pos_oos, df_oos["date"])
@@ -467,7 +475,7 @@ def run_etf_stoploss_experiment(etf: str, scheme: str = "icw", fee_bps: float = 
         best_param, train_info = sweep_train_optimal_stoploss(df_train, pos_train, bars_dict, m_name, fee_bps=fee_bps)
         
         # Single-pass locked evaluation on OOS
-        net_ret_oos, raw_ret_oos, stop_hits_oos, trig_rate_oos = simulate_full_series(
+        net_ret_oos, raw_ret_oos, fees_oos, stop_hits_oos, trig_rate_oos = simulate_full_series(
             df_oos["date"], pos_oos, bars_dict, m_name, best_param, fee_bps=fee_bps
         )
         

@@ -13,38 +13,84 @@ import pandas as pd
 
 
 def generate_positions(Z_composite: np.ndarray, z_th: float = 0.5, mode: str = "binary", gamma: float = 1.5,
-                       long_only: bool = True, z_th_short: float = None, z_th_short_bias: float = 0.1) -> np.ndarray:
+                       long_only: bool = True, z_th_short: float = None, z_th_short_bias: float = 0.1,
+                       k_gain: float = 1.0, min_pos: float = 0.0, delta_z_full: float = 0.20) -> np.ndarray:
     """
     Generate target positions S_t from composite signal Z_composite.
     
     Args:
       - Z_composite: Composite signal Z array shape (T,)
       - z_th: Conviction threshold for long trades (z_th_long)
-      - mode: Sizing mode ('binary', 'tanh', or 'quadratic')
-      - gamma: Ramp parameter for tanh/quadratic mode
+      - mode: Sizing mode
+      - gamma: Ramp parameter for legacy tanh/quadratic mode
       - long_only: If True, clamp negative positions to 0.0 (Spot ETF default)
       - z_th_short: Explicit threshold for short trades. If None, uses z_th + z_th_short_bias
       - z_th_short_bias: Additional buffer for short conviction threshold (default +0.1)
+      - k_gain: Multiplier/gain factor k for continuous and tuned modes (default 1.0)
+      - min_pos: Minimum position size floor when passing conviction threshold (e.g. 0.5 for range [0.5, 1.0])
+      - delta_z_full: Excess Z margin above threshold to reach full 1.0 position size (default 0.20)
     """
     T = len(Z_composite)
     positions = np.zeros(T, dtype=np.float64)
     
     z_th_long = z_th
     z_th_short_effective = z_th_short if z_th_short is not None else (z_th_long + z_th_short_bias)
+    k = k_gain if k_gain != 1.0 else (1.0 / gamma if gamma != 1.5 else 1.0)
+    m = min_pos
+    scale = 1.0 - m
+    dz = max(1e-4, delta_z_full)
     
     if mode == "binary":
         long_mask = Z_composite > z_th_long
         short_mask = Z_composite < -z_th_short_effective
         positions[long_mask] = 1.0
         positions[short_mask] = -1.0
+
+    elif mode == "continuous_ungated":
+        # Pure continuous fractional-Kelly, no gate
+        positions = np.clip(k * Z_composite, -1.0, 1.0)
+
+    elif mode == "continuous_gated_linear":
+        # Gate at z_th, linear scale in range [min_pos, 1.0] above gate
+        for t in range(T):
+            z = Z_composite[t]
+            if z > z_th_long:
+                positions[t] = min(1.0, max(m, m + scale * k * (z - z_th_long)))
+            elif z < -z_th_short_effective:
+                positions[t] = -min(1.0, max(m, m + scale * k * (-z - z_th_short_effective)))
+            else:
+                positions[t] = 0.0
+
+    elif mode == "continuous_gated_prop":
+        # Gate at z_th, position proportional to magnitude in range [min_pos, 1.0] once passed gate
+        for t in range(T):
+            z = Z_composite[t]
+            if z > z_th_long:
+                positions[t] = min(1.0, max(m, k * z))
+            elif z < -z_th_short_effective:
+                positions[t] = -min(1.0, max(m, k * (-z)))
+            else:
+                positions[t] = 0.0
         
     elif mode == "tanh":
         for t in range(T):
             z = Z_composite[t]
             if z > z_th_long:
-                positions[t] = np.tanh((z - z_th_long) / gamma)
+                val = np.tanh((z - z_th_long) / gamma)
+                positions[t] = m + scale * val if m > 0 else val
             elif z < -z_th_short_effective:
-                positions[t] = np.tanh((z + z_th_short_effective) / gamma)
+                val = np.tanh((z + z_th_short_effective) / gamma)
+                positions[t] = -m - scale * val if m > 0 else val
+            else:
+                positions[t] = 0.0
+
+    elif mode == "tanh_tuned":
+        for t in range(T):
+            z = Z_composite[t]
+            if z > z_th_long:
+                positions[t] = m + scale * np.tanh(k * (z - z_th_long))
+            elif z < -z_th_short_effective:
+                positions[t] = -m - scale * np.tanh(k * (-z - z_th_short_effective))
             else:
                 positions[t] = 0.0
 
@@ -52,15 +98,59 @@ def generate_positions(Z_composite: np.ndarray, z_th: float = 0.5, mode: str = "
         for t in range(T):
             z = Z_composite[t]
             if z > z_th_long:
-                val = ((z - z_th_long) / gamma) ** 2
-                positions[t] = min(1.0, val)
+                raw_val = ((z - z_th_long) / gamma) ** 2
+                positions[t] = min(1.0, m + scale * raw_val)
             elif z < -z_th_short_effective:
-                val = ((-z - z_th_short_effective) / gamma) ** 2
-                positions[t] = -min(1.0, val)
+                raw_val = ((-z - z_th_short_effective) / gamma) ** 2
+                positions[t] = -min(1.0, m + scale * raw_val)
             else:
                 positions[t] = 0.0
+
+    elif mode == "fast_ramp_quadratic":
+        # Reach full 1.0 position when Z exceeds threshold by delta_z_full (e.g. +0.20)
+        for t in range(T):
+            z = Z_composite[t]
+            if z > z_th_long:
+                margin = z - z_th_long
+                frac = min(1.0, margin / dz)
+                positions[t] = min(1.0, m + scale * (frac ** 2))
+            elif z < -z_th_short_effective:
+                margin = -z - z_th_short_effective
+                frac = min(1.0, margin / dz)
+                positions[t] = -min(1.0, m + scale * (frac ** 2))
+            else:
+                positions[t] = 0.0
+
+    elif mode == "fast_ramp_linear":
+        for t in range(T):
+            z = Z_composite[t]
+            if z > z_th_long:
+                margin = z - z_th_long
+                frac = min(1.0, margin / dz)
+                positions[t] = min(1.0, m + scale * frac)
+            elif z < -z_th_short_effective:
+                margin = -z - z_th_short_effective
+                frac = min(1.0, margin / dz)
+                positions[t] = -min(1.0, m + scale * frac)
+            else:
+                positions[t] = 0.0
+
+    elif mode == "fast_ramp_tanh":
+        for t in range(T):
+            z = Z_composite[t]
+            if z > z_th_long:
+                margin = z - z_th_long
+                val = np.tanh(2.0 * margin / dz)
+                positions[t] = min(1.0, m + scale * val)
+            elif z < -z_th_short_effective:
+                margin = -z - z_th_short_effective
+                val = np.tanh(2.0 * margin / dz)
+                positions[t] = -min(1.0, m + scale * val)
+            else:
+                positions[t] = 0.0
+
     else:
-        raise ValueError(f"Unknown position mode '{mode}'. Choose 'binary', 'tanh', or 'quadratic'.")
+        raise ValueError(f"Unknown position mode '{mode}'.")
 
     # Long-only clamping for Spot ETFs
     if long_only:
@@ -72,7 +162,7 @@ def generate_positions(Z_composite: np.ndarray, z_th: float = 0.5, mode: str = "
 def sweep_optimal_threshold(Z_composite_train: np.ndarray, trade_returns_train: np.ndarray,
                             mode: str = "binary", gamma: float = 1.5, long_only: bool = True,
                             fee_bps: float = 0.0008, z_range: tuple = (0.5, 1.5), z_step: float = 0.1,
-                            min_active_pct: float = 8.0) -> dict:
+                            min_active_pct: float = 8.0, min_pos: float = 0.0, delta_z_full: float = 0.20) -> dict:
     """
     Sweep conviction thresholds on training data for long and short sides independently.
     Finds optimal Z_th_long and Z_th_short that maximize cost-adjusted Sharpe ratio.
@@ -87,7 +177,7 @@ def sweep_optimal_threshold(Z_composite_train: np.ndarray, trade_returns_train: 
     
     # 1. Sweep Long side (Z > z_th)
     for z_th in thresholds:
-        positions = generate_positions(Z_composite_train, z_th=z_th, mode=mode, gamma=gamma, long_only=True)
+        positions = generate_positions(Z_composite_train, z_th=z_th, mode=mode, gamma=gamma, long_only=True, min_pos=min_pos, delta_z_full=delta_z_full)
         net_returns, _, _ = simulate_etf_spot(trade_returns_train, positions, fee_bps=fee_bps)
         
         std_net = np.std(net_returns)
@@ -110,19 +200,8 @@ def sweep_optimal_threshold(Z_composite_train: np.ndarray, trade_returns_train: 
     best_sharpe_short = -np.inf
     optimal_z_th_short = z_min
     for z_th in thresholds:
-        pos_short = np.zeros(len(Z_composite_train), dtype=np.float64)
-        if mode == "binary":
-            pos_short[Z_composite_train < -z_th] = -1.0
-        elif mode == "tanh":
-            for t in range(len(Z_composite_train)):
-                z = Z_composite_train[t]
-                if z < -z_th:
-                    pos_short[t] = np.tanh((z + z_th) / gamma)
-        elif mode == "quadratic":
-            for t in range(len(Z_composite_train)):
-                z = Z_composite_train[t]
-                if z < -z_th:
-                    pos_short[t] = -min(1.0, ((-z - z_th) / gamma) ** 2)
+        pos_full = generate_positions(Z_composite_train, z_th=10.0, z_th_short=z_th, mode=mode, gamma=gamma, long_only=False, min_pos=min_pos, delta_z_full=delta_z_full)
+        pos_short = np.minimum(0.0, pos_full)
         
         net_returns, _, _ = simulate_etf_spot(trade_returns_train, pos_short, fee_bps=fee_bps)
         std_net = np.std(net_returns)
@@ -139,7 +218,7 @@ def sweep_optimal_threshold(Z_composite_train: np.ndarray, trade_returns_train: 
     if not long_only:
         for zl in thresholds:
             for zs in thresholds:
-                positions = generate_positions(Z_composite_train, z_th=zl, z_th_short=zs, mode=mode, gamma=gamma, long_only=False)
+                positions = generate_positions(Z_composite_train, z_th=zl, z_th_short=zs, mode=mode, gamma=gamma, long_only=False, min_pos=min_pos, delta_z_full=delta_z_full)
                 n_active = int((np.abs(positions) > 1e-5).sum())
                 active_pct = (n_active / len(positions) * 100.0) if len(positions) > 0 else 0.0
                 if active_pct < min_active_pct:
