@@ -44,6 +44,14 @@ uv run python newtrade/run_backtest.py -e 500ETF --future --scheme rank
 # Trade Option Portfolios (100k RMB capital, 10k/trade, opt_time_decay_trailing=0.30 default)
 uv run python newtrade/run_backtest.py -e 300ETF --option
 uv run python newtrade/run_backtest.py -e all --option
+uv run python newtrade/run_backtest.py -e all --pool-period all --option   # All vintages
+
+# Option Strike Selection A/B test (5 modes × all ETFs)
+uv run python newtrade/run_backtest.py -e all --pool-period _p2016_2024 --option --strike-ab --no-validate
+
+# Force specific strike mode (override ETF-adaptive default)
+uv run python newtrade/run_backtest.py -e 300ETF --option --strike-mode cascade
+uv run python newtrade/run_backtest.py -e 159915ETF --option --strike-mode vol_t1
 
 # Compare all weighting schemes side-by-side (auto exports trades CSVs)
 uv run python newtrade/run_backtest.py -e 500ETF --scheme all
@@ -100,6 +108,7 @@ newtrade/
 ├── REPORT_{year}.md         # Per-year reports (generated via --year flag)
 ├── REPORT_production.md     # Production ensemble report (DSR-validated)
 ├── REPORT_option.md         # Option portfolio backtest report
+├── REPORT_option_{year}.md  # Per-year option reports (generated via --pool-period/--year + --option)
 ├── run_production.py        # Production ensemble CLI (binary L+S, buffer=0.15, DSR)
 ├── run_backtest.py          # CLI runner (--year, --pool-period, --decay, --scheme, --validate, --option, --stoploss)
 ├── run_migration.py         # Pool migration protocol (--monitor, --candidate-period)
@@ -108,7 +117,7 @@ newtrade/
 ├── robustness.py            # DSR, CPCV, PBO, Ensemble, Sensitivity Grid
 ├── research_stoploss.py     # 1m intraday stop-loss simulator & Train/OOS benchmark
 ├── research_option_stoploss.py # Option intraday stop-loss simulator & Train/OOS benchmark
-├── option_strategy.py       # Capital-constrained option portfolio execution & 5m stop-loss engine
+├── option_strategy.py       # Capital-constrained option portfolio execution, 5m stop-loss, ETF-adaptive strike selection
 ├── utils.py                 # Data loading, recipe computation, expanding z-score, futures trade return mapper
 ├── weighting.py             # Weighting schemes: ICW (default), EW, Score, Rank, with Top-K truncation
 ├── strategy.py              # Threshold sweep, position sizing (binary/tanh/quadratic), ETF simulation
@@ -148,7 +157,8 @@ newtrade/
 | **Position Sizing** | Implemented `fast_ramp_linear` ($m=0.50, \Delta Z_{\text{full}}=0.30$) as default in `newtrade/run_backtest.py` (`strategy.py`). **Strictly beats Binary Baseline Sharpe across ALL 3 ETFs simultaneously (300ETF: 1.026 vs 1.021, 500ETF: 1.419 vs 1.390, 159915ETF: 1.573 vs 1.562; Avg 1.339 vs 1.324)** while **slashing MaxDD by 43.9% (3.97% vs 7.08%)** using only 0.55 avg position size! |
 | **Feature Floor** | ETF/side must have ≥ 10 admitted features, else skipped. |
 | **Zero Lookahead** | Expanding-window z-score (μ/σ from t-1). Expanding factor IC from t-1. Threshold from training sweep. |
-| **Friction** | 8 bps per position state transition. Stress-tested to 20bps. |
+| **Friction** | 8 bps per position state transition (Spot). 4 RMB per contract per side (Option). Stress-tested to 20bps. |
+| **Option Strike Selection** | ETF-adaptive default (`--strike-mode auto`): 300ETF/50ETF=cascade, 500ETF=nearest, 159915ETF=vol_t1. A/B validated: +83% avg Sharpe vs OTM baseline. See [plan.md §5.3](plan.md). |
 | **Instrument** | Long-Short enabled by default. Use `--long-only` for Spot ETF long-only. Use `--future` for Index Futures. |
 | **Trade Window** | 10:00 entry → 14:35 exit (intraday). |
 | **Intraday Stop-Loss** | **Omitted**. Benchmarked 5 methods across 1m bars (2022-2026 OOS). Intraday stop-losses degrade Sharpe by -0.337 on avg due to premature exits on noisy local extremes & friction. |
