@@ -6,7 +6,7 @@ Simulates a capital-constrained option portfolio:
 - Each signal deploys 10% of current portfolio capital into nearest OTM option (call=long, put=short)
 - Nearest expiry with >= 7 days to maturity
 - Fractional contracts allowed
-- 4 RMB commission per side (buy + sell)
+- 4 RMB commission per contract per side (buy + sell)
 - Bankrupt (capital <= 0) -> report all zeros afterward
 
 Performance: pre-grouped dict lookups, numpy arrays, no per-trade DataFrame filtering.
@@ -66,8 +66,10 @@ def load_option_data(etf: str) -> dict:
     Load and pre-index all option data for fast simulation.
     
     Returns dict with:
-      - strike_lookup: dict[(date_ts, expiry_ts, opt_type)] -> (strikes_fp32, contracts, mults)
-      - opt_5m_lookup: dict[(contract_id, date)] -> (opens_fp32, closes_fp32, datetimes_np)
+      - strike_lookup: dict[(date_ts, expiry_ts, opt_type)] -> (strikes_fp32, contracts, mults, volumes)
+      - prev_vol_lookup: dict[(date_ts, contract_id)] -> previous day volume (float)
+      - intraday_vol_lookup: dict[(contract_id, date)] -> cumulative volume before 10:00
+      - opt_5m_lookup: dict[(contract_id, date)] -> (opens, highs, lows, closes, datetimes)
       - etf_spots: dict[date] -> (spot_entry, spot_exit, entry_dt, exit_dt)
       - expiries: sorted list of expiry Timestamps
     """
@@ -105,7 +107,7 @@ def load_option_data(etf: str) -> dict:
     )
     expiries = sorted(expiries)
     
-    # Pre-build strike lookup: (date, expiry, opt_type) -> sorted arrays
+    # Pre-build strike lookup: (date, expiry, opt_type) -> sorted arrays (with volume)
     strike_lookup = {}
     has_mult = "contract_multiplier" in opt_daily.columns
     
@@ -113,10 +115,20 @@ def load_option_data(etf: str) -> dict:
         strikes = grp["strike_price"].values.astype(np.float32)
         contracts = grp["order_book_id"].values
         mults = grp["contract_multiplier"].values.astype(np.float32) if has_mult else np.full(len(grp), 10000.0, dtype=np.float32)
+        vols = grp["volume"].values.astype(np.float32)
         
         # Sort by strike ascending
         sort_idx = np.argsort(strikes)
-        strike_lookup[(date, expiry, opt_type)] = (strikes[sort_idx], contracts[sort_idx], mults[sort_idx])
+        strike_lookup[(date, expiry, opt_type)] = (strikes[sort_idx], contracts[sort_idx], mults[sort_idx], vols[sort_idx])
+    
+    # Build T-1 volume lookup: (date, contract_id) -> previous trading day's volume
+    prev_vol_lookup = {}
+    opt_daily_sorted = opt_daily.sort_values(["order_book_id", "date"])
+    for cid, grp in opt_daily_sorted.groupby("order_book_id"):
+        dates_arr = grp["date"].values
+        vols_arr = grp["volume"].values.astype(np.float32)
+        for i in range(1, len(dates_arr)):
+            prev_vol_lookup[(pd.Timestamp(dates_arr[i]), cid)] = float(vols_arr[i - 1])
     
     # Pre-extract ETF 5m spots: date -> (spot_entry, spot_exit, entry_dt, exit_dt)
     etf_5m_file = ETF_5M_FILE.get(etf)
@@ -151,11 +163,13 @@ def load_option_data(etf: str) -> dict:
             )
     
     # Load option 5m data - build (contract_id, date) -> (opens, highs, lows, closes, datetimes) lookup
+    # Also build intraday_vol_lookup: (contract_id, date) -> cumulative volume before 10:00
     opt_5m_path = DATA_DIR / f"{etf}_historical_prices_5m.parquet"
     opt_5m_lookup = {}
+    intraday_vol_lookup = {}
     if opt_5m_path.exists():
         print(f"    [OPTION] Loading 5m option data from {opt_5m_path.name}...")
-        opt_5m = pd.read_parquet(opt_5m_path, columns=["order_book_id", "datetime", "open", "high", "low", "close"])
+        opt_5m = pd.read_parquet(opt_5m_path, columns=["order_book_id", "datetime", "open", "high", "low", "close", "volume"])
         opt_5m["datetime"] = pd.to_datetime(opt_5m["datetime"])
         opt_5m["date"] = opt_5m["datetime"].dt.date
         
@@ -169,6 +183,9 @@ def load_option_data(etf: str) -> dict:
                 g_sorted["close"].values.astype(np.float32),
                 g_sorted["datetime"].values,  # numpy datetime64
             )
+            # Cumulative volume before 10:00 (first ENTRY_BAR=6 bars: 09:35-10:00)
+            vol_vals = g_sorted["volume"].values
+            intraday_vol_lookup[(cid, d)] = float(vol_vals[:ENTRY_BAR].sum()) if len(vol_vals) > 0 else 0.0
         
         print(f"    [OPTION] Built {len(opt_5m_lookup)} (contract, day) price lookups")
     else:
@@ -176,6 +193,8 @@ def load_option_data(etf: str) -> dict:
     
     return {
         "strike_lookup": strike_lookup,
+        "prev_vol_lookup": prev_vol_lookup,
+        "intraday_vol_lookup": intraday_vol_lookup,
         "opt_5m_lookup": opt_5m_lookup,
         "etf_spots": etf_spots,
         "etf_5m_bars": etf_5m_bars,
@@ -209,7 +228,7 @@ def _find_otm_strike(
     if key not in strike_lookup:
         return None
     
-    strikes_sorted, contracts_sorted, mults_sorted = strike_lookup[key]
+    strikes_sorted, contracts_sorted, mults_sorted, _vols = strike_lookup[key]
     
     if opt_type == "C":
         idx = np.searchsorted(strikes_sorted, spot, side="right")
@@ -221,6 +240,139 @@ def _find_otm_strike(
             return None
     
     return (contracts_sorted[idx], float(strikes_sorted[idx]), expiry_date, float(mults_sorted[idx]), (expiry_date - date_ts).days)
+
+
+STRIKE_MODES = ["otm", "nearest", "vol_t1", "vol_intraday", "cascade"]
+
+# ETF-adaptive default strike modes (A/B validated on _p2016_2024 OOS 2024-2025)
+STRIKE_MODE_DEFAULTS = {
+    "300ETF": "cascade",      # Shanghai, large gaps → distance + gamma guard
+    "500ETF": "nearest",      # Shanghai, large gaps → simple closest
+    "50ETF": "cascade",       # Shanghai, similar to 300ETF
+    "159915ETF": "vol_t1",    # Shenzhen, liquidity matters more
+    "588000ETF": "cascade",   # Shanghai, default cascade
+}
+
+
+def resolve_strike_mode(etf: str, user_mode: str = "auto") -> str:
+    """Resolve ETF-adaptive strike mode. 'auto' uses per-ETF default from A/B test."""
+    if user_mode != "auto":
+        return user_mode
+    return STRIKE_MODE_DEFAULTS.get(etf, "cascade")
+
+
+def _find_strike(
+    strike_lookup: dict,
+    expiries: list,
+    date_ts: pd.Timestamp,
+    spot: float,
+    direction: int,
+    min_dtm: int,
+    mode: str = "otm",
+    prev_vol_lookup: dict = None,
+    intraday_vol_lookup: dict = None,
+    gamma_threshold: float = 0.4,
+    tie_ratio: float = 1.3,
+):
+    """
+    Unified strike selector supporting multiple A/B modes.
+    Returns (contract_id, strike, expiry, multiplier, dtm) or None.
+    
+    Modes:
+      otm          - Always nearest OTM (baseline)
+      nearest      - Pick closer of ITM1/OTM1 by distance to spot
+      vol_t1       - Pick ITM1/OTM1 with higher T-1 daily volume
+      vol_intraday - Pick ITM1/OTM1 with higher pre-10:00 cumulative volume
+      cascade      - Distance-first + gamma guard + volume tie-breaker
+    """
+    # Fast path for baseline
+    if mode == "otm":
+        return _find_otm_strike(strike_lookup, expiries, date_ts, spot, direction, min_dtm)
+    
+    # Find expiry
+    expiry_date = None
+    for exp in expiries:
+        if exp > date_ts and (exp - date_ts).days >= min_dtm:
+            expiry_date = exp
+            break
+    if expiry_date is None:
+        return None
+    
+    opt_type = "C" if direction > 0 else "P"
+    key = (date_ts, expiry_date, opt_type)
+    if key not in strike_lookup:
+        return None
+    
+    strikes_sorted, contracts_sorted, mults_sorted, vols_sorted = strike_lookup[key]
+    n = len(strikes_sorted)
+    dtm = (expiry_date - date_ts).days
+    date_d = date_ts.date()
+    
+    # Locate OTM1 and ITM1 indices
+    if opt_type == "C":
+        # Calls: OTM = first strike > spot, ITM = last strike < spot
+        otm_idx = int(np.searchsorted(strikes_sorted, spot, side="right"))
+        itm_idx = otm_idx - 1
+    else:
+        # Puts: OTM = last strike < spot, ITM = first strike > spot
+        otm_idx = int(np.searchsorted(strikes_sorted, spot, side="left")) - 1
+        itm_idx = otm_idx + 1
+    
+    # Validate indices
+    otm_valid = 0 <= otm_idx < n
+    itm_valid = 0 <= itm_idx < n
+    
+    # If only one side available, use it
+    if otm_valid and not itm_valid:
+        idx = otm_idx
+    elif itm_valid and not otm_valid:
+        idx = itm_idx
+    elif not otm_valid and not itm_valid:
+        return None
+    else:
+        # Both available — apply mode logic
+        strike_otm = float(strikes_sorted[otm_idx])
+        strike_itm = float(strikes_sorted[itm_idx])
+        dist_otm = abs(spot - strike_otm)
+        dist_itm = abs(spot - strike_itm)
+        contract_otm = contracts_sorted[otm_idx]
+        contract_itm = contracts_sorted[itm_idx]
+        
+        if mode == "nearest":
+            idx = otm_idx if dist_otm <= dist_itm else itm_idx
+        
+        elif mode == "vol_t1":
+            vol_otm = prev_vol_lookup.get((date_ts, contract_otm), 0.0) if prev_vol_lookup else 0.0
+            vol_itm = prev_vol_lookup.get((date_ts, contract_itm), 0.0) if prev_vol_lookup else 0.0
+            idx = otm_idx if vol_otm >= vol_itm else itm_idx
+        
+        elif mode == "vol_intraday":
+            vol_otm = intraday_vol_lookup.get((contract_otm, date_d), 0.0) if intraday_vol_lookup else 0.0
+            vol_itm = intraday_vol_lookup.get((contract_itm, date_d), 0.0) if intraday_vol_lookup else 0.0
+            idx = otm_idx if vol_otm >= vol_itm else itm_idx
+        
+        elif mode == "cascade":
+            # Gamma guard: if OTM is close enough to spot, keep OTM for gamma benefit
+            strike_gap = abs(strike_otm - strike_itm) if strike_otm != strike_itm else 1.0
+            if dist_otm <= gamma_threshold * strike_gap:
+                idx = otm_idx
+            else:
+                # Pick closer strike
+                if dist_otm <= dist_itm:
+                    idx = otm_idx
+                elif dist_itm < dist_otm / tie_ratio:
+                    # ITM clearly closer
+                    idx = itm_idx
+                else:
+                    # Similar distance — volume tie-breaker
+                    vol_otm = prev_vol_lookup.get((date_ts, contract_otm), 0.0) if prev_vol_lookup else 0.0
+                    vol_itm = prev_vol_lookup.get((date_ts, contract_itm), 0.0) if prev_vol_lookup else 0.0
+                    idx = otm_idx if vol_otm >= vol_itm else itm_idx
+        else:
+            # Unknown mode fallback to OTM
+            idx = otm_idx
+    
+    return (contracts_sorted[idx], float(strikes_sorted[idx]), expiry_date, float(mults_sorted[idx]), dtm)
 
 
 def _get_5m_price(
@@ -267,6 +419,7 @@ def _get_option_5m_series(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Returns (opens, highs, lows, closes) float32 arrays for option 5m bars aligned with ETF 5m datetimes.
+    Vectorized: uses searchsorted for O(n log m) datetime matching instead of per-bar argmin.
     """
     n_bars = len(etf_bar_dts)
     opens = np.zeros(n_bars, dtype=np.float32)
@@ -276,31 +429,47 @@ def _get_option_5m_series(
     
     key = (contract_id, date_d)
     has_opt = key in opt_5m_lookup
+    matched = np.zeros(n_bars, dtype=np.bool_)
+    
     if has_opt:
         opt_o, opt_h, opt_l, opt_c, opt_dts = opt_5m_lookup[key]
+        if len(opt_dts) > 0:
+            # Vectorized closest-index matching via searchsorted
+            idx = np.searchsorted(opt_dts, etf_bar_dts, side='left')
+            idx = np.clip(idx, 0, len(opt_dts) - 1)
+            # Check if idx-1 is closer
+            idx_m1 = np.maximum(idx - 1, 0)
+            diff_idx = np.abs(opt_dts[idx].astype(np.int64) - etf_bar_dts.astype(np.int64))
+            diff_m1 = np.abs(opt_dts[idx_m1].astype(np.int64) - etf_bar_dts.astype(np.int64))
+            use_prev = diff_m1 < diff_idx
+            idx = np.where(use_prev, idx_m1, idx)
+            # Validate within 300s tolerance
+            diff_sec = np.abs(opt_dts[idx].astype(np.int64) - etf_bar_dts.astype(np.int64)) / 1_000_000_000
+            valid = (diff_sec <= 300)
+            # Check prices positive
+            o_vals = opt_o[idx]
+            c_vals = opt_c[idx]
+            price_ok = (o_vals > 0) & (c_vals > 0)
+            matched = valid & price_ok
+            # Fill matched bars
+            if matched.any():
+                h_vals = opt_h[idx[matched]]
+                l_vals = opt_l[idx[matched]]
+                o_m = o_vals[matched]
+                c_m = c_vals[matched]
+                opens[matched] = o_m
+                highs[matched] = np.maximum(h_vals, np.maximum(o_m, c_m))
+                l_safe = np.where(l_vals > 0, l_vals, np.minimum(o_m, c_m))
+                lows[matched] = np.minimum(l_safe, np.minimum(o_m, c_m))
+                closes[matched] = c_m
     
-    is_call = (opt_type == "C")
-    T = max(1e-5, dtm / 365.0)
-    
-    for k in range(n_bars):
-        matched = False
-        if has_opt and len(opt_dts) > 0:
-            dt_target = etf_bar_dts[k]
-            idx = int(np.argmin(np.abs(opt_dts - dt_target)))
-            diff_sec = abs(opt_dts[idx] - dt_target) / np.timedelta64(1, 's')
-            if diff_sec <= 300:
-                o_val = float(opt_o[idx])
-                h_val = float(opt_h[idx])
-                l_val = float(opt_l[idx])
-                c_val = float(opt_c[idx])
-                if o_val > 0 and c_val > 0:
-                    opens[k] = o_val
-                    highs[k] = max(h_val, o_val, c_val)
-                    lows[k] = min(l_val, o_val, c_val) if l_val > 0 else min(o_val, c_val)
-                    closes[k] = c_val
-                    matched = True
-        
-        if not matched:
+    # BS fallback for unmatched bars
+    if not matched.all():
+        is_call = (opt_type == "C")
+        T = max(1e-5, dtm / 365.0)
+        um = ~matched
+        um_idx = np.where(um)[0]
+        for k in um_idx:
             opens[k] = max(0.0001, _bs_price(float(etf_opens[k]), strike, T, 0.02, iv, is_call))
             h_bs = _bs_price(float(etf_highs[k]), strike, T, 0.02, iv, is_call) if is_call else _bs_price(float(etf_lows[k]), strike, T, 0.02, iv, is_call)
             l_bs = _bs_price(float(etf_lows[k]), strike, T, 0.02, iv, is_call) if is_call else _bs_price(float(etf_highs[k]), strike, T, 0.02, iv, is_call)
@@ -325,6 +494,7 @@ def simulate_option_portfolio(
     stoploss_mode: str = DEFAULT_OPT_STOPLOSS_MODE,
     stoploss_param: float = DEFAULT_OPT_STOPLOSS_PARAM,
     time_tighten_factor: float = DEFAULT_OPT_TIME_TIGHTEN_FACTOR,
+    strike_mode: str = "otm",
 ) -> dict:
     """
     Simulate option portfolio with capital constraints & intraday stop-loss support.
@@ -335,6 +505,8 @@ def simulate_option_portfolio(
     etf_spots = opt_data["etf_spots"]
     etf_5m_bars = opt_data.get("etf_5m_bars", {})
     expiries = opt_data["expiries"]
+    prev_vol_lookup = opt_data.get("prev_vol_lookup", {})
+    intraday_vol_lookup = opt_data.get("intraday_vol_lookup", {})
     
     T = len(positions_oos)
     daily_pnl = np.zeros(T, dtype=np.float32)
@@ -344,7 +516,7 @@ def simulate_option_portfolio(
     trade_records = []
     n_trades = 0
     n_stop_hits = 0
-    commission_total = commission_per_side * 2.0
+    commission_per_contract_side = commission_per_side  # RMB per contract per side
     
     dates_np = dates_oos.values  # numpy datetime64 array
     
@@ -373,8 +545,11 @@ def simulate_option_portfolio(
         # Direction: +1 -> Call, -1 -> Put
         direction = 1 if pos > 0 else -1
         
-        # Find nearest OTM option
-        result = _find_otm_strike(strike_lookup, expiries, date_ts, spot_entry, direction, min_days_to_maturity)
+        # Find option strike using selected mode
+        result = _find_strike(
+            strike_lookup, expiries, date_ts, spot_entry, direction, min_days_to_maturity,
+            mode=strike_mode, prev_vol_lookup=prev_vol_lookup, intraday_vol_lookup=intraday_vol_lookup,
+        )
         if result is None:
             continue
         
@@ -490,6 +665,7 @@ def simulate_option_portfolio(
         
         # P&L calculation
         gross_pnl = (exit_px - entry_px) * contracts * multiplier
+        commission_total = commission_per_contract_side * contracts * 2.0  # per-contract, both sides
         net_pnl = gross_pnl - commission_total
         
         if stop_hit:

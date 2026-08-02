@@ -139,10 +139,15 @@ def load_cluster_assignments(etf: str, side: str = "single", suffix: str = "") -
     return feature_to_cluster
 
 
+_etf_dataset_cache: dict = {}
+
 def load_etf_dataset(etf: str) -> pd.DataFrame:
     """
     Load raw ETF features dataset from day-model/data/features_{etf}.parquet.
+    Cached in-memory across repeated calls (e.g. --pool-period all).
     """
+    if etf in _etf_dataset_cache:
+        return _etf_dataset_cache[etf]
     path = REPO_ROOT / "day-model" / "data" / f"features_{etf}.parquet"
     if not path.exists():
         raise FileNotFoundError(f"Dataset not found at {path}")
@@ -157,6 +162,7 @@ def load_etf_dataset(etf: str) -> pd.DataFrame:
     base_med = df[FEATURES].median().fillna(0.0)
     df[FEATURES] = df[FEATURES].ffill().fillna(base_med)
 
+    _etf_dataset_cache[etf] = df
     return df
 
 

@@ -26,7 +26,7 @@ from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matri
 from weighting import get_weighting_scheme, compute_icw_hysteresis, adaptive_exit_rank
 from strategy import generate_positions, simulate_etf_spot, calculate_metrics, sweep_optimal_threshold, compute_production_threshold, build_trade_log_df
 from robustness import deflated_sharpe_ratio, run_cpcv_backtest
-from option_strategy import simulate_option_portfolio, DEFAULT_OPT_STOPLOSS_MODE, DEFAULT_OPT_STOPLOSS_PARAM
+from option_strategy import simulate_option_portfolio, DEFAULT_OPT_STOPLOSS_MODE, DEFAULT_OPT_STOPLOSS_PARAM, STRIKE_MODES, resolve_strike_mode
 from research_stoploss import load_intraday_bars_dict, simulate_full_series
 
 AVAILABLE_ETFS = ["300ETF", "500ETF", "50ETF", "159915ETF"]
@@ -50,7 +50,8 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                         stoploss_mode: str = "time_decay_trailing", stoploss_param: float = 0.03,
                         pool_override: list = None, cluster_suffix: str = "", group_constraint: bool = None, max_per_group: int = 1,
                         ic_mode: str = "expanding", tail_window: int = 252, tail_pct: float = 0.10,
-                        hysteresis: bool = True, exit_rank: int = None, min_pos: float = 0.7, delta_z_full: float = 0.4) -> dict:
+                        hysteresis: bool = True, exit_rank: int = None, min_pos: float = 0.7, delta_z_full: float = 0.4,
+                        opt_commission: float = 4.0, strike_mode: str = "otm") -> dict:
     """
     Run backtest for one ETF and side combination filtered to OOS date range.
     
@@ -284,6 +285,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     option_result = None
     if use_option:
         # Option portfolio simulation mode
+        resolved_strike_mode = resolve_strike_mode(etf, strike_mode)
         iv_series = df_oos["iv"].values if "iv" in df_oos.columns else None
         option_result = simulate_option_portfolio(
             etf=etf,
@@ -292,11 +294,12 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
             iv_series=iv_series,
             initial_capital=100_000.0,
             trade_budget=10_000.0,
-            commission_per_side=4.0,
+            commission_per_side=opt_commission,
             min_days_to_maturity=7,
             use_stoploss=use_stoploss,
             stoploss_mode=stoploss_mode,
             stoploss_param=stoploss_param,
+            strike_mode=resolved_strike_mode,
         )
         # Use option daily returns for metrics
         net_returns = option_result["daily_returns"]
@@ -425,6 +428,11 @@ def main():
     parser.add_argument("--allow-short", dest="long_only", action="store_false", help="Allow short trades (default)")
     parser.add_argument("--future", action="store_true", help="Trade underlying Index Futures (IF88 for 300ETF, IC88 for 500ETF, IH88 for 50ETF) instead of Spot ETF.")
     parser.add_argument("--option", action="store_true", help="Simulate option portfolio (100k RMB, 10k per trade, nearest OTM, 7-day min DTM)")
+    parser.add_argument("--opt-commission", type=float, default=4.0, help="Option commission in RMB per contract per side (default: 4.0)")
+    parser.add_argument("--strike-mode", type=str, default="auto", choices=["auto"] + STRIKE_MODES,
+                        help="Option strike selection mode (default: auto = ETF-adaptive). Options: auto, otm, nearest, vol_t1, vol_intraday, cascade")
+    parser.add_argument("--strike-ab", action="store_true", default=False,
+                        help="Run A/B comparison of all strike selection modes and print table")
 
     # Stop-Loss options
     parser.add_argument("--stoploss", dest="stoploss", action="store_true", default=True, help="Enable 3%% time decay trailing stop-loss (default: True).")
@@ -473,10 +481,12 @@ def main():
     fee_bps = effective_fee_bps / 10000.0
 
     # --year: set OOS start date from year (runs through end_date) and output path
+    mode_prefix = "option" if args.option else ("future" if args.future else "")
     if args.year:
         args.start_date = f"{args.year}-01-01"
         if not args.output:
-            args.output = str(HERE / f"REPORT_{args.year}.md")
+            stem = f"REPORT_{mode_prefix}_{args.year}" if mode_prefix else f"REPORT_{args.year}"
+            args.output = str(HERE / f"{stem}.md")
     elif args.pool_period and args.start_date == "2022-01-01":
         import re
         match = re.search(r'_p\d{4}_(\d{4})', args.pool_period)
@@ -485,8 +495,12 @@ def main():
             start_yr = pool_end_yr
             args.start_date = f"{start_yr}-01-01"
             if not args.output:
-                args.output = str(HERE / f"REPORT_{pool_end_yr}.md")
-            print(f"  [AUTO OOS] Inferred OOS start_date={args.start_date} from pool_period '{args.pool_period}' -> output REPORT_{pool_end_yr}.md")
+                stem = f"REPORT_{mode_prefix}_{pool_end_yr}" if mode_prefix else f"REPORT_{pool_end_yr}"
+                args.output = str(HERE / f"{stem}.md")
+            print(f"  [AUTO OOS] Inferred OOS start_date={args.start_date} from pool_period '{args.pool_period}' -> output {Path(args.output).name}")
+        elif args.pool_period in ("old", "original") and not args.output:
+            stem = f"REPORT_{mode_prefix}_{args.pool_period}" if mode_prefix else f"REPORT_{args.pool_period}"
+            args.output = str(HERE / f"{stem}.md")
 
     # --pool-period: load period-specific pool override or handle 'all'
     if args.pool_period and args.pool_period.lower() == "all":
@@ -543,7 +557,7 @@ def main():
     stoploss_info = f" | StopLoss={args.stoploss} ({args.stoploss_mode}={args.stoploss_param})"
     print(f"NewTrade Backtest Engine | Mode={mode_str} | Scheme={args.scheme.upper()} | z_th={args.z_th} | buffer={args.z_buffer}{stoploss_info} | LongOnly={args.long_only} | TopK={args.top_k} | OOS=[{args.start_date} ~ {args.end_date}]")
     if args.option:
-        print(f"  Option Params: 100k RMB capital, 10k/trade, 4 RMB/side commission, >=7 DTM")
+        print(f"  Option Params: 100k RMB capital, 10k/trade, {args.opt_commission} RMB/contract/side commission, >=7 DTM")
     print("================================================================================")
 
     rank_kwargs = {
@@ -607,6 +621,7 @@ def main():
                     group_constraint=args.group_constraint, max_per_group=args.max_per_group,
                     hysteresis=args.hysteresis, exit_rank=args.exit_rank,
                     min_pos=args.min_pos, delta_z_full=args.delta_z_full,
+                    opt_commission=args.opt_commission,
                 )
                 yr_results.append(res)
             decay_results.append((yr, yr_results))
@@ -655,6 +670,68 @@ def main():
                 print(f"\n  Saved decay chart: {chart_path}")
         except Exception as e:
             print(f"  [WARNING] Decay chart failed: {e}")
+        return
+
+    # ─── Strike Selection A/B Test Mode ───
+    if args.strike_ab and args.option:
+        print("\n" + "=" * 80)
+        print("STRIKE SELECTION A/B TEST")
+        print("=" * 80)
+        ab_rows = []
+        for etf in etfs_to_run:
+            # Resolve pool override
+            _pool_ov = None
+            if pool_period_override is not None:
+                if isinstance(pool_period_override, dict):
+                    _pool_ov = pool_period_override.get(etf, {}).get(args.side, [])
+                elif pool_period_override == "__original__":
+                    _fpath = REPO_ROOT / "day-model-new" / "data" / f"selected_pool_{etf}_{args.side}.json"
+                    if _fpath.exists():
+                        with open(_fpath, "r", encoding="utf-8") as _f:
+                            _pool_ov = json.load(_f)
+                else:
+                    _fpath = REPO_ROOT / "day-model-new" / "data" / f"selected_pool_{etf}_{args.side}{pool_period_override}.json"
+                    if _fpath.exists():
+                        with open(_fpath, "r", encoding="utf-8") as _f:
+                            _pool_ov = json.load(_f)
+            _cluster_suf = pool_period_override if isinstance(pool_period_override, str) and pool_period_override.startswith("_p") else ""
+            _rank_kw = dict(rank_kwargs)
+            _rank_kw["ic_ema_span"] = resolve_ic_ema_span(etf, args.ic_ema_span)
+            
+            for s_mode in STRIKE_MODES:
+                res = run_single_backtest(
+                    etf=etf, side=args.side, scheme_name="icw", z_th=z_th_fixed,
+                    position_mode=args.position_mode, fee_bps=fee_bps,
+                    start_date=args.start_date, end_date=args.end_date,
+                    z_buffer=args.z_buffer, z_short_buffer=args.z_short_buffer,
+                    auto_threshold=auto_threshold, rank_kwargs=_rank_kw,
+                    dynamic_ic=args.dynamic_ic, long_only=args.long_only,
+                    use_option=True, use_stoploss=args.stoploss,
+                    stoploss_mode=args.stoploss_mode, stoploss_param=args.stoploss_param,
+                    pool_override=_pool_ov, cluster_suffix=_cluster_suf,
+                    group_constraint=args.group_constraint, max_per_group=args.max_per_group,
+                    ic_mode=args.ic_mode, tail_window=args.tail_window, tail_pct=args.tail_pct,
+                    hysteresis=args.hysteresis, exit_rank=args.exit_rank,
+                    min_pos=args.min_pos, delta_z_full=args.delta_z_full,
+                    opt_commission=args.opt_commission, strike_mode=s_mode,
+                )
+                if res.get("status") == "SUCCESS":
+                    avg_comm = res.get("option_total_pnl_rmb", 0)
+                    n_opt = res.get("option_n_trades", 0)
+                    ab_rows.append({
+                        "etf": etf, "mode": s_mode, "trades": n_opt,
+                        "sharpe": res["cost_sharpe"], "pnl_rmb": res.get("option_total_pnl_rmb", 0),
+                        "win_rate": res["win_rate_pct"], "max_dd": res["max_drawdown"],
+                    })
+                else:
+                    ab_rows.append({"etf": etf, "mode": s_mode, "trades": 0, "sharpe": 0, "pnl_rmb": 0, "win_rate": 0, "max_dd": 0})
+        
+        # Print comparison table
+        print(f"\n{'ETF':<12} | {'Mode':<14} | {'Trades':>6} | {'Sharpe':>7} | {'PnL (RMB)':>12} | {'WinRate':>7} | {'MaxDD':>7}")
+        print(f"{'-'*12}-+-{'-'*14}-+-{'-'*6}-+-{'-'*7}-+-{'-'*12}-+-{'-'*7}-+-{'-'*7}")
+        for row in ab_rows:
+            print(f"{row['etf']:<12} | {row['mode']:<14} | {row['trades']:>6} | {row['sharpe']:>7.3f} | {row['pnl_rmb']:>+12,.0f} | {row['win_rate']:>6.1f}% | {row['max_dd']:>7.4f}")
+        print()
         return
 
     results = []
@@ -713,6 +790,8 @@ def main():
                 exit_rank=args.exit_rank,
                 min_pos=args.min_pos,
                 delta_z_full=args.delta_z_full,
+                opt_commission=args.opt_commission,
+                strike_mode=args.strike_mode,
             )
             results.append(res)
 
@@ -1002,7 +1081,7 @@ def main():
             f.write(f"- **Mode**: `Option Portfolio`\n")
             f.write(f"- **Initial Capital**: `100,000 RMB per ETF`\n")
             f.write(f"- **Trade Budget**: `10% of portfolio capital per signal`\n")
-            f.write(f"- **Commission**: `4 RMB per side (8 RMB round-trip)`\n")
+            f.write(f"- **Commission**: `{args.opt_commission} RMB per contract per side ({args.opt_commission*2:.1f} RMB round-trip per contract)`\n")
             f.write(f"- **Option Selection**: `Nearest OTM, >=7 DTM`\n\n")
         else:
             if args.stoploss:

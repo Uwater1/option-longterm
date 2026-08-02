@@ -154,6 +154,30 @@ Production uses `time_decay_trailing`:
 
 Enabled by default (`--stoploss`). Disable with `--no-stoploss`.
 
+### 5.3 Option Strike Selection (ETF-Adaptive)
+
+With large Chinese option strike gaps (e.g., 500ETF: 7.75/8.00/8.25), always buying nearest OTM can be suboptimal when spot is far from OTM1 but close to ITM1. The system supports 5 strike selection modes via `--strike-mode`:
+
+| Mode | Logic |
+|------|-------|
+| `otm` | Always nearest OTM (legacy baseline) |
+| `nearest` | Pick closer of ITM1/OTM1 by distance to spot |
+| `vol_t1` | Pick ITM1/OTM1 with higher T-1 daily volume |
+| `vol_intraday` | Pick higher cumulative volume 09:35–10:00 |
+| `cascade` | Distance-first + gamma guard (spot within 40% of gap → keep OTM) + volume tie-breaker |
+
+**Default (`auto`)** resolves per-ETF based on A/B test results:
+
+| ETF | Default Mode | Rationale |
+|-----|-------------|----------|
+| 300ETF | cascade | Shanghai, large gaps → distance + gamma guard |
+| 500ETF | nearest | Shanghai, large gaps → simple closest |
+| 50ETF | cascade | Shanghai, similar to 300ETF |
+| 159915ETF | vol_t1 | Shenzhen exchange, liquidity matters more |
+| 588000ETF | cascade | Shanghai, default cascade |
+
+Override with explicit mode: `--strike-mode cascade`. A/B comparison: `--strike-ab`.
+
 ---
 
 ## 6. Production Configuration
@@ -171,7 +195,8 @@ Enabled by default (`--stoploss`). Disable with `--no-stoploss`.
 | Threshold | Train-sweep + 0.10 buffer | Robust across regimes |
 | Spot Stop-Loss | time_decay_trailing=0.03 | Cuts intraday spot losers |
 | Option Stop-Loss | opt_time_decay_trailing=0.30 | +0.205 Sharpe lift on 300ETF, -49.4% MaxDD |
-| Fee | 8 bps (Spot) / 4 RMB per side (Option) | Stress-tested |
+| Fee | 8 bps (Spot) / 4 RMB per contract per side (Option) | Stress-tested |
+| Strike Selection | ETF-adaptive (cascade/nearest/vol_t1) | A/B validated, see §5.3 |
 | Feature Floor | ≥ 10 | 50ETF/588000ETF disabled |
 
 **CLI**: `python newtrade/run_backtest.py --scheme icw` (all defaults are production-optimal)
@@ -237,3 +262,9 @@ Adaptive ER formula validated. Wider = better up to cap. RollPct480 adds no valu
 
 ### Option Intraday Stop-Loss Benchmark (2026-08)
 5 arms × 3 ETFs. `opt_time_decay_trailing` (30% initial gap, 40% time decay) and `spot_time_decay_trailing` confirmed optimal. Direct option trailing stop cuts MaxDD on 300ETF from 22.87% to 11.57% while boosting Sharpe to 1.251 (+0.205 lift). See `tests/test_option_stoploss_ab.py`.
+
+### Option Strike Selection A/B (2026-08)
+5 modes × 3 ETFs (pool _p2016_2024, OOS 2024-2025). All alternatives beat OTM baseline. ETF-adaptive defaults deployed:
+- 300ETF: `cascade` wins (Sharpe 0.090→0.492, +5.5x; MaxDD 13.0%→10.2%)
+- 500ETF: `nearest` wins (Sharpe 0.703→0.984, +40%; MaxDD 39.6%→26.5%)
+- 159915ETF: `vol_t1` wins (Sharpe 0.908→1.244, +37%; MaxDD 18.4%→14.6%)
