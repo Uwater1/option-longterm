@@ -142,3 +142,4 @@ daytrade/methods/              # See daytrade/methods/AGENTS.md for details
 
 ## TODO
 - [ ] Improve put buy strategy: [put_improvement_plan.md](file:///home/hallo/Documents/option-longterm/put_improvement_plan.md)
+- [x] Fix Commit 820d7fc correlation regression in `day-model-new/select_features.py` (re-weight Q-score: 50% Deflated IC + 25% Sortino + 15% Recent IC + 10% IR, fix fallback bug, fix multi-correlation pool leakage)

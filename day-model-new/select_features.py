@@ -1331,17 +1331,54 @@ def main():
             cand["ic_null_mean"] = float(ic_null_mean_arr[idx])
             cand["deflated_ic"] = max(0.0, cand["overall_ic"] - cand["ic_null_mean"])
 
-        # Re-sort surviving candidates by initial q_score descending so highest quality enters B4 first
-        for cand in surviving_candidates:
-            ic_first = cand.get("split_half_ic_first", 0.0)
-            denom = abs(ic_first) + 1e-4
-            half_r = cand.get("split_half_ic_second", 0.0) / denom
-            fname = cand.get("feature_name", "")
+        # Helper function for unified composite Quality Score (q_score)
+        def compute_q_score(item_dict):
+            """Compute recalibrated composite Quality Score (q_score) for feature candidate.
+            
+            Weights: 50% Deflated IC + 25% Sortino + 15% Recent IC + 10% IC IR - Penalties (capped).
+            Penalties:
+              - complexity_penalty: 0.03 for combo_tri_, 0.01 for combo_
+              - cv_penalty: 0.02 * max(0.0, ic_cv - 0.50) if ic_cv is present
+              - half_penalty: 0.02 * abs(half_val - 1.0) if half_ratio present, else 0.0
+            Total penalty drag is capped at 0.03 to avoid drowning out primary Deflated IC signal.
+            """
+            fname = item_dict.get("feature_name", "")
+            def_ic = max(0.0, item_dict.get("deflated_ic", item_dict.get("overall_ic", 0.0)))
+            sortino_val = max(0.0, item_dict.get("sortino", 0.0))
+            ic_ir_val = max(0.0, item_dict.get("ic_ir", 0.0))
+            recent_val = max(0.0, item_dict.get("recent_ic", item_dict.get("overall_ic", 0.0)))
+
+            if "half_ratio" in item_dict:
+                half_val = item_dict["half_ratio"]
+            else:
+                ic_first = item_dict.get("split_half_ic_first", 0.0)
+                if abs(ic_first) > 1e-4:
+                    half_val = item_dict.get("split_half_ic_second", 0.0) / (abs(ic_first) + 1e-4)
+                else:
+                    half_val = 1.0  # fallback to neutral ratio (0 penalty)
+
+            cv_val = item_dict.get("ic_cv")
+
             is_tri = fname.startswith("combo_tri_")
             is_combo = fname.startswith("combo_")
-            comp_pen = 0.05 if is_tri else (0.02 if is_combo else 0.0)
-            half_pen = 0.05 * abs(half_r - 1.0)
-            cand["q_score_init"] = 0.35 * cand.get("deflated_ic", 0.0) + 0.25 * max(0.0, cand.get("sortino", 0.0)) + 0.15 * cand.get("ic_ir", 0.0) + 0.15 * cand.get("recent_ic", 0.0) - half_pen - comp_pen
+            complexity_penalty = 0.03 if is_tri else (0.01 if is_combo else 0.0)
+
+            cv_penalty = 0.02 * max(0.0, cv_val - 0.50) if cv_val is not None else 0.0
+            half_penalty = 0.02 * abs(half_val - 1.0)
+
+            total_penalty = min(0.03, cv_penalty + half_penalty + complexity_penalty)
+
+            return (
+                0.50 * def_ic +
+                0.25 * sortino_val +
+                0.15 * recent_val +
+                0.10 * ic_ir_val -
+                total_penalty
+            )
+
+        # Re-sort surviving candidates by initial q_score descending so highest quality enters B4 first
+        for cand in surviving_candidates:
+            cand["q_score_init"] = compute_q_score(cand)
 
         surviving_candidates.sort(key=lambda item: item["q_score_init"], reverse=True)
 
@@ -1675,52 +1712,31 @@ def main():
                 "verdict": "ADMITTED"
             })
         else:
-            # Case 2: Max correlation exceeds threshold -> Check replacement rule against highest correlated pool member
+            # Case 2: Max correlation exceeds threshold -> Check replacement rule against correlated pool member(s)
             high_corr_members = [item for item in corrs if item[1] >= args.theta]
             
             replaced = False
-            # Replacement rule: replace if candidate has strictly higher q_score than the correlated pool member
+            # Replacement rule: replace ONLY IF candidate strictly beats ALL correlated pool members
             if high_corr_members:
-                old_feature_name, _ = high_corr_members[0]  # Closest correlated member
-                old_idx = -1
-                for idx, p in enumerate(admitted_pool):
-                    if p["feature_name"] == old_feature_name:
-                        old_idx = idx
-                        break
+                high_corr_indices = []
+                for fname, _ in high_corr_members:
+                    for idx, p in enumerate(admitted_pool):
+                        if p["feature_name"] == fname:
+                            high_corr_indices.append(idx)
+                            break
                 
-                if old_idx != -1:
-                    def _calc_q_score(item_dict):
-                        fname = item_dict.get("feature_name", "")
-                        def_ic = item_dict.get("deflated_ic", item_dict.get("overall_ic", 0.0))
-                        sortino_val = max(0.0, item_dict.get("sortino", 0.0))
-                        ic_ir_val = item_dict.get("ic_ir", 0.0)
-                        recent_val = item_dict.get("recent_ic", item_dict.get("overall_ic", 0.0))
-                        
-                        cv_val = item_dict.get("ic_cv", 0.5)
-                        half_val = item_dict.get("half_ratio", 1.0)
-                        
-                        is_tri = fname.startswith("combo_tri_")
-                        is_combo = fname.startswith("combo_")
-                        complexity_penalty = 0.05 if is_tri else (0.02 if is_combo else 0.0)
-                        
-                        cv_penalty = 0.05 * max(0.0, cv_val - 0.50)
-                        half_penalty = 0.05 * abs(half_val - 1.0)
-                        
-                        return (
-                            0.35 * def_ic +
-                            0.25 * sortino_val +
-                            0.15 * ic_ir_val +
-                            0.15 * recent_val
-                            - cv_penalty
-                            - half_penalty
-                            - complexity_penalty
-                        )
+                if high_corr_indices:
+                    cand_q = compute_q_score(cand)
+                    all_beaten = all(cand_q > compute_q_score(admitted_pool[idx]) for idx in high_corr_indices)
                     
-                    cand_q = _calc_q_score(cand)
-                    old_q = _calc_q_score(old_item := admitted_pool[old_idx])
-                    
-                    if cand_q > old_q:
-                        admitted_pool[old_idx] = cand
+                    if all_beaten:
+                        # Evict all correlated members (in reverse index order) and insert candidate
+                        evicted_names = []
+                        for idx in sorted(high_corr_indices, reverse=True):
+                            evicted_names.append(admitted_pool[idx]["feature_name"])
+                            admitted_pool.pop(idx)
+                        
+                        admitted_pool.append(cand)
                         replaced = True
                         attempts_log.append({
                             "feature_name": cand_name,
@@ -1735,12 +1751,14 @@ def main():
                             "passes_fdr": True,
                             "max_corr": max_corr,
                             "max_corr_feature": max_corr_feature,
-                            "verdict": f"ADMITTED_REPLACED_{old_feature_name}"
+                            "evicted_features": evicted_names,
+                            "verdict": f"ADMITTED_REPLACED_{','.join(evicted_names)}"
                         })
-                        attempts_log.append({
-                            "feature_name": old_feature_name,
-                            "verdict": f"DROPPED_REPLACED_BY_{cand_name}"
-                        })
+                        for old_fname in evicted_names:
+                            attempts_log.append({
+                                "feature_name": old_fname,
+                                "verdict": f"DROPPED_REPLACED_BY_{cand_name}"
+                            })
             
             if not replaced:
                 attempts_log.append({

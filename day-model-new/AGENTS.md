@@ -60,7 +60,7 @@ python3 day-model-new/filter_diagnosis.py
 # Jackknife uses n_chunks = training_years (1 chunk per calendar year).
 python3 day-model-new/run_periods.py                    # All 3 periods, all ETFs/sides
 python3 day-model-new/run_periods.py -e 300ETF          # Single ETF
-python3 day-model-new/run_periods.py --periods p2,p3    # Subset of periods
+day-model-new/run_periods.py   # Subset of periods
 python3 day-model-new/run_periods.py --compile-only     # Recompile MULTI_PERIOD_FP_REPORT.md
 python3 day-model-new/run_periods.py --max-parallel 4   # Parallel combos
 ```
@@ -119,4 +119,14 @@ python3 day-model-new/run_periods.py --max-parallel 4   # Parallel combos
 - **Filter Effectiveness Diagnostics** (`analyze_admitted_features.py`): Evaluates each gate's false positive/negative rate against lockbox performance (read-only, never fed back into selection). Outputs: per-gate FN rate, threshold sensitivity sweep (mono_thr × ir_thr grid), IC decay curves (rolling 126-day IC across train→OOS→lockbox), and data-driven filter tuning recommendations. Results saved to `data/filter_effectiveness.json` and appended to `FEATURE_DIAGNOSTICS.md`.
 - **Deep Filter Diagnosis** (`filter_diagnosis.py`): Causal analysis of false acceptance/rejection. Computes temporal IC decomposition, component stability, regime concentration, and training-only discriminators (Cohen's d) to identify WHY filters fail. Includes per-gate confusion matrix (§6b: precision/collateral from stratified full-population sampling) and temporal gate sub-condition analysis (§6c: `recent_ic≤0` vs `ratio≥2.5` breakdown). Excludes 588000ETF (insufficient history). Outputs `FILTER_DIAGNOSIS.md` and `data/filter_diagnosis.json`. Lockbox used for labeling only — never fed back into selection logic.
 - **Multi-Period FP Analysis** (`run_periods.py`): Runs the full pipeline across 3 alternate training windows (P2: 2015-2023, P3: 2016-2024, P4: 2017-2025) to assess temporal robustness of filter gates. Uses OOS as ground truth (no lockbox — insufficient future data for later periods). Outputs: per-period `FEATURE_DIAGNOSTICS{suffix}.md`, `data/filter_effectiveness{suffix}.json`, and consolidated `MULTI_PERIOD_FP_REPORT.md`. Does NOT modify `admitted_pools.py` — purely diagnostic. Supports `--train-start`/`--train-end`/`--period-suffix` CLI overrides on `select_features.py`, `evaluate_concept.py`, and `analyze_admitted_features.py`.
+
+## TODO — Commit 820d7fc Remediation Checklist
+
+- [x] **Fix Quality Score Formula**: Re-weight quality score to $0.50 \cdot \text{deflated\_ic} + 0.25 \cdot \text{sortino} + 0.15 \cdot \text{recent\_ic} + 0.10 \cdot \text{ic\_ir} - \text{penalties}$ in `select_features.py`.
+- [x] **Fix Dict Key Fallback & Scale Cap**: Set `half_ratio` fallback to `1.0` (zero penalty) when missing; cap max penalty drag; unify `q_score_init` and `_calc_q_score` into single `compute_q_score(cand)` helper.
+- [x] **Repair Correlation Independence Gate**: Fix replacement logic (`len(high_corr_members) == 1` or multi-eviction) to prevent correlated pairs ($\ge \theta$) co-existing in `admitted_pool`.
+- [x] **Re-run Validation Pipeline**: Run `run_periods.py` to confirm Prod Score recovery in multi-period filter diagnostics.
+
+
+
 
