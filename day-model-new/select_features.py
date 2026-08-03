@@ -48,9 +48,9 @@ IR_THR_DIR = 0.15             # Rolling 90d IC_IR threshold for long/short sides
 
 # Temporal & Quality Gate Thresholds
 MAX_RECENCY_RATIO = 2.5       # Cap recent_ic / early_ic to prune late-training overfit spikes
-MAX_HALF_RATIO = 1.80          # Cap ic_second / early_ic to prune late-training half spikes
+MAX_HALF_RATIO = 1.70          # Cap ic_second / early_ic to prune late-training half spikes (tuned: 1.80->1.70)
 MAX_EXTREME_RECENCY_RATIO = 4.0 # Universal cap for extreme recency spikes regardless of early IC
-MAX_EXTREME_HALF_RATIO = 2.5   # Universal cap for extreme half-ratio spikes regardless of early IC
+MAX_EXTREME_HALF_RATIO = 2.20   # Universal cap for extreme half-ratio spikes (tuned: 2.50->2.20)
 MIN_EARLY_IC_THRESHOLD = 0.03 # Minimum early IC to trigger recency ratio cap (prevents dividing by tiny early ICs)
 MAX_YEARLY_IC_CV = 1.00       # Max coefficient of variation for yearly ICs (tuned: 1.15->1.00 to prune high-CV noise)
 # MAX_WEAK_LINK_CV removed — combo ops stabilize noisy primitives; gate had 76-100% TP collateral
