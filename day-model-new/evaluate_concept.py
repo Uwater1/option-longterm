@@ -340,7 +340,7 @@ def main():
         oos_start = pd.Timestamp("2025-01-01")
         lockbox_start = pd.Timestamp("2025-07-01")
     else:
-        train_start = pd.Timestamp("2015-01-01")
+        train_start = pd.Timestamp("2014-01-01")
         train_end = pd.Timestamp("2022-01-01")
         oos_start = pd.Timestamp("2022-01-01")
         lockbox_start = pd.Timestamp("2024-03-01")

@@ -42,7 +42,7 @@ from recipe_utils import compute_recipe
 # Training end dates (cluster fit on training data only — no lookahead)
 ADAPTIVE_DATES = {
     "588000ETF": ("2020-11-01", "2025-01-01"),
-    "_default": ("2015-01-01", "2022-01-01"),
+    "_default": ("2014-01-01", "2022-01-01"),
 }
 
 ALL_ETFS = ["300ETF", "500ETF", "50ETF", "588000ETF", "159915ETF"]

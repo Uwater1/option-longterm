@@ -471,7 +471,7 @@ def run_one(etf: str, side: str, args):
         train_start = pd.Timestamp("2020-11-01")
         train_end = pd.Timestamp("2025-01-01")
     else:
-        train_start = pd.Timestamp("2015-01-01")
+        train_start = pd.Timestamp("2014-01-01")
         train_end = pd.Timestamp("2022-01-01")
 
     print(f"\n{'='*60}")

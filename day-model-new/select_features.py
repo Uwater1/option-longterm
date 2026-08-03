@@ -829,7 +829,7 @@ def main():
         train_end = pd.Timestamp("2025-01-01")
         args.max_flips = 1
     else:
-        train_start = pd.Timestamp("2015-01-01")
+        train_start = pd.Timestamp("2014-01-01")
         train_end = pd.Timestamp("2022-01-01")
         args.max_flips = MAX_FLIPS
 

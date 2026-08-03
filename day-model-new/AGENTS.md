@@ -69,7 +69,7 @@ python3 day-model-new/run_periods.py --max-parallel 4   # Parallel combos
 
 - **Adaptive Dates**:
   - `588000ETF`: Train Nov 2020 ~ Jan 2025. OOS post-Jan 2025.
-  - Other ETFs: Train 2015 ~ 2022. OOS post-2022.
+  - Other ETFs: Train 2014 ~ 2022 (8Y default). OOS post-2022.
 - **Admitted Pools Registry**:
   - `admitted_pools.py` acts as the central, version-controlled Python registry of approved feature pools (and recipes) across all ETFs and sides, protecting them from volatile `data/` overwrites and providing a quick import for downstream strategies.
 - **Aggressive Feature Mining** (`mining/`):
