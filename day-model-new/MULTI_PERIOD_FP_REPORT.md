@@ -10,17 +10,20 @@ Ground truth: OOS (post-training) performance. No lockbox used.
 | Period | Pool Size | Clusters | Cluster Sizes | FP Rate | Mean OOS IC | Mean OOS Sharpe |
 | :--- | ---: | ---: | :--- | ---: | ---: | ---: |
 | 2015-2022 (Original) | 44 | 20 | `[4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, ... (20 clusters)]` | 43.2% | +0.0150 | +0.0146 |
-| 2018-2026 | 123 | 26 | `[17, 10, 9, 8, 7, 4, 3, 3, 3, 3, 3, 2, ... (26 clusters)]` | 98.4% | -0.0952 | -1.5824 |
+| 2015-2023 | 81 | 31 | `[6, 5, 5, 4, 3, 3, 3, 3, 2, 2, 2, 2, ... (31 clusters)]` | 21.0% | +0.0584 | +0.2757 |
+| 2016-2024 | 97 | 34 | `[7, 7, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, ... (34 clusters)]` | 49.5% | +0.0170 | +0.0042 |
+| 2017-2025 | 103 | 39 | `[6, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, ... (39 clusters)]` | 92.2% | +0.0054 | -0.7600 |
+| 2018-2026 | 119 | 35 | `[15, 10, 9, 5, 4, 3, 3, 3, 3, 2, 2, 2, ... (35 clusters)]` | 98.3% | -0.0937 | -1.5562 |
 
 ### Per-Gate False Negative Rate Comparison
 
-| Gate | 2015-2022 (Original) | 2018-2026 |
-| :--- | ---: | ---: |
-| 7-Year Jackknife Sign Stability | 30.0% | 0.0% |
-| B2 Rolling Guard | 23.3% | 6.7% |
-| B3 Composite Floor | 63.3% | 0.0% |
-| B4 Correlation Gate | 73.3% | 6.7% |
-| BH-FDR Gate | 0.0% | 0.0% |
+| Gate | 2015-2022 (Original) | 2015-2023 | 2016-2024 | 2017-2025 | 2018-2026 |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| 7-Year Jackknife Sign Stability | 30.0% | 80.0% | 40.0% | 50.0% | 0.0% |
+| B2 Rolling Guard | 23.3% | 93.3% | 26.7% | 26.7% | 3.3% |
+| B3 Composite Floor | 63.3% | 70.0% | 0.0% | 0.0% | 0.0% |
+| B4 Correlation Gate | 73.3% | 86.7% | 56.7% | 33.3% | 6.7% |
+| BH-FDR Gate | 0.0% | 0.0% | 9.1% | 25.0% | 0.0% |
 
 ---
 
@@ -29,17 +32,20 @@ Ground truth: OOS (post-training) performance. No lockbox used.
 | Period | Pool Size | Clusters | Cluster Sizes | FP Rate | Mean OOS IC | Mean OOS Sharpe |
 | :--- | ---: | ---: | :--- | ---: | ---: | ---: |
 | 2015-2022 (Original) | 0 | - | `-` | 0.0% | +0.0000 | +0.0000 |
+| 2015-2023 | 0 | - | `-` | 0.0% | +0.0000 | +0.0000 |
+| 2016-2024 | 0 | - | `-` | 0.0% | +0.0000 | +0.0000 |
+| 2017-2025 | 0 | - | `-` | 0.0% | +0.0000 | +0.0000 |
 | 2018-2026 | 0 | - | `-` | 0.0% | +0.0000 | +0.0000 |
 
 ### Per-Gate False Negative Rate Comparison
 
-| Gate | 2015-2022 (Original) | 2018-2026 |
-| :--- | ---: | ---: |
-| 7-Year Jackknife Sign Stability | 33.3% | 46.7% |
-| B2 Rolling Guard | 43.3% | 33.3% |
-| B3 Composite Floor | 0.0% | 0.0% |
-| B4 Correlation Gate | 0.0% | 0.0% |
-| BH-FDR Gate | 0.0% | 60.0% |
+| Gate | 2015-2022 (Original) | 2015-2023 | 2016-2024 | 2017-2025 | 2018-2026 |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| 7-Year Jackknife Sign Stability | 33.3% | 50.0% | 60.0% | 50.0% | 46.7% |
+| B2 Rolling Guard | 43.3% | 6.7% | 10.0% | 46.7% | 33.3% |
+| B3 Composite Floor | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% |
+| B4 Correlation Gate | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% |
+| BH-FDR Gate | 0.0% | 100.0% | 0.0% | 0.0% | 60.0% |
 
 ---
 
@@ -48,17 +54,20 @@ Ground truth: OOS (post-training) performance. No lockbox used.
 | Period | Pool Size | Clusters | Cluster Sizes | FP Rate | Mean OOS IC | Mean OOS Sharpe |
 | :--- | ---: | ---: | :--- | ---: | ---: | ---: |
 | 2015-2022 (Original) | 248 | 55 | `[13, 12, 11, 9, 8, 7, 7, 6, 6, 6, 6, 6, ... (55 clusters)]` | 19.8% | +0.0903 | +0.3577 |
-| 2018-2026 | 148 | 50 | `[9, 8, 7, 6, 5, 5, 4, 3, 3, 3, 3, 3, ... (50 clusters)]` | 77.7% | +0.0053 | -0.9438 |
+| 2015-2023 | 259 | 59 | `[14, 12, 11, 10, 9, 8, 7, 6, 6, 6, 5, 5, ... (59 clusters)]` | 9.7% | +0.0920 | +0.4010 |
+| 2016-2024 | 179 | 56 | `[12, 12, 11, 5, 5, 5, 4, 4, 3, 3, 3, 3, ... (56 clusters)]` | 11.2% | +0.0904 | +0.4134 |
+| 2017-2025 | 205 | 51 | `[10, 9, 8, 8, 7, 7, 6, 6, 6, 5, 5, 5, ... (51 clusters)]` | 72.2% | +0.0601 | -0.4074 |
+| 2018-2026 | 147 | 39 | `[9, 8, 8, 7, 6, 6, 5, 5, 4, 4, 4, 4, ... (39 clusters)]` | 77.6% | +0.0062 | -0.9322 |
 
 ### Per-Gate False Negative Rate Comparison
 
-| Gate | 2015-2022 (Original) | 2018-2026 |
-| :--- | ---: | ---: |
-| 7-Year Jackknife Sign Stability | 93.3% | 33.3% |
-| B2 Rolling Guard | 76.7% | 16.7% |
-| B3 Composite Floor | 93.3% | 6.7% |
-| B4 Correlation Gate | 90.0% | 6.7% |
-| BH-FDR Gate | 0.0% | 0.0% |
+| Gate | 2015-2022 (Original) | 2015-2023 | 2016-2024 | 2017-2025 | 2018-2026 |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| 7-Year Jackknife Sign Stability | 93.3% | 96.7% | 93.3% | 56.7% | 33.3% |
+| B2 Rolling Guard | 76.7% | 70.0% | 90.0% | 6.7% | 16.7% |
+| B3 Composite Floor | 93.3% | 100.0% | 100.0% | 26.7% | 6.7% |
+| B4 Correlation Gate | 90.0% | 100.0% | 96.7% | 10.0% | 6.7% |
+| BH-FDR Gate | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% |
 
 ---
 
@@ -67,17 +76,20 @@ Ground truth: OOS (post-training) performance. No lockbox used.
 | Period | Pool Size | Clusters | Cluster Sizes | FP Rate | Mean OOS IC | Mean OOS Sharpe |
 | :--- | ---: | ---: | :--- | ---: | ---: | ---: |
 | 2015-2022 (Original) | 29 | 16 | `[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, ... (16 clusters)]` | 6.9% | +0.1181 | +0.9856 |
-| 2018-2026 | 178 | 53 | `[12, 10, 8, 8, 7, 7, 6, 6, 5, 4, 3, 2, ... (53 clusters)]` | 68.0% | +0.0215 | -0.8474 |
+| 2015-2023 | 98 | 28 | `[13, 5, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, ... (28 clusters)]` | 1.0% | +0.1145 | +0.9685 |
+| 2016-2024 | 143 | 42 | `[16, 8, 8, 5, 5, 4, 4, 4, 3, 3, 3, 2, ... (42 clusters)]` | 2.8% | +0.1022 | +0.8092 |
+| 2017-2025 | 179 | 51 | `[13, 12, 11, 9, 6, 5, 4, 4, 3, 3, 3, 3, ... (51 clusters)]` | 27.9% | +0.1047 | +0.3629 |
+| 2018-2026 | 171 | 46 | `[12, 8, 8, 8, 7, 6, 5, 5, 5, 4, 4, 4, ... (46 clusters)]` | 66.7% | +0.0246 | -0.7834 |
 
 ### Per-Gate False Negative Rate Comparison
 
-| Gate | 2015-2022 (Original) | 2018-2026 |
-| :--- | ---: | ---: |
-| 7-Year Jackknife Sign Stability | 66.7% | 30.0% |
-| B2 Rolling Guard | 96.7% | 60.0% |
-| B3 Composite Floor | 100.0% | 10.0% |
-| B4 Correlation Gate | 93.3% | 70.0% |
-| BH-FDR Gate | 80.0% | 100.0% |
+| Gate | 2015-2022 (Original) | 2015-2023 | 2016-2024 | 2017-2025 | 2018-2026 |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| 7-Year Jackknife Sign Stability | 66.7% | 86.7% | 80.0% | 70.0% | 20.0% |
+| B2 Rolling Guard | 96.7% | 96.7% | 100.0% | 66.7% | 56.7% |
+| B3 Composite Floor | 100.0% | 100.0% | 100.0% | 90.0% | 3.3% |
+| B4 Correlation Gate | 93.3% | 100.0% | 100.0% | 100.0% | 66.7% |
+| BH-FDR Gate | 80.0% | 0.0% | 71.4% | 25.0% | 100.0% |
 
 ---
 

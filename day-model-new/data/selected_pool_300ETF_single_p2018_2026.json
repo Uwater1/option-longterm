@@ -576,6 +576,19 @@
     }
   },
   {
+    "feature_name": "combo_rank_min__first_bar_return__first_bar_sentiment",
+    "sign": 1,
+    "overall_ic": 0.2091894213789792,
+    "deflated_ic": 0.2090581128587578,
+    "ic_ir": 0.5671603397896295,
+    "monotonicity": 0.7131822863027807,
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "first_bar_return",
+      "feature_b": "first_bar_sentiment"
+    }
+  },
+  {
     "feature_name": "combo_tri_max__max_up_ret__bar_ret_0__bar_body_rng_0",
     "sign": 1,
     "overall_ic": 0.20916906068249405,
@@ -747,19 +760,6 @@
     }
   },
   {
-    "feature_name": "combo_max__first_bar_return__first_bar_sentiment",
-    "sign": 1,
-    "overall_ic": 0.19028876559615526,
-    "deflated_ic": 0.1903376130398547,
-    "ic_ir": 0.6210921622818085,
-    "monotonicity": 0.7533470648815654,
-    "recipe": {
-      "op": "max",
-      "feature_a": "first_bar_return",
-      "feature_b": "first_bar_sentiment"
-    }
-  },
-  {
     "feature_name": "combo_rank_min__rbreaker_sell_setup_proximity_early__max_up_ret",
     "sign": 1,
     "overall_ic": 0.1942689501180768,
@@ -814,6 +814,19 @@
     }
   },
   {
+    "feature_name": "combo_rank_min__max_up_ret__first_bar_sentiment",
+    "sign": 1,
+    "overall_ic": 0.19160145864619166,
+    "deflated_ic": 0.19227321456441965,
+    "ic_ir": 0.5216122418746247,
+    "monotonicity": 0.6879505664263645,
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "max_up_ret",
+      "feature_b": "first_bar_sentiment"
+    }
+  },
+  {
     "feature_name": "combo_tri_median__max_up_ret__volume_weighted_price_position__bar_body_rng_0",
     "sign": 1,
     "overall_ic": 0.19098482461143815,
@@ -864,19 +877,6 @@
       "op": "mean",
       "feature_a": "opening_drive_thrust_ratio",
       "feature_b": "rbreaker_buy_setup_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_min__max_up_ret__first_bar_sentiment",
-    "sign": 1,
-    "overall_ic": 0.1874560454401379,
-    "deflated_ic": 0.18800723875899064,
-    "ic_ir": 0.579483077032685,
-    "monotonicity": 0.7209062821833162,
-    "recipe": {
-      "op": "min",
-      "feature_a": "max_up_ret",
-      "feature_b": "first_bar_sentiment"
     }
   },
   {
@@ -946,6 +946,19 @@
     }
   },
   {
+    "feature_name": "combo_max__opening_drive_thrust_ratio__first_bar_sentiment",
+    "sign": 1,
+    "overall_ic": 0.18073503900360324,
+    "deflated_ic": 0.18139987859055245,
+    "ic_ir": 0.47195779004731875,
+    "monotonicity": 0.6781668383110195,
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "first_bar_sentiment"
+    }
+  },
+  {
     "feature_name": "combo_sig_product__first_bar_return__volume_weighted_price_position",
     "sign": 1,
     "overall_ic": 0.17805830422650928,
@@ -965,34 +978,6 @@
     "deflated_ic": 0.17735140843734737,
     "ic_ir": 0.6714881827058551,
     "monotonicity": 0.7662203913491246
-  },
-  {
-    "feature_name": "combo_tri_mean__volume_weighted_momentum_acceleration__max_up_ret__first_bar_return",
-    "sign": 1,
-    "overall_ic": 0.17700854391814252,
-    "deflated_ic": 0.17639844616442651,
-    "ic_ir": 0.4340064661816753,
-    "monotonicity": 0.6570545829042225,
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "volume_weighted_momentum_acceleration",
-      "feature_b": "max_up_ret",
-      "feature_c": "first_bar_return"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__volume_weighted_momentum_acceleration__max_up_ret__bar_ret_0",
-    "sign": 1,
-    "overall_ic": 0.17244923293134432,
-    "deflated_ic": 0.1721881176794876,
-    "ic_ir": 0.3951330528723825,
-    "monotonicity": 0.660659114315139,
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "volume_weighted_momentum_acceleration",
-      "feature_b": "max_up_ret",
-      "feature_c": "bar_ret_0"
-    }
   },
   {
     "feature_name": "combo_min__volume_weighted_price_position__volume_surge_direction",
@@ -1018,6 +1003,19 @@
       "op": "mean",
       "feature_a": "volume_weighted_price_position",
       "feature_b": "volume_surge_direction"
+    }
+  },
+  {
+    "feature_name": "combo_max__first_bar_return__first_bar_sentiment",
+    "sign": 1,
+    "overall_ic": 0.1719129321276553,
+    "deflated_ic": 0.17196177957135472,
+    "ic_ir": 0.6210921622818085,
+    "monotonicity": 0.7533470648815654,
+    "recipe": {
+      "op": "max",
+      "feature_a": "first_bar_return",
+      "feature_b": "first_bar_sentiment"
     }
   },
   {
@@ -1214,19 +1212,6 @@
     }
   },
   {
-    "feature_name": "combo_max__opening_drive_thrust_ratio__first_bar_sentiment",
-    "sign": 1,
-    "overall_ic": 0.12989241405383545,
-    "deflated_ic": 0.13055725364078466,
-    "ic_ir": 0.47195779004731875,
-    "monotonicity": 0.6781668383110195,
-    "recipe": {
-      "op": "max",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "first_bar_sentiment"
-    }
-  },
-  {
     "feature_name": "combo_ratio__volume_surge_direction__volume_weighted_price_position",
     "sign": 1,
     "overall_ic": 0.12463713167656977,
@@ -1253,14 +1238,6 @@
     }
   },
   {
-    "feature_name": "trend_bar_close_consistency",
-    "sign": 1,
-    "overall_ic": 0.12046372135260688,
-    "deflated_ic": 0.1196271916693657,
-    "ic_ir": 0.31978345569157335,
-    "monotonicity": 0.6730175077239959
-  },
-  {
     "feature_name": "combo_ratio__max_up_ret__bar_vol_0",
     "sign": 1,
     "overall_ic": 0.11207555195043482,
@@ -1271,19 +1248,6 @@
       "op": "ratio",
       "feature_a": "max_up_ret",
       "feature_b": "bar_vol_0"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__first_bar_return__first_bar_sentiment",
-    "sign": 1,
-    "overall_ic": 0.09998102652022217,
-    "deflated_ic": 0.09984971800000078,
-    "ic_ir": 0.5671603397896295,
-    "monotonicity": 0.7131822863027807,
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "first_bar_return",
-      "feature_b": "first_bar_sentiment"
     }
   }
 ]
