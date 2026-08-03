@@ -3243,3 +3243,9 @@ POOLS = {
         "short": []
     }
 }
+
+
+def get_admitted_pool(etf: str, side: str = "single"):
+    """Retrieve admitted features pool for ETF and side."""
+    return POOLS.get(etf, {}).get(side, [])
+

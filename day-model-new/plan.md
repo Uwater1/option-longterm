@@ -88,9 +88,9 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 - **Primitive Cluster Cap**: Extract primitive feature set (`feature_a`, `feature_b`, `feature_c`, `feature_cond`, `feature_cond2`). Drop or replace redundant combos built from identical base primitives to ensure pool diversity.
 - **Replacement rule**:
   ```
-  cv_penalty = 0.05 * max(0.0, ic_cv - 0.50)
+  cv_penalty = 0.05 * max(0.0, ic_cv - 0.60)
   half_penalty = 0.05 * abs(half_ratio - 1.0)
-  complexity_penalty = 0.05 if is_tri_combo else (0.02 if is_combo else 0.0)
+  complexity_penalty = 0.08 if is_tri_combo else (0.03 if is_combo else 0.0)
 
   q_score = (
       0.35 * deflated_ic + 0.25 * max(0.0, sortino) + 0.15 * ic_ir + 0.15 * recent_ic 
@@ -99,7 +99,7 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
   if candidate is correlated with existing pool member old_feature (corr >= theta):
       replace old_feature with candidate if cand_q > old_q
   ```
-- **Design rationale**: Pre-sorting by $Q$-score descending + strict replacement ($cand\_q > old\_q$) mathematically guarantees that between any pair or group of correlated features ($r \ge \theta$), the feature with the highest composite quality score ALWAYS survives, 100% eliminating arrival order bias. $\theta=0.95$ only rejects near-perfect duplicates.
+- **Design rationale**: Occam's Razor complexity penalty (`-0.08` 3-way, `-0.03` 2-way, `0.00` base) + $IC\_CV$ penalty above `0.60` ensures clean base features are prioritized over overfit combo features during $Q$-score pre-sorting, while strict replacement (`cand_q > old_q`) maintains 100% mathematical order-independence.
 
 ### B6. ONC Feature Clustering (Downstream Diversity Control)
 - **Global Constant** (defined at top of `select_features.py`):
