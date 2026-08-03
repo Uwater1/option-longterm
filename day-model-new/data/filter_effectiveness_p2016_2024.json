@@ -31732,13 +31732,13 @@
           "false_negative_rate": 0.6,
           "top_rejects": [
             {
-              "feature_name": "combo_max__roc60__wavetrend_osc_day",
+              "feature_name": "combo_max__roc60__yesterday_wavetrend_osc",
               "train_ic": 0.13299156496931439,
               "lock_ic": 0.04697689956297699,
               "lock_sharpe": 0.98514411934279
             },
             {
-              "feature_name": "combo_min__iv_corridor_width__wavetrend_osc_day",
+              "feature_name": "combo_min__iv_corridor_width__yesterday_wavetrend_osc",
               "train_ic": 0.14413573945008915,
               "lock_ic": 0.056561417920555065,
               "lock_sharpe": 0.8006883348388475
@@ -31756,13 +31756,13 @@
               "lock_sharpe": 0.7196580746870176
             },
             {
-              "feature_name": "combo_mean__bar_vol_4__bar_vol_0",
+              "feature_name": "combo_mean__bar_vol_4__first_bar_volume",
               "train_ic": 0.12778147214393765,
               "lock_ic": 0.04431528316397438,
               "lock_sharpe": 0.5811955320427794
             },
             {
-              "feature_name": "combo_z_sum__bar_vol_4__bar_vol_0",
+              "feature_name": "combo_z_sum__bar_vol_4__first_bar_volume",
               "train_ic": 0.12778147214393765,
               "lock_ic": 0.04431528316397438,
               "lock_sharpe": 0.5811955320427794
@@ -31802,13 +31802,13 @@
           "false_negative_rate": 0.1,
           "top_rejects": [
             {
-              "feature_name": "combo_product__bar_vol_4__bar_vol_0",
+              "feature_name": "combo_product__bar_vol_4__first_bar_volume",
               "train_ic": 0.11570671469606925,
               "lock_ic": 0.021122267566740502,
               "lock_sharpe": 0.18924833725623372
             },
             {
-              "feature_name": "combo_product__bar_vol_4__first_bar_volume",
+              "feature_name": "combo_product__bar_vol_4__bar_vol_0",
               "train_ic": 0.11570671469606925,
               "lock_ic": 0.021122267566740502,
               "lock_sharpe": 0.18924833725623372

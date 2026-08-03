@@ -31421,13 +31421,13 @@
               "lock_sharpe": 1.0040949469840394
             },
             {
-              "feature_name": "combo_rank_min__bar_vol_0__roc10",
+              "feature_name": "combo_rank_min__first_bar_volume__roc10",
               "train_ic": 0.1467142769995256,
               "lock_ic": 0.02826953351030188,
               "lock_sharpe": 1.0040949469840394
             },
             {
-              "feature_name": "combo_rank_min__first_bar_volume__roc10",
+              "feature_name": "combo_rank_min__bar_vol_0__roc10",
               "train_ic": 0.1467142769995256,
               "lock_ic": 0.02826953351030188,
               "lock_sharpe": 1.0040949469840394
@@ -31451,7 +31451,7 @@
               "lock_sharpe": 0.5118372674942089
             },
             {
-              "feature_name": "combo_rank_min__iv_corridor_width__wavetrend_osc_day",
+              "feature_name": "combo_rank_min__iv_corridor_width__yesterday_wavetrend_osc",
               "train_ic": 0.1531204405761945,
               "lock_ic": 0.05674021334101637,
               "lock_sharpe": 0.4388903881578435
@@ -31509,7 +31509,7 @@
               "lock_sharpe": 0.9299716235439556
             },
             {
-              "feature_name": "combo_max__bar_vol_4__wavetrend_osc_day",
+              "feature_name": "combo_max__bar_vol_4__yesterday_wavetrend_osc",
               "train_ic": 0.08299090162418221,
               "lock_ic": 0.09579154701337657,
               "lock_sharpe": 0.8259700565154188
@@ -31539,7 +31539,7 @@
               "lock_sharpe": 0.5090513035472919
             },
             {
-              "feature_name": "combo_product__bar_vol_4__bar_vol_0",
+              "feature_name": "combo_product__bar_vol_4__first_bar_volume",
               "train_ic": 0.08255260230624509,
               "lock_ic": 0.028966995317436982,
               "lock_sharpe": 0.5090513035472919

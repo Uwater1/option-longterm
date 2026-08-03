@@ -617,9 +617,9 @@ def numba_fast_null_composite_kernel(x_flipped: np.ndarray, y: np.ndarray, windo
     return null_scores
 
 
-@njit(cache=True)
+@njit(parallel=True, cache=True)
 def numba_batched_b3_null_kernel(X: np.ndarray, y: np.ndarray, window_starts: np.ndarray, window_ends: np.ndarray, all_starts: np.ndarray, tail_def: int, pct: float, n_tail: int, block_size: int, n_sims: int):
-    """Batched B3 composite null over all candidates. Range over candidates.
+    """Batched B3 composite null over all candidates. prange over candidates.
 
     Returns (out_95, out_99, out_mean, out_ic_mean): each shape (n_cands,).
     Shared y-shuffle starts across candidates for efficiency.
@@ -635,7 +635,7 @@ def numba_batched_b3_null_kernel(X: np.ndarray, y: np.ndarray, window_starts: np
     out_mean = np.empty(n_cands, dtype=np.float64)
     out_ic_mean = np.empty(n_cands, dtype=np.float64)
 
-    for c in range(n_cands):
+    for c in prange(n_cands):
         x = X[:, c]
 
         # Per-candidate precompute: overall sorted index, window sorted indices
@@ -1331,10 +1331,6 @@ def main():
             cand["ic_null_mean"] = float(ic_null_mean_arr[idx])
             cand["deflated_ic"] = max(0.0, cand["overall_ic"] - cand["ic_null_mean"])
 
-        # Pre-compute yearly IC decomposition for temporal stability gate and q_score pre-sorting
-        dates_years = pd.DatetimeIndex(dates_train.values).year.values
-        unique_years = sorted(set(dates_years))
-
         # Re-sort surviving candidates by initial q_score descending so highest quality enters B4 first
         for cand in surviving_candidates:
             ic_first = cand.get("split_half_ic_first", 0.0)
@@ -1343,25 +1339,9 @@ def main():
             fname = cand.get("feature_name", "")
             is_tri = fname.startswith("combo_tri_")
             is_combo = fname.startswith("combo_")
-            comp_pen = 0.08 if is_tri else (0.03 if is_combo else 0.0)
+            comp_pen = 0.05 if is_tri else (0.02 if is_combo else 0.0)
             half_pen = 0.05 * abs(half_r - 1.0)
-            
-            # Compute ic_cv for candidate pre-sorting
-            ic_cv = _compute_yearly_ic_cv(cand["x_flipped"]) if "x_flipped" in cand else cand.get("ic_cv", 0.5)
-            if ic_cv is None:
-                ic_cv = 0.5
-            cand["ic_cv"] = ic_cv
-            cv_pen = 0.05 * max(0.0, ic_cv - 0.60)
-            
-            cand["q_score_init"] = (
-                0.35 * cand.get("deflated_ic", 0.0) +
-                0.25 * max(0.0, cand.get("sortino", 0.0)) +
-                0.15 * cand.get("ic_ir", 0.0) +
-                0.15 * cand.get("recent_ic", 0.0)
-                - cv_pen
-                - half_pen
-                - comp_pen
-            )
+            cand["q_score_init"] = 0.35 * cand.get("deflated_ic", 0.0) + 0.25 * max(0.0, cand.get("sortino", 0.0)) + 0.15 * cand.get("ic_ir", 0.0) + 0.15 * cand.get("recent_ic", 0.0) - half_pen - comp_pen
 
         surviving_candidates.sort(key=lambda item: item["q_score_init"], reverse=True)
 
@@ -1372,6 +1352,10 @@ def main():
     min_deflated_ic = 0.05 if n_train < 1200 else 0.03  # stricter for 588000ETF (~1000 rows)
     min_raw_ic = 0.03 if n_train < 1200 else 0.02  # catch tail-only mirages
     admitted_pool = []  # list of dicts
+
+    # Pre-compute yearly IC decomposition for temporal stability gate (P1)
+    dates_years = pd.DatetimeIndex(dates_train.values).year.values
+    unique_years = sorted(set(dates_years))
 
     # Pre-compute vol20 regime masks for negative-regime gate
     _vol20 = pd.Series(y_train).rolling(20).std().values
@@ -1717,9 +1701,9 @@ def main():
                         
                         is_tri = fname.startswith("combo_tri_")
                         is_combo = fname.startswith("combo_")
-                        complexity_penalty = 0.08 if is_tri else (0.03 if is_combo else 0.0)
+                        complexity_penalty = 0.05 if is_tri else (0.02 if is_combo else 0.0)
                         
-                        cv_penalty = 0.05 * max(0.0, cv_val - 0.60)
+                        cv_penalty = 0.05 * max(0.0, cv_val - 0.50)
                         half_penalty = 0.05 * abs(half_val - 1.0)
                         
                         return (

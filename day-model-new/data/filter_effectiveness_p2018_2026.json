@@ -37849,7 +37849,7 @@
               "lock_sharpe": 0.5011266270042113
             },
             {
-              "feature_name": "combo_max__bar_vol_4__wavetrend_osc_day",
+              "feature_name": "combo_max__bar_vol_4__yesterday_wavetrend_osc",
               "train_ic": 0.08900735860114199,
               "lock_ic": 0.0913015587287882,
               "lock_sharpe": 0.4050304012353354

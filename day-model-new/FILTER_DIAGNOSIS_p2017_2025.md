@@ -4391,8 +4391,8 @@ Per-primitive FP rate across all combo features. Flag primitives with FP rate â‰
 
 | Primitive | FP | TP | Total | FP Rate | Flag |
 | :--- | ---: | ---: | ---: | ---: | :--- |
-| `volume_surge_direction` | 5 | 0 | 5 | 100% | âš  TOXIC |
 | `early_vwap_acceleration` | 2 | 0 | 2 | 100% |  |
+| `volume_surge_direction` | 5 | 0 | 5 | 100% | âš  TOXIC |
 | `smooth_momentum_structure` | 3 | 1 | 4 | 75% |  |
 | `volume_weighted_price_position` | 18 | 12 | 30 | 60% |  |
 | `max_up_ret` | 25 | 27 | 52 | 48% |  |
@@ -4403,21 +4403,21 @@ Per-primitive FP rate across all combo features. Flag primitives with FP rate â‰
 | `bar_body_rng_0` | 3 | 29 | 32 | 9% |  |
 | `volatility_expansion_trend_vector` | 1 | 13 | 14 | 7% |  |
 | `rbreaker_sell_setup_proximity_early` | 2 | 48 | 50 | 4% |  |
-| `trend_bar_close_consistency` | 0 | 2 | 2 | 0% |  |
-| `close_vs_open_range` | 0 | 2 | 2 | 0% |  |
-| `yesterday_first_30min_return` | 0 | 7 | 7 | 0% |  |
-| `star50_limit_proximity_early` | 0 | 43 | 43 | 0% |  |
 | `net_volume_flow` | 0 | 4 | 4 | 0% |  |
-| `yesterday_early_vwap_dev` | 0 | 2 | 2 | 0% |  |
-| `impulse_bar_dominance` | 0 | 10 | 10 | 0% |  |
-| `demark_setup_reversal_early` | 0 | 6 | 6 | 0% |  |
 | `volume_weighted_momentum_acceleration` | 0 | 6 | 6 | 0% |  |
-| `late_bar_momentum` | 0 | 2 | 2 | 0% |  |
-| `body_size_progression` | 0 | 9 | 9 | 0% |  |
-| `limit_down_proximity_early` | 0 | 10 | 10 | 0% |  |
+| `yesterday_first_30min_return` | 0 | 7 | 7 | 0% |  |
+| `demark_setup_reversal_early` | 0 | 6 | 6 | 0% |  |
 | `early_late_momentum_divergence` | 0 | 2 | 2 | 0% |  |
+| `impulse_bar_dominance` | 0 | 10 | 10 | 0% |  |
 | `max_down_ret` | 0 | 14 | 14 | 0% |  |
+| `late_bar_momentum` | 0 | 2 | 2 | 0% |  |
+| `trend_bar_close_consistency` | 0 | 2 | 2 | 0% |  |
+| `limit_down_proximity_early` | 0 | 10 | 10 | 0% |  |
 | `rbreaker_buy_setup_proximity_early` | 0 | 8 | 8 | 0% |  |
+| `yesterday_early_vwap_dev` | 0 | 2 | 2 | 0% |  |
+| `star50_limit_proximity_early` | 0 | 43 | 43 | 0% |  |
+| `body_size_progression` | 0 | 9 | 9 | 0% |  |
+| `close_vs_open_range` | 0 | 2 | 2 | 0% |  |
 
 ---
 

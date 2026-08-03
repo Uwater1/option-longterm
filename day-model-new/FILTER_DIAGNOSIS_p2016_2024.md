@@ -3917,24 +3917,24 @@ Per-primitive FP rate across all combo features. Flag primitives with FP rate â‰
 | `opening_drive_thrust_ratio` | 5 | 79 | 84 | 6% |  |
 | `bar_ret_0` | 1 | 18 | 19 | 5% |  |
 | `volatility_expansion_trend_vector` | 1 | 31 | 32 | 3% |  |
+| `rbreaker_sell_setup_proximity_early` | 0 | 74 | 74 | 0% |  |
+| `yesterday_first_30min_return` | 0 | 10 | 10 | 0% |  |
+| `body_size_progression` | 0 | 7 | 7 | 0% |  |
+| `net_volume_flow` | 0 | 25 | 25 | 0% |  |
+| `limit_down_proximity_early` | 0 | 10 | 10 | 0% |  |
+| `close_vs_open_range` | 0 | 18 | 18 | 0% |  |
+| `trend_bar_close_consistency` | 0 | 9 | 9 | 0% |  |
+| `volume_weighted_momentum_acceleration` | 0 | 11 | 11 | 0% |  |
+| `early_body_momentum` | 0 | 10 | 10 | 0% |  |
+| `impulse_bar_dominance` | 0 | 6 | 6 | 0% |  |
 | `star50_limit_proximity_early` | 0 | 53 | 53 | 0% |  |
 | `rbreaker_buy_setup_proximity_early` | 0 | 7 | 7 | 0% |  |
-| `body_size_progression` | 0 | 7 | 7 | 0% |  |
-| `max_down_ret` | 0 | 17 | 17 | 0% |  |
-| `net_volume_flow` | 0 | 25 | 25 | 0% |  |
-| `demark_setup_reversal_early` | 0 | 6 | 6 | 0% |  |
-| `impulse_bar_dominance` | 0 | 6 | 6 | 0% |  |
-| `trend_day_regime_conviction` | 0 | 2 | 2 | 0% |  |
-| `rbreaker_sell_setup_proximity_early` | 0 | 74 | 74 | 0% |  |
-| `limit_down_proximity_early` | 0 | 10 | 10 | 0% |  |
-| `yesterday_first_30min_return` | 0 | 10 | 10 | 0% |  |
-| `trend_bar_close_consistency` | 0 | 9 | 9 | 0% |  |
-| `close_vs_open_range` | 0 | 18 | 18 | 0% |  |
 | `yesterday_early_vwap_dev` | 0 | 4 | 4 | 0% |  |
-| `early_body_momentum` | 0 | 10 | 10 | 0% |  |
 | `bar_body_rng_0` | 0 | 37 | 37 | 0% |  |
+| `max_down_ret` | 0 | 17 | 17 | 0% |  |
+| `trend_day_regime_conviction` | 0 | 2 | 2 | 0% |  |
+| `demark_setup_reversal_early` | 0 | 6 | 6 | 0% |  |
 | `volume_surge_direction` | 0 | 5 | 5 | 0% |  |
-| `volume_weighted_momentum_acceleration` | 0 | 11 | 11 | 0% |  |
 
 ---
 

@@ -60,11 +60,20 @@ def cpu_count():
         return 1
 
 
-def run_combo(etf: str, side: str, period_name: str, inner_n_jobs: int) -> tuple:
+def _sub_env(numba_threads: int) -> dict:
+    """Build subprocess env with NUMBA_NUM_THREADS set to avoid thread oversubscription
+    when multiple combos run concurrently (each numba prange kernel otherwise spawns all cores)."""
+    env = os.environ.copy()
+    env["NUMBA_NUM_THREADS"] = str(max(1, int(numba_threads)))
+    return env
+
+
+def run_combo(etf: str, side: str, period_name: str, inner_n_jobs: int, numba_threads: int = 0) -> tuple:
     """Run select_features + evaluate_concept for one ETF/side/period combo."""
     train_start, train_end = PERIODS[period_name]
     suffix = period_suffix(period_name)
     oos_start = train_end  # OOS starts where training ends
+    env = _sub_env(numba_threads if numba_threads > 0 else cpu_count())
 
     # Stage 0: Ensure candidate combination file exists
     cand_file = HERE / "mining" / f"candidates_{etf}_{side}.json"
@@ -79,7 +88,7 @@ def run_combo(etf: str, side: str, period_name: str, inner_n_jobs: int) -> tuple
         ]
         try:
             result_gen = subprocess.run(
-                cmd_gen, cwd=str(REPO_ROOT), text=True, encoding="utf-8", errors="replace",
+                cmd_gen, cwd=str(REPO_ROOT), text=True, encoding="utf-8", errors="replace", env=env,
             )
             if result_gen.returncode not in (0, None):
                 print(f"WARNING: generate_combos exited {result_gen.returncode} for {etf} {side}")
@@ -101,7 +110,7 @@ def run_combo(etf: str, side: str, period_name: str, inner_n_jobs: int) -> tuple
     print(f"\n>>> [Stage A] select_features: ETF={etf}, Side={side}, Period={period_name}")
     try:
         result_a = subprocess.run(
-            cmd_a, cwd=str(REPO_ROOT), text=True, encoding="utf-8", errors="replace",
+            cmd_a, cwd=str(REPO_ROOT), text=True, encoding="utf-8", errors="replace", env=env,
         )
     except Exception as e:
         return False, f"select_features failed to launch for {etf} {side} {period_name}: {e}"
@@ -122,7 +131,7 @@ def run_combo(etf: str, side: str, period_name: str, inner_n_jobs: int) -> tuple
     print(f"\n>>> [Stage A2] feature_clusters: ETF={etf}, Side={side}, Period={period_name}")
     try:
         result_ac = subprocess.run(
-            cmd_ac, cwd=str(REPO_ROOT), text=True, encoding="utf-8", errors="replace",
+            cmd_ac, cwd=str(REPO_ROOT), text=True, encoding="utf-8", errors="replace", env=env,
         )
     except Exception as e:
         print(f"WARNING: feature_clusters failed to launch for {etf} {side} {period_name}: {e}")
@@ -142,7 +151,7 @@ def run_combo(etf: str, side: str, period_name: str, inner_n_jobs: int) -> tuple
     print(f"\n>>> [Stage B] evaluate_concept: ETF={etf}, Side={side}, Period={period_name}")
     try:
         result_b = subprocess.run(
-            cmd_b, cwd=str(REPO_ROOT), text=True, encoding="utf-8", errors="replace",
+            cmd_b, cwd=str(REPO_ROOT), text=True, encoding="utf-8", errors="replace", env=env,
         )
     except Exception as e:
         return False, f"evaluate_concept failed to launch for {etf} {side} {period_name}: {e}"
@@ -411,11 +420,13 @@ def main():
     print(f"ETFs={etfs_to_run}, Sides={sides_to_run}, max_parallel={args.max_parallel}")
 
     if args.max_parallel <= 1:
-        inner_n_jobs = args.n_jobs if args.n_jobs > 0 else min(total_cpus, 4)  # Cap at 4 to avoid FDR sim crashes
+        # joblib feature-eval workers; evaluate_single_feature is numpy/scipy-only
+        # (no nested prange), so more workers than 4 is safe and faster.
+        inner_n_jobs = args.n_jobs if args.n_jobs > 0 else min(total_cpus, 8)
         results = []
         for idx, (etf, side, pname) in enumerate(tasks, 1):
             print(f"\n===== [{idx}/{len(tasks)}] {etf} {side} {pname} =====")
-            ok, msg = run_combo(etf, side, pname, inner_n_jobs)
+            ok, msg = run_combo(etf, side, pname, inner_n_jobs, numba_threads=total_cpus)
             results.append((ok, msg))
             if not ok:
                 print(f"ERROR: {msg}")
@@ -426,7 +437,7 @@ def main():
         results = []
         with ThreadPoolExecutor(max_workers=args.max_parallel) as ex:
             futures = {
-                ex.submit(run_combo, etf, side, pname, inner_n_jobs): (etf, side, pname)
+                ex.submit(run_combo, etf, side, pname, inner_n_jobs, inner_n_jobs): (etf, side, pname)
                 for etf, side, pname in tasks
             }
             for fut in as_completed(futures):

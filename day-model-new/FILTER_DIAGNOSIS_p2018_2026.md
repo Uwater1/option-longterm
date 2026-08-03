@@ -4246,15 +4246,15 @@ Per-primitive FP rate across all combo features. Flag primitives with FP rate �
 
 | Primitive | FP | TP | Total | FP Rate | Flag |
 | :--- | ---: | ---: | ---: | ---: | :--- |
-| `volume_surge_direction` | 20 | 0 | 20 | 100% | ⚠ TOXIC |
 | `early_body_momentum` | 4 | 0 | 4 | 100% |  |
+| `volume_surge_direction` | 20 | 0 | 20 | 100% | ⚠ TOXIC |
 | `max_up_ret` | 69 | 5 | 74 | 93% | ⚠ TOXIC |
 | `volatility_expansion_trend_vector` | 27 | 3 | 30 | 90% | ⚠ TOXIC |
 | `first_bar_return` | 35 | 5 | 40 | 88% | ⚠ TOXIC |
 | `volume_weighted_price_position` | 40 | 6 | 46 | 87% | ⚠ TOXIC |
-| `net_volume_flow` | 10 | 2 | 12 | 83% | ⚠ TOXIC |
 | `body_size_progression` | 5 | 1 | 6 | 83% | ⚠ TOXIC |
 | `impulse_bar_dominance` | 10 | 2 | 12 | 83% | ⚠ TOXIC |
+| `net_volume_flow` | 10 | 2 | 12 | 83% | ⚠ TOXIC |
 | `bar_ret_0` | 24 | 5 | 29 | 83% | ⚠ TOXIC |
 | `opening_drive_thrust_ratio` | 71 | 17 | 88 | 81% | ⚠ TOXIC |
 | `trend_bar_close_consistency` | 7 | 2 | 9 | 78% |  |
@@ -4267,8 +4267,8 @@ Per-primitive FP rate across all combo features. Flag primitives with FP rate �
 | `demark_setup_reversal_early` | 2 | 2 | 4 | 50% |  |
 | `rbreaker_sell_setup_proximity_early` | 15 | 26 | 41 | 37% |  |
 | `rbreaker_buy_setup_proximity_early` | 2 | 5 | 7 | 29% |  |
-| `limit_down_proximity_early` | 2 | 8 | 10 | 20% |  |
 | `volume_weighted_momentum_acceleration` | 1 | 4 | 5 | 20% |  |
+| `limit_down_proximity_early` | 2 | 8 | 10 | 20% |  |
 | `star50_limit_proximity_early` | 4 | 29 | 33 | 12% |  |
 | `yesterday_first_30min_return` | 0 | 4 | 4 | 0% |  |
 

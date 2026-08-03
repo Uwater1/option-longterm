@@ -540,8 +540,8 @@ _Null Baseline (un-gated candidate pool): 62.0% lock IC > 0, 25.0% true FN rate 
 **Top True False Negatives from 7-Year Jackknife Sign Stability** (rejected but lockbox IC > 0 AND Sharpe > 0):
 
 - `combo_rank_min__volume_surge_max__roc10`: Train IC=+0.1513, Lock IC=+0.0272, Lock Sharpe=+1.0041
-- `combo_rank_min__bar_vol_0__roc10`: Train IC=+0.1467, Lock IC=+0.0283, Lock Sharpe=+1.0041
 - `combo_rank_min__first_bar_volume__roc10`: Train IC=+0.1467, Lock IC=+0.0283, Lock Sharpe=+1.0041
+- `combo_rank_min__bar_vol_0__roc10`: Train IC=+0.1467, Lock IC=+0.0283, Lock Sharpe=+1.0041
 - `combo_min__roc60__roc10`: Train IC=+0.1297, Lock IC=+0.0274, Lock Sharpe=+0.7136
 - `combo_sig_product__roc60__roc10`: Train IC=+0.1486, Lock IC=+0.0149, Lock Sharpe=+0.5659
 
@@ -551,7 +551,7 @@ _Null Baseline (un-gated candidate pool): 62.0% lock IC > 0, 25.0% true FN rate 
 - `combo_sig_product__iv_corridor_width__sma100_dist`: Train IC=+0.1155, Lock IC=+0.0663, Lock Sharpe=+1.0514
 - `combo_sig_product__iv_corridor_width__roc60`: Train IC=+0.0946, Lock IC=+0.0603, Lock Sharpe=+0.9632
 - `combo_rank_max__bar_vol_4__roc10`: Train IC=+0.1007, Lock IC=+0.0813, Lock Sharpe=+0.9300
-- `combo_max__bar_vol_4__wavetrend_osc_day`: Train IC=+0.0830, Lock IC=+0.0958, Lock Sharpe=+0.8260
+- `combo_max__bar_vol_4__yesterday_wavetrend_osc`: Train IC=+0.0830, Lock IC=+0.0958, Lock Sharpe=+0.8260
 
 ### 50ETF — `long` Gate Effectiveness
 
