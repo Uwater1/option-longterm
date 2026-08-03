@@ -1327,8 +1327,21 @@ def main():
         for idx, cand in enumerate(surviving_candidates):
             cand["empirical_p93"] = float(emp_p93_arr[idx])
             cand["empirical_p97"] = float(emp_p97_arr[idx])
-            cand["empirical_mean"] = float(emp_mean_arr[idx])
-            cand["ic_null_mean"] = float(ic_null_mean_arr[idx])
+            cand["deflated_ic"] = max(0.0, cand["overall_ic"] - cand["ic_null_mean"])
+
+        # Re-sort surviving candidates by initial q_score descending so highest quality enters B4 first
+        for cand in surviving_candidates:
+            ic_first = cand.get("split_half_ic_first", 0.0)
+            denom = abs(ic_first) + 1e-4
+            half_r = cand.get("split_half_ic_second", 0.0) / denom
+            fname = cand.get("feature_name", "")
+            is_tri = fname.startswith("combo_tri_")
+            is_combo = fname.startswith("combo_")
+            comp_pen = 0.05 if is_tri else (0.02 if is_combo else 0.0)
+            half_pen = 0.05 * abs(half_r - 1.0)
+            cand["q_score_init"] = 0.35 * cand.get("deflated_ic", 0.0) + 0.25 * max(0.0, cand.get("sortino", 0.0)) + 0.15 * cand.get("ic_ir", 0.0) + 0.15 * cand.get("recent_ic", 0.0) - half_pen - comp_pen
+
+        surviving_candidates.sort(key=lambda item: item["q_score_init"], reverse=True)
 
     # 7. Admission Gate (B3 Composite Floor + Stability Gate + Quality Gate + B4 Correlation Gate & Replacement Rule)
     # Quality Gate runs BEFORE correlation to prevent low-quality features from blocking high-quality ones.
@@ -1660,13 +1673,13 @@ def main():
                 "verdict": "ADMITTED"
             })
         else:
-            # Case 2: Max correlation exceeds threshold -> Check replacement rule
+            # Case 2: Max correlation exceeds threshold -> Check replacement rule against highest correlated pool member
             high_corr_members = [item for item in corrs if item[1] >= args.theta]
             
             replaced = False
-            # Fine-tuned B4 replacement: replace if candidate has higher quality q_score than old correlated feature
-            if len(high_corr_members) == 1:
-                old_feature_name, _ = high_corr_members[0]
+            # Replacement rule: replace if candidate has strictly higher q_score than the correlated pool member
+            if high_corr_members:
+                old_feature_name, _ = high_corr_members[0]  # Closest correlated member
                 old_idx = -1
                 for idx, p in enumerate(admitted_pool):
                     if p["feature_name"] == old_feature_name:
@@ -1674,11 +1687,37 @@ def main():
                         break
                 
                 if old_idx != -1:
-                    old_item = admitted_pool[old_idx]
-                    cand_q = 0.40 * deflated_ic + 0.25 * cand.get("sortino", 0.0) + 0.20 * cand.get("recent_ic", cand_ic) + 0.15 * cand.get("ic_ir", 0.0)
-                    old_q = 0.40 * old_item.get("deflated_ic", old_item.get("overall_ic", 0.0)) + 0.25 * old_item.get("sortino", 0.0) + 0.20 * old_item.get("recent_ic", old_item.get("overall_ic", 0.0)) + 0.15 * old_item.get("ic_ir", 0.0) 
+                    def _calc_q_score(item_dict):
+                        fname = item_dict.get("feature_name", "")
+                        def_ic = item_dict.get("deflated_ic", item_dict.get("overall_ic", 0.0))
+                        sortino_val = max(0.0, item_dict.get("sortino", 0.0))
+                        ic_ir_val = item_dict.get("ic_ir", 0.0)
+                        recent_val = item_dict.get("recent_ic", item_dict.get("overall_ic", 0.0))
+                        
+                        cv_val = item_dict.get("ic_cv", 0.5)
+                        half_val = item_dict.get("half_ratio", 1.0)
+                        
+                        is_tri = fname.startswith("combo_tri_")
+                        is_combo = fname.startswith("combo_")
+                        complexity_penalty = 0.05 if is_tri else (0.02 if is_combo else 0.0)
+                        
+                        cv_penalty = 0.05 * max(0.0, cv_val - 0.50)
+                        half_penalty = 0.05 * abs(half_val - 1.0)
+                        
+                        return (
+                            0.35 * def_ic +
+                            0.25 * sortino_val +
+                            0.15 * ic_ir_val +
+                            0.15 * recent_val
+                            - cv_penalty
+                            - half_penalty
+                            - complexity_penalty
+                        )
                     
-                    if cand_q > old_q or cand_ic > old_item.get("overall_ic", 0.0):
+                    cand_q = _calc_q_score(cand)
+                    old_q = _calc_q_score(old_item := admitted_pool[old_idx])
+                    
+                    if cand_q > old_q:
                         admitted_pool[old_idx] = cand
                         replaced = True
                         attempts_log.append({

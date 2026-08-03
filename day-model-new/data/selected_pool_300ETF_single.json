@@ -80,33 +80,6 @@
     }
   },
   {
-    "feature_name": "combo_tri_min__rbreaker_sell_setup_proximity_early__bar_ret_0__bar_body_rng_0",
-    "sign": 1,
-    "overall_ic": 0.23938929974308185,
-    "deflated_ic": 0.23933812575654506,
-    "ic_ir": 0.5672125573366241,
-    "monotonicity": 0.6832844574780058,
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "bar_ret_0",
-      "feature_c": "bar_body_rng_0"
-    }
-  },
-  {
-    "feature_name": "combo_mean__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio",
-    "sign": 1,
-    "overall_ic": 0.2353683092108979,
-    "deflated_ic": 0.23461386252652866,
-    "ic_ir": 0.7230851044975098,
-    "monotonicity": 0.7683284457478006,
-    "recipe": {
-      "op": "mean",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_drive_thrust_ratio"
-    }
-  },
-  {
     "feature_name": "rbreaker_sell_setup_proximity_early",
     "sign": 1,
     "overall_ic": 0.22943301912845318,
@@ -182,19 +155,6 @@
     }
   },
   {
-    "feature_name": "combo_min__star50_limit_proximity_early__bar_body_rng_0",
-    "sign": 1,
-    "overall_ic": 0.2121482695341131,
-    "deflated_ic": 0.21177022657814126,
-    "ic_ir": 0.6538810158273615,
-    "monotonicity": 0.7131964809384165,
-    "recipe": {
-      "op": "min",
-      "feature_a": "star50_limit_proximity_early",
-      "feature_b": "bar_body_rng_0"
-    }
-  },
-  {
     "feature_name": "combo_ratio__bar_body_rng_0__volume_weighted_price_position",
     "sign": 1,
     "overall_ic": 0.1898255421880977,
@@ -218,19 +178,6 @@
       "op": "rank_max",
       "feature_a": "max_up_ret",
       "feature_b": "volume_weighted_price_position"
-    }
-  },
-  {
-    "feature_name": "combo_mean__max_up_ret__volume_surge_direction",
-    "sign": 1,
-    "overall_ic": 0.1816377406073633,
-    "deflated_ic": 0.18040456663080132,
-    "ic_ir": 0.6498812710375115,
-    "monotonicity": 0.7284457478005865,
-    "recipe": {
-      "op": "mean",
-      "feature_a": "max_up_ret",
-      "feature_b": "volume_surge_direction"
     }
   },
   {

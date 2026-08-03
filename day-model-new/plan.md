@@ -88,9 +88,16 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
 - **Primitive Cluster Cap**: Extract primitive feature set (`feature_a`, `feature_b`, `feature_c`, `feature_cond`, `feature_cond2`). Drop or replace redundant combos built from identical base primitives to ensure pool diversity.
 - **Replacement rule**:
   ```
-  q_score = 0.40 * deflated_ic + 0.25 * sortino + 0.15 * ic_ir + 0.20 * recent_ic
-  if candidate is correlated with exactly one existing pool member old_feature (corr >= theta):
-      replace old_feature with candidate if cand_q > old_q or cand_ic > old_ic
+  cv_penalty = 0.05 * max(0.0, ic_cv - 0.50)
+  half_penalty = 0.05 * abs(half_ratio - 1.0)
+  complexity_penalty = 0.05 if is_tri_combo else (0.02 if is_combo else 0.0)
+
+  q_score = (
+      0.35 * deflated_ic + 0.25 * max(0.0, sortino) + 0.15 * ic_ir + 0.15 * recent_ic 
+      - cv_penalty - half_penalty - complexity_penalty
+  )
+  if candidate is correlated with existing pool member old_feature (corr >= theta):
+      replace old_feature with candidate if cand_q > old_q + 0.02
   ```
 - **Design rationale**: Fine-tuned B5 replacement ensures that between any pair of correlated features A and B ($r \ge \theta$), the feature with the higher composite quality score ($q\_score$) ALWAYS survives, eliminating first-come, first-served iteration order bias. θ=0.95 only rejects near-perfect duplicates — pool size is unconstrained.
 
