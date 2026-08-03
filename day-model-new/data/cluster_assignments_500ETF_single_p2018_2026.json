@@ -1,9 +1,9 @@
 {
   "etf": "500ETF",
   "side": "single",
-  "n_features": 125,
-  "n_clusters": 39,
-  "avg_silhouette": 0.2457,
+  "n_features": 122,
+  "n_clusters": 41,
+  "avg_silhouette": 0.2529,
   "max_clusters_param": 10,
   "train_period": [
     "2018-01-01",
@@ -11,207 +11,208 @@
   ],
   "clusters": {
     "0": [
-      "combo_rank_max__volatility_expansion_trend_vector__max_down_ret",
-      "combo_mean__volatility_expansion_trend_vector__max_down_ret",
-      "combo_rank_min__volatility_expansion_trend_vector__max_down_ret",
-      "combo_max__net_volume_flow__max_down_ret",
-      "combo_max__close_vs_open_range__max_down_ret",
-      "max_down_ret"
+      "combo_mean__first_bar_return__max_down_ret",
+      "combo_max__bar_ret_0__max_down_ret",
+      "combo_rank_min__max_up_ret__bar_ret_0",
+      "combo_rank_max__bar_ret_0__max_down_ret",
+      "combo_mean__first_bar_sentiment__max_down_ret",
+      "combo_min__bar_ret_0__max_down_ret",
+      "combo_rank_min__bar_ret_0__max_down_ret"
     ],
     "1": [
-      "combo_max__opening_drive_thrust_ratio__first_bar_sentiment",
-      "combo_rank_max__opening_drive_thrust_ratio__bar_ret_0"
+      "combo_mean__rbreaker_sell_setup_proximity_early__early_body_momentum",
+      "combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__trend_bar_close_consistency",
+      "combo_tri_min__star50_limit_proximity_early__trend_bar_close_consistency__volatility_expansion_trend_vector",
+      "combo_min__star50_limit_proximity_early__close_vs_open_range",
+      "combo_rank_min__star50_limit_proximity_early__close_vs_open_range",
+      "combo_tri_mean__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio__smooth_momentum_structure",
+      "combo_rank_min__rbreaker_sell_setup_proximity_early__trend_bar_close_consistency"
     ],
     "2": [
-      "combo_mean__opening_drive_thrust_ratio__first_bar_return",
-      "combo_min__opening_drive_thrust_ratio__bar_ret_0"
+      "combo_rank_max__opening_drive_thrust_ratio__max_down_ret",
+      "combo_mean__opening_drive_thrust_ratio__max_down_ret",
+      "opening_drive_thrust_ratio",
+      "combo_rank_min__opening_drive_thrust_ratio__max_down_ret"
     ],
     "3": [
-      "combo_rel_diff__net_volume_flow__volume_weighted_momentum_acceleration",
-      "combo_diff__net_volume_flow__volume_weighted_momentum_acceleration"
+      "combo_rank_max__opening_drive_thrust_ratio__max_up_ret",
+      "combo_rank_min__opening_drive_thrust_ratio__max_up_ret"
     ],
     "4": [
-      "combo_min__opening_drive_thrust_ratio__first_bar_sentiment"
-    ],
-    "5": [
-      "combo_rank_max__star50_limit_proximity_early__volatility_expansion_trend_vector",
-      "combo_rank_max__rbreaker_sell_setup_proximity_early__early_body_momentum",
-      "combo_max__star50_limit_proximity_early__close_vs_open_range",
-      "combo_max__net_volume_flow__star50_limit_proximity_early"
-    ],
-    "6": [
-      "combo_clamp_diff__max_up_ret__volume_weighted_momentum_acceleration",
-      "combo_clamp_diff__max_up_ret__early_late_momentum_divergence",
-      "combo_clamp_diff__opening_drive_thrust_ratio__volume_weighted_momentum_acceleration",
-      "combo_clamp_diff__opening_drive_thrust_ratio__body_size_progression",
-      "combo_rel_diff__opening_drive_thrust_ratio__volume_weighted_momentum_acceleration",
-      "combo_diff__opening_drive_thrust_ratio__double_bottom_bull_flag_early",
-      "combo_rel_diff__opening_drive_thrust_ratio__early_late_momentum_divergence"
-    ],
-    "7": [
-      "combo_rank_min__trend_bar_close_consistency__first_bar_sentiment",
-      "combo_min__first_bar_sentiment__bar_ret_0",
-      "combo_rank_min__max_up_ret__first_bar_sentiment",
-      "combo_rank_min__first_bar_sentiment__bar_ret_0",
-      "combo_rank_min__first_bar_sentiment__max_down_ret",
-      "combo_rank_max__net_volume_flow__first_bar_sentiment",
-      "first_bar_return",
-      "combo_max__first_bar_sentiment__bar_ret_0",
-      "bar_body_rng_0"
-    ],
-    "8": [
-      "combo_rank_max__star50_limit_proximity_early__max_down_ret",
-      "combo_max__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio",
-      "combo_max__star50_limit_proximity_early__max_down_ret"
-    ],
-    "9": [
-      "combo_sig_product__volatility_expansion_trend_vector__first_bar_return",
-      "combo_sig_product__volatility_expansion_trend_vector__max_down_ret"
-    ],
-    "10": [
-      "combo_sig_product__max_up_ret__early_body_momentum",
-      "combo_sig_product__max_up_ret__bar_ret_0"
-    ],
-    "11": [
-      "combo_sig_product__opening_drive_thrust_ratio__net_volume_flow",
-      "combo_sig_product__opening_drive_thrust_ratio__volatility_expansion_trend_vector",
-      "combo_sig_product__opening_drive_thrust_ratio__trend_bar_close_consistency",
-      "combo_sig_product__opening_drive_thrust_ratio__close_vs_open_range",
-      "combo_sig_product__opening_drive_thrust_ratio__max_down_ret"
-    ],
-    "12": [
       "combo_sig_product__max_up_ret__volume_weighted_momentum_acceleration",
       "combo_sig_product__max_up_ret__body_size_progression",
       "combo_sig_product__max_up_ret__early_late_momentum_divergence"
     ],
-    "13": [
-      "combo_rank_min__net_volume_flow__bar_ret_0",
-      "combo_mean__first_bar_return__max_down_ret",
-      "combo_rank_min__max_up_ret__bar_ret_0",
-      "combo_min__bar_ret_0__max_down_ret",
-      "combo_rank_min__bar_ret_0__max_down_ret",
-      "combo_max__bar_ret_0__max_down_ret",
-      "combo_rank_max__bar_ret_0__max_down_ret",
-      "combo_mean__first_bar_sentiment__max_down_ret"
-    ],
-    "14": [
-      "combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__body_size_progression",
-      "combo_sig_product__star50_limit_proximity_early__early_body_momentum"
-    ],
-    "15": [
-      "combo_tri_median__opening_drive_thrust_ratio__net_volume_flow__body_size_progression",
-      "combo_tri_min__opening_drive_thrust_ratio__trend_bar_close_consistency__volatility_expansion_trend_vector",
-      "combo_tri_median__opening_drive_thrust_ratio__star50_limit_proximity_early__trend_bar_close_consistency",
-      "combo_max__opening_drive_thrust_ratio__early_body_momentum"
-    ],
-    "16": [
-      "combo_tri_median__opening_drive_thrust_ratio__max_up_ret__body_size_progression",
-      "combo_tri_median__opening_drive_thrust_ratio__max_up_ret__trend_bar_close_consistency",
-      "combo_rank_max__opening_drive_thrust_ratio__max_up_ret"
-    ],
-    "17": [
-      "combo_tri_median__max_up_ret__net_volume_flow__body_size_progression"
-    ],
-    "18": [
-      "combo_tri_mean__star50_limit_proximity_early__trend_bar_close_consistency__volatility_expansion_trend_vector",
-      "volatility_expansion_trend_vector",
-      "combo_tri_min__max_up_ret__trend_bar_close_consistency__volatility_expansion_trend_vector",
-      "first_30min_return",
-      "combo_min__close_vs_open_range__early_body_momentum",
-      "combo_min__early_body_momentum__max_down_ret",
-      "combo_max__close_vs_open_range__early_body_momentum",
-      "morning_volume_weighted_momentum"
-    ],
-    "19": [
-      "combo_rank_min__opening_drive_thrust_ratio__max_up_ret",
-      "combo_rank_max__opening_drive_thrust_ratio__max_down_ret",
-      "opening_drive_thrust_ratio",
-      "combo_mean__opening_drive_thrust_ratio__max_down_ret",
-      "combo_rank_min__opening_drive_thrust_ratio__max_down_ret"
-    ],
-    "20": [
-      "combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__trend_bar_close_consistency",
-      "combo_mean__rbreaker_sell_setup_proximity_early__early_body_momentum",
-      "combo_tri_min__star50_limit_proximity_early__trend_bar_close_consistency__volatility_expansion_trend_vector",
-      "combo_rank_min__star50_limit_proximity_early__close_vs_open_range",
-      "combo_min__star50_limit_proximity_early__close_vs_open_range",
-      "combo_rank_min__rbreaker_sell_setup_proximity_early__trend_bar_close_consistency"
-    ],
-    "21": [
-      "combo_min__rbreaker_sell_setup_proximity_early__bar_ret_0",
-      "combo_rank_min__rbreaker_sell_setup_proximity_early__bar_ret_0",
-      "combo_mean__rbreaker_sell_setup_proximity_early__first_bar_return"
-    ],
-    "22": [
-      "combo_rank_max__max_up_ret__bar_ret_0",
-      "combo_mean__max_up_ret__first_bar_return"
-    ],
-    "23": [
-      "combo_mean__close_vs_open_range__bar_ret_0",
-      "combo_rank_max__volatility_expansion_trend_vector__bar_ret_0"
-    ],
-    "24": [
-      "combo_min__net_volume_flow__first_bar_sentiment",
-      "combo_mean__volatility_expansion_trend_vector__first_bar_sentiment",
-      "combo_max__volatility_expansion_trend_vector__first_bar_sentiment"
-    ],
-    "25": [
-      "combo_tri_mean__rbreaker_sell_setup_proximity_early__net_volume_flow__body_size_progression",
-      "combo_tri_mean__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio__body_size_progression"
-    ],
-    "26": [
-      "combo_tri_mean__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio__smooth_momentum_structure"
-    ],
-    "27": [
+    "5": [
       "combo_min__opening_drive_thrust_ratio__double_bottom_bull_flag_early",
       "combo_rel_diff__volatility_expansion_trend_vector__close_vs_open_range"
     ],
-    "28": [
+    "6": [
+      "combo_min__early_body_momentum__max_down_ret"
+    ],
+    "7": [
+      "combo_sig_product__volatility_expansion_trend_vector__max_down_ret",
+      "combo_sig_product__net_volume_flow__max_down_ret"
+    ],
+    "8": [
+      "combo_clamp_diff__max_up_ret__volume_weighted_momentum_acceleration",
+      "combo_clamp_diff__max_up_ret__early_late_momentum_divergence",
+      "combo_clamp_diff__opening_drive_thrust_ratio__body_size_progression",
+      "combo_clamp_diff__opening_drive_thrust_ratio__volume_weighted_momentum_acceleration",
+      "combo_rel_diff__opening_drive_thrust_ratio__volume_weighted_momentum_acceleration",
+      "combo_rel_diff__opening_drive_thrust_ratio__early_late_momentum_divergence",
+      "combo_diff__opening_drive_thrust_ratio__double_bottom_bull_flag_early"
+    ],
+    "9": [
+      "combo_rank_min__max_up_ret__first_bar_sentiment",
+      "combo_rank_min__first_bar_sentiment__bar_ret_0",
+      "combo_rank_min__volatility_expansion_trend_vector__first_bar_sentiment",
+      "combo_min__first_bar_sentiment__bar_ret_0",
+      "combo_rank_max__net_volume_flow__first_bar_sentiment",
+      "first_bar_return",
+      "combo_max__first_bar_sentiment__bar_ret_0",
+      "combo_rank_min__first_bar_sentiment__max_down_ret",
+      "bar_body_rng_0"
+    ],
+    "10": [
+      "combo_rank_min__rbreaker_sell_setup_proximity_early__bar_ret_0",
+      "combo_min__rbreaker_sell_setup_proximity_early__bar_ret_0",
+      "combo_mean__rbreaker_sell_setup_proximity_early__first_bar_return"
+    ],
+    "11": [
       "vwap_close_divergence_trend",
       "vwap_trend_channel_slope"
     ],
-    "29": [
+    "12": [
       "early_order_flow_imbalance",
       "always_in_trend_persistence"
     ],
-    "30": [
+    "13": [
+      "combo_sig_product__volatility_expansion_trend_vector__first_bar_return"
+    ],
+    "14": [
+      "combo_sig_product__max_up_ret__early_body_momentum",
       "num_up_bars"
     ],
-    "31": [
-      "combo_rank_min__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio",
-      "combo_mean__star50_limit_proximity_early__max_down_ret",
-      "combo_rank_min__star50_limit_proximity_early__max_down_ret",
-      "combo_min__star50_limit_proximity_early__max_down_ret"
-    ],
-    "32": [
-      "combo_min__net_volume_flow__bar_ret_0",
-      "combo_rank_min__trend_bar_close_consistency__bar_ret_0",
-      "combo_min__trend_bar_close_consistency__first_bar_return",
+    "15": [
+      "combo_mean__close_vs_open_range__bar_ret_0",
       "combo_min__close_vs_open_range__first_bar_return"
     ],
-    "33": [
-      "combo_sig_product__net_volume_flow__first_bar_return",
-      "combo_sig_product__net_volume_flow__max_down_ret"
+    "16": [
+      "combo_min__net_volume_flow__first_bar_sentiment",
+      "combo_mean__volatility_expansion_trend_vector__first_bar_sentiment"
     ],
-    "34": [
+    "17": [
+      "combo_min__net_volume_flow__first_bar_return",
+      "combo_rank_min__net_volume_flow__bar_ret_0"
+    ],
+    "18": [
+      "combo_min__trend_bar_close_consistency__first_bar_return",
+      "combo_rank_min__trend_bar_close_consistency__bar_ret_0"
+    ],
+    "19": [
+      "combo_max__volatility_expansion_trend_vector__first_bar_sentiment"
+    ],
+    "20": [
+      "combo_tri_mean__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio__net_volume_flow",
+      "combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__volatility_expansion_trend_vector"
+    ],
+    "21": [
+      "combo_tri_median__opening_drive_thrust_ratio__net_volume_flow__body_size_progression",
+      "combo_mean__opening_drive_thrust_ratio__trend_bar_close_consistency",
+      "combo_tri_median__opening_drive_thrust_ratio__max_up_ret__trend_bar_close_consistency"
+    ],
+    "22": [
+      "combo_tri_median__opening_drive_thrust_ratio__star50_limit_proximity_early__trend_bar_close_consistency"
+    ],
+    "23": [
+      "combo_tri_median__opening_drive_thrust_ratio__max_up_ret__body_size_progression"
+    ],
+    "24": [
+      "combo_tri_min__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio__net_volume_flow",
+      "combo_tri_min__opening_drive_thrust_ratio__star50_limit_proximity_early__trend_day_regime_conviction"
+    ],
+    "25": [
+      "combo_tri_mean__rbreaker_sell_setup_proximity_early__net_volume_flow__body_size_progression",
+      "combo_tri_mean__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio__body_size_progression",
+      "combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__body_size_progression"
+    ],
+    "26": [
+      "combo_sig_product__star50_limit_proximity_early__early_body_momentum"
+    ],
+    "27": [
+      "combo_sig_product__opening_drive_thrust_ratio__volatility_expansion_trend_vector",
+      "combo_sig_product__opening_drive_thrust_ratio__net_volume_flow",
+      "combo_sig_product__opening_drive_thrust_ratio__trend_bar_close_consistency",
+      "combo_sig_product__opening_drive_thrust_ratio__close_vs_open_range",
+      "combo_sig_product__opening_drive_thrust_ratio__max_down_ret"
+    ],
+    "28": [
+      "combo_sig_product__first_bar_sentiment__early_body_momentum",
+      "volume_surge_direction"
+    ],
+    "29": [
+      "combo_rank_min__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio",
+      "combo_rank_max__star50_limit_proximity_early__max_down_ret",
+      "combo_mean__star50_limit_proximity_early__max_down_ret",
+      "combo_rank_min__star50_limit_proximity_early__max_down_ret",
+      "combo_min__star50_limit_proximity_early__max_down_ret",
+      "combo_max__star50_limit_proximity_early__max_down_ret"
+    ],
+    "30": [
+      "combo_rank_max__volatility_expansion_trend_vector__max_down_ret",
+      "combo_mean__volatility_expansion_trend_vector__max_down_ret",
+      "combo_max__net_volume_flow__max_down_ret",
+      "combo_max__close_vs_open_range__max_down_ret",
+      "combo_rank_min__volatility_expansion_trend_vector__max_down_ret",
+      "max_down_ret"
+    ],
+    "31": [
       "combo_rel_diff__star50_limit_proximity_early__volume_weighted_momentum_acceleration",
       "combo_clamp_diff__star50_limit_proximity_early__volume_weighted_momentum_acceleration",
       "combo_diff__star50_limit_proximity_early__volume_weighted_momentum_acceleration"
     ],
+    "32": [
+      "combo_max__star50_limit_proximity_early__volatility_expansion_trend_vector",
+      "combo_rank_max__rbreaker_sell_setup_proximity_early__early_body_momentum",
+      "combo_rank_max__star50_limit_proximity_early__volatility_expansion_trend_vector",
+      "combo_max__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio"
+    ],
+    "33": [
+      "combo_mean__max_up_ret__first_bar_return",
+      "combo_rank_max__max_up_ret__bar_ret_0",
+      "combo_rank_max__volatility_expansion_trend_vector__bar_ret_0"
+    ],
+    "34": [
+      "combo_sig_product__max_up_ret__bar_ret_0"
+    ],
     "35": [
-      "combo_sig_product__first_bar_sentiment__early_body_momentum",
-      "volume_surge_direction"
+      "combo_sig_product__net_volume_flow__first_bar_return"
     ],
     "36": [
-      "combo_tri_min__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio__net_volume_flow",
-      "combo_tri_min__opening_drive_thrust_ratio__star50_limit_proximity_early__trend_day_regime_conviction"
+      "combo_mean__opening_drive_thrust_ratio__first_bar_return",
+      "combo_min__opening_drive_thrust_ratio__bar_ret_0"
     ],
     "37": [
-      "combo_tri_mean__rbreaker_sell_setup_proximity_early__opening_drive_thrust_ratio__net_volume_flow",
-      "combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__volatility_expansion_trend_vector"
+      "combo_rank_max__opening_drive_thrust_ratio__bar_ret_0",
+      "combo_max__opening_drive_thrust_ratio__first_bar_sentiment"
     ],
     "38": [
-      "combo_tri_max__opening_drive_thrust_ratio__star50_limit_proximity_early__volatility_expansion_trend_vector"
+      "combo_rel_diff__net_volume_flow__volume_weighted_momentum_acceleration",
+      "combo_diff__net_volume_flow__volume_weighted_momentum_acceleration"
+    ],
+    "39": [
+      "combo_min__opening_drive_thrust_ratio__first_bar_sentiment"
+    ],
+    "40": [
+      "combo_tri_mean__star50_limit_proximity_early__trend_bar_close_consistency__volatility_expansion_trend_vector",
+      "morning_volume_weighted_momentum",
+      "combo_tri_median__max_up_ret__net_volume_flow__body_size_progression",
+      "volatility_expansion_trend_vector",
+      "first_30min_return",
+      "combo_tri_min__max_up_ret__trend_bar_close_consistency__volatility_expansion_trend_vector",
+      "combo_min__close_vs_open_range__early_body_momentum",
+      "combo_max__close_vs_open_range__early_body_momentum"
     ]
   }
 }
