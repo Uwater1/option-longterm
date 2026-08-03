@@ -97,9 +97,9 @@ Goal: Apply strict statistical guards, correlation filters, and trial-count trac
       - cv_penalty - half_penalty - complexity_penalty
   )
   if candidate is correlated with existing pool member old_feature (corr >= theta):
-      replace old_feature with candidate if cand_q > old_q + 0.02
+      replace old_feature with candidate if cand_q > old_q
   ```
-- **Design rationale**: Fine-tuned B5 replacement ensures that between any pair of correlated features A and B ($r \ge \theta$), the feature with the higher composite quality score ($q\_score$) ALWAYS survives, eliminating first-come, first-served iteration order bias. θ=0.95 only rejects near-perfect duplicates — pool size is unconstrained.
+- **Design rationale**: Pre-sorting by $Q$-score descending + strict replacement ($cand\_q > old\_q$) mathematically guarantees that between any pair or group of correlated features ($r \ge \theta$), the feature with the highest composite quality score ALWAYS survives, 100% eliminating arrival order bias. $\theta=0.95$ only rejects near-perfect duplicates.
 
 ### B6. ONC Feature Clustering (Downstream Diversity Control)
 - **Global Constant** (defined at top of `select_features.py`):
