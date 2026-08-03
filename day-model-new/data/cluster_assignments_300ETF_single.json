@@ -15,21 +15,21 @@
       "combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__bar_ret_0"
     ],
     "1": [
-      "combo_min__max_up_ret__bar_body_rng_0"
-    ],
-    "2": [
-      "combo_ratio__bar_body_rng_0__volume_weighted_price_position",
-      "combo_max__bar_body_rng_0__volume_surge_direction"
-    ],
-    "3": [
       "combo_mean__max_up_ret__volume_weighted_price_position",
       "combo_tri_max__max_up_ret__first_bar_return__volume_weighted_price_position",
       "combo_rank_max__max_up_ret__volume_weighted_price_position"
     ],
-    "4": [
+    "2": [
       "combo_rank_min__rbreaker_sell_setup_proximity_early__bar_body_rng_0",
       "combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__bar_body_rng_0",
       "combo_mean__rbreaker_sell_setup_proximity_early__bar_body_rng_0"
+    ],
+    "3": [
+      "combo_min__max_up_ret__bar_body_rng_0"
+    ],
+    "4": [
+      "combo_ratio__bar_body_rng_0__volume_weighted_price_position",
+      "combo_max__bar_body_rng_0__volume_surge_direction"
     ],
     "5": [
       "combo_ratio__opening_drive_thrust_ratio__volume_weighted_price_position",

@@ -4,101 +4,90 @@
   "early": false,
   "k": 1.0,
   "features_selected": [
-    "combo_min__opening_drive_thrust_ratio__star50_limit_proximity_early",
     "combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__first_bar_sentiment",
     "combo_tri_median__rbreaker_sell_setup_proximity_early__first_bar_sentiment__bar_body_rng_0",
-    "combo_min__star50_limit_proximity_early__bar_body_rng_0",
     "combo_tri_median__rbreaker_sell_setup_proximity_early__first_bar_sentiment__first_bar_return",
-    "combo_min__opening_drive_thrust_ratio__first_bar_sentiment",
-    "combo_z_sum__star50_limit_proximity_early__bar_body_rng_0",
-    "combo_rank_min__opening_drive_thrust_ratio__star50_limit_proximity_early",
-    "combo_tri_mean__rbreaker_sell_setup_proximity_early__bar_body_rng_0__first_bar_return",
-    "combo_min__rbreaker_sell_setup_proximity_early__first_bar_return",
-    "combo_tri_mean__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__first_bar_return",
-    "combo_rank_min__rbreaker_sell_setup_proximity_early__bar_ret_0",
-    "combo_rank_min__star50_limit_proximity_early__first_bar_return",
-    "combo_min__star50_limit_proximity_early__yesterday_first_30min_return",
-    "combo_min__star50_limit_proximity_early__first_bar_sentiment",
-    "combo_z_sum__rbreaker_sell_setup_proximity_early__max_up_ret",
-    "combo_z_sum__star50_limit_proximity_early__yesterday_first_30min_return",
-    "combo_mean__star50_limit_proximity_early__bar_ret_0",
-    "combo_mean__max_up_ret__bar_body_rng_0",
-    "combo_rank_max__max_up_ret__first_bar_return",
-    "combo_clamp_diff__bar_ret_0__demark_setup_reversal_early",
-    "combo_max__max_up_ret__first_bar_return",
-    "combo_z_sum__opening_drive_thrust_ratio__max_up_ret",
-    "combo_clamp_diff__max_up_ret__demark_setup_reversal_early",
     "combo_rank_max__opening_drive_thrust_ratio__first_bar_return",
-    "combo_z_sum__first_bar_sentiment__limit_down_proximity_early",
+    "combo_min__star50_limit_proximity_early__first_bar_sentiment",
+    "combo_max__max_up_ret__first_bar_return",
+    "combo_rank_max__max_up_ret__first_bar_return",
+    "combo_z_sum__star50_limit_proximity_early__yesterday_first_30min_return",
+    "combo_z_sum__bar_body_rng_0__limit_down_proximity_early",
+    "combo_z_sum__max_up_ret__first_bar_sentiment",
+    "combo_z_sum__star50_limit_proximity_early__first_bar_sentiment",
+    "combo_clamp_diff__bar_ret_0__demark_setup_reversal_early",
+    "combo_min__star50_limit_proximity_early__yesterday_first_30min_return",
+    "combo_clamp_diff__max_up_ret__demark_setup_reversal_early",
+    "combo_z_sum__opening_drive_thrust_ratio__max_up_ret",
     "combo_ratio__star50_limit_proximity_early__volatility_expansion_trend_vector"
   ],
   "training_metrics": {
-    "overall_ic": 0.17144854080114244,
+    "overall_ic": 0.17052238518693338,
     "overall_ic_ci": [
-      0.1256552396203309,
-      0.21598624300388006
+      0.12384963371314027,
+      0.2138691014562621
     ],
-    "tail_ic": 0.26056626787428955,
+    "tail_ic": 0.25950255014418505,
     "tail_ic_ci": [
-      0.17122974043638683,
-      0.35051473068920297
+      0.1703717440055201,
+      0.3616977121214665
     ],
-    "monotonicity": 0.9151515151515152,
+    "monotonicity": 0.8666666666666667,
     "monotonicity_ci": [
-      0.6606060606060606,
-      0.9757575757575757
+      0.5636363636363636,
+      0.9272727272727272
     ],
-    "ann_ret": 0.06928808640436854,
-    "raw_ann_ret": 0.08507802409882648,
-    "raw_sharpe": 1.4609994498053593,
-    "sharpe": 1.1980745407542372,
-    "sortino": 1.8163109113657654,
-    "max_dd": 0.08804934578508321
+    "ann_ret": 0.06892642769903086,
+    "raw_ann_ret": 0.08391665938785978,
+    "raw_sharpe": 1.579569886895658,
+    "sharpe": 1.3073894738279352,
+    "sortino": 2.0679470235223754,
+    "max_dd": 0.07497068035222496
   },
   "oos_metrics": {
-    "overall_ic": 0.1377821407697941,
+    "overall_ic": 0.13435900890686228,
     "overall_ic_ci": [
-      0.06795125273660191,
-      0.193736865431542
+      0.0661980847450127,
+      0.19082899920987775
     ],
-    "tail_ic": 0.26091783639227445,
+    "tail_ic": 0.27347308841728313,
     "tail_ic_ci": [
-      0.10545266637670567,
-      0.3927625097803922
+      0.10711410235546015,
+      0.4057565462749374
     ],
-    "monotonicity": 0.793939393939394,
+    "monotonicity": 0.5515151515151515,
     "monotonicity_ci": [
-      0.3212121212121212,
-      0.8909090909090909
+      0.2606060606060606,
+      0.8181818181818182
     ],
-    "ann_ret": 0.08314665861416382,
-    "raw_ann_ret": 0.09682702697144041,
-    "raw_sharpe": 1.5837516567458336,
-    "sharpe": 1.3761610281470422,
-    "sortino": 3.695498980191314,
-    "max_dd": 0.053115981698324655
+    "ann_ret": 0.07792459643065529,
+    "raw_ann_ret": 0.09083792627467957,
+    "raw_sharpe": 1.5344569675001165,
+    "sharpe": 1.3311794113293194,
+    "sortino": 3.4831299875634403,
+    "max_dd": 0.061539874904506575
   },
   "lockbox_metrics": {
-    "overall_ic": 0.14493295645103726,
+    "overall_ic": 0.1411293510842698,
     "overall_ic_ci": [
-      0.048527837580133494,
-      0.23031477194813085
+      0.04725975538421098,
+      0.22767785974365273
     ],
-    "tail_ic": 0.26662670445397213,
+    "tail_ic": 0.27395706769489603,
     "tail_ic_ci": [
-      0.039102083797411966,
-      0.47162997914177507
+      0.05072700026325915,
+      0.4819088313318887
     ],
-    "monotonicity": 0.6606060606060606,
+    "monotonicity": 0.6848484848484848,
     "monotonicity_ci": [
-      0.22424242424242424,
-      0.8787878787878788
+      0.21212121212121213,
+      0.8424242424242424
     ],
-    "ann_ret": 0.11087507483622801,
-    "raw_ann_ret": 0.12470708384082599,
-    "raw_sharpe": 1.612421554852094,
-    "sharpe": 1.4488641247692584,
-    "sortino": 4.257114119697168,
-    "max_dd": 0.06455007886091119
+    "ann_ret": 0.10349710062290247,
+    "raw_ann_ret": 0.11675706659837783,
+    "raw_sharpe": 1.542434999083726,
+    "sharpe": 1.3811891174865052,
+    "sortino": 3.9396896672808537,
+    "max_dd": 0.07236264113388086
   }
 }
