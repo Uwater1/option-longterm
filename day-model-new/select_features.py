@@ -52,7 +52,7 @@ MAX_HALF_RATIO = 1.80          # Cap ic_second / early_ic to prune late-training
 MAX_EXTREME_RECENCY_RATIO = 4.0 # Universal cap for extreme recency spikes regardless of early IC
 MAX_EXTREME_HALF_RATIO = 2.5   # Universal cap for extreme half-ratio spikes regardless of early IC
 MIN_EARLY_IC_THRESHOLD = 0.03 # Minimum early IC to trigger recency ratio cap (prevents dividing by tiny early ICs)
-MAX_YEARLY_IC_CV = 1.10       # Max coefficient of variation for yearly ICs (tuned: 1.15->1.10 to prune high-CV noise)
+MAX_YEARLY_IC_CV = 1.00       # Max coefficient of variation for yearly ICs (tuned: 1.15->1.00 to prune high-CV noise)
 # MAX_WEAK_LINK_CV removed — combo ops stabilize noisy primitives; gate had 76-100% TP collateral
 MIN_STABILITY_PRODUCT = 0.09  # Relaxed from 0.15: FILTER_DIAGNOSIS shows 0% precision, 90% TP collateral at 0.15
 MAX_NEGATIVE_REGIMES = 1      # Max vol-quintile regimes with negative IC (>=2 = regime-conditional signal)
