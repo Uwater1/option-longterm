@@ -22,7 +22,7 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
 
-from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_ic_numba, expanding_factor_score_numba, rolling_tail_ic_numba, load_future_trade_returns, load_cluster_assignments
+from utils import load_admitted_pool, load_etf_dataset, build_pool_feature_matrix, expanding_zscore_numba, expanding_factor_ic_numba, expanding_factor_score_numba, rolling_tail_ic_numba, rolling_factor_risk_numba, composite_tailic_risk_score, load_future_trade_returns, load_cluster_assignments
 from weighting import get_weighting_scheme, compute_icw_hysteresis, adaptive_exit_rank
 from strategy import generate_positions, simulate_etf_spot, calculate_metrics, sweep_optimal_threshold, compute_production_threshold, build_trade_log_df
 from robustness import deflated_sharpe_ratio, run_cpcv_backtest
@@ -30,15 +30,17 @@ from option_strategy import simulate_option_portfolio, DEFAULT_OPT_STOPLOSS_MODE
 from research_stoploss import load_intraday_bars_dict, simulate_full_series
 
 AVAILABLE_ETFS = ["300ETF", "500ETF", "50ETF", "159915ETF"]
-ALL_SCHEMES = ["icw", "ew"]  # leave only icw and ew for --scheme all
+ALL_SCHEMES = ["score", "icw", "sortino", "ew"]  # --scheme all: Score Weight primary, rest secondary
 ENSEMBLE_SCHEMES = ["icw", "ew"]  # schemes averaged in ensemble
+DEFAULT_SCORE_BLEND_W_IC = 0.75  # Score = 0.75*rank(tailIC_480d) + 0.25*rank(Sortino_480d)
 
 
 def resolve_ic_ema_span(etf: str, user_span: int | None = None) -> int:
-    """Resolve ETF-adaptive EMA span: 30d for 300ETF/50ETF, 90d for 500ETF/159915ETF."""
+    """Resolve ETF-adaptive EMA span: 60d for 300ETF/50ETF, 90d for 500ETF/159915ETF.
+    (2026-08 span retest: 300ETF 30->60 wins yearly-consistently; 90 confirmed for 500/159915.)"""
     if user_span is not None:
         return user_span
-    return 30 if etf in ["300ETF", "50ETF"] else 90
+    return 60 if etf in ["300ETF", "50ETF"] else 90
 
 
 def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew", z_th: float = 0.5, 
@@ -50,8 +52,11 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                         stoploss_mode: str = "time_decay_trailing", stoploss_param: float = 0.03,
                         pool_override: list = None, cluster_suffix: str = "", group_constraint: bool = None, max_per_group: int = 1,
                         ic_mode: str = "expanding", tail_window: int = 252, tail_pct: float = 0.10,
-                        hysteresis: bool = True, exit_rank: int = 20, min_pos: float = 0.7, delta_z_full: float = 0.4,
-                        opt_commission: float = 4.0, strike_mode: str = "otm") -> dict:
+                        hysteresis: bool = True, exit_rank: int = 25, min_pos: float = 0.7, delta_z_full: float = 0.4,
+                        opt_commission: float = 4.0, strike_mode: str = "otm",
+                        ic_override: np.ndarray = None, weight_ic_override: np.ndarray = None,
+                        score_blend_w_ic: float = DEFAULT_SCORE_BLEND_W_IC,
+                        sortino_gate: bool = True) -> dict:
     """
     Run backtest for one ETF and side combination filtered to OOS date range.
     
@@ -144,6 +149,15 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     # 4. Zero-lookahead expanding z-score standardizer on full history
     burn_in = 252 if len(df) > 500 else 100
     Z_std = expanding_zscore_numba(X_raw, burn_in=burn_in, clip=3.0)
+
+    # 4b. Score blend matrix for score/sortino/ew schemes (zero-lookahead):
+    #     Score = w_ic*rank(tailIC_480d) + (1-w_ic)*rank(Sortino_480d)
+    score_blend_mat = None
+    if scheme_name in ("score", "sortino", "ew") and ic_override is None:
+        _ic_tail = rolling_tail_ic_numba(Z_std, signs, full_trade_ret, window=tail_window, tail_pct=tail_pct, burn_in=burn_in)
+        _, _sortino_mat = rolling_factor_risk_numba(Z_std, signs, full_trade_ret, window=tail_window, burn_in=burn_in)
+        score_blend_mat = composite_tailic_risk_score(_ic_tail, _sortino_mat, score_blend_w_ic)
+        print(f"    [INFO] Score blend matrix: {score_blend_w_ic:.2f}*rank(tailIC) + {1-score_blend_w_ic:.2f}*rank(Sortino) @ {tail_window}d")
     
     # 5. Calculate Composite Signal using weighting scheme
     # Determine n_train for ICW shrinkage (days before start_date)
@@ -192,7 +206,6 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                 Z_composites.append(s_func(Z_std, signs, pool=pool, n_train=n_train, **s_kwargs))
         Z_composite = np.mean(Z_composites, axis=0)
     else:
-        scheme_func = get_weighting_scheme(scheme_name)
         extra_kwargs = dict(rank_kwargs) if rank_kwargs else {}
         # Inject group constraint params
         if cluster_ids is not None:
@@ -200,7 +213,10 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
             extra_kwargs["max_per_group"] = max_per_group
         if dynamic_ic:
             metric_choice = extra_kwargs.get("dynamic_metric", "multi")
-            if metric_choice == "multi" and scheme_name in ("score", "icw", "rank", "ew"):
+            if ic_override is not None:
+                # Injected custom ranking/weight matrix (e.g. composite Score IC)
+                exp_mat = ic_override
+            elif metric_choice == "multi" and scheme_name in ("score", "icw", "rank", "ew"):
                 sw = extra_kwargs.get("score_weights", (0.20, 0.15, 0.65))
                 mw = extra_kwargs.get("mono_window", 750)
                 exp_mat = expanding_factor_score_numba(Z_std, signs, full_trade_ret, burn_in=burn_in, score_weights=sw, mono_window=mw)
@@ -208,9 +224,21 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                 exp_mat = rolling_tail_ic_numba(Z_std, signs, full_trade_ret, window=tail_window, tail_pct=tail_pct, burn_in=burn_in)
             else:
                 exp_mat = expanding_factor_ic_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
+            # Scheme-level overrides (Score IC family):
+            #   score   -> Score blend drives BOTH selection and weights
+            #   sortino -> tail IC selects, Score blend gives weights (decomposition)
+            #   ew      -> Score blend selects the top-K, then equal weights
+            sortino_weight_src = None
+            if scheme_name in ("score", "sortino", "ew") and score_blend_mat is not None:
+                if scheme_name == "ew":
+                    exp_mat = score_blend_mat  # selection metric only (weights are equal)
+                elif scheme_name == "score":
+                    exp_mat = score_blend_mat
+                else:  # sortino: keep tail IC for selection
+                    sortino_weight_src = score_blend_mat
             extra_kwargs["expanding_ic"] = exp_mat
-        # Hysteresis path: use sticky feature selection for ICW scheme
-        if hysteresis and scheme_name == "icw" and dynamic_ic and "expanding_ic" in extra_kwargs:
+        # Hysteresis path: use sticky feature selection for ICW/Score/Sortino schemes
+        if hysteresis and scheme_name in ("icw", "score", "sortino") and dynamic_ic and "expanding_ic" in extra_kwargs:
             ic_ema_span = extra_kwargs.get("ic_ema_span", 30)
             raw_ic = extra_kwargs["expanding_ic"]
             # Build EMA-smoothed IC matrix for ranking
@@ -223,14 +251,42 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                     ic_smoothed[t_i] = alpha_e * raw_ic[t_i] + (1.0 - alpha_e) * ic_smoothed[t_i - 1]
             else:
                 ic_smoothed = raw_ic
+            # Sortino gate (2026-08): mask factors with Sortino_480d <= 0 out of selection.
+            # Applied AFTER EMA smoothing with a BOUNDED value (pre-EMA -1e9 masks cause a
+            # multi-hundred-day banishment artifact). Zero-cost where it never fires
+            # (300/500ETF at old spans), +0.135 Sharpe on 159915ETF where it does.
+            if sortino_gate and ic_override is None:
+                _, _sort_gate = rolling_factor_risk_numba(Z_std, signs, full_trade_ret,
+                                                          window=tail_window, burn_in=burn_in)
+                ic_smoothed = np.where(_sort_gate <= 0.0, -10.0, ic_smoothed)
+            # Optional separate weighting matrix (selection vs weighting decomposition).
+            # Priority: explicit weight_ic_override > sortino scheme's Score blend.
+            weight_src = weight_ic_override if weight_ic_override is not None else sortino_weight_src
+            weight_smoothed = None
+            if weight_src is not None:
+                if ic_ema_span and ic_ema_span > 1:
+                    alpha_w = 2.0 / (ic_ema_span + 1.0)
+                    weight_smoothed = np.zeros_like(weight_src)
+                    weight_smoothed[0] = weight_src[0]
+                    for t_i in range(1, T_z):
+                        weight_smoothed[t_i] = alpha_w * weight_src[t_i] + (1.0 - alpha_w) * weight_smoothed[t_i - 1]
+                else:
+                    weight_smoothed = weight_src
             er = exit_rank if exit_rank is not None else adaptive_exit_rank(N_z, extra_kwargs.get("top_k", 10))
             Z_composite = compute_icw_hysteresis(
                 Z_std, signs, ic_smoothed,
                 cluster_ids=extra_kwargs.get("cluster_ids", None),
                 n_train=n_train, top_k=extra_kwargs.get("top_k", 10),
-                exit_rank=er, max_per_group=extra_kwargs.get("max_per_group", 1)
+                exit_rank=er, max_per_group=extra_kwargs.get("max_per_group", 1),
+                weight_mat=weight_smoothed
             )
         else:
+            if scheme_name == "sortino" and not hysteresis:
+                print("    [WARNING] 'sortino' requires hysteresis; falling back to icw weighting.")
+                scheme_name_eff = "icw"
+            else:
+                scheme_name_eff = scheme_name
+            scheme_func = get_weighting_scheme(scheme_name_eff)
             Z_composite = scheme_func(Z_std, signs, pool=pool, n_train=n_train, **extra_kwargs)
 
     # 6. Threshold Determination (auto-sweep or fixed)
@@ -390,7 +446,7 @@ def main():
     parser = argparse.ArgumentParser(description="NewTrade Day-Model Factor Monetization Backtest Runner")
     parser.add_argument("-e", "--etf", type=str, default="all", help="Target ETF (300ETF, 500ETF, 50ETF, 588000ETF, 159915ETF, or all)")
     parser.add_argument("-s", "--side", type=str, default="single", choices=["single", "long", "short"], help="Trading side")
-    parser.add_argument("--scheme", type=str, default="all", choices=["ew", "icw", "score", "rank", "ensemble", "all"], help="Factor weighting scheme (default: all)")
+    parser.add_argument("--scheme", type=str, default="all", choices=["ew", "icw", "score", "sortino", "rank", "ensemble", "all"], help="Factor weighting scheme (default: all = Score/ICW/Sortino/EW)")
     parser.add_argument("--z-th", type=str, default="auto", help="Conviction threshold Z score. 'auto' = train-sweep + buffer, or float value for fixed.")
     parser.add_argument("--z-buffer", type=float, default=0.1, help="Production buffer added to train-optimal threshold (default 0.1, walk-forward validated)")
     parser.add_argument("--z-short-buffer", type=float, default=None, help="Production buffer for short threshold (default: z_buffer + 0.1)")
@@ -453,8 +509,12 @@ def main():
                         help="Enable sticky feature selection (enter top-10, exit at adaptive rank). Default: True.")
     parser.add_argument("--no-hysteresis", dest="hysteresis", action="store_false",
                         help="Disable hysteresis (use standard daily top-K reselection).")
-    parser.add_argument("--exit-rank", type=int, default=20,
-                        help="Override exit rank for hysteresis (default: 20).")
+    parser.add_argument("--exit-rank", type=int, default=25,
+                        help="Override exit rank for hysteresis (default: 25, A/B validated fairest across all 3 ETFs).")
+    parser.add_argument("--score-blend-w-ic", type=float, default=DEFAULT_SCORE_BLEND_W_IC,
+                        help=f"Tail IC weight in the Score blend for score/sortino/ew schemes (default {DEFAULT_SCORE_BLEND_W_IC}: 75%% tailIC + 25%% Sortino).")
+    parser.add_argument("--no-sortino-gate", dest="sortino_gate", action="store_false",
+                        help="Disable the Sortino<=0 selection gate (default: enabled, post-EMA bounded mask).")
 
     # Validation options
     parser.add_argument("--validate", dest="validate", action="store_true", default=True, help="Run DSR + CPCV validation on results (default: True)")
@@ -571,6 +631,7 @@ def main():
         "weight_delta": args.weight_delta,
         "score_weights": (args.score_w_ic, args.score_w_ir, args.score_w_mono),
         "mono_window": args.mono_window,
+        "score_blend_w_ic": args.score_blend_w_ic,
     }
 
     # ─── Decay Mode: run pool across all future years ───
@@ -622,6 +683,8 @@ def main():
                     hysteresis=args.hysteresis, exit_rank=args.exit_rank,
                     min_pos=args.min_pos, delta_z_full=args.delta_z_full,
                     opt_commission=args.opt_commission,
+                    score_blend_w_ic=args.score_blend_w_ic,
+                    sortino_gate=args.sortino_gate,
                 )
                 yr_results.append(res)
             decay_results.append((yr, yr_results))
@@ -714,6 +777,8 @@ def main():
                     hysteresis=args.hysteresis, exit_rank=args.exit_rank,
                     min_pos=args.min_pos, delta_z_full=args.delta_z_full,
                     opt_commission=args.opt_commission, strike_mode=s_mode,
+                    score_blend_w_ic=args.score_blend_w_ic,
+                    sortino_gate=args.sortino_gate,
                 )
                 if res.get("status") == "SUCCESS":
                     avg_comm = res.get("option_total_pnl_rmb", 0)
@@ -792,6 +857,8 @@ def main():
                 delta_z_full=args.delta_z_full,
                 opt_commission=args.opt_commission,
                 strike_mode=args.strike_mode,
+                score_blend_w_ic=args.score_blend_w_ic,
+                sortino_gate=args.sortino_gate,
             )
             results.append(res)
 
@@ -883,13 +950,15 @@ def main():
             import matplotlib.pyplot as plt
 
             fig, ax = plt.subplots(figsize=(10, 4.5), dpi=150)
+            # Chart prominence: primary scheme (Score if present) bold; all others de-emphasized
+            primary_scheme = "score" if any(x.get("scheme") == "score" for x in plot_results) else "icw"
             for r in plot_results:
                 if r.get("dates") and r.get("cum_pnl"):
                     dates = pd.to_datetime(r["dates"])
                     cum_pnl = r["cum_pnl"]
                     scheme_lbl = r.get('scheme', '').upper()
-                    is_ew = (r.get('scheme') == 'ew')
-                    ax.plot(dates, cum_pnl, label=f"{r['etf']} [{scheme_lbl}] ({r.get('asset_type', 'Spot ETF')}) (Sharpe: {r['cost_sharpe']:.3f}, PnL: {r['total_pnl']:+.4f})", linewidth=1.0 if is_ew else 1.8, alpha=0.35 if is_ew else 1.0, linestyle='--' if is_ew else '-')
+                    is_minor = (r.get('scheme') != primary_scheme)
+                    ax.plot(dates, cum_pnl, label=f"{r['etf']} [{scheme_lbl}] ({r.get('asset_type', 'Spot ETF')}) (Sharpe: {r['cost_sharpe']:.3f}, PnL: {r['total_pnl']:+.4f})", linewidth=1.0 if is_minor else 1.8, alpha=0.35 if is_minor else 1.0, linestyle='--' if is_minor else '-')
             
             mode_title = "Option Portfolio" if args.option else ("Index Future" if args.future else "Spot ETF")
             scheme_title = args.scheme.upper()
@@ -933,9 +1002,10 @@ def main():
     SCHEME_TITLES = {
         "ensemble": "Ensemble (Equal-Weight Average)",
         "rank": f"Rank Bounded Weight ({args.rank_mapping.capitalize()})",
-        "ew": "Equal Weight (EW)",
+        "ew": "Equal Weight (EW, Score-selected top-K)",
         "icw": "IC Weight (ICW)",
-        "score": "Score Weighted",
+        "score": f"Score Weight ({args.score_blend_w_ic:.0%} TailIC + {1-args.score_blend_w_ic:.0%} Sortino)",
+        "sortino": "Sortino Weight (tail-IC selection + Score-blend weights)",
         "glm": "Linear GLM",
     }
     
@@ -1014,18 +1084,24 @@ def main():
             lines.append("| " + " | ".join(row) + " |")
         return "\n".join(lines)
     
-    # Group results by scheme (icw first, other schemes next, ew last)
+    # Group results by scheme: Score Weight first (primary), then icw, sortino, others, ew last
     from collections import OrderedDict
+    scheme_order_pref = ["score", "icw", "sortino"]
+    present_schemes = [r.get("scheme") for r in results]
     scheme_groups = OrderedDict()
-    if "icw" in [r.get("scheme") for r in results]:
-        scheme_groups["icw"] = [r for r in results if r.get("scheme") == "icw"]
+    for s in scheme_order_pref:
+        if s in present_schemes:
+            scheme_groups[s] = [r for r in results if r.get("scheme") == s]
     for r in results:
         s = r.get("scheme", "?")
-        if s not in ("icw", "ew"):
+        if s not in scheme_order_pref and s != "ew":
             scheme_groups.setdefault(s, []).append(r)
-    if "ew" in [r.get("scheme") for r in results]:
+    if "ew" in present_schemes:
         scheme_groups["ew"] = [r for r in results if r.get("scheme") == "ew"]
-    
+
+    # Primary scheme (uncollapsed section + bold chart line): first group in order
+    primary_scheme = next(iter(scheme_groups), None)
+
     # Build report sections
     report_sections = []
     chart_img_included = False
@@ -1034,15 +1110,15 @@ def main():
         title = SCHEME_TITLES.get(scheme_key, scheme_key.upper())
         table_md = _render_table(rows)
         
-        if scheme_key == "ew":
-            # Collapsed details block ONLY for Equal Weight (EW)
+        if scheme_key != primary_scheme:
+            # Collapsed details block for all secondary schemes
             prefix = ""
             if chart_rel_path and not chart_img_included:
                 prefix = f"![Cumulative Equity]({chart_rel_path})\n\n"
                 chart_img_included = True
             section = f"{prefix}<details>\n<summary><b>{title}</b> (click to expand)</summary>\n\n{table_md}\n\n</details>"
         else:
-            # Uncollapsed main section for IC Weight (ICW) and other schemes
+            # Uncollapsed main section for the primary scheme
             img_md = ""
             if chart_rel_path and not chart_img_included:
                 img_md = f"![Cumulative Equity]({chart_rel_path})\n\n"

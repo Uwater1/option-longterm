@@ -51,11 +51,21 @@ uv run python newtrade/run_backtest.py -e all --pool-period _p2016_2024 --option
 uv run python newtrade/run_backtest.py -e 300ETF --option --strike-mode cascade
 uv run python newtrade/run_backtest.py -e 159915ETF --option --strike-mode vol_t1
 
-# Compare all weighting schemes side-by-side (auto exports trades CSVs)
+# Compare all weighting schemes side-by-side (score/icw/sortino/ew, auto exports trades CSVs)
 uv run python newtrade/run_backtest.py -e 500ETF --scheme all
 
-# Default production backtest (ICW scheme, Top-10 truncation, EMA30 IC, validated)
+# Default production backtest (4 schemes: Score primary + ICW/Sortino/EW, Top-10, ER=25, validated)
 uv run python newtrade/run_backtest.py -e all
+
+# Single new schemes: Score Weight (primary), Sortino Weight (tailIC selection + Score-blend weights)
+uv run python newtrade/run_backtest.py -e all --scheme score
+uv run python newtrade/run_backtest.py -e all --scheme sortino
+
+# Tune the Score blend (tail IC weight; default 0.75 = 75% tailIC + 25% Sortino)
+uv run python newtrade/run_backtest.py -e all --scheme score --score-blend-w-ic 0.5
+
+# Override hysteresis exit rank (default 25, A/B validated)
+uv run python newtrade/run_backtest.py -e all --scheme icw --exit-rank 20
 
 # Group-constrained backtest (ONC clusters, max 1 feature per cluster)
 uv run python newtrade/run_backtest.py -e 300ETF --group-constraint
@@ -116,7 +126,7 @@ newtrade/
 ├── research_option_stoploss.py # Option intraday stop-loss simulator & Train/OOS benchmark
 ├── option_strategy.py       # Capital-constrained option portfolio execution, 5m stop-loss, ETF-adaptive strike selection
 ├── utils.py                 # Data loading, recipe computation, expanding z-score, futures trade return mapper
-├── weighting.py             # Weighting schemes: ICW (default), EW, Score, Rank, with Top-K truncation
+├── weighting.py             # Weighting schemes: ICW, EW, Score, Rank + hysteresis (weight_mat split, adaptive exit ranks)
 ├── strategy.py              # Threshold sweep, position sizing (binary/tanh/quadratic), ETF simulation
 ├── tests/                   # Research & experimental test suite
 │   ├── test_option_stoploss_ab.py # Multi-arm option stoploss A/B testing suite
@@ -138,9 +148,12 @@ newtrade/
 | **Per-Year Diagnosis** | `--year 2022` sets start date to `2022-01-01` and runs through `2026-01-01` with unique chart. `--pool-period _p2016_2024` auto-infers OOS start date `2024-01-01`. `--decay` tests pool across future years. |
 | **Full Pool Benchmark** | `--pool-period all` sequentially executes backtests for all pool vintages (`old`, `_p2016_2024`, `_p2018_2026`) and generates dedicated reports/charts. |
 | **Active ETF Scope** | `300ETF`, `500ETF`, `50ETF`, `159915ETF`. `588000ETF` is **disabled** (trained on 2021-2025 during market regime change). |
-| **Production Signal** | IC Weighted (`--scheme icw`) on Top-10 features selected by ETF-adaptive EMA IC (`--ic-ema-span`: 30d for 300ETF/50ETF, 90d for 500ETF/159915ETF). |
-| **IC Mode** | `--ic-mode expanding` (default): full-history Pearson. `--ic-mode rolling_tail`: 480d rolling Spearman on top/bottom 10% tail. Benefits large stale pools (N>100). Default TBD. |
-| **Scheme Comparison** | `--scheme all` evaluates `ICW` and `EW` side-by-side. |
+| **Production Signal** | 4 schemes: **score** (primary, top of REPORT.md), **icw**, **sortino**, **ew**. All share top-10 hysteresis selection (ER=25); they differ in selection/weight metric. ETF-adaptive EMA IC span (30d for 300ETF/50ETF, 90d for 500ETF/159915ETF). |
+| **Score Blend** | `Score = 0.75·rank(tailIC_480d) + 0.25·rank(Sortino_480d)` (`--score-blend-w-ic 0.75`). Pure-Sortino weights rejected; Sortino for selection crushes 500ETF. See plan.md §3.6. |
+| **Scheme Roles** | score: blend selects + weights. icw: tail IC selects + weights (legacy). sortino: tail IC selects, blend weights (decomposition). ew: blend selects top-K, equal weights. |
+| **IC Mode** | `--ic-mode rolling_tail` (default): 480d rolling Spearman on top/bottom 10% tail. `--ic-mode expanding`: full-history Pearson. |
+| **Exit Rank** | `--exit-rank` default **25** (fixed, A/B validated 2026-08: fairest across all 3 ETFs; per-ETF optima 23/25/15 conflict, adaptive formulas no better). |
+| **Scheme Comparison** | `--scheme all` evaluates `score`, `icw`, `sortino`, `ew` side-by-side (Score section uncollapsed, others in `<details>` blocks). |
 | **Top-K Truncation** | Default `--top-k 10`. Solves 500ETF 32-feature dilution (+0.113 Sharpe lift) while acting as a non-destructive floor for lean pools (159915ETF SR=1.497). |
 | **ONC Group Constraint** | `--group-constraint` enables ONC cluster-based diversity (max 1 feature per cluster per day). Auto-detects period cluster file `day-model-new/data/cluster_assignments_{etf}_{side}{suffix}.json` matching `--pool-period`. Use `--max-per-group N` to allow N features per cluster. |
 | **Production Sizing** | Binary L+S. Shorts add 30-40% of PnL. 61% WR on 159915ETF. |
@@ -158,7 +171,8 @@ newtrade/
 | **Option Strike Selection** | ETF-adaptive default (`--strike-mode auto`): 300ETF/50ETF=cascade, 500ETF=nearest, 159915ETF=vol_t1. A/B validated: +83% avg Sharpe vs OTM baseline. See [plan.md §5.3](plan.md). |
 | **Instrument** | Long-Short enabled by default. Use `--long-only` for Spot ETF long-only. Use `--future` for Index Futures. |
 | **Trade Window** | 10:00 entry → 14:35 exit (intraday). |
-| **Intraday Stop-Loss** | **Omitted**. Benchmarked 5 methods across 1m bars (2022-2026 OOS). Intraday stop-losses degrade Sharpe by -0.337 on avg due to premature exits on noisy local extremes & friction. |
+| **Intraday Stop-Loss** | Enabled by default: `time_decay_trailing=0.03` (spot), `opt_time_decay_trailing=0.30` (option). Disable with `--no-stoploss`. |
+| **Yearly Diagnostics** | Per-year tests (2022–2025) exposed a 2025 regime break: all configs negative on 300ETF/500ETF. Use `--year` runs to check stability before adopting any weighting change. |
 
 ## Data Dependencies
 

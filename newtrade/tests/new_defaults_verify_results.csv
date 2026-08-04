@@ -1,0 +1,10 @@
+Arm,ETF,Span,Gate,CostSharpe,TotalPnL,Trades
+new_defaults,300ETF,60,True,0.539,0.1186,143
+gate_off,300ETF,60,False,0.539,0.1186,143
+old_prod,300ETF,30,False,0.204,0.0399,151
+new_defaults,500ETF,90,True,1.039,0.2176,150
+gate_off,500ETF,90,False,1.039,0.2176,150
+old_prod,500ETF,90,False,1.039,0.2176,150
+new_defaults,159915ETF,90,True,1.065,0.4805,254
+gate_off,159915ETF,90,False,0.93,0.4162,241
+old_prod,159915ETF,90,False,0.93,0.4162,241

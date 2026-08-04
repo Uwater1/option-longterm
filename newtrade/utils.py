@@ -455,6 +455,95 @@ def rolling_tail_ic_numba(Z_std: np.ndarray, signs: np.ndarray, trade_returns: n
 
 
 @njit(cache=True)
+def rolling_factor_risk_numba(Z_std: np.ndarray, signs: np.ndarray, trade_returns: np.ndarray,
+                              window: int = 480, burn_in: int = 252) -> tuple:
+    """
+    Compute zero-lookahead rolling factor-level Sharpe & Sortino ratios.
+    At day t, uses data from [t-window, t-1] only.
+
+    Factor daily strategy return: fret[t, j] = Z_signed[t, j] * trade_returns[t]
+    (i.e. the P&L of holding the sign-aligned z-scored factor as a position).
+
+    Sharpe_j  = mean(fret) / std(fret) * sqrt(252)
+    Sortino_j = mean(fret) / sqrt(mean(min(fret, 0)^2)) * sqrt(252)
+
+    Args:
+        Z_std: Standardized feature matrix (T, N)
+        signs: Sign alignment array (N,)
+        trade_returns: Daily trade returns (T,)
+        window: Rolling lookback window in trading days (default 480)
+        burn_in: Minimum days before producing output (default 252)
+
+    Returns:
+        (Sharpe_matrix, Sortino_matrix) each (T, N), row t computed on [t-window, t-1]
+    """
+    T, N = Z_std.shape
+    Sharpe_mat = np.zeros((T, N), dtype=np.float64)
+    Sortino_mat = np.zeros((T, N), dtype=np.float64)
+    effective_start = max(burn_in, window)
+    if T < effective_start or N == 0:
+        return Sharpe_mat, Sortino_mat
+
+    # Pre-align signs
+    Z_signed = np.zeros((T, N), dtype=np.float64)
+    for j in range(N):
+        Z_signed[:, j] = Z_std[:, j] * signs[j]
+
+    for t in range(effective_start, T):
+        win_start = t - window
+        for j in range(N):
+            sum_r = 0.0
+            sum_r2 = 0.0
+            sum_dn2 = 0.0
+            for i in range(window):
+                fr = Z_signed[win_start + i, j] * trade_returns[win_start + i]
+                sum_r += fr
+                sum_r2 += fr * fr
+                if fr < 0.0:
+                    sum_dn2 += fr * fr
+            mean_r = sum_r / float(window)
+            var_r = sum_r2 / float(window) - mean_r * mean_r
+            std_r = np.sqrt(max(1e-18, var_r))
+            Sharpe_mat[t, j] = (mean_r / std_r) * np.sqrt(252.0)
+            downside_dev = np.sqrt(max(1e-18, sum_dn2 / float(window)))
+            Sortino_mat[t, j] = (mean_r / downside_dev) * np.sqrt(252.0)
+
+    # Fill burn-in with first valid row
+    if effective_start < T:
+        for t in range(effective_start):
+            Sharpe_mat[t, :] = Sharpe_mat[effective_start, :]
+            Sortino_mat[t, :] = Sortino_mat[effective_start, :]
+
+    return Sharpe_mat, Sortino_mat
+
+
+def composite_tailic_risk_score(ic_mat: np.ndarray, risk_mat: np.ndarray,
+                                w_ic: float) -> np.ndarray:
+    """
+    Cross-sectional rank-normalized blend of two factor metric matrices.
+
+    Score[t, j] = w_ic * rank_norm(ic_mat[t]) + (1 - w_ic) * rank_norm(risk_mat[t])
+    where rank_norm maps each row to (1/N .. 1] (same convention as
+    expanding_factor_score_numba). Zero-lookahead: rows of ic_mat/risk_mat
+    are assumed computed on data up to t-1.
+
+    Args:
+        ic_mat: (T, N) rolling tail IC matrix
+        risk_mat: (T, N) rolling Sharpe or Sortino matrix
+        w_ic: Weight on tail IC component (risk weight = 1 - w_ic)
+
+    Returns:
+        Score_matrix (T, N) in (0, 1]
+    """
+    T, N = ic_mat.shape
+    Score_mat = np.empty((T, N), dtype=np.float64)
+    w_risk = 1.0 - w_ic
+    for t in range(T):
+        Score_mat[t] = w_ic * _fast_rankdata_norm(ic_mat[t]) + w_risk * _fast_rankdata_norm(risk_mat[t])
+    return Score_mat
+
+
+@njit(cache=True)
 def _fast_rankdata_norm(arr: np.ndarray) -> np.ndarray:
     N = len(arr)
     order = np.argsort(arr)

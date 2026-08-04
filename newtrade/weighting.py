@@ -462,10 +462,22 @@ def adaptive_exit_rank(n_features: int, top_k: int = 10, hard_cap: int = 20) -> 
     return min(formula, hard_cap)
 
 
+def adaptive_exit_rank_clusters(n_clusters: int, top_k: int = 10, hard_cap: int = 25) -> int:
+    """
+    Cluster-count adaptive exit_rank: ER = min(top_k + max(5, n_clusters // 2), hard_cap).
+
+    Rationale: with the max-1-per-cluster constraint the active set spans distinct
+    ONC clusters, so the probation band should scale with the number of clusters
+    (the effective selection depth), not the raw feature count.
+    """
+    band = max(5, n_clusters // 2)
+    return min(top_k + band, hard_cap)
+
+
 def compute_icw_hysteresis(Z: np.ndarray, signs: np.ndarray, ic_mat: np.ndarray,
                            cluster_ids: np.ndarray = None, n_train: int = 1700,
                            top_k: int = 10, exit_rank: int = None,
-                           max_per_group: int = 1) -> np.ndarray:
+                           max_per_group: int = 1, weight_mat: np.ndarray = None) -> np.ndarray:
     """
     ICW with feature selection hysteresis (cluster-aware).
     
@@ -477,12 +489,15 @@ def compute_icw_hysteresis(Z: np.ndarray, signs: np.ndarray, ic_mat: np.ndarray,
     Args:
       Z: Standardized feature matrix (T, N)
       signs: Factor signs (N,)
-      ic_mat: EMA-smoothed IC matrix (T, N) for ranking
+      ic_mat: EMA-smoothed IC matrix (T, N) for ranking & SELECTION
       cluster_ids: ONC cluster assignments (N,) or None
       n_train: Training sample count for SE_IC shrinkage
       top_k: Number of features to select (enter threshold)
       exit_rank: Rank below which features exit. If None, uses adaptive_exit_rank().
       max_per_group: Max features per cluster (default 1)
+      weight_mat: Optional separate (T, N) matrix used for ICW shrinkage WEIGHTS
+                  (component decomposition: selection metric vs weighting metric).
+                  If None, ic_mat is used for both (original behavior).
     
     Returns:
       Z_composite: (T,) composite signal
@@ -538,7 +553,8 @@ def compute_icw_hysteresis(Z: np.ndarray, signs: np.ndarray, ic_mat: np.ndarray,
             continue
         active_idx = np.array(sorted(active_set), dtype=np.int64)
         w_t = np.zeros(N, dtype=np.float64)
-        raw_w = np.maximum(0.0, scores[active_idx] - se_ic)
+        w_src = weight_mat[t] if weight_mat is not None else scores
+        raw_w = np.maximum(0.0, w_src[active_idx] - se_ic)
         w_sum = raw_w.sum()
         if w_sum < 1e-12:
             w_t[active_idx] = 1.0 / float(len(active_idx))
