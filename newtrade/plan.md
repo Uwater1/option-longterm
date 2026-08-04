@@ -113,10 +113,12 @@ $$\text{Score}_{i,t} = w_{\text{ic}} \cdot \text{rank}(\text{tailIC}_{480d}) + (
 
 | Scheme | Selection metric | Weight metric | Notes |
 |--------|-----------------|---------------|-------|
-| **score** (primary) | Score blend | Score blend (ICW shrinkage) | Full Score IC pipeline; top of REPORT.md |
-| **icw** | Rolling tail IC 480d | Rolling tail IC (ICW shrinkage) | Legacy production scheme |
+| **icw** (primary) | Rolling tail IC 480d | Rolling tail IC (ICW shrinkage) | Production scheme; top of REPORT.md since 2026-08 |
 | **sortino** | Rolling tail IC 480d | Score blend | Selection/weighting decomposition |
 | **ew** | Score blend | Equal weight (1/K) | Score only chooses features |
+| ~~score~~ (retired from `--scheme all`, 2026-08) | Score blend | Score blend (ICW shrinkage) | Still runnable via explicit `--scheme score`; dropped from defaults |
+
+**2026-08 scheme decision:** the Score scheme was removed from `--scheme all` and ICW made primary. Evidence under the current defaults (spans 60/90/90 + Sortino≤0 gate): score avg Sharpe 0.463 vs icw 0.881 (−0.42); meta-IC showed the blend dilutes tailIC's forward predictiveness; and the Sortino≤0 selection gate now bakes the Sortino information into selection, making the blend redundant. sortino/ew are kept as collapsed diagnostics.
 
 **Key empirical findings** (`tests/test_weight_blend_yearly_ab.py`):
 - Pure-Sortino weights are rejected (avg 0.626 vs 0.684 baseline); the blend is required.
@@ -134,7 +136,7 @@ The Score-blend family was judged by P&L A/B, which is contaminated by threshold
 - **Phase 3 A/B (ER=25, REPORT.md baseline reproduced Δ=+0.0000):** FQ_select_weight is the best arm (avg +0.028: 300ETF +0.187, 159915ETF +0.299, but 500ETF −0.403) → **partial pass; production defaults unchanged**. Pool-size interaction: FQ diversity helps small pools; the 377-feature 500ETF pool needs pure tail IC.
 - **Comprehensive sweep (27 arms, target TP′ ≥ 8/10):** multi-window tailIC {240,480,960}, Sortino {240,480}, mono, momentum, plus day-model-new ports (n-negative-blocks, jackknife leave-one-block-out min IC, vol-regime consistency, deflated-IC noise-floor gate) and 9 gate stacks on tailIC. Best TP′ = 7.15/10 (tailIC+Sortino+momentum); **no arm beats raw tailIC480, none null-significant**.
 - **Gated adaptive-K follow-up (no fill-in):** TP′ rate among gate-passing factors is 69.8–71.2% for every gate stack (best: tailIC > pool noise-floor). **The 3-month TP′ ceiling of the admitted pools is ≈ 71–75% (500ETF 75%, 300ETF 66%) — 80% is unreachable by downstream rescoring/gating.** Raising TP count must happen upstream in day-model-new admission.
-- **Gate-as-default P&L A/B (`tests/test_fq_gate_default_ab.py` + `test_fq_g1_diagnose.py`):** the first gate A/B injected masks of −1e9 **before** EMA smoothing — a single tailIC≤0 day (3–6% of factor-days; 70–100% of factors ever touch it) poisoned that factor's smoothed score for ~300–900 days (a banishment artifact), overstating gate costs. Corrected post-EMA gate test: `tailIC≤0` mask is an exact no-op on 300/500ETF (baseline selection almost never holds negative-IC factors: 0.8%/0% of days, and ICW shrinkage w ∝ max(0, IC − 1/√n) already zeroes them) and costs 159915ETF −0.091 (churn). `Sortino≤0` mask is the only clean-positive gate: +0.135 on 159915ETF, Δ=0.000 elsewhere (ΔAvg +0.045). Jackknife-loo gating destroys 300ETF (−0.43). **Decision: default stays ungated**; if a gate is ever wanted, Sortino≤0 is the only defensible candidate (single-ETF evidence).
+- **Gate-as-default P&L A/B (`tests/test_fq_gate_default_ab.py` + `test_fq_g1_diagnose.py`):** the first gate A/B injected masks of −1e9 **before** EMA smoothing — a single tailIC≤0 day (3–6% of factor-days; 70–100% of factors ever touch it) poisoned that factor's smoothed score for ~300–900 days (a banishment artifact), overstating gate costs. Corrected post-EMA gate test: `tailIC≤0` mask is an exact no-op on 300/500ETF (baseline selection almost never holds negative-IC factors: 0.8%/0% of days, and ICW shrinkage w ∝ max(0, IC − 1/√n) already zeroes them) and costs 159915ETF −0.091 (churn). `Sortino≤0` mask is the only clean-positive gate: +0.135 on 159915ETF, Δ=0.000 elsewhere (ΔAvg +0.045). Jackknife-loo gating destroys 300ETF (−0.43). **The tailIC gate was rejected, but the Sortino≤0 candidate was subsequently ADOPTED as production default (2026-08, user decision, spans 60/90/90 + Sortino gate; verified combined config avg +0.157)** — see §3.2 EMA smoothing line.
 
 ---
 

@@ -148,12 +148,13 @@ newtrade/
 | **Per-Year Diagnosis** | `--year 2022` sets start date to `2022-01-01` and runs through `2026-01-01` with unique chart. `--pool-period _p2016_2024` auto-infers OOS start date `2024-01-01`. `--decay` tests pool across future years. |
 | **Full Pool Benchmark** | `--pool-period all` sequentially executes backtests for all pool vintages (`old`, `_p2016_2024`, `_p2018_2026`) and generates dedicated reports/charts. |
 | **Active ETF Scope** | `300ETF`, `500ETF`, `50ETF`, `159915ETF`. `588000ETF` is **disabled** (trained on 2021-2025 during market regime change). |
-| **Production Signal** | 4 schemes: **score** (primary, top of REPORT.md), **icw**, **sortino**, **ew**. All share top-10 hysteresis selection (ER=25); they differ in selection/weight metric. ETF-adaptive EMA IC span (30d for 300ETF/50ETF, 90d for 500ETF/159915ETF). |
+| **Production Signal** | 3 schemes: **icw** (primary, top of REPORT.md), **sortino**, **ew** (2026-08: Score scheme dropped from defaults — avg Sharpe 0.463 vs icw 0.881; still runnable via explicit `--scheme score`). All share top-10 hysteresis selection (ER=25). ETF-adaptive EMA IC span (**60d** for 300ETF/50ETF, 90d for 500ETF/159915ETF) + **Sortino≤0 selection gate** (post-EMA bounded mask, `--no-sortino-gate` to disable). |
+| **Runtime Cache** | Heavy matrices (z-scores, rolling tail IC, Sortino) are computed once per ETF+pool+window and shared across `--scheme all` / `--year` / `--decay` calls (`_PRECOMP_CACHE` in run_backtest.py). |
 | **Score Blend** | `Score = 0.75·rank(tailIC_480d) + 0.25·rank(Sortino_480d)` (`--score-blend-w-ic 0.75`). Pure-Sortino weights rejected; Sortino for selection crushes 500ETF. See plan.md §3.6. |
-| **Scheme Roles** | score: blend selects + weights. icw: tail IC selects + weights (legacy). sortino: tail IC selects, blend weights (decomposition). ew: blend selects top-K, equal weights. |
+| **Scheme Roles** | icw (primary): tail IC selects + weights. sortino: tail IC selects, blend weights (decomposition). ew: blend selects top-K, equal weights. score: retired from defaults (explicit `--scheme score` still works). |
 | **IC Mode** | `--ic-mode rolling_tail` (default): 480d rolling Spearman on top/bottom 10% tail. `--ic-mode expanding`: full-history Pearson. |
 | **Exit Rank** | `--exit-rank` default **25** (fixed, A/B validated 2026-08: fairest across all 3 ETFs; per-ETF optima 23/25/15 conflict, adaptive formulas no better). |
-| **Scheme Comparison** | `--scheme all` evaluates `score`, `icw`, `sortino`, `ew` side-by-side (Score section uncollapsed, others in `<details>` blocks). |
+| **Scheme Comparison** | `--scheme all` evaluates `icw`, `sortino`, `ew` side-by-side (ICW section uncollapsed, others in `<details>` blocks). |
 | **Top-K Truncation** | Default `--top-k 10`. Solves 500ETF 32-feature dilution (+0.113 Sharpe lift) while acting as a non-destructive floor for lean pools (159915ETF SR=1.497). |
 | **ONC Group Constraint** | `--group-constraint` enables ONC cluster-based diversity (max 1 feature per cluster per day). Auto-detects period cluster file `day-model-new/data/cluster_assignments_{etf}_{side}{suffix}.json` matching `--pool-period`. Use `--max-per-group N` to allow N features per cluster. |
 | **Production Sizing** | Binary L+S. Shorts add 30-40% of PnL. 61% WR on 159915ETF. |

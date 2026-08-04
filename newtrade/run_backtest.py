@@ -30,7 +30,7 @@ from option_strategy import simulate_option_portfolio, DEFAULT_OPT_STOPLOSS_MODE
 from research_stoploss import load_intraday_bars_dict, simulate_full_series
 
 AVAILABLE_ETFS = ["300ETF", "500ETF", "50ETF", "159915ETF"]
-ALL_SCHEMES = ["score", "icw", "sortino", "ew"]  # --scheme all: Score Weight primary, rest secondary
+ALL_SCHEMES = ["icw", "sortino", "ew"]  # --scheme all: ICW primary (2026-08: Score scheme dropped)
 ENSEMBLE_SCHEMES = ["icw", "ew"]  # schemes averaged in ensemble
 DEFAULT_SCORE_BLEND_W_IC = 0.75  # Score = 0.75*rank(tailIC_480d) + 0.25*rank(Sortino_480d)
 
@@ -41,6 +41,49 @@ def resolve_ic_ema_span(etf: str, user_span: int | None = None) -> int:
     if user_span is not None:
         return user_span
     return 60 if etf in ["300ETF", "50ETF"] else 90
+
+
+# ── Precompute cache (2026-08 runtime optimization) ──
+# The heavy zero-lookahead matrices (z-scores, rolling tail IC, Sortino) are identical
+# across schemes / --year / --decay calls for the same ETF+pool+window. Previously
+# `--scheme all` recomputed them 4-7 times per ETF (minutes each on 500ETF).
+_PRECOMP_CACHE: dict = {}
+_PRECOMP_CACHE_MAX = 4
+
+
+def _get_precomputed(etf, side, cluster_suffix, pool, df, use_future, tail_window, tail_pct, burn_in):
+    """Return cache entry with Z_std/signs/feat_names (+ lazy tail_ic/sortino slots)."""
+    import json as _json
+    _pool_id = tuple(sorted(_json.dumps(p, sort_keys=True) if isinstance(p, dict) else str(p)
+                            for p in pool))
+    key = (etf, side, cluster_suffix, _pool_id, len(df), tail_window,
+           round(float(tail_pct), 4), "fut" if use_future else "spot", burn_in)
+    hit = _PRECOMP_CACHE.get(key)
+    if hit is not None:
+        return hit
+    X_raw, signs, feat_names = build_pool_feature_matrix(df, pool)
+    Z_std = expanding_zscore_numba(X_raw, burn_in=burn_in, clip=3.0)
+    if len(_PRECOMP_CACHE) >= _PRECOMP_CACHE_MAX:
+        _PRECOMP_CACHE.pop(next(iter(_PRECOMP_CACHE)))  # evict oldest
+    hit = {"Z_std": Z_std, "signs": signs, "feat_names": feat_names,
+           "tail_ic": None, "sortino": None}
+    _PRECOMP_CACHE[key] = hit
+    return hit
+
+
+def _ensure_tail_ic(entry, full_trade_ret, tail_window, tail_pct, burn_in):
+    if entry["tail_ic"] is None:
+        entry["tail_ic"] = rolling_tail_ic_numba(entry["Z_std"], entry["signs"], full_trade_ret,
+                                                 window=tail_window, tail_pct=tail_pct, burn_in=burn_in)
+    return entry["tail_ic"]
+
+
+def _ensure_sortino(entry, full_trade_ret, tail_window, burn_in):
+    if entry["sortino"] is None:
+        _, s = rolling_factor_risk_numba(entry["Z_std"], entry["signs"], full_trade_ret,
+                                         window=tail_window, burn_in=burn_in)
+        entry["sortino"] = s
+    return entry["sortino"]
 
 
 def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew", z_th: float = 0.5, 
@@ -119,9 +162,19 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
 
     print(f"--> Running Backtest: ETF={etf}, Asset={asset_type}, Side={side}, Scheme={scheme_name.upper()}, z_th={'auto' if auto_threshold else z_th}, Mode={position_mode}, LongOnly={long_only}, OOS=[{start_date} to {end_date}]")
     
-    # 3. Build raw feature matrix & signs
-    X_raw, signs, feat_names = build_pool_feature_matrix(df, pool)
-    
+    # 3. Heavy shared matrices (cached across scheme/--year/--decay calls)
+    burn_in = 252 if len(df) > 500 else 100
+    _pre = _get_precomputed(etf, side, cluster_suffix, pool, df, use_future,
+                            tail_window, tail_pct, burn_in)
+    signs, feat_names = _pre["signs"], _pre["feat_names"]
+    Z_std = _pre["Z_std"]
+    _need_tail = (ic_override is None) and (
+        (dynamic_ic and ic_mode == "rolling_tail") or scheme_name in ("score", "sortino", "ew", "ensemble"))
+    _shared_tail_ic = _ensure_tail_ic(_pre, full_trade_ret, tail_window, tail_pct, burn_in) if _need_tail else None
+    _need_sortino = (ic_override is None) and (
+        sortino_gate or scheme_name in ("score", "sortino", "ew"))
+    _shared_sortino = _ensure_sortino(_pre, full_trade_ret, tail_window, burn_in) if _need_sortino else None
+
     # 3b. Build cluster_ids for group-constrained selection (if enabled)
     cluster_ids = None
     if group_constraint is not False:  # None (auto) or True
@@ -146,17 +199,13 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
             elif group_constraint is None or group_constraint is True:
                 print(f"    [INFO] Group constraint auto-enabled: {len(set(cluster_ids))} ONC clusters detected.")
     
-    # 4. Zero-lookahead expanding z-score standardizer on full history
-    burn_in = 252 if len(df) > 500 else 100
-    Z_std = expanding_zscore_numba(X_raw, burn_in=burn_in, clip=3.0)
+    # 4. Z_std from shared cache (zero-lookahead expanding z-score standardizer)
 
     # 4b. Score blend matrix for score/sortino/ew schemes (zero-lookahead):
     #     Score = w_ic*rank(tailIC_480d) + (1-w_ic)*rank(Sortino_480d)
     score_blend_mat = None
     if scheme_name in ("score", "sortino", "ew") and ic_override is None:
-        _ic_tail = rolling_tail_ic_numba(Z_std, signs, full_trade_ret, window=tail_window, tail_pct=tail_pct, burn_in=burn_in)
-        _, _sortino_mat = rolling_factor_risk_numba(Z_std, signs, full_trade_ret, window=tail_window, burn_in=burn_in)
-        score_blend_mat = composite_tailic_risk_score(_ic_tail, _sortino_mat, score_blend_w_ic)
+        score_blend_mat = composite_tailic_risk_score(_shared_tail_ic, _shared_sortino, score_blend_w_ic)
         print(f"    [INFO] Score blend matrix: {score_blend_w_ic:.2f}*rank(tailIC) + {1-score_blend_w_ic:.2f}*rank(Sortino) @ {tail_window}d")
     
     # 5. Calculate Composite Signal using weighting scheme
@@ -169,7 +218,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
     if scheme_name == "ensemble":
         # Ensemble: equal-weight average of all 4 schemes
         if ic_mode == "rolling_tail":
-            IC_mat = rolling_tail_ic_numba(Z_std, signs, full_trade_ret, window=tail_window, tail_pct=tail_pct, burn_in=burn_in)
+            IC_mat = _shared_tail_ic
         else:
             IC_mat = expanding_factor_ic_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
         rk = dict(rank_kwargs) if rank_kwargs else {}
@@ -221,7 +270,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                 mw = extra_kwargs.get("mono_window", 750)
                 exp_mat = expanding_factor_score_numba(Z_std, signs, full_trade_ret, burn_in=burn_in, score_weights=sw, mono_window=mw)
             elif ic_mode == "rolling_tail":
-                exp_mat = rolling_tail_ic_numba(Z_std, signs, full_trade_ret, window=tail_window, tail_pct=tail_pct, burn_in=burn_in)
+                exp_mat = _shared_tail_ic
             else:
                 exp_mat = expanding_factor_ic_numba(Z_std, signs, full_trade_ret, burn_in=burn_in)
             # Scheme-level overrides (Score IC family):
@@ -256,9 +305,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
             # multi-hundred-day banishment artifact). Zero-cost where it never fires
             # (300/500ETF at old spans), +0.135 Sharpe on 159915ETF where it does.
             if sortino_gate and ic_override is None:
-                _, _sort_gate = rolling_factor_risk_numba(Z_std, signs, full_trade_ret,
-                                                          window=tail_window, burn_in=burn_in)
-                ic_smoothed = np.where(_sort_gate <= 0.0, -10.0, ic_smoothed)
+                ic_smoothed = np.where(_shared_sortino <= 0.0, -10.0, ic_smoothed)
             # Optional separate weighting matrix (selection vs weighting decomposition).
             # Priority: explicit weight_ic_override > sortino scheme's Score blend.
             weight_src = weight_ic_override if weight_ic_override is not None else sortino_weight_src
@@ -950,8 +997,8 @@ def main():
             import matplotlib.pyplot as plt
 
             fig, ax = plt.subplots(figsize=(10, 4.5), dpi=150)
-            # Chart prominence: primary scheme (Score if present) bold; all others de-emphasized
-            primary_scheme = "score" if any(x.get("scheme") == "score" for x in plot_results) else "icw"
+            # Chart prominence: primary scheme (ICW) bold; all others de-emphasized
+            primary_scheme = "icw"
             for r in plot_results:
                 if r.get("dates") and r.get("cum_pnl"):
                     dates = pd.to_datetime(r["dates"])
@@ -1084,9 +1131,9 @@ def main():
             lines.append("| " + " | ".join(row) + " |")
         return "\n".join(lines)
     
-    # Group results by scheme: Score Weight first (primary), then icw, sortino, others, ew last
+    # Group results by scheme: ICW first (primary, 2026-08), then sortino, others, ew last
     from collections import OrderedDict
-    scheme_order_pref = ["score", "icw", "sortino"]
+    scheme_order_pref = ["icw", "sortino"]
     present_schemes = [r.get("scheme") for r in results]
     scheme_groups = OrderedDict()
     for s in scheme_order_pref:
