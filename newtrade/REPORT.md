@@ -14,20 +14,32 @@
 
 | ETF | Asset | Side | OOS Period | Z_th | Features | Trades | Cost Sharpe | Raw Sharpe | Total PnL | Long PnL | Long Sharpe | Short PnL | Short Sharpe | Max DD | Win Rate | Turnover |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 300ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:1.30/S:0.90 (train L:1.20/S:0.80) | 37 | 195 (54L/141S) | 0.145 | 1.286 | +0.0333 | +0.0265 | 0.736 | +0.0068 | 0.104 | 0.0842 | 48.2% (L:48.1%, S:48.2%) | 75.9x |
-| 500ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:1.00/S:1.50 (train L:0.90/S:1.40) | 377 | 181 (132L/49S) | 0.942 | 1.991 | +0.2107 | +0.0032 | 0.054 | +0.2075 | 6.387 | 0.0368 | 55.8% (L:50.0%, S:71.4%) | 70.2x |
+| 300ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:1.20/S:1.10 (train L:1.10/S:1.00) | 37 | 143 (63L/80S) | 0.539 | 1.387 | +0.1186 | +0.0359 | 0.883 | +0.0826 | 1.916 | 0.0725 | 53.8% (L:49.2%, S:57.5%) | 59.5x |
+| 500ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:1.10/S:1.50 (train L:1.00/S:1.40) | 377 | 150 (102L/48S) | 1.039 | 1.947 | +0.2176 | +0.0035 | 0.075 | +0.2142 | 6.775 | 0.0468 | 56.7% (L:48.0%, S:75.0%) | 60.3x |
 | 50ETF | Spot ETF | single | 2022-01 ~ 2026-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
-| 159915ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:0.90/S:1.40 (train L:0.80/S:1.30) | 31 | 173 (140L/33S) | 0.965 | 1.554 | +0.3590 | +0.2690 | 2.133 | +0.0900 | 3.026 | 0.0906 | 51.4% (L:49.3%, S:60.6%) | 65.2x |
+| 159915ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:0.70/S:1.30 (train L:0.60/S:1.20) | 31 | 254 (207L/47S) | 1.065 | 1.809 | +0.4805 | +0.3840 | 1.981 | +0.0965 | 2.764 | 0.1081 | 51.6% (L:49.8%, S:59.6%) | 92.0x |
 
 <details>
-<summary><b>Equal Weight (EW)</b> (click to expand)</summary>
+<summary><b>Sortino Weight (tail-IC selection + Score-blend weights)</b> (click to expand)</summary>
 
 | ETF | Asset | Side | OOS Period | Z_th | Features | Trades | Cost Sharpe | Raw Sharpe | Total PnL | Long PnL | Long Sharpe | Short PnL | Short Sharpe | Max DD | Win Rate | Turnover |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 300ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:1.20/S:1.20 (train L:1.10/S:1.10) | 37 | 117 (46L/71S) | 0.143 | 0.991 | +0.0251 | +0.0404 | 1.269 | -0.0153 | -0.580 | 0.0487 | 52.1% (L:50.0%, S:53.5%) | 47.6x |
-| 500ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:0.90/S:1.30 (train L:0.80/S:1.20) | 377 | 247 (169L/78S) | 0.587 | 1.899 | +0.1471 | -0.0443 | -0.578 | +0.1914 | 4.078 | 0.0639 | 53.4% (L:49.7%, S:61.5%) | 94.0x |
+| 300ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:1.20/S:1.10 (train L:1.10/S:1.00) | 37 | 145 (64L/81S) | 0.499 | 1.360 | +0.1097 | +0.0328 | 0.800 | +0.0768 | 1.769 | 0.0760 | 53.1% (L:48.4%, S:56.8%) | 60.4x |
+| 500ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:1.10/S:1.50 (train L:1.00/S:1.40) | 377 | 151 (103L/48S) | 1.000 | 1.912 | +0.2100 | -0.0044 | -0.095 | +0.2144 | 6.782 | 0.0468 | 57.0% (L:48.5%, S:75.0%) | 60.7x |
 | 50ETF | Spot ETF | single | 2022-01 ~ 2026-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
-| 159915ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:0.80/S:1.30 (train L:0.70/S:1.20) | 31 | 224 (176L/48S) | 1.056 | 1.722 | +0.4624 | +0.3507 | 2.095 | +0.1116 | 2.703 | 0.1110 | 52.7% (L:50.0%, S:62.5%) | 84.5x |
+| 159915ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:0.70/S:1.00 (train L:0.60/S:0.90) | 31 | 352 (206L/146S) | 1.123 | 2.082 | +0.5483 | +0.3935 | 2.035 | +0.1548 | 1.628 | 0.1124 | 52.8% (L:50.0%, S:56.8%) | 130.3x |
+
+</details>
+
+<details>
+<summary><b>Equal Weight (EW, Score-selected top-K)</b> (click to expand)</summary>
+
+| ETF | Asset | Side | OOS Period | Z_th | Features | Trades | Cost Sharpe | Raw Sharpe | Total PnL | Long PnL | Long Sharpe | Short PnL | Short Sharpe | Max DD | Win Rate | Turnover |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 300ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:1.20/S:1.40 (train L:1.10/S:1.30) | 37 | 67 (44L/23S) | 0.123 | 0.677 | +0.0196 | +0.0481 | 1.542 | -0.0285 | -3.072 | 0.0607 | 50.7% (L:52.3%, S:47.8%) | 28.5x |
+| 500ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:1.00/S:1.30 (train L:0.90/S:1.20) | 377 | 216 (136L/80S) | 0.519 | 1.720 | +0.1255 | -0.0697 | -1.123 | +0.1952 | 3.984 | 0.0792 | 51.4% (L:47.8%, S:57.5%) | 84.4x |
+| 50ETF | Spot ETF | single | 2022-01 ~ 2026-01 | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
+| 159915ETF | Spot ETF | single | 2022-01 ~ 2025-12 | L:0.80/S:1.50 (train L:0.70/S:1.40) | 31 | 189 (168L/21S) | 0.961 | 1.553 | +0.4040 | +0.3312 | 2.055 | +0.0728 | 3.181 | 0.0913 | 48.7% (L:48.2%, S:52.4%) | 72.1x |
 
 </details>
 
@@ -40,10 +52,13 @@
 
 | ETF | Scheme | Sharpe | DSR | Verdict | CPCV Median | CPCV Std | % Positive |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 300ETF | icw | 0.145 | 0.100 | NOT_SIGNIFICANT | 0.152 | 0.269 | 87% |
-| 500ETF | icw | 0.942 | 0.708 | NOT_SIGNIFICANT | 1.031 | 0.395 | 100% |
-| 159915ETF | icw | 0.965 | 0.788 | NOT_SIGNIFICANT | 0.979 | 0.348 | 100% |
-| 300ETF | ew | 0.143 | 0.099 | NOT_SIGNIFICANT | 0.352 | 0.325 | 73% |
-| 500ETF | ew | 0.587 | 0.362 | NOT_SIGNIFICANT | 1.022 | 0.370 | 93% |
-| 159915ETF | ew | 1.056 | 0.852 | NOT_SIGNIFICANT | 1.109 | 0.366 | 100% |
+| 300ETF | icw | 0.539 | 0.338 | NOT_SIGNIFICANT | 0.333 | 0.223 | 100% |
+| 500ETF | icw | 1.039 | 0.810 | NOT_SIGNIFICANT | 1.041 | 0.440 | 93% |
+| 159915ETF | icw | 1.065 | 0.832 | NOT_SIGNIFICANT | 1.136 | 0.359 | 100% |
+| 300ETF | sortino | 0.499 | 0.304 | NOT_SIGNIFICANT | 0.426 | 0.154 | 100% |
+| 500ETF | sortino | 1.000 | 0.778 | NOT_SIGNIFICANT | 1.034 | 0.417 | 100% |
+| 159915ETF | sortino | 1.123 | 0.860 | NOT_SIGNIFICANT | 1.144 | 0.459 | 100% |
+| 300ETF | ew | 0.123 | 0.092 | NOT_SIGNIFICANT | 0.481 | 0.238 | 100% |
+| 500ETF | ew | 0.519 | 0.311 | NOT_SIGNIFICANT | 1.020 | 0.436 | 93% |
+| 159915ETF | ew | 0.961 | 0.785 | NOT_SIGNIFICANT | 1.077 | 0.415 | 100% |
 

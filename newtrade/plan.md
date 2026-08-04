@@ -6,12 +6,16 @@ NewTrade converts admitted alpha factors from `day-model-new` into intraday ETF 
 
 ### Core Design
 - **Signal**: Weighted average of top-10 z-scored features, where weights come from Empirical Bayes-shrunk IC estimates.
+- **Schemes**: 4 weighting schemes — **Score Weight (primary)**, ICW, Sortino Weight, EW. All share the same top-10 hysteresis selection machinery; they differ in the selection metric and/or the weight metric (see §3.6).
 - **Trade**: Enter at 10:00 AM, exit at 14:35 PM same day. Round-trip fee = 16 bps (8bp buy and 8 bp sell).
 - **Gate**: Trade only when |Z_composite| exceeds a train-swept conviction threshold.
 - **Scope**: 300ETF, 500ETF, 159915ETF (50ETF/588000ETF disabled — insufficient features).
 - **Zero Lookahead**: All parameters estimated from data available at $t-1$.
 
 ### Production OOS Performance (2022-01 ~ 2025-12, 8 bps fee + stoploss) (check REPORT.md)
+
+> REPORT.md is regenerated with the current defaults (ER=25, 4 schemes, Score Weight primary).
+> The legacy ER=20 ICW-only report is preserved as `REPORT_ER20_baseline.md`.
 
 | ETF | Asset | Side | OOS Period | Z_th | Features | Trades | Cost Sharpe | Raw Sharpe | Total PnL | Long PnL | Long Sharpe | Short PnL | Short Sharpe | Max DD | Win Rate | Turnover |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -74,20 +78,17 @@ $$\text{IC}_{i,t} = \text{SpearmanCorr}(z_i[\text{tail}], r[\text{tail}]) \quad 
 
 - **Why tail**: Focuses on extreme signal days where alpha is strongest.
 - **Why rolling 480d**: 2 China trading years. Balances recency vs stability. Validated optimal vs expanding IC and longer windows (600d, 720d).
-- **EMA smoothing**: Span = 30d (300ETF/50ETF) or 90d (500ETF/159915ETF) to reduce daily ranking noise.
+- **EMA smoothing**: Span = 60d (300ETF/50ETF) or 90d (500ETF/159915ETF) to reduce daily ranking noise, plus **Sortino≤0 selection gate** (post-EMA bounded mask, `--no-sortino-gate` to disable). **ADOPTED 2026-08 (user decision) after two retests** (`tests/test_ema_span_ab.py`, `test_ema_span_yearly.py`, `test_fq_g1_diagnose.py`, `test_new_defaults_verify.py`): span-off is worst everywhere (smoothing cuts churn), but 300ETF span 30 was stale → 60 wins yearly-consistently (+0.335 agg; +0.54/+0.51/+0.54 in 2022-24); Sortino≤0 gate is zero-cost where it doesn't fire (300/500ETF) and +0.135 where it does (159915ETF). New icw baseline: **300ETF 0.539 / 500ETF 1.039 / 159915ETF 1.065 (avg 0.881, +0.157 vs old 0.724)**. Caveats: 159915 span-120 (unadopted) rested partly on 2024; 2025 regime break unaffected by spans/gate.
 
 ### 3.3 Feature Selection: Hysteresis + ONC Cluster Constraint
 
 **Problem**: Daily top-10 reselection causes feature churn → Z_composite distribution shifts → threshold instability.
 
-**Solution**: Hysteresis (sticky selection) with adaptive exit rank:
+**Solution**: Hysteresis (sticky selection):
 
 - **Enter**: Feature enters active set when IC rank ≤ 10 AND its ONC cluster is unoccupied.
 - **Exit**: Feature exits only when IC rank > `exit_rank` (wider gate than entry).
-- **Adaptive exit_rank**: $\min\left(10 + \frac{N - 10}{2},\ 25\right)$ where $N$ = pool size.
-  - 300ETF (N=22): exit_rank = 16
-  - 159915ETF (N=27): exit_rank = 18
-  - 500ETF (N=193): exit_rank = 25 (hard cap)
+- **Exit Rank = 25 (fixed default)**: A/B validated (2026-08, `tests/test_exit_rank_sortino_ab.py`): ER=25 is the fairest fixed value across all 3 ETFs for the tail-IC baseline (300ETF 0.204, 500ETF 1.039, 159915ETF 0.930 — all positive, best average 0.724 vs 0.684 at ER=20). Per-ETF optima differ (300→23, 500→25, 159915→15) and pool/cluster-adaptive formulas did not beat fixed values, so a fixed 25 is kept.
 - **Cluster constraint**: Max 1 feature per ONC cluster in the active set. Ensures diversity across feature families.
 
 **Validated impact**: +26% Sharpe on 300ETF, +12% on 159915ETF vs no-hysteresis baseline.
@@ -103,6 +104,39 @@ Features with IC below the standard error floor get zero weight (Empirical Bayes
 ### 3.5 Composite Signal
 
 $$Z_{\text{composite},t} = \sum_{i \in \mathcal{A}} w_i \cdot z_{i,t} \cdot \text{sign}_i$$
+
+### 3.6 The Four Weighting Schemes (Score IC Family)
+
+The weighting system performs two jobs: **selecting** the top-10 features and **weighting** them. A/B testing (2026-08) showed the two jobs can use different metrics. A new factor-level metric was introduced: rolling 480d **Sharpe/Sortino** per factor (factor P&L = sign-aligned z-score × trade return), and the **Score blend**:
+
+$$\text{Score}_{i,t} = w_{\text{ic}} \cdot \text{rank}(\text{tailIC}_{480d}) + (1 - w_{\text{ic}}) \cdot \text{rank}(\text{Sortino}_{480d}), \quad w_{\text{ic}} = 0.75$$
+
+| Scheme | Selection metric | Weight metric | Notes |
+|--------|-----------------|---------------|-------|
+| **icw** (primary) | Rolling tail IC 480d | Rolling tail IC (ICW shrinkage) | Production scheme; top of REPORT.md since 2026-08 |
+| **sortino** | Rolling tail IC 480d | Score blend | Selection/weighting decomposition |
+| **ew** | Score blend | Equal weight (1/K) | Score only chooses features |
+| ~~score~~ (retired from `--scheme all`, 2026-08) | Score blend | Score blend (ICW shrinkage) | Still runnable via explicit `--scheme score`; dropped from defaults |
+
+**2026-08 scheme decision:** the Score scheme was removed from `--scheme all` and ICW made primary. Evidence under the current defaults (spans 60/90/90 + Sortino≤0 gate): score avg Sharpe 0.463 vs icw 0.881 (−0.42); meta-IC showed the blend dilutes tailIC's forward predictiveness; and the Sortino≤0 selection gate now bakes the Sortino information into selection, making the blend redundant. sortino/ew are kept as collapsed diagnostics.
+
+**Key empirical findings** (`tests/test_weight_blend_yearly_ab.py`):
+- Pure-Sortino weights are rejected (avg 0.626 vs 0.684 baseline); the blend is required.
+- **25% Sortino + 75% tail IC** is the robust global blend: +0.084 avg Sharpe, 500ETF preserved (needs ≥0.75 tail IC share), 159915ETF +0.249.
+- Using Sortino for *selection* crushes 500ETF (−0.38); its value is in *sizing* already-selected features.
+- Yearly tests (2022–2025): the blend beats baseline in 7/12 year×ETF cells; 2025 is a regime-break year (all configs negative on 300/500ETF).
+
+### 3.7 Factor Quality (FQ) Score & Meta-IC Judgment Harness (2026-08)
+
+The Score-blend family was judged by P&L A/B, which is contaminated by threshold/sizing interactions. A scientific yardstick was built: **meta-IC** = Spearman(score at t, factor's realized forward IC over the next 63 trading days), at monthly snapshots from 2017, with t-stats and a per-factor 63d-block-shuffle null; plus Top-K **TP′** hit rate (TP′ = fwdIC>0 AND fwdSortino>0). Files: `factor_quality.py`, `tests/test_fq_diagnostic.py` (Phase 0), `test_fq_validation.py` (Phase 2), `test_fq_ab.py` (Phase 3), `test_fq_sweep.py`, `test_fq_gated_adaptive.py`.
+
+**Findings:**
+- **Component meta-IC (pooled 2016–2025):** sortino +0.053 (t=3.4), tailIC +0.048 (t=3.6), mono +0.010 (n.s.); **ic_cv −0.040 and half_ratio −0.043 are anti-predictive** and were excluded from any blend.
+- **Phase 2:** tailIC_480d alone is the best forward predictor (+0.059, t=4.3); the FQ blend dilutes it (+0.033); extra gates raise FP′ rate. Block-shuffle null ≈ +0.042: most meta-IC is persistence, excess increment p≈0.13.
+- **Phase 3 A/B (ER=25, REPORT.md baseline reproduced Δ=+0.0000):** FQ_select_weight is the best arm (avg +0.028: 300ETF +0.187, 159915ETF +0.299, but 500ETF −0.403) → **partial pass; production defaults unchanged**. Pool-size interaction: FQ diversity helps small pools; the 377-feature 500ETF pool needs pure tail IC.
+- **Comprehensive sweep (27 arms, target TP′ ≥ 8/10):** multi-window tailIC {240,480,960}, Sortino {240,480}, mono, momentum, plus day-model-new ports (n-negative-blocks, jackknife leave-one-block-out min IC, vol-regime consistency, deflated-IC noise-floor gate) and 9 gate stacks on tailIC. Best TP′ = 7.15/10 (tailIC+Sortino+momentum); **no arm beats raw tailIC480, none null-significant**.
+- **Gated adaptive-K follow-up (no fill-in):** TP′ rate among gate-passing factors is 69.8–71.2% for every gate stack (best: tailIC > pool noise-floor). **The 3-month TP′ ceiling of the admitted pools is ≈ 71–75% (500ETF 75%, 300ETF 66%) — 80% is unreachable by downstream rescoring/gating.** Raising TP count must happen upstream in day-model-new admission.
+- **Gate-as-default P&L A/B (`tests/test_fq_gate_default_ab.py` + `test_fq_g1_diagnose.py`):** the first gate A/B injected masks of −1e9 **before** EMA smoothing — a single tailIC≤0 day (3–6% of factor-days; 70–100% of factors ever touch it) poisoned that factor's smoothed score for ~300–900 days (a banishment artifact), overstating gate costs. Corrected post-EMA gate test: `tailIC≤0` mask is an exact no-op on 300/500ETF (baseline selection almost never holds negative-IC factors: 0.8%/0% of days, and ICW shrinkage w ∝ max(0, IC − 1/√n) already zeroes them) and costs 159915ETF −0.091 (churn). `Sortino≤0` mask is the only clean-positive gate: +0.135 on 159915ETF, Δ=0.000 elsewhere (ΔAvg +0.045). Jackknife-loo gating destroys 300ETF (−0.43). **The tailIC gate was rejected, but the Sortino≤0 candidate was subsequently ADOPTED as production default (2026-08, user decision, spans 60/90/90 + Sortino gate; verified combined config avg +0.157)** — see §3.2 EMA smoothing line.
 
 ---
 
@@ -184,12 +218,13 @@ Override with explicit mode: `--strike-mode cascade`. A/B comparison: `--strike-
 
 | Parameter | Value | Evidence |
 |-----------|-------|----------|
-| Scheme | ICW (IC Weight) | Highest OOS Sharpe, DSR-validated |
+| Schemes | 4: **score** (primary), icw, sortino, ew | `--scheme all`; Score Weight on top of REPORT.md |
+| Score Blend | 0.75·rank(tailIC₄₈₀) + 0.25·rank(Sortino₄₈₀) | Best robust blend, +0.084 avg Sharpe (A/B 2026-08) |
 | IC Mode | Rolling Tail (480d, 10%) | Wins A/B test vs expanding IC (+12% avg) |
 | EMA Span | 30d (300/50), 90d (500/159915) | Pool-size adaptive smoothing |
 | Top-K | 10 | Fixed; prevents dilution on large pools |
-| Hysteresis | ON (adaptive exit rank) | +26% on small pools, +12% on medium |
-| Exit Rank | min(10 + (N-10)//2, 25) | Pool-adaptive cap |
+| Hysteresis | ON | Feature-churn stabilization |
+| Exit Rank | **25 (fixed)** | Fairest across all 3 ETFs (A/B 2026-08); adaptive formulas no better |
 | ONC Cluster | Max 1 per cluster | Diversity across feature families |
 | Position | Binary L+S | Highest Sharpe |
 | Threshold | Train-sweep + 0.10 buffer | Robust across regimes |
@@ -199,7 +234,7 @@ Override with explicit mode: `--strike-mode cascade`. A/B comparison: `--strike-
 | Strike Selection | ETF-adaptive (cascade/nearest/vol_t1) | A/B validated, see §5.3 |
 | Feature Floor | ≥ 10 | 50ETF/588000ETF disabled |
 
-**CLI**: `python newtrade/run_backtest.py --scheme icw` (all defaults are production-optimal)
+**CLI**: `python newtrade/run_backtest.py` (default `--scheme all` runs score/icw/sortino/ew; all defaults are production-optimal)
 
 ---
 
@@ -212,6 +247,12 @@ Override with explicit mode: `--strike-mode cascade`. A/B comparison: `--strike-
 5. **Direct Option Time-Decay Trailing**: Direct option price time-decay trailing stop (`opt_time_decay_trailing`, $\theta_{\text{start}}=0.30$, $c_{\text{tight}}=0.40$) achieves **1.251 Sharpe** (+0.205 lift) and slashes MaxDD from **22.87% to 11.57%** (-49.4% DD reduction) on 300ETF.
 6. **CPCV 100% Positive**: All active ETFs show 100% positive folds in combinatorial purged cross-validation.
 7. **DSR Significant**: 159915ETF achieves DSR = 0.965 (SIGNIFICANT at 10 trials). 500ETF marginal (0.934).
+8. **Sortino belongs in weights, not selection**: Selection/weighting decomposition A/B — Sortino-480d as a weight metric lifts 300/159915 without breaking 500ETF; as a selection metric it crushes 500ETF. Pure-Sortino weights rejected; the 25/75 Sortino/tailIC blend is the sweet spot.
+9. **Exit rank 25 is the fair default**: ER sweep on the current pipeline — ER25 best average for tail-IC baseline; per-ETF optima conflict (23/25/15) and adaptive pool/cluster formulas do not help.
+10. **2025 regime break**: Per-year diagnostics show all configs go negative on 300ETF/500ETF in 2025 (invisible in the 4-year aggregate). Flagged for pool-decay investigation.
+11. **Meta-IC harness verdict**: tailIC_480d alone is the best 3-month forward predictor; every tested blend or gate stack dilutes it; no sweep arm exceeds the block-shuffle null significantly. The harness now serves as the standard yardstick for any future score proposal.
+12. **TP′ ceiling ≈ 71–75%**: 27-arm sweep + gated adaptive-K follow-up prove no rescoring or hard-gate configuration reaches 80% forward-TP rate. The binding constraint is upstream pool quality (300ETF ceiling only ~66%).
+13. **Pool-size interaction in FQ selection**: FQ-blend selection lifts small pools (300/159915) but costs 500ETF −0.40 Sharpe; large pools want pure tail IC. A pool-size-routed scheme is the open follow-up.
 
 ---
 
@@ -226,6 +267,7 @@ newtrade/
 ├── run_production.py        # Production ensemble CLI (DSR & CPCV validated)
 ├── weighting.py             # ICW, EW, hysteresis, adaptive_exit_rank, ONC selection
 ├── strategy.py              # Threshold sweep, position sizing, ETF simulation
+├── factor_quality.py        # FQ score components, gates, rolling stability kernels (Numba)
 ├── option_strategy.py       # Capital-constrained option portfolio execution & 5m stoploss engine
 ├── utils.py                 # Data loaders, expanding z-score, rolling tail IC (Numba)
 ├── robustness.py            # DSR, CPCV, PBO, sensitivity analysis
@@ -237,6 +279,11 @@ newtrade/
     ├── test_weighting_ab.py       # 11-arm weighting pipeline comparison
     ├── test_zthreshold_ab.py      # 7-arm threshold system comparison
     ├── test_hysteresis_sweep.py   # Exit-rank × threshold grid search
+    ├── test_fq_diagnostic.py      # FQ Phase 0 persistence/meta-IC go-no-go
+    ├── test_fq_validation.py     # FQ Phase 2 meta-IC harness + null + top-K tiers
+    ├── test_fq_ab.py              # FQ Phase 3 integration A/B vs REPORT.md baseline
+    ├── test_fq_sweep.py           # 27-arm FQ component/gate/blend sweep
+    ├── test_fq_gated_adaptive.py  # tailIC + hard gates, adaptive K (no fill-in)
     └── run_ab_test_tail_ic.py     # Rolling tail IC window comparison
 ```
 
@@ -259,6 +306,21 @@ newtrade/
 
 ### Hysteresis Exit-Rank Sweep (2026-08)
 Adaptive ER formula validated. Wider = better up to cap. RollPct480 adds no value on top of hysteresis. See `tests/test_hysteresis_sweep.py`.
+
+### Score IC A/B — Tail IC + Sharpe/Sortino 480d (2026-08)
+11 arms × 3 ETFs. Rolling factor Sharpe/Sortino 480d introduced. Sortino blends beat the tail-IC baseline on average; Sharpe-480d family underperforms. See `tests/test_score_ic_ab.py`.
+
+### exit_rank × Sortino Decomposition (2026-08)
+ER sweep × Sortino blends × selection/weighting decomposition. Findings: ER25 fairest fixed value; Sortino value is in weighting, not selection; Sortino-weighted arms prefer ER=20 while tail-IC baseline prefers ER=25. See `tests/test_exit_rank_sortino_ab.py`.
+
+### Weight Blend + Yearly Stability (2026-08)
+Weight-score blend grid (pure Sortino → pure tailIC) + per-year 2022–2025 stability. 25/75 Sortino/tailIC blend selected as production Score blend; 2025 regime break exposed. See `tests/test_weight_blend_yearly_ab.py`.
+
+### FQ Score System — Meta-IC Harness & Comprehensive Sweep (2026-08)
+Built the forward-predictive Factor Quality score judged by meta-IC + block-shuffle null + TP′ hit rates (replacing lockbox-label judgment). Phase 3 A/B: FQ_select_weight partial-pass (avg +0.028, 500ETF −0.403 regression → production unchanged). Comprehensive 27-arm sweep (incl. day-model-new ports: jackknife LOO, n-negative-blocks, vol-regime consistency, deflated-IC noise-floor gate) and gated adaptive-K follow-up: **nothing beats raw tailIC_480d; 3-month TP′ ceiling ≈ 71–75%, 80% unreachable downstream**. Gate-as-default A/B: first version had a pre-EMA −1e9 mask artifact (banishment ~300–900d per tailIC≤0 touch); corrected post-EMA test shows tailIC≤0 gating is a no-op on 300/500ETF and costs 159915ETF −0.091, while Sortino≤0 masking gives +0.135 on 159915ETF only. **Default stays ungated.** See §3.7 and `tests/test_fq_*.py`.
+
+### EMA Span Retest & Sortino Gate Adoption (2026-08)
+Hypothesis that EMA(30/90) causes regime lag was rejected: span-off (span=1) is the WORST arm on every ETF (avg Sharpe 0.445 vs 0.724). But spans were stale: 300ETF span 30 → 60 wins yearly-consistently (+0.41 avg yearly Sharpe). **Adopted new production defaults: spans 60/90/90 + Sortino≤0 post-EMA gate** (`--no-sortino-gate` disables). Verified combined config: 300ETF 0.204→0.539, 500ETF unchanged 1.039, 159915ETF 0.930→1.065; avg +0.157. See `tests/test_ema_span_ab.py`, `test_ema_span_yearly.py`, `test_fq_g1_diagnose.py`, `test_new_defaults_verify.py`.
 
 ### Option Intraday Stop-Loss Benchmark (2026-08)
 5 arms × 3 ETFs. `opt_time_decay_trailing` (30% initial gap, 40% time decay) and `spot_time_decay_trailing` confirmed optimal. Direct option trailing stop cuts MaxDD on 300ETF from 22.87% to 11.57% while boosting Sharpe to 1.251 (+0.205 lift). See `tests/test_option_stoploss_ab.py`.
