@@ -447,16 +447,16 @@ def compute_glm_w(Z: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
 # Feature Selection Hysteresis (validated via A/B test 2026-08)
 # =============================================================================
 
-def adaptive_exit_rank(n_features: int, top_k: int = 10, hard_cap: int = 25) -> int:
+def adaptive_exit_rank(n_features: int, top_k: int = 10, hard_cap: int = 20) -> int:
     """
     Compute pool-adaptive exit_rank for hysteresis feature selection.
     Formula: min(top_k + (N - top_k) // 2, hard_cap)
     
     Ensures exit_rank is meaningful relative to pool size:
     - Small pools (N=22): exit_rank=16 (features exit at median of non-active ranks)
-    - Large pools (N=193): exit_rank=25 (hard cap prevents over-stickiness)
+    - Large pools (N=377): exit_rank=20 (hard cap prevents over-stickiness past rank 20)
     
-    Validated: +26% Sharpe on 300ETF, +12% on 159915ETF, +4% on 500ETF.
+    Validated: Top-10 / ER=20 optimal across 300ETF, 500ETF, and 159915ETF.
     """
     formula = top_k + (n_features - top_k) // 2
     return min(formula, hard_cap)

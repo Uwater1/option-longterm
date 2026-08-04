@@ -50,7 +50,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
                         stoploss_mode: str = "time_decay_trailing", stoploss_param: float = 0.03,
                         pool_override: list = None, cluster_suffix: str = "", group_constraint: bool = None, max_per_group: int = 1,
                         ic_mode: str = "expanding", tail_window: int = 252, tail_pct: float = 0.10,
-                        hysteresis: bool = True, exit_rank: int = None, min_pos: float = 0.7, delta_z_full: float = 0.4,
+                        hysteresis: bool = True, exit_rank: int = 20, min_pos: float = 0.7, delta_z_full: float = 0.4,
                         opt_commission: float = 4.0, strike_mode: str = "otm") -> dict:
     """
     Run backtest for one ETF and side combination filtered to OOS date range.
@@ -453,8 +453,8 @@ def main():
                         help="Enable sticky feature selection (enter top-10, exit at adaptive rank). Default: True.")
     parser.add_argument("--no-hysteresis", dest="hysteresis", action="store_false",
                         help="Disable hysteresis (use standard daily top-K reselection).")
-    parser.add_argument("--exit-rank", type=int, default=None,
-                        help="Override exit rank for hysteresis (default: adaptive = min(10+(N-10)//2, 25)).")
+    parser.add_argument("--exit-rank", type=int, default=20,
+                        help="Override exit rank for hysteresis (default: 20).")
 
     # Validation options
     parser.add_argument("--validate", dest="validate", action="store_true", default=True, help="Run DSR + CPCV validation on results (default: True)")

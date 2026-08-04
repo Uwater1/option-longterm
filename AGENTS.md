@@ -139,6 +139,7 @@ daytrade/methods/              # See daytrade/methods/AGENTS.md for details
 - **Tail Risk (Puts)**: Vol acceleration + negative skewness predict downside. Details in [FINDINGS.md](file:///home/hallo/Documents/option-longterm/FINDINGS.md).
 - **Day-Model**: 10:00-14:35 return prediction. See [day-model/AGENTS.md](file:///home/hallo/Documents/option-longterm/day-model/AGENTS.md).
 - **Daytrade**: Frozen-linear intraday alpha. See [daytrade/AGENTS.md](file:///home/hallo/Documents/option-longterm/daytrade/AGENTS.md).
+- **Top-K & Hysteresis Selection**: Large TP pools ($N > 100$) suffer from signal dilution if unconstrained. Optimal hysteresis bandwidth $\Delta K = \text{ER} - K \in [5, 7]$ (e.g. $K=10, \text{ER}=17$). Hard cliff drop at $\text{ER} \ge 26$.
 
 ## TODO
 - [ ] Improve put buy strategy: [put_improvement_plan.md](file:///home/hallo/Documents/option-longterm/put_improvement_plan.md)

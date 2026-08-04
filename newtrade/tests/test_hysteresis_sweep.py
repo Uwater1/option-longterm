@@ -59,7 +59,7 @@ def evaluate_with_stoploss(positions, trade_returns, oos_mask, fee_bps, dates, b
         df_dates = df_dates.reset_index(drop=True)
 
     if bars_dict:
-        net_ret, raw_ret, stop_hits, trig_pct = simulate_full_series(
+        net_ret, raw_ret, fees, stop_hits, trig_pct = simulate_full_series(
             df_dates, pos_oos, bars_dict, method="time_decay_trailing",
             param=0.03, fee_bps=fee_bps
         )

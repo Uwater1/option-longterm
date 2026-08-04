@@ -5,8 +5,6 @@ Monetize admitted factors from `day-model-new` into ETF spot trading signals. Se
 ## Production System (Robustness-Validated)
 
 ```bash
-# Production ensemble backtest (DSR-validated, CPCV-confirmed)
-python newtrade/run_production.py -e all --mode binary --cpcv
 
 # Multi-ETF portfolio backtest (equal-weight, DSR=0.953 SIGNIFICANT)
 python newtrade/portfolio_backtest.py
@@ -109,7 +107,6 @@ newtrade/
 ├── REPORT_production.md     # Production ensemble report (DSR-validated)
 ├── REPORT_option.md         # Option portfolio backtest report
 ├── REPORT_option_{year}.md  # Per-year option reports (generated via --pool-period/--year + --option)
-├── run_production.py        # Production ensemble CLI (binary L+S, buffer=0.15, DSR)
 ├── run_backtest.py          # CLI runner (--year, --pool-period, --decay, --scheme, --validate, --option, --stoploss)
 ├── run_migration.py         # Pool migration protocol (--monitor, --candidate-period)
 ├── regenerate_admitted_pools.py  # Regenerate admitted_pools.py from pipeline output
