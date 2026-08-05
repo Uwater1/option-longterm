@@ -241,6 +241,88 @@ def update_vix_prices():
         print("  Warning: No VIX data collected")
 
 
+def update_3rd_party_data():
+    print("=== Updating 3rd-Party Data (margin, capital flow, stock connect) ===")
+    underlyings = ["510300.XSHG", "510050.XSHG", "510500.XSHG", "588000.XSHG", "159915.XSHE"]
+    today = pd.Timestamp.now().strftime("%Y-%m-%d")
+
+    # 1. Margin
+    path_margin = os.path.join(DATA_DIR, "securities_margin.parquet")
+    existing_margin = pd.read_parquet(path_margin) if os.path.exists(path_margin) else pd.DataFrame()
+    if not existing_margin.empty and "date" in existing_margin.columns:
+        last_date = pd.to_datetime(existing_margin["date"]).max()
+        start = (last_date + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+    else:
+        start = "2015-01-01"
+    
+    if start <= today:
+        m_list = []
+        for sym in underlyings:
+            try:
+                df = rq.get_securities_margin(sym, start_date=start, end_date=today)
+                if df is not None and not df.empty:
+                    m_list.append(df.reset_index() if isinstance(df.index, pd.MultiIndex) else df)
+            except Exception as e:
+                print(f"  [WARN] Margin data fetch failed for {sym}: {e}")
+        if m_list:
+            new_margin = pd.concat(m_list, ignore_index=True)
+            combined_margin = pd.concat([existing_margin, new_margin], ignore_index=True)
+            dedup_cols = [c for c in ["order_book_id", "date"] if c in combined_margin.columns]
+            if dedup_cols:
+                combined_margin = combined_margin.drop_duplicates(subset=dedup_cols, keep="last")
+            combined_margin.to_parquet(path_margin, index=False)
+            print(f"  Securities Margin updated -> {path_margin}")
+
+    # 2. Capital flow
+    path_flow = os.path.join(DATA_DIR, "capital_flow.parquet")
+    existing_flow = pd.read_parquet(path_flow) if os.path.exists(path_flow) else pd.DataFrame()
+    if not existing_flow.empty and "date" in existing_flow.columns:
+        last_date = pd.to_datetime(existing_flow["date"]).max()
+        start = (last_date + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+    else:
+        start = "2015-01-01"
+
+    if start <= today:
+        f_list = []
+        for sym in underlyings:
+            try:
+                df = rq.get_capital_flow(sym, start_date=start, end_date=today)
+                if df is not None and not df.empty:
+                    f_list.append(df.reset_index() if isinstance(df.index, pd.MultiIndex) else df)
+            except Exception as e:
+                print(f"  [WARN] Capital flow fetch failed for {sym}: {e}")
+        if f_list:
+            new_flow = pd.concat(f_list, ignore_index=True)
+            combined_flow = pd.concat([existing_flow, new_flow], ignore_index=True)
+            dedup_cols = [c for c in ["order_book_id", "date"] if c in combined_flow.columns]
+            if dedup_cols:
+                combined_flow = combined_flow.drop_duplicates(subset=dedup_cols, keep="last")
+            combined_flow.to_parquet(path_flow, index=False)
+            print(f"  Capital Flow updated -> {path_flow}")
+
+    # 3. Stock connect quota
+    path_quota = os.path.join(DATA_DIR, "stock_connect_quota.parquet")
+    existing_quota = pd.read_parquet(path_quota) if os.path.exists(path_quota) else pd.DataFrame()
+    if not existing_quota.empty and "date" in existing_quota.columns:
+        last_date = pd.to_datetime(existing_quota["date"]).max()
+        start = (last_date + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+    else:
+        start = "2015-01-01"
+
+    if start <= today:
+        try:
+            df = rq.get_stock_connect_quota(start_date=start, end_date=today)
+            if df is not None and not df.empty:
+                df_reset = df.reset_index() if isinstance(df.index, pd.MultiIndex) else df
+                combined_quota = pd.concat([existing_quota, df_reset], ignore_index=True)
+                if "date" in combined_quota.columns:
+                    combined_quota = combined_quota.drop_duplicates(subset=["date"], keep="last")
+                combined_quota.to_parquet(path_quota, index=False)
+                print(f"  Stock Connect Quota updated -> {path_quota}")
+        except Exception as e:
+            print(f"  [WARN] Stock Connect Quota fetch failed: {e}")
+
+
 def main():
     rq.init()
     print("rqdatac connected.\n")
@@ -255,6 +337,9 @@ def main():
     update_vix_prices()
     print()
 
+    update_3rd_party_data()
+    print()
+
     for f in os.listdir(DATA_DIR):
         if f.startswith("30d_iv_cache"):
             cache_path = os.path.join(DATA_DIR, f)
@@ -266,3 +351,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -50,9 +50,19 @@ def main():
         start_date = max(pd.Timestamp("2010-01-04"), listed_date)
         end_date = pd.Timestamp.now()
         
-        print(f"  Listing date: {listed_date.date()}, downloading from {start_date.date()} to {end_date.date()}")
+        if os.path.exists(output_path):
+            existing = pd.read_parquet(output_path)
+            existing["datetime"] = pd.to_datetime(existing["datetime"])
+            last_dt = existing["datetime"].max()
+            start_date = last_dt.floor("D")
+            print(f"  Existing 1m max datetime: {last_dt}, updating from {start_date.date()} to {end_date.date()}")
+        else:
+            existing = pd.DataFrame()
+            inst_info = rq.instruments(symbol)
+            listed_date = pd.Timestamp(inst_info.listed_date)
+            start_date = max(pd.Timestamp("2010-01-04"), listed_date)
+            print(f"  Listing date: {listed_date.date()}, downloading from {start_date.date()} to {end_date.date()}")
         
-        # Download in year-by-year chunks to avoid memory / timeout issues
         years = range(start_date.year, end_date.year + 1)
         etf_dfs = []
         for year in years:
@@ -80,17 +90,19 @@ def main():
                 print(f"      Error fetching data: {e}")
 
         if etf_dfs:
-            combined_etf = pd.concat(etf_dfs, ignore_index=True)
-            # Format columns: lowercase except order_book_id
-            combined_etf.columns = [c.lower() if c != "order_book_id" else c for c in combined_etf.columns]
-            combined_etf["datetime"] = pd.to_datetime(combined_etf["datetime"])
+            new_etf = pd.concat(etf_dfs, ignore_index=True)
+            new_etf.columns = [c.lower() if c != "order_book_id" else c for c in new_etf.columns]
+            new_etf["datetime"] = pd.to_datetime(new_etf["datetime"])
             
-            # Sort values
+            if not existing.empty:
+                combined_etf = pd.concat([existing, new_etf], ignore_index=True)
+            else:
+                combined_etf = new_etf
+
+            combined_etf = combined_etf.drop_duplicates(subset=["order_book_id", "datetime"], keep="last")
             combined_etf = combined_etf.sort_values(["order_book_id", "datetime"])
             
-            # Ensure output directory exists
             os.makedirs(DATA_DIR, exist_ok=True)
-            
             print(f"  Saving to {output_path} (shape: {combined_etf.shape})...")
             combined_etf.to_parquet(
                 output_path,
@@ -100,7 +112,7 @@ def main():
             )
             print(f"  Saved successfully.\n")
         else:
-            print(f"  Warning: No data collected for {name}\n")
+            print(f"  1m Data already up to date or no new rows for {name}\n")
 
     print("All tasks finished successfully.")
 

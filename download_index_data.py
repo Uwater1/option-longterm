@@ -64,34 +64,57 @@ def main():
         
         # 1. Download 1d data
         path_1d = os.path.join(DATA_DIR, cfg["file_1d"])
-        print(f"  Downloading 1d data from {start_date.date()} to {end_date.date()}...")
-        df_1d = rq.get_price(
-            symbol,
-            start_date=start_date.strftime("%Y-%m-%d"),
-            end_date=end_date.strftime("%Y-%m-%d"),
-            frequency="1d",
-            adjust_type="none"
-        )
-        if df_1d is not None and not df_1d.empty:
-            df_1d = df_1d.reset_index()
-            df_1d.columns = [c.lower() if c != "order_book_id" else c for c in df_1d.columns]
-            df_1d["date"] = pd.to_datetime(df_1d["date"])
-            df_1d.to_parquet(path_1d, index=False)
-            print(f"  Saved 1d to {path_1d} (shape: {df_1d.shape})")
+        if os.path.exists(path_1d):
+            existing_1d = pd.read_parquet(path_1d)
+            existing_1d["date"] = pd.to_datetime(existing_1d["date"])
+            start_date_1d = existing_1d["date"].max() + pd.Timedelta(days=1)
         else:
-            print("  Warning: 1d data returned empty")
+            existing_1d = pd.DataFrame()
+            start_date_1d = start_date
+
+        if start_date_1d.date() <= end_date.date():
+            print(f"  Downloading 1d data from {start_date_1d.date()} to {end_date.date()}...")
+            df_1d = rq.get_price(
+                symbol,
+                start_date=start_date_1d.strftime("%Y-%m-%d"),
+                end_date=end_date.strftime("%Y-%m-%d"),
+                frequency="1d",
+                adjust_type="none"
+            )
+            if df_1d is not None and not df_1d.empty:
+                df_1d = df_1d.reset_index()
+                df_1d.columns = [c.lower() if c != "order_book_id" else c for c in df_1d.columns]
+                df_1d["date"] = pd.to_datetime(df_1d["date"])
+                if not existing_1d.empty:
+                    df_1d = pd.concat([existing_1d, df_1d], ignore_index=True)
+                    df_1d = df_1d.drop_duplicates(subset=["date"], keep="last")
+                    df_1d = df_1d.sort_values("date")
+                df_1d.to_parquet(path_1d, index=False)
+                print(f"  Saved 1d to {path_1d} (shape: {df_1d.shape})")
+            else:
+                print("  Warning: 1d data returned empty")
+        else:
+            print("  1d data already up to date.")
 
         # 2. Download 5m data (year-by-year)
         path_5m = os.path.join(DATA_DIR, cfg["file_5m"])
-        print(f"  Downloading 5m data from {start_date.date()} to {end_date.date()}...")
-        years = range(start_date.year, end_date.year + 1)
+        if os.path.exists(path_5m):
+            existing_5m = pd.read_parquet(path_5m)
+            existing_5m["datetime"] = pd.to_datetime(existing_5m["datetime"])
+            start_date_5m = existing_5m["datetime"].max().floor("D")
+        else:
+            existing_5m = pd.DataFrame()
+            start_date_5m = start_date
+
+        years_5m = range(start_date_5m.year, end_date.year + 1)
+        print(f"  Downloading 5m data from {start_date_5m.date()} to {end_date.date()}...")
         dfs_5m = []
-        for year in years:
-            year_start = max(start_date, pd.Timestamp(f"{year}-01-01"))
+        for year in years_5m:
+            year_start = max(start_date_5m, pd.Timestamp(f"{year}-01-01"))
             year_end = min(end_date, pd.Timestamp(f"{year}-12-31"))
             if year_start > year_end:
                 continue
-            print(f"    Downloading 5m for {year}...")
+            print(f"    Downloading 5m for {year} ({year_start.date()} -> {year_end.date()})...")
             try:
                 df = rq.get_price(
                     symbol,
@@ -111,22 +134,34 @@ def main():
             df_5m = pd.concat(dfs_5m, ignore_index=True)
             df_5m.columns = [c.lower() if c != "order_book_id" else c for c in df_5m.columns]
             df_5m["datetime"] = pd.to_datetime(df_5m["datetime"])
+            if not existing_5m.empty:
+                df_5m = pd.concat([existing_5m, df_5m], ignore_index=True)
+            df_5m = df_5m.drop_duplicates(subset=["order_book_id", "datetime"], keep="last")
             df_5m = df_5m.sort_values(["order_book_id", "datetime"])
             df_5m.to_parquet(path_5m, index=False)
             print(f"  Saved 5m to {path_5m} (shape: {df_5m.shape})")
         else:
-            print("  Warning: 5m data returned empty")
+            print("  5m data up to date or empty")
 
         # 3. Download 1m data (year-by-year)
         path_1m = os.path.join(DATA_DIR, cfg["file_1m"])
-        print(f"  Downloading 1m data from {start_date.date()} to {end_date.date()}...")
+        if os.path.exists(path_1m):
+            existing_1m = pd.read_parquet(path_1m)
+            existing_1m["datetime"] = pd.to_datetime(existing_1m["datetime"])
+            start_date_1m = existing_1m["datetime"].max().floor("D")
+        else:
+            existing_1m = pd.DataFrame()
+            start_date_1m = start_date
+
+        years_1m = range(start_date_1m.year, end_date.year + 1)
+        print(f"  Downloading 1m data from {start_date_1m.date()} to {end_date.date()}...")
         dfs_1m = []
-        for year in years:
-            year_start = max(start_date, pd.Timestamp(f"{year}-01-01"))
+        for year in years_1m:
+            year_start = max(start_date_1m, pd.Timestamp(f"{year}-01-01"))
             year_end = min(end_date, pd.Timestamp(f"{year}-12-31"))
             if year_start > year_end:
                 continue
-            print(f"    Downloading 1m for {year}...")
+            print(f"    Downloading 1m for {year} ({year_start.date()} -> {year_end.date()})...")
             try:
                 df = rq.get_price(
                     symbol,
@@ -146,11 +181,14 @@ def main():
             df_1m = pd.concat(dfs_1m, ignore_index=True)
             df_1m.columns = [c.lower() if c != "order_book_id" else c for c in df_1m.columns]
             df_1m["datetime"] = pd.to_datetime(df_1m["datetime"])
+            if not existing_1m.empty:
+                df_1m = pd.concat([existing_1m, df_1m], ignore_index=True)
+            df_1m = df_1m.drop_duplicates(subset=["order_book_id", "datetime"], keep="last")
             df_1m = df_1m.sort_values(["order_book_id", "datetime"])
             df_1m.to_parquet(path_1m, index=False, compression="zstd", compression_level=5)
             print(f"  Saved 1m to {path_1m} (shape: {df_1m.shape})")
         else:
-            print("  Warning: 1m data returned empty")
+            print("  1m data up to date or empty")
         print()
 
     print("All downloads completed successfully.")

@@ -128,47 +128,71 @@ def main():
 
         # 1. Download ETF 5m prices
         etf_5m_path = os.path.join(DATA_DIR, cfg["etf_5m"])
-        start_date = cycles[0]["entry_date"]
-        # Use latest date or end of last cycle
-        end_date = min(pd.Timestamp.now(), cycles[-1]["expiry_date"])
-        print(f"  Downloading ETF 5m prices from {start_date.date()} to {end_date.date()}...")
+        end_date = pd.Timestamp.now()
         
-        etf_df = rq.get_price(
-            cfg["underlying"],
-            start_date=start_date.strftime("%Y-%m-%d"),
-            end_date=end_date.strftime("%Y-%m-%d"),
-            frequency="5m",
-            adjust_type="none"
-        )
-        
-        if etf_df is not None and not etf_df.empty:
-            etf_df = etf_df.reset_index()
-            etf_df.columns = [c.lower() if c != "order_book_id" else c for c in etf_df.columns]
-            etf_df["datetime"] = pd.to_datetime(etf_df["datetime"])
-            etf_df.to_parquet(etf_5m_path, index=False)
-            print(f"  Saved ETF 5m prices to {etf_5m_path} (shape: {etf_df.shape})")
+        if os.path.exists(etf_5m_path):
+            existing_etf_5m = pd.read_parquet(etf_5m_path)
+            existing_etf_5m["datetime"] = pd.to_datetime(existing_etf_5m["datetime"])
+            last_dt = existing_etf_5m["datetime"].max()
+            start_date = last_dt.floor("D")
+            print(f"  Existing ETF 5m max datetime: {last_dt}")
         else:
-            print("  Warning: ETF 5m prices download returned empty")
+            existing_etf_5m = pd.DataFrame()
+            start_date = cycles[0]["entry_date"]
+            print(f"  No existing ETF 5m data found.")
+
+        if start_date.date() <= end_date.date():
+            print(f"  Downloading ETF 5m prices from {start_date.date()} to {end_date.date()}...")
+            etf_df = rq.get_price(
+                cfg["underlying"],
+                start_date=start_date.strftime("%Y-%m-%d"),
+                end_date=end_date.strftime("%Y-%m-%d"),
+                frequency="5m",
+                adjust_type="none"
+            )
+            
+            if etf_df is not None and not etf_df.empty:
+                etf_df = etf_df.reset_index()
+                etf_df.columns = [c.lower() if c != "order_book_id" else c for c in etf_df.columns]
+                etf_df["datetime"] = pd.to_datetime(etf_df["datetime"])
+                
+                if not existing_etf_5m.empty:
+                    etf_df = pd.concat([existing_etf_5m, etf_df], ignore_index=True)
+                    etf_df = etf_df.drop_duplicates(subset=["datetime"], keep="last")
+                    etf_df = etf_df.sort_values("datetime")
+
+                etf_df.to_parquet(etf_5m_path, index=False)
+                print(f"  Saved ETF 5m prices to {etf_5m_path} (shape: {etf_df.shape})")
+            else:
+                print("  Warning: ETF 5m prices download returned empty")
+        else:
+            print("  ETF 5m prices: already up to date.")
 
         # 2. Download option contracts 5m prices
         opt_5m_path = os.path.join(DATA_DIR, cfg["opt_5m"])
-        all_opt_dfs = []
+        if os.path.exists(opt_5m_path):
+            existing_opt_5m = pd.read_parquet(opt_5m_path)
+            existing_opt_5m["datetime"] = pd.to_datetime(existing_opt_5m["datetime"])
+            last_dt = existing_opt_5m["datetime"].max()
+            target_cycles = [cyc for cyc in cycles if cyc["expiry_date"] >= last_dt.floor("D")]
+            print(f"  Existing option 5m max datetime: {last_dt}. Updating {len(target_cycles)} cycles...")
+        else:
+            existing_opt_5m = pd.DataFrame()
+            target_cycles = cycles
+            print(f"  No existing option 5m data found. Downloading {len(target_cycles)} cycles...")
 
-        print("  Downloading option 5m prices cycle-by-cycle...")
-        for idx, cyc in enumerate(cycles):
+        all_opt_dfs = []
+        for idx, cyc in enumerate(target_cycles):
             entry = cyc["entry_date"]
             expiry = cyc["expiry_date"]
             
-            # Find contracts maturing at this expiry
-            # We filter from instruments to get all strikes of C and P
             cycle_contracts = inst[inst["maturity_date"] == expiry]["order_book_id"].unique().tolist()
             if not cycle_contracts:
                 continue
 
-            if idx % 10 == 0 or idx == len(cycles) - 1:
-                print(f"    Cycle {idx+1}/{len(cycles)}: {entry.date()} -> {expiry.date()} ({len(cycle_contracts)} contracts)")
+            if idx % 10 == 0 or idx == len(target_cycles) - 1:
+                print(f"    Cycle {idx+1}/{len(target_cycles)}: {entry.date()} -> {expiry.date()} ({len(cycle_contracts)} contracts)")
 
-            # Fetch 5m data for this cycle's active period
             px = rq.get_price(
                 cycle_contracts,
                 start_date=entry.strftime("%Y-%m-%d"),
@@ -183,13 +207,18 @@ def main():
                 all_opt_dfs.append(px)
 
         if all_opt_dfs:
-            combined_opt = pd.concat(all_opt_dfs, ignore_index=True)
-            combined_opt = combined_opt.drop_duplicates(subset=["order_book_id", "datetime"])
+            new_opt_df = pd.concat(all_opt_dfs, ignore_index=True)
+            if not existing_opt_5m.empty:
+                combined_opt = pd.concat([existing_opt_5m, new_opt_df], ignore_index=True)
+            else:
+                combined_opt = new_opt_df
+
+            combined_opt = combined_opt.drop_duplicates(subset=["order_book_id", "datetime"], keep="last")
             combined_opt = combined_opt.sort_values(["order_book_id", "datetime"])
             combined_opt.to_parquet(opt_5m_path, index=False)
             print(f"  Saved option 5m prices to {opt_5m_path} (shape: {combined_opt.shape})")
         else:
-            print("  Warning: Option 5m prices download returned empty")
+            print("  Option 5m prices: up to date or no new rows fetched.")
         print()
 
     print("All tasks finished successfully.")

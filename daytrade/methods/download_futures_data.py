@@ -32,11 +32,18 @@ def download_futures():
         return
 
     end_date = pd.Timestamp.now().strftime("%Y-%m-%d")
-    start_date = "2020-01-01"
 
     for etf, fut_symbol in FUTURES_MAP.items():
         out_path = DATA_DIR / f"{fut_symbol}_5m.parquet"
-        print(f"Downloading 5m bars for {fut_symbol} ({etf})...")
+        if out_path.exists():
+            existing = pd.read_parquet(out_path)
+            existing["datetime"] = pd.to_datetime(existing["datetime"])
+            start_date = existing["datetime"].max().floor("D").strftime("%Y-%m-%d")
+        else:
+            existing = pd.DataFrame()
+            start_date = "2020-01-01"
+
+        print(f"Downloading 5m bars for {fut_symbol} ({etf}) from {start_date} to {end_date}...")
         try:
             df = rq.get_price(fut_symbol, start_date=start_date, end_date=end_date, frequency="5m", fields=["open", "high", "low", "close", "volume"])
             if df is not None and not df.empty:
@@ -45,7 +52,14 @@ def download_futures():
                 df = df.reset_index()
                 if "index" in df.columns:
                     df.rename(columns={"index": "datetime"}, inplace=True)
-                df.to_parquet(out_path)
+                df["datetime"] = pd.to_datetime(df["datetime"])
+                
+                if not existing.empty:
+                    df = pd.concat([existing, df], ignore_index=True)
+                    df = df.drop_duplicates(subset=["datetime"], keep="last")
+                    df = df.sort_values("datetime")
+
+                df.to_parquet(out_path, index=False)
                 print(f"Saved {len(df)} rows to {out_path}")
             else:
                 print(f"No data returned for {fut_symbol}")

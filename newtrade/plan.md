@@ -330,3 +330,7 @@ Hypothesis that EMA(30/90) causes regime lag was rejected: span-off (span=1) is 
 - 300ETF: `cascade` wins (Sharpe 0.090→0.492, +5.5x; MaxDD 13.0%→10.2%)
 - 500ETF: `nearest` wins (Sharpe 0.703→0.984, +40%; MaxDD 39.6%→26.5%)
 - 159915ETF: `vol_t1` wins (Sharpe 0.908→1.244, +37%; MaxDD 18.4%→14.6%)
+
+### Selection FP/TP Invariance Benchmark (2026-08)
+Evaluated whether production Top-10 selection system (EMA 480d tail IC + Sortino<=0 gate, ER=25) alters pool's base FP/TP factor distribution. Empirical sweep across 4 diagnosis periods (`p2015_2023`, `p2016_2024`, `p2017_2025`, `p2018_2026`) and 3 ETFs confirmed: **Top-10 selected FP rate (22.69%) matches pool base FP rate (21.88%) almost exactly (0.993x selection ratio)**. Downstream dynamic selection system cannot distinguish TP vs FP factors in-sample (both pass mining filters); FP elimination must occur at admission time during feature mining. See `scratch/test_selection_fp_rate.py`.
+
