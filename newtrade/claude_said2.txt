@@ -1,0 +1,23 @@
+Pattern in your results: shape-based gates (skew/kurt #2, regime-bucket #7, concentration #5) → weak/no signal. Stress/perturbation-based gates (cost-stress #6, bootstrap-CI #3-lite) → strong signal. Useful info — tells me which direction to dig further.Good data. Clear pattern: **shape metrics (skew/kurt, regime-bucket, concentration) = noise. Perturbation/stress metrics (cost-stress, resample-CI) = signal.** Makes sense — shape metrics judge one fixed path. Stress metrics ask "does edge survive nearby world." Overfit noise breaks under any perturbation; real signal doesn't care. Push harder in that direction.
+
+## New ideas, same family as your winners
+
+**B. Sortino jackknife (reuse your B1 machinery, new target)**
+You already jackknife 7 chunks for **IC sign**. Do same chunks, but jackknife **Sortino value**: drop each chunk, recompute Sortino on remaining 6. Require median leave-one-out Sortino > 0 AND CV of the 7 leave-one-out Sortinos below cap. This is structurally identical code to what you already run (cheap, same infra) but targets the metric that actually correlates with your OOS Sharpe fails, not IC. Given jackknife-on-sign already proven and bootstrap-CI-on-sortino (#3) worked — this is the natural hybrid, should be near-free to test.
+
+**C. tanh-ramp / z-threshold perturbation**
+Same plateau logic as A, applied to position-sizing param (z>0.5 threshold) instead of timing. ±20% sweep, require Sortino sign-stable across sweep. Catches features whose apparent edge depends on the exact sizing curve you happened to tune globally — a form of implicit overfitting your gate can't see because sizing is shared across all candidates.
+
+**D. Vol-scaled cost stress (refine your winner, #6)** (already done, 2.5)
+You flat-doubled cost 8→16bps and it worked well (3.3). Try cost scaling with realized vol instead of flat multiplier — `cost_t = base_cost * (1 + k * realized_vol_t / vol_median)`. Punishes signals that fire disproportionately during vol spikes (worse fills, more slippage) — exactly the regime your #7 regime-gate was trying and failing to catch via static IC buckets. Stress-based version might succeed where the shape-based version (#7) didn't.
+
+**E. Combine your two winners into AND-ensemble, not two separate gates**
+Right now #6 and #3-lite presumably run as independent pass/fail. Consider requiring survival of *both simultaneously on the same resampled path* — e.g. bootstrap-resample the block series AND apply 2x cost on each resample, take CI lower bound. Interaction effect might catch marginal survivors that pass each test alone via different lucky subsets.
+
+**F. Theoretical IS/OOS Sharpe gap bound**
+A 2025 paper derives in-sample vs out-of-sample Sharpe ratio relationships for linear predictive models (arXiv:2501.03938, Jacquier/Muhle-Karbe/Mulligan) — your C1 signal is literally IC-weighted linear sum, matches their setup. Might give closed-form expected shrinkage as function of n_features/n_obs, usable as analytic sanity check or even a formula-based penalty instead of empirical null sim. Worth reading before building — could replace or validate your B3 empirical percentile floor with something less brittle. Flagging as investigate-first, not build-first.
+
+## Recommend build order
+B (cheapest, reuses jackknife code) → A (cheap) → D (extends proven #6) → C → E (needs both A/B or #3/#6 finished first) → F (research task, read paper before committing eng time).
+
+Want the jackknife-Sortino (B) spec'd against your `expanding_wf_sign_check` function first? It's the closest fit to existing code.
