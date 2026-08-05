@@ -62,6 +62,19 @@ MAX_NEGATIVE_REGIMES = 1      # Max vol-quintile regimes with negative IC (>=2 =
 MIN_IC_STD_REGIMES = 0.030    # Min std of IC across vol regimes (below = suspiciously uniform)
 MAX_IC_CV_FOR_UNIFORM = 0.85  # Max yearly IC CV to trigger uniformity check (above = unstable)
 
+# Robustness Gate (A/B-validated in research_gate_ab_test.py, see plan.md):
+# G7 Cost-stress: reject unless Sortino stays > 0 at COST_STRESS_MULT x cost
+#    (A/B: FP-kill 14.7% admitted / 8.9% preb4 vs TP-kill 2.9% / 1.8%)
+# G4 Bootstrap CI: reject if block-bootstrap Sortino lower bound <= 0
+#    (A/B: FP-kill 15.2% admitted / 8.2% preb4 vs TP-kill 4.4% / 2.6%)
+BOOT_B = 199               # Bootstrap resamples
+BOOT_BLOCK = 10            # Moving-block bootstrap block length (days)
+BOOT_CI_PCT = 5.0          # One-sided CI lower-bound percentile
+COST_BASE = 0.0008         # 8 bps per active day — keep in sync with simulate_returns
+COST_STRESS_MULT = 2.0     # G7 stress multiplier applied to COST_BASE
+ANNUAL_DAYS = 244          # Trading days per year — keep in sync with simulate_returns
+ROBUST_GATE_SEED = 42      # Bootstrap RNG seed (deterministic verdicts)
+
 def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     """Pearson over ranks. Faster than scipy.stats.spearmanr."""
     if a.shape[0] < 5:
@@ -76,6 +89,54 @@ def _spearman_from_arrays(a: np.ndarray, b: np.ndarray) -> float:
     if denom < 1e-12:
         return 0.0
     return float((ra * rb).sum() / denom)
+
+
+def _tail_positions_binary(y_true: np.ndarray, pred: np.ndarray, side: str) -> np.ndarray:
+    """Binary tail positions mirroring simulate_returns (binary mode,
+    enforce_absolute_sign=True), so Robustness Gate metrics match the
+    Sortino already used by the Quality Gate."""
+    n = len(pred)
+    order = np.argsort(pred, kind="quicksort")
+    pos = np.zeros(n, dtype=np.float64)
+    if side == "long":
+        n_tail = max(5, int(n * 0.15))
+        idx = order[-n_tail:]
+        if float(np.mean(y_true[idx])) > 0.0:
+            pos[idx] = 1.0
+    elif side == "short":
+        n_tail = max(5, int(n * 0.15))
+        idx = order[:n_tail]
+        if float(np.mean(-y_true[idx])) > 0.0:
+            pos[idx] = -1.0
+    else:  # single: two-sided
+        n_tail = max(5, int(n * 0.10))
+        long_idx, short_idx = order[-n_tail:], order[:n_tail]
+        if float(np.mean(y_true[long_idx])) > 0.0:
+            pos[long_idx] = 1.0
+        if float(np.mean(-y_true[short_idx])) > 0.0:
+            pos[short_idx] = -1.0
+    return pos
+
+
+def _sortino_annual(returns: np.ndarray) -> float:
+    """Annualized Sortino, formula identical to simulate_returns."""
+    ann_ret = float(np.mean(returns) * ANNUAL_DAYS)
+    down_vol = float(np.std(np.minimum(returns, 0.0)) * np.sqrt(ANNUAL_DAYS))
+    return ann_ret / (down_vol + 1e-10)
+
+
+def _bootstrap_sortino_ci(cost_ret: np.ndarray, rng) -> float:
+    """BOOT_CI_PCT percentile of block-bootstrap Sortino (fully vectorized)."""
+    T = len(cost_ret)
+    nblocks = int(np.ceil(T / BOOT_BLOCK))
+    starts = rng.integers(0, max(T - BOOT_BLOCK, 1), size=(BOOT_B, nblocks))
+    offs = np.arange(BOOT_BLOCK)
+    idx = (starts[:, :, None] + offs[None, None, :]) % T
+    boot_mat = cost_ret[idx].reshape(BOOT_B, -1)[:, :T]
+    ann = boot_mat.mean(axis=1) * ANNUAL_DAYS
+    dvol = np.minimum(boot_mat, 0.0).std(axis=1) * np.sqrt(ANNUAL_DAYS)
+    return float(np.percentile(ann / (dvol + 1e-10), BOOT_CI_PCT))
+
 
 @njit(cache=True)
 def fast_rankdata(a: np.ndarray) -> np.ndarray:
@@ -1491,6 +1552,9 @@ def main():
                 max_cv = cv
         return max_cv if max_cv > 0 else None
 
+    # Deterministic RNG for the Robustness Gate block bootstrap
+    _robust_rng = np.random.default_rng(ROBUST_GATE_SEED)
+
     for cand in surviving_candidates:
         cand_name = cand["feature_name"]
         cand_ic = cand["overall_ic"]
@@ -1665,6 +1729,58 @@ def main():
             })
             continue
 
+        # Robustness Gate (A/B-validated in research_gate_ab_test.py):
+        # G7 cost-stress (cheap, runs first) then G4 block-bootstrap Sortino CI.
+        # Both use the train-window daily strategy returns rebuilt with the
+        # exact position logic of simulate_returns. All-flat positions are
+        # already rejected above (sortino == 0 fails the Quality Gate).
+        # Design note: ALL badness gates run before B5 redundancy resolution
+        # (filter -> dedupe). Enforcing post-B5 was tried and reverted: a bad
+        # feature could evict a good pool member via the Q-score replacement
+        # rule and then die at the gate, silently losing the good feature.
+        _pos = _tail_positions_binary(y_train, x_cand, args.side)
+        _raw_ret = _pos * y_train
+        _abs_pos = np.abs(_pos)
+
+        stress_sortino = _sortino_annual(_raw_ret - _abs_pos * COST_BASE * COST_STRESS_MULT)
+        cand["stress_sortino"] = stress_sortino
+        if stress_sortino <= 0.0:
+            attempts_log.append({
+                "feature_name": cand_name,
+                "sign": cand["sign"],
+                "raw_ic": cand["raw_ic"],
+                "overall_ic": cand_ic,
+                "deflated_ic": deflated_ic,
+                "sortino": sortino_val,
+                "stress_sortino": stress_sortino,
+                "ic_ir": cand["ic_ir"],
+                "monotonicity": cand["monotonicity"],
+                "passes_rolling_guard": True,
+                "passes_fdr": True,
+                "verdict": "REJECTED_COST_STRESS"
+            })
+            continue
+
+        sortino_ci_low = _bootstrap_sortino_ci(_raw_ret - _abs_pos * COST_BASE, _robust_rng)
+        cand["sortino_ci_low"] = sortino_ci_low
+        if sortino_ci_low <= 0.0:
+            attempts_log.append({
+                "feature_name": cand_name,
+                "sign": cand["sign"],
+                "raw_ic": cand["raw_ic"],
+                "overall_ic": cand_ic,
+                "deflated_ic": deflated_ic,
+                "sortino": sortino_val,
+                "stress_sortino": stress_sortino,
+                "sortino_ci_low": sortino_ci_low,
+                "ic_ir": cand["ic_ir"],
+                "monotonicity": cand["monotonicity"],
+                "passes_rolling_guard": True,
+                "passes_fdr": True,
+                "verdict": "REJECTED_BOOTSTRAP_CI"
+            })
+            continue
+
         # If pool is empty, admit candidate immediately
         if not admitted_pool:
             admitted_pool.append(cand)
@@ -1675,6 +1791,8 @@ def main():
                 "overall_ic": cand_ic,
                 "p_value": cand["p_value"],
                 "deflated_ic": deflated_ic,
+                "stress_sortino": cand.get("stress_sortino"),
+                "sortino_ci_low": cand.get("sortino_ci_low"),
                 "ic_ir": cand["ic_ir"],
                 "monotonicity": cand["monotonicity"],
                 "passes_rolling_guard": True,
@@ -1703,6 +1821,8 @@ def main():
                 "overall_ic": cand_ic,
                 "p_value": cand["p_value"],
                 "deflated_ic": deflated_ic,
+                "stress_sortino": cand.get("stress_sortino"),
+                "sortino_ci_low": cand.get("sortino_ci_low"),
                 "ic_ir": cand["ic_ir"],
                 "monotonicity": cand["monotonicity"],
                 "passes_rolling_guard": True,
@@ -1745,6 +1865,8 @@ def main():
                             "overall_ic": cand_ic,
                             "p_value": cand["p_value"],
                             "deflated_ic": deflated_ic,
+                            "stress_sortino": cand.get("stress_sortino"),
+                            "sortino_ci_low": cand.get("sortino_ci_low"),
                             "ic_ir": cand["ic_ir"],
                             "monotonicity": cand["monotonicity"],
                             "passes_rolling_guard": True,
@@ -1779,7 +1901,11 @@ def main():
 
     n_quality_rejects = sum(1 for a in attempts_log if a.get("verdict") == "REJECTED_QUALITY_GATE")
     n_stability_rejects = sum(1 for a in attempts_log if a.get("verdict") == "REJECTED_STABILITY_GATE")
-    print(f"Final admitted pool size: {len(admitted_pool)} (Quality Gate rejected {n_quality_rejects}, Stability Gate rejected {n_stability_rejects} pre-correlation)")
+    n_cost_rejects = sum(1 for a in attempts_log if a.get("verdict") == "REJECTED_COST_STRESS")
+    n_boot_rejects = sum(1 for a in attempts_log if a.get("verdict") == "REJECTED_BOOTSTRAP_CI")
+    print(f"Final admitted pool size: {len(admitted_pool)} (Quality Gate rejected {n_quality_rejects}, "
+          f"Stability Gate rejected {n_stability_rejects}, Robustness Gate rejected "
+          f"{n_cost_rejects} cost-stress + {n_boot_rejects} bootstrap pre-correlation)")
 
     # Free x_flipped arrays from non-admitted results to reclaim memory
     admitted_names_set = {item["feature_name"] for item in admitted_pool}

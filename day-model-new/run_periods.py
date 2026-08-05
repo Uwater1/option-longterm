@@ -24,9 +24,11 @@ Usage:
 import os
 import sys
 import json
+import time
 import argparse
 import subprocess
 from pathlib import Path
+from collections import deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 HERE = Path(__file__).resolve().parent
@@ -68,6 +70,32 @@ def _sub_env(numba_threads: int) -> dict:
     return env
 
 
+def _run_logged(cmd: list, env: dict) -> tuple:
+    """Run a subprocess streaming output live while buffering the tail.
+
+    Returns (returncode, tail_lines). On stage failure the caller can print
+    the tail so the traceback is visible even in long multi-combo runs.
+    """
+    proc = subprocess.Popen(
+        cmd, cwd=str(REPO_ROOT), text=True, encoding="utf-8", errors="replace",
+        env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    )
+    tail = deque(maxlen=40)
+    for line in proc.stdout:
+        sys.stdout.write(line)
+        sys.stdout.flush()
+        tail.append(line.rstrip())
+    proc.wait()
+    return proc.returncode, list(tail)
+
+
+def _print_tail(tail: list) -> None:
+    print("---- last output from failed stage ----")
+    for line in tail:
+        print("  |", line)
+    print("---------------------------------------")
+
+
 def run_combo(etf: str, side: str, period_name: str, inner_n_jobs: int, numba_threads: int = 0) -> tuple:
     """Run select_features + evaluate_concept for one ETF/side/period combo."""
     train_start, train_end = PERIODS[period_name]
@@ -87,11 +115,10 @@ def run_combo(etf: str, side: str, period_name: str, inner_n_jobs: int, numba_th
             "--no-dedup",
         ]
         try:
-            result_gen = subprocess.run(
-                cmd_gen, cwd=str(REPO_ROOT), text=True, encoding="utf-8", errors="replace", env=env,
-            )
-            if result_gen.returncode not in (0, None):
-                print(f"WARNING: generate_combos exited {result_gen.returncode} for {etf} {side}")
+            rc_gen, tail_gen = _run_logged(cmd_gen, env)
+            if rc_gen not in (0, None):
+                _print_tail(tail_gen)
+                print(f"WARNING: generate_combos exited {rc_gen} for {etf} {side}")
         except Exception as e:
             print(f"WARNING: generate_combos failed to launch for {etf} {side}: {e}")
 
@@ -109,13 +136,12 @@ def run_combo(etf: str, side: str, period_name: str, inner_n_jobs: int, numba_th
 
     print(f"\n>>> [Stage A] select_features: ETF={etf}, Side={side}, Period={period_name}")
     try:
-        result_a = subprocess.run(
-            cmd_a, cwd=str(REPO_ROOT), text=True, encoding="utf-8", errors="replace", env=env,
-        )
+        rc_a, tail_a = _run_logged(cmd_a, env)
     except Exception as e:
         return False, f"select_features failed to launch for {etf} {side} {period_name}: {e}"
-    if result_a.returncode not in (0, None):
-        return False, f"select_features failed for {etf} {side} {period_name} (exit {result_a.returncode})"
+    if rc_a not in (0, None):
+        _print_tail(tail_a)
+        return False, f"select_features failed for {etf} {side} {period_name} (exit {rc_a})"
 
     # Stage A2: ONC Feature Clustering
     cmd_ac = [
@@ -150,13 +176,12 @@ def run_combo(etf: str, side: str, period_name: str, inner_n_jobs: int, numba_th
 
     print(f"\n>>> [Stage B] evaluate_concept: ETF={etf}, Side={side}, Period={period_name}")
     try:
-        result_b = subprocess.run(
-            cmd_b, cwd=str(REPO_ROOT), text=True, encoding="utf-8", errors="replace", env=env,
-        )
+        rc_b, tail_b = _run_logged(cmd_b, env)
     except Exception as e:
         return False, f"evaluate_concept failed to launch for {etf} {side} {period_name}: {e}"
-    if result_b.returncode not in (0, None):
-        return False, f"evaluate_concept failed for {etf} {side} {period_name} (exit {result_b.returncode})"
+    if rc_b not in (0, None):
+        _print_tail(tail_b)
+        return False, f"evaluate_concept failed for {etf} {side} {period_name} (exit {rc_b})"
 
     return True, f"Success {etf} {side} {period_name}"
 
@@ -416,6 +441,7 @@ def main():
                 tasks.append((etf, side, pname))
 
     total_cpus = cpu_count()
+    run_start = time.time()
     print(f"Multi-period training: {len(tasks)} combos across periods={periods_to_run}")
     print(f"ETFs={etfs_to_run}, Sides={sides_to_run}, max_parallel={args.max_parallel}")
 
@@ -453,6 +479,22 @@ def main():
     success_count = sum(1 for ok, _ in results if ok)
     print(f"\nCompleted {success_count}/{len(tasks)} combinations successfully.")
 
+    # Staleness guard: any combo whose selected_pool was NOT rewritten by this
+    # run would otherwise have diagnostics compiled from stale pre-change pools.
+    stale = []
+    for etf, side, pname in tasks:
+        suffix = period_suffix(pname)
+        pool_path = HERE / "data" / f"selected_pool_{etf}_{side}{suffix}.json"
+        if not pool_path.exists() or pool_path.stat().st_mtime < run_start:
+            stale.append(f"{etf}/{side}/{pname}")
+    if stale:
+        print("\n" + "!" * 72)
+        print("WARNING: the following combos have STALE selected pools (not updated")
+        print("by this run). Diagnostics/reports for them reflect OLD selections:")
+        for s in stale:
+            print(f"  - {s}")
+        print("!" * 72)
+
     # Run diagnostics per period
     if not args.skip_diagnostics:
         for pname in periods_to_run:
@@ -462,6 +504,9 @@ def main():
 
     # Compile cross-period report
     compile_cross_period_report(periods_to_run, etfs_to_run, sides_to_run)
+
+    if success_count < len(tasks):
+        sys.exit(1)
 
 
 if __name__ == "__main__":

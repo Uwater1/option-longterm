@@ -2,8 +2,8 @@
   {
     "feature_name": "combo_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration",
     "sign": 1,
-    "overall_ic": 0.2835569150689674,
-    "deflated_ic": 0.2825300498490203,
+    "overall_ic": 0.28355690836906433,
+    "deflated_ic": 0.2825300431491172,
     "ic_ir": 0.8899871770060491,
     "monotonicity": 0.7946692991115498,
     "recipe": {
@@ -15,8 +15,8 @@
   {
     "feature_name": "combo_rel_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration",
     "sign": 1,
-    "overall_ic": 0.2829953897141686,
-    "deflated_ic": 0.2819722847647611,
+    "overall_ic": 0.2829953730106354,
+    "deflated_ic": 0.2819722680612279,
     "ic_ir": 0.8708873523978995,
     "monotonicity": 0.792694965449161,
     "recipe": {
@@ -28,8 +28,8 @@
   {
     "feature_name": "combo_diff__directional_volume_signature__smooth_momentum_structure",
     "sign": 1,
-    "overall_ic": 0.30372657836812206,
-    "deflated_ic": 0.30254259639381564,
+    "overall_ic": 0.30372658371925354,
+    "deflated_ic": 0.3025426017449471,
     "ic_ir": 0.7795226713374771,
     "monotonicity": 0.7601184600197434,
     "recipe": {
@@ -41,8 +41,8 @@
   {
     "feature_name": "combo_rel_diff__directional_volume_signature__smooth_momentum_structure",
     "sign": 1,
-    "overall_ic": 0.3011324765055745,
-    "deflated_ic": 0.2999170600197337,
+    "overall_ic": 0.301132470369339,
+    "deflated_ic": 0.2999170538834982,
     "ic_ir": 0.7891862612442934,
     "monotonicity": 0.7650542941757157,
     "recipe": {
@@ -54,8 +54,8 @@
   {
     "feature_name": "combo_sig_product__high_low_sequence_momentum__vwap_trend_channel_slope",
     "sign": 1,
-    "overall_ic": 0.26600856850577437,
-    "deflated_ic": 0.2656042074988388,
+    "overall_ic": 0.26600855588912964,
+    "deflated_ic": 0.26560419488219406,
     "ic_ir": 0.864856025474726,
     "monotonicity": 0.7778874629812438,
     "recipe": {
@@ -67,8 +67,8 @@
   {
     "feature_name": "combo_diff__directional_volume_signature__early_vwap_acceleration",
     "sign": 1,
-    "overall_ic": 0.29166839566857056,
-    "deflated_ic": 0.2904556624747355,
+    "overall_ic": 0.2916683852672577,
+    "deflated_ic": 0.2904556520734226,
     "ic_ir": 0.785501914088641,
     "monotonicity": 0.7838104639684107,
     "recipe": {
@@ -80,16 +80,16 @@
   {
     "feature_name": "max_up_ret",
     "sign": 1,
-    "overall_ic": 0.1934996544494661,
-    "deflated_ic": 0.19338354973585473,
+    "overall_ic": 0.19349965453147888,
+    "deflated_ic": 0.1933835498178675,
     "ic_ir": 0.6050890044419849,
     "monotonicity": 0.7265547877591313
   },
   {
     "feature_name": "combo_sig_product__directional_volume_signature__smooth_momentum_structure",
     "sign": 1,
-    "overall_ic": 0.26450509363027275,
-    "deflated_ic": 0.26420030852047127,
+    "overall_ic": 0.2645051181316376,
+    "deflated_ic": 0.2642003330218361,
     "ic_ir": 0.6275086501931872,
     "monotonicity": 0.7512339585389931,
     "recipe": {

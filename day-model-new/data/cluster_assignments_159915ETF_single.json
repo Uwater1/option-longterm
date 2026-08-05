@@ -1,9 +1,9 @@
 {
   "etf": "159915ETF",
   "side": "single",
-  "n_features": 31,
-  "n_clusters": 18,
-  "avg_silhouette": 0.3192,
+  "n_features": 37,
+  "n_clusters": 22,
+  "avg_silhouette": 0.3421,
   "max_clusters_param": 10,
   "train_period": [
     "2014-01-01",
@@ -11,71 +11,85 @@
   ],
   "clusters": {
     "0": [
-      "combo_min__opening_drive_thrust_ratio__star50_limit_proximity_early",
-      "combo_rank_min__max_up_ret__star50_limit_proximity_early"
-    ],
-    "1": [
-      "combo_z_sum__first_bar_return__volume_weighted_price_position"
-    ],
-    "2": [
-      "combo_tri_min__rbreaker_sell_setup_proximity_early__yesterday_first_30min_return__yesterday_early_vwap_dev",
-      "combo_tri_min__star50_limit_proximity_early__yesterday_first_30min_return__yesterday_early_trend"
-    ],
-    "3": [
-      "combo_rank_max__opening_drive_thrust_ratio__max_up_ret",
-      "combo_z_sum__opening_drive_thrust_ratio__max_up_ret"
-    ],
-    "4": [
-      "combo_min__bar_ret_0__volume_price_confirmation",
-      "combo_min__bar_ret_0__directional_volume_signature"
-    ],
-    "5": [
-      "combo_rel_diff__max_up_ret__keltner_squeeze_width"
-    ],
-    "6": [
-      "combo_max__volatility_expansion_trend_vector__volume_price_confirmation",
-      "combo_z_sum__volatility_expansion_trend_vector__volume_price_confirmation"
-    ],
-    "7": [
-      "combo_max__max_up_ret__volume_price_confirmation"
-    ],
-    "8": [
-      "combo_rank_max__max_up_ret__bar_ret_0",
-      "combo_max__max_up_ret__first_bar_return",
-      "combo_z_sum__max_up_ret__first_bar_sentiment"
-    ],
-    "9": [
-      "combo_rank_min__max_up_ret__volume_price_confirmation",
-      "combo_rank_min__max_up_ret__directional_volume_signature"
-    ],
-    "10": [
-      "combo_rel_diff__max_up_ret__volume_weighted_momentum_acceleration",
-      "combo_diff__max_up_ret__volume_weighted_momentum_acceleration"
-    ],
-    "11": [
-      "combo_rel_diff__directional_volume_signature__early_late_momentum_divergence"
-    ],
-    "12": [
-      "combo_tri_median__rbreaker_sell_setup_proximity_early__first_bar_sentiment__first_bar_return",
-      "combo_ratio__bar_ret_0__volume_weighted_price_position",
-      "combo_rank_min__first_bar_sentiment__first_bar_return"
-    ],
-    "13": [
-      "combo_max__opening_drive_thrust_ratio__bar_body_rng_0",
-      "combo_min__opening_drive_thrust_ratio__first_bar_sentiment"
-    ],
-    "14": [
-      "combo_max__star50_limit_proximity_early__directional_volume_signature"
-    ],
-    "15": [
       "combo_max__max_up_ret__volume_weighted_price_position",
       "combo_z_sum__max_up_ret__rally_strength_max"
     ],
+    "1": [
+      "combo_ifelse__gap_pct__max_up_ret__yesterday_early_vwap_dev",
+      "combo_ifelse__gap_pct__max_up_ret__yesterday_early_trend",
+      "combo_ifelse__gap_pct__max_up_ret__yesterday_first_30min_return"
+    ],
+    "2": [
+      "combo_min__bar_ret_0__volume_price_confirmation",
+      "combo_min__bar_ret_0__directional_volume_signature"
+    ],
+    "3": [
+      "combo_tri_min__rbreaker_sell_setup_proximity_early__yesterday_first_30min_return__yesterday_early_vwap_dev",
+      "combo_tri_min__star50_limit_proximity_early__yesterday_first_30min_return__yesterday_early_trend"
+    ],
+    "4": [
+      "combo_ifelse__gap_pct__rbreaker_sell_setup_proximity_early__bar_ret_0"
+    ],
+    "5": [
+      "combo_max__volatility_expansion_trend_vector__volume_price_confirmation",
+      "combo_z_sum__volatility_expansion_trend_vector__volume_price_confirmation"
+    ],
+    "6": [
+      "combo_max__max_up_ret__volume_price_confirmation"
+    ],
+    "7": [
+      "combo_rank_max__max_up_ret__bar_ret_0",
+      "combo_max__max_up_ret__first_bar_return"
+    ],
+    "8": [
+      "combo_clamp_diff__max_up_ret__volume_weighted_momentum_acceleration",
+      "combo_rel_diff__max_up_ret__volume_weighted_momentum_acceleration"
+    ],
+    "9": [
+      "combo_rel_diff__max_up_ret__keltner_squeeze_width"
+    ],
+    "10": [
+      "combo_diff__first_bar_return__volume_weighted_momentum_acceleration",
+      "combo_clamp_diff__bar_body_rng_0__volume_weighted_momentum_acceleration"
+    ],
+    "11": [
+      "combo_min__opening_drive_thrust_ratio__star50_limit_proximity_early",
+      "combo_rank_min__max_up_ret__star50_limit_proximity_early"
+    ],
+    "12": [
+      "combo_rel_diff__directional_volume_signature__early_late_momentum_divergence"
+    ],
+    "13": [
+      "combo_rank_max__opening_drive_thrust_ratio__max_up_ret",
+      "combo_z_sum__opening_drive_thrust_ratio__max_up_ret"
+    ],
+    "14": [
+      "combo_max__opening_drive_thrust_ratio__bar_body_rng_0",
+      "combo_ifelse__gap_pct__opening_drive_thrust_ratio__bar_body_rng_0"
+    ],
+    "15": [
+      "combo_ifelse__gap_pct__opening_drive_thrust_ratio__yesterday_first_30min_return",
+      "combo_ifelse__gap_pct__opening_drive_thrust_ratio__yesterday_early_trend"
+    ],
     "16": [
-      "combo_z_sum__first_bar_sentiment__limit_down_proximity_early"
+      "combo_rel_diff__rbreaker_sell_setup_proximity_early__gap_pct"
     ],
     "17": [
-      "combo_clamp_diff__bar_ret_0__volume_weighted_momentum_acceleration"
+      "combo_rank_min__max_up_ret__volume_price_confirmation",
+      "combo_rank_min__max_up_ret__directional_volume_signature"
+    ],
+    "18": [
+      "combo_max__star50_limit_proximity_early__directional_volume_signature"
+    ],
+    "19": [
+      "combo_ifelse__gap_pct__rbreaker_sell_setup_proximity_early__yesterday_first_30min_return"
+    ],
+    "20": [
+      "combo_ratio__bar_ret_0__volume_weighted_price_position",
+      "combo_z_sum__first_bar_return__volume_weighted_price_position"
+    ],
+    "21": [
+      "combo_ifelse__gap_pct__max_up_ret__first_bar_return"
     ]
   }
 }

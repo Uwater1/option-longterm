@@ -1,0 +1,508 @@
+{
+  "population_size": 1805,
+  "tiers": {
+    "TP": 1228,
+    "Median": 346,
+    "FP": 231
+  },
+  "baseline_fp_rate": 0.12797783933518006,
+  "gates": {
+    "G1_psr": {
+      "thresholds": {
+        "0.5": {
+          "n_rejected": 2,
+          "fp_kill_rate": 0.004329004329004329,
+          "tp_kill_rate": 0.0,
+          "median_kill_rate": 0.002890173410404624,
+          "fp_killed": 1,
+          "tp_killed": 0,
+          "median_killed": 1,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.12756516916250693,
+          "focus_fp_kill_rate": 0.004424778761061947,
+          "focus_tp_kill_rate": 0.0,
+          "focus_fp_rate_after": 0.22255192878338279,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "0.6": {
+          "n_rejected": 5,
+          "fp_kill_rate": 0.008658008658008658,
+          "tp_kill_rate": 0.0008143322475570033,
+          "median_kill_rate": 0.005780346820809248,
+          "fp_killed": 2,
+          "tp_killed": 1,
+          "median_killed": 2,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.1272222222222222,
+          "focus_fp_kill_rate": 0.008849557522123894,
+          "focus_tp_kill_rate": 0.0019646365422396855,
+          "focus_fp_rate_after": 0.222001982160555,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "0.7": {
+          "n_rejected": 16,
+          "fp_kill_rate": 0.030303030303030304,
+          "tp_kill_rate": 0.004885993485342019,
+          "median_kill_rate": 0.008670520231213872,
+          "fp_killed": 7,
+          "tp_killed": 6,
+          "median_killed": 3,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.1252096143096702,
+          "focus_fp_kill_rate": 0.030973451327433628,
+          "focus_tp_kill_rate": 0.009823182711198428,
+          "focus_fp_rate_after": 0.219,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "0.8": {
+          "n_rejected": 30,
+          "fp_kill_rate": 0.05627705627705628,
+          "tp_kill_rate": 0.008143322475570033,
+          "median_kill_rate": 0.02023121387283237,
+          "fp_killed": 13,
+          "tp_killed": 10,
+          "median_killed": 7,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.12281690140845071,
+          "focus_fp_kill_rate": 0.05752212389380531,
+          "focus_tp_kill_rate": 0.01768172888015717,
+          "focus_fp_rate_after": 0.21580547112462006,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "0.9": {
+          "n_rejected": 70,
+          "fp_kill_rate": 0.10822510822510822,
+          "tp_kill_rate": 0.021172638436482084,
+          "median_kill_rate": 0.05491329479768786,
+          "fp_killed": 25,
+          "tp_killed": 26,
+          "median_killed": 19,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.11873198847262248,
+          "focus_fp_kill_rate": 0.10619469026548672,
+          "focus_tp_kill_rate": 0.03929273084479371,
+          "focus_fp_rate_after": 0.2110762800417973,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        }
+      }
+    },
+    "G2_neg_skew": {
+      "thresholds": {
+        "0.0": {
+          "n_rejected": 347,
+          "fp_kill_rate": 0.17316017316017315,
+          "tp_kill_rate": 0.20439739413680783,
+          "median_kill_rate": 0.16184971098265896,
+          "fp_killed": 40,
+          "tp_killed": 251,
+          "median_killed": 56,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.1310013717421125,
+          "focus_fp_kill_rate": 0.16371681415929204,
+          "focus_tp_kill_rate": 0.12180746561886051,
+          "focus_fp_rate_after": 0.2152619589977221,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "-0.25": {
+          "n_rejected": 156,
+          "fp_kill_rate": 0.06926406926406926,
+          "tp_kill_rate": 0.09201954397394137,
+          "median_kill_rate": 0.07803468208092486,
+          "fp_killed": 16,
+          "tp_killed": 113,
+          "median_killed": 27,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.13038204972710735,
+          "focus_fp_kill_rate": 0.06637168141592921,
+          "focus_tp_kill_rate": 0.0275049115913556,
+          "focus_fp_rate_after": 0.21775025799793601,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "-0.5": {
+          "n_rejected": 56,
+          "fp_kill_rate": 0.008658008658008658,
+          "tp_kill_rate": 0.041530944625407164,
+          "median_kill_rate": 0.008670520231213872,
+          "fp_killed": 2,
+          "tp_killed": 51,
+          "median_killed": 3,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.13093196112064037,
+          "focus_fp_kill_rate": 0.004424778761061947,
+          "focus_tp_kill_rate": 0.0019646365422396855,
+          "focus_fp_rate_after": 0.22255192878338279,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "-0.75": {
+          "n_rejected": 16,
+          "fp_kill_rate": 0.004329004329004329,
+          "tp_kill_rate": 0.010586319218241042,
+          "median_kill_rate": 0.005780346820809248,
+          "fp_killed": 1,
+          "tp_killed": 13,
+          "median_killed": 2,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.1285634432643935,
+          "focus_fp_kill_rate": 0.0,
+          "focus_tp_kill_rate": 0.0,
+          "focus_fp_rate_after": 0.22309970384995065,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "-1.0": {
+          "n_rejected": 4,
+          "fp_kill_rate": 0.0,
+          "tp_kill_rate": 0.0016286644951140066,
+          "median_kill_rate": 0.005780346820809248,
+          "fp_killed": 0,
+          "tp_killed": 2,
+          "median_killed": 2,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.12826207662409772,
+          "focus_fp_kill_rate": 0.0,
+          "focus_tp_kill_rate": 0.0,
+          "focus_fp_rate_after": 0.22309970384995065,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        }
+      }
+    },
+    "G3_exkurt": {
+      "thresholds": {
+        "1.0": {
+          "n_rejected": 1743,
+          "fp_kill_rate": 0.9047619047619048,
+          "tp_kill_rate": 0.9771986970684039,
+          "median_kill_rate": 0.9653179190751445,
+          "fp_killed": 209,
+          "tp_killed": 1200,
+          "median_killed": 334,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.3548387096774194,
+          "focus_fp_kill_rate": 0.9026548672566371,
+          "focus_tp_kill_rate": 0.9508840864440079,
+          "focus_fp_rate_after": 0.3728813559322034,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "2.0": {
+          "n_rejected": 1556,
+          "fp_kill_rate": 0.6796536796536796,
+          "tp_kill_rate": 0.9071661237785016,
+          "median_kill_rate": 0.8236994219653179,
+          "fp_killed": 157,
+          "tp_killed": 1114,
+          "median_killed": 285,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.2971887550200803,
+          "focus_fp_kill_rate": 0.672566371681416,
+          "focus_tp_kill_rate": 0.7897838899803536,
+          "focus_fp_rate_after": 0.3070539419087137,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "3.0": {
+          "n_rejected": 1253,
+          "fp_kill_rate": 0.30303030303030304,
+          "tp_kill_rate": 0.8061889250814332,
+          "median_kill_rate": 0.5578034682080925,
+          "fp_killed": 70,
+          "tp_killed": 990,
+          "median_killed": 193,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.2916666666666667,
+          "focus_fp_kill_rate": 0.29646017699115046,
+          "focus_tp_kill_rate": 0.5599214145383105,
+          "focus_fp_rate_after": 0.2994350282485876,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "5.0": {
+          "n_rejected": 660,
+          "fp_kill_rate": 0.12987012987012986,
+          "tp_kill_rate": 0.44869706840390877,
+          "median_kill_rate": 0.22832369942196531,
+          "fp_killed": 30,
+          "tp_killed": 551,
+          "median_killed": 79,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.17554585152838428,
+          "focus_fp_kill_rate": 0.11946902654867257,
+          "focus_tp_kill_rate": 0.18467583497053044,
+          "focus_fp_rate_after": 0.23166472642607683,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "8.0": {
+          "n_rejected": 103,
+          "fp_kill_rate": 0.04329004329004329,
+          "tp_kill_rate": 0.06351791530944625,
+          "median_kill_rate": 0.04335260115606936,
+          "fp_killed": 10,
+          "tp_killed": 78,
+          "median_killed": 15,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.1298472385428907,
+          "focus_fp_kill_rate": 0.04424778761061947,
+          "focus_tp_kill_rate": 0.05893909626719057,
+          "focus_fp_rate_after": 0.22453222453222454,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        }
+      }
+    },
+    "G4_boot_sortino_ci": {
+      "thresholds": {
+        "0.0": {
+          "n_rejected": 126,
+          "fp_kill_rate": 0.15151515151515152,
+          "tp_kill_rate": 0.043973941368078175,
+          "median_kill_rate": 0.1069364161849711,
+          "fp_killed": 35,
+          "tp_killed": 54,
+          "median_killed": 37,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.11673615247170935,
+          "focus_fp_kill_rate": 0.1504424778761062,
+          "focus_tp_kill_rate": 0.07072691552062868,
+          "focus_fp_rate_after": 0.20915032679738563,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        }
+      }
+    },
+    "G5_payoff": {
+      "thresholds": {
+        "0.5": {
+          "n_rejected": 0,
+          "fp_kill_rate": 0.0,
+          "tp_kill_rate": 0.0,
+          "median_kill_rate": 0.0,
+          "fp_killed": 0,
+          "tp_killed": 0,
+          "median_killed": 0,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.12797783933518006,
+          "focus_fp_kill_rate": 0.0,
+          "focus_tp_kill_rate": 0.0,
+          "focus_fp_rate_after": 0.22309970384995065,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "0.6": {
+          "n_rejected": 0,
+          "fp_kill_rate": 0.0,
+          "tp_kill_rate": 0.0,
+          "median_kill_rate": 0.0,
+          "fp_killed": 0,
+          "tp_killed": 0,
+          "median_killed": 0,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.12797783933518006,
+          "focus_fp_kill_rate": 0.0,
+          "focus_tp_kill_rate": 0.0,
+          "focus_fp_rate_after": 0.22309970384995065,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "0.7": {
+          "n_rejected": 0,
+          "fp_kill_rate": 0.0,
+          "tp_kill_rate": 0.0,
+          "median_kill_rate": 0.0,
+          "fp_killed": 0,
+          "tp_killed": 0,
+          "median_killed": 0,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.12797783933518006,
+          "focus_fp_kill_rate": 0.0,
+          "focus_tp_kill_rate": 0.0,
+          "focus_fp_rate_after": 0.22309970384995065,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "0.8": {
+          "n_rejected": 0,
+          "fp_kill_rate": 0.0,
+          "tp_kill_rate": 0.0,
+          "median_kill_rate": 0.0,
+          "fp_killed": 0,
+          "tp_killed": 0,
+          "median_killed": 0,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.12797783933518006,
+          "focus_fp_kill_rate": 0.0,
+          "focus_tp_kill_rate": 0.0,
+          "focus_fp_rate_after": 0.22309970384995065,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "0.9": {
+          "n_rejected": 1,
+          "fp_kill_rate": 0.0,
+          "tp_kill_rate": 0.0,
+          "median_kill_rate": 0.002890173410404624,
+          "fp_killed": 0,
+          "tp_killed": 0,
+          "median_killed": 1,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.12804878048780488,
+          "focus_fp_kill_rate": 0.0,
+          "focus_tp_kill_rate": 0.0,
+          "focus_fp_rate_after": 0.22309970384995065,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "1.0": {
+          "n_rejected": 27,
+          "fp_kill_rate": 0.012987012987012988,
+          "tp_kill_rate": 0.012214983713355049,
+          "median_kill_rate": 0.02601156069364162,
+          "fp_killed": 3,
+          "tp_killed": 15,
+          "median_killed": 9,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.12823397075365578,
+          "focus_fp_kill_rate": 0.01327433628318584,
+          "focus_tp_kill_rate": 0.005893909626719057,
+          "focus_fp_rate_after": 0.22233300099700898,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        }
+      }
+    },
+    "G6_ic_concentration": {
+      "thresholds": {
+        "0.3": {
+          "n_rejected": 3,
+          "fp_kill_rate": 0.012987012987012988,
+          "tp_kill_rate": 0.0,
+          "median_kill_rate": 0.0,
+          "fp_killed": 3,
+          "tp_killed": 0,
+          "median_killed": 0,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.12652608213096558,
+          "focus_fp_kill_rate": 0.01327433628318584,
+          "focus_tp_kill_rate": 0.0,
+          "focus_fp_rate_after": 0.2207920792079208,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "0.4": {
+          "n_rejected": 0,
+          "fp_kill_rate": 0.0,
+          "tp_kill_rate": 0.0,
+          "median_kill_rate": 0.0,
+          "fp_killed": 0,
+          "tp_killed": 0,
+          "median_killed": 0,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.12797783933518006,
+          "focus_fp_kill_rate": 0.0,
+          "focus_tp_kill_rate": 0.0,
+          "focus_fp_rate_after": 0.22309970384995065,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "0.5": {
+          "n_rejected": 0,
+          "fp_kill_rate": 0.0,
+          "tp_kill_rate": 0.0,
+          "median_kill_rate": 0.0,
+          "fp_killed": 0,
+          "tp_killed": 0,
+          "median_killed": 0,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.12797783933518006,
+          "focus_fp_kill_rate": 0.0,
+          "focus_tp_kill_rate": 0.0,
+          "focus_fp_rate_after": 0.22309970384995065,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "0.6": {
+          "n_rejected": 0,
+          "fp_kill_rate": 0.0,
+          "tp_kill_rate": 0.0,
+          "median_kill_rate": 0.0,
+          "fp_killed": 0,
+          "tp_killed": 0,
+          "median_killed": 0,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.12797783933518006,
+          "focus_fp_kill_rate": 0.0,
+          "focus_tp_kill_rate": 0.0,
+          "focus_fp_rate_after": 0.22309970384995065,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "0.7": {
+          "n_rejected": 0,
+          "fp_kill_rate": 0.0,
+          "tp_kill_rate": 0.0,
+          "median_kill_rate": 0.0,
+          "fp_killed": 0,
+          "tp_killed": 0,
+          "median_killed": 0,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.12797783933518006,
+          "focus_fp_kill_rate": 0.0,
+          "focus_tp_kill_rate": 0.0,
+          "focus_fp_rate_after": 0.22309970384995065,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        }
+      }
+    },
+    "G7_cost_stress": {
+      "thresholds": {
+        "0.0": {
+          "n_rejected": 97,
+          "fp_kill_rate": 0.1471861471861472,
+          "tp_kill_rate": 0.028501628664495113,
+          "median_kill_rate": 0.08092485549132948,
+          "fp_killed": 34,
+          "tp_killed": 35,
+          "median_killed": 28,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.11533957845433256,
+          "focus_fp_kill_rate": 0.14601769911504425,
+          "focus_tp_kill_rate": 0.0550098231827112,
+          "focus_fp_rate_after": 0.20730397422126745,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        }
+      }
+    },
+    "G8_regime_sortino": {
+      "thresholds": {
+        "0": {
+          "n_rejected": 1239,
+          "fp_kill_rate": 0.5930735930735931,
+          "tp_kill_rate": 0.7157980456026058,
+          "median_kill_rate": 0.6445086705202312,
+          "fp_killed": 137,
+          "tp_killed": 879,
+          "median_killed": 223,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.16607773851590105,
+          "focus_fp_kill_rate": 0.584070796460177,
+          "focus_tp_kill_rate": 0.6404715127701375,
+          "focus_fp_rate_after": 0.24289405684754523,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "1": {
+          "n_rejected": 356,
+          "fp_kill_rate": 0.2683982683982684,
+          "tp_kill_rate": 0.17996742671009772,
+          "median_kill_rate": 0.21098265895953758,
+          "fp_killed": 62,
+          "tp_killed": 221,
+          "median_killed": 73,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.11663216011042098,
+          "focus_fp_kill_rate": 0.25663716814159293,
+          "focus_tp_kill_rate": 0.22593320235756384,
+          "focus_fp_rate_after": 0.2131979695431472,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        },
+        "2": {
+          "n_rejected": 53,
+          "fp_kill_rate": 0.047619047619047616,
+          "tp_kill_rate": 0.024429967426710098,
+          "median_kill_rate": 0.03468208092485549,
+          "fp_killed": 11,
+          "tp_killed": 30,
+          "median_killed": 12,
+          "baseline_fp_rate": 0.12797783933518006,
+          "fp_rate_after": 0.12557077625570776,
+          "focus_fp_kill_rate": 0.04424778761061947,
+          "focus_tp_kill_rate": 0.0412573673870334,
+          "focus_fp_rate_after": 0.22153846153846155,
+          "focus_baseline_fp_rate": 0.22309970384995065
+        }
+      }
+    }
+  }
+}

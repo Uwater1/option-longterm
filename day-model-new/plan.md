@@ -42,7 +42,7 @@ Before generating combos, compute yearly IC decomposition for base features:
 
 Goal: Apply strict statistical guards, correlation filters, and trial-count tracking to build a robust pool.
 
-### Global Thresholds & Constants (`select_features.py:L35-L63`)
+### Global Thresholds & Constants (`select_features.py:L35-L76`)
 ```python
 MAX_FLIPS = 1                   # Max sign flip chunks allowed in 7-year jackknife
 FDR_THRESHOLD = 0.20            # Benjamini-Hochberg (BH-FDR) q-value threshold
@@ -65,6 +65,15 @@ MIN_STABILITY_PRODUCT = 0.09    # Minimum (yearly_ic_cv * weak_link_cv) product 
 MAX_NEGATIVE_REGIMES = 1        # Max vol-quintile regimes with negative IC
 MIN_IC_STD_REGIMES = 0.030      # Min IC std across vol regimes (for regime uniformity check)
 MAX_IC_CV_FOR_UNIFORM = 0.85    # Max yearly IC CV triggering regime uniformity rejection
+
+# Robustness Gate (A/B-validated, see research_gate_ab_test.py)
+BOOT_B = 199                    # Bootstrap resamples
+BOOT_BLOCK = 10                 # Moving-block bootstrap block length (days)
+BOOT_CI_PCT = 5.0               # One-sided CI lower-bound percentile
+COST_BASE = 0.0008              # 8 bps per active day (sync w/ simulate_returns)
+COST_STRESS_MULT = 2.0          # G7 stress multiplier applied to COST_BASE
+ANNUAL_DAYS = 244               # Trading days per year (sync w/ simulate_returns)
+ROBUST_GATE_SEED = 42           # Bootstrap RNG seed (deterministic verdicts)
 ```
 
 ### B1. 7-Year Jackknife Sign Guard & Temporal Validation Pre-filters
@@ -94,6 +103,12 @@ MAX_IC_CV_FOR_UNIFORM = 0.85    # Max yearly IC CV triggering regime uniformity 
 - **Negative Vol-Regime Gate**: Reject if IC is negative in $> 1$ vol-quintile regimes (`n_neg_reg > MAX_NEGATIVE_REGIMES (1)`).
 - **Regime Uniformity Gate**: Reject if combo feature has `ic_std_across_regimes < MIN_IC_STD_REGIMES (0.030)` AND `ic_cv > MAX_IC_CV_FOR_UNIFORM (0.85)` (catches suspiciously regime-uniform yet yearly-erratic overfit signals).
 - **Quality Gate**: Require `deflated_ic >= min_deflated_ic` (0.03 normal / 0.05 short-history), `sortino > 0`, and `|raw_ic| >= min_raw_ic` (0.02 normal / 0.03 short-history).
+- **Robustness Gate** (immediately after Quality Gate, before B5 correlation — all badness gates run before redundancy resolution, filter → dedupe):
+  - **G7 Cost-Stress Sortino**: Rebuild train-window daily strategy returns with the exact `simulate_returns` binary position logic (`_tail_positions_binary` + `enforce_absolute_sign`). Reject with verdict `REJECTED_COST_STRESS` if Sortino at `COST_STRESS_MULT × COST_BASE` (2× cost) is `<= 0`. Runs first (cheap, O(n)).
+  - **G4 Block-Bootstrap Sortino CI**: Reject with verdict `REJECTED_BOOTSTRAP_CI` if the `BOOT_CI_PCT`-th percentile (5th) of `BOOT_B` (199) moving-block (`BOOT_BLOCK = 10`) bootstrap Sortinos on the base-cost return series is `<= 0`. Fully vectorized; deterministic RNG (`ROBUST_GATE_SEED`).
+  - Both metrics stored on the candidate and logged into `ADMITTED*` attempt entries for downstream diagnosis.
+  - **Placement rationale (pre-B5, filter → dedupe)**: rejected features never enter the B5 cascade, so they can neither evict good members nor leave holes; each correlation cluster admits its best *robust* representative. Post-B5 enforcement was tried and reverted: under it a bad feature could evict a good pool member via the Q-score replacement rule and then die at the gate, silently losing the good feature. Empirically the two placements are near-identical (500ETF p2017_2025: pool 258/FP 10 pre-B5 vs 253/FP 9 post-B5); the apparent late-window regression vs the 8/3 baseline was a search-space artifact (candidate space grew 3,037 → 4,744 on 8/3 16:05, after that baseline was produced) — a same-space no-gate control admits 299, so the gate shrinks every pool.
+  - **A/B evidence** (`research_gate_ab_test.py`, reports `GATE_AB_TEST_{admitted,preb4}.md`): G7 FP-kill 14.7% admitted / 8.9% preb4 vs TP-kill 2.9% / 1.8%; G4 FP-kill 15.2% / 8.2% vs TP-kill 4.4% / 2.6%. Other claude_said.txt candidates (PSR, skew/kurtosis, payoff, IC-concentration, regime Sortino) were rejected by the A/B evidence.
 
 ### B5. Correlation Gate & Recalibrated $Q$-Score Replacement Rule
 - Pre-sort candidates by $Q$-score descending so highest quality features enter B5 first.
@@ -155,7 +170,7 @@ SE_IC ≈ 1 / sqrt(n_train)
 - [x] **B1 Sign & Temporal**: 7-year jackknife sign guard (`MAX_FLIPS = 1`, last 2 chunks intact) & adaptive temporal gate (`recent_ic > 0`, ratio caps with `MIN_EARLY_IC_THRESHOLD = 0.03`).
 - [x] **B2 Rolling & FDR**: 90d rolling guard (`mono_thr` 0.65/0.60, `ir_thr` 0.30/0.15) & BH-FDR gate ($q=0.20$) with full search space correction ($m_{\text{total}}$).
 - [x] **B3 Composite Floor**: Sign-locked composite score ($0.3\text{Mono} + 0.5\text{Sortino} + 0.15\text{TailIC} + 0.05\text{RawIC}$) with tiered admission floor (97th tri / 95th sym / 93rd cond & base) and standalone `deflated_ic`.
-- [x] **B4 Quality & Stability**: Pre-correlation Quality Gate (`deflated_ic \ge 0.03/0.05`, `sortino > 0`, `|raw_ic| \ge 0.02/0.03`), Yearly IC CV gate (`\le 1.00`), Stability Product gate (`\ge 0.09`), Negative Regime gate (`\le 1`), and Regime Uniformity gate (`ic_std < 0.030` & `ic_cv > 0.85`).
+- [x] **B4 Quality & Stability**: Pre-correlation Quality Gate (`deflated_ic \ge 0.03/0.05`, `sortino > 0`, `|raw_ic| \ge 0.02/0.03`), Yearly IC CV gate (`\le 1.00`), Stability Product gate (`\ge 0.09`), Negative Regime gate (`\le 1`), Regime Uniformity gate (`ic_std < 0.030` & `ic_cv > 0.85`), and Robustness Gate (G7 cost-stress Sortino `> 0` at 2× cost; G4 block-bootstrap Sortino CI 5th-pct `> 0`).
 - [x] **B5 Correlation & Q-Score**: Pre-sort pool candidates by recalibrated $Q$-score ($50\%\text{DefIC} + 25\%\text{Sortino} + 15\%\text{RecentIC} + 10\%\text{IC\_IR} - \text{TotalPenalty}_{\le 0.03}$) and strict correlated replacement at $\theta = 0.95$.
 - [x] **B6 Downstream Diversity**: de Prado ONC feature clustering (`feature_clusters.py`) for downstream group-constrained selection in `newtrade`.
 - [x] **B7 Ledger & Logging**: Persistent trial ledger tracking cumulative trials $N$ and versioned pool output registry (`admitted_pools.py`).
