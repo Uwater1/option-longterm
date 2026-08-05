@@ -71,7 +71,7 @@ BOOT_B = 199               # Bootstrap resamples
 BOOT_BLOCK = 10            # Moving-block bootstrap block length (days)
 BOOT_CI_PCT = 5.0          # One-sided CI lower-bound percentile
 COST_BASE = 0.0008         # 8 bps per active day — keep in sync with simulate_returns
-COST_STRESS_MULT = 2.0     # G7 stress multiplier applied to COST_BASE
+COST_STRESS_MULT = 2.5     # G7 stress multiplier applied to COST_BASE
 ANNUAL_DAYS = 244          # Trading days per year — keep in sync with simulate_returns
 ROBUST_GATE_SEED = 42      # Bootstrap RNG seed (deterministic verdicts)
 
