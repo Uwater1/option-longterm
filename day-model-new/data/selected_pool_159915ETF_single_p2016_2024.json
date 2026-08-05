@@ -1217,19 +1217,6 @@
     }
   },
   {
-    "feature_name": "combo_rel_diff__rbreaker_sell_setup_proximity_early__gap_pct",
-    "sign": 1,
-    "overall_ic": 0.20147496461868286,
-    "deflated_ic": 0.20155436538500823,
-    "ic_ir": 0.8361348614965243,
-    "monotonicity": 0.8041131105398458,
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "gap_pct"
-    }
-  },
-  {
     "feature_name": "combo_min__opening_drive_thrust_ratio__volatility_expansion_trend_vector",
     "sign": 1,
     "overall_ic": 0.2130916863679886,
@@ -1428,14 +1415,6 @@
     }
   },
   {
-    "feature_name": "opening_drive_thrust_ratio",
-    "sign": 1,
-    "overall_ic": 0.21482983231544495,
-    "deflated_ic": 0.21357423017537547,
-    "ic_ir": 0.5625616125950064,
-    "monotonicity": 0.7053984575835476
-  },
-  {
     "feature_name": "combo_sig_product__opening_drive_thrust_ratio__max_up_ret",
     "sign": 1,
     "overall_ic": 0.17116712033748627,
@@ -1582,32 +1561,6 @@
     }
   },
   {
-    "feature_name": "combo_rel_diff__rbreaker_sell_setup_proximity_early__rbreaker_buy_setup_proximity_early",
-    "sign": 1,
-    "overall_ic": 0.18410015106201172,
-    "deflated_ic": 0.18405001632669393,
-    "ic_ir": 0.48469245762361596,
-    "monotonicity": 0.6508997429305913,
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "rbreaker_buy_setup_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_mean__max_up_ret__volume_weighted_price_position",
-    "sign": 1,
-    "overall_ic": 0.2099464237689972,
-    "deflated_ic": 0.20989505409719883,
-    "ic_ir": 0.38731343578333827,
-    "monotonicity": 0.6735218508997429,
-    "recipe": {
-      "op": "mean",
-      "feature_a": "max_up_ret",
-      "feature_b": "volume_weighted_price_position"
-    }
-  },
-  {
     "feature_name": "combo_ifelse__gap_pct__max_up_ret__yesterday_first_30min_return",
     "sign": 1,
     "overall_ic": 0.18101269006729126,
@@ -1634,65 +1587,5 @@
       "feature_a": "yesterday_early_momentum",
       "feature_b": "bar_body_rng_0"
     }
-  },
-  {
-    "feature_name": "combo_clamp_diff__opening_drive_thrust_ratio__volume_weighted_momentum_acceleration",
-    "sign": 1,
-    "overall_ic": 0.16560764610767365,
-    "deflated_ic": 0.16419409831857396,
-    "ic_ir": 0.40772262647782026,
-    "monotonicity": 0.6642673521850899,
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__max_up_ret__body_size_progression",
-    "sign": 1,
-    "overall_ic": 0.16738292574882507,
-    "deflated_ic": 0.16642035071072034,
-    "ic_ir": 0.44172265317823695,
-    "monotonicity": 0.6591259640102828,
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "max_up_ret",
-      "feature_b": "body_size_progression"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__rbreaker_sell_setup_proximity_early__limit_down_proximity_early",
-    "sign": 1,
-    "overall_ic": 0.17822414636611938,
-    "deflated_ic": 0.17789539412165878,
-    "ic_ir": 0.5106775866307816,
-    "monotonicity": 0.6776349614395887,
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_diff__rbreaker_sell_setup_proximity_early__limit_down_proximity_early",
-    "sign": 1,
-    "overall_ic": 0.17736084759235382,
-    "deflated_ic": 0.17703296483306977,
-    "ic_ir": 0.5172401403233304,
-    "monotonicity": 0.6889460154241646,
-    "recipe": {
-      "op": "diff",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "limit_down_proximity_early"
-    }
-  },
-  {
-    "feature_name": "bar_ret_0",
-    "sign": 1,
-    "overall_ic": 0.13773606717586517,
-    "deflated_ic": 0.13755675552419497,
-    "ic_ir": 0.38112178045591,
-    "monotonicity": 0.6565552699228792
   }
 ]

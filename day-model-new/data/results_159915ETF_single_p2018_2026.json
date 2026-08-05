@@ -167,7 +167,6 @@
     "combo_mean__opening_drive_thrust_ratio__volume_price_confirmation",
     "net_volume_flow",
     "combo_rel_diff__star50_limit_proximity_early__body_size_progression",
-    "combo_rel_diff__rbreaker_sell_setup_proximity_early__gap_pct",
     "combo_ifelse__gap_pct__yesterday_early_momentum__max_up_ret",
     "combo_z_sum__max_up_ret__directional_volume_signature",
     "combo_tri_median__max_up_ret__demark_setup_reversal_early__first_bar_return",
@@ -178,62 +177,56 @@
     "combo_rank_min__first_bar_return__volatility_expansion_trend_vector",
     "combo_max__limit_down_proximity_early__volatility_expansion_trend_vector",
     "combo_ifelse__gap_pct__opening_drive_thrust_ratio__max_up_ret",
-    "combo_rank_min__opening_drive_thrust_ratio__directional_volume_signature",
-    "combo_rank_min__limit_down_proximity_early__directional_volume_signature",
+    "combo_rank_min__rbreaker_buy_setup_proximity_early__directional_volume_signature",
     "combo_sig_product__opening_drive_thrust_ratio__first_bar_return",
     "combo_ratio__star50_limit_proximity_early__volume_weighted_momentum_acceleration",
-    "combo_sig_product__star50_limit_proximity_early__volatility_expansion_trend_vector",
     "combo_diff__max_up_ret__early_late_momentum_divergence",
-    "combo_sig_product__rbreaker_sell_setup_proximity_early__body_size_progression",
-    "combo_clamp_diff__volume_weighted_price_position__early_late_momentum_divergence",
-    "combo_rel_diff__rbreaker_sell_setup_proximity_early__limit_down_proximity_early",
-    "combo_ifelse__gap_pct__yesterday_early_trend__first_bar_return",
-    "combo_sig_product__limit_down_proximity_early__volatility_expansion_trend_vector"
+    "combo_ifelse__gap_pct__yesterday_early_trend__first_bar_return"
   ],
   "training_metrics": {
-    "overall_ic": 0.15344182017634198,
+    "overall_ic": 0.1537306531038921,
     "overall_ic_ci": [
-      0.11312960565181215,
-      0.201521010944194
+      0.1139551024672184,
+      0.2016778658387303
     ],
-    "tail_ic": 0.3386527467223369,
+    "tail_ic": 0.3368910794516671,
     "tail_ic_ci": [
-      0.2448442565747047,
-      0.41708301515524115
+      0.24458665815315567,
+      0.41680776927727814
     ],
-    "monotonicity": 0.9151515151515152,
+    "monotonicity": 0.8909090909090909,
     "monotonicity_ci": [
-      0.5757575757575758,
-      0.9518181818181816
+      0.5636363636363636,
+      0.9515151515151515
     ],
-    "ann_ret": 0.07744837069003982,
-    "raw_ann_ret": 0.09346606229080147,
-    "raw_sharpe": 1.9001006425586604,
-    "sharpe": 1.597584125565399,
-    "sortino": 3.8968057444965982,
-    "max_dd": 0.0321513604560468
+    "ann_ret": 0.07832558828831244,
+    "raw_ann_ret": 0.09433546466968479,
+    "raw_sharpe": 1.909154639489339,
+    "sharpe": 1.6083756883124987,
+    "sortino": 3.930361493444966,
+    "max_dd": 0.031709451494727994
   },
   "oos_metrics": {
-    "overall_ic": 0.054122951312317105,
+    "overall_ic": 0.05220546204927679,
     "overall_ic_ci": [
-      -0.22007099731663685,
-      0.27109388975849724
+      -0.2203259168157424,
+      0.2711286896243291
     ],
-    "tail_ic": -0.09043478260869565,
+    "tail_ic": -0.08608695652173913,
     "tail_ic_ci": [
-      -0.6218478260869564,
-      0.31658695652173907
+      -0.6115434782608696,
+      0.32349999999999995
     ],
     "monotonicity": -0.04242424242424243,
     "monotonicity_ci": [
       -0.5393939393939394,
       0.5878787878787879
     ],
-    "ann_ret": -0.031049711376172854,
-    "raw_ann_ret": -0.01698930879646202,
-    "raw_sharpe": -0.33292903200618396,
-    "sharpe": -0.6078386718834519,
-    "sortino": -0.7899107594920343,
-    "max_dd": 0.04636591948280055
+    "ann_ret": -0.03013992673760153,
+    "raw_ann_ret": -0.01617719778418735,
+    "raw_sharpe": -0.31741276080040687,
+    "sharpe": -0.5908982125384056,
+    "sortino": -0.7687957401695038,
+    "max_dd": 0.04609789011625403
   }
 }

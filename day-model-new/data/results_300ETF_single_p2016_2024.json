@@ -22,7 +22,6 @@
     "combo_tri_max__first_bar_return__bar_body_rng_0__volume_weighted_price_position",
     "combo_tri_median__opening_drive_thrust_ratio__max_up_ret__volume_concentration",
     "combo_rank_max__max_up_ret__volume_weighted_price_position",
-    "bar_body_rng_0",
     "combo_rank_max__bar_body_rng_0__volume_weighted_price_position",
     "combo_tri_mean__rbreaker_sell_setup_proximity_early__first_bar_return__bar_body_rng_0",
     "combo_tri_min__opening_drive_thrust_ratio__max_up_ret__volume_weighted_price_position",
@@ -35,82 +34,58 @@
     "combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__bar_body_rng_0",
     "combo_min__bar_body_rng_0__limit_down_proximity_early",
     "combo_tri_median__max_up_ret__bar_body_rng_0__volume_weighted_price_position",
-    "combo_mean__max_up_ret__bar_body_rng_0",
     "combo_tri_median__max_up_ret__bar_body_rng_0__rbreaker_buy_setup_proximity_early",
     "combo_tri_max__opening_drive_thrust_ratio__max_up_ret__volume_weighted_price_position",
-    "combo_rank_min__opening_drive_thrust_ratio__bar_body_rng_0",
     "combo_tri_mean__star50_limit_proximity_early__opening_drive_thrust_ratio__bar_body_rng_0",
-    "combo_rank_max__max_up_ret__first_bar_return",
     "combo_mean__star50_limit_proximity_early__bar_body_rng_0",
     "combo_min__rbreaker_sell_setup_proximity_early__max_up_ret",
-    "combo_tri_median__rbreaker_sell_setup_proximity_early__first_bar_return__bar_body_rng_0",
-    "combo_tri_median__rbreaker_sell_setup_proximity_early__max_up_ret__first_bar_return",
-    "combo_diff__max_up_ret__early_late_momentum_divergence",
-    "combo_rank_min__opening_drive_thrust_ratio__morning_volume_weighted_momentum",
-    "combo_rank_max__opening_drive_thrust_ratio__max_up_ret",
-    "opening_drive_thrust_ratio",
-    "combo_tri_max__opening_drive_thrust_ratio__bar_ret_0__volume_weighted_price_position",
     "combo_tri_min__star50_limit_proximity_early__opening_drive_thrust_ratio__bar_ret_0",
-    "combo_sig_product__star50_limit_proximity_early__opening_drive_thrust_ratio",
-    "combo_mean__rbreaker_sell_setup_proximity_early__max_up_ret",
-    "combo_tri_mean__opening_drive_thrust_ratio__bar_ret_0__volume_weighted_price_position",
-    "combo_sig_product__opening_drive_thrust_ratio__max_up_ret",
-    "combo_min__rbreaker_sell_setup_proximity_early__morning_volume_weighted_momentum",
-    "max_up_ret",
-    "combo_rank_min__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early",
-    "combo_max__bar_body_rng_0__morning_volume_weighted_momentum",
-    "combo_tri_max__rbreaker_sell_setup_proximity_early__max_up_ret__bar_ret_0",
-    "combo_tri_median__volume_weighted_momentum_acceleration__opening_drive_thrust_ratio__max_up_ret",
-    "combo_clamp_diff__max_up_ret__early_vwap_acceleration",
-    "combo_min__volume_weighted_price_position__double_bottom_bull_flag_early",
-    "combo_tri_min__opening_drive_thrust_ratio__max_up_ret__bar_ret_0",
-    "combo_sig_product__bar_ret_0__morning_volume_weighted_momentum",
-    "combo_tri_max__rbreaker_sell_setup_proximity_early__bar_ret_0__bar_body_rng_0"
+    "combo_min__rbreaker_sell_setup_proximity_early__morning_volume_weighted_momentum"
   ],
   "training_metrics": {
-    "overall_ic": 0.11167752701975656,
+    "overall_ic": 0.11465977678234957,
     "overall_ic_ci": [
-      0.06828189918787621,
-      0.15422732389841992
+      0.07208997399950036,
+      0.15758718817576614
     ],
-    "tail_ic": 0.22168515147179202,
+    "tail_ic": 0.23255333553909566,
     "tail_ic_ci": [
-      0.12232115104147727,
-      0.3238833720899416
+      0.13375387797205046,
+      0.3386541801154048
     ],
-    "monotonicity": 0.8909090909090909,
+    "monotonicity": 0.793939393939394,
     "monotonicity_ci": [
-      0.4666666666666667,
-      0.9030303030303031
+      0.5151515151515151,
+      0.8909090909090909
     ],
-    "ann_ret": 0.03377966080361216,
-    "raw_ann_ret": 0.04999998591252799,
-    "raw_sharpe": 1.5536983636586177,
-    "sharpe": 1.0677955080856913,
-    "sortino": 2.0819332251841507,
-    "max_dd": 0.03113122907352498
+    "ann_ret": 0.038431986168771096,
+    "raw_ann_ret": 0.05473646976170942,
+    "raw_sharpe": 1.6843661677975226,
+    "sharpe": 1.2037156958828064,
+    "sortino": 2.398737450615713,
+    "max_dd": 0.03595077519188907
   },
   "oos_metrics": {
-    "overall_ic": 0.0317210489483704,
+    "overall_ic": 0.03612537062396586,
     "overall_ic_ci": [
-      -0.058534939399268855,
-      0.12708722495347552
+      -0.05281985569668387,
+      0.13142448817243405
     ],
-    "tail_ic": 0.08945571824832944,
+    "tail_ic": 0.11928200146318747,
     "tail_ic_ci": [
-      -0.1114415390868446,
-      0.26119766969245356
+      -0.08974228490422013,
+      0.2877247448128186
     ],
-    "monotonicity": 0.44242424242424244,
+    "monotonicity": 0.6242424242424243,
     "monotonicity_ci": [
-      -0.16363636363636364,
-      0.8424242424242424
+      -0.17606060606060603,
+      0.8303030303030303
     ],
-    "ann_ret": 0.01143889252887148,
-    "raw_ann_ret": 0.027526431613657212,
-    "raw_sharpe": 0.7118196441996932,
-    "sharpe": 0.29850884822000984,
-    "sortino": 0.6141010355821057,
-    "max_dd": 0.04817761701785761
+    "ann_ret": 0.015755601667079486,
+    "raw_ann_ret": 0.03214358368752033,
+    "raw_sharpe": 0.8163668914676919,
+    "sharpe": 0.40412675606714354,
+    "sortino": 0.8503261807208553,
+    "max_dd": 0.046798827672682175
   }
 }
