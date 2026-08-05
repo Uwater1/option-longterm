@@ -19,10 +19,10 @@ Candidate counts at each admission gate. Shows where features get pruned.
 
 | ETF | Side | Total Candidates | 7Y-Jackknife Pass | B2 Rolling Guard | Temporal Gate | BH-FDR Pass | B3 Composite Floor | Stability Gate | Quality Gate | B4 Correlation | Final Admitted | Clusters | Cluster Sizes |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- |
-| 300ETF | single | 1,839 | 562 | 351 | 125 | 119 | 110 | 90 | 90 | 37 | 37 | 14 | `[9, 6, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1]` |
-| 50ETF | single | 985 | 246 | 181 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | - | `-` |
+| 300ETF | single | 1,797 | 558 | 348 | 125 | 119 | 110 | 90 | 90 | 37 | 37 | 14 | `[9, 6, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1]` |
+| 50ETF | single | 985 | 248 | 181 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | - | `-` |
 | 500ETF | single | 4,746 | 2,440 | 2,137 | 1,923 | 1,921 | 1,515 | 1,482 | 1,482 | 379 | 377 | 121 | `[20, 18, 17, 13, 12, 12, 11, 11, 10, 10, 9, 7, ... (121 clusters)]` |
-| 588000ETF | single | 1,711 | 1,096 | 745 | 513 | 473 | 36 | 36 | 36 | 12 | 12 | 4 | `[4, 4, 3, 1]` |
+| 588000ETF | single | 1,583 | 1,016 | 691 | 453 | 415 | 29 | 29 | 29 | 8 | 8 | 4 | `[4, 2, 1, 1]` |
 | 159915ETF | single | 3,174 | 1,023 | 579 | 352 | 340 | 56 | 53 | 53 | 31 | 31 | 18 | `[3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, ... (18 clusters)]` |
 
 ## 2. Training-Period Performance (in-sample)
@@ -33,7 +33,7 @@ IC-weighted combination model on the training window. Useful for sanity-checking
 | :--- | :--- | ---: | ---: | :--- | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
 | 300ETF | single | 37 | 14 | `[9, 6, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1]` | +0.1282 | [+0.0828, +0.1699] | +0.2498 | [+0.1229, +0.3511] | +0.9636 | 7.13% | 1.6659 | 5.48% | 1.3011 | 2.7064 | 5.84% |
 | 500ETF | single | 377 | 121 | `[20, 18, 17, 13, 12, 12, 11, 11, 10, 10, 9, 7, ... (121 clusters)]` | +0.1940 | [+0.1495, +0.2367] | +0.3001 | [+0.2092, +0.3884] | +0.9030 | 8.71% | 1.7793 | 7.07% | 1.4595 | 2.6674 | 3.72% |
-| 588000ETF | single | 12 | 4 | `[4, 4, 3, 1]` | +0.1448 | [+0.0828, +0.2029] | +0.2924 | [+0.1563, +0.3896] | +0.8667 | 7.36% | 1.7703 | 5.79% | 1.4118 | 2.6514 | 3.70% |
+| 588000ETF | single | 8 | 4 | `[4, 2, 1, 1]` | +0.1340 | [+0.0694, +0.1933] | +0.3536 | [+0.2106, +0.4477] | +0.8061 | 7.82% | 2.2008 | 6.38% | 1.8279 | 3.7105 | 2.01% |
 | 159915ETF | single | 31 | 18 | `[3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, ... (18 clusters)]` | +0.1722 | [+0.1258, +0.2162] | +0.2721 | [+0.1725, +0.3600] | +0.9152 | 7.88% | 1.4924 | 6.33% | 1.2082 | 1.9911 | 7.65% |
 
 ## 3. Holdout OOS Performance
@@ -44,7 +44,7 @@ Out-of-sample from holdout start to present.
 | :--- | :--- | ---: | ---: | :--- | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
 | 300ETF | single | 37 | 14 | `[9, 6, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1]` | +0.0727 | [+0.0054, +0.1347] | +0.1868 | [+0.0268, +0.3181] | +0.8182 | 3.99% | 1.0972 | 2.36% | 0.6593 | 1.3259 | 3.81% |
 | 500ETF | single | 377 | 121 | `[20, 18, 17, 13, 12, 12, 11, 11, 10, 10, 9, 7, ... (121 clusters)]` | +0.1082 | [+0.0469, +0.1671] | +0.1509 | [+0.0203, +0.2579] | +0.9879 | 4.48% | 1.0207 | 2.97% | 0.6809 | 1.2510 | 4.74% |
-| 588000ETF | single | 12 | 4 | `[4, 4, 3, 1]` | -0.0045* | [-0.1099, +0.0780] | -0.0314* | [-0.2730, +0.2005] | +0.0303 | -0.50% | -0.0894 | -2.08% | -0.3714 | -0.5425 | 10.68% |
+| 588000ETF | single | 8 | 4 | `[4, 2, 1, 1]` | +0.0059* | [-0.0930, +0.0830] | -0.1255* | [-0.3423, +0.1175] | +0.4788 | -1.94% | -0.3988 | -3.41% | -0.6974 | -0.9470 | 8.84% |
 | 159915ETF | single | 31 | 18 | `[3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, ... (18 clusters)]` | +0.1243 | [+0.0621, +0.1808] | +0.2853 | [+0.1208, +0.4099] | +0.6727 | 8.26% | 1.5641 | 6.92% | 1.3253 | 3.5822 | 5.00% |
 
 ## 4. OOS Lockbox Performance
@@ -55,7 +55,7 @@ Most recent OOS window (lockbox start to present). Strictest generalization test
 | :--- | :--- | ---: | ---: | :--- | :--- | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
 | 300ETF | single | 37 | 14 | `[9, 6, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1]` | +0.0291* | [-0.0623, +0.1207] | +0.0914* | [-0.1430, +0.2855] | +0.3333 | 3.11% | 0.7198 | 1.49% | 0.3489 | 0.7704 | 4.95% |
 | 500ETF | single | 377 | 121 | `[20, 18, 17, 13, 12, 12, 11, 11, 10, 10, 9, 7, ... (121 clusters)]` | +0.1087 | [+0.0198, +0.1910] | +0.0571* | [-0.1236, +0.2150] | +0.7455 | 3.31% | 0.7808 | 1.81% | 0.4294 | 0.7876 | 4.51% |
-| 588000ETF | single | 12 | 4 | `[4, 4, 3, 1]` | -0.0472* | [-0.1555, +0.0683] | -0.0237* | [-0.2940, +0.2356] | +0.0545 | -1.31% | -0.2209 | -2.90% | -0.4896 | -0.7233 | 9.33% |
+| 588000ETF | single | 8 | 4 | `[4, 2, 1, 1]` | -0.0125* | [-0.1129, +0.1013] | -0.1301* | [-0.3634, +0.1942] | +0.1152 | -1.88% | -0.3639 | -3.33% | -0.6403 | -0.8778 | 8.44% |
 | 159915ETF | single | 31 | 18 | `[3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, ... (18 clusters)]` | +0.1235 | [+0.0391, +0.2038] | +0.2431 | [+0.0075, +0.4184] | +0.6000 | 9.45% | 1.4416 | 8.07% | 1.2417 | 3.5320 | 5.44% |
 
 ## 5. Admitted Features — Full Details
@@ -494,18 +494,14 @@ No features admitted.
 
 | Feature | Cluster | Sign | Raw IC | Overall IC | Deflated IC | p-value | IC IR | Monotonicity | Max Corr |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `combo_diff__impulse_bar_dominance__pullback_depth_ratio` | Cluster 2 | +1 | +0.1151 | +0.3760 | +0.3768 | 0.0000 | +0.9507 | +0.8055 | 0.773 |
-| `combo_diff__directional_volume_signature__smooth_momentum_structure` | Cluster 0 | +1 | +0.1055 | +0.3037 | +0.3025 | 0.0000 | +0.7795 | +0.7601 | 0.787 |
-| `combo_rel_diff__directional_volume_signature__smooth_momentum_structure` | Cluster 0 | +1 | +0.1078 | +0.3011 | +0.2999 | 0.0000 | +0.7892 | +0.7651 | 0.897 |
-| `combo_diff__directional_volume_signature__early_vwap_acceleration` | Cluster 0 | +1 | +0.1087 | +0.2917 | +0.2905 | 0.0000 | +0.7855 | +0.7838 | 0.903 |
-| `combo_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration` | Cluster 1 | +1 | +0.1329 | +0.2836 | +0.2825 | 0.0000 | +0.8900 | +0.7947 | 0.723 |
+| `combo_diff__directional_volume_signature__smooth_momentum_structure` | Cluster 3 | +1 | +0.1055 | +0.3037 | +0.3025 | 0.0000 | +0.7795 | +0.7601 | 0.787 |
+| `combo_rel_diff__directional_volume_signature__smooth_momentum_structure` | Cluster 3 | +1 | +0.1078 | +0.3011 | +0.2999 | 0.0000 | +0.7892 | +0.7651 | 0.897 |
+| `combo_diff__directional_volume_signature__early_vwap_acceleration` | Cluster 3 | +1 | +0.1087 | +0.2917 | +0.2905 | 0.0000 | +0.7855 | +0.7838 | 0.903 |
+| `combo_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration` | Cluster 1 | +1 | +0.1329 | +0.2836 | +0.2825 | 0.0000 | +0.8900 | +0.7947 | 0.000 |
 | `combo_rel_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration` | Cluster 1 | +1 | +0.1389 | +0.2830 | +0.2820 | 0.0000 | +0.8709 | +0.7927 | 0.917 |
-| `combo_sig_product__impulse_bar_dominance__open_to_current_return` | Cluster 2 | +1 | +0.1427 | +0.2786 | +0.2800 | 0.0000 | +1.1568 | +0.8421 | 0.866 |
-| `combo_sig_product__impulse_bar_dominance__vwap_trend_channel_slope` | Cluster 2 | +1 | +0.1301 | +0.2744 | +0.2763 | 0.0000 | +0.8147 | +0.7927 | 0.000 |
-| `combo_sig_product__high_low_sequence_momentum__vwap_trend_channel_slope` | Cluster 3 | +1 | +0.1493 | +0.2660 | +0.2656 | 0.0002 | +0.8649 | +0.7779 | 0.828 |
-| `combo_sig_product__directional_volume_signature__smooth_momentum_structure` | Cluster 0 | +1 | +0.0645 | +0.2645 | +0.2642 | 0.0002 | +0.6275 | +0.7512 | 0.808 |
-| `combo_z_sum__impulse_bar_dominance__first_30min_return` | Cluster 2 | +1 | +0.1297 | +0.2638 | +0.2643 | 0.0002 | +1.2203 | +0.8411 | 0.926 |
-| `max_up_ret` | Cluster 1 | +1 | +0.1040 | +0.1935 | +0.1934 | 0.0046 | +0.6051 | +0.7266 | 0.757 |
+| `combo_sig_product__high_low_sequence_momentum__vwap_trend_channel_slope` | Cluster 0 | +1 | +0.1493 | +0.2660 | +0.2656 | 0.0002 | +0.8649 | +0.7779 | 0.730 |
+| `combo_sig_product__directional_volume_signature__smooth_momentum_structure` | Cluster 3 | +1 | +0.0645 | +0.2645 | +0.2642 | 0.0002 | +0.6275 | +0.7512 | 0.808 |
+| `max_up_ret` | Cluster 2 | +1 | +0.1040 | +0.1935 | +0.1934 | 0.0046 | +0.6051 | +0.7266 | 0.728 |
 
 ### 159915ETF / single
 
@@ -555,7 +551,7 @@ Enforces diversity downstream (max 1 feature per cluster selected per rebalance)
 | :--- | :--- | ---: | ---: | ---: | :--- |
 | 300ETF | single | 37 | 14 | 0.2575 | `[9, 6, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1]` |
 | 500ETF | single | 377 | 121 | 0.2165 | `[20, 18, 17, 13, 12, 12, 11, 11, 10, 10, 9, 7, ... (121 clusters)]` |
-| 588000ETF | single | 12 | 4 | 0.3683 | `[4, 4, 3, 1]` |
+| 588000ETF | single | 8 | 4 | 0.3860 | `[4, 2, 1, 1]` |
 | 159915ETF | single | 31 | 18 | 0.3192 | `[3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, ... (18 clusters)]` |
 
 ### Cluster Breakdown Details
@@ -697,10 +693,10 @@ Enforces diversity downstream (max 1 feature per cluster selected per rebalance)
 | 500ETF | single | Cluster 118 | 2 | 0.2165 | `combo_rank_min__max_down_ret__vwap_close_divergence_trend` | `combo_min__max_down_ret__vwap_close_divergence_trend` |
 | 500ETF | single | Cluster 119 | 2 | 0.2165 | `combo_min__early_order_flow_imbalance__max_down_ret` | `combo_rank_min__early_order_flow_imbalance__max_down_ret` |
 | 500ETF | single | Cluster 120 | 2 | 0.2165 | `combo_max__early_body_momentum__max_down_ret` | `combo_clamp_diff__max_down_ret__h2_l2_pullback_continuation` |
-| 588000ETF | single | Cluster 0 | 4 | 0.3683 | `combo_diff__directional_volume_signature__smooth_momentum_structure` | `combo_rel_diff__directional_volume_signature__smooth_momentum_structure`, `combo_diff__directional_volume_signature__early_vwap_acceleration`, `combo_sig_product__directional_volume_signature__smooth_momentum_structure` |
-| 588000ETF | single | Cluster 1 | 3 | 0.3683 | `combo_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration` | `combo_rel_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration`, `max_up_ret` |
-| 588000ETF | single | Cluster 2 | 4 | 0.3683 | `combo_sig_product__impulse_bar_dominance__vwap_trend_channel_slope` | `combo_diff__impulse_bar_dominance__pullback_depth_ratio`, `combo_sig_product__impulse_bar_dominance__open_to_current_return`, `combo_z_sum__impulse_bar_dominance__first_30min_return` |
-| 588000ETF | single | Cluster 3 | 1 | 0.3683 | `combo_sig_product__high_low_sequence_momentum__vwap_trend_channel_slope` | _(none)_ |
+| 588000ETF | single | Cluster 0 | 1 | 0.3860 | `combo_sig_product__high_low_sequence_momentum__vwap_trend_channel_slope` | _(none)_ |
+| 588000ETF | single | Cluster 1 | 2 | 0.3860 | `combo_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration` | `combo_rel_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration` |
+| 588000ETF | single | Cluster 2 | 1 | 0.3860 | `max_up_ret` | _(none)_ |
+| 588000ETF | single | Cluster 3 | 4 | 0.3860 | `combo_diff__directional_volume_signature__smooth_momentum_structure` | `combo_rel_diff__directional_volume_signature__smooth_momentum_structure`, `combo_diff__directional_volume_signature__early_vwap_acceleration`, `combo_sig_product__directional_volume_signature__smooth_momentum_structure` |
 | 159915ETF | single | Cluster 0 | 2 | 0.3192 | `combo_min__opening_drive_thrust_ratio__star50_limit_proximity_early` | `combo_rank_min__max_up_ret__star50_limit_proximity_early` |
 | 159915ETF | single | Cluster 1 | 1 | 0.3192 | `combo_z_sum__first_bar_return__volume_weighted_price_position` | _(none)_ |
 | 159915ETF | single | Cluster 2 | 2 | 0.3192 | `combo_tri_min__rbreaker_sell_setup_proximity_early__yesterday_first_30min_return__yesterday_early_vwap_dev` | `combo_tri_min__star50_limit_proximity_early__yesterday_first_30min_return__yesterday_early_trend` |
@@ -1127,17 +1123,13 @@ Recipes are resolved using training-set statistics (mean/std/median) to prevent 
 | `combo_z_sum__opening_drive_thrust_ratio__h2_l2_pullback_continuation` | `z_sum` | a=`opening_drive_thrust_ratio`, b=`h2_l2_pullback_continuation` |
 | `combo_clamp_diff__opening_drive_thrust_ratio__early_order_flow_imbalance` | `clamp_diff` | a=`opening_drive_thrust_ratio`, b=`early_order_flow_imbalance` |
 | `combo_rel_diff__max_up_ret__max_down_ret` | `rel_diff` | a=`max_up_ret`, b=`max_down_ret` |
-| `combo_diff__impulse_bar_dominance__pullback_depth_ratio` | `diff` | a=`impulse_bar_dominance`, b=`pullback_depth_ratio` |
 | `combo_diff__directional_volume_signature__smooth_momentum_structure` | `diff` | a=`directional_volume_signature`, b=`smooth_momentum_structure` |
 | `combo_rel_diff__directional_volume_signature__smooth_momentum_structure` | `rel_diff` | a=`directional_volume_signature`, b=`smooth_momentum_structure` |
 | `combo_diff__directional_volume_signature__early_vwap_acceleration` | `diff` | a=`directional_volume_signature`, b=`early_vwap_acceleration` |
 | `combo_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration` | `diff` | a=`trend_day_regime_conviction`, b=`volume_weighted_momentum_acceleration` |
 | `combo_rel_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration` | `rel_diff` | a=`trend_day_regime_conviction`, b=`volume_weighted_momentum_acceleration` |
-| `combo_sig_product__impulse_bar_dominance__open_to_current_return` | `sig_product` | a=`impulse_bar_dominance`, b=`open_to_current_return` |
-| `combo_sig_product__impulse_bar_dominance__vwap_trend_channel_slope` | `sig_product` | a=`impulse_bar_dominance`, b=`vwap_trend_channel_slope` |
 | `combo_sig_product__high_low_sequence_momentum__vwap_trend_channel_slope` | `sig_product` | a=`high_low_sequence_momentum`, b=`vwap_trend_channel_slope` |
 | `combo_sig_product__directional_volume_signature__smooth_momentum_structure` | `sig_product` | a=`directional_volume_signature`, b=`smooth_momentum_structure` |
-| `combo_z_sum__impulse_bar_dominance__first_30min_return` | `z_sum` | a=`impulse_bar_dominance`, b=`first_30min_return` |
 | `combo_min__opening_drive_thrust_ratio__star50_limit_proximity_early` | `min` | a=`opening_drive_thrust_ratio`, b=`star50_limit_proximity_early` |
 | `combo_tri_min__star50_limit_proximity_early__yesterday_first_30min_return__yesterday_early_trend` | `tri_min` | a=`star50_limit_proximity_early`, b=`yesterday_first_30min_return`, c=`yesterday_early_trend` |
 | `combo_min__opening_drive_thrust_ratio__first_bar_sentiment` | `min` | a=`opening_drive_thrust_ratio`, b=`first_bar_sentiment` |

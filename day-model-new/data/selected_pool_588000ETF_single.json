@@ -1,44 +1,5 @@
 [
   {
-    "feature_name": "combo_sig_product__impulse_bar_dominance__vwap_trend_channel_slope",
-    "sign": 1,
-    "overall_ic": 0.27443366556756393,
-    "deflated_ic": 0.2763416843465676,
-    "ic_ir": 0.8146704792660977,
-    "monotonicity": 0.792694965449161,
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "impulse_bar_dominance",
-      "feature_b": "vwap_trend_channel_slope"
-    }
-  },
-  {
-    "feature_name": "combo_diff__impulse_bar_dominance__pullback_depth_ratio",
-    "sign": 1,
-    "overall_ic": 0.37598068407890994,
-    "deflated_ic": 0.3767800074943377,
-    "ic_ir": 0.9506513435416911,
-    "monotonicity": 0.805528134254689,
-    "recipe": {
-      "op": "diff",
-      "feature_a": "impulse_bar_dominance",
-      "feature_b": "pullback_depth_ratio"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__impulse_bar_dominance__open_to_current_return",
-    "sign": 1,
-    "overall_ic": 0.278595966074377,
-    "deflated_ic": 0.28004910471748745,
-    "ic_ir": 1.1568189846138883,
-    "monotonicity": 0.8420533070088845,
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "impulse_bar_dominance",
-      "feature_b": "open_to_current_return"
-    }
-  },
-  {
     "feature_name": "combo_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration",
     "sign": 1,
     "overall_ic": 0.2835569150689674,
@@ -88,19 +49,6 @@
       "op": "rel_diff",
       "feature_a": "directional_volume_signature",
       "feature_b": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__impulse_bar_dominance__first_30min_return",
-    "sign": 1,
-    "overall_ic": 0.26379767642220703,
-    "deflated_ic": 0.26433570734934014,
-    "ic_ir": 1.2202637947598087,
-    "monotonicity": 0.84106614017769,
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "impulse_bar_dominance",
-      "feature_b": "first_30min_return"
     }
   },
   {

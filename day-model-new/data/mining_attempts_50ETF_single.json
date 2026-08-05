@@ -366,6 +366,23 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
+    "feature_name": "combo_min__iv_corridor_width__multi_ema_alignment_5_20_50",
+    "sign": -1,
+    "raw_ic": 0.07437258044317184,
+    "overall_ic": 0.16231979023149115,
+    "split_half_ic_first": -0.0776759649734945,
+    "split_half_ic_second": -0.10894657121828114,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF",
+    "recipe": {
+      "op": "min",
+      "feature_a": "iv_corridor_width",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
     "feature_name": "combo_tri_median__bar_vol_4__volume_surge_max__volume_differential_10d",
     "sign": -1,
     "raw_ic": 0.05301485639138675,
@@ -588,23 +605,6 @@
     }
   },
   {
-    "feature_name": "combo_min__iv_corridor_width__multi_ema_alignment_5_20_50",
-    "sign": -1,
-    "raw_ic": 0.07437258044317184,
-    "overall_ic": 0.15336829303566746,
-    "split_half_ic_first": -0.0776759649734945,
-    "split_half_ic_second": -0.10894657121828114,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF",
-    "recipe": {
-      "op": "min",
-      "feature_a": "iv_corridor_width",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
     "feature_name": "combo_rank_max__bar_vol_4__bar_vol_0",
     "sign": -1,
     "raw_ic": 0.05123059179956425,
@@ -636,23 +636,6 @@
       "op": "rank_max",
       "feature_a": "bar_vol_4",
       "feature_b": "first_bar_volume"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__iv_corridor_width__multi_ema_alignment_5_20_50",
-    "sign": -1,
-    "raw_ic": 0.05253533077255417,
-    "overall_ic": 0.15269457318010288,
-    "split_half_ic_first": -0.09648775448103096,
-    "split_half_ic_second": -0.06983198196986845,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "iv_corridor_width",
-      "feature_b": "multi_ema_alignment_5_20_50"
     }
   },
   {
@@ -1123,23 +1106,6 @@
       "feature_a": "bar_vol_4",
       "feature_b": "first_bar_volume",
       "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_min__multi_ema_alignment_5_20_50__roc60",
-    "sign": -1,
-    "raw_ic": 0.03994704669315727,
-    "overall_ic": 0.14009849983985564,
-    "split_half_ic_first": -0.13104556976361098,
-    "split_half_ic_second": -0.14407850629089242,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF",
-    "recipe": {
-      "op": "min",
-      "feature_a": "multi_ema_alignment_5_20_50",
-      "feature_b": "roc60"
     }
   },
   {
@@ -1699,23 +1665,6 @@
     }
   },
   {
-    "feature_name": "combo_rank_max__multi_ema_alignment_5_20_50__roc60",
-    "sign": -1,
-    "raw_ic": 0.0384934866709488,
-    "overall_ic": 0.12752526305817,
-    "split_half_ic_first": -0.10364232828043143,
-    "split_half_ic_second": -0.061385386879824436,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "multi_ema_alignment_5_20_50",
-      "feature_b": "roc60"
-    }
-  },
-  {
     "feature_name": "combo_diff__iv_corridor_width__multi_ema_alignment_5_20_50",
     "sign": -1,
     "raw_ic": 0.031896536699292447,
@@ -1859,6 +1808,23 @@
     }
   },
   {
+    "feature_name": "combo_rank_max__iv_corridor_width__multi_ema_alignment_5_20_50",
+    "sign": -1,
+    "raw_ic": 0.05253533077255417,
+    "overall_ic": 0.12356395709322446,
+    "split_half_ic_first": -0.09648775448103096,
+    "split_half_ic_second": -0.06983198196986845,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "iv_corridor_width",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
     "feature_name": "combo_max__volume_surge_max__yesterday_body_ratio",
     "sign": -1,
     "raw_ic": 0.057933882583783285,
@@ -1989,6 +1955,23 @@
     "monotonicity": 0.0,
     "passes_split_half": false,
     "verdict": "REJECTED_SPLIT_HALF"
+  },
+  {
+    "feature_name": "combo_rank_max__multi_ema_alignment_5_20_50__roc60",
+    "sign": -1,
+    "raw_ic": 0.0384934866709488,
+    "overall_ic": 0.11991252101810448,
+    "split_half_ic_first": -0.10364232828043143,
+    "split_half_ic_second": -0.061385386879824436,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "roc60"
+    }
   },
   {
     "feature_name": "combo_rank_max__bar_vol_0__volume_concentration",
@@ -2278,6 +2261,18 @@
     }
   },
   {
+    "feature_name": "multi_ema_alignment_5_20_50",
+    "sign": -1,
+    "raw_ic": 0.037886688357874655,
+    "overall_ic": 0.11148488034330184,
+    "split_half_ic_first": -0.007439690894434692,
+    "split_half_ic_second": -0.004136291913044645,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF"
+  },
+  {
     "feature_name": "consecutive_higher_highs",
     "sign": 1,
     "raw_ic": 0.030025394488762888,
@@ -2469,6 +2464,40 @@
     }
   },
   {
+    "feature_name": "combo_rank_max__volume_differential_10d__multi_ema_alignment_5_20_50",
+    "sign": -1,
+    "raw_ic": 0.057150875443043765,
+    "overall_ic": 0.1077852807392319,
+    "split_half_ic_first": -0.12709363506883686,
+    "split_half_ic_second": -0.039207530013155474,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "volume_differential_10d",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
+    "feature_name": "combo_min__multi_ema_alignment_5_20_50__roc60",
+    "sign": -1,
+    "raw_ic": 0.03994704669315727,
+    "overall_ic": 0.10772727446884811,
+    "split_half_ic_first": -0.13104556976361098,
+    "split_half_ic_second": -0.14407850629089242,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF",
+    "recipe": {
+      "op": "min",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "roc60"
+    }
+  },
+  {
     "feature_name": "combo_rank_max__volume_surge_max__volume_concentration",
     "sign": -1,
     "raw_ic": 0.05431595906738448,
@@ -2653,18 +2682,6 @@
     }
   },
   {
-    "feature_name": "multi_ema_alignment_5_20_50",
-    "sign": -1,
-    "raw_ic": 0.037886688357874655,
-    "overall_ic": 0.10151155641757176,
-    "split_half_ic_first": -0.007439690894434692,
-    "split_half_ic_second": -0.004136291913044645,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF"
-  },
-  {
     "feature_name": "combo_mean__bar_vol_0__volume_concentration",
     "sign": -1,
     "raw_ic": 0.05753362935969108,
@@ -2830,7 +2847,7 @@
     }
   },
   {
-    "feature_name": "combo_max__willr14__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_max__multi_ema_alignment_5_20_50__willr14",
     "sign": -1,
     "raw_ic": 0.03918326238745399,
     "overall_ic": 0.09799390854747915,
@@ -2842,25 +2859,8 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "max",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__stoch_k__multi_ema_alignment_5_20_50",
-    "sign": -1,
-    "raw_ic": 0.05320069755056917,
-    "overall_ic": 0.09657782444508348,
-    "split_half_ic_first": -0.019089695934883966,
-    "split_half_ic_second": -0.05874794611258623,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
     }
   },
   {
@@ -2890,6 +2890,23 @@
       "op": "product",
       "feature_a": "volume_surge_max",
       "feature_b": "yesterday_body_ratio"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__multi_ema_alignment_5_20_50__willr14",
+    "sign": -1,
+    "raw_ic": 0.0441588461775786,
+    "overall_ic": 0.09321305403690511,
+    "split_half_ic_first": -0.0625172678772605,
+    "split_half_ic_second": -0.13796250875845148,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
     }
   },
   {
@@ -2968,6 +2985,40 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
+    "feature_name": "combo_rank_max__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
+    "sign": -1,
+    "raw_ic": 0.04094743456660799,
+    "overall_ic": 0.08823528970481821,
+    "split_half_ic_first": -0.04355970804014686,
+    "split_half_ic_second": -0.10560154161795307,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "sign": -1,
+    "raw_ic": 0.04094743456660799,
+    "overall_ic": 0.08823528970481821,
+    "split_half_ic_first": -0.04355970804014686,
+    "split_half_ic_second": -0.10560154161795307,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
+    }
+  },
+  {
     "feature_name": "early_body_momentum",
     "sign": 1,
     "raw_ic": 0.01654233222819598,
@@ -3038,7 +3089,7 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
-    "feature_name": "combo_mean__willr14__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_mean__multi_ema_alignment_5_20_50__willr14",
     "sign": -1,
     "raw_ic": 0.034044903649855504,
     "overall_ic": 0.08703365462588239,
@@ -3050,12 +3101,12 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "mean",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
     }
   },
   {
-    "feature_name": "combo_z_sum__willr14__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_z_sum__multi_ema_alignment_5_20_50__willr14",
     "sign": -1,
     "raw_ic": 0.034044903649855504,
     "overall_ic": 0.08703365462588239,
@@ -3067,8 +3118,8 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "z_sum",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
     }
   },
   {
@@ -3254,6 +3305,18 @@
     }
   },
   {
+    "feature_name": "opening_direction_stability",
+    "sign": 1,
+    "raw_ic": 0.014084821686625396,
+    "overall_ic": 0.08170539770649211,
+    "split_half_ic_first": 0.16079292675100665,
+    "split_half_ic_second": 0.05996738387987866,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF"
+  },
+  {
     "feature_name": "cvd_divergence_day",
     "sign": 1,
     "raw_ic": 0.037443500136006044,
@@ -3264,40 +3327,6 @@
     "monotonicity": 0.0,
     "passes_split_half": false,
     "verdict": "REJECTED_SPLIT_HALF"
-  },
-  {
-    "feature_name": "combo_rank_max__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
-    "sign": -1,
-    "raw_ic": 0.04094743456660799,
-    "overall_ic": 0.08076602467490501,
-    "split_half_ic_first": -0.04355970804014686,
-    "split_half_ic_second": -0.10560154161795307,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "sign": -1,
-    "raw_ic": 0.04094743456660799,
-    "overall_ic": 0.08076602467490501,
-    "split_half_ic_first": -0.04355970804014686,
-    "split_half_ic_second": -0.10560154161795307,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
   },
   {
     "feature_name": "tight_channel_persistence",
@@ -3353,23 +3382,6 @@
     }
   },
   {
-    "feature_name": "combo_rank_max__willr14__multi_ema_alignment_5_20_50",
-    "sign": -1,
-    "raw_ic": 0.0441588461775786,
-    "overall_ic": 0.07910812995919082,
-    "split_half_ic_first": -0.0625172678772605,
-    "split_half_ic_second": -0.13796250875845148,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
     "feature_name": "volume_trend_intraday",
     "sign": 1,
     "raw_ic": 0.0208493651508267,
@@ -3382,16 +3394,21 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
-    "feature_name": "volume_weighted_trend_strength_10d",
+    "feature_name": "combo_sig_product__multi_ema_alignment_5_20_50__willr14",
     "sign": -1,
-    "raw_ic": 0.02280881831633055,
-    "overall_ic": 0.07666147445372311,
-    "split_half_ic_first": -0.004138741095152781,
-    "split_half_ic_second": 0.060905364716526696,
+    "raw_ic": 0.024185988887388446,
+    "overall_ic": 0.07646334027106752,
+    "split_half_ic_first": -0.09811823092927541,
+    "split_half_ic_second": -0.04562769085276687,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF"
+    "verdict": "REJECTED_SPLIT_HALF",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
+    }
   },
   {
     "feature_name": "rsi5",
@@ -3452,7 +3469,7 @@
     }
   },
   {
-    "feature_name": "combo_mean__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_mean__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "sign": -1,
     "raw_ic": 0.035413591962821754,
     "overall_ic": 0.07487415761613142,
@@ -3464,12 +3481,12 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "mean",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_z_sum__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_z_sum__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "sign": -1,
     "raw_ic": 0.035413591962821754,
     "overall_ic": 0.07487415761613142,
@@ -3481,12 +3498,12 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "z_sum",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_mean__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_mean__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
     "sign": -1,
     "raw_ic": 0.035413591962821754,
     "overall_ic": 0.07487415761613142,
@@ -3498,12 +3515,12 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "mean",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
     }
   },
   {
-    "feature_name": "combo_z_sum__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_z_sum__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
     "sign": -1,
     "raw_ic": 0.035413591962821754,
     "overall_ic": 0.07487415761613142,
@@ -3515,8 +3532,8 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "z_sum",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
     }
   },
   {
@@ -3593,23 +3610,6 @@
     "monotonicity": 0.0,
     "passes_split_half": false,
     "verdict": "REJECTED_SPLIT_HALF"
-  },
-  {
-    "feature_name": "combo_min__stoch_k__multi_ema_alignment_5_20_50",
-    "sign": -1,
-    "raw_ic": 0.04451005584182846,
-    "overall_ic": 0.07282589494746998,
-    "split_half_ic_first": -0.1024229208224639,
-    "split_half_ic_second": -0.08601932536967694,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF",
-    "recipe": {
-      "op": "min",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
   },
   {
     "feature_name": "yesterday_early_vwap_dev",
@@ -3808,23 +3808,6 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
-    "feature_name": "combo_rank_max__volume_differential_10d__multi_ema_alignment_5_20_50",
-    "sign": -1,
-    "raw_ic": 0.057150875443043765,
-    "overall_ic": 0.07090692562621055,
-    "split_half_ic_first": -0.12709363506883686,
-    "split_half_ic_second": -0.039207530013155474,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "volume_differential_10d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
     "feature_name": "combo_clamp_diff__bar_vol_0__willr14",
     "sign": -1,
     "raw_ic": 0.02799589422190635,
@@ -3919,7 +3902,7 @@
     }
   },
   {
-    "feature_name": "combo_max__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_max__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "sign": -1,
     "raw_ic": 0.03590990634410326,
     "overall_ic": 0.0699490286399909,
@@ -3931,12 +3914,12 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "max",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_max__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_max__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
     "sign": -1,
     "raw_ic": 0.03590990634410326,
     "overall_ic": 0.0699490286399909,
@@ -3948,8 +3931,8 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "max",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
     }
   },
   {
@@ -4170,18 +4153,6 @@
       "feature_a": "volume_surge_max",
       "feature_b": "yesterday_body_ratio"
     }
-  },
-  {
-    "feature_name": "opening_direction_stability",
-    "sign": 1,
-    "raw_ic": 0.014084821686625396,
-    "overall_ic": 0.06744099731728244,
-    "split_half_ic_first": 0.16079292675100665,
-    "split_half_ic_second": 0.05996738387987866,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF"
   },
   {
     "feature_name": "combo_rank_max__donchian_breakout_proximity_20d__roc60",
@@ -4468,7 +4439,7 @@
     "feature_name": "combo_sig_product__volume_differential_10d__multi_ema_alignment_5_20_50",
     "sign": -1,
     "raw_ic": 0.029453329007956188,
-    "overall_ic": 0.06391492740210873,
+    "overall_ic": 0.06359420222235326,
     "split_half_ic_first": -0.03336699721366839,
     "split_half_ic_second": 0.0061976817547807275,
     "ic_ir": 0.0,
@@ -4478,23 +4449,6 @@
     "recipe": {
       "op": "sig_product",
       "feature_a": "volume_differential_10d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__stoch_k__multi_ema_alignment_5_20_50",
-    "sign": -1,
-    "raw_ic": 0.045806502546813385,
-    "overall_ic": 0.0638709253702941,
-    "split_half_ic_first": -0.03672734358939459,
-    "split_half_ic_second": -0.14048670006112274,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "stoch_k",
       "feature_b": "multi_ema_alignment_5_20_50"
     }
   },
@@ -4710,18 +4664,6 @@
     }
   },
   {
-    "feature_name": "trend_day_count_5d",
-    "sign": -1,
-    "raw_ic": 0.034214934563813096,
-    "overall_ic": 0.060109394155016344,
-    "split_half_ic_first": -0.05710699018420848,
-    "split_half_ic_second": -0.04574417842363329,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF"
-  },
-  {
     "feature_name": "close_to_ema21_distance",
     "sign": -1,
     "raw_ic": 0.03679423399778723,
@@ -4774,18 +4716,6 @@
     "overall_ic": 0.05966666378762361,
     "split_half_ic_first": -0.10360198911051935,
     "split_half_ic_second": -0.06612285586029502,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF"
-  },
-  {
-    "feature_name": "high_beta_vol_ratio",
-    "sign": 1,
-    "raw_ic": 0.031193691822941034,
-    "overall_ic": 0.0593586004128736,
-    "split_half_ic_first": 0.0,
-    "split_half_ic_second": 0.04267429139975894,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
@@ -5007,7 +4937,7 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
-    "feature_name": "combo_max__stoch_k__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_max__multi_ema_alignment_5_20_50__stoch_k",
     "sign": -1,
     "raw_ic": 0.03631002986431904,
     "overall_ic": 0.05707650263286461,
@@ -5019,8 +4949,8 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "max",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
     }
   },
   {
@@ -5030,6 +4960,18 @@
     "overall_ic": 0.05703309673264446,
     "split_half_ic_first": -0.061339159662919016,
     "split_half_ic_second": -0.031263059579437494,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF"
+  },
+  {
+    "feature_name": "high_beta_vol_ratio",
+    "sign": 1,
+    "raw_ic": 0.031193691822941034,
+    "overall_ic": 0.05692945216477474,
+    "split_half_ic_first": 0.0,
+    "split_half_ic_second": 0.04267429139975894,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
@@ -5116,6 +5058,18 @@
       "feature_a": "donchian_breakout_ratio_20d",
       "feature_b": "roc60"
     }
+  },
+  {
+    "feature_name": "trend_day_count_5d",
+    "sign": -1,
+    "raw_ic": 0.034214934563813096,
+    "overall_ic": 0.054865358500729884,
+    "split_half_ic_first": -0.05710699018420848,
+    "split_half_ic_second": -0.04574417842363329,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF"
   },
   {
     "feature_name": "combo_clamp_diff__volume_surge_max__volume_concentration",
@@ -5469,6 +5423,23 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
+    "feature_name": "combo_min__multi_ema_alignment_5_20_50__stoch_k",
+    "sign": -1,
+    "raw_ic": 0.04451005584182846,
+    "overall_ic": 0.05118429217476314,
+    "split_half_ic_first": -0.1024229208224639,
+    "split_half_ic_second": -0.08601932536967694,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF",
+    "recipe": {
+      "op": "min",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
+    }
+  },
+  {
     "feature_name": "trend_day_regime_conviction",
     "sign": 1,
     "raw_ic": 0.028801828404286058,
@@ -5499,6 +5470,18 @@
     "overall_ic": 0.05089435655564341,
     "split_half_ic_first": 0.07761825587930937,
     "split_half_ic_second": -0.018703887945805596,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF"
+  },
+  {
+    "feature_name": "volume_weighted_trend_strength_10d",
+    "sign": -1,
+    "raw_ic": 0.02280881831633055,
+    "overall_ic": 0.050720496123500144,
+    "split_half_ic_first": -0.004138741095152781,
+    "split_half_ic_second": 0.060905364716526696,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
@@ -5613,19 +5596,7 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
-    "feature_name": "current_drawdown_from_peak_20d",
-    "sign": -1,
-    "raw_ic": 0.020600055905376145,
-    "overall_ic": 0.0490463010159865,
-    "split_half_ic_first": 0.009758983044233307,
-    "split_half_ic_second": -0.048670207363082585,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF"
-  },
-  {
-    "feature_name": "combo_mean__stoch_k__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_mean__multi_ema_alignment_5_20_50__stoch_k",
     "sign": -1,
     "raw_ic": 0.03990215830243802,
     "overall_ic": 0.04900827165783756,
@@ -5637,12 +5608,12 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "mean",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
     }
   },
   {
-    "feature_name": "combo_z_sum__stoch_k__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_z_sum__multi_ema_alignment_5_20_50__stoch_k",
     "sign": -1,
     "raw_ic": 0.03990215830243802,
     "overall_ic": 0.04900827165783756,
@@ -5654,8 +5625,8 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "z_sum",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
     }
   },
   {
@@ -5983,7 +5954,19 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
-    "feature_name": "combo_rank_min__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "current_drawdown_from_peak_20d",
+    "sign": -1,
+    "raw_ic": 0.020600055905376145,
+    "overall_ic": 0.04536017436771061,
+    "split_half_ic_first": 0.009758983044233307,
+    "split_half_ic_second": -0.048670207363082585,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF"
+  },
+  {
+    "feature_name": "combo_rank_min__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "sign": -1,
     "raw_ic": 0.041219239533710955,
     "overall_ic": 0.04534384778780651,
@@ -5995,12 +5978,12 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "rank_min",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_rank_min__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_rank_min__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
     "sign": -1,
     "raw_ic": 0.041219239533710955,
     "overall_ic": 0.04534384778780651,
@@ -6012,8 +5995,8 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "rank_min",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
     }
   },
   {
@@ -6269,6 +6252,18 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
+    "feature_name": "measured_move_proximity",
+    "sign": 1,
+    "raw_ic": 0.0400013928290087,
+    "overall_ic": 0.04204315530910437,
+    "split_half_ic_first": 0.06354488573525503,
+    "split_half_ic_second": 0.08120750667427147,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF"
+  },
+  {
     "feature_name": "combo_abs_diff__bar_vol_4__stoch_k",
     "sign": 1,
     "raw_ic": 0.0015703239718867779,
@@ -6514,18 +6509,6 @@
     }
   },
   {
-    "feature_name": "outside_bar_reversal_day",
-    "sign": 1,
-    "raw_ic": 0.022701022335145937,
-    "overall_ic": 0.04097298682921392,
-    "split_half_ic_first": 0.09994550388227828,
-    "split_half_ic_second": 0.033084539756184674,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF"
-  },
-  {
     "feature_name": "combo_diff__multi_ema_alignment_5_20_50__roc60",
     "sign": 1,
     "raw_ic": 0.0063561986055352595,
@@ -6673,6 +6656,18 @@
     }
   },
   {
+    "feature_name": "roll_spread_proxy_10d",
+    "sign": -1,
+    "raw_ic": 0.01469992648115892,
+    "overall_ic": 0.04042604749381384,
+    "split_half_ic_first": 0.03233153683452217,
+    "split_half_ic_second": 0.040603834894781546,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF"
+  },
+  {
     "feature_name": "vwap_close_divergence_trend",
     "sign": 1,
     "raw_ic": 0.013202150012472845,
@@ -6753,41 +6748,41 @@
     }
   },
   {
-    "feature_name": "combo_diff__stoch_k__multi_ema_alignment_5_20_50",
-    "sign": -1,
+    "feature_name": "combo_diff__multi_ema_alignment_5_20_50__stoch_k",
+    "sign": 1,
     "raw_ic": 0.0013929008649466179,
     "overall_ic": 0.03951246033123303,
-    "split_half_ic_first": -0.0438999951248521,
-    "split_half_ic_second": 0.014247720364741638,
+    "split_half_ic_first": 0.0438999951248521,
+    "split_half_ic_second": -0.014247720364741638,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "diff",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
     }
   },
   {
-    "feature_name": "combo_z_diff__stoch_k__multi_ema_alignment_5_20_50",
-    "sign": -1,
+    "feature_name": "combo_z_diff__multi_ema_alignment_5_20_50__stoch_k",
+    "sign": 1,
     "raw_ic": 0.0013929008649466179,
     "overall_ic": 0.03951246033123303,
-    "split_half_ic_first": -0.0438999951248521,
-    "split_half_ic_second": 0.014247720364741638,
+    "split_half_ic_first": 0.0438999951248521,
+    "split_half_ic_second": -0.014247720364741638,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "z_diff",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
     }
   },
   {
-    "feature_name": "combo_rank_min__willr14__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_rank_min__multi_ema_alignment_5_20_50__willr14",
     "sign": -1,
     "raw_ic": 0.03194778439052198,
     "overall_ic": 0.03944715094656669,
@@ -6799,8 +6794,8 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "rank_min",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
     }
   },
   {
@@ -6937,20 +6932,20 @@
     }
   },
   {
-    "feature_name": "combo_clamp_diff__stoch_k__multi_ema_alignment_5_20_50",
-    "sign": -1,
+    "feature_name": "combo_clamp_diff__multi_ema_alignment_5_20_50__stoch_k",
+    "sign": 1,
     "raw_ic": 0.001370213172179647,
     "overall_ic": 0.03891051268056359,
-    "split_half_ic_first": -0.04286993079727383,
-    "split_half_ic_second": 0.01245320634283124,
+    "split_half_ic_first": 0.04286993079727383,
+    "split_half_ic_second": -0.01245320634283124,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "clamp_diff",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
     }
   },
   {
@@ -6994,18 +6989,6 @@
     "overall_ic": 0.03888064144857339,
     "split_half_ic_first": -0.10299204284108626,
     "split_half_ic_second": -0.06779888346753657,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF"
-  },
-  {
-    "feature_name": "measured_move_proximity",
-    "sign": 1,
-    "raw_ic": 0.0400013928290087,
-    "overall_ic": 0.03880932159921096,
-    "split_half_ic_first": 0.06354488573525503,
-    "split_half_ic_second": 0.08120750667427147,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
@@ -7111,18 +7094,6 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
-    "feature_name": "roll_spread_proxy_10d",
-    "sign": -1,
-    "raw_ic": 0.01469992648115892,
-    "overall_ic": 0.03760201686719155,
-    "split_half_ic_first": 0.03233153683452217,
-    "split_half_ic_second": 0.040603834894781546,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF"
-  },
-  {
     "feature_name": "volume_price_confirmation",
     "sign": -1,
     "raw_ic": 0.008708912681331522,
@@ -7193,20 +7164,20 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
-    "feature_name": "combo_rel_diff__stoch_k__multi_ema_alignment_5_20_50",
-    "sign": -1,
+    "feature_name": "combo_rel_diff__multi_ema_alignment_5_20_50__stoch_k",
+    "sign": 1,
     "raw_ic": 0.003085160919335467,
     "overall_ic": 0.036908775772758085,
-    "split_half_ic_first": -0.045075043245696216,
-    "split_half_ic_second": 0.004057528783893309,
+    "split_half_ic_first": 0.045075043245696216,
+    "split_half_ic_second": -0.004057528783893309,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "rel_diff",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
     }
   },
   {
@@ -7532,6 +7503,23 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
+    "feature_name": "combo_sig_product__multi_ema_alignment_5_20_50__stoch_k",
+    "sign": -1,
+    "raw_ic": 0.02962043743024619,
+    "overall_ic": 0.034488972307725435,
+    "split_half_ic_first": -0.10135955724651535,
+    "split_half_ic_second": 0.030030577302113913,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
+    }
+  },
+  {
     "feature_name": "combo_diff__volume_surge_max__donchian_breakout_proximity_20d",
     "sign": -1,
     "raw_ic": 0.019018342659416584,
@@ -7699,6 +7687,23 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
+    "feature_name": "combo_rank_max__multi_ema_alignment_5_20_50__stoch_k",
+    "sign": -1,
+    "raw_ic": 0.045806502546813385,
+    "overall_ic": 0.03253559994698205,
+    "split_half_ic_first": -0.03672734358939459,
+    "split_half_ic_second": -0.14048670006112274,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
+    }
+  },
+  {
     "feature_name": "combo_product__volume_differential_10d__stoch_k",
     "sign": 1,
     "raw_ic": 0.017388655663769976,
@@ -7813,6 +7818,18 @@
     }
   },
   {
+    "feature_name": "moving_average_gap_bar_early",
+    "sign": 1,
+    "raw_ic": 0.021376897569369398,
+    "overall_ic": 0.031736448127760886,
+    "split_half_ic_first": 0.05133949124734276,
+    "split_half_ic_second": 0.06690312251981435,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF"
+  },
+  {
     "feature_name": "combo_rel_diff__bar_vol_0__willr14",
     "sign": -1,
     "raw_ic": 0.02288144608379833,
@@ -7845,18 +7862,6 @@
       "feature_a": "first_bar_volume",
       "feature_b": "willr14"
     }
-  },
-  {
-    "feature_name": "moving_average_gap_bar_early",
-    "sign": 1,
-    "raw_ic": 0.021376897569369398,
-    "overall_ic": 0.031132752657398854,
-    "split_half_ic_first": 0.05133949124734276,
-    "split_half_ic_second": 0.06690312251981435,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF"
   },
   {
     "feature_name": "combo_ratio__donchian_breakout_proximity_20d__bar_vol_0",
@@ -7961,7 +7966,7 @@
     }
   },
   {
-    "feature_name": "combo_rank_min__stoch_k__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_rank_min__multi_ema_alignment_5_20_50__stoch_k",
     "sign": -1,
     "raw_ic": 0.040510755791260754,
     "overall_ic": 0.03056375929474007,
@@ -7973,12 +7978,24 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "rank_min",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
     }
   },
   {
-    "feature_name": "combo_product__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "keltner_channel_position_20d",
+    "sign": -1,
+    "raw_ic": 0.03499600575913479,
+    "overall_ic": 0.030479662189939215,
+    "split_half_ic_first": -0.044359306003493235,
+    "split_half_ic_second": -0.07233358910557026,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF"
+  },
+  {
+    "feature_name": "combo_product__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "sign": 1,
     "raw_ic": 0.016574299861913454,
     "overall_ic": 0.029858492527056215,
@@ -7990,12 +8007,12 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "product",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_product__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_product__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
     "sign": 1,
     "raw_ic": 0.016574299861913454,
     "overall_ic": 0.029858492527056215,
@@ -8007,8 +8024,8 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "product",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
     }
   },
   {
@@ -8053,7 +8070,7 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
-    "feature_name": "combo_abs_diff__stoch_k__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_abs_diff__multi_ema_alignment_5_20_50__stoch_k",
     "sign": 1,
     "raw_ic": -0.0012032784014931266,
     "overall_ic": 0.029647414827587697,
@@ -8065,8 +8082,8 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "abs_diff",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
     }
   },
   {
@@ -8559,30 +8576,6 @@
     }
   },
   {
-    "feature_name": "keltner_channel_position_20d",
-    "sign": -1,
-    "raw_ic": 0.03499600575913479,
-    "overall_ic": 0.026050659392597028,
-    "split_half_ic_first": -0.044359306003493235,
-    "split_half_ic_second": -0.07233358910557026,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF"
-  },
-  {
-    "feature_name": "impulse_bar_dominance",
-    "sign": 1,
-    "raw_ic": 0.021644976798311545,
-    "overall_ic": 0.025963924982358576,
-    "split_half_ic_first": 0.007519376835829161,
-    "split_half_ic_second": -0.0015042100396659348,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF"
-  },
-  {
     "feature_name": "intraday_slope",
     "sign": -1,
     "raw_ic": 0.0005629902395793728,
@@ -8771,71 +8764,71 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
-    "feature_name": "combo_diff__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
-    "sign": -1,
+    "feature_name": "combo_diff__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
+    "sign": 1,
     "raw_ic": -0.001585708355431918,
     "overall_ic": 0.023522671596623624,
-    "split_half_ic_first": 0.0017619993950041069,
-    "split_half_ic_second": -0.046573121335531154,
+    "split_half_ic_first": -0.0017619993950041069,
+    "split_half_ic_second": 0.046573121335531154,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "diff",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_z_diff__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
-    "sign": -1,
+    "feature_name": "combo_z_diff__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
+    "sign": 1,
     "raw_ic": -0.001585708355431918,
     "overall_ic": 0.023522671596623624,
-    "split_half_ic_first": 0.0017619993950041069,
-    "split_half_ic_second": -0.046573121335531154,
+    "split_half_ic_first": -0.0017619993950041069,
+    "split_half_ic_second": 0.046573121335531154,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "z_diff",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_diff__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "sign": -1,
+    "feature_name": "combo_diff__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "sign": 1,
     "raw_ic": -0.001585708355431918,
     "overall_ic": 0.023522671596623624,
-    "split_half_ic_first": 0.0017619993950041069,
-    "split_half_ic_second": -0.046573121335531154,
+    "split_half_ic_first": -0.0017619993950041069,
+    "split_half_ic_second": 0.046573121335531154,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "diff",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
     }
   },
   {
-    "feature_name": "combo_z_diff__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "sign": -1,
+    "feature_name": "combo_z_diff__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "sign": 1,
     "raw_ic": -0.001585708355431918,
     "overall_ic": 0.023522671596623624,
-    "split_half_ic_first": 0.0017619993950041069,
-    "split_half_ic_second": -0.046573121335531154,
+    "split_half_ic_first": -0.0017619993950041069,
+    "split_half_ic_second": 0.046573121335531154,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "z_diff",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
     }
   },
   {
@@ -8965,41 +8958,41 @@
     }
   },
   {
-    "feature_name": "combo_clamp_diff__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
-    "sign": -1,
+    "feature_name": "combo_clamp_diff__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
+    "sign": 1,
     "raw_ic": -0.0016205456327236377,
     "overall_ic": 0.022636602221044078,
-    "split_half_ic_first": 0.0021529498584686975,
-    "split_half_ic_second": -0.046441051478148046,
+    "split_half_ic_first": -0.0021529498584686975,
+    "split_half_ic_second": 0.046441051478148046,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "clamp_diff",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_clamp_diff__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "sign": -1,
+    "feature_name": "combo_clamp_diff__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "sign": 1,
     "raw_ic": -0.0016205456327236377,
     "overall_ic": 0.022636602221044078,
-    "split_half_ic_first": 0.0021529498584686975,
-    "split_half_ic_second": -0.046441051478148046,
+    "split_half_ic_first": -0.0021529498584686975,
+    "split_half_ic_second": 0.046441051478148046,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "clamp_diff",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
     }
   },
   {
-    "feature_name": "combo_product__stoch_k__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_product__multi_ema_alignment_5_20_50__stoch_k",
     "sign": 1,
     "raw_ic": 0.026011637180407825,
     "overall_ic": 0.0218805279973879,
@@ -9011,8 +9004,8 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "product",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
     }
   },
   {
@@ -9539,6 +9532,18 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
+    "feature_name": "skypark_gap_reversal_early",
+    "sign": -1,
+    "raw_ic": 0.0024906681368746693,
+    "overall_ic": 0.01882384693400443,
+    "split_half_ic_first": -0.06721948701470867,
+    "split_half_ic_second": 0.14723664876725323,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF"
+  },
+  {
     "feature_name": "combo_rel_diff__bar_vol_4__volume_differential_10d",
     "sign": -1,
     "raw_ic": 0.011498705749010317,
@@ -9620,18 +9625,6 @@
     "overall_ic": 0.018129300567688262,
     "split_half_ic_first": -0.10444616584933325,
     "split_half_ic_second": 0.07233520215215025,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF"
-  },
-  {
-    "feature_name": "skypark_gap_reversal_early",
-    "sign": -1,
-    "raw_ic": 0.0024906681368746693,
-    "overall_ic": 0.017927251792849506,
-    "split_half_ic_first": -0.06721948701470867,
-    "split_half_ic_second": 0.14723664876725323,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
@@ -9893,40 +9886,6 @@
     "monotonicity": 0.0,
     "passes_split_half": false,
     "verdict": "REJECTED_SPLIT_HALF"
-  },
-  {
-    "feature_name": "combo_sig_product__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
-    "sign": 1,
-    "raw_ic": -0.026339708857359413,
-    "overall_ic": 0.013686099483398438,
-    "split_half_ic_first": 0.0,
-    "split_half_ic_second": 0.0,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "sign": 1,
-    "raw_ic": -0.026339708857359413,
-    "overall_ic": 0.013686099483398438,
-    "split_half_ic_first": 0.0,
-    "split_half_ic_second": 0.0,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
   },
   {
     "feature_name": "combo_abs_diff__bar_vol_4__willr14",
@@ -10602,23 +10561,6 @@
     }
   },
   {
-    "feature_name": "combo_sig_product__willr14__multi_ema_alignment_5_20_50",
-    "sign": 1,
-    "raw_ic": -0.008787209514221161,
-    "overall_ic": 0.005947792327003491,
-    "split_half_ic_first": 0.05014398453043227,
-    "split_half_ic_second": 0.0722152311508275,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
     "feature_name": "combo_sig_product__bar_vol_0__willr14",
     "sign": -1,
     "raw_ic": 0.029015115505831742,
@@ -10748,18 +10690,6 @@
       "feature_a": "volume_surge_max",
       "feature_b": "stoch_k"
     }
-  },
-  {
-    "feature_name": "inside_bar_failure_bull",
-    "sign": 1,
-    "raw_ic": -0.01592746840432192,
-    "overall_ic": 0.005159775390759991,
-    "split_half_ic_first": 0.0,
-    "split_half_ic_second": 0.0,
-    "ic_ir": 0.0,
-    "monotonicity": 0.0,
-    "passes_split_half": false,
-    "verdict": "REJECTED_SPLIT_HALF"
   },
   {
     "feature_name": "combo_rel_diff__bar_vol_0__volume_concentration",
@@ -11063,7 +10993,7 @@
     }
   },
   {
-    "feature_name": "combo_abs_diff__willr14__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_abs_diff__multi_ema_alignment_5_20_50__willr14",
     "sign": 1,
     "raw_ic": -0.017274093488409983,
     "overall_ic": 0.003651498366182769,
@@ -11075,8 +11005,8 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "abs_diff",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
     }
   },
   {
@@ -11223,37 +11153,37 @@
     }
   },
   {
-    "feature_name": "combo_rel_diff__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
-    "sign": 1,
+    "feature_name": "combo_rel_diff__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
+    "sign": -1,
     "raw_ic": -0.00022923606367540218,
     "overall_ic": 0.0014937516988360825,
-    "split_half_ic_first": 0.039045447525222335,
-    "split_half_ic_second": -0.01551252060335012,
+    "split_half_ic_first": -0.039045447525222335,
+    "split_half_ic_second": 0.01551252060335012,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "rel_diff",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_rel_diff__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "sign": 1,
+    "feature_name": "combo_rel_diff__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "sign": -1,
     "raw_ic": -0.00022923606367540218,
     "overall_ic": 0.0014937516988360825,
-    "split_half_ic_first": 0.039045447525222335,
-    "split_half_ic_second": -0.01551252060335012,
+    "split_half_ic_first": -0.039045447525222335,
+    "split_half_ic_second": 0.01551252060335012,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "rel_diff",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
     }
   },
   {
@@ -11269,7 +11199,7 @@
     "verdict": "REJECTED_SPLIT_HALF"
   },
   {
-    "feature_name": "combo_abs_diff__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_abs_diff__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "sign": 1,
     "raw_ic": 0.00826673971845715,
     "overall_ic": 0.001106081343644854,
@@ -11281,12 +11211,12 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "abs_diff",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_abs_diff__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_abs_diff__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
     "sign": 1,
     "raw_ic": 0.00826673971845715,
     "overall_ic": 0.001106081343644854,
@@ -11298,8 +11228,8 @@
     "verdict": "REJECTED_SPLIT_HALF",
     "recipe": {
       "op": "abs_diff",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
     }
   },
   {
@@ -11520,6 +11450,42 @@
     "overall_ic": -0.004299432886732205,
     "split_half_ic_first": 0.035776694606157,
     "split_half_ic_second": -0.023311639705323888,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF"
+  },
+  {
+    "feature_name": "impulse_bar_dominance",
+    "sign": -1,
+    "raw_ic": -0.021644976798311545,
+    "overall_ic": -0.04903510234666247,
+    "split_half_ic_first": 0.0,
+    "split_half_ic_second": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF"
+  },
+  {
+    "feature_name": "outside_bar_reversal_day",
+    "sign": -1,
+    "raw_ic": -0.022701022335145937,
+    "overall_ic": -0.05185929828755724,
+    "split_half_ic_first": 0.0,
+    "split_half_ic_second": 0.0,
+    "ic_ir": 0.0,
+    "monotonicity": 0.0,
+    "passes_split_half": false,
+    "verdict": "REJECTED_SPLIT_HALF"
+  },
+  {
+    "feature_name": "inside_bar_failure_bull",
+    "sign": -1,
+    "raw_ic": 0.01592746840432192,
+    "overall_ic": -0.054895634940578274,
+    "split_half_ic_first": 0.0034511803832541835,
+    "split_half_ic_second": -0.009920317137703194,
     "ic_ir": 0.0,
     "monotonicity": 0.0,
     "passes_split_half": false,
@@ -12048,6 +12014,50 @@
     "verdict": "REJECTED_ROLLING_GUARD"
   },
   {
+    "feature_name": "combo_sig_product__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
+    "sign": -1,
+    "raw_ic": 0.024158742623189036,
+    "overall_ic": 0.08435120325730847,
+    "mean_tail_ic": 0.09928778913394298,
+    "sortino": 0.0,
+    "composite_score": 0.0,
+    "ic_ir": 0.36455650764897496,
+    "monotonicity": 0.5938461538461538,
+    "split_half_ic_first": -0.15131126901766176,
+    "split_half_ic_second": -0.0660015417495486,
+    "passes_split_half": true,
+    "passes_rolling_guard": false,
+    "passes_fdr": false,
+    "verdict": "REJECTED_ROLLING_GUARD",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "sign": -1,
+    "raw_ic": 0.024158742623189036,
+    "overall_ic": 0.08435120325730847,
+    "mean_tail_ic": 0.09928778913394298,
+    "sortino": 0.0,
+    "composite_score": 0.0,
+    "ic_ir": 0.36455650764897496,
+    "monotonicity": 0.5938461538461538,
+    "split_half_ic_first": -0.15131126901766176,
+    "split_half_ic_second": -0.0660015417495486,
+    "passes_split_half": true,
+    "passes_rolling_guard": false,
+    "passes_fdr": false,
+    "verdict": "REJECTED_ROLLING_GUARD",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
+    }
+  },
+  {
     "feature_name": "combo_mean__volume_surge_max__yesterday_body_ratio",
     "sign": -1,
     "raw_ic": 0.07237977369914152,
@@ -12136,7 +12146,7 @@
     }
   },
   {
-    "feature_name": "combo_product__willr14__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_product__multi_ema_alignment_5_20_50__willr14",
     "sign": 1,
     "raw_ic": 0.02586707940417632,
     "overall_ic": 0.07875741187367354,
@@ -12153,8 +12163,8 @@
     "verdict": "REJECTED_ROLLING_GUARD",
     "recipe": {
       "op": "product",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
     }
   },
   {
@@ -12517,8 +12527,8 @@
     }
   },
   {
-    "feature_name": "combo_rel_diff__willr14__multi_ema_alignment_5_20_50",
-    "sign": 1,
+    "feature_name": "combo_rel_diff__multi_ema_alignment_5_20_50__willr14",
+    "sign": -1,
     "raw_ic": 0.003087721943944049,
     "overall_ic": 0.019372578511382826,
     "mean_tail_ic": 0.0386186121570737,
@@ -12526,16 +12536,16 @@
     "composite_score": 0.0,
     "ic_ir": 0.15281982009496273,
     "monotonicity": 0.5512820512820513,
-    "split_half_ic_first": -0.012941077708357012,
-    "split_half_ic_second": 0.09102897482357444,
+    "split_half_ic_first": 0.012941077708357012,
+    "split_half_ic_second": -0.09250848369670442,
     "passes_split_half": true,
     "passes_rolling_guard": false,
     "passes_fdr": false,
     "verdict": "REJECTED_ROLLING_GUARD",
     "recipe": {
       "op": "rel_diff",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
     }
   },
   {
@@ -12573,8 +12583,8 @@
     "verdict": "REJECTED_ROLLING_GUARD"
   },
   {
-    "feature_name": "combo_clamp_diff__willr14__multi_ema_alignment_5_20_50",
-    "sign": 1,
+    "feature_name": "combo_clamp_diff__multi_ema_alignment_5_20_50__willr14",
+    "sign": -1,
     "raw_ic": 0.0020208864169381693,
     "overall_ic": 0.01627511778274983,
     "mean_tail_ic": 0.03570187077879386,
@@ -12582,21 +12592,21 @@
     "composite_score": 0.0,
     "ic_ir": 0.1278642779645409,
     "monotonicity": 0.5717948717948718,
-    "split_half_ic_first": -0.010828043586777795,
-    "split_half_ic_second": 0.08557868306626731,
+    "split_half_ic_first": 0.010828043586777795,
+    "split_half_ic_second": -0.08557868306626731,
     "passes_split_half": true,
     "passes_rolling_guard": false,
     "passes_fdr": false,
     "verdict": "REJECTED_ROLLING_GUARD",
     "recipe": {
       "op": "clamp_diff",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
     }
   },
   {
-    "feature_name": "combo_diff__willr14__multi_ema_alignment_5_20_50",
-    "sign": 1,
+    "feature_name": "combo_diff__multi_ema_alignment_5_20_50__willr14",
+    "sign": -1,
     "raw_ic": 0.0020153529174556893,
     "overall_ic": 0.016264183102411966,
     "mean_tail_ic": 0.04551431474508399,
@@ -12604,21 +12614,21 @@
     "composite_score": 0.0,
     "ic_ir": 0.17188346789690967,
     "monotonicity": 0.5717948717948718,
-    "split_half_ic_first": -0.012591663795602911,
-    "split_half_ic_second": 0.09278665416150451,
+    "split_half_ic_first": 0.012591663795602911,
+    "split_half_ic_second": -0.09278665416150451,
     "passes_split_half": true,
     "passes_rolling_guard": false,
     "passes_fdr": false,
     "verdict": "REJECTED_ROLLING_GUARD",
     "recipe": {
       "op": "diff",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
     }
   },
   {
-    "feature_name": "combo_z_diff__willr14__multi_ema_alignment_5_20_50",
-    "sign": 1,
+    "feature_name": "combo_z_diff__multi_ema_alignment_5_20_50__willr14",
+    "sign": -1,
     "raw_ic": 0.0020153529174556893,
     "overall_ic": 0.016264183102411966,
     "mean_tail_ic": 0.04551431474508399,
@@ -12626,16 +12636,16 @@
     "composite_score": 0.0,
     "ic_ir": 0.17188346789690967,
     "monotonicity": 0.5717948717948718,
-    "split_half_ic_first": -0.012591663795602911,
-    "split_half_ic_second": 0.09278665416150451,
+    "split_half_ic_first": 0.012591663795602911,
+    "split_half_ic_second": -0.09278665416150451,
     "passes_split_half": true,
     "passes_rolling_guard": false,
     "passes_fdr": false,
     "verdict": "REJECTED_ROLLING_GUARD",
     "recipe": {
       "op": "z_diff",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
     }
   },
   {
@@ -15452,10 +15462,10 @@
     "feature_name": "combo_max__multi_ema_alignment_5_20_50__roc60",
     "sign": -1,
     "raw_ic": 0.04014015941919651,
-    "overall_ic": 0.12214509642644701,
+    "overall_ic": 0.1220460010831404,
     "mean_tail_ic": 0.265650827804674,
-    "sortino": 0.1803498048275317,
-    "composite_score": 0.1901989231900949,
+    "sortino": 0.14679072143873528,
+    "composite_score": 0.1734045171942007,
     "recent_ic": -0.19422341474043167,
     "recency_ratio": -1.4008623530476185,
     "half_ratio": -1.3712419208504134,
@@ -15855,6 +15865,52 @@
     }
   },
   {
+    "feature_name": "combo_min__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
+    "sign": -1,
+    "raw_ic": 0.03973073964379921,
+    "overall_ic": 0.1084158043968105,
+    "mean_tail_ic": 0.171483354252585,
+    "sortino": 0.06788882757873196,
+    "composite_score": 0.10363832770685302,
+    "recent_ic": -0.14507098629843096,
+    "recency_ratio": -1.5001745342987114,
+    "half_ratio": -1.6030662349314784,
+    "ic_ir": 0.593732051307523,
+    "monotonicity": 0.718974358974359,
+    "passes_split_half": true,
+    "passes_rolling_guard": true,
+    "passes_temporal_gate": false,
+    "verdict": "REJECTED_TEMPORAL",
+    "recipe": {
+      "op": "min",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
+    }
+  },
+  {
+    "feature_name": "combo_min__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "sign": -1,
+    "raw_ic": 0.03973073964379921,
+    "overall_ic": 0.1084158043968105,
+    "mean_tail_ic": 0.171483354252585,
+    "sortino": 0.06788882757873196,
+    "composite_score": 0.10363832770685302,
+    "recent_ic": -0.14507098629843096,
+    "recency_ratio": -1.5001745342987114,
+    "half_ratio": -1.6030662349314784,
+    "ic_ir": 0.593732051307523,
+    "monotonicity": 0.718974358974359,
+    "passes_split_half": true,
+    "passes_rolling_guard": true,
+    "passes_temporal_gate": false,
+    "verdict": "REJECTED_TEMPORAL",
+    "recipe": {
+      "op": "min",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
+    }
+  },
+  {
     "feature_name": "combo_rank_max__volume_differential_10d__donchian_breakout_proximity_20d",
     "sign": -1,
     "raw_ic": 0.045680762831615276,
@@ -15944,29 +16000,6 @@
       "op": "min",
       "feature_a": "bar_vol_4",
       "feature_b": "volume_differential_10d"
-    }
-  },
-  {
-    "feature_name": "combo_min__volume_differential_10d__multi_ema_alignment_5_20_50",
-    "sign": -1,
-    "raw_ic": 0.023713810644202242,
-    "overall_ic": 0.10532671779710466,
-    "mean_tail_ic": 0.14677616400693325,
-    "sortino": -0.1846677909432745,
-    "composite_score": -0.031316348067781476,
-    "recent_ic": -0.20023931232876854,
-    "recency_ratio": -1.2641630811189772,
-    "half_ratio": -0.36510507313965246,
-    "ic_ir": 0.5113384677103473,
-    "monotonicity": 0.6902564102564103,
-    "passes_split_half": true,
-    "passes_rolling_guard": true,
-    "passes_temporal_gate": false,
-    "verdict": "REJECTED_TEMPORAL",
-    "recipe": {
-      "op": "min",
-      "feature_a": "volume_differential_10d",
-      "feature_b": "multi_ema_alignment_5_20_50"
     }
   },
   {
@@ -16108,13 +16141,13 @@
     }
   },
   {
-    "feature_name": "combo_min__willr14__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_min__multi_ema_alignment_5_20_50__willr14",
     "sign": -1,
     "raw_ic": 0.03169002800286509,
-    "overall_ic": 0.10177873903756467,
+    "overall_ic": 0.1016269205287404,
     "mean_tail_ic": 0.14904835335604566,
-    "sortino": -0.026969140418022765,
-    "composite_score": 0.048081248053580265,
+    "sortino": 0.018800758131273,
+    "composite_score": 0.07094342455190451,
     "recent_ic": -0.14556875178706452,
     "recency_ratio": -3.0140610871810565,
     "half_ratio": -2.392179193879794,
@@ -16126,8 +16159,8 @@
     "verdict": "REJECTED_TEMPORAL",
     "recipe": {
       "op": "min",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
     }
   },
   {
@@ -16218,6 +16251,29 @@
     }
   },
   {
+    "feature_name": "combo_min__volume_differential_10d__multi_ema_alignment_5_20_50",
+    "sign": -1,
+    "raw_ic": 0.023713810644202242,
+    "overall_ic": 0.09851088157196221,
+    "mean_tail_ic": 0.14677616400693325,
+    "sortino": -0.47959284866399526,
+    "composite_score": -0.17980125236191322,
+    "recent_ic": -0.20023931232876854,
+    "recency_ratio": -1.2641630811189772,
+    "half_ratio": -0.36510507313965246,
+    "ic_ir": 0.5113384677103473,
+    "monotonicity": 0.6902564102564103,
+    "passes_split_half": true,
+    "passes_rolling_guard": true,
+    "passes_temporal_gate": false,
+    "verdict": "REJECTED_TEMPORAL",
+    "recipe": {
+      "op": "min",
+      "feature_a": "volume_differential_10d",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
     "feature_name": "combo_rank_max__volume_differential_10d__willr14",
     "sign": -1,
     "raw_ic": 0.03340673475717968,
@@ -16238,52 +16294,6 @@
       "op": "rank_max",
       "feature_a": "volume_differential_10d",
       "feature_b": "willr14"
-    }
-  },
-  {
-    "feature_name": "combo_min__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
-    "sign": -1,
-    "raw_ic": 0.03973073964379921,
-    "overall_ic": 0.09542634618459396,
-    "mean_tail_ic": 0.171483354252585,
-    "sortino": 0.37814550858496104,
-    "composite_score": 0.2568182494781351,
-    "recent_ic": -0.14507098629843096,
-    "recency_ratio": -1.5001745342987114,
-    "half_ratio": -1.6030662349314784,
-    "ic_ir": 0.593732051307523,
-    "monotonicity": 0.718974358974359,
-    "passes_split_half": true,
-    "passes_rolling_guard": true,
-    "passes_temporal_gate": false,
-    "verdict": "REJECTED_TEMPORAL",
-    "recipe": {
-      "op": "min",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_min__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "sign": -1,
-    "raw_ic": 0.03973073964379921,
-    "overall_ic": 0.09542634618459396,
-    "mean_tail_ic": 0.171483354252585,
-    "sortino": 0.37814550858496104,
-    "composite_score": 0.2568182494781351,
-    "recent_ic": -0.14507098629843096,
-    "recency_ratio": -1.5001745342987114,
-    "half_ratio": -1.6030662349314784,
-    "ic_ir": 0.593732051307523,
-    "monotonicity": 0.718974358974359,
-    "passes_split_half": true,
-    "passes_rolling_guard": true,
-    "passes_temporal_gate": false,
-    "verdict": "REJECTED_TEMPORAL",
-    "recipe": {
-      "op": "min",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
     }
   },
   {

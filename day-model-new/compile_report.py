@@ -404,15 +404,15 @@ def build_report(etfs, sides, suffix):
 
 def main():
     parser = argparse.ArgumentParser(description="Compile BASELINE_REPORT.md from existing JSON outputs.")
-    parser.add_argument("-e", "--etf", default="all", help="ETF or 'all'")
-    parser.add_argument("-s", "--side", default="all", help="Side or 'all'")
+    parser.add_argument("-e", "--etf", default="all", help="ETF or 'all' (comma-separated list supported, e.g. 300ETF,500ETF)")
+    parser.add_argument("-s", "--side", default="all", help="Side or 'all' (comma-separated list supported, e.g. single,long)")
     parser.add_argument("--early", action="store_true", help="Use early window dataset suffix")
     parser.add_argument("--period-suffix", type=str, default=None, help="Period suffix for multi-period runs (e.g., _p2015_2023)")
     parser.add_argument("-o", "--output", default=None, help="Output path (default: day-model-new/BASELINE_REPORT{suffix}.md)")
     args = parser.parse_args()
 
-    etfs = ETFS if args.etf == "all" else [args.etf]
-    sides = SIDES if args.side == "all" else [args.side]
+    etfs = ETFS if args.etf == "all" else [e.strip() for e in args.etf.split(",") if e.strip()]
+    sides = SIDES if args.side == "all" else [s.strip() for s in args.side.split(",") if s.strip()]
     suffix = args.period_suffix or ("_early" if args.early else "")
 
     lines = build_report(etfs, sides, suffix)

@@ -208,118 +208,6 @@
     }
   },
   {
-    "feature_name": "combo_min__opening_drive_thrust_ratio__opening_auction_imbalance",
-    "recipe": {
-      "op": "min",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_max__opening_drive_thrust_ratio__opening_auction_imbalance",
-    "recipe": {
-      "op": "max",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_diff__opening_drive_thrust_ratio__opening_auction_imbalance",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_mean__opening_drive_thrust_ratio__opening_auction_imbalance",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_product__opening_drive_thrust_ratio__opening_auction_imbalance",
-    "recipe": {
-      "op": "product",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__opening_drive_thrust_ratio__opening_auction_imbalance",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__opening_drive_thrust_ratio__opening_auction_imbalance",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__opening_drive_thrust_ratio__opening_auction_imbalance",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__opening_drive_thrust_ratio__opening_auction_imbalance",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__opening_drive_thrust_ratio__opening_auction_imbalance",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__opening_drive_thrust_ratio__opening_auction_imbalance",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__opening_drive_thrust_ratio__opening_auction_imbalance",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__opening_drive_thrust_ratio__opening_auction_imbalance",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__opening_drive_thrust_ratio__opening_auction_imbalance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
     "feature_name": "combo_min__opening_drive_thrust_ratio__net_volume_flow",
     "recipe": {
       "op": "min",
@@ -429,6 +317,118 @@
       "op": "ratio",
       "feature_a": "opening_drive_thrust_ratio",
       "feature_b": "net_volume_flow"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_drive_thrust_ratio__opening_auction_imbalance",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_drive_thrust_ratio__opening_auction_imbalance",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_drive_thrust_ratio__opening_auction_imbalance",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_drive_thrust_ratio__opening_auction_imbalance",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_drive_thrust_ratio__opening_auction_imbalance",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_drive_thrust_ratio__opening_auction_imbalance",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_drive_thrust_ratio__opening_auction_imbalance",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_drive_thrust_ratio__opening_auction_imbalance",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_drive_thrust_ratio__opening_auction_imbalance",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_drive_thrust_ratio__opening_auction_imbalance",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_drive_thrust_ratio__opening_auction_imbalance",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_drive_thrust_ratio__opening_auction_imbalance",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_drive_thrust_ratio__opening_auction_imbalance",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__opening_drive_thrust_ratio__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
@@ -2952,118 +2952,6 @@
     }
   },
   {
-    "feature_name": "combo_min__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "min",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_max__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "max",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_diff__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_mean__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_product__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "product",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
     "feature_name": "combo_min__rbreaker_sell_setup_proximity_early__net_volume_flow",
     "recipe": {
       "op": "min",
@@ -3173,6 +3061,118 @@
       "op": "ratio",
       "feature_a": "rbreaker_sell_setup_proximity_early",
       "feature_b": "net_volume_flow"
+    }
+  },
+  {
+    "feature_name": "combo_min__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "min",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_max__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "max",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_diff__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_mean__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_product__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "product",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
@@ -4640,118 +4640,6 @@
     }
   },
   {
-    "feature_name": "combo_min__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "min",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_max__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "max",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_diff__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_mean__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_product__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "product",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
     "feature_name": "combo_min__max_up_ret__net_volume_flow",
     "recipe": {
       "op": "min",
@@ -4861,6 +4749,118 @@
       "op": "ratio",
       "feature_a": "max_up_ret",
       "feature_b": "net_volume_flow"
+    }
+  },
+  {
+    "feature_name": "combo_min__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "min",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_max__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "max",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_diff__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_mean__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_product__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "product",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
@@ -7176,1358 +7176,6 @@
     }
   },
   {
-    "feature_name": "combo_min__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_max__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_diff__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_mean__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_product__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__smooth_momentum_structure__opening_auction_imbalance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "smooth_momentum_structure",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_min__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_max__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_diff__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_mean__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_product__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__star50_limit_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "star50_limit_proximity_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_min__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_max__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_diff__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_mean__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_product__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__volume_weighted_momentum_acceleration__opening_auction_imbalance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "volume_weighted_momentum_acceleration",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_min__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_max__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_diff__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_mean__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_product__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__bar_ret_0__opening_auction_imbalance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "bar_ret_0",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_min__opening_auction_imbalance__first_bar_return",
-    "recipe": {
-      "op": "min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "first_bar_return"
-    }
-  },
-  {
-    "feature_name": "combo_max__opening_auction_imbalance__first_bar_return",
-    "recipe": {
-      "op": "max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "first_bar_return"
-    }
-  },
-  {
-    "feature_name": "combo_diff__opening_auction_imbalance__first_bar_return",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "first_bar_return"
-    }
-  },
-  {
-    "feature_name": "combo_mean__opening_auction_imbalance__first_bar_return",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "first_bar_return"
-    }
-  },
-  {
-    "feature_name": "combo_product__opening_auction_imbalance__first_bar_return",
-    "recipe": {
-      "op": "product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "first_bar_return"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__opening_auction_imbalance__first_bar_return",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "first_bar_return"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__opening_auction_imbalance__first_bar_return",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "first_bar_return"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__opening_auction_imbalance__first_bar_return",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "first_bar_return"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__opening_auction_imbalance__first_bar_return",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "first_bar_return"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__opening_auction_imbalance__first_bar_return",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "first_bar_return"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__opening_auction_imbalance__first_bar_return",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "first_bar_return"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__opening_auction_imbalance__first_bar_return",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "first_bar_return"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__opening_auction_imbalance__first_bar_return",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "first_bar_return"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__first_bar_return__opening_auction_imbalance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "first_bar_return",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_min__opening_auction_imbalance__demark_setup_reversal_early",
-    "recipe": {
-      "op": "min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "demark_setup_reversal_early"
-    }
-  },
-  {
-    "feature_name": "combo_max__opening_auction_imbalance__demark_setup_reversal_early",
-    "recipe": {
-      "op": "max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "demark_setup_reversal_early"
-    }
-  },
-  {
-    "feature_name": "combo_diff__opening_auction_imbalance__demark_setup_reversal_early",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "demark_setup_reversal_early"
-    }
-  },
-  {
-    "feature_name": "combo_mean__opening_auction_imbalance__demark_setup_reversal_early",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "demark_setup_reversal_early"
-    }
-  },
-  {
-    "feature_name": "combo_product__opening_auction_imbalance__demark_setup_reversal_early",
-    "recipe": {
-      "op": "product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "demark_setup_reversal_early"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__opening_auction_imbalance__demark_setup_reversal_early",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "demark_setup_reversal_early"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__opening_auction_imbalance__demark_setup_reversal_early",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "demark_setup_reversal_early"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__opening_auction_imbalance__demark_setup_reversal_early",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "demark_setup_reversal_early"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__opening_auction_imbalance__demark_setup_reversal_early",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "demark_setup_reversal_early"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__opening_auction_imbalance__demark_setup_reversal_early",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "demark_setup_reversal_early"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__opening_auction_imbalance__demark_setup_reversal_early",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "demark_setup_reversal_early"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__opening_auction_imbalance__demark_setup_reversal_early",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "demark_setup_reversal_early"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__opening_auction_imbalance__demark_setup_reversal_early",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "demark_setup_reversal_early"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__demark_setup_reversal_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "demark_setup_reversal_early",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_min__opening_auction_imbalance__max_down_ret",
-    "recipe": {
-      "op": "min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "max_down_ret"
-    }
-  },
-  {
-    "feature_name": "combo_max__opening_auction_imbalance__max_down_ret",
-    "recipe": {
-      "op": "max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "max_down_ret"
-    }
-  },
-  {
-    "feature_name": "combo_diff__opening_auction_imbalance__max_down_ret",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "max_down_ret"
-    }
-  },
-  {
-    "feature_name": "combo_mean__opening_auction_imbalance__max_down_ret",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "max_down_ret"
-    }
-  },
-  {
-    "feature_name": "combo_product__opening_auction_imbalance__max_down_ret",
-    "recipe": {
-      "op": "product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "max_down_ret"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__opening_auction_imbalance__max_down_ret",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "max_down_ret"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__opening_auction_imbalance__max_down_ret",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "max_down_ret"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__opening_auction_imbalance__max_down_ret",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "max_down_ret"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__opening_auction_imbalance__max_down_ret",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "max_down_ret"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__opening_auction_imbalance__max_down_ret",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "max_down_ret"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__opening_auction_imbalance__max_down_ret",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "max_down_ret"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__opening_auction_imbalance__max_down_ret",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "max_down_ret"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__opening_auction_imbalance__max_down_ret",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "max_down_ret"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__max_down_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "max_down_ret",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_min__opening_auction_imbalance__close_vs_open_range",
-    "recipe": {
-      "op": "min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "close_vs_open_range"
-    }
-  },
-  {
-    "feature_name": "combo_max__opening_auction_imbalance__close_vs_open_range",
-    "recipe": {
-      "op": "max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "close_vs_open_range"
-    }
-  },
-  {
-    "feature_name": "combo_diff__opening_auction_imbalance__close_vs_open_range",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "close_vs_open_range"
-    }
-  },
-  {
-    "feature_name": "combo_mean__opening_auction_imbalance__close_vs_open_range",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "close_vs_open_range"
-    }
-  },
-  {
-    "feature_name": "combo_product__opening_auction_imbalance__close_vs_open_range",
-    "recipe": {
-      "op": "product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "close_vs_open_range"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__opening_auction_imbalance__close_vs_open_range",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "close_vs_open_range"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__opening_auction_imbalance__close_vs_open_range",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "close_vs_open_range"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__opening_auction_imbalance__close_vs_open_range",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "close_vs_open_range"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__opening_auction_imbalance__close_vs_open_range",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "close_vs_open_range"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__opening_auction_imbalance__close_vs_open_range",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "close_vs_open_range"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__opening_auction_imbalance__close_vs_open_range",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "close_vs_open_range"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__opening_auction_imbalance__close_vs_open_range",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "close_vs_open_range"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__opening_auction_imbalance__close_vs_open_range",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "close_vs_open_range"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__close_vs_open_range__opening_auction_imbalance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "close_vs_open_range",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_min__opening_auction_imbalance__vwap_close_divergence_trend",
-    "recipe": {
-      "op": "min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "vwap_close_divergence_trend"
-    }
-  },
-  {
-    "feature_name": "combo_max__opening_auction_imbalance__vwap_close_divergence_trend",
-    "recipe": {
-      "op": "max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "vwap_close_divergence_trend"
-    }
-  },
-  {
-    "feature_name": "combo_diff__opening_auction_imbalance__vwap_close_divergence_trend",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "vwap_close_divergence_trend"
-    }
-  },
-  {
-    "feature_name": "combo_mean__opening_auction_imbalance__vwap_close_divergence_trend",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "vwap_close_divergence_trend"
-    }
-  },
-  {
-    "feature_name": "combo_product__opening_auction_imbalance__vwap_close_divergence_trend",
-    "recipe": {
-      "op": "product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "vwap_close_divergence_trend"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__opening_auction_imbalance__vwap_close_divergence_trend",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "vwap_close_divergence_trend"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__opening_auction_imbalance__vwap_close_divergence_trend",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "vwap_close_divergence_trend"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__opening_auction_imbalance__vwap_close_divergence_trend",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "vwap_close_divergence_trend"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__opening_auction_imbalance__vwap_close_divergence_trend",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "vwap_close_divergence_trend"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__opening_auction_imbalance__vwap_close_divergence_trend",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "vwap_close_divergence_trend"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__opening_auction_imbalance__vwap_close_divergence_trend",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "vwap_close_divergence_trend"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__opening_auction_imbalance__vwap_close_divergence_trend",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "vwap_close_divergence_trend"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__opening_auction_imbalance__vwap_close_divergence_trend",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "vwap_close_divergence_trend"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__vwap_close_divergence_trend__opening_auction_imbalance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "vwap_close_divergence_trend",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_min__opening_auction_imbalance__bar_body_rng_0",
-    "recipe": {
-      "op": "min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_body_rng_0"
-    }
-  },
-  {
-    "feature_name": "combo_max__opening_auction_imbalance__bar_body_rng_0",
-    "recipe": {
-      "op": "max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_body_rng_0"
-    }
-  },
-  {
-    "feature_name": "combo_diff__opening_auction_imbalance__bar_body_rng_0",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_body_rng_0"
-    }
-  },
-  {
-    "feature_name": "combo_mean__opening_auction_imbalance__bar_body_rng_0",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_body_rng_0"
-    }
-  },
-  {
-    "feature_name": "combo_product__opening_auction_imbalance__bar_body_rng_0",
-    "recipe": {
-      "op": "product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_body_rng_0"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__opening_auction_imbalance__bar_body_rng_0",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_body_rng_0"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__opening_auction_imbalance__bar_body_rng_0",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_body_rng_0"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__opening_auction_imbalance__bar_body_rng_0",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_body_rng_0"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__opening_auction_imbalance__bar_body_rng_0",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_body_rng_0"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__opening_auction_imbalance__bar_body_rng_0",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_body_rng_0"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__opening_auction_imbalance__bar_body_rng_0",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_body_rng_0"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__opening_auction_imbalance__bar_body_rng_0",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_body_rng_0"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__opening_auction_imbalance__bar_body_rng_0",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "bar_body_rng_0"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__bar_body_rng_0__opening_auction_imbalance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "bar_body_rng_0",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_min__opening_auction_imbalance__shaved_bar_trend_conviction",
-    "recipe": {
-      "op": "min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "shaved_bar_trend_conviction"
-    }
-  },
-  {
-    "feature_name": "combo_max__opening_auction_imbalance__shaved_bar_trend_conviction",
-    "recipe": {
-      "op": "max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "shaved_bar_trend_conviction"
-    }
-  },
-  {
-    "feature_name": "combo_diff__opening_auction_imbalance__shaved_bar_trend_conviction",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "shaved_bar_trend_conviction"
-    }
-  },
-  {
-    "feature_name": "combo_mean__opening_auction_imbalance__shaved_bar_trend_conviction",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "shaved_bar_trend_conviction"
-    }
-  },
-  {
-    "feature_name": "combo_product__opening_auction_imbalance__shaved_bar_trend_conviction",
-    "recipe": {
-      "op": "product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "shaved_bar_trend_conviction"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__opening_auction_imbalance__shaved_bar_trend_conviction",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "shaved_bar_trend_conviction"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__opening_auction_imbalance__shaved_bar_trend_conviction",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "shaved_bar_trend_conviction"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__opening_auction_imbalance__shaved_bar_trend_conviction",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "shaved_bar_trend_conviction"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__opening_auction_imbalance__shaved_bar_trend_conviction",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "shaved_bar_trend_conviction"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__opening_auction_imbalance__shaved_bar_trend_conviction",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "shaved_bar_trend_conviction"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__opening_auction_imbalance__shaved_bar_trend_conviction",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "shaved_bar_trend_conviction"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__opening_auction_imbalance__shaved_bar_trend_conviction",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "shaved_bar_trend_conviction"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__opening_auction_imbalance__shaved_bar_trend_conviction",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "shaved_bar_trend_conviction"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__shaved_bar_trend_conviction__opening_auction_imbalance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "shaved_bar_trend_conviction",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_min__opening_auction_imbalance__h2_l2_pullback_continuation",
-    "recipe": {
-      "op": "min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "h2_l2_pullback_continuation"
-    }
-  },
-  {
-    "feature_name": "combo_max__opening_auction_imbalance__h2_l2_pullback_continuation",
-    "recipe": {
-      "op": "max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "h2_l2_pullback_continuation"
-    }
-  },
-  {
-    "feature_name": "combo_diff__opening_auction_imbalance__h2_l2_pullback_continuation",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "h2_l2_pullback_continuation"
-    }
-  },
-  {
-    "feature_name": "combo_mean__opening_auction_imbalance__h2_l2_pullback_continuation",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "h2_l2_pullback_continuation"
-    }
-  },
-  {
-    "feature_name": "combo_product__opening_auction_imbalance__h2_l2_pullback_continuation",
-    "recipe": {
-      "op": "product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "h2_l2_pullback_continuation"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__opening_auction_imbalance__h2_l2_pullback_continuation",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "h2_l2_pullback_continuation"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__opening_auction_imbalance__h2_l2_pullback_continuation",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "h2_l2_pullback_continuation"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__opening_auction_imbalance__h2_l2_pullback_continuation",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "h2_l2_pullback_continuation"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__opening_auction_imbalance__h2_l2_pullback_continuation",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "h2_l2_pullback_continuation"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__opening_auction_imbalance__h2_l2_pullback_continuation",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "h2_l2_pullback_continuation"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__opening_auction_imbalance__h2_l2_pullback_continuation",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "h2_l2_pullback_continuation"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__opening_auction_imbalance__h2_l2_pullback_continuation",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "h2_l2_pullback_continuation"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__opening_auction_imbalance__h2_l2_pullback_continuation",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "h2_l2_pullback_continuation"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__h2_l2_pullback_continuation__opening_auction_imbalance",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "h2_l2_pullback_continuation",
-      "feature_b": "opening_auction_imbalance"
-    }
-  },
-  {
     "feature_name": "combo_min__net_volume_flow__smooth_momentum_structure",
     "recipe": {
       "op": "min",
@@ -9877,6 +8525,1358 @@
       "op": "ratio",
       "feature_a": "h2_l2_pullback_continuation",
       "feature_b": "net_volume_flow"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__smooth_momentum_structure__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "smooth_momentum_structure",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__star50_limit_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "star50_limit_proximity_early",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__volume_weighted_momentum_acceleration__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "volume_weighted_momentum_acceleration",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__bar_ret_0__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "bar_ret_0",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_auction_imbalance__first_bar_return",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "first_bar_return"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_auction_imbalance__first_bar_return",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "first_bar_return"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_auction_imbalance__first_bar_return",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "first_bar_return"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_auction_imbalance__first_bar_return",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "first_bar_return"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_auction_imbalance__first_bar_return",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "first_bar_return"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_auction_imbalance__first_bar_return",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "first_bar_return"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_auction_imbalance__first_bar_return",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "first_bar_return"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_auction_imbalance__first_bar_return",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "first_bar_return"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_auction_imbalance__first_bar_return",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "first_bar_return"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_auction_imbalance__first_bar_return",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "first_bar_return"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_auction_imbalance__first_bar_return",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "first_bar_return"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_auction_imbalance__first_bar_return",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "first_bar_return"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_auction_imbalance__first_bar_return",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "first_bar_return"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__first_bar_return__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "first_bar_return",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_auction_imbalance__demark_setup_reversal_early",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "demark_setup_reversal_early"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_auction_imbalance__demark_setup_reversal_early",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "demark_setup_reversal_early"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_auction_imbalance__demark_setup_reversal_early",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "demark_setup_reversal_early"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_auction_imbalance__demark_setup_reversal_early",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "demark_setup_reversal_early"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_auction_imbalance__demark_setup_reversal_early",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "demark_setup_reversal_early"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_auction_imbalance__demark_setup_reversal_early",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "demark_setup_reversal_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_auction_imbalance__demark_setup_reversal_early",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "demark_setup_reversal_early"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_auction_imbalance__demark_setup_reversal_early",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "demark_setup_reversal_early"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_auction_imbalance__demark_setup_reversal_early",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "demark_setup_reversal_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_auction_imbalance__demark_setup_reversal_early",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "demark_setup_reversal_early"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_auction_imbalance__demark_setup_reversal_early",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "demark_setup_reversal_early"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_auction_imbalance__demark_setup_reversal_early",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "demark_setup_reversal_early"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_auction_imbalance__demark_setup_reversal_early",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "demark_setup_reversal_early"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__demark_setup_reversal_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "demark_setup_reversal_early",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_auction_imbalance__max_down_ret",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "max_down_ret"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_auction_imbalance__max_down_ret",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "max_down_ret"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_auction_imbalance__max_down_ret",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "max_down_ret"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_auction_imbalance__max_down_ret",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "max_down_ret"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_auction_imbalance__max_down_ret",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "max_down_ret"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_auction_imbalance__max_down_ret",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "max_down_ret"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_auction_imbalance__max_down_ret",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "max_down_ret"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_auction_imbalance__max_down_ret",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "max_down_ret"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_auction_imbalance__max_down_ret",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "max_down_ret"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_auction_imbalance__max_down_ret",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "max_down_ret"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_auction_imbalance__max_down_ret",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "max_down_ret"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_auction_imbalance__max_down_ret",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "max_down_ret"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_auction_imbalance__max_down_ret",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "max_down_ret"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__max_down_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "max_down_ret",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_auction_imbalance__close_vs_open_range",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "close_vs_open_range"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_auction_imbalance__close_vs_open_range",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "close_vs_open_range"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_auction_imbalance__close_vs_open_range",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "close_vs_open_range"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_auction_imbalance__close_vs_open_range",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "close_vs_open_range"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_auction_imbalance__close_vs_open_range",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "close_vs_open_range"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_auction_imbalance__close_vs_open_range",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "close_vs_open_range"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_auction_imbalance__close_vs_open_range",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "close_vs_open_range"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_auction_imbalance__close_vs_open_range",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "close_vs_open_range"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_auction_imbalance__close_vs_open_range",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "close_vs_open_range"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_auction_imbalance__close_vs_open_range",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "close_vs_open_range"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_auction_imbalance__close_vs_open_range",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "close_vs_open_range"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_auction_imbalance__close_vs_open_range",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "close_vs_open_range"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_auction_imbalance__close_vs_open_range",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "close_vs_open_range"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__close_vs_open_range__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "close_vs_open_range",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_auction_imbalance__vwap_close_divergence_trend",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "vwap_close_divergence_trend"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_auction_imbalance__vwap_close_divergence_trend",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "vwap_close_divergence_trend"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_auction_imbalance__vwap_close_divergence_trend",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "vwap_close_divergence_trend"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_auction_imbalance__vwap_close_divergence_trend",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "vwap_close_divergence_trend"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_auction_imbalance__vwap_close_divergence_trend",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "vwap_close_divergence_trend"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_auction_imbalance__vwap_close_divergence_trend",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "vwap_close_divergence_trend"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_auction_imbalance__vwap_close_divergence_trend",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "vwap_close_divergence_trend"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_auction_imbalance__vwap_close_divergence_trend",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "vwap_close_divergence_trend"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_auction_imbalance__vwap_close_divergence_trend",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "vwap_close_divergence_trend"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_auction_imbalance__vwap_close_divergence_trend",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "vwap_close_divergence_trend"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_auction_imbalance__vwap_close_divergence_trend",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "vwap_close_divergence_trend"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_auction_imbalance__vwap_close_divergence_trend",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "vwap_close_divergence_trend"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_auction_imbalance__vwap_close_divergence_trend",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "vwap_close_divergence_trend"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__vwap_close_divergence_trend__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "vwap_close_divergence_trend",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_auction_imbalance__bar_body_rng_0",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_body_rng_0"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_auction_imbalance__bar_body_rng_0",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_body_rng_0"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_auction_imbalance__bar_body_rng_0",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_body_rng_0"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_auction_imbalance__bar_body_rng_0",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_body_rng_0"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_auction_imbalance__bar_body_rng_0",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_body_rng_0"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_auction_imbalance__bar_body_rng_0",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_body_rng_0"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_auction_imbalance__bar_body_rng_0",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_body_rng_0"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_auction_imbalance__bar_body_rng_0",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_body_rng_0"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_auction_imbalance__bar_body_rng_0",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_body_rng_0"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_auction_imbalance__bar_body_rng_0",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_body_rng_0"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_auction_imbalance__bar_body_rng_0",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_body_rng_0"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_auction_imbalance__bar_body_rng_0",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_body_rng_0"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_auction_imbalance__bar_body_rng_0",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "bar_body_rng_0"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__bar_body_rng_0__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "bar_body_rng_0",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_auction_imbalance__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_auction_imbalance__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_auction_imbalance__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_auction_imbalance__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_auction_imbalance__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_auction_imbalance__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_auction_imbalance__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_auction_imbalance__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_auction_imbalance__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_auction_imbalance__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_auction_imbalance__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_auction_imbalance__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_auction_imbalance__shaved_bar_trend_conviction",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "shaved_bar_trend_conviction"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__shaved_bar_trend_conviction__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "shaved_bar_trend_conviction",
+      "feature_b": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_min__opening_auction_imbalance__h2_l2_pullback_continuation",
+    "recipe": {
+      "op": "min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "h2_l2_pullback_continuation"
+    }
+  },
+  {
+    "feature_name": "combo_max__opening_auction_imbalance__h2_l2_pullback_continuation",
+    "recipe": {
+      "op": "max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "h2_l2_pullback_continuation"
+    }
+  },
+  {
+    "feature_name": "combo_diff__opening_auction_imbalance__h2_l2_pullback_continuation",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "h2_l2_pullback_continuation"
+    }
+  },
+  {
+    "feature_name": "combo_mean__opening_auction_imbalance__h2_l2_pullback_continuation",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "h2_l2_pullback_continuation"
+    }
+  },
+  {
+    "feature_name": "combo_product__opening_auction_imbalance__h2_l2_pullback_continuation",
+    "recipe": {
+      "op": "product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "h2_l2_pullback_continuation"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__opening_auction_imbalance__h2_l2_pullback_continuation",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "h2_l2_pullback_continuation"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__opening_auction_imbalance__h2_l2_pullback_continuation",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "h2_l2_pullback_continuation"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__opening_auction_imbalance__h2_l2_pullback_continuation",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "h2_l2_pullback_continuation"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__opening_auction_imbalance__h2_l2_pullback_continuation",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "h2_l2_pullback_continuation"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__opening_auction_imbalance__h2_l2_pullback_continuation",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "h2_l2_pullback_continuation"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__opening_auction_imbalance__h2_l2_pullback_continuation",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "h2_l2_pullback_continuation"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__opening_auction_imbalance__h2_l2_pullback_continuation",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "h2_l2_pullback_continuation"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__opening_auction_imbalance__h2_l2_pullback_continuation",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "h2_l2_pullback_continuation"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__h2_l2_pullback_continuation__opening_auction_imbalance",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "h2_l2_pullback_continuation",
+      "feature_b": "opening_auction_imbalance"
     }
   },
   {
@@ -28598,60 +28598,6 @@
     }
   },
   {
-    "feature_name": "combo_tri_mean__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "rbreaker_sell_setup_proximity_early",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "rbreaker_sell_setup_proximity_early",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "rbreaker_sell_setup_proximity_early",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "rbreaker_sell_setup_proximity_early",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "rbreaker_sell_setup_proximity_early",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "rbreaker_sell_setup_proximity_early",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
     "feature_name": "combo_tri_mean__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__net_volume_flow",
     "recipe": {
       "op": "tri_mean",
@@ -28703,6 +28649,60 @@
       "feature_a": "opening_drive_thrust_ratio",
       "feature_b": "rbreaker_sell_setup_proximity_early",
       "feature_c": "net_volume_flow"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_sell_setup_proximity_early",
+      "feature_c": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_sell_setup_proximity_early",
+      "feature_c": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_sell_setup_proximity_early",
+      "feature_c": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_sell_setup_proximity_early",
+      "feature_c": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_sell_setup_proximity_early",
+      "feature_c": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "rbreaker_sell_setup_proximity_early",
+      "feature_c": "opening_auction_imbalance"
     }
   },
   {
@@ -29138,60 +29138,6 @@
     }
   },
   {
-    "feature_name": "combo_tri_mean__opening_drive_thrust_ratio__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "max_up_ret",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__opening_drive_thrust_ratio__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "max_up_ret",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__opening_drive_thrust_ratio__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "max_up_ret",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__opening_drive_thrust_ratio__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "max_up_ret",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__opening_drive_thrust_ratio__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "max_up_ret",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__opening_drive_thrust_ratio__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "max_up_ret",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
     "feature_name": "combo_tri_mean__opening_drive_thrust_ratio__max_up_ret__net_volume_flow",
     "recipe": {
       "op": "tri_mean",
@@ -29243,6 +29189,60 @@
       "feature_a": "opening_drive_thrust_ratio",
       "feature_b": "max_up_ret",
       "feature_c": "net_volume_flow"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__opening_drive_thrust_ratio__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "max_up_ret",
+      "feature_c": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__opening_drive_thrust_ratio__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "max_up_ret",
+      "feature_c": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__opening_drive_thrust_ratio__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "max_up_ret",
+      "feature_c": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__opening_drive_thrust_ratio__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "max_up_ret",
+      "feature_c": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__opening_drive_thrust_ratio__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "max_up_ret",
+      "feature_c": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__opening_drive_thrust_ratio__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "max_up_ret",
+      "feature_c": "opening_auction_imbalance"
     }
   },
   {
@@ -29732,222 +29732,6 @@
     }
   },
   {
-    "feature_name": "combo_tri_mean__opening_drive_thrust_ratio__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__opening_drive_thrust_ratio__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__opening_drive_thrust_ratio__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__opening_drive_thrust_ratio__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__opening_drive_thrust_ratio__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__opening_drive_thrust_ratio__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_mean__opening_drive_thrust_ratio__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__opening_drive_thrust_ratio__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__opening_drive_thrust_ratio__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__opening_drive_thrust_ratio__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__opening_drive_thrust_ratio__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__opening_drive_thrust_ratio__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_mean__opening_drive_thrust_ratio__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__opening_drive_thrust_ratio__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__opening_drive_thrust_ratio__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__opening_drive_thrust_ratio__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__opening_drive_thrust_ratio__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__opening_drive_thrust_ratio__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_mean__opening_drive_thrust_ratio__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__opening_drive_thrust_ratio__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__opening_drive_thrust_ratio__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__opening_drive_thrust_ratio__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__opening_drive_thrust_ratio__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__opening_drive_thrust_ratio__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "opening_drive_thrust_ratio",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
     "feature_name": "combo_tri_mean__opening_drive_thrust_ratio__net_volume_flow__smooth_momentum_structure",
     "recipe": {
       "op": "tri_mean",
@@ -30160,6 +29944,222 @@
       "op": "tri_sig_max",
       "feature_a": "opening_drive_thrust_ratio",
       "feature_b": "net_volume_flow",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__opening_drive_thrust_ratio__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__opening_drive_thrust_ratio__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__opening_drive_thrust_ratio__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__opening_drive_thrust_ratio__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__opening_drive_thrust_ratio__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__opening_drive_thrust_ratio__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__opening_drive_thrust_ratio__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__opening_drive_thrust_ratio__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__opening_drive_thrust_ratio__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__opening_drive_thrust_ratio__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__opening_drive_thrust_ratio__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__opening_drive_thrust_ratio__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__opening_drive_thrust_ratio__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__opening_drive_thrust_ratio__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__opening_drive_thrust_ratio__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__opening_drive_thrust_ratio__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__opening_drive_thrust_ratio__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__opening_drive_thrust_ratio__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__opening_drive_thrust_ratio__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__opening_drive_thrust_ratio__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__opening_drive_thrust_ratio__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__opening_drive_thrust_ratio__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__opening_drive_thrust_ratio__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__opening_drive_thrust_ratio__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "opening_drive_thrust_ratio",
+      "feature_b": "opening_auction_imbalance",
       "feature_c": "bar_ret_0"
     }
   },
@@ -31460,60 +31460,6 @@
     }
   },
   {
-    "feature_name": "combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "max_up_ret",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "max_up_ret",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__rbreaker_sell_setup_proximity_early__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "max_up_ret",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__rbreaker_sell_setup_proximity_early__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "max_up_ret",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__rbreaker_sell_setup_proximity_early__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "max_up_ret",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__rbreaker_sell_setup_proximity_early__max_up_ret__opening_auction_imbalance",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "max_up_ret",
-      "feature_c": "opening_auction_imbalance"
-    }
-  },
-  {
     "feature_name": "combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__net_volume_flow",
     "recipe": {
       "op": "tri_mean",
@@ -31565,6 +31511,60 @@
       "feature_a": "rbreaker_sell_setup_proximity_early",
       "feature_b": "max_up_ret",
       "feature_c": "net_volume_flow"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "max_up_ret",
+      "feature_c": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "max_up_ret",
+      "feature_c": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__rbreaker_sell_setup_proximity_early__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "max_up_ret",
+      "feature_c": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__rbreaker_sell_setup_proximity_early__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "max_up_ret",
+      "feature_c": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__rbreaker_sell_setup_proximity_early__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "max_up_ret",
+      "feature_c": "opening_auction_imbalance"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__rbreaker_sell_setup_proximity_early__max_up_ret__opening_auction_imbalance",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "max_up_ret",
+      "feature_c": "opening_auction_imbalance"
     }
   },
   {
@@ -32000,168 +32000,6 @@
     }
   },
   {
-    "feature_name": "combo_tri_mean__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_mean__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_mean__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "rbreaker_sell_setup_proximity_early",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
     "feature_name": "combo_tri_mean__rbreaker_sell_setup_proximity_early__net_volume_flow__smooth_momentum_structure",
     "recipe": {
       "op": "tri_mean",
@@ -32320,6 +32158,168 @@
       "op": "tri_sig_max",
       "feature_a": "rbreaker_sell_setup_proximity_early",
       "feature_b": "net_volume_flow",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__rbreaker_sell_setup_proximity_early__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "rbreaker_sell_setup_proximity_early",
+      "feature_b": "opening_auction_imbalance",
       "feature_c": "bar_ret_0"
     }
   },
@@ -33188,222 +33188,6 @@
     }
   },
   {
-    "feature_name": "combo_tri_mean__max_up_ret__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__max_up_ret__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__max_up_ret__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__max_up_ret__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__max_up_ret__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__max_up_ret__opening_auction_imbalance__smooth_momentum_structure",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "smooth_momentum_structure"
-    }
-  },
-  {
-    "feature_name": "combo_tri_mean__max_up_ret__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__max_up_ret__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__max_up_ret__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__max_up_ret__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__max_up_ret__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__max_up_ret__opening_auction_imbalance__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_mean__max_up_ret__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__max_up_ret__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__max_up_ret__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__max_up_ret__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__max_up_ret__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__max_up_ret__opening_auction_imbalance__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_mean__max_up_ret__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__max_up_ret__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__max_up_ret__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__max_up_ret__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__max_up_ret__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__max_up_ret__opening_auction_imbalance__bar_ret_0",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "max_up_ret",
-      "feature_b": "opening_auction_imbalance",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
     "feature_name": "combo_tri_mean__max_up_ret__net_volume_flow__smooth_momentum_structure",
     "recipe": {
       "op": "tri_mean",
@@ -33616,6 +33400,222 @@
       "op": "tri_sig_max",
       "feature_a": "max_up_ret",
       "feature_b": "net_volume_flow",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__max_up_ret__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__max_up_ret__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__max_up_ret__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__max_up_ret__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__max_up_ret__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__max_up_ret__opening_auction_imbalance__smooth_momentum_structure",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "smooth_momentum_structure"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__max_up_ret__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__max_up_ret__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__max_up_ret__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__max_up_ret__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__max_up_ret__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__max_up_ret__opening_auction_imbalance__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__max_up_ret__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__max_up_ret__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__max_up_ret__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__max_up_ret__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__max_up_ret__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__max_up_ret__opening_auction_imbalance__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__max_up_ret__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__max_up_ret__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__max_up_ret__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__max_up_ret__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__max_up_ret__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__max_up_ret__opening_auction_imbalance__bar_ret_0",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "max_up_ret",
+      "feature_b": "opening_auction_imbalance",
       "feature_c": "bar_ret_0"
     }
   },
@@ -34916,276 +34916,6 @@
     }
   },
   {
-    "feature_name": "combo_tri_mean__opening_auction_imbalance__smooth_momentum_structure__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__opening_auction_imbalance__smooth_momentum_structure__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__opening_auction_imbalance__smooth_momentum_structure__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__opening_auction_imbalance__smooth_momentum_structure__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__opening_auction_imbalance__smooth_momentum_structure__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__opening_auction_imbalance__smooth_momentum_structure__star50_limit_proximity_early",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure",
-      "feature_c": "star50_limit_proximity_early"
-    }
-  },
-  {
-    "feature_name": "combo_tri_mean__opening_auction_imbalance__smooth_momentum_structure__bar_ret_0",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__opening_auction_imbalance__smooth_momentum_structure__bar_ret_0",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__opening_auction_imbalance__smooth_momentum_structure__bar_ret_0",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__opening_auction_imbalance__smooth_momentum_structure__bar_ret_0",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__opening_auction_imbalance__smooth_momentum_structure__bar_ret_0",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__opening_auction_imbalance__smooth_momentum_structure__bar_ret_0",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "smooth_momentum_structure",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_mean__opening_auction_imbalance__star50_limit_proximity_early__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__opening_auction_imbalance__star50_limit_proximity_early__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__opening_auction_imbalance__star50_limit_proximity_early__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__opening_auction_imbalance__star50_limit_proximity_early__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__opening_auction_imbalance__star50_limit_proximity_early__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__opening_auction_imbalance__star50_limit_proximity_early__volume_weighted_momentum_acceleration",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early",
-      "feature_c": "volume_weighted_momentum_acceleration"
-    }
-  },
-  {
-    "feature_name": "combo_tri_mean__opening_auction_imbalance__star50_limit_proximity_early__bar_ret_0",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__opening_auction_imbalance__star50_limit_proximity_early__bar_ret_0",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__opening_auction_imbalance__star50_limit_proximity_early__bar_ret_0",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__opening_auction_imbalance__star50_limit_proximity_early__bar_ret_0",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__opening_auction_imbalance__star50_limit_proximity_early__bar_ret_0",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__opening_auction_imbalance__star50_limit_proximity_early__bar_ret_0",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "star50_limit_proximity_early",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_mean__opening_auction_imbalance__volume_weighted_momentum_acceleration__bar_ret_0",
-    "recipe": {
-      "op": "tri_mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_min__opening_auction_imbalance__volume_weighted_momentum_acceleration__bar_ret_0",
-    "recipe": {
-      "op": "tri_min",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_max__opening_auction_imbalance__volume_weighted_momentum_acceleration__bar_ret_0",
-    "recipe": {
-      "op": "tri_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_median__opening_auction_imbalance__volume_weighted_momentum_acceleration__bar_ret_0",
-    "recipe": {
-      "op": "tri_median",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_z_mean__opening_auction_imbalance__volume_weighted_momentum_acceleration__bar_ret_0",
-    "recipe": {
-      "op": "tri_z_mean",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
-    "feature_name": "combo_tri_sig_max__opening_auction_imbalance__volume_weighted_momentum_acceleration__bar_ret_0",
-    "recipe": {
-      "op": "tri_sig_max",
-      "feature_a": "opening_auction_imbalance",
-      "feature_b": "volume_weighted_momentum_acceleration",
-      "feature_c": "bar_ret_0"
-    }
-  },
-  {
     "feature_name": "combo_tri_mean__net_volume_flow__smooth_momentum_structure__star50_limit_proximity_early",
     "recipe": {
       "op": "tri_mean",
@@ -35451,6 +35181,276 @@
     "recipe": {
       "op": "tri_sig_max",
       "feature_a": "net_volume_flow",
+      "feature_b": "volume_weighted_momentum_acceleration",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__opening_auction_imbalance__smooth_momentum_structure__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__opening_auction_imbalance__smooth_momentum_structure__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__opening_auction_imbalance__smooth_momentum_structure__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__opening_auction_imbalance__smooth_momentum_structure__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__opening_auction_imbalance__smooth_momentum_structure__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__opening_auction_imbalance__smooth_momentum_structure__star50_limit_proximity_early",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure",
+      "feature_c": "star50_limit_proximity_early"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__opening_auction_imbalance__smooth_momentum_structure__bar_ret_0",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__opening_auction_imbalance__smooth_momentum_structure__bar_ret_0",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__opening_auction_imbalance__smooth_momentum_structure__bar_ret_0",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__opening_auction_imbalance__smooth_momentum_structure__bar_ret_0",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__opening_auction_imbalance__smooth_momentum_structure__bar_ret_0",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__opening_auction_imbalance__smooth_momentum_structure__bar_ret_0",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "smooth_momentum_structure",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__opening_auction_imbalance__star50_limit_proximity_early__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__opening_auction_imbalance__star50_limit_proximity_early__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__opening_auction_imbalance__star50_limit_proximity_early__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__opening_auction_imbalance__star50_limit_proximity_early__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__opening_auction_imbalance__star50_limit_proximity_early__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__opening_auction_imbalance__star50_limit_proximity_early__volume_weighted_momentum_acceleration",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "volume_weighted_momentum_acceleration"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__opening_auction_imbalance__star50_limit_proximity_early__bar_ret_0",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__opening_auction_imbalance__star50_limit_proximity_early__bar_ret_0",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__opening_auction_imbalance__star50_limit_proximity_early__bar_ret_0",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__opening_auction_imbalance__star50_limit_proximity_early__bar_ret_0",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__opening_auction_imbalance__star50_limit_proximity_early__bar_ret_0",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__opening_auction_imbalance__star50_limit_proximity_early__bar_ret_0",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "star50_limit_proximity_early",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_mean__opening_auction_imbalance__volume_weighted_momentum_acceleration__bar_ret_0",
+    "recipe": {
+      "op": "tri_mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_min__opening_auction_imbalance__volume_weighted_momentum_acceleration__bar_ret_0",
+    "recipe": {
+      "op": "tri_min",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_max__opening_auction_imbalance__volume_weighted_momentum_acceleration__bar_ret_0",
+    "recipe": {
+      "op": "tri_max",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_median__opening_auction_imbalance__volume_weighted_momentum_acceleration__bar_ret_0",
+    "recipe": {
+      "op": "tri_median",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_z_mean__opening_auction_imbalance__volume_weighted_momentum_acceleration__bar_ret_0",
+    "recipe": {
+      "op": "tri_z_mean",
+      "feature_a": "opening_auction_imbalance",
+      "feature_b": "volume_weighted_momentum_acceleration",
+      "feature_c": "bar_ret_0"
+    }
+  },
+  {
+    "feature_name": "combo_tri_sig_max__opening_auction_imbalance__volume_weighted_momentum_acceleration__bar_ret_0",
+    "recipe": {
+      "op": "tri_sig_max",
+      "feature_a": "opening_auction_imbalance",
       "feature_b": "volume_weighted_momentum_acceleration",
       "feature_c": "bar_ret_0"
     }

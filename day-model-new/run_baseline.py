@@ -11,7 +11,8 @@ Execution strategy:
   - Default = sequential (one combo at a time). Each combo then uses ALL
     cores internally via joblib + numba prange. No oversubscription.
   - --max-parallel N runs up to N combos concurrently. When set, inner
-    --n-jobs is capped so total workers ~= CPU count.
+    --n-jobs is capped so total workers ~= CPU count, and per-combo output
+    is captured and printed on completion to avoid interleaved logs.
 """
 
 import os
@@ -35,10 +36,45 @@ def cpu_count():
         return 1
 
 
+def run_stage(cmd, label, timeout=None, capture=False):
+    """Run one pipeline stage as a subprocess.
+    Returns (failed: bool, tail: str). tail holds the last output lines
+    when captured or when the stage failed/timed out.
+    """
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=str(REPO_ROOT),
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+            capture_output=capture,
+        )
+    except subprocess.TimeoutExpired as e:
+        out = e.stdout or ""
+        if isinstance(out, bytes):
+            out = out.decode("utf-8", "replace")
+        tail = "\n".join(out.splitlines()[-10:]) if out else "(no output captured)"
+        return True, f"{label} timed out after {timeout}s\n{tail}"
+    except Exception as e:
+        return True, f"{label} failed to launch: {e}"
+    tail = ""
+    if proc.stdout:
+        tail = "\n".join(proc.stdout.splitlines()[-10:])
+    if proc.returncode != 0:
+        if not tail and proc.stderr:
+            tail = "\n".join(proc.stderr.splitlines()[-10:])
+        return True, f"{label} failed (exit code {proc.returncode})\n{tail}"
+    return False, tail
+
+
 def results_valid(etf: str, side: str, suffix: str) -> bool:
-    """Check if a valid results JSON exists for this combo."""
+    """Check if valid Stage A (selected_pool) AND Stage B (results) outputs
+    exist for this combo, so --skip-existing never skips a partially done combo."""
+    pool_file = HERE / "data" / f"selected_pool_{etf}_{side}{suffix}.json"
     res_file = HERE / "data" / f"results_{etf}_{side}{suffix}.json"
-    if not res_file.exists():
+    if not pool_file.exists() or not res_file.exists():
         return False
     try:
         with open(res_file, "r", encoding="utf-8") as f:
@@ -53,9 +89,12 @@ def results_valid(etf: str, side: str, suffix: str) -> bool:
         return False
 
 
-def run_combination(etf: str, side: str, early: bool, inner_n_jobs: int, verbose: bool) -> tuple:
-    """Run generate_combos + select_features + evaluate_concept as subprocesses for one combo."""
-    suffix = "_early" if early else ""
+def run_combination(etf: str, side: str, early: bool, inner_n_jobs: int,
+                    timeout: int = None, capture: bool = False) -> tuple:
+    """Run generate_combos + select_features + feature_clusters + evaluate_concept
+    as subprocesses for one combo. When capture=True, child output is captured
+    and shown on failure/completion instead of streaming (parallel mode)."""
+    tag = f"{etf} {side}{'_early' if early else ''}"
 
     # --- Stage 0: Candidate Generation (full space, no dedup) ---
     cmd_gen = [
@@ -69,18 +108,12 @@ def run_combination(etf: str, side: str, early: bool, inner_n_jobs: int, verbose
         cmd_gen.append("--early")
 
     print(f"\n>>> [Stage 0] generate_combos --no-dedup: ETF={etf}, Side={side}")
-    try:
-        result_gen = subprocess.run(
-            cmd_gen,
-            cwd=str(REPO_ROOT),
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-        )
-    except Exception as e:
-        return False, f"generate_combos failed to launch for {etf} {side}: {e}"
-    if result_gen.returncode not in (0, None):
-        print(f"WARNING: generate_combos exited {result_gen.returncode} for {etf} {side} (continuing with existing candidates)")
+    failed, tail = run_stage(cmd_gen, f"generate_combos ({tag})", timeout, capture)
+    if failed:
+        print(f"WARNING: {tail} (continuing with existing candidates)")
+    cand_file = HERE / "mining" / f"candidates_{etf}_{side}{'_early' if early else ''}.json"
+    if not cand_file.exists():
+        return False, f"generate_combos failed for {tag} and no candidates file exists at {cand_file}"
 
     # --- Stage A: Feature Selection ---
     cmd_a = [
@@ -94,18 +127,11 @@ def run_combination(etf: str, side: str, early: bool, inner_n_jobs: int, verbose
         cmd_a.append("--early")
 
     print(f"\n>>> [Stage A] select_features: ETF={etf}, Side={side}, inner n_jobs={inner_n_jobs}")
-    try:
-        result_a = subprocess.run(
-            cmd_a,
-            cwd=str(REPO_ROOT),
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-        )
-    except Exception as e:
-        return False, f"select_features failed to launch for {etf} {side}: {e}"
-    if result_a.returncode not in (0, None):
-        return False, f"select_features failed for {etf} {side} (exit code {result_a.returncode})"
+    failed, tail = run_stage(cmd_a, f"select_features ({tag})", timeout, capture)
+    if failed:
+        return False, f"select_features failed for {tag}\n{tail}"
+    if capture and tail:
+        print(tail)
 
     # --- Stage A2: ONC Feature Clustering ---
     cmd_ac = [
@@ -118,16 +144,9 @@ def run_combination(etf: str, side: str, early: bool, inner_n_jobs: int, verbose
         cmd_ac.extend(["--suffix", "_early"])
 
     print(f"\n>>> [Stage A2] feature_clusters: ETF={etf}, Side={side}")
-    try:
-        result_ac = subprocess.run(
-            cmd_ac,
-            cwd=str(REPO_ROOT),
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-        )
-    except Exception as e:
-        print(f"WARNING: feature_clusters failed to launch for {etf} {side}: {e}")
+    failed, tail = run_stage(cmd_ac, f"feature_clusters ({tag})", timeout, capture)
+    if failed:
+        print(f"WARNING: {tail} (continuing; downstream may use stale cluster data)")
 
     # --- Stage B: Evaluation ---
     cmd_b = [
@@ -140,23 +159,16 @@ def run_combination(etf: str, side: str, early: bool, inner_n_jobs: int, verbose
         cmd_b.append("--early")
 
     print(f"\n>>> [Stage B] evaluate_concept: ETF={etf}, Side={side}")
-    try:
-        result_b = subprocess.run(
-            cmd_b,
-            cwd=str(REPO_ROOT),
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-        )
-    except Exception as e:
-        return False, f"evaluate_concept failed to launch for {etf} {side}: {e}"
-    if result_b.returncode not in (0, None):
-        return False, f"evaluate_concept failed for {etf} {side} (exit code {result_b.returncode})"
+    failed, tail = run_stage(cmd_b, f"evaluate_concept ({tag})", timeout, capture)
+    if failed:
+        return False, f"evaluate_concept failed for {tag}\n{tail}"
+    if capture and tail:
+        print(tail)
 
     return True, f"Success {etf} {side}"
 
 
-def run_combinations_sequential(tasks, inner_n_jobs: int, skip_existing: bool, suffix: str):
+def run_combinations_sequential(tasks, inner_n_jobs: int, skip_existing: bool, timeout: int = None):
     results = []
     for idx, (etf, side, early) in enumerate(tasks, 1):
         s = "_early" if early else ""
@@ -165,19 +177,25 @@ def run_combinations_sequential(tasks, inner_n_jobs: int, skip_existing: bool, s
             results.append((True, f"Skipped {etf} {side}"))
             continue
         print(f"\n===== [{idx}/{len(tasks)}] {etf} {side} =====")
-        ok, msg = run_combination(etf, side, early, inner_n_jobs, True)
+        ok, msg = run_combination(etf, side, early, inner_n_jobs, timeout=timeout, capture=False)
         results.append((ok, msg))
         if not ok:
             print(f"ERROR: {msg}")
     return results
 
 
-def run_combinations_parallel(tasks, max_parallel: int, total_cpus: int, skip_existing: bool, suffix: str):
+def run_combinations_parallel(tasks, max_parallel: int, total_cpus: int, skip_existing: bool,
+                              n_jobs: int = -1, timeout: int = None):
     """Run up to max_parallel combos concurrently. Inner n_jobs capped so
-    total inner workers across concurrent combos ~= total_cpus."""
+    total inner workers across concurrent combos ~= total_cpus.
+    Per-combo output is captured and printed on completion (no interleaving)."""
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
     inner_n_jobs = max(1, total_cpus // max_parallel)
+    if n_jobs > 0 and n_jobs != inner_n_jobs:
+        print(f"WARNING: --n-jobs {n_jobs} ignored in parallel mode; capped to "
+              f"{inner_n_jobs} (= cpu_count {total_cpus} // max_parallel {max_parallel}) "
+              f"to avoid oversubscription.")
 
     # Build a filtered task list (skip existing checked upfront)
     pending = []
@@ -197,7 +215,7 @@ def run_combinations_parallel(tasks, max_parallel: int, total_cpus: int, skip_ex
 
     with ThreadPoolExecutor(max_workers=max_parallel) as ex:
         futures = {
-            ex.submit(run_combination, etf, side, early, inner_n_jobs, True): (etf, side, early)
+            ex.submit(run_combination, etf, side, early, inner_n_jobs, timeout, True): (etf, side, early)
             for etf, side, early in pending
         }
         for fut in as_completed(futures):
@@ -217,16 +235,18 @@ def compile_report(etfs_to_run, sides_to_run, suffix: str):
     """Delegate report compilation to the standalone compile_report.py module
     to avoid duplicating the rendering logic."""
     import importlib
-    sys.path.insert(0, str(HERE))
+    here_str = str(HERE)
+    if here_str not in sys.path:
+        sys.path.insert(0, here_str)
     try:
         cr = importlib.import_module("compile_report")
     except Exception as e:
         print(f"WARNING: could not import compile_report module: {e}; falling back to subprocess")
         cmd = [sys.executable, str(HERE / "compile_report.py")]
         if etfs_to_run != ETFS:
-            cmd += ["-e", etfs_to_run[0] if len(etfs_to_run) == 1 else "all"]
+            cmd += ["-e", ",".join(etfs_to_run) if etfs_to_run else "all"]
         if sides_to_run != SIDES:
-            cmd += ["-s", sides_to_run[0] if len(sides_to_run) == 1 else "all"]
+            cmd += ["-s", ",".join(sides_to_run) if sides_to_run else "all"]
         if suffix:
             cmd.append("--early")
         try:
@@ -267,6 +287,12 @@ def main():
         action="store_true",
         help="Skip combos that already have a valid (non-empty) results JSON.",
     )
+    parser.add_argument(
+        "--stage-timeout",
+        type=int,
+        default=None,
+        help="Per-stage subprocess timeout in seconds (default: no timeout).",
+    )
     args = parser.parse_args()
 
     etfs_to_run = ETFS if args.etf == "all" else [args.etf]
@@ -289,7 +315,7 @@ def main():
     if args.max_parallel <= 1:
         # Sequential: each combo uses all cores (or args.n_jobs if specified)
         inner_n_jobs = args.n_jobs if args.n_jobs > 0 else total_cpus
-        results = run_combinations_sequential(tasks, inner_n_jobs, args.skip_existing, suffix)
+        results = run_combinations_sequential(tasks, inner_n_jobs, args.skip_existing, args.stage_timeout)
     else:
         # Parallel: cap inner workers to avoid oversubscription
         results = run_combinations_parallel(
@@ -297,7 +323,8 @@ def main():
             max_parallel=args.max_parallel,
             total_cpus=total_cpus,
             skip_existing=args.skip_existing,
-            suffix=suffix,
+            n_jobs=args.n_jobs,
+            timeout=args.stage_timeout,
         )
 
     success_count = sum(1 for ok, _ in results if ok)
@@ -306,23 +333,35 @@ def main():
         if not ok:
             print(f"ERROR: {msg}")
 
+    if tasks and success_count == 0:
+        print("WARNING: all combinations failed. Compiling report from stale/missing JSON outputs.")
+
     compile_report(etfs_to_run, sides_to_run, suffix)
 
-    # Run filter diagnosis
+    # Run filter diagnosis (scoped to the ETFs/sides actually run, only if something succeeded)
     if not args.early:
+        if success_count == 0:
+            print("\nSkipping trailing diagnostics: no combination succeeded.")
+            return
+
         print("\nRunning filter deep diagnosis (filter_diagnosis.py)...")
-        cmd_diag = [sys.executable, str(HERE / "filter_diagnosis.py")]
+        cmd_diag = [sys.executable, str(HERE / "filter_diagnosis.py"),
+                    "-e", *etfs_to_run, "-s", *sides_to_run]
         try:
             subprocess.run(cmd_diag, cwd=str(REPO_ROOT), check=False)
         except Exception as e:
             print(f"WARNING: filter_diagnosis subprocess failed: {e}")
 
-        print("\nRunning feature diagnostics (analyze_admitted_features.py)...")
-        cmd_feat = [sys.executable, str(HERE / "analyze_admitted_features.py")]
-        try:
-            subprocess.run(cmd_feat, cwd=str(REPO_ROOT), check=False)
-        except Exception as e:
-            print(f"WARNING: analyze_admitted_features subprocess failed: {e}")
+        if etfs_to_run == ETFS and sides_to_run == SIDES:
+            print("\nRunning feature diagnostics (analyze_admitted_features.py)...")
+            cmd_feat = [sys.executable, str(HERE / "analyze_admitted_features.py")]
+            try:
+                subprocess.run(cmd_feat, cwd=str(REPO_ROOT), check=False)
+            except Exception as e:
+                print(f"WARNING: analyze_admitted_features subprocess failed: {e}")
+        else:
+            print("\nSkipping analyze_admitted_features.py (runs over all ETFs/sides; "
+                  "current run is scoped to a subset).")
 
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
 {
   "etf": "588000ETF",
   "side": "single",
-  "n_features": 12,
+  "n_features": 8,
   "n_clusters": 4,
-  "avg_silhouette": 0.3683,
+  "avg_silhouette": 0.386,
   "max_clusters_param": 10,
   "train_period": [
     "2020-11-01",
@@ -11,24 +11,20 @@
   ],
   "clusters": {
     "0": [
+      "combo_sig_product__high_low_sequence_momentum__vwap_trend_channel_slope"
+    ],
+    "1": [
+      "combo_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration",
+      "combo_rel_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration"
+    ],
+    "2": [
+      "max_up_ret"
+    ],
+    "3": [
       "combo_diff__directional_volume_signature__smooth_momentum_structure",
       "combo_rel_diff__directional_volume_signature__smooth_momentum_structure",
       "combo_diff__directional_volume_signature__early_vwap_acceleration",
       "combo_sig_product__directional_volume_signature__smooth_momentum_structure"
-    ],
-    "1": [
-      "combo_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration",
-      "combo_rel_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration",
-      "max_up_ret"
-    ],
-    "2": [
-      "combo_sig_product__impulse_bar_dominance__vwap_trend_channel_slope",
-      "combo_diff__impulse_bar_dominance__pullback_depth_ratio",
-      "combo_sig_product__impulse_bar_dominance__open_to_current_return",
-      "combo_z_sum__impulse_bar_dominance__first_30min_return"
-    ],
-    "3": [
-      "combo_sig_product__high_low_sequence_momentum__vwap_trend_channel_slope"
     ]
   }
 }

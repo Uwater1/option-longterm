@@ -3776,6 +3776,118 @@
     }
   },
   {
+    "feature_name": "combo_min__volume_differential_10d__multi_ema_alignment_5_20_50",
+    "recipe": {
+      "op": "min",
+      "feature_a": "volume_differential_10d",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
+    "feature_name": "combo_max__volume_differential_10d__multi_ema_alignment_5_20_50",
+    "recipe": {
+      "op": "max",
+      "feature_a": "volume_differential_10d",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
+    "feature_name": "combo_diff__volume_differential_10d__multi_ema_alignment_5_20_50",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "volume_differential_10d",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
+    "feature_name": "combo_mean__volume_differential_10d__multi_ema_alignment_5_20_50",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "volume_differential_10d",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
+    "feature_name": "combo_product__volume_differential_10d__multi_ema_alignment_5_20_50",
+    "recipe": {
+      "op": "product",
+      "feature_a": "volume_differential_10d",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__volume_differential_10d__multi_ema_alignment_5_20_50",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "volume_differential_10d",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__volume_differential_10d__multi_ema_alignment_5_20_50",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "volume_differential_10d",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__volume_differential_10d__multi_ema_alignment_5_20_50",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "volume_differential_10d",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__volume_differential_10d__multi_ema_alignment_5_20_50",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "volume_differential_10d",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__volume_differential_10d__multi_ema_alignment_5_20_50",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "volume_differential_10d",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__volume_differential_10d__multi_ema_alignment_5_20_50",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "volume_differential_10d",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__volume_differential_10d__multi_ema_alignment_5_20_50",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "volume_differential_10d",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__volume_differential_10d__multi_ema_alignment_5_20_50",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "volume_differential_10d",
+      "feature_b": "multi_ema_alignment_5_20_50"
+    }
+  },
+  {
+    "feature_name": "combo_ratio__multi_ema_alignment_5_20_50__volume_differential_10d",
+    "recipe": {
+      "op": "ratio",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "volume_differential_10d"
+    }
+  },
+  {
     "feature_name": "combo_min__volume_differential_10d__donchian_breakout_proximity_20d",
     "recipe": {
       "op": "min",
@@ -4224,118 +4336,6 @@
     }
   },
   {
-    "feature_name": "combo_min__volume_differential_10d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "min",
-      "feature_a": "volume_differential_10d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_max__volume_differential_10d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "max",
-      "feature_a": "volume_differential_10d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_diff__volume_differential_10d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "volume_differential_10d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_mean__volume_differential_10d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "volume_differential_10d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_product__volume_differential_10d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "product",
-      "feature_a": "volume_differential_10d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__volume_differential_10d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "volume_differential_10d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__volume_differential_10d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "volume_differential_10d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__volume_differential_10d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "volume_differential_10d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__volume_differential_10d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "volume_differential_10d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__volume_differential_10d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "volume_differential_10d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__volume_differential_10d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "volume_differential_10d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__volume_differential_10d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "volume_differential_10d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__volume_differential_10d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "volume_differential_10d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_ratio__multi_ema_alignment_5_20_50__volume_differential_10d",
-    "recipe": {
-      "op": "ratio",
-      "feature_a": "multi_ema_alignment_5_20_50",
-      "feature_b": "volume_differential_10d"
-    }
-  },
-  {
     "feature_name": "combo_min__volume_differential_10d__roc60",
     "recipe": {
       "op": "min",
@@ -4448,107 +4448,523 @@
     }
   },
   {
-    "feature_name": "combo_min__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_min__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "recipe": {
       "op": "min",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_max__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_max__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "recipe": {
       "op": "max",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_diff__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_diff__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "recipe": {
       "op": "diff",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_mean__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_mean__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "recipe": {
       "op": "mean",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_product__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_product__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "recipe": {
       "op": "product",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_abs_diff__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_abs_diff__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "recipe": {
       "op": "abs_diff",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_rank_min__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_rank_min__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "recipe": {
       "op": "rank_min",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_rank_max__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_rank_max__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "recipe": {
       "op": "rank_max",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_clamp_diff__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_clamp_diff__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "recipe": {
       "op": "clamp_diff",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_z_sum__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_z_sum__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "recipe": {
       "op": "z_sum",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_z_diff__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_z_diff__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "recipe": {
       "op": "z_diff",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_sig_product__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_sig_product__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "recipe": {
       "op": "sig_product",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
     }
   },
   {
-    "feature_name": "combo_rel_diff__donchian_breakout_proximity_20d__multi_ema_alignment_5_20_50",
+    "feature_name": "combo_rel_diff__multi_ema_alignment_5_20_50__donchian_breakout_proximity_20d",
     "recipe": {
       "op": "rel_diff",
-      "feature_a": "donchian_breakout_proximity_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_proximity_20d"
+    }
+  },
+  {
+    "feature_name": "combo_min__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "recipe": {
+      "op": "min",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
+    }
+  },
+  {
+    "feature_name": "combo_max__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "recipe": {
+      "op": "max",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
+    }
+  },
+  {
+    "feature_name": "combo_diff__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
+    }
+  },
+  {
+    "feature_name": "combo_mean__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
+    }
+  },
+  {
+    "feature_name": "combo_product__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "recipe": {
+      "op": "product",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__multi_ema_alignment_5_20_50__donchian_breakout_ratio_20d",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "donchian_breakout_ratio_20d"
+    }
+  },
+  {
+    "feature_name": "combo_min__multi_ema_alignment_5_20_50__willr14",
+    "recipe": {
+      "op": "min",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
+    }
+  },
+  {
+    "feature_name": "combo_max__multi_ema_alignment_5_20_50__willr14",
+    "recipe": {
+      "op": "max",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
+    }
+  },
+  {
+    "feature_name": "combo_diff__multi_ema_alignment_5_20_50__willr14",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
+    }
+  },
+  {
+    "feature_name": "combo_mean__multi_ema_alignment_5_20_50__willr14",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
+    }
+  },
+  {
+    "feature_name": "combo_product__multi_ema_alignment_5_20_50__willr14",
+    "recipe": {
+      "op": "product",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__multi_ema_alignment_5_20_50__willr14",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__multi_ema_alignment_5_20_50__willr14",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__multi_ema_alignment_5_20_50__willr14",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__multi_ema_alignment_5_20_50__willr14",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__multi_ema_alignment_5_20_50__willr14",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__multi_ema_alignment_5_20_50__willr14",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__multi_ema_alignment_5_20_50__willr14",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__multi_ema_alignment_5_20_50__willr14",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "willr14"
+    }
+  },
+  {
+    "feature_name": "combo_min__multi_ema_alignment_5_20_50__stoch_k",
+    "recipe": {
+      "op": "min",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
+    }
+  },
+  {
+    "feature_name": "combo_max__multi_ema_alignment_5_20_50__stoch_k",
+    "recipe": {
+      "op": "max",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
+    }
+  },
+  {
+    "feature_name": "combo_diff__multi_ema_alignment_5_20_50__stoch_k",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
+    }
+  },
+  {
+    "feature_name": "combo_mean__multi_ema_alignment_5_20_50__stoch_k",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
+    }
+  },
+  {
+    "feature_name": "combo_product__multi_ema_alignment_5_20_50__stoch_k",
+    "recipe": {
+      "op": "product",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__multi_ema_alignment_5_20_50__stoch_k",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__multi_ema_alignment_5_20_50__stoch_k",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__multi_ema_alignment_5_20_50__stoch_k",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__multi_ema_alignment_5_20_50__stoch_k",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__multi_ema_alignment_5_20_50__stoch_k",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__multi_ema_alignment_5_20_50__stoch_k",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__multi_ema_alignment_5_20_50__stoch_k",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__multi_ema_alignment_5_20_50__stoch_k",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "stoch_k"
+    }
+  },
+  {
+    "feature_name": "combo_min__multi_ema_alignment_5_20_50__roc60",
+    "recipe": {
+      "op": "min",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "roc60"
+    }
+  },
+  {
+    "feature_name": "combo_max__multi_ema_alignment_5_20_50__roc60",
+    "recipe": {
+      "op": "max",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "roc60"
+    }
+  },
+  {
+    "feature_name": "combo_diff__multi_ema_alignment_5_20_50__roc60",
+    "recipe": {
+      "op": "diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "roc60"
+    }
+  },
+  {
+    "feature_name": "combo_mean__multi_ema_alignment_5_20_50__roc60",
+    "recipe": {
+      "op": "mean",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "roc60"
+    }
+  },
+  {
+    "feature_name": "combo_product__multi_ema_alignment_5_20_50__roc60",
+    "recipe": {
+      "op": "product",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "roc60"
+    }
+  },
+  {
+    "feature_name": "combo_abs_diff__multi_ema_alignment_5_20_50__roc60",
+    "recipe": {
+      "op": "abs_diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "roc60"
+    }
+  },
+  {
+    "feature_name": "combo_rank_min__multi_ema_alignment_5_20_50__roc60",
+    "recipe": {
+      "op": "rank_min",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "roc60"
+    }
+  },
+  {
+    "feature_name": "combo_rank_max__multi_ema_alignment_5_20_50__roc60",
+    "recipe": {
+      "op": "rank_max",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "roc60"
+    }
+  },
+  {
+    "feature_name": "combo_clamp_diff__multi_ema_alignment_5_20_50__roc60",
+    "recipe": {
+      "op": "clamp_diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "roc60"
+    }
+  },
+  {
+    "feature_name": "combo_z_sum__multi_ema_alignment_5_20_50__roc60",
+    "recipe": {
+      "op": "z_sum",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "roc60"
+    }
+  },
+  {
+    "feature_name": "combo_z_diff__multi_ema_alignment_5_20_50__roc60",
+    "recipe": {
+      "op": "z_diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "roc60"
+    }
+  },
+  {
+    "feature_name": "combo_sig_product__multi_ema_alignment_5_20_50__roc60",
+    "recipe": {
+      "op": "sig_product",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "roc60"
+    }
+  },
+  {
+    "feature_name": "combo_rel_diff__multi_ema_alignment_5_20_50__roc60",
+    "recipe": {
+      "op": "rel_diff",
+      "feature_a": "multi_ema_alignment_5_20_50",
+      "feature_b": "roc60"
     }
   },
   {
@@ -4656,110 +5072,6 @@
     }
   },
   {
-    "feature_name": "combo_min__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "min",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_max__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "max",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_diff__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_mean__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_product__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "product",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__donchian_breakout_ratio_20d__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "donchian_breakout_ratio_20d",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
     "feature_name": "combo_min__donchian_breakout_ratio_20d__roc60",
     "recipe": {
       "op": "min",
@@ -4861,110 +5173,6 @@
       "op": "rel_diff",
       "feature_a": "donchian_breakout_ratio_20d",
       "feature_b": "roc60"
-    }
-  },
-  {
-    "feature_name": "combo_min__willr14__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "min",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_max__willr14__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "max",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_diff__willr14__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_mean__willr14__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_product__willr14__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "product",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__willr14__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__willr14__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__willr14__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__willr14__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__willr14__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__willr14__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__willr14__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__willr14__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "willr14",
-      "feature_b": "multi_ema_alignment_5_20_50"
     }
   },
   {
@@ -5072,110 +5280,6 @@
     }
   },
   {
-    "feature_name": "combo_min__stoch_k__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "min",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_max__stoch_k__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "max",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_diff__stoch_k__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_mean__stoch_k__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_product__stoch_k__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "product",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__stoch_k__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__stoch_k__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__stoch_k__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__stoch_k__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__stoch_k__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__stoch_k__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__stoch_k__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__stoch_k__multi_ema_alignment_5_20_50",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "stoch_k",
-      "feature_b": "multi_ema_alignment_5_20_50"
-    }
-  },
-  {
     "feature_name": "combo_min__stoch_k__roc60",
     "recipe": {
       "op": "min",
@@ -5276,110 +5380,6 @@
     "recipe": {
       "op": "rel_diff",
       "feature_a": "stoch_k",
-      "feature_b": "roc60"
-    }
-  },
-  {
-    "feature_name": "combo_min__multi_ema_alignment_5_20_50__roc60",
-    "recipe": {
-      "op": "min",
-      "feature_a": "multi_ema_alignment_5_20_50",
-      "feature_b": "roc60"
-    }
-  },
-  {
-    "feature_name": "combo_max__multi_ema_alignment_5_20_50__roc60",
-    "recipe": {
-      "op": "max",
-      "feature_a": "multi_ema_alignment_5_20_50",
-      "feature_b": "roc60"
-    }
-  },
-  {
-    "feature_name": "combo_diff__multi_ema_alignment_5_20_50__roc60",
-    "recipe": {
-      "op": "diff",
-      "feature_a": "multi_ema_alignment_5_20_50",
-      "feature_b": "roc60"
-    }
-  },
-  {
-    "feature_name": "combo_mean__multi_ema_alignment_5_20_50__roc60",
-    "recipe": {
-      "op": "mean",
-      "feature_a": "multi_ema_alignment_5_20_50",
-      "feature_b": "roc60"
-    }
-  },
-  {
-    "feature_name": "combo_product__multi_ema_alignment_5_20_50__roc60",
-    "recipe": {
-      "op": "product",
-      "feature_a": "multi_ema_alignment_5_20_50",
-      "feature_b": "roc60"
-    }
-  },
-  {
-    "feature_name": "combo_abs_diff__multi_ema_alignment_5_20_50__roc60",
-    "recipe": {
-      "op": "abs_diff",
-      "feature_a": "multi_ema_alignment_5_20_50",
-      "feature_b": "roc60"
-    }
-  },
-  {
-    "feature_name": "combo_rank_min__multi_ema_alignment_5_20_50__roc60",
-    "recipe": {
-      "op": "rank_min",
-      "feature_a": "multi_ema_alignment_5_20_50",
-      "feature_b": "roc60"
-    }
-  },
-  {
-    "feature_name": "combo_rank_max__multi_ema_alignment_5_20_50__roc60",
-    "recipe": {
-      "op": "rank_max",
-      "feature_a": "multi_ema_alignment_5_20_50",
-      "feature_b": "roc60"
-    }
-  },
-  {
-    "feature_name": "combo_clamp_diff__multi_ema_alignment_5_20_50__roc60",
-    "recipe": {
-      "op": "clamp_diff",
-      "feature_a": "multi_ema_alignment_5_20_50",
-      "feature_b": "roc60"
-    }
-  },
-  {
-    "feature_name": "combo_z_sum__multi_ema_alignment_5_20_50__roc60",
-    "recipe": {
-      "op": "z_sum",
-      "feature_a": "multi_ema_alignment_5_20_50",
-      "feature_b": "roc60"
-    }
-  },
-  {
-    "feature_name": "combo_z_diff__multi_ema_alignment_5_20_50__roc60",
-    "recipe": {
-      "op": "z_diff",
-      "feature_a": "multi_ema_alignment_5_20_50",
-      "feature_b": "roc60"
-    }
-  },
-  {
-    "feature_name": "combo_sig_product__multi_ema_alignment_5_20_50__roc60",
-    "recipe": {
-      "op": "sig_product",
-      "feature_a": "multi_ema_alignment_5_20_50",
-      "feature_b": "roc60"
-    }
-  },
-  {
-    "feature_name": "combo_rel_diff__multi_ema_alignment_5_20_50__roc60",
-    "recipe": {
-      "op": "rel_diff",
-      "feature_a": "multi_ema_alignment_5_20_50",
       "feature_b": "roc60"
     }
   },
