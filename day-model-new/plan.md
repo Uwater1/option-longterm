@@ -1,34 +1,40 @@
 # Day-Model Rewrite v3 — Plan
 
 ## Why v1/v2 died (context, don't repeat)
-- v1: way too complex. Don't try to read it 
-- v2 (`day-model/day-model_plan.md`): elaborate model-side machinery (Huber+MCP manifold, CSS+VIF, HMM regimes, vol gating) worked numerically (condition numbers, ESS all fixed) but the *headline* Sharpe-objective search came back statistically indistinguishable from baseline once block-bootstrap CI was applied (§8.6 of that doc). Lesson: fancy model-side optimization can look good pre-CI and be noise post-CI.
-- Core decision for v3: **move weak/joint-signal capture to the feature-mining stage. Keep model training dumb and hard to overfit.** Mining can be messy, agentic, human-in-the-loop. Model stage cannot.
+- v1: way too complex. Don't try to read it.
+- v2 (`day-model/day-model_plan.md`): elaborate model-side machinery (Huber+MCP manifold, CSS+VIF, HMM regimes, vol gating) worked numerically (condition numbers, ESS all fixed) but headline Sharpe-objective search was statistically indistinguishable from baseline post block-bootstrap CI (§8.6).
+- Core decision for v3: **move weak/joint-signal capture to feature-mining stage. Keep model training simple and hard to overfit.** Mining can be messy and agentic; model stage cannot.
 
-> NOTE: This document must be updated if logical changes.
+> NOTE: Keep this document synchronized with implementation in `select_features.py` and `recipe_utils.py`.
 
 ---
 
 ## Stage A — Feature Mining (`mining/generate_combos.py`)
 
-Goal: Produce aggressive candidate recipes and combinations to find weak/joint signals, avoiding redundant evaluations.
+Goal: Produce aggressive candidate recipes and combinations to find weak/joint signals while avoiding redundant evaluations.
 
 ### A0. Component Stability Gate (Training-Only, ETF-Agnostic)
-Before generating combos, compute yearly IC decomposition for each base feature:
-- Split training data by calendar year, compute tail IC per year.
+Before generating combos, compute yearly IC decomposition for base features:
+- Split training data by calendar year; compute tail IC per year.
 - Flag feature as **unstable** if `IC_CV > 3.0` OR `n_negative_years > 2`.
-- Exclude unstable features from all combo generation (2-way and 3-way).
-- **Rationale**: Prevents regime-dependent components (e.g. `gap_pct` with CV=4.66) from contaminating candidates. Root cause of 300ETF false positives was unstable conditioning variables in `ifelse` ops.
+- Exclude unstable features from all 2-way and 3-way combo generation.
 
-### A1. Sources
-1. Existing survivor list (already pruned 317→210, keep as base).
-2. Mine repo of 1000+ trading ideas / AL Brooks book → candidate formulas.
-3. Combine existing features: `min(A,B)`, `max(A,B)`, `IfElse(regime_cond, A, B)`, ratio/diff combos etc. (2-way and 3-way ops).
+### A1. Sources & Combination Operators
+1. **Base Primitives**: Existing survivor list (base technical, momentum, volume flow, and microstructure primitives) + domain candidate formulas.
+2. **2-Way Combinations (13 operators)**:
+   - **Bounds & Quantiles**: `min(A,B)`, `max(A,B)`, `rank_min(A,B)`, `rank_max(A,B)`
+   - **Linear & Normalized Blends**: `mean(A,B)`, `z_sum(A,B)`, `z_diff(A,B)`
+   - **Differences & Distances**: `diff(A,B)`, `abs_diff(A,B)`, `clamp_diff(A,B)`, `rel_diff(A,B)`
+   - **Interactions & Ratios**: `product(A,B)`, `sig_product(A,B)`, `ratio(A,B)`
+   - **Regime-Conditioned Branching**: `IfElse(regime_cond, A, B)` (gates feature $A$ vs $B$ based on volatility, VIX, GARCH, or trend regimes)
+3. **3-Way Combinations (6 operators)**:
+   - **Aggregations & Medians**: `tri_mean(A,B,C)`, `tri_min(A,B,C)`, `tri_max(A,B,C)`, `tri_median(A,B,C)`
+   - **Normalized Composites**: `tri_z_mean(A,B,C)`, `tri_sig_max(A,B,C)`, `tri_ifelse(cond, A, B)`
+
 
 ### A2. Deduplication & Verification
-### A2. Deduplication & Verification
-- **Mining Log (`mining_log.json`)**: Persistent ledger tracking all generated candidates per ETF/side. Only delta is sent to evaluation.
-- **Sample-Size Scaling**: Candidate space parameters ($k, k_3$) scale dynamically based on training sample size relative to ~3400 trading day baseline ($N_{obs}/3400$) to prevent candidate over-generation on short datasets (e.g. 588000ETF).
+- **Mining Ledger (`mining_log.json`)**: Persistent ledger tracking candidate formulas per ETF/side; evaluates only new deltas.
+- **Sample-Size Scaling**: Candidate space parameters ($k, k_3$) scale dynamically based on training sample size relative to ~3400 trading day baseline ($N_{obs}/3400$).
 
 ---
 
@@ -36,153 +42,137 @@ Before generating combos, compute yearly IC decomposition for each base feature:
 
 Goal: Apply strict statistical guards, correlation filters, and trial-count tracking to build a robust pool.
 
-> Rules: 1. 0 feature better than many FP features. 2. Check logic before lowering threshold, TP still might be OOS lucky.
+### Global Thresholds & Constants (`select_features.py:L35-L63`)
+```python
+MAX_FLIPS = 1                   # Max sign flip chunks allowed in 7-year jackknife
+FDR_THRESHOLD = 0.20            # Benjamini-Hochberg (BH-FDR) q-value threshold
+DEFAULT_THETA = 0.95            # Near-duplicate correlation threshold (B5 gate)
 
-### B1. 7-Year Jackknife Sign Stability & Temporal Validation Pre-filters
-1. **7-Year Jackknife Sign Guard**: Split training data into 7 equal chunks (approximating calendar years). Compute tail IC per chunk, lock sign from full-sample IC. Count "flip chunks" where chunk IC sign disagrees with locked sign. Reject if flip_count > 1 OR if either of the last 2 chunks is a flip (recent signal must be intact).
-   - **Sign locking**: Outputs a locked `sign` (+1 or -1) value from full train set. This sign is the pipeline's single source of truth carried forward to B2 and B3.
-2. **Temporal Validation Gate** (adaptive): Require positive tail IC in the most recent chunk from jackknife (`recent_ic > 0`). Additionally, cap `recency_ratio < 2.5` ONLY when `|early_ic| < 0.05` ("appeared from nowhere" pattern). Features with solid early IC (≥ 0.05) that strengthen recently pass freely — a high ratio with positive early base indicates a strengthening signal, not overfit. Diagnosed via `filter_diagnosis.py` §6b/6c.
-   - _Known limitation: single-chunk `recent_ic` is noisy for short training windows; a multi-chunk rolling average could improve stability._
+# Rolling Guard (90-calendar-day)
+MONO_THR_SINGLE = 0.65          # Monotonicity threshold (single side)
+MONO_THR_DIR = 0.60             # Monotonicity threshold (directional: long/short)
+IR_THR_SINGLE = 0.30            # IC_IR threshold (single side)
+IR_THR_DIR = 0.15               # IC_IR threshold (directional: long/short)
 
-### B2. Rolling Guard & FDR Pre-filter
-1. **Rolling Guard (Pre-filter check)**: 90-calendar-date rolling tail IC evaluated instantly on pre-computed values. Drop if monotonicity < `mono_thr` or `IC_IR` < `ir_thr`:
-   - `long`/`short`: `mono_thr = 0.55`, `ir_thr = 0.15`
-   - `single`: `mono_thr = 0.65`, `ir_thr = 0.30`
-   - **Pass-forward cached values**: Rolling mono average from this step is cached and passed forward to B3, not just its pass/fail verdict (uses locked `sign` from B1).
-   - **Cheap-first ordering**: Executed before simulation to thin pool by ~98% instantly.
-2. **Benjamini-Hochberg (BH-FDR) pre-filter**: Reject if empirical $p$-value fails Benjamini-Hochberg FDR at $q=0.20$ (standard screening threshold, via 5,000-trial single-feature block-shuffled simulation on compact survivor matrix `X_survivors`, cached per ETF/side).
-   - **Full search-space correction**: Uses `m_total = len(eval_results)` (total candidates before any filtering) for rank denominator, properly accounting for pre-filter selection bias. This does NOT increase computation — FDR still runs only on survivors.
+# Temporal & Quality Gate Thresholds
+MAX_RECENCY_RATIO = 2.5         # Moderate recency spike cap (when |early_ic| < 0.03)
+MAX_HALF_RATIO = 1.80           # Moderate half-ratio spike cap (when |early_ic| < 0.03)
+MAX_EXTREME_RECENCY_RATIO = 4.0 # Universal extreme recency spike cap
+MAX_EXTREME_HALF_RATIO = 2.50   # Universal extreme half-ratio spike cap
+MIN_EARLY_IC_THRESHOLD = 0.03   # Minimum early IC required to bypass moderate ratio caps
+MAX_YEARLY_IC_CV = 1.00         # Max yearly IC coefficient of variation
+MIN_STABILITY_PRODUCT = 0.09    # Minimum (yearly_ic_cv * weak_link_cv) product for combos
+MAX_NEGATIVE_REGIMES = 1        # Max vol-quintile regimes with negative IC
+MIN_IC_STD_REGIMES = 0.030      # Min IC std across vol regimes (for regime uniformity check)
+MAX_IC_CV_FOR_UNIFORM = 0.85    # Max yearly IC CV triggering regime uniformity rejection
+```
 
-### B3. Admission Floor (Composite score gate) & Deflated IC
-- **Rank-normalized Composite Score** (Sortino weight calibrated for fixed null formula):
-  $$\text{score} = 0.3 \times \text{RollingMono}_{90\text{d}} + 0.5 \times \text{Sortino} + 0.15 \times |\text{Tail IC}| + 0.05 \times |\text{Overall IC}|$$
-  - `RollingMono` (cached from B2) and `Sortino` consume locked `sign` from B1 (computed post sign-resolution, no $|\text{abs}|$ needed).
-  - `Tail IC` and `Overall IC` use absolute values $|\text{IC}|$.
-- **Per-candidate trade simulation**: Runs `simulate_returns()` (ported to shared module `recipe_utils.py`) per candidate using B1 locked sign to compute candidate Sortino.
-- **Null-permutation-wrapped threshold**: Block-permute target $y$ (500 trials), recompute entire composite score per permutation, and take percentile as admission floor. Null Sortino uses `n` denominator (aligned with `simulate_returns`).
-- **Tiered admission floor by combo complexity & operator class**:
-  - Conditional 2-way combos & base features: $\text{composite\_score} \ge \text{empirical\_93rd}$
-  - Symmetric 2-way combos (`max`, `min`, `mean`, `rank_max`, `rank_min`): $\text{composite\_score} \ge \text{empirical\_95th}$ (symmetric ops destroy regime conditioning)
-  - 3-way combos (`combo_tri_*`): $\text{composite\_score} \ge \text{empirical\_97th}$ (stricter — more degrees of freedom = higher overfit risk)
-- **Standalone Deflated IC**: `deflated_ic = max(0.0, cand_ic - ic_null_mean)` where `ic_null_mean` is standalone empirical mean of raw overall IC under block-permutation null.
-- *Compute note*: Heavier compute per survivor, but B1 + B2 thin pool first (cheap-first order preserved). 97th percentile computed in same kernel pass as 93rd — no additional simulation cost.
+### B1. 7-Year Jackknife Sign Guard & Temporal Validation Pre-filters
+1. **7-Year Jackknife Sign Guard**: Split training data into 7 equal chunks. Lock sign from full-sample IC. Count flip chunks where chunk IC sign disagrees with locked sign. Reject if `flip_count > MAX_FLIPS (1)` OR if either of the last 2 chunks is a flip.
+2. **Temporal Validation Gate**:
+   - Require `recent_ic > 0` (positive tail IC in recent training chunk).
+   - Moderate spike rejection: Reject if (`recency_ratio >= 2.5` OR `half_ratio >= 1.80`) AND `|early_ic| < 0.03`. Solid early IC ($\ge 0.03$) passes freely.
+   - Extreme spike rejection: Reject if `recency_ratio >= 4.0` OR `half_ratio >= 2.50` regardless of early IC.
 
-### B4. Training-Only Quality & Temporal Stability Gates (Pre-Correlation)
-- Applied AFTER B3 floor, BEFORE B5 correlation gate.
-- **Temporal Stability Gate**: For combo features, require `ic_cv * weak_link_cv >= MIN_STABILITY_PRODUCT (0.15)`. Features with artificially low temporal variation (suspiciously "too smooth" in-sample) are fitting structural artifacts. _Tuned: 0.15 chosen to avoid false-rejecting stable 300ETF/159915ETF features; lower values over-penalize genuinely persistent signals._
-- **Yearly IC CV Gate**: Requires `yearly_ic_cv <= MAX_YEARLY_IC_CV (1.50)`. Rejects features with erratic year-to-year IC. _Relaxed from 0.85→1.50 after diagnosis: 0.85 had 48% collateral on 300ETF (16/33 TP killed) and 100% on 159915ETF (2/2). At 1.20, still 88% collateral (7/8 TP killed, 0 FP caught). 1.50 retains as a minimal guard against genuinely erratic signals while admitting positive-but-variable features. B1 jackknife already catches sign flips._
-- ~~**Unstable Component Gate**~~: **REMOVED**. Required `weak_link_cv <= 1.00`. Diagnosis showed 76% collateral on 300ETF (59/78 TP killed) and 100% on 159915ETF (10/10). Combo operations (rank_min, z_sum, etc.) stabilize noisy primitives — standalone component CV ≠ combo instability.
-- **Sign Consistency Gate**: Rejects candidate if meaningful full-sample IC ($|\text{IC}_{\text{full}}| \ge 0.015$) contradicts tail IC sign ($\text{IC}_{\text{full}} \cdot \text{IC}_{\text{tail}} < 0$), preventing non-monotonic tail mirages from entering the pool.
-- **Negative Vol-Regime Gate**: Rejects feature if IC is negative in $\ge 2$ vol-quintile regimes (`REJECTED_NEGATIVE_REGIMES`), catching regime-conditional signals that fail in transitional volatility environments.
-- **Regime Uniformity Gate**: Rejects combo features with suspiciously uniform IC across vol regimes AND unstable yearly ICs (`REJECTED_REGIME_UNIFORMITY`). Combined condition: `ic_std_across_regimes < 0.030 AND ic_cv > 0.85`. Catches "too good to be true" features that appear stable across regimes but have erratic year-to-year performance (overfit signature). Based on FILTER_DIAGNOSIS discriminators: ic_std Cohen's d = -0.86, ic_cv Cohen's d = +0.85 for 300ETF FPs.
-- **Quality Gate**: Requires all three:
-  - `deflated_ic >= 0.03` (normal) / `0.05` (short-history ETFs with n_train < 1200)
-  - `|raw_ic| >= 0.02` (normal) / `0.03` (short-history) — catches tail-only mirages
-  - `sortino > 0` — rejects negative risk-adjusted returns
-- **Rationale for pre-correlation placement**: Prevents low-quality/unstable features from occupying pool slots and blocking higher-quality candidates via the correlation gate.
-- **Zero look-ahead bias**: Uses only training-period metrics. No OOS or lockbox data is accessed.
+### B2. Rolling Guard & BH-FDR Pre-filter
+1. **Rolling Guard**: 90-calendar-date rolling tail IC evaluated on pre-computed values. Drop if `monotonicity < mono_thr` or `IC_IR < ir_thr` (`mono_thr`: 0.65 single / 0.60 dir; `ir_thr`: 0.30 single / 0.15 dir).
+2. **BH-FDR Pre-filter**: Reject if empirical $p$-value fails Benjamini-Hochberg FDR at $q=0.20$. Uses full search-space correction `m_total = len(eval_results)` for rank denominator to account for candidate selection bias.
 
-### B5. Initial Correlation Gate, Primitive Cluster Cap & Replacement Rule
-- Admit if `max_corr(candidate, current_pool) < theta` ($\theta = 0.80$, relaxed initial pass).
-- **Runs AFTER B4 Quality & Stability Gates**: Low-quality or unstable features are filtered before correlation comparison, preventing them from blocking high-quality candidates.
-- **Primitive Cluster Cap**: Extract primitive feature set (`feature_a`, `feature_b`, `feature_c`, `feature_cond`, `feature_cond2`). Drop or replace redundant combos built from identical base primitives to ensure pool diversity.
-- **Replacement rule**:
-  ```
-  cv_penalty = 0.05 * max(0.0, ic_cv - 0.60)
-  half_penalty = 0.05 * abs(half_ratio - 1.0)
-  complexity_penalty = 0.08 if is_tri_combo else (0.03 if is_combo else 0.0)
+### B3. Admission Floor & Deflated IC
+- **Composite Score**:
+  $$\text{composite\_score} = 0.3 \times \text{mean\_tail\_ic} + 0.5 \times \text{sortino} + 0.15 \times |\text{overall\_ic}| + 0.05 \times |\text{raw\_ic}|$$
+  `sortino` is calculated via `simulate_returns()` using the locked sign from B1.
+- **Tiered Admission Floor** (via 500-trial block-permutation null):
+  - 3-way combos (`combo_tri_*`): empirical 97th percentile
+  - Symmetric 2-way combos (`max`, `min`, `mean`, `rank_max`, `rank_min`): interpolated 95th percentile
+  - Conditional 2-way combos & base features: empirical 93rd percentile
+- **Deflated IC**: `deflated_ic = max(0.0, cand_ic - ic_null_mean)`.
 
-  q_score = (
-      0.35 * deflated_ic + 0.25 * max(0.0, sortino) + 0.15 * ic_ir + 0.15 * recent_ic 
-      - cv_penalty - half_penalty - complexity_penalty
-  )
-  if candidate is correlated with existing pool member old_feature (corr >= theta):
-      replace old_feature with candidate if cand_q > old_q
-  ```
-- **Design rationale**: Occam's Razor complexity penalty (`-0.08` 3-way, `-0.03` 2-way, `0.00` base) + $IC\_CV$ penalty above `0.60` ensures clean base features are prioritized over overfit combo features during $Q$-score pre-sorting, while strict replacement (`cand_q > old_q`) maintains 100% mathematical order-independence.
+### B4. Training-Only Quality & Temporal Stability Gates
+- **Yearly IC CV Gate**: Require `yearly_ic_cv <= MAX_YEARLY_IC_CV (1.00)`.
+- **Temporal Stability Gate**: For combo features, require `ic_cv * weak_link_cv >= MIN_STABILITY_PRODUCT (0.09)`.
+- **Negative Vol-Regime Gate**: Reject if IC is negative in $> 1$ vol-quintile regimes (`n_neg_reg > MAX_NEGATIVE_REGIMES (1)`).
+- **Regime Uniformity Gate**: Reject if combo feature has `ic_std_across_regimes < MIN_IC_STD_REGIMES (0.030)` AND `ic_cv > MAX_IC_CV_FOR_UNIFORM (0.85)` (catches suspiciously regime-uniform yet yearly-erratic overfit signals).
+- **Quality Gate**: Require `deflated_ic >= min_deflated_ic` (0.03 normal / 0.05 short-history), `sortino > 0`, and `|raw_ic| >= min_raw_ic` (0.02 normal / 0.03 short-history).
 
-### B6. ONC Feature Clustering (Downstream Diversity Control)
-- **Global Constant** (defined at top of `select_features.py`):
-  - `DEFAULT_THETA = 0.95`: Near-duplicate correlation threshold (only rejects exact duplicates).
+### B5. Correlation Gate & Recalibrated $Q$-Score Replacement Rule
+- Pre-sort candidates by $Q$-score descending so highest quality features enter B5 first.
+- Admit candidate if `max_corr(candidate, current_pool) < DEFAULT_THETA (0.95)`.
+- If `max_corr >= 0.95`, candidate replaces correlated pool member(s) ONLY IF its $Q$-score strictly beats ALL correlated pool members (`cand_q > old_q` for all correlated members).
+- **Recalibrated $Q$-Score Formula** (`select_features.py:L1335-L1377`):
+  $$\text{q\_score} = 0.50 \times \text{DeflatedIC} + 0.25 \times \text{Sortino} + 0.15 \times \text{RecentIC} + 0.10 \times \text{IC\_IR} - \text{TotalPenalty}$$
+  where $\text{TotalPenalty} = \min(0.03, \text{cv\_penalty} + \text{half\_penalty} + \text{complexity\_penalty})$:
+  - $\text{complexity\_penalty} = 0.03$ (3-way `combo_tri_*`), $0.01$ (2-way `combo_*`), $0.00$ (base)
+  - $\text{cv\_penalty} = 0.02 \times \max(0.0, \text{ic\_cv} - 0.50)$
+  - $\text{half\_penalty} = 0.02 \times |\text{half\_ratio} - 1.0|$
 
-#### Mechanism (diversity enforced in newtrade)
-- **Pool size**: Unconstrained. All features passing gates 1-7 + B4 (θ=0.95) are admitted.
-- **ONC Clustering** (`feature_clusters.py`):
-  1. Computes Spearman rank correlation matrix on training-period feature values.
-  2. Converts to angular distance: $d(i,j) = \sqrt{0.5 \cdot (1 - \rho_{ij})}$.
-  3. K-Means sweep $K \in [2, \min(10, N-1)]$, select by silhouette score.
-  4. Recursive re-split: clusters with below-average silhouette get re-clustered.
-  5. Outputs `data/cluster_assignments_{etf}_{side}.json`.
-- **newtrade group-constrained top-K**: At selection time, picks max 1 feature per cluster per day (greedy by EMA-30d rolling IC). Ensures diversity across feature families.
-- **Design**: Replaces the old Adaptive Boundary Gate (removed). Diversity is now a downstream concern, not an admission-time prune. This preserves more features for the dynamic selector to choose from.
-- **Zero OOS leakage**: Clustering uses only training set statistics.
+### B6. Downstream ONC Feature Clustering (`feature_clusters.py`)
+- Computes Spearman rank correlation matrix on training feature values, converted to angular distance $d(i,j) = \sqrt{0.5 \cdot (1 - \rho_{ij})}$.
+- Runs K-Means sweep $K \in [2, \min(10, N-1)]$, selecting $K$ by silhouette score with recursive re-splitting.
+- Outputs `data/cluster_assignments_{etf}_{side}.json`.
+- Diversity is enforced downstream in `newtrade` (picks max 1 feature per cluster per day via rolling EMA IC).
 
 ### B7. Outputs & Trial Ledger
-- Save unique attempted candidate formulas to `trial_ledger_{ETF}_{side}.json` to track cumulative unique trials $N$.
-- Version-controlled admitted pools registry in [admitted_pools.py](file:///home/hallo/Documents/option-longterm/day-model-new/admitted_pools.py).
-- Detailed log of attempts in `data/mining_attempts_{ETF}_{side}.json`.
+- Saves cumulative unique trials $N$ to `trial_ledger_{ETF}_{side}.json`.
+- Registry of admitted pools in [admitted_pools.py](file:///home/hallo/Documents/option-longterm/day-model-new/admitted_pools.py).
+- Detailed execution logs in `data/mining_attempts_{ETF}_{side}.json`.
 
-> IMPORTANT: NO OOS data present in this stage. All metrics are computed using training-period data only.
 ---
 
 ## Stage C — Model Training & Evaluation (`evaluate_concept.py`)
 
 Goal: Combine surviving features and evaluate performance under strict cross-validation.
 
-> **Strategy**: Entry at 10:00 (open of bar 6), exit at 14:35 (close of bar 42). Conviction-weighted position sizing (default): only trades when prediction z-score > 0.5, with smooth tanh ramp. Long top-10% / short bottom-10% predicted days (`single`), or top/bottom-15% for directional sides. 8 bps cost per position state transition (realistic for liquid ETFs).
+> **Execution Setting**: Entry at 10:00 (bar 6 open), exit at 14:35 (bar 42 close). Conviction-weighted position sizing with smooth tanh ramp (z > 0.5). 8 bps transaction cost per state change.
 
-### C1. Baseline Model: IC-weighted Linear Sum (with Empirical Bayes Shrinkage)
+### C1. Baseline Model: IC-Weighted Linear Sum (with Empirical Bayes Shrinkage)
 ```
 signal = sum_i( sign(IC_i) * max(0, deflated_ic_i - SE_IC)^k * z(feature_i) )
-SE_IC ≈ 1/√n_train
+SE_IC ≈ 1 / sqrt(n_train)
 ```
-- `k` optional mild tilt toward higher-IC features (k=1 default).
-- **Empirical Bayes shrinkage**: Subtract $SE_{IC} \approx 1/\sqrt{n}$ from `deflated_ic` before weighting. This penalizes features with marginal IC estimates that are likely noise. If all weights shrink to zero, fall back to equal weighting.
-- Avoids orthogonalization (retains noise-canceling properties).
+- Empirical Bayes shrinkage subtracts $SE_{\text{IC}} \approx 1/\sqrt{n}$ from `deflated_ic` before weighting.
+- Fallback to equal weighting if all weights shrink to zero.
 
 ### C2. VIF Safety Net & Data Leakage Prevention
-- **Leakage-Free Recipe Prebuilding**: Prebuild reference statistics (`train_means`, `train_stds`, `train_medians`) for ALL recipe input features (`feature_a`, `feature_b`, `feature_c`, `feature_cond`, `feature_cond2`) on training set to eliminate OOS lookahead leakage on 3-way `tri_*` features.
-- **VIF Safety Net**: One VIF pass on the final pool, drop features if VIF > 5.0.
+- **Leakage-Free Recipe Prebuilding**: Reference statistics (`train_means`, `train_stds`, `train_medians`) prebuilt on training set for all recipe input features.
+- **VIF Safety Net**: Single VIF pass on final pool, dropping features with VIF > 5.0.
 
 ### C3. Guardrails & Validation
-- **Chronological split**: Train / holdout OOS / OOS lockbox.
-- **Block-bootstrap CI**: Report OOS metrics via CI (block size 10) instead of point estimates.
-- **Kill switches**: Overall IC > 0, Hit Rate ≥ 60%, Monotonicity ≥ 0.25, Spread > 0.
-
-### C4. Escalation Rule
-- Only use more complex models (e.g. ElasticNet, LightGBM) if they statistically outperform the baseline weighted sum within the block-bootstrap CI.
+- **Chronological Split**: Train / holdout OOS / OOS lockbox.
+- **Block-Bootstrap CI**: Report OOS metrics via block-bootstrap confidence intervals (block size 10).
+- **Kill Switches**: Overall IC > 0, Hit Rate $\ge 60\%$, Monotonicity $\ge 0.25$, Spread > 0.
 
 ---
 
-## Checklist
-- [x] Replace B3 IC-threshold with rank-normalized composite (Mono 0.4 / Sortino 0.3 / TailIC 0.2 / OverallIC 0.1), sign locked from B1, null-permutation-wrapped.
-- [x] Port `simulate_returns()` to shared module (`recipe_utils.py`) and run per-candidate Sortino in B3 using B1 locked sign.
-- [x] Upgrade BH-FDR to Benjamini-Yekutieli (BY-FDR) at $q=0.30$ to handle correlated candidate feature spaces.
-- [x] Fix `deflated_ic` calculation using standalone raw IC null mean (`ic_null_mean`).
-- [x] Prebuild 3-way recipe statistics (`feature_c`, `feature_cond2`) in `evaluate_concept.py` to eliminate OOS lookahead leakage.
-- [x] Upgrade sign check to 7-year jackknife guard (`expanding_wf_sign_check`, max_flips=2 [1 for 588000ETF], last 2 chunks must not flip).
-- [x] Scale candidate generation space by sample size ratio in `generate_combos.py`.
-- [x] Reconcile `feature-mining.md` and `AGENTS.md` step numbering with new A/B/C stage names.
-- [x] **Anti-overfit: Full search-space FDR correction** — BY-FDR uses `m_total = len(eval_results)` (total candidates before filtering) for harmonic correction, not just survivor count.
-- [x] **Anti-overfit: Temporal validation gate** — Require positive tail IC in most recent 30% of training (fold 3). Zero additional compute (reuses `ic_f3` from walk-forward).
-- [x] **Anti-overfit: IC shrinkage weighting** — Subtract $SE_{IC} \approx 1/\sqrt{n}$ from `deflated_ic` before IC-weighting in `evaluate_concept.py`.
-- [x] **Anti-overfit: Tiered B3 admission floor** — 3-way combos (`combo_tri_*`) require 97th percentile vs 95th/93rd for 2-way/base features. Computed in same kernel pass.
-- [x] **Anti-overfit: Training-only Quality Gate (B6)** — Require deflated_ic ≥ 0.03/0.05, |raw_ic| ≥ 0.02/0.03, sortino > 0. Catches tail-only mirages. Zero look-ahead.
-- [x] **Execution: Conviction-weighted position sizing** — Default mode in `evaluate_concept.py`. Skips low-conviction days (z < 0.5), smooth tanh ramp. Reduces turnover ~40% without losing high-conviction trades.
-- [x] **Filter calibration: Relaxed B2/FDR/θ** — mono_thr 0.70→0.60, FDR q 0.20→0.30, θ 0.70. Data-driven from per-gate OOS diagnostics (FEATURE_DIAGNOSTICS.md).
-- [x] **Component stability gate (A0)** — Yearly IC decomposition in `generate_combos.py`. Flags features with IC_CV > 3.0 or neg_years > 2 as unstable, excludes from all combos. Training-only, ETF-agnostic.
-- [x] **B4 correlation threshold** — θ=0.95 (near-duplicate only). Pool size unconstrained; diversity enforced downstream by ONC clustering + newtrade group-constrained top-K.
-- [x] **Quality Gate before Correlation** — Moved Quality Gate (B6) before B4 correlation gate. Prevents low-quality features from blocking high-quality candidates.
-- [x] **ONC Feature Clustering** — `feature_clusters.py` implements de Prado ONC (angular distance + K-Means + silhouette). Outputs cluster assignments for newtrade group-constrained selection. Replaces old Adaptive Boundary Gate.
-- [x] **Deep filter diagnosis tool** — `filter_diagnosis.py` for causal FP/FN analysis. Temporal decomposition, component stability, regime concentration, Cohen's d discriminators. Per-gate confusion matrix (§6b) and temporal sub-condition analysis (§6c). Excludes 588000ETF.
-- [x] **Adaptive temporal gate relaxation** — Ratio cap (`recency_ratio < 2.5`) now only fires when `|early_ic| < 0.05`. Features with solid early IC that strengthen recently are no longer penalized. Result: 300ETF pool 7→15, 159915ETF 11→16, 500ETF unchanged (capped). FP rate remains 0% for 500ETF/159915ETF; 300ETF gained 2 FP in exchange for 2× pool size.
-- [x] **B6 threshold tuning documented** — `MAX_YEARLY_IC_CV=0.85`, `MIN_STABILITY_PRODUCT=0.15`, `MAX_WEAK_LINK_CV=1.00` calibrated against FILTER_DIAGNOSIS FN data for 300ETF/159915ETF. Rationale added inline in §B6.
-- [x] **B6 gates added to diagnosis** — `REJECTED_HIGH_YEARLY_IC_CV`, `REJECTED_UNSTABLE_COMPONENT`, `REJECTED_STABILITY_GATE`, `REJECTED_QUALITY_GATE` now tracked in `filter_diagnosis.py` GATE_ORDER and `compile_report.py` funnel.
-- [x] **Regime Uniformity Gate (B4)** — Rejects combo features with `ic_std_across_regimes < 0.030 AND ic_cv > 0.85`. Catches "too good to be true" overfit pattern (uniform across vol regimes BUT unstable yearly). Based on FILTER_DIAGNOSIS discriminators: ic_std Cohen's d=-0.86, ic_cv Cohen's d=+0.85. Rejects ~8 features for 300ETF p2016_2024. Training-only, zero look-ahead.
+## Compacted Progress Checklist
+
+### Stage A — Mining
+- [x] Base primitive feature generation & persistent candidate logging (`mining_log.json`).
+- [x] Candidate search space auto-scaling by training sample size ratio.
+- [x] Training-only Component Stability Gate (A0: `IC_CV > 3.0` or `n_neg_years > 2`).
+
+### Stage B — Selection & Admission Gate
+- [x] **B1 Sign & Temporal**: 7-year jackknife sign guard (`MAX_FLIPS = 1`, last 2 chunks intact) & adaptive temporal gate (`recent_ic > 0`, ratio caps with `MIN_EARLY_IC_THRESHOLD = 0.03`).
+- [x] **B2 Rolling & FDR**: 90d rolling guard (`mono_thr` 0.65/0.60, `ir_thr` 0.30/0.15) & BH-FDR gate ($q=0.20$) with full search space correction ($m_{\text{total}}$).
+- [x] **B3 Composite Floor**: Sign-locked composite score ($0.3\text{Mono} + 0.5\text{Sortino} + 0.15\text{TailIC} + 0.05\text{RawIC}$) with tiered admission floor (97th tri / 95th sym / 93rd cond & base) and standalone `deflated_ic`.
+- [x] **B4 Quality & Stability**: Pre-correlation Quality Gate (`deflated_ic \ge 0.03/0.05`, `sortino > 0`, `|raw_ic| \ge 0.02/0.03`), Yearly IC CV gate (`\le 1.00`), Stability Product gate (`\ge 0.09`), Negative Regime gate (`\le 1`), and Regime Uniformity gate (`ic_std < 0.030` & `ic_cv > 0.85`).
+- [x] **B5 Correlation & Q-Score**: Pre-sort pool candidates by recalibrated $Q$-score ($50\%\text{DefIC} + 25\%\text{Sortino} + 15\%\text{RecentIC} + 10\%\text{IC\_IR} - \text{TotalPenalty}_{\le 0.03}$) and strict correlated replacement at $\theta = 0.95$.
+- [x] **B6 Downstream Diversity**: de Prado ONC feature clustering (`feature_clusters.py`) for downstream group-constrained selection in `newtrade`.
+- [x] **B7 Ledger & Logging**: Persistent trial ledger tracking cumulative trials $N$ and versioned pool output registry (`admitted_pools.py`).
+
+### Stage C — Model Training & Evaluation
+- [x] Empirical Bayes IC shrinkage weighting (`evaluate_concept.py`).
+- [x] Leakage-free recipe prebuilding for 3-way combo statistics.
+- [x] Conviction-weighted position sizing (tanh ramp, z-threshold 0.5).
+
+### Diagnostics & Validation Tools
+- [x] Deep filter diagnosis tool (`filter_diagnosis.py`) for causal FP/FN analysis, Cohen's d discriminators, and temporal sub-condition tracking.
+
+---
 
 ## References
-- Wang et al. 2026, *FactorMiner: A Self-Evolving Agent with Skills and Experience Memory for Financial Alpha Discovery*, arXiv:2602.14670 — admission gate, replacement rule, IC-weighted vs orthogonal vs learned-selection comparison.
-- Dobriban 2026, *No Universal Multiplicative FDR Bound for BH with Correlated Two-Sided Gaussian Tests*, arXiv:2607.14812 — FDR control failure under high candidate correlation; justification for BY-FDR.
-- Bailey & López de Prado 2014, *The Deflated Sharpe Ratio: Correcting for Selection Bias, Backtest Overfitting and Non-Normality*, Journal of Portfolio Management 40(5) — deflate IC/Sharpe by trial count.
-- López de Prado & Lewis 2019, *Detection of False Investment Strategies Using Unsupervised Learning*, SSRN 3517595 — ONC clustering (angular distance + K-Means + silhouette) for feature group definition.
-- `day-model_plan.md` (this repo, v2) — chronological split design, CSS+VIF mechanics, block-bootstrap CI reporting, all reused as-is where noted above.
+- Wang et al. 2026, *FactorMiner: A Self-Evolving Agent with Skills and Experience Memory for Financial Alpha Discovery*, arXiv:2602.14670.
+- Dobriban 2026, *No Universal Multiplicative FDR Bound for BH with Correlated Two-Sided Gaussian Tests*, arXiv:2607.14812.
+- Bailey & López de Prado 2014, *The Deflated Sharpe Ratio: Correcting for Selection Bias, Backtest Overfitting and Non-Normality*, Journal of Portfolio Management 40(5).
+- López de Prado & Lewis 2019, *Detection of False Investment Strategies Using Unsupervised Learning*, SSRN 3517595.
+- `day-model_plan.md` (v2 plan, preserved historical reference).

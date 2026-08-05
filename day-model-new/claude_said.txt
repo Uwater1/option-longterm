@@ -1,33 +1,84 @@
-User:when developing a quant trading,  I encountered this problem: my complex filter filter out some features, highly correlated, I used to do correlation with threshold 0.8, and remove the feature that get worse score (scored based on IC, icir, monotonistic ...) However I find it not benefiting the model below it. I want to use the later model picking (pick with EMA 30d rolling ic)  but let it only pick one feature from each "group" so I want to build the group system. Can you do research and tell me how to do it
-Claude: 
-Pairwise threshold correl-prune got transitivity bug. A-B=0.85, B-C=0.85, A-C=0.3 → threshold kill order-dependent, arbitrary. Clustering fix this — group by full structure, not pairs.
+## Root cause read
 
-**Standard method: de Prado ONC (Optimal Number of Clusters)**
+Your two failure modes point same direction:
+- **FP (OOS IC<0)**: selection bias not fully caught. BH-FDR + single train/holdout not enough vs huge combo search space (~13 2-way + 6 3-way ops × primitives = big M).
+- **Median-fail (IC>0, Sharpe<0)**: gate stack is *rank-metric heavy* (IC, monotonicity, jackknife sign) but *distribution-blind*. Nothing in B1-B5 look at return skew/kurtosis/tail concentration. Sortino gate is single point estimate `> 0`, no significance test. Signal can rank correctly on average while payoff structure kill you (few bad tail days, fat left tail, IC driven by handful of extreme obs).
 
-Paper: López de Prado & Lewis, "Detection of False Investment Strategies Using Unsupervised Learning" (also condensed in *Advances in Financial ML* ch.4, and slide deck "Clustered Feature Importance", SSRN 3517595).
+Below: filters that target Sharpe path quality without touching your IC gates (so TP survival should hold).
 
-Steps:
-1. Corr matrix → angular distance: `d(i,j) = sqrt(0.5*(1-corr(i,j)))`. Proper metric (satisfies triangle ineq), corr threshold don't.
-2. K-Means on distance matrix, sweep K, pick by silhouette score.
-3. Recursive re-clustering: any cluster w/ below-avg silhouette gets re-split. Kills the "K-Means got unlucky init" problem.
-4. Output: hard partition of features into clusters. No feature straddle two groups (caveat: if one feature genuinely combo of two clusters, silhouette stays low forever — flag manually, maybe drop or duplicate).
+## 1. Swap point-Sortino gate for Probabilistic Sharpe Ratio (PSR)
 
-mlfinlab has working impl (`onc` module) if you want reference code instead of raw paper math.
+Bailey & López de Prado PSR, skew/kurtosis-adjusted:
 
-**Wiring into your rolling-IC picker**
+$$PSR(SR^*) = \Phi\left(\frac{(\widehat{SR}-SR^*)\sqrt{T-1}}{\sqrt{1-\gamma_3\widehat{SR}+\frac{\gamma_4-1}{4}\widehat{SR}^2}}\right)$$
 
-Group assignment is separate stage from picker, not fused:
-- Fit ONC once (or every N days, see below) → get `cluster_id: [features]` map.
-- Each day/rebal: compute your EMA-30d rolling IC (or IC+ICIR+monotonic composite score, whatever you already use) per feature.
-- Within each cluster_id, argmax the composite score → 1 feature survives, rest masked to zero-weight for that period.
-- Selected set = one per cluster, size = num clusters, varies day to day as winner rotates inside each group.
+γ₃=skew, γ₄=kurtosis. This corrects for sample length, skewness, and kurtosis, and inflates uncertainty when returns are asymmetric or fat-tailed — exactly what raw Sharpe ignores.
 
-**Static vs rolling cluster refresh**
+Right now `sortino_val > 0.0` at B4 quality gate is naive point estimate — passes garbage with lucky path. Replace/augment:
+```
+passes_quality = (deflated_ic >= min_deflated_ic) and (psr(returns, SR_star=0) >= 0.60) and (raw_ic_abs >= min_raw_ic)
+```
+Direct hit on median-fail bucket: candidate w/ IC>0 but bad Sharpe path usually has negative skew or fat tails → PSR punishes it even when point-Sortino sneaks positive.
 
-- Static (fit once, freeze): stable groups, no lookahead bias risk, but stale if factor correlation regime shifts (crowding effects, macro regime change).
-- Rolling refresh (refit ONC every M days on trailing window): adapts, but cluster membership can flip → picked feature discontinuity, needs hysteresis or your feature "group" itself becomes noisy meta-parameter.
-- Compromise most alpha shops use: refit clusters quarterly/monthly (slow), rolling-IC picker inside stays daily (fast). Group boundary ~ slow signal, feature selection inside group ~ fast signal. Matches your dual-speed structure already (IC:30d EMA fast, corr-structure: slower).
+## 2. Explicit skew/kurtosis gate on simulated returns
 
-**One thing worth checking**: correlation used for clustering should be Spearman or distance-correlation (nonlinear dependence), not Pearson, if your features have nonlinear/monotonic-but-not-linear relations — common in alpha factors. de Prado's slides address this too (a "codependence" module in mlfinlab handles distance-corr / mutual-info variants for exactly this).
+Add straight to B4, cheap, orthogonal to IC-based gates:
+```
+MAX_NEG_SKEW = -0.5   # reject strong negative skew (crash risk)
+MAX_EXCESS_KURT = 5.0 # reject fat-tail blowup risk
+```
+Negative skew = occasional big loss days, exactly your "IC right on average, P&L wrong" signature (small wins outnumbered by rare large losses despite correct average rank).
 
-Want the ONC pseudocode / actual python impl, or the composite-score picker logic spelled out?
+## 3. Bootstrap CI on Sortino at feature level, not just Stage C
+
+You already have block-bootstrap CI at C3 for the ensemble. Push it down to B-stage per-candidate:
+```
+sortino_ci_low = block_bootstrap_ci(returns, block=10, stat=sortino, pct=5)
+require sortino_ci_low > 0
+```
+This is basically CPCV logic applied per-feature. Recent comparison work shows Combinatorial Purged CV gives materially lower Probability of Backtest Overfitting and better Deflated Sharpe stat than plain walk-forward / holdout — your current B-stage validation is single split + jackknife sign, not full CPCV. If compute allows, swap the 7-chunk jackknife sign guard for CPCV-style N-choose-k paths (even N=6,k=2 cheap) and compute PBO directly per candidate — reject if PBO > 0.5 (worse than coinflip that IS-best survives OOS). CSCV/PBO framework: model-free, non-parametric estimate of probability that IS-optimal candidate underperforms OOS median.
+
+## 4. Payoff-ratio / win-loss asymmetry gate
+
+Nothing currently checks avg-win vs avg-loss size. Add:
+```
+payoff_ratio = mean(win_returns) / abs(mean(loss_returns))
+require payoff_ratio >= 0.8  # tune
+```
+Catches "high hit rate, bad payoff" signals — a classic IC-Sharpe divergence source your monotonicity/IC gates structurally can't see (IC only cares about rank order, not magnitude of P&L on wrong calls).
+
+## 5. IC-contribution concentration gate (Gini-style)
+
+Compute per-day contribution to overall tail IC (or per-day return contribution to total Sortino numerator). If top 5% of days explain >X% of the metric → reject. Cheap numba addable next to your existing rolling-window kernels. Targets candidates where signal "IC" is a few lucky extreme days — these are prime FP/median-fail source and won't get caught by yearly_ic_cv (CV can look fine while day-level concentration is terrible).
+
+## 6. Cost-stress test
+
+Currently 8bps fixed in `simulate_returns`. Add a stress pass at 2x cost (16bps):
+```
+require sortino(returns_at_2x_cost) > 0
+```
+Directly prunes high-turnover/noisy signals that only "work" under thin assumed friction — reduces both FP and marginal Sharpe-negative survivors cheaply (one extra `simulate_returns` call, no new infra).
+
+## 7. Regime-conditioned Sortino (mirror your existing IC regime gate)
+
+You have `MAX_NEGATIVE_REGIMES` for IC across vol quintiles. Add same for Sortino:
+```
+require n_neg_sortino_regimes <= 1
+```
+IC can be regime-uniform-positive while Sortino is negative in exactly the regime that dominates recent OOS period (vol clustering) — separate check needed since sign of return ≠ sign of rank correctly weighted by size.
+
+## Priority order (cheapest / highest expected yield first)
+1. Skew/kurtosis explicit gate (#2) — near-zero compute, directly named cause
+2. Payoff ratio gate (#4) — near-zero compute
+3. PSR swap-in (#1) — cheap, principled, subsumes naive Sortino gate
+4. Cost-stress test (#6) — one more sim call
+5. Regime Sortino (#7) — mirrors existing code, easy port
+6. Concentration gate (#5) — moderate, new kernel
+7. CPCV/PBO (#3) — most compute, best FP fix, do after cheap wins tested
+
+Run `filter_diagnosis.py` (you already have it) against a synthetic set with these gates on/off to get precision/TP-collateral numbers before committing thresholds — same methodology you used tuning `MIN_STABILITY_PRODUCT`.
+
+## Refs (recent)
+- Bailey & López de Prado — PSR/DSR (skew-kurtosis adjusted, already in your plan.md refs for DSR concept)
+- Arian, Norouzi M., Seco 2024/2025 — CPCV vs Walk-Forward vs Purged K-Fold, PBO/DSR comparison, ScienceDirect + SSRN shows CPCV materially outperforms K-Fold, Purged K-Fold, and Walk-Forward on both PBO and DSR test stat
+- Bailey, Borwein, López de Prado, Zhu — original PBO/CSCV paper
