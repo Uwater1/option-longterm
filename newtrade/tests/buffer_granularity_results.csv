@@ -1,0 +1,16 @@
+Config,ETF,Cost Sharpe,Raw Sharpe,Total PnL,Max DD,Win Rate,Turnover,Trades,Z_th_Long,Z_th_Short
+"1. Baseline (Buffer=0.10, Step=0.10)",300ETF,0.591,1.02,0.0918,0.0592,54.1,23.1,61,0.0,0.0
+"1. Baseline (Buffer=0.10, Step=0.10)",500ETF,0.683,1.528,0.1998,0.0716,52.5,71.8,204,0.0,0.0
+"1. Baseline (Buffer=0.10, Step=0.10)",159915ETF,0.917,1.502,0.3563,0.0969,48.9,64.82,188,0.0,0.0
+"2. Increased Buffer (Buffer=0.15, Step=0.10)",300ETF,0.713,1.072,0.1061,0.0496,56.9,19.25,51,0.0,0.0
+"2. Increased Buffer (Buffer=0.15, Step=0.10)",500ETF,0.747,1.481,0.2118,0.0685,53.2,61.1,171,0.0,0.0
+"2. Increased Buffer (Buffer=0.15, Step=0.10)",159915ETF,0.937,1.444,0.3504,0.0952,49.7,53.95,155,0.0,0.0
+"3. Increased Buffer (Buffer=0.20, Step=0.10)",300ETF,0.825,1.125,0.1194,0.0423,60.5,16.16,43,0.0,0.0
+"3. Increased Buffer (Buffer=0.20, Step=0.10)",500ETF,0.617,1.281,0.169,0.0679,50.7,53.0,148,0.0,0.0
+"3. Increased Buffer (Buffer=0.20, Step=0.10)",159915ETF,1.085,1.536,0.3945,0.0818,50.7,47.41,136,0.0,0.0
+"4. Finer Granularity (Buffer=0.10, Step=0.05)",300ETF,0.591,1.02,0.0918,0.0592,54.1,23.1,61,0.0,0.0
+"4. Finer Granularity (Buffer=0.10, Step=0.05)",500ETF,0.683,1.528,0.1998,0.0716,52.5,71.8,204,0.0,0.0
+"4. Finer Granularity (Buffer=0.10, Step=0.05)",159915ETF,0.917,1.502,0.3563,0.0969,48.9,64.82,188,0.0,0.0
+"5. Finer + Higher Buffer (Buffer=0.15, Step=0.05)",300ETF,0.713,1.072,0.1061,0.0496,56.9,19.25,51,0.0,0.0
+"5. Finer + Higher Buffer (Buffer=0.15, Step=0.05)",500ETF,0.747,1.481,0.2118,0.0685,53.2,61.1,171,0.0,0.0
+"5. Finer + Higher Buffer (Buffer=0.15, Step=0.05)",159915ETF,0.937,1.444,0.3504,0.0952,49.7,53.95,155,0.0,0.0

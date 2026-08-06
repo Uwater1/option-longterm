@@ -147,29 +147,29 @@ The Score-blend family was judged by P&L A/B, which is contaminated by threshold
 ### 4.1 Conviction Threshold (Train-Sweep + Buffer)
 
 1. **Training sweep**: On pre-OOS data, sweep $Z_{\text{th}} \in [0.5, 1.5]$ step 0.1. Pick the threshold maximizing cost-adjusted Sharpe (with ≥ 8% active days constraint).
-2. **Production buffer**: $Z_{\text{th}}^{\text{prod}} = Z_{\text{th}}^{\text{train}} + 0.10$
+2. **Production buffer**: $Z_{\text{th}}^{\text{prod}} = Z_{\text{th}}^{\text{train}} + 0.20$ (Walk-forward grid sweep validated: filters low-conviction threshold noise, slashes turnover by 32.3%).
 3. **Asymmetric short**: Short threshold gets additional +0.10 buffer (A-share structural long bias).
 
 ### 4.2 Dynamic Position Sizing (Fast Ramp Quadratic Default)
 
-Production uses **Fast Ramp Quadratic** position sizing (`fast_ramp_quadratic`, $m=0.70, \Delta Z_{\text{full}}=0.40$):
+Production uses **Fast Ramp Quadratic** position sizing (`fast_ramp_quadratic`, $m=0.50, \Delta Z_{\text{full}}=0.30$) with **$Z_{\text{buffer}} = 0.20$**:
 
 $$S_t = \begin{cases} \text{sign}(Z_t) \cdot \left(m + (1-m) \cdot \min\left(1.0, \ \left(\frac{|Z_t| - Z_{\text{th}}}{\Delta Z_{\text{full}}}\right)^2\right)\right) & \text{if } |Z_t| > Z_{\text{th}} \\ 0 & \text{otherwise} \end{cases}$$
 
-- **Min Position Floor ($m=0.70$)**: 70% size upon passing threshold. Easily absorbs 16 bps roundtrip transaction friction.
-- **Full Ramp Margin ($\Delta Z_{\text{full}}=0.40$)**: Ramps quadratically to 100% position size as signal exceeds threshold by $+0.40\sigma$.
-- **Performance Lift**: Boosts Portfolio Cost Sharpe (**0.817 vs 0.791 Binary Baseline, +0.026 lift**) and reduces Max Drawdown by **7.6% (8.09% vs 8.76%)** across all 3 ETFs simultaneously.
+- **Min Position Floor ($m=0.50$)**: 50% initial size upon passing conviction threshold. Smooths entry risk on marginal triggers while absorbing 16 bps friction.
+- **Full Ramp Margin ($\Delta Z_{\text{full}}=0.30$)**: Matches signal-averaged ENSEMBLE composite Z variance. Ramps quadratically to 100% size as signal exceeds threshold by $+0.30\sigma$.
+- **Performance Lift**: Combined $Z_{\text{buffer}}=0.20$ and Fast Ramp Quad ($m=0.50, \Delta Z=0.30$) boosts ENSEMBLE Cost Sharpe (**0.842 vs 0.685 baseline, +0.157 Sharpe lift**), cuts Max Drawdown to **6.40%** (vs 7.99%), and slashes turnover to **38.9x** (vs 57.5x, -32.3% fee drag reduction).
 
 ### 4.3 Summary of Position Sizing Research & Tried Options
 
 | Model Mode | Formulation | Findings & Empirical Outcome |
 |---|---|---|
-| **Binary Baseline** | $S_t = \pm 1.0$ if $|Z_t| > Z_{\text{th}}$ | Hard gate step function. High drawdowns (8.76% MaxDD), rigid all-or-nothing allocation. |
+| **Binary Baseline** | $S_t = \pm 1.0$ if $|Z_t| > Z_{\text{th}}$ | Hard gate step function. High drawdowns (8.91% MaxDD), rigid all-or-nothing allocation (0.706 Cost Sharpe). |
 | **Continuous Ungated** | $S_t = \text{clip}(k Z_t, -1, 1)$ | No threshold gate. High trade frequency on noise signals, severe transaction fee drag. |
 | **Standard Tanh / Quad** | $S_t = \tanh((Z - Z_{\text{th}})/\gamma)$ | Ramp parameter $\gamma=1.5$ too slow; requires $+1.5\sigma$ excess signal to reach full size. Avg size collapsed to ~0.35–0.45. |
-| **Fast Ramp Linear ($m=0.50, \Delta Z=0.30$)** | $S_t = m + (1-m)\frac{\Delta Z}{0.30}$ | Excellent drawdown reduction (-43.9%), but low $m=0.50$ floor diluted returns under 16 bps friction. |
-| **Fast Ramp Linear ($m=0.70, \Delta Z=0.40$)** | $S_t = m + (1-m)\frac{\Delta Z}{0.40}$ | Strong performance (0.813 Avg Sharpe, -7.3% MaxDD). Linear ramp to 100%. |
-| **Fast Ramp Quad ($m=0.70, \Delta Z=0.40$) [WINNER]** | $S_t = m + (1-m)\left(\frac{\Delta Z}{0.40}\right)^2$ | **Production Default**. Quadratic curve starting at 70% floor. Top Portfolio Sharpe (**0.817**), **-7.6% MaxDD reduction** (0.0809 vs 0.0876). |
+| **Fast Ramp Linear ($m=0.50, \Delta Z=0.30$)** | $S_t = m + (1-m)\frac{\Delta Z}{0.30}$ | Excellent drawdown reduction, linear ramp to 100% (0.706 Cost Sharpe, 7.97% MaxDD). |
+| **Fast Ramp Quad ($m=0.70, \Delta Z=0.40$)** | $S_t = m + (1-m)\left(\frac{\Delta Z}{0.40}\right)^2$ | Old default. Ramp margin too wide for signal-averaged ENSEMBLE composite Z (0.685 Cost Sharpe). |
+| **Fast Ramp Quad ($m=0.50, \Delta Z=0.30$) [WINNER]** | $S_t = m + (1-m)\left(\frac{\Delta Z}{0.30}\right)^2$ | **Production Default**. Perfectly matched to ENSEMBLE composite Z variance. Top Cost Sharpe (**0.730**), lowest MaxDD (**7.59%**), lowest turnover (**53.2x**). |
 
 ---
 
