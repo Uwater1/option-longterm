@@ -56,7 +56,7 @@ def main():
             etf=etf, side="single", scheme_name=args.scheme, z_th=z_th_fixed,
             position_mode="binary", fee_bps=fee_bps, start_date=args.start_date, end_date=args.end_date,
             z_buffer=args.z_buffer, auto_threshold=auto_threshold, dynamic_ic=True,
-            rank_kwargs={"dynamic_metric": "multi", "top_k": None}
+            rank_kwargs={"dynamic_metric": "multi", "top_k": 999}
         )
         if res.get("status") == "SUCCESS":
             res["ab_group"] = "Baseline (Full Pool)"

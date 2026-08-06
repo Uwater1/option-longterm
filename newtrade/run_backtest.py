@@ -30,9 +30,9 @@ from option_strategy import simulate_option_portfolio, DEFAULT_OPT_STOPLOSS_MODE
 from research_stoploss import load_intraday_bars_dict, simulate_full_series
 
 AVAILABLE_ETFS = ["300ETF", "500ETF", "50ETF", "159915ETF"]
-ALL_SCHEMES = ["icw", "sortino", "ew"]  # --scheme all: ICW primary (2026-08: Score scheme dropped)
+ALL_SCHEMES = ["ensemble", "icw", "sortino", "ew"]  # --scheme all: ENSEMBLE primary (2026-08)
 ENSEMBLE_SCHEMES = ["icw", "ew"]  # schemes averaged in ensemble
-DEFAULT_SCORE_BLEND_W_IC = 0.75  # Score = 0.75*rank(tailIC_480d) + 0.25*rank(Sortino_480d)
+DEFAULT_SCORE_BLEND_W_IC = 1.0  # Pure 100% TailIC for EW selection (Sortino<=0 gate handles risk)
 
 
 def resolve_ic_ema_span(etf: str, user_span: int | None = None) -> int:
@@ -1049,7 +1049,7 @@ def main():
     SCHEME_TITLES = {
         "ensemble": "Ensemble (Equal-Weight Average)",
         "rank": f"Rank Bounded Weight ({args.rank_mapping.capitalize()})",
-        "ew": "Equal Weight (EW, Score-selected top-K)",
+        "ew": "Equal Weight (EW, TailIC-selected top-K)",
         "icw": "IC Weight (ICW)",
         "score": f"Score Weight ({args.score_blend_w_ic:.0%} TailIC + {1-args.score_blend_w_ic:.0%} Sortino)",
         "sortino": "Sortino Weight (tail-IC selection + Score-blend weights)",
@@ -1131,9 +1131,9 @@ def main():
             lines.append("| " + " | ".join(row) + " |")
         return "\n".join(lines)
     
-    # Group results by scheme: ICW first (primary, 2026-08), then sortino, others, ew last
+    # Group results by scheme: ENSEMBLE first (primary, 2026-08), then ICW, sortino, others, ew last
     from collections import OrderedDict
-    scheme_order_pref = ["icw", "sortino"]
+    scheme_order_pref = ["ensemble", "icw", "sortino"]
     present_schemes = [r.get("scheme") for r in results]
     scheme_groups = OrderedDict()
     for s in scheme_order_pref:
