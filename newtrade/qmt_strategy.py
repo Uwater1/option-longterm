@@ -549,11 +549,18 @@ DECISION_TIME = datetime.time(10, 0, 0)
 EXIT_TIME = datetime.time(14, 35, 0)
 HARD_DEADLINE = datetime.time(14, 45, 0)
 
+# Base directory for state/audit files. QMT exec()s this script from a
+# string, so __file__ may not exist there -- fall back to the working dir.
+try:
+    _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+except NameError:
+    _BASE_DIR = os.getcwd()
+
 # Structured audit log (diffed against qmt_audit_replay.py output run after
 # market close). Empty string disables audit logging.
-AUDIT_LOG_FILE = "qmt_audit_log.txt"
+AUDIT_LOG_FILE = os.path.join(_BASE_DIR, "qmt_audit_log.txt")
 
-STATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "qmt_state")
+STATE_DIR = os.path.join(_BASE_DIR, "qmt_state")
 
 
 # =====================================================================
