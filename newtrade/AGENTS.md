@@ -88,6 +88,24 @@ uv run python newtrade/research_option_stoploss.py -e all --report
 uv run python newtrade/tests/test_option_stoploss_ab.py
 ```
 
+## QMT Draft Commands (simulated trading, see QMT_short/)
+
+```bash
+# Part A: hand-pick 10 features per ETF (cross-window stability + walk-forward greedy)
+python newtrade/research_qmt_selection.py
+
+# Bake selections + stats into the self-contained QMT script config block
+python newtrade/build_qmt_config.py
+
+# Audit-diff workflow (after market close, data downloaded):
+python QMT_short/qmt_audit_replay.py --date YYYYMMDD
+# then diff AUDIT lines: QMT-side qmt_audit_log.txt vs QMT_short/qmt_audit_replay_<date>.log
+
+# Tests
+python newtrade/tests/test_qmt_selection.py [--slow]
+python newtrade/tests/test_qmt_features.py [--days 40]
+```
+
 ## Pool Migration Commands
 
 ```bash
@@ -174,6 +192,7 @@ newtrade/
 | **Trade Window** | 10:00 entry → 14:35 exit (intraday). |
 | **Intraday Stop-Loss** | Enabled by default: `time_decay_trailing=0.03` (spot), `opt_time_decay_trailing=0.30` (option). Disable with `--no-stoploss`. |
 | **Yearly Diagnostics** | Per-year tests (2022–2025) exposed a 2025 regime break: all configs negative on 300ETF/500ETF. Use `--year` runs to check stability before adopting any weighting change. |
+| **First QMT Draft** | `QMT_short/qmt_strategy.py`: single self-contained file (stdlib+numpy), 500ETF+159915ETF options, 10 hand-picked features each (OOS Sharpe 1.336/2.096, all years positive), 10:00 entry on index early-bar features, call/put by side, trailing stop 0.30, 14:35 exit. Audit contract: `AUDIT` log lines diffable against `qmt_audit_replay.py` run on downloaded data. See `newtrade/plan.md` §10 and `QMT_short/部署说明.md`. |
 
 ## Data Dependencies
 
