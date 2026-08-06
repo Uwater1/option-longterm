@@ -6,7 +6,7 @@ NewTrade converts admitted alpha factors from `day-model-new` into intraday ETF 
 
 ### Core Design
 - **Signal**: Weighted average of top-10 z-scored features, where weights come from Empirical Bayes-shrunk IC estimates.
-- **Schemes**: 4 weighting schemes — **Score Weight (primary)**, ICW, Sortino Weight, EW. All share the same top-10 hysteresis selection machinery; they differ in the selection metric and/or the weight metric (see §3.6).
+- **Schemes**: 4 weighting schemes — **ENSEMBLE (primary, averages ICW + EW)**, ICW, Sortino Weight, EW (100% Tail-IC selected). All share top-10 hysteresis selection machinery; they differ in selection/weighting metrics (see §3.6).
 - **Trade**: Enter at 10:00 AM, exit at 14:35 PM same day. Round-trip fee = 16 bps (8bp buy and 8 bp sell).
 - **Gate**: Trade only when |Z_composite| exceeds a train-swept conviction threshold.
 - **Scope**: 300ETF, 500ETF, 159915ETF (50ETF/588000ETF disabled — insufficient features).
@@ -113,12 +113,14 @@ $$\text{Score}_{i,t} = w_{\text{ic}} \cdot \text{rank}(\text{tailIC}_{480d}) + (
 
 | Scheme | Selection metric | Weight metric | Notes |
 |--------|-----------------|---------------|-------|
-| **icw** (primary) | Rolling tail IC 480d | Rolling tail IC (ICW shrinkage) | Production scheme; top of REPORT.md since 2026-08 |
+| **ensemble** (primary) | Tail-IC + Sortino gate | Signal average ($[Z_{\text{icw}} + Z_{\text{ew}}]/2$) | Production scheme; top of REPORT.md since 2026-08 (0.849–1.021 Cost Sharpe) |
+| **icw** | Rolling tail IC 480d | Rolling tail IC (ICW shrinkage) | Conviction weighting + hysteresis |
 | **sortino** | Rolling tail IC 480d | Score blend | Selection/weighting decomposition |
-| **ew** | Score blend | Equal weight (1/K) | Score only chooses features |
-| ~~score~~ (retired from `--scheme all`, 2026-08) | Score blend | Score blend (ICW shrinkage) | Still runnable via explicit `--scheme score`; dropped from defaults |
+| **ew** | Rolling tail IC 480d | Equal weight (1/K) | 100% Tail-IC selection ($w_{\text{ic}}=1.0$); Sortino≤0 gate prunes downside risk |
 
-**2026-08 scheme decision:** the Score scheme was removed from `--scheme all` and ICW made primary. Evidence under the current defaults (spans 60/90/90 + Sortino≤0 gate): score avg Sharpe 0.463 vs icw 0.881 (−0.42); meta-IC showed the blend dilutes tailIC's forward predictiveness; and the Sortino≤0 selection gate now bakes the Sortino information into selection, making the blend redundant. sortino/ew are kept as collapsed diagnostics.
+**2026-08 ENSEMBLE & IC EW decision:** 
+1. **ENSEMBLE set as primary default**: Combining `icw` (trend conviction + hysteresis) and `ew` (equal-weight noise dampening) produces an **0.849 Cost Sharpe** (2022–2026 OOS) and **0.912–1.021 Cost Sharpe** across multi-period windows (2023–2026, 2024–2026) while reducing turnover to ~55x–59x. It strictly beats every standalone scheme across all ETFs.
+2. **EW switched to 100% Tail-IC ($w_{\text{ic}} = 1.0$)**: Standalone EW Tail-IC selection improves Sharpe from 0.482 to **0.579** (+0.097 lift) and lowers turnover. The post-EMA `Sortino <= 0` gate handles downside risk, eliminating the arbitrary 75/25 blend hyperparameter.
 
 **Key empirical findings** (`tests/test_weight_blend_yearly_ab.py`):
 - Pure-Sortino weights are rejected (avg 0.626 vs 0.684 baseline); the blend is required.

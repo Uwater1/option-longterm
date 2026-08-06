@@ -19,6 +19,7 @@ Group-Constrained Selection:
 
 import numpy as np
 from scipy.stats import rankdata
+from numba import njit
 
 
 def _select_top_k_grouped(scores: np.ndarray, top_k: int, cluster_ids: np.ndarray,
@@ -186,6 +187,46 @@ def compute_icw(Z: np.ndarray, signs: np.ndarray, pool: list = None, n_train: in
     
     Z_composite = Z_signed @ weights
     return Z_composite
+
+
+def compute_icir(Z: np.ndarray, signs: np.ndarray, pool: list = None, **kwargs) -> np.ndarray:
+    """
+    ICIR Weighted Scheme:
+    w_i ∝ max(0, ICIR_i) where ICIR = rolling_mean(IC) / (rolling_std(IC) + 1e-4)
+    Penalizes unstable factors directly.
+    """
+    T, N = Z.shape
+    if N == 0:
+        return np.zeros(T, dtype=np.float64)
+    
+    top_k = kwargs.get("top_k", None)
+    expanding_ic = kwargs.get("expanding_ic", None)
+    cluster_ids = kwargs.get("cluster_ids", None)
+    max_per_group = kwargs.get("max_per_group", 1)
+    Z_signed = Z * signs
+
+    if top_k is not None and 1 <= top_k < N and expanding_ic is not None and expanding_ic.shape == Z.shape:
+        # Vectorized rolling ICIR calculation
+        import pandas as pd
+        ic_df = pd.DataFrame(expanding_ic)
+        ic_mean = ic_df.rolling(window=480, min_periods=10).mean().shift(1).fillna(0.0).values
+        ic_std = ic_df.rolling(window=480, min_periods=10).std().shift(1).fillna(1.0).values + 1e-4
+        icir_mat = ic_mean / ic_std
+        
+        Z_composite = np.zeros(T, dtype=np.float64)
+        for t in range(T):
+            top_idx = _get_top_k_indices(icir_mat[t], top_k, cluster_ids, max_per_group)
+            raw_w = np.maximum(0.0, icir_mat[t, top_idx])
+            w_sum = raw_w.sum()
+            w_t = np.zeros(N, dtype=np.float64)
+            if w_sum < 1e-12:
+                w_t[top_idx] = 1.0 / float(len(top_idx))
+            else:
+                w_t[top_idx] = raw_w / w_sum
+            Z_composite[t] = Z_signed[t] @ w_t
+        return Z_composite
+
+    return compute_ew(Z, signs, pool=pool, **kwargs)
 
 
 def _compute_pool_scores(pool: list, score_weights: tuple = (0.20, 0.15, 0.65)) -> np.ndarray:
@@ -474,100 +515,118 @@ def adaptive_exit_rank_clusters(n_clusters: int, top_k: int = 10, hard_cap: int 
     return min(top_k + band, hard_cap)
 
 
+@njit(fastmath=True)
+def _ema_smooth_matrix_numba(ic_mat: np.ndarray, span: int) -> np.ndarray:
+    T, N = ic_mat.shape
+    alpha = 2.0 / (span + 1.0)
+    out = np.empty((T, N), dtype=np.float64)
+    out[0] = ic_mat[0]
+    for t in range(1, T):
+        out[t] = alpha * ic_mat[t] + (1.0 - alpha) * out[t - 1]
+    return out
+
+
+@njit(fastmath=True)
+def _compute_icw_hysteresis_numba(Z_signed: np.ndarray, ic_mat: np.ndarray, weight_mat: np.ndarray,
+                                  cluster_ids: np.ndarray, top_k: int, exit_rank: int, se_ic: float) -> np.ndarray:
+    T, N = Z_signed.shape
+    Z_composite = np.zeros(T, dtype=np.float64)
+    active_mask = np.zeros(N, dtype=np.bool_)
+    use_weight_mat = (weight_mat.shape[0] == T and weight_mat.shape[1] == N)
+    has_clusters = (cluster_ids.size == N)
+
+    for t in range(T):
+        scores = ic_mat[t]
+        order = np.argsort(scores)[::-1]
+        rank_of = np.empty(N, dtype=np.int64)
+        for r_pos in range(N):
+            rank_of[order[r_pos]] = r_pos + 1
+
+        # 1. Exit: remove features that dropped below exit_rank
+        for f in range(N):
+            if active_mask[f] and rank_of[f] > exit_rank:
+                active_mask[f] = False
+
+        # 2. Enter: add features ranking <= top_k (cluster-constrained)
+        n_active = 0
+        for f in range(N):
+            if active_mask[f]:
+                n_active += 1
+
+        for idx in order:
+            if n_active >= top_k:
+                break
+            if active_mask[idx]:
+                continue
+            if rank_of[idx] > top_k:
+                break
+            if has_clusters:
+                c = cluster_ids[idx]
+                cluster_taken = False
+                for f in range(N):
+                    if active_mask[f] and cluster_ids[f] == c:
+                        cluster_taken = True
+                        break
+                if cluster_taken:
+                    continue
+            active_mask[idx] = True
+            n_active += 1
+
+        # 3. ICW shrinkage weights for active set
+        if n_active > 0:
+            w_sum = 0.0
+            sig_val = 0.0
+            w_src = weight_mat[t] if use_weight_mat else scores
+
+            for f in range(N):
+                if active_mask[f]:
+                    v = w_src[f] - se_ic
+                    if v > 0.0:
+                        w_sum += v
+
+            if w_sum > 1e-12:
+                for f in range(N):
+                    if active_mask[f]:
+                        v = w_src[f] - se_ic
+                        if v > 0.0:
+                            sig_val += Z_signed[t, f] * (v / w_sum)
+            else:
+                eq_w = 1.0 / float(n_active)
+                for f in range(N):
+                    if active_mask[f]:
+                        sig_val += Z_signed[t, f] * eq_w
+            Z_composite[t] = sig_val
+
+    return Z_composite
+
+
 def compute_icw_hysteresis(Z: np.ndarray, signs: np.ndarray, ic_mat: np.ndarray,
                            cluster_ids: np.ndarray = None, n_train: int = 1700,
                            top_k: int = 10, exit_rank: int = None,
                            max_per_group: int = 1, weight_mat: np.ndarray = None) -> np.ndarray:
     """
-    ICW with feature selection hysteresis (cluster-aware).
-    
-    Stabilizes Z_composite by reducing feature rotation:
-    - Enter: feature ranks <= top_k AND cluster not occupied
-    - Exit: feature ranks > exit_rank (wider threshold to leave)
-    - Features in ranks (top_k, exit_rank] are 'on probation' - they stay
-    
-    Args:
-      Z: Standardized feature matrix (T, N)
-      signs: Factor signs (N,)
-      ic_mat: EMA-smoothed IC matrix (T, N) for ranking & SELECTION
-      cluster_ids: ONC cluster assignments (N,) or None
-      n_train: Training sample count for SE_IC shrinkage
-      top_k: Number of features to select (enter threshold)
-      exit_rank: Rank below which features exit. If None, uses adaptive_exit_rank().
-      max_per_group: Max features per cluster (default 1)
-      weight_mat: Optional separate (T, N) matrix used for ICW shrinkage WEIGHTS
-                  (component decomposition: selection metric vs weighting metric).
-                  If None, ic_mat is used for both (original behavior).
-    
-    Returns:
-      Z_composite: (T,) composite signal
+    Hysteresis-based Top-K selection with Empirical Bayes ICW shrinkage weights.
+    Accelerated via Numba JIT kernel _compute_icw_hysteresis_numba.
     """
     T, N = Z.shape
     if N == 0:
         return np.zeros(T, dtype=np.float64)
-    
+
     if exit_rank is None:
         exit_rank = adaptive_exit_rank(N, top_k)
-    
+
     se_ic = 1.0 / np.sqrt(n_train)
     Z_signed = Z * signs
-    Z_composite = np.zeros(T, dtype=np.float64)
-    
-    active_set = set()
-    
-    for t in range(T):
-        scores = ic_mat[t]
-        order = np.argsort(scores)[::-1]
-        rank_of = np.zeros(N, dtype=np.int64)
-        for rank_pos, idx in enumerate(order):
-            rank_of[idx] = rank_pos + 1
-        
-        # 1. Exit: remove features that dropped below exit_rank
-        to_remove = [f for f in active_set if rank_of[f] > exit_rank]
-        for f in to_remove:
-            active_set.discard(f)
-        
-        # 2. Enter: add features ranking <= top_k (cluster-constrained)
-        occupied_clusters = {}
-        if cluster_ids is not None:
-            for f in active_set:
-                occupied_clusters[int(cluster_ids[f])] = f
-        
-        for idx in order:
-            if len(active_set) >= top_k:
-                break
-            idx_int = int(idx)
-            if idx_int in active_set:
-                continue
-            if rank_of[idx_int] > top_k:
-                break
-            if cluster_ids is not None:
-                c = int(cluster_ids[idx_int])
-                if c in occupied_clusters:
-                    continue
-                occupied_clusters[c] = idx_int
-            active_set.add(idx_int)
-        
-        # 3. ICW shrinkage weights for active set
-        if not active_set:
-            continue
-        active_idx = np.array(sorted(active_set), dtype=np.int64)
-        w_t = np.zeros(N, dtype=np.float64)
-        w_src = weight_mat[t] if weight_mat is not None else scores
-        raw_w = np.maximum(0.0, w_src[active_idx] - se_ic)
-        w_sum = raw_w.sum()
-        if w_sum < 1e-12:
-            w_t[active_idx] = 1.0 / float(len(active_idx))
-        else:
-            w_t[active_idx] = raw_w / w_sum
-        Z_composite[t] = Z_signed[t] @ w_t
-    
-    return Z_composite
+    c_arr = cluster_ids if cluster_ids is not None else np.empty(0, dtype=np.int64)
+    w_mat = weight_mat if weight_mat is not None else np.empty((0, 0), dtype=np.float64)
+
+    return _compute_icw_hysteresis_numba(Z_signed, ic_mat, w_mat, c_arr, top_k, exit_rank, se_ic)
 
 
 WEIGHTING_SCHEMES = {
     "ew": compute_ew,
     "icw": compute_icw,
+    "icir": compute_icir,
     "score": compute_score_w,
     "rank": compute_rank_w,
     "glm": compute_glm_w,

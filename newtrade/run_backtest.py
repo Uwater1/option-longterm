@@ -31,7 +31,7 @@ from research_stoploss import load_intraday_bars_dict, simulate_full_series
 
 AVAILABLE_ETFS = ["300ETF", "500ETF", "50ETF", "159915ETF"]
 ALL_SCHEMES = ["ensemble", "icw", "sortino", "ew"]  # --scheme all: ENSEMBLE primary (2026-08)
-ENSEMBLE_SCHEMES = ["icw", "ew"]  # schemes averaged in ensemble
+ENSEMBLE_SCHEMES = ["icw", "ew"]  # 2-way ensemble baseline: ICW + EW
 DEFAULT_SCORE_BLEND_W_IC = 1.0  # Pure 100% TailIC for EW selection (Sortino<=0 gate handles risk)
 
 
