@@ -36,9 +36,9 @@ MAX_FLIPS = 1 # Cross-period test: MAX_FLIPS=1 creates systematic false negative
 FDR_THRESHOLD = 0.20
 
 # Feature Selection Global Constants (easily fine-tuned)
-# B4 Correlation Gate: single threshold, only reject near-perfect duplicates.
+# B6 Correlation Gate: single threshold, only reject near-perfect duplicates.
 # Diversity is enforced downstream by ONC clustering + newtrade group-constrained top-K.
-DEFAULT_THETA = 0.95          # Near-duplicate correlation threshold (B4 gate)
+DEFAULT_THETA = 0.95          # Near-duplicate correlation threshold (B6 gate)
 
 # B2 Rolling Guard Defaults
 MONO_THR_SINGLE = 0.65        # Rolling 90d monotonicity threshold for single side
@@ -71,7 +71,9 @@ BOOT_B = 199               # Bootstrap resamples
 BOOT_BLOCK = 10            # Moving-block bootstrap block length (days)
 BOOT_CI_PCT = 5.0          # One-sided CI lower-bound percentile
 COST_BASE = 0.0008         # 8 bps per active day — keep in sync with simulate_returns
-COST_STRESS_MULT = 2.5     # G7 stress multiplier applied to COST_BASE
+COST_STRESS_MULT = 2.5     # G7 base stress multiplier applied to COST_BASE (20bp)
+DEEP_STRESS_MULT = 3.0     # B5 Deep-Stress Eliminator multiplier (24bp)
+DEEP_STRESS_MIN_SPACE = 2500  # B5 fires only when candidate space size exceeds this
 ANNUAL_DAYS = 244          # Trading days per year — keep in sync with simulate_returns
 ROBUST_GATE_SEED = 42      # Bootstrap RNG seed (deterministic verdicts)
 
@@ -1443,7 +1445,7 @@ def main():
 
         surviving_candidates.sort(key=lambda item: item["q_score_init"], reverse=True)
 
-    # 7. Admission Gate (B3 Composite Floor + Stability Gate + Quality Gate + B4 Correlation Gate & Replacement Rule)
+    # 7. Admission Gate (B3 Composite Floor + Stability Gate + Quality Gate + Robustness Gate + B5 Deep-Stress + B6 Correlation Gate & Replacement Rule)
     # Quality Gate runs BEFORE correlation to prevent low-quality features from blocking high-quality ones.
     SYMMETRIC_OPS = {"max", "min", "mean", "rank_max", "rank_min"}
     n_train = len(y_train)
@@ -1554,6 +1556,9 @@ def main():
 
     # Deterministic RNG for the Robustness Gate block bootstrap
     _robust_rng = np.random.default_rng(ROBUST_GATE_SEED)
+
+    # Features passing all B4 gates; feeds the conditional B5 Deep-Stress stage
+    b4_survivors = []
 
     for cand in surviving_candidates:
         cand_name = cand["feature_name"]
@@ -1734,13 +1739,16 @@ def main():
         # Both use the train-window daily strategy returns rebuilt with the
         # exact position logic of simulate_returns. All-flat positions are
         # already rejected above (sortino == 0 fails the Quality Gate).
-        # Design note: ALL badness gates run before B5 redundancy resolution
-        # (filter -> dedupe). Enforcing post-B5 was tried and reverted: a bad
+        # Design note: ALL badness gates run before B6 redundancy resolution
+        # (filter -> dedupe). Enforcing post-B6 was tried and reverted: a bad
         # feature could evict a good pool member via the Q-score replacement
         # rule and then die at the gate, silently losing the good feature.
         _pos = _tail_positions_binary(y_train, x_cand, args.side)
         _raw_ret = _pos * y_train
         _abs_pos = np.abs(_pos)
+        # Keep for the B5 Deep-Stress stage (avoids recomputing positions)
+        cand["_raw_ret"] = _raw_ret
+        cand["_abs_pos"] = _abs_pos
 
         stress_sortino = _sortino_annual(_raw_ret - _abs_pos * COST_BASE * COST_STRESS_MULT)
         cand["stress_sortino"] = stress_sortino
@@ -1781,6 +1789,65 @@ def main():
             })
             continue
 
+        # Passed all B4 gates (incl. base Robustness Gate) -> B5 stage
+        b4_survivors.append(cand)
+
+    # ── B5. Deep Cost-Stress Eliminator (conditional) ─────────────────────
+    # Fires only when the candidate space size exceeds DEEP_STRESS_MIN_SPACE:
+    # large candidate spaces carry higher multiple-testing FP pressure and can
+    # afford stricter stress (A/B: 3.0x kills 60% residual FPs at 2.6x ratio),
+    # while small spaces (300ETF ~1.8k, 50ETF ~1k; vs 500ETF ~4.7k, 159915 ~3k)
+    # get over-purged at 3.0x. Space size is used instead of the B4 survivor
+    # count because the latter varies too much across windows (~100-160 for
+    # 300ETF) to separate ETFs reliably.
+    # Optimized: reuses positions/raw returns already computed at the base
+    # Robustness Gate — only one extra O(n) Sortino per entrant.
+    # Every entrant is logged with deep_stress_sortino for examination.
+    if len(eval_results) > DEEP_STRESS_MIN_SPACE:
+        b5_survivors = []
+        for cand in b4_survivors:
+            deep_sortino = _sortino_annual(
+                cand["_raw_ret"] - cand["_abs_pos"] * COST_BASE * DEEP_STRESS_MULT)
+            cand["deep_stress_sortino"] = deep_sortino
+            if deep_sortino <= 0.0:
+                attempts_log.append({
+                    "feature_name": cand["feature_name"],
+                    "sign": cand["sign"],
+                    "raw_ic": cand["raw_ic"],
+                    "overall_ic": cand["overall_ic"],
+                    "deflated_ic": cand["deflated_ic"],
+                    "sortino": cand.get("sortino", 0.0),
+                    "stress_sortino": cand.get("stress_sortino"),
+                    "sortino_ci_low": cand.get("sortino_ci_low"),
+                    "deep_stress_sortino": deep_sortino,
+                    "ic_ir": cand["ic_ir"],
+                    "monotonicity": cand["monotonicity"],
+                    "passes_rolling_guard": True,
+                    "passes_fdr": True,
+                    "verdict": "REJECTED_DEEP_STRESS"
+                })
+                cand.pop("_raw_ret", None)
+                cand.pop("_abs_pos", None)
+            else:
+                b5_survivors.append(cand)
+        print(f"B5 Deep-Stress Eliminator: {len(b4_survivors)} entrants, rejected "
+              f"{len(b4_survivors) - len(b5_survivors)} at {DEEP_STRESS_MULT}x cost "
+              f"(trigger: candidate space {len(eval_results)} > {DEEP_STRESS_MIN_SPACE})")
+    else:
+        b5_survivors = b4_survivors
+        print(f"B5 Deep-Stress Eliminator: SKIPPED (candidate space {len(eval_results)} "
+              f"<= {DEEP_STRESS_MIN_SPACE}; {len(b4_survivors)} B4 survivors pass through)")
+
+    # ── B6. Correlation Gate & Q-Score Replacement Rule ───────────────────
+    for cand in b5_survivors:
+        cand_name = cand["feature_name"]
+        cand_ic = cand["overall_ic"]
+        deflated_ic = cand["deflated_ic"]
+        sortino_val = cand.get("sortino", 0.0)
+        stress_sortino = cand.get("stress_sortino")
+        sortino_ci_low = cand.get("sortino_ci_low")
+        x_cand = cand["x_flipped"]
+
         # If pool is empty, admit candidate immediately
         if not admitted_pool:
             admitted_pool.append(cand)
@@ -1793,6 +1860,7 @@ def main():
                 "deflated_ic": deflated_ic,
                 "stress_sortino": cand.get("stress_sortino"),
                 "sortino_ci_low": cand.get("sortino_ci_low"),
+                "deep_stress_sortino": cand.get("deep_stress_sortino"),
                 "ic_ir": cand["ic_ir"],
                 "monotonicity": cand["monotonicity"],
                 "passes_rolling_guard": True,
@@ -1823,6 +1891,7 @@ def main():
                 "deflated_ic": deflated_ic,
                 "stress_sortino": cand.get("stress_sortino"),
                 "sortino_ci_low": cand.get("sortino_ci_low"),
+                "deep_stress_sortino": cand.get("deep_stress_sortino"),
                 "ic_ir": cand["ic_ir"],
                 "monotonicity": cand["monotonicity"],
                 "passes_rolling_guard": True,
@@ -1867,6 +1936,7 @@ def main():
                             "deflated_ic": deflated_ic,
                             "stress_sortino": cand.get("stress_sortino"),
                             "sortino_ci_low": cand.get("sortino_ci_low"),
+                            "deep_stress_sortino": cand.get("deep_stress_sortino"),
                             "ic_ir": cand["ic_ir"],
                             "monotonicity": cand["monotonicity"],
                             "passes_rolling_guard": True,
@@ -1896,6 +1966,9 @@ def main():
                     "passes_fdr": True,
                     "max_corr": max_corr,
                     "max_corr_feature": max_corr_feature,
+                    "stress_sortino": cand.get("stress_sortino"),
+                    "sortino_ci_low": cand.get("sortino_ci_low"),
+                    "deep_stress_sortino": cand.get("deep_stress_sortino"),
                     "verdict": "REJECTED_REDUNDANCY"
                 })
 
@@ -1903,15 +1976,19 @@ def main():
     n_stability_rejects = sum(1 for a in attempts_log if a.get("verdict") == "REJECTED_STABILITY_GATE")
     n_cost_rejects = sum(1 for a in attempts_log if a.get("verdict") == "REJECTED_COST_STRESS")
     n_boot_rejects = sum(1 for a in attempts_log if a.get("verdict") == "REJECTED_BOOTSTRAP_CI")
+    n_deep_rejects = sum(1 for a in attempts_log if a.get("verdict") == "REJECTED_DEEP_STRESS")
     print(f"Final admitted pool size: {len(admitted_pool)} (Quality Gate rejected {n_quality_rejects}, "
           f"Stability Gate rejected {n_stability_rejects}, Robustness Gate rejected "
-          f"{n_cost_rejects} cost-stress + {n_boot_rejects} bootstrap pre-correlation)")
+          f"{n_cost_rejects} cost-stress + {n_boot_rejects} bootstrap, B5 Deep-Stress rejected "
+          f"{n_deep_rejects} pre-correlation)")
 
     # Free x_flipped arrays from non-admitted results to reclaim memory
     admitted_names_set = {item["feature_name"] for item in admitted_pool}
     for item in eval_results:
         if item["feature_name"] not in admitted_names_set and "x_flipped" in item:
             del item["x_flipped"]
+        item.pop("_raw_ret", None)
+        item.pop("_abs_pos", None)
 
     # Format the selected pool output
     selected_output = []

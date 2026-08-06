@@ -19,8 +19,8 @@ Lockbox is used solely for labeling TP/FP — all proposed fixes are training-on
 | ETF | Side | Admitted | Clusters | Cluster Sizes | Avg Sil | FP | Median | TP | FP Rate | Prod Score |
 | :--- | :--- | ---: | ---: | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
 | 300ETF | single | 44 | 18 | `[10, 5, 4, 3, 2, 2, 2, 2, 2, 2, 2, 1, ... (18 clusters)]` | 0.2308 | 38 | 3 | 3 | 86% | 0.10 |
-| 500ETF | single | 127 | 51 | `[12, 7, 6, 5, 5, 4, 4, 4, 4, 3, 3, 3, ... (51 clusters)]` | 0.2430 | 73 | 28 | 26 | 57% | 0.31 |
-| 159915ETF | single | 178 | 61 | `[13, 10, 9, 9, 7, 6, 5, 5, 5, 5, 5, 4, ... (61 clusters)]` | 0.2646 | 73 | 34 | 71 | 41% | 0.49 |
+| 500ETF | single | 56 | 31 | `[4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, ... (31 clusters)]` | 0.2358 | 24 | 16 | 16 | 43% | 0.43 |
+| 159915ETF | single | 146 | 62 | `[9, 7, 5, 4, 4, 4, 3, 3, 3, 3, 3, 3, ... (62 clusters)]` | 0.3111 | 56 | 28 | 62 | 38% | 0.52 |
 
 ---
 
@@ -43,29 +43,29 @@ Positive Cohen's d means FP has HIGHER value (more unstable/concentrated).
 | ic_std_across_regimes | 0.051 | 0.057 | 0.050 | 0.055 | -0.55 | 0.025 | 90% |
 | weak_link_cv | 0.816 | 0.843 | 0.731 | 0.899 | -0.21 | 0.612 | 90% |
 
-### 500ETF — `single` (FP=73, TP=26)
+### 500ETF — `single` (FP=24, TP=16)
 
 | Metric | FP Mean | TP Mean | FP Median | TP Median | Cohen's d | Best Threshold | Accuracy |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| half_ratio | 1.065 | 0.764 | 0.960 | 0.679 | +1.10 | 0.676 | 83% |
-| ic_std_across_regimes | 0.037 | 0.048 | 0.037 | 0.053 | -0.89 | 0.013 | 73% |
-| ic_cv | 0.321 | 0.383 | 0.295 | 0.362 | -0.72 | 0.215 | 73% |
-| recency_ratio | 1.021 | 0.879 | 0.906 | 0.738 | +0.38 | 0.475 | 76% |
-| n_negative_years | 0.000 | 0.038 | 0.000 | 0.000 | -0.28 | 0.000 | 73% |
-| n_negative_regimes | 0.000 | 0.038 | 0.000 | 0.000 | -0.28 | 0.000 | 73% |
-| weak_link_cv | 0.465 | 0.474 | 0.482 | 0.482 | -0.05 | 0.289 | 71% |
+| half_ratio | 1.006 | 0.665 | 0.913 | 0.633 | +1.39 | 0.696 | 90% |
+| ic_std_across_regimes | 0.039 | 0.054 | 0.040 | 0.056 | -1.34 | 0.018 | 57% |
+| ic_cv | 0.308 | 0.361 | 0.291 | 0.355 | -0.87 | 0.221 | 57% |
+| recency_ratio | 0.887 | 0.699 | 0.835 | 0.650 | +0.80 | 0.681 | 80% |
+| n_negative_regimes | 0.000 | 0.062 | 0.000 | 0.000 | -0.37 | 0.000 | 57% |
+| weak_link_cv | 0.433 | 0.447 | 0.482 | 0.482 | -0.18 | 0.334 | 59% |
+| n_negative_years | 0.000 | 0.000 | 0.000 | 0.000 | +0.00 | 0.000 | 57% |
 
-### 159915ETF — `single` (FP=73, TP=71)
+### 159915ETF — `single` (FP=56, TP=62)
 
 | Metric | FP Mean | TP Mean | FP Median | TP Median | Cohen's d | Best Threshold | Accuracy |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| half_ratio | 1.145 | 0.839 | 1.043 | 0.820 | +1.04 | 0.898 | 73% |
-| recency_ratio | 1.159 | 0.735 | 1.048 | 0.698 | +0.99 | 0.856 | 76% |
-| ic_cv | 0.427 | 0.389 | 0.398 | 0.359 | +0.35 | 0.361 | 58% |
-| n_negative_years | 0.027 | 0.000 | 0.000 | 0.000 | +0.24 | 0.500 | 51% |
-| ic_std_across_regimes | 0.025 | 0.026 | 0.024 | 0.026 | -0.10 | 0.014 | 53% |
-| weak_link_cv | 0.614 | 0.607 | 0.676 | 0.570 | +0.03 | 0.575 | 60% |
-| n_negative_regimes | 0.000 | 0.000 | 0.000 | 0.000 | +0.00 | 0.000 | 50% |
+| half_ratio | 1.084 | 0.832 | 1.026 | 0.821 | +1.07 | 0.858 | 72% |
+| recency_ratio | 1.079 | 0.738 | 1.035 | 0.712 | +1.05 | 0.856 | 76% |
+| ic_std_across_regimes | 0.024 | 0.026 | 0.022 | 0.026 | -0.22 | 0.040 | 53% |
+| ic_cv | 0.397 | 0.380 | 0.369 | 0.358 | +0.20 | 0.494 | 58% |
+| weak_link_cv | 0.595 | 0.598 | 0.581 | 0.570 | -0.02 | 0.575 | 57% |
+| n_negative_years | 0.000 | 0.000 | 0.000 | 0.000 | +0.00 | 0.000 | 52% |
+| n_negative_regimes | 0.000 | 0.000 | 0.000 | 0.000 | +0.00 | 0.000 | 52% |
 
 ---
 
@@ -422,15 +422,6 @@ Per-year training IC for each FP feature. Look for:
 
 ### 500ETF — `single` False Positives
 
-**`combo_rank_max__volatility_expansion_trend_vector__bar_ret_0`** (Lock IC=-0.0914, Sharpe=-3.3937)
-- Admission: Train IC=+0.2028, Deflated=+0.2021, IR=0.73, Mono=0.76, p=0.0000, MaxCorr=0.94
-- Yearly Linear ICs: 2015: +0.233 | 2016: +0.107 | 2017: +0.208 | 2018: +0.218 | 2019: +0.104 | 2020: +0.126 | 2021: +0.123 | 2022: +0.115 | 2023: +0.089 | 2024: +0.131 | 2025: +0.123 | 2026: -0.092
-- Yearly Tail ICs:   2015: +0.424 | 2016: -0.156 | 2017: +0.242 | 2018: +0.210 | 2019: +0.275 | 2020: +0.194 | 2021: +0.188 | 2022: +0.298 | 2023: +0.373 | 2024: +0.219 | 2025: +0.003 | 2026: -0.427
-- IC CV=0.28, Neg years (linear/tail)=0/1 of 8, Half ratio=0.85, Recency ratio=0.80
-- Early IC=+0.1592, Recent IC=+0.1270, 1st-half IC=+0.1388, 2nd-half IC=+0.1184, Neg regimes=0/5
-- Weak component: `bar_ret_0` (CV=0.48, neg years=0)
-- Regime ICs: Q1_low_vol=+0.112, Q2=+0.066, Q3_mid=+0.140, Q4=+0.134, Q5_high_vol=+0.176
-
 **`combo_sig_product__trend_bar_close_consistency__vwap_close_divergence_trend`** (Lock IC=-0.1131, Sharpe=-3.2742)
 - Admission: Train IC=+0.1737, Deflated=+0.1729, IR=0.68, Mono=0.75, p=0.0000, MaxCorr=0.84
 - Yearly Linear ICs: 2015: +0.043 | 2016: +0.030 | 2017: +0.096 | 2018: +0.096 | 2019: +0.066 | 2020: +0.074 | 2021: +0.053 | 2022: +0.093 | 2023: +0.124 | 2024: +0.089 | 2025: +0.122 | 2026: -0.113
@@ -458,85 +449,14 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `early_body_momentum` (CV=0.36, neg years=0)
 - Regime ICs: Q1_low_vol=+0.127, Q2=+0.100, Q3_mid=+0.139, Q4=+0.103, Q5_high_vol=+0.053
 
-**`vwap_close_divergence_trend`** (Lock IC=-0.0940, Sharpe=-3.2742)
-- Admission: Train IC=+0.1609, Deflated=+0.1597, IR=0.63, Mono=0.73, p=0.0008, MaxCorr=0.93
-- Yearly Linear ICs: 2015: +0.112 | 2016: +0.023 | 2017: +0.184 | 2018: +0.055 | 2019: +0.091 | 2020: +0.075 | 2021: +0.069 | 2022: +0.094 | 2023: +0.107 | 2024: +0.092 | 2025: +0.133 | 2026: -0.094
-- Yearly Tail ICs:   2015: +0.081 | 2016: +0.019 | 2017: +0.138 | 2018: +0.210 | 2019: +0.269 | 2020: +0.030 | 2021: +0.253 | 2022: +0.060 | 2023: +0.292 | 2024: +0.110 | 2025: +0.182 | 2026: -0.357
-- IC CV=0.25, Neg years (linear/tail)=0/0 of 8, Half ratio=1.52, Recency ratio=1.54
-- Early IC=+0.0728, Recent IC=+0.1122, 1st-half IC=+0.0748, 2nd-half IC=+0.1139, Neg regimes=0/5
-- Regime ICs: Q1_low_vol=+0.105, Q2=+0.098, Q3_mid=+0.143, Q4=+0.060, Q5_high_vol=+0.081
-
-**`combo_max__max_down_ret__vwap_close_divergence_trend`** (Lock IC=-0.0888, Sharpe=-3.2479)
-- Admission: Train IC=+0.1545, Deflated=+0.1535, IR=0.61, Mono=0.74, p=0.0018, MaxCorr=0.93
-- Yearly Linear ICs: 2015: +0.152 | 2016: +0.025 | 2017: +0.199 | 2018: +0.147 | 2019: +0.102 | 2020: +0.094 | 2021: +0.119 | 2022: +0.055 | 2023: +0.070 | 2024: +0.096 | 2025: +0.168 | 2026: -0.089
-- Yearly Tail ICs:   2015: +0.100 | 2016: +0.004 | 2017: +0.140 | 2018: +0.154 | 2019: +0.270 | 2020: +0.000 | 2021: +0.248 | 2022: +0.107 | 2023: +0.369 | 2024: +0.166 | 2025: +0.167 | 2026: -0.319
-- IC CV=0.33, Neg years (linear/tail)=0/0 of 8, Half ratio=0.96, Recency ratio=1.06
-- Early IC=+0.1245, Recent IC=+0.1322, 1st-half IC=+0.1082, 2nd-half IC=+0.1038, Neg regimes=0/5
-- Weak component: `max_down_ret` (CV=0.39, neg years=0)
-- Regime ICs: Q1_low_vol=+0.103, Q2=+0.083, Q3_mid=+0.158, Q4=+0.086, Q5_high_vol=+0.108
-
-**`combo_rank_max__early_body_momentum__vwap_close_divergence_trend`** (Lock IC=-0.1077, Sharpe=-3.1681)
-- Admission: Train IC=+0.1742, Deflated=+0.1725, IR=0.45, Mono=0.66, p=0.0000, MaxCorr=0.93
-- Yearly Linear ICs: 2015: +0.109 | 2016: +0.045 | 2017: +0.124 | 2018: +0.079 | 2019: +0.066 | 2020: +0.074 | 2021: +0.067 | 2022: +0.120 | 2023: +0.084 | 2024: +0.096 | 2025: +0.128 | 2026: -0.100
-- Yearly Tail ICs:   2015: +0.129 | 2016: +0.064 | 2017: +0.217 | 2018: +0.191 | 2019: +0.215 | 2020: +0.102 | 2021: +0.239 | 2022: +0.161 | 2023: +0.177 | 2024: +0.225 | 2025: +0.104 | 2026: -0.228
-- IC CV=0.27, Neg years (linear/tail)=0/0 of 8, Half ratio=1.60, Recency ratio=1.57
-- Early IC=+0.0724, Recent IC=+0.1135, 1st-half IC=+0.0715, 2nd-half IC=+0.1143, Neg regimes=0/5
-- Weak component: `early_body_momentum` (CV=0.36, neg years=0)
-- Regime ICs: Q1_low_vol=+0.108, Q2=+0.084, Q3_mid=+0.147, Q4=+0.065, Q5_high_vol=+0.078
-
-**`combo_rel_diff__first_bar_return__h2_l2_pullback_continuation`** (Lock IC=-0.1062, Sharpe=-3.0712)
-- Admission: Train IC=+0.1898, Deflated=+0.1890, IR=0.76, Mono=0.77, p=0.0000, MaxCorr=0.85
-- Yearly Linear ICs: 2015: +0.207 | 2016: +0.096 | 2017: +0.149 | 2018: +0.150 | 2019: +0.111 | 2020: +0.092 | 2021: +0.074 | 2022: +0.094 | 2023: +0.079 | 2024: +0.114 | 2025: +0.127 | 2026: -0.106
-- Yearly Tail ICs:   2015: +0.391 | 2016: +0.008 | 2017: +0.029 | 2018: +0.334 | 2019: +0.184 | 2020: +0.077 | 2021: +0.121 | 2022: +0.243 | 2023: +0.319 | 2024: +0.279 | 2025: +0.029 | 2026: -0.494
-- IC CV=0.23, Neg years (linear/tail)=0/0 of 8, Half ratio=1.02, Recency ratio=0.93
-- Early IC=+0.1303, Recent IC=+0.1209, 1st-half IC=+0.1083, 2nd-half IC=+0.1108, Neg regimes=0/5
-- Weak component: `first_bar_return` (CV=0.48, neg years=0)
-- Regime ICs: Q1_low_vol=+0.138, Q2=+0.032, Q3_mid=+0.168, Q4=+0.129, Q5_high_vol=+0.098
-
-**`combo_sig_product__volatility_expansion_trend_vector__first_bar_return`** (Lock IC=-0.1430, Sharpe=-2.8810)
-- Admission: Train IC=+0.1833, Deflated=+0.1815, IR=0.53, Mono=0.72, p=0.0000, MaxCorr=0.79
-- Yearly Linear ICs: 2015: +0.102 | 2016: +0.006 | 2017: +0.151 | 2018: +0.174 | 2019: +0.085 | 2020: +0.041 | 2021: +0.092 | 2022: +0.103 | 2023: +0.083 | 2024: +0.111 | 2025: +0.161 | 2026: -0.143
-- Yearly Tail ICs:   2015: +0.206 | 2016: -0.060 | 2017: +0.180 | 2018: +0.332 | 2019: +0.150 | 2020: +0.119 | 2021: +0.242 | 2022: +0.180 | 2023: +0.081 | 2024: +0.193 | 2025: +0.312 | 2026: -0.386
-- IC CV=0.38, Neg years (linear/tail)=0/0 of 8, Half ratio=1.26, Recency ratio=1.05
-- Early IC=+0.1299, Recent IC=+0.1362, 1st-half IC=+0.0957, 2nd-half IC=+0.1206, Neg regimes=0/5
-- Weak component: `first_bar_return` (CV=0.48, neg years=0)
-- Regime ICs: Q1_low_vol=+0.034, Q2=+0.097, Q3_mid=+0.147, Q4=+0.111, Q5_high_vol=+0.145
-
-**`combo_sig_product__net_volume_flow__first_bar_return`** (Lock IC=-0.1006, Sharpe=-2.8810)
-- Admission: Train IC=+0.1763, Deflated=+0.1758, IR=0.48, Mono=0.66, p=0.0000, MaxCorr=0.86
-- Yearly Linear ICs: 2015: +0.116 | 2016: +0.022 | 2017: +0.154 | 2018: +0.199 | 2019: +0.138 | 2020: +0.069 | 2021: +0.044 | 2022: +0.045 | 2023: +0.048 | 2024: +0.055 | 2025: +0.108 | 2026: -0.101
-- Yearly Tail ICs:   2015: +0.237 | 2016: -0.042 | 2017: +0.209 | 2018: +0.425 | 2019: +0.231 | 2020: +0.166 | 2021: +0.145 | 2022: +0.133 | 2023: +0.040 | 2024: +0.160 | 2025: +0.159 | 2026: -0.386
-- IC CV=0.59, Neg years (linear/tail)=0/0 of 8, Half ratio=0.55, Recency ratio=0.48
-- Early IC=+0.1680, Recent IC=+0.0814, 1st-half IC=+0.1125, 2nd-half IC=+0.0622, Neg regimes=0/5
-- Weak component: `first_bar_return` (CV=0.48, neg years=0)
-- Regime ICs: Q1_low_vol=+0.107, Q2=+0.004, Q3_mid=+0.093, Q4=+0.096, Q5_high_vol=+0.125
-
 **`combo_sig_product__max_down_ret__vwap_close_divergence_trend`** (Lock IC=-0.0915, Sharpe=-2.8218)
-- Admission: Train IC=+0.1750, Deflated=+0.1753, IR=0.72, Mono=0.76, p=0.0000, MaxCorr=0.80
+- Admission: Train IC=+0.1750, Deflated=+0.1753, IR=0.72, Mono=0.76, p=0.0000, MaxCorr=0.77
 - Yearly Linear ICs: 2015: +0.200 | 2016: +0.141 | 2017: +0.110 | 2018: +0.129 | 2019: +0.055 | 2020: +0.086 | 2021: +0.073 | 2022: +0.139 | 2023: +0.134 | 2024: +0.105 | 2025: +0.130 | 2026: -0.092
 - Yearly Tail ICs:   2015: +0.166 | 2016: +0.199 | 2017: +0.083 | 2018: +0.149 | 2019: +0.178 | 2020: +0.056 | 2021: +0.169 | 2022: +0.163 | 2023: +0.270 | 2024: +0.283 | 2025: +0.275 | 2026: -0.258
 - IC CV=0.28, Neg years (linear/tail)=0/0 of 8, Half ratio=1.60, Recency ratio=1.28
 - Early IC=+0.0920, Recent IC=+0.1175, 1st-half IC=+0.0805, 2nd-half IC=+0.1286, Neg regimes=0/5
 - Weak component: `max_down_ret` (CV=0.39, neg years=0)
 - Regime ICs: Q1_low_vol=+0.104, Q2=+0.093, Q3_mid=+0.131, Q4=+0.120, Q5_high_vol=+0.092
-
-**`combo_rank_max__max_up_ret__early_order_flow_imbalance`** (Lock IC=-0.0476, Sharpe=-2.6663)
-- Admission: Train IC=+0.2169, Deflated=+0.2161, IR=0.85, Mono=0.82, p=0.0000, MaxCorr=0.86
-- Yearly Linear ICs: 2015: +0.232 | 2016: +0.063 | 2017: +0.120 | 2018: +0.212 | 2019: +0.098 | 2020: +0.108 | 2021: +0.098 | 2022: +0.134 | 2023: +0.084 | 2024: +0.119 | 2025: +0.086 | 2026: -0.050
-- Yearly Tail ICs:   2015: +0.227 | 2016: +0.111 | 2017: +0.112 | 2018: +0.398 | 2019: +0.159 | 2020: +0.173 | 2021: +0.334 | 2022: +0.222 | 2023: +0.247 | 2024: +0.297 | 2025: -0.024 | 2026: -0.267
-- IC CV=0.33, Neg years (linear/tail)=0/1 of 8, Half ratio=0.88, Recency ratio=0.66
-- Early IC=+0.1564, Recent IC=+0.1025, 1st-half IC=+0.1291, 2nd-half IC=+0.1139, Neg regimes=0/5
-- Weak component: `max_up_ret` (CV=0.30, neg years=0)
-- Regime ICs: Q1_low_vol=+0.124, Q2=+0.027, Q3_mid=+0.117, Q4=+0.123, Q5_high_vol=+0.189
-
-**`combo_diff__bar_ret_0__h2_l2_pullback_continuation`** (Lock IC=-0.0669, Sharpe=-2.6452)
-- Admission: Train IC=+0.1914, Deflated=+0.1907, IR=0.74, Mono=0.75, p=0.0000, MaxCorr=0.92
-- Yearly Linear ICs: 2015: +0.196 | 2016: +0.101 | 2017: +0.165 | 2018: +0.165 | 2019: +0.105 | 2020: +0.100 | 2021: +0.075 | 2022: +0.088 | 2023: +0.100 | 2024: +0.137 | 2025: +0.095 | 2026: -0.067
-- Yearly Tail ICs:   2015: +0.298 | 2016: +0.025 | 2017: +0.112 | 2018: +0.327 | 2019: +0.185 | 2020: +0.085 | 2021: +0.182 | 2022: +0.205 | 2023: +0.288 | 2024: +0.310 | 2025: +0.006 | 2026: -0.376
-- IC CV=0.25, Neg years (linear/tail)=0/0 of 8, Half ratio=0.96, Recency ratio=0.86
-- Early IC=+0.1351, Recent IC=+0.1161, 1st-half IC=+0.1157, 2nd-half IC=+0.1111, Neg regimes=0/5
-- Weak component: `bar_ret_0` (CV=0.48, neg years=0)
-- Regime ICs: Q1_low_vol=+0.146, Q2=+0.046, Q3_mid=+0.158, Q4=+0.115, Q5_high_vol=+0.119
 
 **`combo_mean__vwap_close_divergence_trend__bar_body_rng_0`** (Lock IC=-0.0705, Sharpe=-2.6077)
 - Admission: Train IC=+0.2197, Deflated=+0.2186, IR=0.66, Mono=0.72, p=0.0000, MaxCorr=0.92
@@ -547,156 +467,14 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `bar_body_rng_0` (CV=0.36, neg years=0)
 - Regime ICs: Q1_low_vol=+0.140, Q2=+0.039, Q3_mid=+0.159, Q4=+0.119, Q5_high_vol=+0.134
 
-**`combo_rel_diff__vwap_close_divergence_trend__h2_l2_pullback_continuation`** (Lock IC=-0.1155, Sharpe=-2.3882)
-- Admission: Train IC=+0.1620, Deflated=+0.1608, IR=0.47, Mono=0.68, p=0.0008, MaxCorr=0.90
-- Yearly Linear ICs: 2015: +0.127 | 2016: +0.056 | 2017: +0.146 | 2018: +0.052 | 2019: +0.061 | 2020: +0.077 | 2021: +0.055 | 2022: +0.093 | 2023: +0.112 | 2024: +0.090 | 2025: +0.118 | 2026: -0.116
-- Yearly Tail ICs:   2015: +0.142 | 2016: +0.166 | 2017: +0.092 | 2018: +0.138 | 2019: +0.223 | 2020: -0.020 | 2021: +0.231 | 2022: +0.128 | 2023: +0.276 | 2024: +0.183 | 2025: +0.028 | 2026: -0.211
-- IC CV=0.29, Neg years (linear/tail)=0/1 of 8, Half ratio=1.63, Recency ratio=1.84
-- Early IC=+0.0564, Recent IC=+0.1041, 1st-half IC=+0.0684, 2nd-half IC=+0.1114, Neg regimes=0/5
-- Weak component: `h2_l2_pullback_continuation` (CV=0.43, neg years=0)
-- Regime ICs: Q1_low_vol=+0.122, Q2=+0.079, Q3_mid=+0.161, Q4=+0.078, Q5_high_vol=+0.045
-
-**`combo_diff__vwap_close_divergence_trend__h2_l2_pullback_continuation`** (Lock IC=-0.1133, Sharpe=-2.3882)
-- Admission: Train IC=+0.1580, Deflated=+0.1567, IR=0.48, Mono=0.68, p=0.0012, MaxCorr=0.95
-- Yearly Linear ICs: 2015: +0.115 | 2016: +0.049 | 2017: +0.139 | 2018: +0.048 | 2019: +0.071 | 2020: +0.074 | 2021: +0.045 | 2022: +0.091 | 2023: +0.112 | 2024: +0.085 | 2025: +0.117 | 2026: -0.113
-- Yearly Tail ICs:   2015: +0.136 | 2016: +0.162 | 2017: +0.091 | 2018: +0.148 | 2019: +0.228 | 2020: -0.019 | 2021: +0.217 | 2022: +0.132 | 2023: +0.279 | 2024: +0.173 | 2025: +0.031 | 2026: -0.204
-- IC CV=0.31, Neg years (linear/tail)=0/1 of 8, Half ratio=1.62, Recency ratio=1.70
-- Early IC=+0.0595, Recent IC=+0.1012, 1st-half IC=+0.0674, 2nd-half IC=+0.1093, Neg regimes=0/5
-- Weak component: `h2_l2_pullback_continuation` (CV=0.43, neg years=0)
-- Regime ICs: Q1_low_vol=+0.111, Q2=+0.080, Q3_mid=+0.162, Q4=+0.074, Q5_high_vol=+0.046
-
-**`volatility_expansion_trend_vector`** (Lock IC=-0.0850, Sharpe=-2.3631)
-- Admission: Train IC=+0.2278, Deflated=+0.2263, IR=0.58, Mono=0.72, p=0.0000, MaxCorr=0.94
-- Yearly Linear ICs: 2015: +0.165 | 2016: +0.061 | 2017: +0.201 | 2018: +0.129 | 2019: +0.076 | 2020: +0.097 | 2021: +0.073 | 2022: +0.093 | 2023: +0.089 | 2024: +0.123 | 2025: +0.155 | 2026: -0.085
-- Yearly Tail ICs:   2015: +0.306 | 2016: -0.052 | 2017: +0.291 | 2018: +0.219 | 2019: +0.292 | 2020: +0.226 | 2021: +0.227 | 2022: +0.241 | 2023: +0.284 | 2024: +0.228 | 2025: +0.065 | 2026: -0.099
-- IC CV=0.26, Neg years (linear/tail)=0/0 of 8, Half ratio=1.29, Recency ratio=1.36
-- Early IC=+0.1024, Recent IC=+0.1390, 1st-half IC=+0.0933, 2nd-half IC=+0.1204, Neg regimes=0/5
-- Regime ICs: Q1_low_vol=+0.093, Q2=+0.081, Q3_mid=+0.139, Q4=+0.108, Q5_high_vol=+0.128
-
-**`combo_sig_product__opening_drive_thrust_ratio__volatility_expansion_trend_vector`** (Lock IC=-0.0689, Sharpe=-2.3631)
-- Admission: Train IC=+0.2158, Deflated=+0.2159, IR=0.57, Mono=0.72, p=0.0000, MaxCorr=0.88
-- Yearly Linear ICs: 2015: +0.193 | 2016: +0.079 | 2017: +0.211 | 2018: +0.167 | 2019: +0.118 | 2020: +0.167 | 2021: +0.051 | 2022: +0.112 | 2023: +0.120 | 2024: +0.091 | 2025: +0.103 | 2026: -0.069
-- Yearly Tail ICs:   2015: +0.454 | 2016: -0.083 | 2017: +0.313 | 2018: +0.224 | 2019: +0.292 | 2020: +0.226 | 2021: +0.197 | 2022: +0.241 | 2023: +0.284 | 2024: +0.228 | 2025: -0.037 | 2026: -0.099
-- IC CV=0.31, Neg years (linear/tail)=0/1 of 8, Half ratio=0.86, Recency ratio=0.68
-- Early IC=+0.1425, Recent IC=+0.0971, 1st-half IC=+0.1291, 2nd-half IC=+0.1115, Neg regimes=0/5
-- Weak component: `opening_drive_thrust_ratio` (CV=0.31, neg years=0)
-- Regime ICs: Q1_low_vol=+0.085, Q2=+0.081, Q3_mid=+0.173, Q4=+0.104, Q5_high_vol=+0.155
-
-**`combo_rank_max__opening_drive_thrust_ratio__max_up_ret`** (Lock IC=-0.0132, Sharpe=-2.3509)
-- Admission: Train IC=+0.2028, Deflated=+0.2029, IR=0.61, Mono=0.73, p=0.0000, MaxCorr=0.92
-- Yearly Linear ICs: 2015: +0.266 | 2016: +0.094 | 2017: +0.235 | 2018: +0.223 | 2019: +0.107 | 2020: +0.153 | 2021: +0.154 | 2022: +0.123 | 2023: +0.098 | 2024: +0.145 | 2025: +0.078 | 2026: -0.019
-- Yearly Tail ICs:   2015: +0.259 | 2016: +0.103 | 2017: +0.148 | 2018: +0.362 | 2019: +0.318 | 2020: +0.098 | 2021: +0.316 | 2022: +0.211 | 2023: -0.005 | 2024: +0.273 | 2025: +0.022 | 2026: -0.232
-- IC CV=0.31, Neg years (linear/tail)=0/0 of 8, Half ratio=0.76, Recency ratio=0.68
-- Early IC=+0.1651, Recent IC=+0.1117, 1st-half IC=+0.1558, 2nd-half IC=+0.1182, Neg regimes=0/5
-- Weak component: `opening_drive_thrust_ratio` (CV=0.31, neg years=0)
-- Regime ICs: Q1_low_vol=+0.105, Q2=+0.065, Q3_mid=+0.128, Q4=+0.142, Q5_high_vol=+0.223
-
-**`combo_clamp_diff__volatility_expansion_trend_vector__h2_l2_pullback_continuation`** (Lock IC=-0.1034, Sharpe=-2.3182)
-- Admission: Train IC=+0.2326, Deflated=+0.2312, IR=0.49, Mono=0.68, p=0.0000, MaxCorr=0.84
-- Yearly Linear ICs: 2015: +0.122 | 2016: +0.076 | 2017: +0.167 | 2018: +0.089 | 2019: +0.054 | 2020: +0.092 | 2021: +0.047 | 2022: +0.091 | 2023: +0.089 | 2024: +0.106 | 2025: +0.143 | 2026: -0.103
-- Yearly Tail ICs:   2015: +0.110 | 2016: +0.114 | 2017: +0.223 | 2018: +0.129 | 2019: +0.126 | 2020: +0.189 | 2021: +0.208 | 2022: +0.253 | 2023: +0.141 | 2024: +0.310 | 2025: +0.286 | 2026: -0.241
-- IC CV=0.31, Neg years (linear/tail)=0/0 of 8, Half ratio=1.53, Recency ratio=1.74
-- Early IC=+0.0715, Recent IC=+0.1245, 1st-half IC=+0.0748, 2nd-half IC=+0.1147, Neg regimes=0/5
-- Weak component: `h2_l2_pullback_continuation` (CV=0.43, neg years=0)
-- Regime ICs: Q1_low_vol=+0.099, Q2=+0.067, Q3_mid=+0.161, Q4=+0.100, Q5_high_vol=+0.065
-
 **`combo_rank_max__max_up_ret__bar_ret_0`** (Lock IC=-0.0646, Sharpe=-2.3002)
-- Admission: Train IC=+0.2178, Deflated=+0.2170, IR=0.69, Mono=0.77, p=0.0000, MaxCorr=0.89
+- Admission: Train IC=+0.2178, Deflated=+0.2170, IR=0.69, Mono=0.77, p=0.0000, MaxCorr=0.88
 - Yearly Linear ICs: 2015: +0.225 | 2016: +0.141 | 2017: +0.163 | 2018: +0.234 | 2019: +0.121 | 2020: +0.106 | 2021: +0.163 | 2022: +0.087 | 2023: +0.093 | 2024: +0.161 | 2025: +0.100 | 2026: -0.067
 - Yearly Tail ICs:   2015: +0.213 | 2016: +0.135 | 2017: +0.302 | 2018: +0.469 | 2019: +0.162 | 2020: +0.241 | 2021: +0.318 | 2022: +0.208 | 2023: +0.100 | 2024: +0.285 | 2025: +0.012 | 2026: -0.328
 - IC CV=0.36, Neg years (linear/tail)=0/1 of 8, Half ratio=0.76, Recency ratio=0.71
 - Early IC=+0.1800, Recent IC=+0.1273, 1st-half IC=+0.1492, 2nd-half IC=+0.1140, Neg regimes=0/5
 - Weak component: `bar_ret_0` (CV=0.48, neg years=0)
 - Regime ICs: Q1_low_vol=+0.115, Q2=+0.034, Q3_mid=+0.117, Q4=+0.128, Q5_high_vol=+0.226
-
-**`combo_tri_median__max_up_ret__volume_weighted_momentum_acceleration__bar_ret_0`** (Lock IC=-0.0666, Sharpe=-2.2843)
-- Admission: Train IC=+0.2030, Deflated=+0.2028, IR=0.49, Mono=0.68, p=0.0000, MaxCorr=0.89
-- Yearly Linear ICs: 2015: +0.206 | 2016: +0.121 | 2017: +0.156 | 2018: +0.191 | 2019: +0.068 | 2020: +0.114 | 2021: +0.091 | 2022: +0.096 | 2023: +0.080 | 2024: +0.078 | 2025: +0.122 | 2026: -0.067
-- Yearly Tail ICs:   2015: +0.114 | 2016: +0.096 | 2017: +0.229 | 2018: +0.279 | 2019: +0.142 | 2020: +0.301 | 2021: +0.217 | 2022: +0.061 | 2023: +0.103 | 2024: +0.209 | 2025: +0.239 | 2026: -0.312
-- IC CV=0.35, Neg years (linear/tail)=0/0 of 8, Half ratio=0.84, Recency ratio=0.77
-- Early IC=+0.1295, Recent IC=+0.1000, 1st-half IC=+0.1154, 2nd-half IC=+0.0967, Neg regimes=0/5
-- Weak component: `volume_weighted_momentum_acceleration` (CV=0.53, neg years=0)
-- Regime ICs: Q1_low_vol=+0.111, Q2=+0.030, Q3_mid=+0.104, Q4=+0.114, Q5_high_vol=+0.156
-
-**`combo_max__early_body_momentum__early_order_flow_imbalance`** (Lock IC=-0.1244, Sharpe=-2.1877)
-- Admission: Train IC=+0.2284, Deflated=+0.2269, IR=0.65, Mono=0.78, p=0.0000, MaxCorr=0.84
-- Yearly Linear ICs: 2015: +0.122 | 2016: +0.009 | 2017: +0.104 | 2018: +0.095 | 2019: +0.096 | 2020: +0.066 | 2021: +0.082 | 2022: +0.143 | 2023: +0.066 | 2024: +0.104 | 2025: +0.126 | 2026: -0.124
-- Yearly Tail ICs:   2015: +0.310 | 2016: +0.036 | 2017: +0.161 | 2018: +0.135 | 2019: +0.245 | 2020: +0.209 | 2021: +0.225 | 2022: +0.424 | 2023: +0.168 | 2024: +0.312 | 2025: +0.056 | 2026: -0.159
-- IC CV=0.26, Neg years (linear/tail)=0/0 of 8, Half ratio=1.33, Recency ratio=1.21
-- Early IC=+0.0954, Recent IC=+0.1154, 1st-half IC=+0.0864, 2nd-half IC=+0.1145, Neg regimes=0/5
-- Weak component: `early_body_momentum` (CV=0.36, neg years=0)
-- Regime ICs: Q1_low_vol=+0.122, Q2=+0.063, Q3_mid=+0.134, Q4=+0.105, Q5_high_vol=+0.089
-
-**`combo_rank_min__early_order_flow_imbalance__shaved_bar_trend_conviction`** (Lock IC=-0.1351, Sharpe=-2.1450)
-- Admission: Train IC=+0.1722, Deflated=+0.1705, IR=0.48, Mono=0.70, p=0.0002, MaxCorr=0.92
-- Yearly Linear ICs: 2015: +0.095 | 2016: -0.002 | 2017: +0.132 | 2018: +0.092 | 2019: +0.046 | 2020: +0.057 | 2021: +0.094 | 2022: +0.107 | 2023: +0.122 | 2024: +0.102 | 2025: +0.093 | 2026: -0.127
-- Yearly Tail ICs:   2015: +0.127 | 2016: +0.080 | 2017: +0.240 | 2018: +0.096 | 2019: +0.163 | 2020: +0.112 | 2021: +0.202 | 2022: +0.158 | 2023: +0.085 | 2024: +0.298 | 2025: +0.198 | 2026: -0.149
-- IC CV=0.29, Neg years (linear/tail)=0/0 of 8, Half ratio=1.56, Recency ratio=1.44
-- Early IC=+0.0672, Recent IC=+0.0968, 1st-half IC=+0.0698, 2nd-half IC=+0.1087, Neg regimes=0/5
-- Weak component: `shaved_bar_trend_conviction` (CV=1.10, neg years=3)
-- Regime ICs: Q1_low_vol=+0.119, Q2=+0.083, Q3_mid=+0.094, Q4=+0.116, Q5_high_vol=+0.071
-
-**`first_30min_return`** (Lock IC=-0.1128, Sharpe=-2.1381)
-- Admission: Train IC=+0.1826, Deflated=+0.1808, IR=0.68, Mono=0.76, p=0.0000, MaxCorr=0.93
-- Yearly Linear ICs: 2015: +0.144 | 2016: +0.056 | 2017: +0.205 | 2018: +0.130 | 2019: +0.080 | 2020: +0.092 | 2021: +0.085 | 2022: +0.094 | 2023: +0.095 | 2024: +0.120 | 2025: +0.164 | 2026: -0.113
-- Yearly Tail ICs:   2015: +0.131 | 2016: +0.099 | 2017: +0.224 | 2018: +0.229 | 2019: +0.073 | 2020: +0.062 | 2021: +0.270 | 2022: +0.181 | 2023: +0.257 | 2024: +0.228 | 2025: +0.208 | 2026: -0.307
-- IC CV=0.25, Neg years (linear/tail)=0/0 of 8, Half ratio=1.32, Recency ratio=1.35
-- Early IC=+0.1053, Recent IC=+0.1420, 1st-half IC=+0.0956, 2nd-half IC=+0.1262, Neg regimes=0/5
-- Regime ICs: Q1_low_vol=+0.091, Q2=+0.093, Q3_mid=+0.140, Q4=+0.100, Q5_high_vol=+0.130
-
-**`combo_sig_product__max_up_ret__bar_ret_0`** (Lock IC=-0.0695, Sharpe=-2.1354)
-- Admission: Train IC=+0.1709, Deflated=+0.1713, IR=0.57, Mono=0.74, p=0.0002, MaxCorr=0.86
-- Yearly Linear ICs: 2015: +0.181 | 2016: +0.142 | 2017: +0.115 | 2018: +0.276 | 2019: +0.086 | 2020: +0.115 | 2021: +0.110 | 2022: +0.109 | 2023: +0.023 | 2024: +0.102 | 2025: +0.094 | 2026: -0.069
-- Yearly Tail ICs:   2015: +0.142 | 2016: +0.092 | 2017: +0.306 | 2018: +0.468 | 2019: +0.081 | 2020: +0.215 | 2021: +0.204 | 2022: -0.008 | 2023: +0.021 | 2024: +0.172 | 2025: +0.155 | 2026: -0.305
-- IC CV=0.59, Neg years (linear/tail)=0/1 of 8, Half ratio=0.61, Recency ratio=0.54
-- Early IC=+0.1807, Recent IC=+0.0980, 1st-half IC=+0.1425, 2nd-half IC=+0.0871, Neg regimes=0/5
-- Weak component: `bar_ret_0` (CV=0.48, neg years=0)
-- Regime ICs: Q1_low_vol=+0.116, Q2=+0.028, Q3_mid=+0.058, Q4=+0.132, Q5_high_vol=+0.176
-
-**`combo_min__early_body_momentum__vwap_close_divergence_trend`** (Lock IC=-0.0918, Sharpe=-2.1074)
-- Admission: Train IC=+0.1700, Deflated=+0.1691, IR=0.59, Mono=0.70, p=0.0002, MaxCorr=0.92
-- Yearly Linear ICs: 2015: +0.108 | 2016: +0.038 | 2017: +0.170 | 2018: +0.091 | 2019: +0.070 | 2020: +0.093 | 2021: +0.069 | 2022: +0.096 | 2023: +0.125 | 2024: +0.096 | 2025: +0.154 | 2026: -0.092
-- Yearly Tail ICs:   2015: +0.182 | 2016: +0.156 | 2017: +0.118 | 2018: +0.113 | 2019: +0.254 | 2020: +0.113 | 2021: +0.310 | 2022: +0.154 | 2023: +0.245 | 2024: +0.140 | 2025: +0.070 | 2026: -0.264
-- IC CV=0.27, Neg years (linear/tail)=0/0 of 8, Half ratio=1.48, Recency ratio=1.55
-- Early IC=+0.0804, Recent IC=+0.1250, 1st-half IC=+0.0841, 2nd-half IC=+0.1243, Neg regimes=0/5
-- Weak component: `early_body_momentum` (CV=0.36, neg years=0)
-- Regime ICs: Q1_low_vol=+0.110, Q2=+0.112, Q3_mid=+0.150, Q4=+0.087, Q5_high_vol=+0.088
-
-**`combo_tri_min__max_up_ret__trend_bar_close_consistency__volatility_expansion_trend_vector`** (Lock IC=-0.0906, Sharpe=-2.0531)
-- Admission: Train IC=+0.2109, Deflated=+0.2098, IR=0.57, Mono=0.70, p=0.0000, MaxCorr=0.93
-- Yearly Linear ICs: 2015: +0.133 | 2016: +0.071 | 2017: +0.169 | 2018: +0.120 | 2019: +0.055 | 2020: +0.085 | 2021: +0.098 | 2022: +0.107 | 2023: +0.111 | 2024: +0.139 | 2025: +0.129 | 2026: -0.091
-- Yearly Tail ICs:   2015: +0.351 | 2016: +0.230 | 2017: +0.367 | 2018: +0.306 | 2019: +0.105 | 2020: +0.162 | 2021: +0.224 | 2022: +0.212 | 2023: +0.247 | 2024: +0.300 | 2025: -0.011 | 2026: -0.042
-- IC CV=0.23, Neg years (linear/tail)=0/1 of 8, Half ratio=1.43, Recency ratio=1.53
-- Early IC=+0.0877, Recent IC=+0.1339, 1st-half IC=+0.0901, 2nd-half IC=+0.1284, Neg regimes=0/5
-- Weak component: `trend_bar_close_consistency` (CV=0.49, neg years=0)
-- Regime ICs: Q1_low_vol=+0.091, Q2=+0.082, Q3_mid=+0.140, Q4=+0.097, Q5_high_vol=+0.139
-
-**`combo_tri_median__opening_drive_thrust_ratio__max_up_ret__trend_bar_close_consistency`** (Lock IC=-0.0468, Sharpe=-2.0328)
-- Admission: Train IC=+0.2196, Deflated=+0.2187, IR=0.75, Mono=0.79, p=0.0000, MaxCorr=0.92
-- Yearly Linear ICs: 2015: +0.262 | 2016: +0.075 | 2017: +0.218 | 2018: +0.208 | 2019: +0.105 | 2020: +0.158 | 2021: +0.122 | 2022: +0.087 | 2023: +0.120 | 2024: +0.125 | 2025: +0.132 | 2026: -0.047
-- Yearly Tail ICs:   2015: +0.490 | 2016: +0.345 | 2017: +0.238 | 2018: +0.415 | 2019: +0.073 | 2020: +0.224 | 2021: +0.291 | 2022: +0.191 | 2023: +0.287 | 2024: +0.245 | 2025: +0.012 | 2026: -0.186
-- IC CV=0.26, Neg years (linear/tail)=0/0 of 8, Half ratio=0.86, Recency ratio=0.82
-- Early IC=+0.1565, Recent IC=+0.1284, 1st-half IC=+0.1466, 2nd-half IC=+0.1260, Neg regimes=0/5
-- Weak component: `trend_bar_close_consistency` (CV=0.49, neg years=0)
-- Regime ICs: Q1_low_vol=+0.112, Q2=+0.062, Q3_mid=+0.160, Q4=+0.140, Q5_high_vol=+0.195
-
-**`combo_rank_min__opening_drive_thrust_ratio__max_up_ret`** (Lock IC=-0.0104, Sharpe=-2.0137)
-- Admission: Train IC=+0.2029, Deflated=+0.2025, IR=0.63, Mono=0.75, p=0.0000, MaxCorr=0.92
-- Yearly Linear ICs: 2015: +0.275 | 2016: +0.102 | 2017: +0.200 | 2018: +0.210 | 2019: +0.141 | 2020: +0.146 | 2021: +0.129 | 2022: +0.045 | 2023: +0.112 | 2024: +0.158 | 2025: +0.098 | 2026: -0.008
-- Yearly Tail ICs:   2015: +0.503 | 2016: +0.293 | 2017: +0.257 | 2018: +0.337 | 2019: +0.215 | 2020: +0.184 | 2021: +0.339 | 2022: +0.100 | 2023: +0.140 | 2024: +0.207 | 2025: +0.026 | 2026: -0.084
-- IC CV=0.34, Neg years (linear/tail)=0/0 of 8, Half ratio=0.74, Recency ratio=0.73
-- Early IC=+0.1764, Recent IC=+0.1292, 1st-half IC=+0.1535, 2nd-half IC=+0.1141, Neg regimes=0/5
-- Weak component: `opening_drive_thrust_ratio` (CV=0.31, neg years=0)
-- Regime ICs: Q1_low_vol=+0.082, Q2=+0.047, Q3_mid=+0.174, Q4=+0.120, Q5_high_vol=+0.208
-
-**`combo_min__vwap_close_divergence_trend__shaved_bar_trend_conviction`** (Lock IC=-0.0901, Sharpe=-1.9999)
-- Admission: Train IC=+0.1811, Deflated=+0.1803, IR=0.71, Mono=0.79, p=0.0000, MaxCorr=0.87
-- Yearly Linear ICs: 2015: +0.108 | 2016: +0.025 | 2017: +0.147 | 2018: +0.080 | 2019: +0.014 | 2020: +0.087 | 2021: +0.033 | 2022: +0.020 | 2023: +0.132 | 2024: +0.079 | 2025: +0.120 | 2026: -0.090
-- Yearly Tail ICs:   2015: +0.120 | 2016: +0.130 | 2017: +0.255 | 2018: +0.170 | 2019: +0.191 | 2020: +0.117 | 2021: +0.242 | 2022: +0.186 | 2023: +0.241 | 2024: +0.173 | 2025: +0.123 | 2026: -0.300
-- IC CV=0.59, Neg years (linear/tail)=0/0 of 8, Half ratio=1.59, Recency ratio=2.10
-- Early IC=+0.0472, Recent IC=+0.0994, 1st-half IC=+0.0591, 2nd-half IC=+0.0937, Neg regimes=0/5
-- Weak component: `shaved_bar_trend_conviction` (CV=1.10, neg years=3)
-- Regime ICs: Q1_low_vol=+0.094, Q2=+0.071, Q3_mid=+0.116, Q4=+0.084, Q5_high_vol=+0.055
 
 **`combo_min__early_order_flow_imbalance__bar_body_rng_0`** (Lock IC=-0.0451, Sharpe=-1.9899)
 - Admission: Train IC=+0.2411, Deflated=+0.2397, IR=0.73, Mono=0.79, p=0.0000, MaxCorr=0.85
@@ -725,33 +503,6 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `max_up_ret` (CV=0.30, neg years=0)
 - Regime ICs: Q1_low_vol=+0.121, Q2=+0.054, Q3_mid=+0.088, Q4=+0.088, Q5_high_vol=+0.171
 
-**`combo_min__early_body_momentum__close_vs_open_range`** (Lock IC=-0.0785, Sharpe=-1.9210)
-- Admission: Train IC=+0.1744, Deflated=+0.1732, IR=0.42, Mono=0.65, p=0.0000, MaxCorr=0.93
-- Yearly Linear ICs: 2015: +0.132 | 2016: +0.064 | 2017: +0.155 | 2018: +0.108 | 2019: +0.052 | 2020: +0.095 | 2021: +0.051 | 2022: +0.112 | 2023: +0.094 | 2024: +0.107 | 2025: +0.142 | 2026: -0.079
-- Yearly Tail ICs:   2015: +0.246 | 2016: +0.199 | 2017: +0.312 | 2018: +0.237 | 2019: +0.098 | 2020: +0.283 | 2021: +0.226 | 2022: +0.125 | 2023: +0.071 | 2024: +0.225 | 2025: -0.042 | 2026: -0.062
-- IC CV=0.30, Neg years (linear/tail)=0/1 of 8, Half ratio=1.52, Recency ratio=1.56
-- Early IC=+0.0801, Recent IC=+0.1248, 1st-half IC=+0.0779, 2nd-half IC=+0.1187, Neg regimes=0/5
-- Weak component: `early_body_momentum` (CV=0.36, neg years=0)
-- Regime ICs: Q1_low_vol=+0.098, Q2=+0.096, Q3_mid=+0.126, Q4=+0.093, Q5_high_vol=+0.102
-
-**`combo_tri_median__max_up_ret__net_volume_flow__smooth_momentum_structure`** (Lock IC=-0.0680, Sharpe=-1.8579)
-- Admission: Train IC=+0.1765, Deflated=+0.1761, IR=0.54, Mono=0.69, p=0.0000, MaxCorr=0.91
-- Yearly Linear ICs: 2015: +0.132 | 2016: +0.073 | 2017: +0.095 | 2018: +0.131 | 2019: +0.072 | 2020: +0.068 | 2021: +0.085 | 2022: +0.115 | 2023: +0.085 | 2024: +0.120 | 2025: +0.123 | 2026: -0.068
-- Yearly Tail ICs:   2015: +0.183 | 2016: +0.174 | 2017: +0.060 | 2018: +0.176 | 2019: +0.155 | 2020: +0.048 | 2021: +0.290 | 2022: +0.126 | 2023: +0.101 | 2024: +0.288 | 2025: +0.117 | 2026: -0.292
-- IC CV=0.23, Neg years (linear/tail)=0/0 of 8, Half ratio=1.30, Recency ratio=1.19
-- Early IC=+0.1018, Recent IC=+0.1215, 1st-half IC=+0.0878, 2nd-half IC=+0.1145, Neg regimes=0/5
-- Weak component: `smooth_momentum_structure` (CV=0.57, neg years=0)
-- Regime ICs: Q1_low_vol=+0.092, Q2=+0.060, Q3_mid=+0.137, Q4=+0.101, Q5_high_vol=+0.117
-
-**`combo_sig_product__max_up_ret__max_down_ret`** (Lock IC=-0.0507, Sharpe=-1.8152)
-- Admission: Train IC=+0.1700, Deflated=+0.1710, IR=0.56, Mono=0.72, p=0.0002, MaxCorr=0.75
-- Yearly Linear ICs: 2015: +0.207 | 2016: +0.211 | 2017: +0.033 | 2018: +0.163 | 2019: +0.173 | 2020: +0.119 | 2021: +0.105 | 2022: +0.069 | 2023: +0.118 | 2024: +0.156 | 2025: +0.123 | 2026: -0.051
-- Yearly Tail ICs:   2015: +0.198 | 2016: +0.192 | 2017: +0.164 | 2018: +0.191 | 2019: +0.295 | 2020: +0.047 | 2021: +0.296 | 2022: +0.029 | 2023: +0.105 | 2024: +0.307 | 2025: +0.223 | 2026: -0.145
-- IC CV=0.25, Neg years (linear/tail)=0/0 of 8, Half ratio=0.84, Recency ratio=0.83
-- Early IC=+0.1678, Recent IC=+0.1397, 1st-half IC=+0.1388, 2nd-half IC=+0.1169, Neg regimes=0/5
-- Weak component: `max_down_ret` (CV=0.39, neg years=0)
-- Regime ICs: Q1_low_vol=+0.148, Q2=+0.063, Q3_mid=+0.123, Q4=+0.140, Q5_high_vol=+0.170
-
 **`combo_rank_max__volatility_expansion_trend_vector__max_down_ret`** (Lock IC=-0.0686, Sharpe=-1.8069)
 - Admission: Train IC=+0.2229, Deflated=+0.2221, IR=0.61, Mono=0.72, p=0.0000, MaxCorr=0.91
 - Yearly Linear ICs: 2015: +0.221 | 2016: +0.048 | 2017: +0.216 | 2018: +0.159 | 2019: +0.107 | 2020: +0.105 | 2021: +0.088 | 2022: +0.062 | 2023: +0.047 | 2024: +0.136 | 2025: +0.153 | 2026: -0.068
@@ -761,24 +512,6 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `max_down_ret` (CV=0.39, neg years=0)
 - Regime ICs: Q1_low_vol=+0.088, Q2=+0.073, Q3_mid=+0.143, Q4=+0.122, Q5_high_vol=+0.127
 
-**`combo_tri_median__net_volume_flow__volume_weighted_momentum_acceleration__bar_ret_0`** (Lock IC=-0.0843, Sharpe=-1.7825)
-- Admission: Train IC=+0.1789, Deflated=+0.1781, IR=0.66, Mono=0.73, p=0.0000, MaxCorr=0.88
-- Yearly Linear ICs: 2015: +0.137 | 2016: +0.052 | 2017: +0.118 | 2018: +0.153 | 2019: +0.085 | 2020: +0.042 | 2021: +0.079 | 2022: +0.078 | 2023: +0.076 | 2024: +0.098 | 2025: +0.137 | 2026: -0.084
-- Yearly Tail ICs:   2015: +0.199 | 2016: +0.114 | 2017: +0.075 | 2018: +0.183 | 2019: +0.144 | 2020: +0.108 | 2021: +0.357 | 2022: +0.129 | 2023: +0.201 | 2024: +0.232 | 2025: +0.153 | 2026: -0.409
-- IC CV=0.36, Neg years (linear/tail)=0/0 of 8, Half ratio=1.09, Recency ratio=0.99
-- Early IC=+0.1194, Recent IC=+0.1178, 1st-half IC=+0.0929, 2nd-half IC=+0.1009, Neg regimes=0/5
-- Weak component: `volume_weighted_momentum_acceleration` (CV=0.53, neg years=0)
-- Regime ICs: Q1_low_vol=+0.104, Q2=+0.049, Q3_mid=+0.107, Q4=+0.101, Q5_high_vol=+0.122
-
-**`combo_sig_product__volatility_expansion_trend_vector__max_down_ret`** (Lock IC=-0.0739, Sharpe=-1.7537)
-- Admission: Train IC=+0.1786, Deflated=+0.1773, IR=0.67, Mono=0.74, p=0.0000, MaxCorr=0.86
-- Yearly Linear ICs: 2015: +0.170 | 2016: +0.021 | 2017: +0.200 | 2018: +0.128 | 2019: +0.130 | 2020: +0.095 | 2021: +0.090 | 2022: +0.085 | 2023: +0.097 | 2024: +0.120 | 2025: +0.212 | 2026: -0.074
-- Yearly Tail ICs:   2015: +0.058 | 2016: -0.181 | 2017: +0.203 | 2018: +0.010 | 2019: +0.216 | 2020: +0.106 | 2021: +0.301 | 2022: +0.182 | 2023: +0.141 | 2024: +0.240 | 2025: +0.418 | 2026: -0.270
-- IC CV=0.32, Neg years (linear/tail)=0/0 of 8, Half ratio=1.21, Recency ratio=1.28
-- Early IC=+0.1295, Recent IC=+0.1660, 1st-half IC=+0.1100, 2nd-half IC=+0.1328, Neg regimes=0/5
-- Weak component: `max_down_ret` (CV=0.39, neg years=0)
-- Regime ICs: Q1_low_vol=+0.093, Q2=+0.087, Q3_mid=+0.191, Q4=+0.144, Q5_high_vol=+0.119
-
 **`morning_volume_weighted_momentum`** (Lock IC=-0.0906, Sharpe=-1.7423)
 - Admission: Train IC=+0.1720, Deflated=+0.1705, IR=0.58, Mono=0.71, p=0.0002, MaxCorr=0.90
 - Yearly Linear ICs: 2015: +0.139 | 2016: +0.039 | 2017: +0.203 | 2018: +0.126 | 2019: +0.090 | 2020: +0.097 | 2021: +0.088 | 2022: +0.095 | 2023: +0.096 | 2024: +0.115 | 2025: +0.165 | 2026: -0.091
@@ -786,50 +519,6 @@ Per-year training IC for each FP feature. Look for:
 - IC CV=0.23, Neg years (linear/tail)=0/0 of 8, Half ratio=1.27, Recency ratio=1.29
 - Early IC=+0.1081, Recent IC=+0.1398, 1st-half IC=+0.0985, 2nd-half IC=+0.1255, Neg regimes=0/5
 - Regime ICs: Q1_low_vol=+0.092, Q2=+0.098, Q3_mid=+0.146, Q4=+0.100, Q5_high_vol=+0.125
-
-**`net_volume_flow`** (Lock IC=-0.0580, Sharpe=-1.7157)
-- Admission: Train IC=+0.2317, Deflated=+0.2308, IR=0.66, Mono=0.75, p=0.0000, MaxCorr=0.93
-- Yearly Linear ICs: 2015: +0.151 | 2016: +0.063 | 2017: +0.165 | 2018: +0.154 | 2019: +0.088 | 2020: +0.107 | 2021: +0.085 | 2022: +0.104 | 2023: +0.088 | 2024: +0.132 | 2025: +0.131 | 2026: -0.058
-- Yearly Tail ICs:   2015: +0.332 | 2016: +0.088 | 2017: +0.166 | 2018: +0.242 | 2019: +0.165 | 2020: +0.274 | 2021: +0.194 | 2022: +0.244 | 2023: +0.334 | 2024: +0.276 | 2025: +0.032 | 2026: -0.115
-- IC CV=0.21, Neg years (linear/tail)=0/0 of 8, Half ratio=1.12, Recency ratio=1.09
-- Early IC=+0.1210, Recent IC=+0.1317, 1st-half IC=+0.1071, 2nd-half IC=+0.1199, Neg regimes=0/5
-- Regime ICs: Q1_low_vol=+0.123, Q2=+0.064, Q3_mid=+0.151, Q4=+0.110, Q5_high_vol=+0.133
-
-**`combo_sig_product__max_up_ret__early_order_flow_imbalance`** (Lock IC=-0.0342, Sharpe=-1.7142)
-- Admission: Train IC=+0.2171, Deflated=+0.2175, IR=0.55, Mono=0.74, p=0.0000, MaxCorr=0.80
-- Yearly Linear ICs: 2015: +0.182 | 2016: +0.147 | 2017: +0.044 | 2018: +0.181 | 2019: +0.098 | 2020: +0.081 | 2021: +0.187 | 2022: +0.140 | 2023: +0.115 | 2024: +0.169 | 2025: +0.046 | 2026: -0.034
-- Yearly Tail ICs:   2015: +0.290 | 2016: +0.241 | 2017: +0.186 | 2018: +0.324 | 2019: +0.257 | 2020: +0.075 | 2021: +0.145 | 2022: +0.306 | 2023: +0.213 | 2024: +0.375 | 2025: +0.023 | 2026: -0.113
-- IC CV=0.37, Neg years (linear/tail)=0/0 of 8, Half ratio=0.93, Recency ratio=0.77
-- Early IC=+0.1399, Recent IC=+0.1074, 1st-half IC=+0.1319, 2nd-half IC=+0.1222, Neg regimes=0/5
-- Weak component: `max_up_ret` (CV=0.30, neg years=0)
-- Regime ICs: Q1_low_vol=+0.155, Q2=+0.102, Q3_mid=+0.099, Q4=+0.097, Q5_high_vol=+0.161
-
-**`combo_max__net_volume_flow__max_down_ret`** (Lock IC=-0.0643, Sharpe=-1.7123)
-- Admission: Train IC=+0.1832, Deflated=+0.1826, IR=0.68, Mono=0.76, p=0.0000, MaxCorr=0.93
-- Yearly Linear ICs: 2015: +0.193 | 2016: +0.083 | 2017: +0.206 | 2018: +0.177 | 2019: +0.108 | 2020: +0.113 | 2021: +0.073 | 2022: +0.069 | 2023: +0.045 | 2024: +0.148 | 2025: +0.137 | 2026: -0.064
-- Yearly Tail ICs:   2015: +0.341 | 2016: +0.162 | 2017: +0.168 | 2018: +0.133 | 2019: +0.191 | 2020: +0.020 | 2021: +0.230 | 2022: +0.274 | 2023: +0.307 | 2024: +0.284 | 2025: +0.058 | 2026: -0.147
-- IC CV=0.38, Neg years (linear/tail)=0/0 of 8, Half ratio=0.96, Recency ratio=1.00
-- Early IC=+0.1424, Recent IC=+0.1422, 1st-half IC=+0.1128, 2nd-half IC=+0.1079, Neg regimes=0/5
-- Weak component: `max_down_ret` (CV=0.39, neg years=0)
-- Regime ICs: Q1_low_vol=+0.127, Q2=+0.055, Q3_mid=+0.135, Q4=+0.124, Q5_high_vol=+0.124
-
-**`combo_tri_min__opening_drive_thrust_ratio__trend_bar_close_consistency__volatility_expansion_trend_vector`** (Lock IC=-0.0503, Sharpe=-1.6591)
-- Admission: Train IC=+0.2357, Deflated=+0.2348, IR=0.69, Mono=0.77, p=0.0000, MaxCorr=0.92
-- Yearly Linear ICs: 2015: +0.134 | 2016: +0.042 | 2017: +0.183 | 2018: +0.163 | 2019: +0.075 | 2020: +0.104 | 2021: +0.092 | 2022: +0.071 | 2023: +0.115 | 2024: +0.139 | 2025: +0.109 | 2026: -0.050
-- Yearly Tail ICs:   2015: +0.395 | 2016: +0.235 | 2017: +0.265 | 2018: +0.295 | 2019: +0.232 | 2020: +0.157 | 2021: +0.305 | 2022: +0.290 | 2023: +0.220 | 2024: +0.322 | 2025: +0.059 | 2026: +0.050
-- IC CV=0.27, Neg years (linear/tail)=0/0 of 8, Half ratio=1.08, Recency ratio=1.04
-- Early IC=+0.1188, Recent IC=+0.1239, 1st-half IC=+0.1082, 2nd-half IC=+0.1168, Neg regimes=0/5
-- Weak component: `trend_bar_close_consistency` (CV=0.49, neg years=0)
-- Regime ICs: Q1_low_vol=+0.108, Q2=+0.061, Q3_mid=+0.144, Q4=+0.102, Q5_high_vol=+0.161
-
-**`combo_tri_max__opening_drive_thrust_ratio__early_body_momentum__trend_day_regime_conviction`** (Lock IC=-0.0451, Sharpe=-1.6562)
-- Admission: Train IC=+0.2080, Deflated=+0.2072, IR=0.70, Mono=0.78, p=0.0000, MaxCorr=0.92
-- Yearly Linear ICs: 2015: +0.253 | 2016: +0.089 | 2017: +0.227 | 2018: +0.156 | 2019: +0.093 | 2020: +0.148 | 2021: +0.086 | 2022: +0.109 | 2023: +0.067 | 2024: +0.154 | 2025: +0.108 | 2026: -0.045
-- Yearly Tail ICs:   2015: +0.392 | 2016: +0.236 | 2017: +0.342 | 2018: +0.205 | 2019: +0.277 | 2020: +0.303 | 2021: +0.134 | 2022: +0.206 | 2023: +0.255 | 2024: +0.269 | 2025: -0.008 | 2026: -0.161
-- IC CV=0.28, Neg years (linear/tail)=0/1 of 8, Half ratio=0.99, Recency ratio=1.05
-- Early IC=+0.1246, Recent IC=+0.1309, 1st-half IC=+0.1198, 2nd-half IC=+0.1185, Neg regimes=0/5
-- Weak component: `early_body_momentum` (CV=0.36, neg years=0)
-- Regime ICs: Q1_low_vol=+0.074, Q2=+0.084, Q3_mid=+0.164, Q4=+0.135, Q5_high_vol=+0.143
 
 **`combo_tri_mean__opening_drive_thrust_ratio__trend_day_regime_conviction__bar_ret_0`** (Lock IC=-0.0298, Sharpe=-1.5915)
 - Admission: Train IC=+0.2298, Deflated=+0.2291, IR=0.64, Mono=0.75, p=0.0000, MaxCorr=0.95
@@ -840,23 +529,6 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `bar_ret_0` (CV=0.48, neg years=0)
 - Regime ICs: Q1_low_vol=+0.102, Q2=+0.060, Q3_mid=+0.150, Q4=+0.142, Q5_high_vol=+0.194
 
-**`first_bar_return`** (Lock IC=-0.0114, Sharpe=-1.5357)
-- Admission: Train IC=+0.1817, Deflated=+0.1816, IR=0.53, Mono=0.71, p=0.0000, MaxCorr=0.94
-- Yearly Linear ICs: 2015: +0.209 | 2016: +0.112 | 2017: +0.153 | 2018: +0.238 | 2019: +0.148 | 2020: +0.088 | 2021: +0.099 | 2022: +0.063 | 2023: +0.062 | 2024: +0.107 | 2025: +0.092 | 2026: -0.011
-- Yearly Tail ICs:   2015: +0.202 | 2016: -0.004 | 2017: +0.297 | 2018: +0.423 | 2019: +0.144 | 2020: +0.207 | 2021: +0.212 | 2022: +0.189 | 2023: +0.121 | 2024: +0.212 | 2025: +0.043 | 2026: -0.189
-- IC CV=0.48, Neg years (linear/tail)=0/0 of 8, Half ratio=0.59, Recency ratio=0.52
-- Early IC=+0.1931, Recent IC=+0.0995, 1st-half IC=+0.1410, 2nd-half IC=+0.0829, Neg regimes=0/5
-- Regime ICs: Q1_low_vol=+0.114, Q2=+0.005, Q3_mid=+0.091, Q4=+0.130, Q5_high_vol=+0.169
-
-**`combo_mean__first_bar_return__shaved_bar_trend_conviction`** (Lock IC=-0.0510, Sharpe=-1.5241)
-- Admission: Train IC=+0.1829, Deflated=+0.1821, IR=0.57, Mono=0.67, p=0.0000, MaxCorr=0.90
-- Yearly Linear ICs: 2015: +0.182 | 2016: +0.063 | 2017: +0.170 | 2018: +0.186 | 2019: +0.067 | 2020: +0.117 | 2021: +0.068 | 2022: +0.035 | 2023: +0.085 | 2024: +0.091 | 2025: +0.118 | 2026: -0.051
-- Yearly Tail ICs:   2015: +0.285 | 2016: -0.021 | 2017: +0.154 | 2018: +0.252 | 2019: +0.118 | 2020: +0.178 | 2021: +0.044 | 2022: +0.148 | 2023: +0.120 | 2024: +0.191 | 2025: +0.212 | 2026: -0.287
-- IC CV=0.44, Neg years (linear/tail)=0/0 of 8, Half ratio=0.75, Recency ratio=0.82
-- Early IC=+0.1265, Recent IC=+0.1042, 1st-half IC=+0.1132, 2nd-half IC=+0.0852, Neg regimes=0/5
-- Weak component: `shaved_bar_trend_conviction` (CV=1.10, neg years=3)
-- Regime ICs: Q1_low_vol=+0.120, Q2=+0.018, Q3_mid=+0.094, Q4=+0.124, Q5_high_vol=+0.139
-
 **`combo_min__first_bar_return__bar_body_rng_0`** (Lock IC=-0.0051, Sharpe=-1.4910)
 - Admission: Train IC=+0.2178, Deflated=+0.2175, IR=0.67, Mono=0.74, p=0.0000, MaxCorr=0.90
 - Yearly Linear ICs: 2015: +0.219 | 2016: +0.108 | 2017: +0.160 | 2018: +0.231 | 2019: +0.128 | 2020: +0.086 | 2021: +0.119 | 2022: +0.066 | 2023: +0.079 | 2024: +0.110 | 2025: +0.100 | 2026: -0.005
@@ -865,15 +537,6 @@ Per-year training IC for each FP feature. Look for:
 - Early IC=+0.1795, Recent IC=+0.1051, 1st-half IC=+0.1389, 2nd-half IC=+0.0909, Neg regimes=0/5
 - Weak component: `first_bar_return` (CV=0.48, neg years=0)
 - Regime ICs: Q1_low_vol=+0.124, Q2=+0.005, Q3_mid=+0.093, Q4=+0.136, Q5_high_vol=+0.169
-
-**`combo_rank_max__max_up_ret__max_down_ret`** (Lock IC=-0.0021, Sharpe=-1.4591)
-- Admission: Train IC=+0.2102, Deflated=+0.2098, IR=0.75, Mono=0.78, p=0.0000, MaxCorr=0.91
-- Yearly Linear ICs: 2015: +0.272 | 2016: +0.079 | 2017: +0.232 | 2018: +0.240 | 2019: +0.123 | 2020: +0.132 | 2021: +0.128 | 2022: +0.077 | 2023: +0.052 | 2024: +0.142 | 2025: +0.111 | 2026: -0.006
-- Yearly Tail ICs:   2015: +0.520 | 2016: -0.023 | 2017: +0.192 | 2018: +0.193 | 2019: +0.374 | 2020: +0.193 | 2021: +0.307 | 2022: +0.142 | 2023: +0.092 | 2024: +0.311 | 2025: +0.202 | 2026: -0.142
-- IC CV=0.41, Neg years (linear/tail)=0/0 of 8, Half ratio=0.70, Recency ratio=0.70
-- Early IC=+0.1795, Recent IC=+0.1264, 1st-half IC=+0.1486, 2nd-half IC=+0.1034, Neg regimes=0/5
-- Weak component: `max_down_ret` (CV=0.39, neg years=0)
-- Regime ICs: Q1_low_vol=+0.099, Q2=+0.047, Q3_mid=+0.132, Q4=+0.116, Q5_high_vol=+0.213
 
 **`combo_tri_mean__max_up_ret__trend_bar_close_consistency__bar_ret_0`** (Lock IC=-0.0656, Sharpe=-1.4128)
 - Admission: Train IC=+0.2029, Deflated=+0.2020, IR=0.56, Mono=0.71, p=0.0000, MaxCorr=0.95
@@ -884,15 +547,6 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `trend_bar_close_consistency` (CV=0.49, neg years=0)
 - Regime ICs: Q1_low_vol=+0.113, Q2=+0.055, Q3_mid=+0.130, Q4=+0.119, Q5_high_vol=+0.182
 
-**`combo_rank_min__net_volume_flow__shaved_bar_trend_conviction`** (Lock IC=-0.0862, Sharpe=-1.3223)
-- Admission: Train IC=+0.1999, Deflated=+0.1991, IR=0.70, Mono=0.78, p=0.0000, MaxCorr=0.85
-- Yearly Linear ICs: 2015: +0.133 | 2016: +0.038 | 2017: +0.149 | 2018: +0.086 | 2019: +0.017 | 2020: +0.093 | 2021: +0.041 | 2022: +0.051 | 2023: +0.099 | 2024: +0.089 | 2025: +0.109 | 2026: -0.082
-- Yearly Tail ICs:   2015: +0.220 | 2016: +0.062 | 2017: +0.185 | 2018: +0.159 | 2019: +0.189 | 2020: +0.183 | 2021: +0.150 | 2022: +0.131 | 2023: +0.285 | 2024: +0.373 | 2025: +0.124 | 2026: -0.124
-- IC CV=0.43, Neg years (linear/tail)=0/0 of 8, Half ratio=1.52, Recency ratio=1.93
-- Early IC=+0.0509, Recent IC=+0.0983, 1st-half IC=+0.0610, 2nd-half IC=+0.0925, Neg regimes=0/5
-- Weak component: `shaved_bar_trend_conviction` (CV=1.10, neg years=3)
-- Regime ICs: Q1_low_vol=+0.095, Q2=+0.053, Q3_mid=+0.117, Q4=+0.098, Q5_high_vol=+0.065
-
 **`combo_mean__bar_ret_0__close_vs_open_range`** (Lock IC=-0.0383, Sharpe=-1.2349)
 - Admission: Train IC=+0.2414, Deflated=+0.2405, IR=0.86, Mono=0.79, p=0.0000, MaxCorr=0.88
 - Yearly Linear ICs: 2015: +0.227 | 2016: +0.094 | 2017: +0.212 | 2018: +0.196 | 2019: +0.106 | 2020: +0.116 | 2021: +0.098 | 2022: +0.096 | 2023: +0.079 | 2024: +0.154 | 2025: +0.119 | 2026: -0.038
@@ -901,24 +555,6 @@ Per-year training IC for each FP feature. Look for:
 - Early IC=+0.1510, Recent IC=+0.1367, 1st-half IC=+0.1278, 2nd-half IC=+0.1196, Neg regimes=0/5
 - Weak component: `bar_ret_0` (CV=0.48, neg years=0)
 - Regime ICs: Q1_low_vol=+0.127, Q2=+0.055, Q3_mid=+0.130, Q4=+0.134, Q5_high_vol=+0.168
-
-**`combo_diff__net_volume_flow__h2_l2_pullback_continuation`** (Lock IC=-0.0890, Sharpe=-1.1296)
-- Admission: Train IC=+0.1931, Deflated=+0.1919, IR=0.45, Mono=0.67, p=0.0000, MaxCorr=0.94
-- Yearly Linear ICs: 2015: +0.143 | 2016: +0.078 | 2017: +0.150 | 2018: +0.100 | 2019: +0.070 | 2020: +0.088 | 2021: +0.051 | 2022: +0.098 | 2023: +0.103 | 2024: +0.118 | 2025: +0.124 | 2026: -0.089
-- Yearly Tail ICs:   2015: +0.300 | 2016: +0.151 | 2017: +0.059 | 2018: +0.182 | 2019: +0.252 | 2020: +0.146 | 2021: +0.192 | 2022: +0.195 | 2023: +0.235 | 2024: +0.268 | 2025: -0.055 | 2026: +0.069
-- IC CV=0.24, Neg years (linear/tail)=0/1 of 8, Half ratio=1.43, Recency ratio=1.43
-- Early IC=+0.0848, Recent IC=+0.1210, 1st-half IC=+0.0820, 2nd-half IC=+0.1173, Neg regimes=0/5
-- Weak component: `h2_l2_pullback_continuation` (CV=0.43, neg years=0)
-- Regime ICs: Q1_low_vol=+0.126, Q2=+0.067, Q3_mid=+0.168, Q4=+0.095, Q5_high_vol=+0.075
-
-**`combo_mean__bar_ret_0__early_order_flow_imbalance`** (Lock IC=-0.0684, Sharpe=-1.0664)
-- Admission: Train IC=+0.2375, Deflated=+0.2363, IR=0.75, Mono=0.78, p=0.0000, MaxCorr=0.93
-- Yearly Linear ICs: 2015: +0.173 | 2016: +0.030 | 2017: +0.139 | 2018: +0.192 | 2019: +0.136 | 2020: +0.075 | 2021: +0.131 | 2022: +0.120 | 2023: +0.074 | 2024: +0.119 | 2025: +0.087 | 2026: -0.068
-- Yearly Tail ICs:   2015: +0.192 | 2016: -0.073 | 2017: +0.149 | 2018: +0.389 | 2019: +0.253 | 2020: +0.095 | 2021: +0.356 | 2022: +0.278 | 2023: +0.309 | 2024: +0.296 | 2025: +0.096 | 2026: -0.296
-- IC CV=0.31, Neg years (linear/tail)=0/0 of 8, Half ratio=0.81, Recency ratio=0.63
-- Early IC=+0.1637, Recent IC=+0.1030, 1st-half IC=+0.1315, 2nd-half IC=+0.1069, Neg regimes=0/5
-- Weak component: `bar_ret_0` (CV=0.48, neg years=0)
-- Regime ICs: Q1_low_vol=+0.154, Q2=+0.039, Q3_mid=+0.109, Q4=+0.119, Q5_high_vol=+0.161
 
 **`combo_mean__bar_ret_0__vwap_close_divergence_trend`** (Lock IC=-0.0676, Sharpe=-1.0649)
 - Admission: Train IC=+0.2187, Deflated=+0.2177, IR=0.68, Mono=0.73, p=0.0000, MaxCorr=0.93
@@ -947,24 +583,6 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `bar_ret_0` (CV=0.48, neg years=0)
 - Regime ICs: Q1_low_vol=+0.107, Q2=+0.044, Q3_mid=+0.135, Q4=+0.147, Q5_high_vol=+0.233
 
-**`combo_rank_max__max_down_ret__vwap_close_divergence_trend`** (Lock IC=-0.0647, Sharpe=-0.9479)
-- Admission: Train IC=+0.1828, Deflated=+0.1818, IR=0.65, Mono=0.75, p=0.0000, MaxCorr=0.95
-- Yearly Linear ICs: 2015: +0.177 | 2016: +0.027 | 2017: +0.203 | 2018: +0.128 | 2019: +0.107 | 2020: +0.095 | 2021: +0.106 | 2022: +0.058 | 2023: +0.074 | 2024: +0.109 | 2025: +0.179 | 2026: -0.061
-- Yearly Tail ICs:   2015: +0.197 | 2016: +0.001 | 2017: +0.242 | 2018: +0.063 | 2019: +0.276 | 2020: +0.095 | 2021: +0.300 | 2022: +0.202 | 2023: +0.159 | 2024: +0.176 | 2025: +0.363 | 2026: -0.039
-- IC CV=0.33, Neg years (linear/tail)=0/0 of 8, Half ratio=1.03, Recency ratio=1.19
-- Early IC=+0.1207, Recent IC=+0.1442, 1st-half IC=+0.1053, 2nd-half IC=+0.1082, Neg regimes=0/5
-- Weak component: `max_down_ret` (CV=0.39, neg years=0)
-- Regime ICs: Q1_low_vol=+0.094, Q2=+0.082, Q3_mid=+0.171, Q4=+0.091, Q5_high_vol=+0.111
-
-**`combo_mean__rsi_opening__bar_body_rng_0`** (Lock IC=-0.0320, Sharpe=-0.8778)
-- Admission: Train IC=+0.2283, Deflated=+0.2273, IR=0.66, Mono=0.75, p=0.0000, MaxCorr=0.95
-- Yearly Linear ICs: 2015: +0.217 | 2016: +0.093 | 2017: +0.218 | 2018: +0.189 | 2019: +0.114 | 2020: +0.105 | 2021: +0.101 | 2022: +0.087 | 2023: +0.078 | 2024: +0.133 | 2025: +0.134 | 2026: -0.032
-- Yearly Tail ICs:   2015: +0.450 | 2016: +0.009 | 2017: +0.192 | 2018: +0.313 | 2019: +0.212 | 2020: +0.143 | 2021: +0.124 | 2022: +0.353 | 2023: +0.272 | 2024: +0.292 | 2025: +0.153 | 2026: -0.115
-- IC CV=0.28, Neg years (linear/tail)=0/0 of 8, Half ratio=0.92, Recency ratio=0.88
-- Early IC=+0.1516, Recent IC=+0.1337, 1st-half IC=+0.1226, 2nd-half IC=+0.1126, Neg regimes=0/5
-- Weak component: `bar_body_rng_0` (CV=0.36, neg years=0)
-- Regime ICs: Q1_low_vol=+0.107, Q2=+0.048, Q3_mid=+0.142, Q4=+0.135, Q5_high_vol=+0.150
-
 **`combo_min__bar_ret_0__early_order_flow_imbalance`** (Lock IC=-0.0339, Sharpe=-0.8457)
 - Admission: Train IC=+0.2402, Deflated=+0.2390, IR=0.78, Mono=0.75, p=0.0000, MaxCorr=0.93
 - Yearly Linear ICs: 2015: +0.153 | 2016: +0.005 | 2017: +0.137 | 2018: +0.160 | 2019: +0.157 | 2020: +0.064 | 2021: +0.165 | 2022: +0.125 | 2023: +0.077 | 2024: +0.121 | 2025: +0.102 | 2026: -0.034
@@ -974,15 +592,6 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `bar_ret_0` (CV=0.48, neg years=0)
 - Regime ICs: Q1_low_vol=+0.143, Q2=+0.047, Q3_mid=+0.113, Q4=+0.125, Q5_high_vol=+0.151
 
-**`combo_mean__volatility_expansion_trend_vector__max_down_ret`** (Lock IC=-0.0187, Sharpe=-0.7812)
-- Admission: Train IC=+0.2111, Deflated=+0.2104, IR=0.71, Mono=0.76, p=0.0000, MaxCorr=0.93
-- Yearly Linear ICs: 2015: +0.248 | 2016: +0.069 | 2017: +0.225 | 2018: +0.139 | 2019: +0.101 | 2020: +0.122 | 2021: +0.072 | 2022: +0.076 | 2023: +0.072 | 2024: +0.122 | 2025: +0.144 | 2026: -0.019
-- Yearly Tail ICs:   2015: +0.291 | 2016: -0.115 | 2017: +0.318 | 2018: +0.081 | 2019: +0.240 | 2020: +0.091 | 2021: +0.312 | 2022: +0.309 | 2023: +0.294 | 2024: +0.313 | 2025: +0.133 | 2026: -0.168
-- IC CV=0.26, Neg years (linear/tail)=0/0 of 8, Half ratio=1.04, Recency ratio=1.11
-- Early IC=+0.1197, Recent IC=+0.1332, 1st-half IC=+0.1071, 2nd-half IC=+0.1116, Neg regimes=0/5
-- Weak component: `max_down_ret` (CV=0.39, neg years=0)
-- Regime ICs: Q1_low_vol=+0.098, Q2=+0.063, Q3_mid=+0.148, Q4=+0.113, Q5_high_vol=+0.135
-
 **`combo_mean__max_up_ret__max_down_ret`** (Lock IC=-0.0160, Sharpe=-0.6629)
 - Admission: Train IC=+0.1869, Deflated=+0.1868, IR=0.61, Mono=0.70, p=0.0000, MaxCorr=0.93
 - Yearly Linear ICs: 2015: +0.256 | 2016: +0.068 | 2017: +0.243 | 2018: +0.206 | 2019: +0.121 | 2020: +0.136 | 2021: +0.105 | 2022: +0.105 | 2023: +0.092 | 2024: +0.157 | 2025: +0.107 | 2026: -0.016
@@ -991,15 +600,6 @@ Per-year training IC for each FP feature. Look for:
 - Early IC=+0.1633, Recent IC=+0.1317, 1st-half IC=+0.1363, 2nd-half IC=+0.1233, Neg regimes=0/5
 - Weak component: `max_down_ret` (CV=0.39, neg years=0)
 - Regime ICs: Q1_low_vol=+0.105, Q2=+0.059, Q3_mid=+0.142, Q4=+0.120, Q5_high_vol=+0.196
-
-**`combo_tri_min__opening_drive_thrust_ratio__max_up_ret__bar_ret_0`** (Lock IC=-0.0023, Sharpe=-0.5680)
-- Admission: Train IC=+0.2330, Deflated=+0.2333, IR=0.86, Mono=0.83, p=0.0000, MaxCorr=0.94
-- Yearly Linear ICs: 2015: +0.265 | 2016: +0.105 | 2017: +0.205 | 2018: +0.239 | 2019: +0.159 | 2020: +0.142 | 2021: +0.107 | 2022: +0.073 | 2023: +0.093 | 2024: +0.120 | 2025: +0.123 | 2026: -0.002
-- Yearly Tail ICs:   2015: +0.384 | 2016: +0.086 | 2017: +0.330 | 2018: +0.472 | 2019: +0.170 | 2020: +0.150 | 2021: +0.248 | 2022: +0.254 | 2023: +0.186 | 2024: +0.214 | 2025: +0.107 | 2026: -0.200
-- IC CV=0.36, Neg years (linear/tail)=0/0 of 8, Half ratio=0.68, Recency ratio=0.61
-- Early IC=+0.1990, Recent IC=+0.1211, 1st-half IC=+0.1587, 2nd-half IC=+0.1080, Neg regimes=0/5
-- Weak component: `bar_ret_0` (CV=0.48, neg years=0)
-- Regime ICs: Q1_low_vol=+0.086, Q2=+0.033, Q3_mid=+0.150, Q4=+0.148, Q5_high_vol=+0.191
 
 **`combo_tri_min__max_up_ret__trend_day_regime_conviction__bar_ret_0`** (Lock IC=-0.0199, Sharpe=-0.4536)
 - Admission: Train IC=+0.2227, Deflated=+0.2222, IR=0.73, Mono=0.75, p=0.0000, MaxCorr=0.94
@@ -1019,15 +619,6 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `bar_body_rng_0` (CV=0.36, neg years=0)
 - Regime ICs: Q1_low_vol=+0.130, Q2=+0.033, Q3_mid=+0.142, Q4=+0.122, Q5_high_vol=+0.137
 
-**`combo_sig_product__volatility_expansion_trend_vector__star50_limit_proximity_early`** (Lock IC=-0.1166, Sharpe=-0.3288)
-- Admission: Train IC=+0.1620, Deflated=+0.1595, IR=0.56, Mono=0.71, p=0.0008, MaxCorr=0.68
-- Yearly Linear ICs: 2015: +0.151 | 2016: -0.044 | 2017: +0.188 | 2018: +0.181 | 2019: +0.138 | 2020: +0.042 | 2021: +0.096 | 2022: +0.104 | 2023: +0.066 | 2024: +0.146 | 2025: +0.178 | 2026: -0.117
-- Yearly Tail ICs:   2015: +0.091 | 2016: -0.040 | 2017: +0.125 | 2018: +0.130 | 2019: +0.304 | 2020: +0.038 | 2021: +0.014 | 2022: +0.174 | 2023: +0.158 | 2024: +0.142 | 2025: +0.217 | 2026: -0.070
-- IC CV=0.40, Neg years (linear/tail)=0/0 of 8, Half ratio=1.17, Recency ratio=1.02
-- Early IC=+0.1594, Recent IC=+0.1619, 1st-half IC=+0.1140, 2nd-half IC=+0.1332, Neg regimes=0/5
-- Weak component: `star50_limit_proximity_early` (CV=0.28, neg years=0)
-- Regime ICs: Q1_low_vol=+0.051, Q2=+0.142, Q3_mid=+0.160, Q4=+0.140, Q5_high_vol=+0.117
-
 **`combo_min__net_volume_flow__first_bar_return`** (Lock IC=-0.0010, Sharpe=-0.2212)
 - Admission: Train IC=+0.2435, Deflated=+0.2432, IR=0.72, Mono=0.75, p=0.0000, MaxCorr=0.91
 - Yearly Linear ICs: 2015: +0.200 | 2016: +0.071 | 2017: +0.181 | 2018: +0.177 | 2019: +0.120 | 2020: +0.094 | 2021: +0.083 | 2022: +0.086 | 2023: +0.078 | 2024: +0.134 | 2025: +0.124 | 2026: -0.001
@@ -1036,15 +627,6 @@ Per-year training IC for each FP feature. Look for:
 - Early IC=+0.1487, Recent IC=+0.1290, 1st-half IC=+0.1184, 2nd-half IC=+0.1114, Neg regimes=0/5
 - Weak component: `first_bar_return` (CV=0.48, neg years=0)
 - Regime ICs: Q1_low_vol=+0.109, Q2=+0.044, Q3_mid=+0.134, Q4=+0.115, Q5_high_vol=+0.151
-
-**`combo_tri_min__opening_drive_thrust_ratio__volatility_expansion_trend_vector__bar_ret_0`** (Lock IC=-0.0080, Sharpe=-0.0237)
-- Admission: Train IC=+0.2401, Deflated=+0.2394, IR=0.75, Mono=0.75, p=0.0000, MaxCorr=0.95
-- Yearly Linear ICs: 2015: +0.201 | 2016: +0.062 | 2017: +0.199 | 2018: +0.213 | 2019: +0.134 | 2020: +0.102 | 2021: +0.100 | 2022: +0.067 | 2023: +0.086 | 2024: +0.131 | 2025: +0.142 | 2026: -0.008
-- Yearly Tail ICs:   2015: +0.315 | 2016: +0.057 | 2017: +0.337 | 2018: +0.348 | 2019: +0.264 | 2020: +0.157 | 2021: +0.334 | 2022: +0.270 | 2023: +0.289 | 2024: +0.252 | 2025: +0.123 | 2026: -0.117
-- IC CV=0.34, Neg years (linear/tail)=0/0 of 8, Half ratio=0.82, Recency ratio=0.79
-- Early IC=+0.1731, Recent IC=+0.1362, 1st-half IC=+0.1349, 2nd-half IC=+0.1107, Neg regimes=0/5
-- Weak component: `bar_ret_0` (CV=0.48, neg years=0)
-- Regime ICs: Q1_low_vol=+0.110, Q2=+0.040, Q3_mid=+0.126, Q4=+0.141, Q5_high_vol=+0.176
 
 **`combo_tri_median__rbreaker_sell_setup_proximity_early__volatility_expansion_trend_vector__bar_ret_0`** (Lock IC=-0.0197, Sharpe=+0.1617)
 - Admission: Train IC=+0.2192, Deflated=+0.2184, IR=0.70, Mono=0.78, p=0.0000, MaxCorr=0.90
@@ -1055,34 +637,7 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `bar_ret_0` (CV=0.48, neg years=0)
 - Regime ICs: Q1_low_vol=+0.119, Q2=+0.059, Q3_mid=+0.152, Q4=+0.127, Q5_high_vol=+0.212
 
-**`combo_tri_median__opening_drive_thrust_ratio__trend_bar_close_consistency__star50_limit_proximity_early`** (Lock IC=-0.0061, Sharpe=+0.1883)
-- Admission: Train IC=+0.1965, Deflated=+0.1957, IR=0.69, Mono=0.81, p=0.0000, MaxCorr=0.91
-- Yearly Linear ICs: 2015: +0.240 | 2016: +0.054 | 2017: +0.210 | 2018: +0.200 | 2019: +0.133 | 2020: +0.146 | 2021: +0.106 | 2022: +0.086 | 2023: +0.131 | 2024: +0.151 | 2025: +0.109 | 2026: -0.006
-- Yearly Tail ICs:   2015: +0.387 | 2016: +0.209 | 2017: +0.332 | 2018: +0.306 | 2019: +0.177 | 2020: +0.225 | 2021: +0.275 | 2022: +0.232 | 2023: +0.231 | 2024: +0.178 | 2025: +0.049 | 2026: -0.213
-- IC CV=0.25, Neg years (linear/tail)=0/0 of 8, Half ratio=0.88, Recency ratio=0.78
-- Early IC=+0.1667, Recent IC=+0.1297, 1st-half IC=+0.1461, 2nd-half IC=+0.1278, Neg regimes=0/5
-- Weak component: `trend_bar_close_consistency` (CV=0.49, neg years=0)
-- Regime ICs: Q1_low_vol=+0.132, Q2=+0.075, Q3_mid=+0.171, Q4=+0.120, Q5_high_vol=+0.177
-
-**`combo_tri_min__trend_bar_close_consistency__volatility_expansion_trend_vector__bar_ret_0`** (Lock IC=-0.0001, Sharpe=+0.3696)
-- Admission: Train IC=+0.2269, Deflated=+0.2261, IR=0.74, Mono=0.73, p=0.0000, MaxCorr=0.95
-- Yearly Linear ICs: 2015: +0.153 | 2016: +0.060 | 2017: +0.176 | 2018: +0.148 | 2019: +0.097 | 2020: +0.053 | 2021: +0.045 | 2022: +0.069 | 2023: +0.087 | 2024: +0.139 | 2025: +0.121 | 2026: -0.000
-- Yearly Tail ICs:   2015: +0.330 | 2016: +0.026 | 2017: +0.382 | 2018: +0.364 | 2019: +0.143 | 2020: +0.070 | 2021: +0.304 | 2022: +0.262 | 2023: +0.222 | 2024: +0.347 | 2025: +0.116 | 2026: +0.032
-- IC CV=0.38, Neg years (linear/tail)=0/0 of 8, Half ratio=1.22, Recency ratio=1.06
-- Early IC=+0.1227, Recent IC=+0.1298, 1st-half IC=+0.0879, 2nd-half IC=+0.1069, Neg regimes=0/5
-- Weak component: `trend_bar_close_consistency` (CV=0.49, neg years=0)
-- Regime ICs: Q1_low_vol=+0.103, Q2=+0.031, Q3_mid=+0.111, Q4=+0.098, Q5_high_vol=+0.139
-
 ### 159915ETF — `single` False Positives
-
-**`combo_ratio__volatility_expansion_trend_vector__volume_weighted_price_position`** (Lock IC=-0.1064, Sharpe=-4.3046)
-- Admission: Train IC=+0.2173, Deflated=+0.2174, IR=0.68, Mono=0.76, p=0.0002, MaxCorr=0.92
-- Yearly Linear ICs: 2015: +0.134 | 2016: +0.006 | 2017: +0.035 | 2018: +0.002 | 2019: +0.098 | 2020: +0.044 | 2021: +0.145 | 2022: +0.076 | 2023: +0.163 | 2024: +0.087 | 2025: +0.195 | 2026: -0.106
-- Yearly Tail ICs:   2015: +0.298 | 2016: -0.007 | 2017: +0.135 | 2018: -0.059 | 2019: +0.380 | 2020: +0.209 | 2021: +0.219 | 2022: +0.279 | 2023: +0.335 | 2024: +0.198 | 2025: +0.185 | 2026: -0.492
-- IC CV=0.59, Neg years (linear/tail)=0/1 of 8, Half ratio=2.15, Recency ratio=2.80
-- Early IC=+0.0502, Recent IC=+0.1406, 1st-half IC=+0.0638, 2nd-half IC=+0.1373, Neg regimes=0/5
-- Weak component: `volume_weighted_price_position` (CV=0.69, neg years=0)
-- Regime ICs: Q1_low_vol=+0.146, Q2=+0.147, Q3_mid=+0.137, Q4=+0.072, Q5_high_vol=+0.078
 
 **`combo_rank_max__max_up_ret__volatility_expansion_trend_vector`** (Lock IC=-0.0913, Sharpe=-4.2927)
 - Admission: Train IC=+0.2254, Deflated=+0.2264, IR=0.82, Mono=0.79, p=0.0000, MaxCorr=0.93
@@ -1165,23 +720,6 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `volatility_expansion_trend_vector` (CV=0.58, neg years=0)
 - Regime ICs: Q1_low_vol=+0.183, Q2=+0.156, Q3_mid=+0.151, Q4=+0.081, Q5_high_vol=+0.113
 
-**`net_volume_flow`** (Lock IC=-0.0663, Sharpe=-3.0886)
-- Admission: Train IC=+0.2076, Deflated=+0.2077, IR=0.65, Mono=0.74, p=0.0002, MaxCorr=0.92
-- Yearly Linear ICs: 2015: +0.132 | 2016: +0.053 | 2017: -0.019 | 2018: +0.036 | 2019: +0.116 | 2020: +0.049 | 2021: +0.139 | 2022: +0.063 | 2023: +0.165 | 2024: +0.072 | 2025: +0.205 | 2026: -0.066
-- Yearly Tail ICs:   2015: +0.145 | 2016: +0.110 | 2017: +0.061 | 2018: +0.026 | 2019: +0.301 | 2020: +0.192 | 2021: -0.005 | 2022: +0.332 | 2023: +0.452 | 2024: +0.160 | 2025: +0.185 | 2026: -0.324
-- IC CV=0.54, Neg years (linear/tail)=0/1 of 8, Half ratio=1.80, Recency ratio=1.83
-- Early IC=+0.0757, Recent IC=+0.1386, 1st-half IC=+0.0760, 2nd-half IC=+0.1368, Neg regimes=0/5
-- Regime ICs: Q1_low_vol=+0.154, Q2=+0.156, Q3_mid=+0.135, Q4=+0.077, Q5_high_vol=+0.075
-
-**`combo_mean__volume_weighted_price_position__volatility_expansion_trend_vector`** (Lock IC=-0.0820, Sharpe=-3.0532)
-- Admission: Train IC=+0.2248, Deflated=+0.2248, IR=0.64, Mono=0.73, p=0.0000, MaxCorr=0.92
-- Yearly Linear ICs: 2015: +0.108 | 2016: +0.039 | 2017: +0.044 | 2018: +0.020 | 2019: +0.146 | 2020: +0.031 | 2021: +0.189 | 2022: +0.052 | 2023: +0.168 | 2024: +0.082 | 2025: +0.195 | 2026: -0.082
-- Yearly Tail ICs:   2015: +0.142 | 2016: -0.049 | 2017: +0.147 | 2018: +0.069 | 2019: +0.455 | 2020: +0.087 | 2021: +0.215 | 2022: +0.156 | 2023: +0.307 | 2024: +0.146 | 2025: +0.283 | 2026: -0.313
-- IC CV=0.61, Neg years (linear/tail)=0/0 of 8, Half ratio=1.50, Recency ratio=1.66
-- Early IC=+0.0830, Recent IC=+0.1383, 1st-half IC=+0.0874, 2nd-half IC=+0.1315, Neg regimes=0/5
-- Weak component: `volume_weighted_price_position` (CV=0.69, neg years=0)
-- Regime ICs: Q1_low_vol=+0.126, Q2=+0.157, Q3_mid=+0.144, Q4=+0.086, Q5_high_vol=+0.092
-
 **`combo_rank_max__max_up_ret__volume_weighted_price_position`** (Lock IC=-0.0737, Sharpe=-3.0060)
 - Admission: Train IC=+0.2261, Deflated=+0.2260, IR=0.61, Mono=0.70, p=0.0000, MaxCorr=0.85
 - Yearly Linear ICs: 2015: +0.171 | 2016: +0.084 | 2017: +0.064 | 2018: +0.067 | 2019: +0.173 | 2020: +0.066 | 2021: +0.220 | 2022: +0.089 | 2023: +0.165 | 2024: +0.079 | 2025: +0.179 | 2026: -0.069
@@ -1200,15 +738,6 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `volatility_expansion_trend_vector` (CV=0.58, neg years=0)
 - Regime ICs: Q1_low_vol=+0.145, Q2=+0.151, Q3_mid=+0.136, Q4=+0.096, Q5_high_vol=+0.107
 
-**`combo_rank_max__volatility_expansion_trend_vector__rally_strength_max`** (Lock IC=-0.0820, Sharpe=-2.8534)
-- Admission: Train IC=+0.2197, Deflated=+0.2196, IR=0.61, Mono=0.71, p=0.0002, MaxCorr=0.95
-- Yearly Linear ICs: 2015: +0.148 | 2016: -0.004 | 2017: +0.027 | 2018: +0.037 | 2019: +0.118 | 2020: +0.054 | 2021: +0.168 | 2022: +0.081 | 2023: +0.159 | 2024: +0.074 | 2025: +0.202 | 2026: -0.085
-- Yearly Tail ICs:   2015: +0.315 | 2016: -0.095 | 2017: -0.091 | 2018: -0.017 | 2019: +0.360 | 2020: +0.240 | 2021: +0.276 | 2022: +0.229 | 2023: +0.271 | 2024: +0.240 | 2025: +0.281 | 2026: -0.302
-- IC CV=0.52, Neg years (linear/tail)=0/0 of 8, Half ratio=1.46, Recency ratio=1.65
-- Early IC=+0.0805, Recent IC=+0.1327, 1st-half IC=+0.0872, 2nd-half IC=+0.1271, Neg regimes=0/5
-- Weak component: `rally_strength_max` (CV=0.90, neg years=1)
-- Regime ICs: Q1_low_vol=+0.111, Q2=+0.138, Q3_mid=+0.170, Q4=+0.102, Q5_high_vol=+0.072
-
 **`combo_rank_max__opening_drive_thrust_ratio__max_up_ret`** (Lock IC=-0.0595, Sharpe=-2.7716)
 - Admission: Train IC=+0.2532, Deflated=+0.2535, IR=0.77, Mono=0.75, p=0.0000, MaxCorr=0.90
 - Yearly Linear ICs: 2015: +0.192 | 2016: +0.062 | 2017: +0.043 | 2018: +0.055 | 2019: +0.164 | 2020: +0.100 | 2021: +0.182 | 2022: +0.114 | 2023: +0.190 | 2024: +0.078 | 2025: +0.174 | 2026: -0.063
@@ -1226,24 +755,6 @@ Per-year training IC for each FP feature. Look for:
 - Early IC=+0.0990, Recent IC=+0.1104, 1st-half IC=+0.1019, 2nd-half IC=+0.1027, Neg regimes=0/5
 - Weak component: `rally_strength_max` (CV=0.90, neg years=1)
 - Regime ICs: Q1_low_vol=+0.065, Q2=+0.157, Q3_mid=+0.133, Q4=+0.120, Q5_high_vol=+0.072
-
-**`combo_sig_product__opening_drive_thrust_ratio__volatility_expansion_trend_vector`** (Lock IC=-0.1124, Sharpe=-2.6779)
-- Admission: Train IC=+0.2139, Deflated=+0.2137, IR=0.69, Mono=0.77, p=0.0002, MaxCorr=0.90
-- Yearly Linear ICs: 2015: +0.086 | 2016: +0.045 | 2017: +0.069 | 2018: +0.084 | 2019: +0.206 | 2020: +0.077 | 2021: +0.111 | 2022: +0.057 | 2023: +0.173 | 2024: +0.119 | 2025: +0.169 | 2026: -0.112
-- Yearly Tail ICs:   2015: +0.167 | 2016: +0.081 | 2017: +0.039 | 2018: +0.002 | 2019: +0.273 | 2020: +0.174 | 2021: +0.151 | 2022: +0.352 | 2023: +0.381 | 2024: +0.160 | 2025: +0.280 | 2026: -0.291
-- IC CV=0.40, Neg years (linear/tail)=0/0 of 8, Half ratio=1.30, Recency ratio=0.99
-- Early IC=+0.1452, Recent IC=+0.1440, 1st-half IC=+0.1048, 2nd-half IC=+0.1359, Neg regimes=0/5
-- Weak component: `volatility_expansion_trend_vector` (CV=0.58, neg years=0)
-- Regime ICs: Q1_low_vol=+0.157, Q2=+0.151, Q3_mid=+0.148, Q4=+0.101, Q5_high_vol=+0.113
-
-**`combo_sig_product__max_up_ret__volatility_expansion_trend_vector`** (Lock IC=-0.0325, Sharpe=-2.6779)
-- Admission: Train IC=+0.2159, Deflated=+0.2157, IR=0.70, Mono=0.78, p=0.0002, MaxCorr=0.89
-- Yearly Linear ICs: 2015: +0.155 | 2016: +0.041 | 2017: +0.004 | 2018: +0.033 | 2019: +0.128 | 2020: +0.102 | 2021: +0.111 | 2022: +0.075 | 2023: +0.138 | 2024: +0.116 | 2025: +0.195 | 2026: -0.033
-- Yearly Tail ICs:   2015: +0.210 | 2016: +0.105 | 2017: +0.098 | 2018: -0.016 | 2019: +0.319 | 2020: +0.179 | 2021: +0.151 | 2022: +0.361 | 2023: +0.373 | 2024: +0.169 | 2025: +0.260 | 2026: -0.291
-- IC CV=0.39, Neg years (linear/tail)=0/1 of 8, Half ratio=1.53, Recency ratio=1.93
-- Early IC=+0.0807, Recent IC=+0.1557, 1st-half IC=+0.0904, 2nd-half IC=+0.1381, Neg regimes=0/5
-- Weak component: `volatility_expansion_trend_vector` (CV=0.58, neg years=0)
-- Regime ICs: Q1_low_vol=+0.101, Q2=+0.173, Q3_mid=+0.111, Q4=+0.104, Q5_high_vol=+0.109
 
 **`combo_rank_max__max_up_ret__bar_body_rng_0`** (Lock IC=-0.0563, Sharpe=-2.6490)
 - Admission: Train IC=+0.2775, Deflated=+0.2775, IR=0.87, Mono=0.78, p=0.0000, MaxCorr=0.86
@@ -1272,24 +783,6 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `volume_weighted_price_position` (CV=0.69, neg years=0)
 - Regime ICs: Q1_low_vol=+0.091, Q2=+0.108, Q3_mid=+0.108, Q4=+0.121, Q5_high_vol=+0.130
 
-**`combo_sig_product__volume_weighted_price_position__volatility_expansion_trend_vector`** (Lock IC=-0.0445, Sharpe=-2.4277)
-- Admission: Train IC=+0.2112, Deflated=+0.2115, IR=0.68, Mono=0.73, p=0.0002, MaxCorr=0.77
-- Yearly Linear ICs: 2015: +0.047 | 2016: +0.069 | 2017: -0.004 | 2018: +0.055 | 2019: +0.192 | 2020: +0.043 | 2021: +0.159 | 2022: +0.081 | 2023: +0.125 | 2024: +0.096 | 2025: +0.178 | 2026: -0.044
-- Yearly Tail ICs:   2015: -0.021 | 2016: +0.181 | 2017: +0.163 | 2018: -0.026 | 2019: +0.316 | 2020: +0.279 | 2021: +0.076 | 2022: +0.332 | 2023: +0.234 | 2024: +0.145 | 2025: +0.216 | 2026: -0.275
-- IC CV=0.46, Neg years (linear/tail)=0/1 of 8, Half ratio=1.22, Recency ratio=1.11
-- Early IC=+0.1236, Recent IC=+0.1369, 1st-half IC=+0.1038, 2nd-half IC=+0.1263, Neg regimes=0/5
-- Weak component: `volume_weighted_price_position` (CV=0.69, neg years=0)
-- Regime ICs: Q1_low_vol=+0.133, Q2=+0.151, Q3_mid=+0.138, Q4=+0.129, Q5_high_vol=+0.055
-
-**`combo_rank_min__volume_weighted_price_position__rally_strength_max`** (Lock IC=-0.0427, Sharpe=-2.4174)
-- Admission: Train IC=+0.1855, Deflated=+0.1854, IR=0.58, Mono=0.71, p=0.0004, MaxCorr=0.82
-- Yearly Linear ICs: 2015: +0.070 | 2016: +0.020 | 2017: +0.049 | 2018: +0.044 | 2019: +0.163 | 2020: +0.011 | 2021: +0.189 | 2022: -0.042 | 2023: +0.124 | 2024: +0.084 | 2025: +0.148 | 2026: -0.036
-- Yearly Tail ICs:   2015: +0.038 | 2016: -0.122 | 2017: +0.026 | 2018: +0.096 | 2019: +0.460 | 2020: +0.072 | 2021: +0.169 | 2022: +0.020 | 2023: +0.265 | 2024: +0.207 | 2025: +0.127 | 2026: -0.214
-- IC CV=0.83, Neg years (linear/tail)=1/0 of 8, Half ratio=0.91, Recency ratio=1.12
-- Early IC=+0.1041, Recent IC=+0.1170, 1st-half IC=+0.0958, 2nd-half IC=+0.0876, Neg regimes=0/5
-- Weak component: `rally_strength_max` (CV=0.90, neg years=1)
-- Regime ICs: Q1_low_vol=+0.088, Q2=+0.119, Q3_mid=+0.142, Q4=+0.080, Q5_high_vol=+0.060
-
 **`combo_mean__volatility_expansion_trend_vector__rally_strength_max`** (Lock IC=-0.0867, Sharpe=-2.3108)
 - Admission: Train IC=+0.2340, Deflated=+0.2339, IR=0.72, Mono=0.78, p=0.0000, MaxCorr=0.92
 - Yearly Linear ICs: 2015: +0.132 | 2016: +0.001 | 2017: +0.039 | 2018: +0.010 | 2019: +0.125 | 2020: +0.029 | 2021: +0.167 | 2022: +0.043 | 2023: +0.145 | 2024: +0.071 | 2025: +0.200 | 2026: -0.087
@@ -1298,15 +791,6 @@ Per-year training IC for each FP feature. Look for:
 - Early IC=+0.0676, Recent IC=+0.1358, 1st-half IC=+0.0751, 2nd-half IC=+0.1206, Neg regimes=0/5
 - Weak component: `rally_strength_max` (CV=0.90, neg years=1)
 - Regime ICs: Q1_low_vol=+0.102, Q2=+0.159, Q3_mid=+0.150, Q4=+0.080, Q5_high_vol=+0.063
-
-**`combo_ifelse__gap_pct__opening_drive_thrust_ratio__max_up_ret`** (Lock IC=-0.0582, Sharpe=-2.1924)
-- Admission: Train IC=+0.1815, Deflated=+0.1814, IR=0.73, Mono=0.77, p=0.0004, MaxCorr=0.90
-- Yearly Linear ICs: 2015: +0.159 | 2016: +0.008 | 2017: +0.056 | 2018: +0.085 | 2019: +0.177 | 2020: +0.103 | 2021: +0.178 | 2022: +0.103 | 2023: +0.189 | 2024: +0.043 | 2025: +0.188 | 2026: -0.058
-- Yearly Tail ICs:   2015: +0.195 | 2016: +0.044 | 2017: +0.150 | 2018: +0.093 | 2019: +0.154 | 2020: +0.298 | 2021: +0.149 | 2022: +0.275 | 2023: +0.387 | 2024: +0.013 | 2025: +0.122 | 2026: -0.268
-- IC CV=0.40, Neg years (linear/tail)=0/0 of 8, Half ratio=1.00, Recency ratio=0.88
-- Early IC=+0.1309, Recent IC=+0.1154, 1st-half IC=+0.1319, 2nd-half IC=+0.1319, Neg regimes=0/5
-- Weak component: `gap_pct` (CV=0.76, neg years=1)
-- Regime ICs: Q1_low_vol=+0.166, Q2=+0.146, Q3_mid=+0.104, Q4=+0.144, Q5_high_vol=+0.145
 
 **`combo_rank_max__opening_drive_thrust_ratio__volatility_expansion_trend_vector`** (Lock IC=-0.0930, Sharpe=-2.1195)
 - Admission: Train IC=+0.2483, Deflated=+0.2487, IR=0.90, Mono=0.80, p=0.0000, MaxCorr=0.92
@@ -1334,23 +818,6 @@ Per-year training IC for each FP feature. Look for:
 - Early IC=+0.1167, Recent IC=+0.1051, 1st-half IC=+0.1117, 2nd-half IC=+0.1187, Neg regimes=0/5
 - Weak component: `demark_setup_reversal_early` (CV=0.34, neg years=0)
 - Regime ICs: Q1_low_vol=+0.091, Q2=+0.149, Q3_mid=+0.106, Q4=+0.116, Q5_high_vol=+0.123
-
-**`combo_sig_product__bar_body_rng_0__volatility_expansion_trend_vector`** (Lock IC=-0.0010, Sharpe=-1.9510)
-- Admission: Train IC=+0.2328, Deflated=+0.2335, IR=0.64, Mono=0.74, p=0.0000, MaxCorr=0.83
-- Yearly Linear ICs: 2015: +0.187 | 2016: +0.130 | 2017: +0.013 | 2018: +0.109 | 2019: +0.222 | 2020: +0.144 | 2021: +0.031 | 2022: +0.057 | 2023: +0.140 | 2024: +0.064 | 2025: +0.122 | 2026: -0.001
-- Yearly Tail ICs:   2015: +0.262 | 2016: +0.087 | 2017: -0.031 | 2018: -0.019 | 2019: +0.411 | 2020: +0.287 | 2021: +0.098 | 2022: +0.355 | 2023: +0.372 | 2024: +0.177 | 2025: +0.163 | 2026: -0.217
-- IC CV=0.51, Neg years (linear/tail)=0/1 of 8, Half ratio=0.85, Recency ratio=0.56
-- Early IC=+0.1654, Recent IC=+0.0930, 1st-half IC=+0.1151, 2nd-half IC=+0.0984, Neg regimes=0/5
-- Weak component: `volatility_expansion_trend_vector` (CV=0.58, neg years=0)
-- Regime ICs: Q1_low_vol=+0.157, Q2=+0.125, Q3_mid=+0.114, Q4=+0.078, Q5_high_vol=+0.104
-
-**`trend_bar_close_consistency`** (Lock IC=-0.1362, Sharpe=-1.8903)
-- Admission: Train IC=+0.1956, Deflated=+0.1955, IR=0.61, Mono=0.75, p=0.0002, MaxCorr=0.88
-- Yearly Linear ICs: 2015: +0.055 | 2016: +0.017 | 2017: -0.031 | 2018: +0.000 | 2019: +0.074 | 2020: +0.026 | 2021: +0.109 | 2022: +0.058 | 2023: +0.144 | 2024: +0.066 | 2025: +0.222 | 2026: -0.136
-- Yearly Tail ICs:   2015: +0.047 | 2016: +0.226 | 2017: -0.086 | 2018: +0.030 | 2019: +0.233 | 2020: +0.182 | 2021: +0.058 | 2022: +0.382 | 2023: +0.352 | 2024: +0.099 | 2025: +0.249 | 2026: -0.074
-- IC CV=0.75, Neg years (linear/tail)=0/0 of 8, Half ratio=2.76, Recency ratio=3.89
-- Early IC=+0.0370, Recent IC=+0.1440, 1st-half IC=+0.0475, 2nd-half IC=+0.1313, Neg regimes=0/5
-- Regime ICs: Q1_low_vol=+0.126, Q2=+0.158, Q3_mid=+0.121, Q4=+0.075, Q5_high_vol=+0.030
 
 **`combo_sig_product__opening_drive_thrust_ratio__max_up_ret`** (Lock IC=-0.0811, Sharpe=-1.8808)
 - Admission: Train IC=+0.2099, Deflated=+0.2097, IR=0.69, Mono=0.77, p=0.0002, MaxCorr=0.88
@@ -1433,15 +900,6 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `keltner_squeeze_width` (CV=0.68, neg years=1)
 - Regime ICs: Q1_low_vol=+0.159, Q2=+0.096, Q3_mid=+0.099, Q4=+0.121, Q5_high_vol=+0.063
 
-**`combo_tri_median__max_up_ret__demark_setup_reversal_early__first_bar_return`** (Lock IC=-0.0495, Sharpe=-1.7134)
-- Admission: Train IC=+0.1960, Deflated=+0.1970, IR=0.62, Mono=0.75, p=0.0002, MaxCorr=0.93
-- Yearly Linear ICs: 2015: +0.174 | 2016: +0.142 | 2017: +0.007 | 2018: +0.113 | 2019: +0.167 | 2020: +0.154 | 2021: +0.138 | 2022: +0.079 | 2023: +0.140 | 2024: +0.056 | 2025: +0.111 | 2026: -0.049
-- Yearly Tail ICs:   2015: +0.096 | 2016: +0.095 | 2017: +0.137 | 2018: +0.190 | 2019: +0.140 | 2020: +0.168 | 2021: +0.290 | 2022: +0.152 | 2023: +0.334 | 2024: +0.134 | 2025: +0.232 | 2026: -0.221
-- IC CV=0.29, Neg years (linear/tail)=0/0 of 8, Half ratio=0.76, Recency ratio=0.60
-- Early IC=+0.1401, Recent IC=+0.0837, 1st-half IC=+0.1280, 2nd-half IC=+0.0976, Neg regimes=0/5
-- Weak component: `demark_setup_reversal_early` (CV=0.34, neg years=0)
-- Regime ICs: Q1_low_vol=+0.107, Q2=+0.142, Q3_mid=+0.105, Q4=+0.088, Q5_high_vol=+0.122
-
 **`combo_min__opening_drive_thrust_ratio__bar_body_rng_0`** (Lock IC=-0.0036, Sharpe=-1.7032)
 - Admission: Train IC=+0.2780, Deflated=+0.2786, IR=0.64, Mono=0.75, p=0.0000, MaxCorr=0.93
 - Yearly Linear ICs: 2015: +0.168 | 2016: +0.096 | 2017: -0.003 | 2018: +0.128 | 2019: +0.200 | 2020: +0.124 | 2021: +0.142 | 2022: +0.099 | 2023: +0.177 | 2024: +0.076 | 2025: +0.180 | 2026: -0.004
@@ -1487,15 +945,6 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `keltner_squeeze_width` (CV=0.68, neg years=1)
 - Regime ICs: Q1_low_vol=+0.158, Q2=+0.105, Q3_mid=+0.094, Q4=+0.128, Q5_high_vol=+0.071
 
-**`combo_rank_min__volume_weighted_price_position__volatility_expansion_trend_vector`** (Lock IC=-0.0561, Sharpe=-1.5551)
-- Admission: Train IC=+0.2141, Deflated=+0.2141, IR=0.71, Mono=0.75, p=0.0002, MaxCorr=0.94
-- Yearly Linear ICs: 2015: +0.093 | 2016: +0.041 | 2017: +0.011 | 2018: +0.023 | 2019: +0.133 | 2020: -0.015 | 2021: +0.167 | 2022: +0.017 | 2023: +0.179 | 2024: +0.069 | 2025: +0.169 | 2026: -0.054
-- Yearly Tail ICs:   2015: +0.027 | 2016: +0.051 | 2017: +0.104 | 2018: +0.135 | 2019: +0.330 | 2020: +0.070 | 2021: +0.088 | 2022: +0.155 | 2023: +0.382 | 2024: +0.220 | 2025: +0.210 | 2026: -0.249
-- IC CV=0.79, Neg years (linear/tail)=1/0 of 8, Half ratio=1.80, Recency ratio=1.71
-- Early IC=+0.0720, Recent IC=+0.1233, 1st-half IC=+0.0654, 2nd-half IC=+0.1174, Neg regimes=0/5
-- Weak component: `volume_weighted_price_position` (CV=0.69, neg years=0)
-- Regime ICs: Q1_low_vol=+0.110, Q2=+0.143, Q3_mid=+0.102, Q4=+0.066, Q5_high_vol=+0.082
-
 **`combo_tri_median__max_up_ret__demark_setup_reversal_early__bar_body_rng_0`** (Lock IC=-0.0399, Sharpe=-1.5508)
 - Admission: Train IC=+0.2246, Deflated=+0.2251, IR=0.58, Mono=0.72, p=0.0000, MaxCorr=0.90
 - Yearly Linear ICs: 2015: +0.197 | 2016: +0.144 | 2017: -0.009 | 2018: +0.103 | 2019: +0.172 | 2020: +0.141 | 2021: +0.146 | 2022: +0.074 | 2023: +0.132 | 2024: +0.061 | 2025: +0.125 | 2026: -0.040
@@ -1513,15 +962,6 @@ Per-year training IC for each FP feature. Look for:
 - Early IC=+0.1571, Recent IC=+0.1058, 1st-half IC=+0.1265, 2nd-half IC=+0.0931, Neg regimes=0/5
 - Weak component: `rally_strength_max` (CV=0.90, neg years=1)
 - Regime ICs: Q1_low_vol=+0.119, Q2=+0.149, Q3_mid=+0.180, Q4=+0.080, Q5_high_vol=+0.074
-
-**`combo_ratio__max_up_ret__directional_volume_signature`** (Lock IC=-0.0437, Sharpe=-1.2791)
-- Admission: Train IC=+0.1672, Deflated=+0.1676, IR=0.61, Mono=0.71, p=0.0012, MaxCorr=0.16
-- Yearly Linear ICs: 2015: +0.110 | 2016: +0.008 | 2017: +0.105 | 2018: +0.060 | 2019: +0.122 | 2020: +0.057 | 2021: +0.190 | 2022: +0.075 | 2023: +0.181 | 2024: +0.092 | 2025: +0.078 | 2026: -0.044
-- Yearly Tail ICs:   2015: +0.235 | 2016: -0.298 | 2017: +0.007 | 2018: +0.036 | 2019: +0.244 | 2020: +0.230 | 2021: +0.308 | 2022: +0.014 | 2023: +0.308 | 2024: +0.145 | 2025: +0.126 | 2026: -0.052
-- IC CV=0.46, Neg years (linear/tail)=0/0 of 8, Half ratio=1.08, Recency ratio=0.93
-- Early IC=+0.0911, Recent IC=+0.0850, 1st-half IC=+0.0959, 2nd-half IC=+0.1032, Neg regimes=0/5
-- Weak component: `directional_volume_signature` (CV=0.91, neg years=1)
-- Regime ICs: Q1_low_vol=+0.089, Q2=+0.116, Q3_mid=+0.085, Q4=+0.120, Q5_high_vol=+0.109
 
 **`combo_max__first_bar_return__rally_strength_max`** (Lock IC=-0.0599, Sharpe=-1.2485)
 - Admission: Train IC=+0.2035, Deflated=+0.2038, IR=0.53, Mono=0.70, p=0.0002, MaxCorr=0.91
@@ -1586,15 +1026,6 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `volatility_expansion_trend_vector` (CV=0.58, neg years=0)
 - Regime ICs: Q1_low_vol=+0.146, Q2=+0.149, Q3_mid=+0.126, Q4=+0.097, Q5_high_vol=+0.114
 
-**`combo_sig_product__opening_drive_thrust_ratio__first_bar_return`** (Lock IC=-0.1070, Sharpe=-1.0195)
-- Admission: Train IC=+0.1335, Deflated=+0.1328, IR=0.40, Mono=0.67, p=0.0072, MaxCorr=0.89
-- Yearly Linear ICs: 2015: +0.110 | 2016: +0.068 | 2017: +0.101 | 2018: +0.140 | 2019: +0.150 | 2020: +0.076 | 2021: +0.127 | 2022: +0.041 | 2023: +0.186 | 2024: +0.106 | 2025: +0.129 | 2026: -0.107
-- Yearly Tail ICs:   2015: -0.067 | 2016: -0.040 | 2017: +0.215 | 2018: +0.174 | 2019: +0.114 | 2020: +0.019 | 2021: +0.258 | 2022: +0.036 | 2023: +0.291 | 2024: +0.114 | 2025: +0.139 | 2026: -0.097
-- IC CV=0.35, Neg years (linear/tail)=0/0 of 8, Half ratio=0.98, Recency ratio=0.81
-- Early IC=+0.1451, Recent IC=+0.1173, 1st-half IC=+0.1128, 2nd-half IC=+0.1104, Neg regimes=0/5
-- Weak component: `opening_drive_thrust_ratio` (CV=0.33, neg years=0)
-- Regime ICs: Q1_low_vol=+0.140, Q2=+0.096, Q3_mid=+0.085, Q4=+0.105, Q5_high_vol=+0.159
-
 **`combo_sig_product__max_up_ret__bar_body_rng_0`** (Lock IC=-0.0148, Sharpe=-1.0032)
 - Admission: Train IC=+0.2553, Deflated=+0.2552, IR=0.58, Mono=0.75, p=0.0000, MaxCorr=0.81
 - Yearly Linear ICs: 2015: +0.217 | 2016: +0.068 | 2017: +0.037 | 2018: +0.154 | 2019: +0.138 | 2020: +0.129 | 2021: +0.150 | 2022: +0.067 | 2023: +0.190 | 2024: +0.054 | 2025: +0.168 | 2026: -0.015
@@ -1657,15 +1088,6 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `bar_ret_0` (CV=0.32, neg years=0)
 - Regime ICs: Q1_low_vol=+0.150, Q2=+0.128, Q3_mid=+0.108, Q4=+0.104, Q5_high_vol=+0.143
 
-**`combo_rank_max__bar_body_rng_0__volume_weighted_price_position`** (Lock IC=-0.0256, Sharpe=-0.7046)
-- Admission: Train IC=+0.1989, Deflated=+0.1995, IR=0.46, Mono=0.70, p=0.0002, MaxCorr=0.91
-- Yearly Linear ICs: 2015: +0.139 | 2016: +0.128 | 2017: +0.017 | 2018: +0.117 | 2019: +0.199 | 2020: +0.067 | 2021: +0.214 | 2022: +0.026 | 2023: +0.151 | 2024: +0.038 | 2025: +0.158 | 2026: -0.023
-- Yearly Tail ICs:   2015: +0.127 | 2016: -0.148 | 2017: +0.102 | 2018: +0.310 | 2019: +0.437 | 2020: -0.057 | 2021: +0.296 | 2022: +0.078 | 2023: +0.232 | 2024: +0.064 | 2025: +0.316 | 2026: -0.033
-- IC CV=0.56, Neg years (linear/tail)=0/1 of 8, Half ratio=0.69, Recency ratio=0.62
-- Early IC=+0.1596, Recent IC=+0.0994, 1st-half IC=+0.1412, 2nd-half IC=+0.0975, Neg regimes=0/5
-- Weak component: `volume_weighted_price_position` (CV=0.69, neg years=0)
-- Regime ICs: Q1_low_vol=+0.139, Q2=+0.133, Q3_mid=+0.125, Q4=+0.092, Q5_high_vol=+0.125
-
 **`combo_mean__max_up_ret__volume_weighted_price_position`** (Lock IC=-0.0570, Sharpe=-0.3265)
 - Admission: Train IC=+0.2368, Deflated=+0.2369, IR=0.60, Mono=0.72, p=0.0000, MaxCorr=0.91
 - Yearly Linear ICs: 2015: +0.163 | 2016: +0.093 | 2017: +0.067 | 2018: +0.066 | 2019: +0.189 | 2020: +0.059 | 2021: +0.197 | 2022: +0.058 | 2023: +0.172 | 2024: +0.094 | 2025: +0.172 | 2026: -0.057
@@ -1720,15 +1142,6 @@ Per-year training IC for each FP feature. Look for:
 - Weak component: `volume_weighted_price_position` (CV=0.69, neg years=0)
 - Regime ICs: Q1_low_vol=+0.124, Q2=+0.138, Q3_mid=+0.130, Q4=+0.083, Q5_high_vol=+0.113
 
-**`combo_mean__opening_drive_thrust_ratio__rally_strength_max`** (Lock IC=-0.0641, Sharpe=+0.8775)
-- Admission: Train IC=+0.2380, Deflated=+0.2380, IR=0.60, Mono=0.72, p=0.0000, MaxCorr=0.95
-- Yearly Linear ICs: 2015: +0.171 | 2016: +0.011 | 2017: +0.038 | 2018: +0.070 | 2019: +0.183 | 2020: +0.058 | 2021: +0.172 | 2022: +0.044 | 2023: +0.160 | 2024: +0.079 | 2025: +0.188 | 2026: -0.064
-- Yearly Tail ICs:   2015: +0.289 | 2016: -0.037 | 2017: +0.031 | 2018: +0.120 | 2019: +0.342 | 2020: +0.100 | 2021: +0.237 | 2022: +0.161 | 2023: +0.518 | 2024: +0.184 | 2025: +0.185 | 2026: +0.118
-- IC CV=0.48, Neg years (linear/tail)=0/0 of 8, Half ratio=1.12, Recency ratio=1.06
-- Early IC=+0.1264, Recent IC=+0.1339, 1st-half IC=+0.1109, 2nd-half IC=+0.1243, Neg regimes=0/5
-- Weak component: `rally_strength_max` (CV=0.90, neg years=1)
-- Regime ICs: Q1_low_vol=+0.092, Q2=+0.164, Q3_mid=+0.149, Q4=+0.127, Q5_high_vol=+0.105
-
 ---
 
 ## 3b. Median (Usable) Temporal Decomposition
@@ -1767,15 +1180,6 @@ These contribute signal to IC-weighted ensembles but aren't profitable standalon
 
 ### 500ETF — `single` Median Features
 
-**`combo_clamp_diff__first_bar_return__early_late_momentum_divergence`** (Lock IC=+0.1113, Sharpe=-1.0360)
-- Admission: Train IC=+0.2057, Deflated=+0.2071, IR=0.46, Mono=0.66, p=0.0000, MaxCorr=0.90
-- Yearly Linear ICs: 2015: +0.301 | 2016: +0.066 | 2017: +0.156 | 2018: +0.222 | 2019: +0.193 | 2020: +0.115 | 2021: +0.122 | 2022: +0.066 | 2023: +0.062 | 2024: +0.118 | 2025: +0.012 | 2026: +0.111
-- Yearly Tail ICs:   2015: +0.412 | 2016: +0.063 | 2017: +0.367 | 2018: +0.330 | 2019: +0.209 | 2020: +0.256 | 2021: +0.121 | 2022: +0.238 | 2023: +0.083 | 2024: +0.141 | 2025: -0.016 | 2026: -0.024
-- IC CV=0.57, Neg years (linear/tail)=0/1 of 8, Half ratio=0.45, Recency ratio=0.31
-- Early IC=+0.2074, Recent IC=+0.0651, 1st-half IC=+0.1564, 2nd-half IC=+0.0708, Neg regimes=1/5
-- Weak component: `early_late_momentum_divergence` (CV=0.86)
-- Regime ICs: Q1_low_vol=+0.085, Q2=-0.020, Q3_mid=+0.077, Q4=+0.148, Q5_high_vol=+0.191
-
 **`combo_mean__star50_limit_proximity_early__bar_ret_0`** (Lock IC=+0.1105, Sharpe=-0.0489)
 - Admission: Train IC=+0.2253, Deflated=+0.2248, IR=0.71, Mono=0.75, p=0.0000, MaxCorr=0.93
 - Yearly Linear ICs: 2015: +0.287 | 2016: +0.092 | 2017: +0.221 | 2018: +0.181 | 2019: +0.125 | 2020: +0.169 | 2021: +0.085 | 2022: +0.064 | 2023: +0.064 | 2024: +0.088 | 2025: +0.125 | 2026: +0.111
@@ -1785,15 +1189,6 @@ These contribute signal to IC-weighted ensembles but aren't profitable standalon
 - Weak component: `bar_ret_0` (CV=0.48)
 - Regime ICs: Q1_low_vol=+0.116, Q2=+0.023, Q3_mid=+0.104, Q4=+0.134, Q5_high_vol=+0.164
 
-**`combo_mean__star50_limit_proximity_early__max_down_ret`** (Lock IC=+0.1008, Sharpe=-0.4764)
-- Admission: Train IC=+0.1726, Deflated=+0.1721, IR=0.63, Mono=0.71, p=0.0002, MaxCorr=0.83
-- Yearly Linear ICs: 2015: +0.306 | 2016: +0.037 | 2017: +0.234 | 2018: +0.103 | 2019: +0.112 | 2020: +0.115 | 2021: +0.047 | 2022: +0.058 | 2023: +0.048 | 2024: +0.104 | 2025: +0.097 | 2026: +0.101
-- Yearly Tail ICs:   2015: +0.300 | 2016: +0.158 | 2017: +0.194 | 2018: +0.219 | 2019: +0.360 | 2020: +0.197 | 2021: +0.177 | 2022: +0.102 | 2023: +0.037 | 2024: +0.240 | 2025: +0.009 | 2026: +0.182
-- IC CV=0.32, Neg years (linear/tail)=0/0 of 8, Half ratio=0.92, Recency ratio=0.93
-- Early IC=+0.1073, Recent IC=+0.1001, 1st-half IC=+0.0920, 2nd-half IC=+0.0847, Neg regimes=0/5
-- Weak component: `max_down_ret` (CV=0.39)
-- Regime ICs: Q1_low_vol=+0.086, Q2=+0.037, Q3_mid=+0.121, Q4=+0.104, Q5_high_vol=+0.105
-
 **`combo_clamp_diff__max_up_ret__early_late_momentum_divergence`** (Lock IC=+0.0988, Sharpe=-1.7785)
 - Admission: Train IC=+0.2389, Deflated=+0.2402, IR=0.53, Mono=0.70, p=0.0000, MaxCorr=0.88
 - Yearly Linear ICs: 2015: +0.323 | 2016: +0.111 | 2017: +0.189 | 2018: +0.218 | 2019: +0.122 | 2020: +0.148 | 2021: +0.153 | 2022: +0.060 | 2023: +0.093 | 2024: +0.126 | 2025: +0.012 | 2026: +0.099
@@ -1802,24 +1197,6 @@ These contribute signal to IC-weighted ensembles but aren't profitable standalon
 - Early IC=+0.1699, Recent IC=+0.0692, 1st-half IC=+0.1524, 2nd-half IC=+0.0795, Neg regimes=0/5
 - Weak component: `early_late_momentum_divergence` (CV=0.86)
 - Regime ICs: Q1_low_vol=+0.086, Q2=+0.003, Q3_mid=+0.087, Q4=+0.129, Q5_high_vol=+0.210
-
-**`combo_tri_max__opening_drive_thrust_ratio__volatility_expansion_trend_vector__star50_limit_proximity_early`** (Lock IC=+0.0887, Sharpe=-0.7597)
-- Admission: Train IC=+0.1619, Deflated=+0.1612, IR=0.43, Mono=0.68, p=0.0008, MaxCorr=0.93
-- Yearly Linear ICs: 2015: +0.308 | 2016: +0.095 | 2017: +0.256 | 2018: +0.120 | 2019: +0.120 | 2020: +0.160 | 2021: +0.070 | 2022: +0.115 | 2023: +0.043 | 2024: +0.112 | 2025: +0.099 | 2026: +0.089
-- Yearly Tail ICs:   2015: +0.164 | 2016: +0.139 | 2017: +0.205 | 2018: +0.171 | 2019: +0.266 | 2020: +0.132 | 2021: +0.126 | 2022: +0.225 | 2023: +0.020 | 2024: +0.108 | 2025: +0.050 | 2026: -0.023
-- IC CV=0.32, Neg years (linear/tail)=0/0 of 8, Half ratio=0.89, Recency ratio=0.88
-- Early IC=+0.1202, Recent IC=+0.1055, 1st-half IC=+0.1180, 2nd-half IC=+0.1051, Neg regimes=0/5
-- Weak component: `opening_drive_thrust_ratio` (CV=0.31)
-- Regime ICs: Q1_low_vol=+0.073, Q2=+0.084, Q3_mid=+0.127, Q4=+0.111, Q5_high_vol=+0.160
-
-**`combo_clamp_diff__opening_drive_thrust_ratio__body_size_progression`** (Lock IC=+0.0832, Sharpe=-0.6640)
-- Admission: Train IC=+0.2105, Deflated=+0.2116, IR=0.55, Mono=0.70, p=0.0000, MaxCorr=0.90
-- Yearly Linear ICs: 2015: +0.287 | 2016: +0.038 | 2017: +0.197 | 2018: +0.197 | 2019: +0.185 | 2020: +0.169 | 2021: +0.124 | 2022: +0.053 | 2023: +0.102 | 2024: +0.112 | 2025: +0.042 | 2026: +0.083
-- Yearly Tail ICs:   2015: +0.427 | 2016: +0.069 | 2017: +0.244 | 2018: +0.343 | 2019: +0.427 | 2020: +0.180 | 2021: +0.177 | 2022: +0.220 | 2023: +0.183 | 2024: +0.256 | 2025: +0.102 | 2026: +0.024
-- IC CV=0.44, Neg years (linear/tail)=0/0 of 8, Half ratio=0.52, Recency ratio=0.40
-- Early IC=+0.1912, Recent IC=+0.0771, 1st-half IC=+0.1640, 2nd-half IC=+0.0846, Neg regimes=0/5
-- Weak component: `body_size_progression` (CV=0.71)
-- Regime ICs: Q1_low_vol=+0.082, Q2=+0.014, Q3_mid=+0.134, Q4=+0.134, Q5_high_vol=+0.198
 
 **`combo_mean__rbreaker_sell_setup_proximity_early__early_body_momentum`** (Lock IC=+0.0727, Sharpe=-0.4830)
 - Admission: Train IC=+0.2243, Deflated=+0.2234, IR=0.68, Mono=0.76, p=0.0000, MaxCorr=0.91
@@ -1857,15 +1234,6 @@ These contribute signal to IC-weighted ensembles but aren't profitable standalon
 - Weak component: `first_bar_return` (CV=0.48)
 - Regime ICs: Q1_low_vol=+0.142, Q2=+0.065, Q3_mid=+0.130, Q4=+0.146, Q5_high_vol=+0.192
 
-**`combo_tri_max__volatility_expansion_trend_vector__early_body_momentum__star50_limit_proximity_early`** (Lock IC=+0.0390, Sharpe=-1.7307)
-- Admission: Train IC=+0.1696, Deflated=+0.1682, IR=0.43, Mono=0.68, p=0.0002, MaxCorr=0.88
-- Yearly Linear ICs: 2015: +0.238 | 2016: +0.085 | 2017: +0.164 | 2018: +0.131 | 2019: +0.081 | 2020: +0.111 | 2021: +0.020 | 2022: +0.122 | 2023: +0.068 | 2024: +0.108 | 2025: +0.118 | 2026: +0.039
-- Yearly Tail ICs:   2015: +0.083 | 2016: +0.196 | 2017: +0.153 | 2018: +0.091 | 2019: +0.199 | 2020: +0.080 | 2021: +0.137 | 2022: +0.335 | 2023: +0.179 | 2024: +0.144 | 2025: +0.041 | 2026: -0.201
-- IC CV=0.36, Neg years (linear/tail)=0/0 of 8, Half ratio=1.25, Recency ratio=1.07
-- Early IC=+0.1058, Recent IC=+0.1131, 1st-half IC=+0.0899, 2nd-half IC=+0.1123, Neg regimes=0/5
-- Weak component: `early_body_momentum` (CV=0.36)
-- Regime ICs: Q1_low_vol=+0.099, Q2=+0.083, Q3_mid=+0.129, Q4=+0.083, Q5_high_vol=+0.119
-
 **`combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__trend_bar_close_consistency`** (Lock IC=+0.0350, Sharpe=-0.6199)
 - Admission: Train IC=+0.2348, Deflated=+0.2340, IR=0.68, Mono=0.73, p=0.0000, MaxCorr=0.90
 - Yearly Linear ICs: 2015: +0.189 | 2016: +0.103 | 2017: +0.203 | 2018: +0.098 | 2019: +0.071 | 2020: +0.126 | 2021: +0.118 | 2022: +0.059 | 2023: +0.103 | 2024: +0.132 | 2025: +0.123 | 2026: +0.035
@@ -1875,15 +1243,6 @@ These contribute signal to IC-weighted ensembles but aren't profitable standalon
 - Weak component: `trend_bar_close_consistency` (CV=0.49)
 - Regime ICs: Q1_low_vol=+0.094, Q2=+0.062, Q3_mid=+0.125, Q4=+0.087, Q5_high_vol=+0.151
 
-**`combo_rank_max__bar_ret_0__max_down_ret`** (Lock IC=+0.0298, Sharpe=-0.8460)
-- Admission: Train IC=+0.1703, Deflated=+0.1704, IR=0.60, Mono=0.72, p=0.0002, MaxCorr=0.90
-- Yearly Linear ICs: 2015: +0.261 | 2016: +0.090 | 2017: +0.239 | 2018: +0.234 | 2019: +0.150 | 2020: +0.126 | 2021: +0.098 | 2022: +0.093 | 2023: +0.036 | 2024: +0.117 | 2025: +0.112 | 2026: +0.029
-- Yearly Tail ICs:   2015: +0.605 | 2016: -0.121 | 2017: +0.202 | 2018: +0.245 | 2019: +0.306 | 2020: +0.177 | 2021: +0.248 | 2022: +0.130 | 2023: +0.169 | 2024: +0.217 | 2025: +0.104 | 2026: -0.076
-- IC CV=0.44, Neg years (linear/tail)=0/0 of 8, Half ratio=0.67, Recency ratio=0.59
-- Early IC=+0.1909, Recent IC=+0.1133, 1st-half IC=+0.1470, 2nd-half IC=+0.0977, Neg regimes=0/5
-- Weak component: `bar_ret_0` (CV=0.48)
-- Regime ICs: Q1_low_vol=+0.096, Q2=+0.015, Q3_mid=+0.141, Q4=+0.150, Q5_high_vol=+0.168
-
 **`combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__early_body_momentum`** (Lock IC=+0.0277, Sharpe=-0.8653)
 - Admission: Train IC=+0.2149, Deflated=+0.2142, IR=0.68, Mono=0.74, p=0.0000, MaxCorr=0.94
 - Yearly Linear ICs: 2015: +0.234 | 2016: +0.129 | 2017: +0.174 | 2018: +0.210 | 2019: +0.106 | 2020: +0.162 | 2021: +0.094 | 2022: +0.133 | 2023: +0.087 | 2024: +0.096 | 2025: +0.137 | 2026: +0.028
@@ -1892,33 +1251,6 @@ These contribute signal to IC-weighted ensembles but aren't profitable standalon
 - Early IC=+0.1578, Recent IC=+0.1163, 1st-half IC=+0.1463, 2nd-half IC=+0.1195, Neg regimes=0/5
 - Weak component: `early_body_momentum` (CV=0.36)
 - Regime ICs: Q1_low_vol=+0.120, Q2=+0.084, Q3_mid=+0.144, Q4=+0.112, Q5_high_vol=+0.195
-
-**`combo_rank_min__max_down_ret__vwap_close_divergence_trend`** (Lock IC=+0.0265, Sharpe=-1.2338)
-- Admission: Train IC=+0.1770, Deflated=+0.1769, IR=0.73, Mono=0.76, p=0.0000, MaxCorr=0.88
-- Yearly Linear ICs: 2015: +0.265 | 2016: +0.069 | 2017: +0.241 | 2018: +0.095 | 2019: +0.122 | 2020: +0.124 | 2021: +0.038 | 2022: +0.090 | 2023: +0.074 | 2024: +0.114 | 2025: +0.102 | 2026: +0.022
-- Yearly Tail ICs:   2015: +0.318 | 2016: +0.073 | 2017: +0.320 | 2018: +0.161 | 2019: +0.238 | 2020: +0.140 | 2021: +0.362 | 2022: +0.359 | 2023: +0.079 | 2024: +0.088 | 2025: +0.236 | 2026: -0.234
-- IC CV=0.27, Neg years (linear/tail)=0/0 of 8, Half ratio=1.06, Recency ratio=0.97
-- Early IC=+0.1102, Recent IC=+0.1071, 1st-half IC=+0.0975, 2nd-half IC=+0.1037, Neg regimes=0/5
-- Weak component: `max_down_ret` (CV=0.39)
-- Regime ICs: Q1_low_vol=+0.095, Q2=+0.054, Q3_mid=+0.154, Q4=+0.107, Q5_high_vol=+0.108
-
-**`combo_diff__net_volume_flow__smooth_momentum_structure`** (Lock IC=+0.0252, Sharpe=-0.1184)
-- Admission: Train IC=+0.2838, Deflated=+0.2840, IR=0.95, Mono=0.82, p=0.0000, MaxCorr=0.92
-- Yearly Linear ICs: 2015: +0.236 | 2016: +0.047 | 2017: +0.168 | 2018: +0.228 | 2019: +0.170 | 2020: +0.170 | 2021: +0.146 | 2022: +0.062 | 2023: +0.108 | 2024: +0.146 | 2025: +0.084 | 2026: +0.025
-- Yearly Tail ICs:   2015: +0.436 | 2016: +0.086 | 2017: +0.229 | 2018: +0.329 | 2019: +0.285 | 2020: +0.182 | 2021: +0.362 | 2022: +0.227 | 2023: +0.313 | 2024: +0.276 | 2025: +0.055 | 2026: -0.230
-- IC CV=0.36, Neg years (linear/tail)=0/0 of 8, Half ratio=0.62, Recency ratio=0.58
-- Early IC=+0.1990, Recent IC=+0.1153, 1st-half IC=+0.1747, 2nd-half IC=+0.1088, Neg regimes=0/5
-- Weak component: `smooth_momentum_structure` (CV=0.57)
-- Regime ICs: Q1_low_vol=+0.117, Q2=+0.042, Q3_mid=+0.157, Q4=+0.132, Q5_high_vol=+0.219
-
-**`combo_mean__opening_drive_thrust_ratio__max_down_ret`** (Lock IC=+0.0234, Sharpe=-0.4926)
-- Admission: Train IC=+0.1783, Deflated=+0.1784, IR=0.65, Mono=0.73, p=0.0000, MaxCorr=0.93
-- Yearly Linear ICs: 2015: +0.291 | 2016: +0.057 | 2017: +0.245 | 2018: +0.188 | 2019: +0.133 | 2020: +0.163 | 2021: +0.115 | 2022: +0.080 | 2023: +0.083 | 2024: +0.134 | 2025: +0.111 | 2026: +0.023
-- Yearly Tail ICs:   2015: +0.413 | 2016: -0.042 | 2017: +0.113 | 2018: +0.128 | 2019: +0.303 | 2020: +0.009 | 2021: +0.362 | 2022: +0.238 | 2023: +0.119 | 2024: +0.235 | 2025: +0.101 | 2026: +0.006
-- IC CV=0.27, Neg years (linear/tail)=0/0 of 8, Half ratio=0.78, Recency ratio=0.76
-- Early IC=+0.1604, Recent IC=+0.1225, 1st-half IC=+0.1429, 2nd-half IC=+0.1110, Neg regimes=0/5
-- Weak component: `max_down_ret` (CV=0.39)
-- Regime ICs: Q1_low_vol=+0.095, Q2=+0.050, Q3_mid=+0.168, Q4=+0.146, Q5_high_vol=+0.166
 
 **`combo_tri_median__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__bar_ret_0`** (Lock IC=+0.0177, Sharpe=-1.6384)
 - Admission: Train IC=+0.1953, Deflated=+0.1954, IR=0.61, Mono=0.70, p=0.0000, MaxCorr=0.93
@@ -1974,33 +1306,6 @@ These contribute signal to IC-weighted ensembles but aren't profitable standalon
 - Weak component: `bar_ret_0` (CV=0.48)
 - Regime ICs: Q1_low_vol=+0.093, Q2=+0.025, Q3_mid=+0.135, Q4=+0.139, Q5_high_vol=+0.172
 
-**`combo_min__first_bar_return__vwap_close_divergence_trend`** (Lock IC=+0.0050, Sharpe=-0.0750)
-- Admission: Train IC=+0.1974, Deflated=+0.1968, IR=0.74, Mono=0.75, p=0.0000, MaxCorr=0.89
-- Yearly Linear ICs: 2015: +0.185 | 2016: +0.033 | 2017: +0.219 | 2018: +0.148 | 2019: +0.153 | 2020: +0.072 | 2021: +0.055 | 2022: +0.039 | 2023: +0.055 | 2024: +0.099 | 2025: +0.117 | 2026: +0.005
-- Yearly Tail ICs:   2015: +0.084 | 2016: +0.079 | 2017: +0.234 | 2018: +0.280 | 2019: +0.273 | 2020: +0.060 | 2021: +0.195 | 2022: +0.236 | 2023: +0.070 | 2024: +0.099 | 2025: +0.322 | 2026: -0.045
-- IC CV=0.44, Neg years (linear/tail)=0/0 of 8, Half ratio=0.80, Recency ratio=0.72
-- Early IC=+0.1501, Recent IC=+0.1081, 1st-half IC=+0.1065, 2nd-half IC=+0.0857, Neg regimes=0/5
-- Weak component: `first_bar_return` (CV=0.48)
-- Regime ICs: Q1_low_vol=+0.099, Q2=+0.030, Q3_mid=+0.111, Q4=+0.105, Q5_high_vol=+0.117
-
-**`combo_rank_min__bar_ret_0__vwap_close_divergence_trend`** (Lock IC=+0.0037, Sharpe=-0.0750)
-- Admission: Train IC=+0.1879, Deflated=+0.1872, IR=0.63, Mono=0.74, p=0.0000, MaxCorr=0.94
-- Yearly Linear ICs: 2015: +0.185 | 2016: +0.034 | 2017: +0.225 | 2018: +0.151 | 2019: +0.157 | 2020: +0.070 | 2021: +0.053 | 2022: +0.036 | 2023: +0.054 | 2024: +0.099 | 2025: +0.118 | 2026: +0.006
-- Yearly Tail ICs:   2015: +0.043 | 2016: +0.069 | 2017: +0.222 | 2018: +0.296 | 2019: +0.325 | 2020: +0.021 | 2021: +0.216 | 2022: +0.224 | 2023: +0.051 | 2024: +0.117 | 2025: +0.312 | 2026: -0.197
-- IC CV=0.46, Neg years (linear/tail)=0/0 of 8, Half ratio=0.80, Recency ratio=0.71
-- Early IC=+0.1525, Recent IC=+0.1077, 1st-half IC=+0.1063, 2nd-half IC=+0.0849, Neg regimes=0/5
-- Weak component: `bar_ret_0` (CV=0.48)
-- Regime ICs: Q1_low_vol=+0.100, Q2=+0.028, Q3_mid=+0.111, Q4=+0.104, Q5_high_vol=+0.116
-
-**`combo_rel_diff__net_volume_flow__volume_weighted_momentum_acceleration`** (Lock IC=+0.0033, Sharpe=-1.5227)
-- Admission: Train IC=+0.2805, Deflated=+0.2807, IR=1.02, Mono=0.83, p=0.0000, MaxCorr=0.89
-- Yearly Linear ICs: 2015: +0.222 | 2016: +0.041 | 2017: +0.163 | 2018: +0.219 | 2019: +0.178 | 2020: +0.161 | 2021: +0.163 | 2022: +0.059 | 2023: +0.088 | 2024: +0.124 | 2025: +0.095 | 2026: +0.003
-- Yearly Tail ICs:   2015: +0.424 | 2016: +0.022 | 2017: +0.200 | 2018: +0.388 | 2019: +0.253 | 2020: +0.224 | 2021: +0.333 | 2022: +0.235 | 2023: +0.304 | 2024: +0.296 | 2025: +0.107 | 2026: -0.345
-- IC CV=0.37, Neg years (linear/tail)=0/0 of 8, Half ratio=0.57, Recency ratio=0.55
-- Early IC=+0.1981, Recent IC=+0.1096, 1st-half IC=+0.1735, 2nd-half IC=+0.0981, Neg regimes=0/5
-- Weak component: `volume_weighted_momentum_acceleration` (CV=0.53)
-- Regime ICs: Q1_low_vol=+0.120, Q2=+0.028, Q3_mid=+0.140, Q4=+0.141, Q5_high_vol=+0.207
-
 **`combo_clamp_diff__max_up_ret__volume_weighted_momentum_acceleration`** (Lock IC=+0.0028, Sharpe=-1.6259)
 - Admission: Train IC=+0.2776, Deflated=+0.2782, IR=0.71, Mono=0.75, p=0.0000, MaxCorr=0.69
 - Yearly Linear ICs: 2015: +0.284 | 2016: +0.102 | 2017: +0.141 | 2018: +0.284 | 2019: +0.177 | 2020: +0.174 | 2021: +0.172 | 2022: +0.055 | 2023: +0.093 | 2024: +0.158 | 2025: +0.058 | 2026: +0.003
@@ -2049,7 +1354,7 @@ These contribute signal to IC-weighted ensembles but aren't profitable standalon
 - Regime ICs: Q1_low_vol=+0.096, Q2=+0.132, Q3_mid=+0.116, Q4=+0.165, Q5_high_vol=+0.089
 
 **`combo_rank_min__max_up_ret__directional_volume_signature`** (Lock IC=+0.0897, Sharpe=-0.0372)
-- Admission: Train IC=+0.1909, Deflated=+0.1916, IR=0.58, Mono=0.71, p=0.0002, MaxCorr=0.90
+- Admission: Train IC=+0.1909, Deflated=+0.1916, IR=0.58, Mono=0.71, p=0.0002, MaxCorr=0.89
 - Yearly Linear ICs: 2015: +0.265 | 2016: +0.102 | 2017: +0.065 | 2018: +0.068 | 2019: +0.186 | 2020: +0.156 | 2021: +0.094 | 2022: +0.043 | 2023: +0.161 | 2024: +0.099 | 2025: +0.066 | 2026: +0.101
 - Yearly Tail ICs:   2015: +0.461 | 2016: +0.182 | 2017: +0.030 | 2018: +0.179 | 2019: +0.361 | 2020: +0.159 | 2021: +0.207 | 2022: +0.132 | 2023: +0.361 | 2024: +0.287 | 2025: +0.142 | 2026: +0.060
 - IC CV=0.45, Neg years (linear/tail)=0/0 of 8, Half ratio=0.78, Recency ratio=0.70
@@ -2120,15 +1425,6 @@ These contribute signal to IC-weighted ensembles but aren't profitable standalon
 - Weak component: `rbreaker_buy_setup_proximity_early` (CV=0.44)
 - Regime ICs: Q1_low_vol=+0.138, Q2=+0.107, Q3_mid=+0.100, Q4=+0.111, Q5_high_vol=+0.119
 
-**`combo_min__volatility_expansion_trend_vector__volume_price_confirmation`** (Lock IC=+0.0628, Sharpe=-0.4172)
-- Admission: Train IC=+0.2103, Deflated=+0.2106, IR=0.61, Mono=0.75, p=0.0002, MaxCorr=0.90
-- Yearly Linear ICs: 2015: +0.171 | 2016: +0.047 | 2017: +0.050 | 2018: +0.051 | 2019: +0.129 | 2020: +0.067 | 2021: +0.052 | 2022: +0.092 | 2023: +0.136 | 2024: +0.090 | 2025: +0.140 | 2026: +0.063
-- Yearly Tail ICs:   2015: +0.295 | 2016: -0.079 | 2017: -0.006 | 2018: +0.097 | 2019: +0.286 | 2020: +0.208 | 2021: +0.078 | 2022: +0.113 | 2023: +0.376 | 2024: +0.215 | 2025: +0.272 | 2026: +0.130
-- IC CV=0.36, Neg years (linear/tail)=0/0 of 8, Half ratio=2.03, Recency ratio=1.28
-- Early IC=+0.0900, Recent IC=+0.1153, 1st-half IC=+0.0596, 2nd-half IC=+0.1212, Neg regimes=0/5
-- Weak component: `volatility_expansion_trend_vector` (CV=0.58)
-- Regime ICs: Q1_low_vol=+0.125, Q2=+0.094, Q3_mid=+0.059, Q4=+0.068, Q5_high_vol=+0.133
-
 **`combo_rank_max__rbreaker_sell_setup_proximity_early__volatility_expansion_trend_vector`** (Lock IC=+0.0623, Sharpe=-0.0060)
 - Admission: Train IC=+0.1943, Deflated=+0.1942, IR=0.70, Mono=0.73, p=0.0002, MaxCorr=0.90
 - Yearly Linear ICs: 2015: +0.172 | 2016: +0.049 | 2017: +0.028 | 2018: +0.063 | 2019: +0.148 | 2020: +0.113 | 2021: +0.106 | 2022: +0.164 | 2023: +0.127 | 2024: +0.133 | 2025: +0.179 | 2026: +0.065
@@ -2173,15 +1469,6 @@ These contribute signal to IC-weighted ensembles but aren't profitable standalon
 - Early IC=+0.1639, Recent IC=+0.1405, 1st-half IC=+0.1358, 2nd-half IC=+0.1376, Neg regimes=0/5
 - Weak component: `bar_body_rng_0` (CV=0.37)
 - Regime ICs: Q1_low_vol=+0.169, Q2=+0.156, Q3_mid=+0.141, Q4=+0.109, Q5_high_vol=+0.156
-
-**`combo_ifelse__gap_pct__yesterday_early_trend__first_bar_return`** (Lock IC=+0.0564, Sharpe=-0.4957)
-- Admission: Train IC=+0.1367, Deflated=+0.1353, IR=0.50, Mono=0.68, p=0.0058, MaxCorr=0.83
-- Yearly Linear ICs: 2015: +0.103 | 2016: +0.126 | 2017: -0.052 | 2018: +0.129 | 2019: +0.015 | 2020: +0.126 | 2021: +0.095 | 2022: +0.116 | 2023: +0.207 | 2024: -0.032 | 2025: +0.098 | 2026: +0.056
-- Yearly Tail ICs:   2015: +0.172 | 2016: -0.050 | 2017: -0.026 | 2018: +0.268 | 2019: +0.015 | 2020: +0.059 | 2021: +0.275 | 2022: +0.195 | 2023: +0.214 | 2024: -0.001 | 2025: +0.161 | 2026: +0.157
-- IC CV=0.73, Neg years (linear/tail)=1/1 of 8, Half ratio=1.00, Recency ratio=0.46
-- Early IC=+0.0721, Recent IC=+0.0331, 1st-half IC=+0.0914, 2nd-half IC=+0.0911, Neg regimes=0/5
-- Weak component: `gap_pct` (CV=0.76)
-- Regime ICs: Q1_low_vol=+0.139, Q2=+0.125, Q3_mid=+0.102, Q4=+0.026, Q5_high_vol=+0.097
 
 **`combo_mean__rbreaker_sell_setup_proximity_early__volatility_expansion_trend_vector`** (Lock IC=+0.0545, Sharpe=-1.0195)
 - Admission: Train IC=+0.2337, Deflated=+0.2336, IR=0.71, Mono=0.76, p=0.0000, MaxCorr=0.89
@@ -2228,15 +1515,6 @@ These contribute signal to IC-weighted ensembles but aren't profitable standalon
 - Weak component: `demark_setup_reversal_early` (CV=0.34)
 - Regime ICs: Q1_low_vol=+0.134, Q2=+0.181, Q3_mid=+0.115, Q4=+0.110, Q5_high_vol=+0.126
 
-**`combo_max__limit_down_proximity_early__volatility_expansion_trend_vector`** (Lock IC=+0.0279, Sharpe=-1.5933)
-- Admission: Train IC=+0.1317, Deflated=+0.1313, IR=0.45, Mono=0.67, p=0.0084, MaxCorr=0.89
-- Yearly Linear ICs: 2015: +0.113 | 2016: +0.000 | 2017: +0.022 | 2018: +0.048 | 2019: +0.119 | 2020: +0.046 | 2021: +0.123 | 2022: +0.142 | 2023: +0.132 | 2024: +0.097 | 2025: +0.175 | 2026: +0.028
-- Yearly Tail ICs:   2015: +0.022 | 2016: -0.011 | 2017: -0.001 | 2018: +0.045 | 2019: +0.204 | 2020: -0.016 | 2021: +0.120 | 2022: +0.120 | 2023: +0.170 | 2024: +0.289 | 2025: +0.154 | 2026: -0.182
-- IC CV=0.38, Neg years (linear/tail)=0/1 of 8, Half ratio=1.83, Recency ratio=1.63
-- Early IC=+0.0837, Recent IC=+0.1361, 1st-half IC=+0.0799, 2nd-half IC=+0.1462, Neg regimes=0/5
-- Weak component: `volatility_expansion_trend_vector` (CV=0.58)
-- Regime ICs: Q1_low_vol=+0.185, Q2=+0.110, Q3_mid=+0.144, Q4=+0.089, Q5_high_vol=+0.100
-
 **`combo_tri_max__opening_drive_thrust_ratio__max_up_ret__star50_limit_proximity_early`** (Lock IC=+0.0262, Sharpe=-1.0933)
 - Admission: Train IC=+0.1827, Deflated=+0.1822, IR=0.55, Mono=0.67, p=0.0004, MaxCorr=0.93
 - Yearly Linear ICs: 2015: +0.180 | 2016: +0.060 | 2017: +0.036 | 2018: +0.076 | 2019: +0.136 | 2020: +0.071 | 2021: +0.178 | 2022: +0.142 | 2023: +0.149 | 2024: +0.079 | 2025: +0.132 | 2026: +0.026
@@ -2281,15 +1559,6 @@ These contribute signal to IC-weighted ensembles but aren't profitable standalon
 - Weak component: `gap_pct` (CV=0.76)
 - Regime ICs: Q1_low_vol=+0.153, Q2=+0.129, Q3_mid=+0.100, Q4=+0.072, Q5_high_vol=+0.113
 
-**`combo_rank_min__first_bar_return__volatility_expansion_trend_vector`** (Lock IC=+0.0154, Sharpe=-0.1510)
-- Admission: Train IC=+0.2066, Deflated=+0.2073, IR=0.53, Mono=0.74, p=0.0002, MaxCorr=0.94
-- Yearly Linear ICs: 2015: +0.170 | 2016: +0.071 | 2017: +0.020 | 2018: +0.061 | 2019: +0.163 | 2020: +0.054 | 2021: +0.114 | 2022: +0.073 | 2023: +0.177 | 2024: +0.075 | 2025: +0.150 | 2026: +0.017
-- Yearly Tail ICs:   2015: +0.015 | 2016: +0.184 | 2017: +0.120 | 2018: +0.086 | 2019: +0.253 | 2020: +0.119 | 2021: +0.071 | 2022: +0.235 | 2023: +0.411 | 2024: +0.190 | 2025: +0.132 | 2026: +0.044
-- IC CV=0.45, Neg years (linear/tail)=0/0 of 8, Half ratio=1.58, Recency ratio=1.13
-- Early IC=+0.1039, Recent IC=+0.1172, 1st-half IC=+0.0797, 2nd-half IC=+0.1257, Neg regimes=0/5
-- Weak component: `volatility_expansion_trend_vector` (CV=0.58)
-- Regime ICs: Q1_low_vol=+0.177, Q2=+0.127, Q3_mid=+0.105, Q4=+0.061, Q5_high_vol=+0.111
-
 **`combo_clamp_diff__first_bar_return__volume_weighted_momentum_acceleration`** (Lock IC=+0.0109, Sharpe=-1.8509)
 - Admission: Train IC=+0.2051, Deflated=+0.2057, IR=0.45, Mono=0.66, p=0.0002, MaxCorr=0.90
 - Yearly Linear ICs: 2015: +0.189 | 2016: +0.102 | 2017: +0.028 | 2018: +0.161 | 2019: +0.212 | 2020: +0.123 | 2021: +0.114 | 2022: +0.093 | 2023: +0.140 | 2024: +0.071 | 2025: +0.109 | 2026: +0.011
@@ -2298,24 +1567,6 @@ These contribute signal to IC-weighted ensembles but aren't profitable standalon
 - Early IC=+0.1866, Recent IC=+0.0901, 1st-half IC=+0.1361, 2nd-half IC=+0.1045, Neg regimes=0/5
 - Weak component: `volume_weighted_momentum_acceleration` (CV=0.32)
 - Regime ICs: Q1_low_vol=+0.139, Q2=+0.116, Q3_mid=+0.108, Q4=+0.096, Q5_high_vol=+0.157
-
-**`combo_ifelse__gap_pct__max_up_ret__bar_body_rng_0`** (Lock IC=+0.0107, Sharpe=-0.7547)
-- Admission: Train IC=+0.2082, Deflated=+0.2081, IR=0.60, Mono=0.70, p=0.0002, MaxCorr=0.94
-- Yearly Linear ICs: 2015: +0.215 | 2016: +0.154 | 2017: -0.013 | 2018: +0.132 | 2019: +0.149 | 2020: +0.120 | 2021: +0.141 | 2022: +0.068 | 2023: +0.159 | 2024: +0.018 | 2025: +0.127 | 2026: +0.011
-- Yearly Tail ICs:   2015: +0.234 | 2016: +0.057 | 2017: -0.182 | 2018: +0.236 | 2019: +0.329 | 2020: +0.045 | 2021: +0.336 | 2022: +0.113 | 2023: +0.242 | 2024: +0.142 | 2025: +0.264 | 2026: -0.098
-- IC CV=0.39, Neg years (linear/tail)=0/0 of 8, Half ratio=0.75, Recency ratio=0.52
-- Early IC=+0.1407, Recent IC=+0.0728, 1st-half IC=+0.1285, 2nd-half IC=+0.0960, Neg regimes=0/5
-- Weak component: `gap_pct` (CV=0.76)
-- Regime ICs: Q1_low_vol=+0.157, Q2=+0.131, Q3_mid=+0.112, Q4=+0.084, Q5_high_vol=+0.104
-
-**`combo_ifelse__gap_pct__opening_drive_thrust_ratio__bar_body_rng_0`** (Lock IC=+0.0066, Sharpe=-1.1418)
-- Admission: Train IC=+0.2406, Deflated=+0.2401, IR=0.75, Mono=0.75, p=0.0000, MaxCorr=0.89
-- Yearly Linear ICs: 2015: +0.193 | 2016: +0.082 | 2017: +0.013 | 2018: +0.152 | 2019: +0.180 | 2020: +0.127 | 2021: +0.161 | 2022: +0.066 | 2023: +0.175 | 2024: -0.003 | 2025: +0.151 | 2026: +0.007
-- Yearly Tail ICs:   2015: +0.382 | 2016: -0.185 | 2017: +0.098 | 2018: +0.244 | 2019: +0.354 | 2020: +0.241 | 2021: +0.261 | 2022: +0.195 | 2023: +0.275 | 2024: +0.084 | 2025: +0.306 | 2026: -0.097
-- IC CV=0.47, Neg years (linear/tail)=1/0 of 8, Half ratio=0.69, Recency ratio=0.45
-- Early IC=+0.1658, Recent IC=+0.0742, 1st-half IC=+0.1470, 2nd-half IC=+0.1012, Neg regimes=0/5
-- Weak component: `gap_pct` (CV=0.76)
-- Regime ICs: Q1_low_vol=+0.173, Q2=+0.124, Q3_mid=+0.108, Q4=+0.107, Q5_high_vol=+0.144
 
 **`combo_rel_diff__max_up_ret__demark_setup_reversal_early`** (Lock IC=+0.0018, Sharpe=-2.0212)
 - Admission: Train IC=+0.2583, Deflated=+0.2583, IR=0.78, Mono=0.78, p=0.0000, MaxCorr=0.90
@@ -2372,15 +1623,6 @@ What stable, persistent features look like in training.
 - Weak component: `volume_weighted_momentum_acceleration` (CV=0.53)
 - Regime ICs: Q1_low_vol=+0.103, Q2=+0.023, Q3_mid=+0.110, Q4=+0.133, Q5_high_vol=+0.207
 
-**`combo_tri_min__opening_drive_thrust_ratio__star50_limit_proximity_early__trend_day_regime_conviction`** (Lock IC=+0.0811, Sharpe=+2.5041)
-- Admission: Train IC=+0.2157, Deflated=+0.2148, IR=0.51, Mono=0.69, p=0.0000, MaxCorr=0.95
-- Yearly Linear ICs: 2015: +0.214 | 2016: +0.075 | 2017: +0.225 | 2018: +0.159 | 2019: +0.120 | 2020: +0.127 | 2021: +0.124 | 2022: +0.018 | 2023: +0.101 | 2024: +0.154 | 2025: +0.112 | 2026: +0.081
-- Yearly Tail ICs:   2015: +0.321 | 2016: +0.218 | 2017: +0.285 | 2018: +0.411 | 2019: +0.249 | 2020: +0.200 | 2021: +0.155 | 2022: +0.247 | 2023: +0.014 | 2024: +0.274 | 2025: +0.055 | 2026: +0.395
-- IC CV=0.36, Neg years (linear/tail)=0/0 of 8, Half ratio=0.78, Recency ratio=0.95
-- Early IC=+0.1395, Recent IC=+0.1331, 1st-half IC=+0.1313, 2nd-half IC=+0.1029, Neg regimes=0/5
-- Weak component: `opening_drive_thrust_ratio` (CV=0.31)
-- Regime ICs: Q1_low_vol=+0.095, Q2=+0.050, Q3_mid=+0.142, Q4=+0.115, Q5_high_vol=+0.174
-
 **`combo_clamp_diff__star50_limit_proximity_early__volume_weighted_momentum_acceleration`** (Lock IC=+0.1783, Sharpe=+2.2572)
 - Admission: Train IC=+0.2390, Deflated=+0.2395, IR=0.55, Mono=0.70, p=0.0000, MaxCorr=0.91
 - Yearly Linear ICs: 2015: +0.307 | 2016: +0.080 | 2017: +0.128 | 2018: +0.205 | 2019: +0.176 | 2020: +0.187 | 2021: +0.125 | 2022: +0.049 | 2023: +0.062 | 2024: +0.116 | 2025: +0.062 | 2026: +0.178
@@ -2407,24 +1649,6 @@ What stable, persistent features look like in training.
 - Early IC=+0.1880, Recent IC=+0.1220, 1st-half IC=+0.1724, 2nd-half IC=+0.1096, Neg regimes=0/5
 - Weak component: `bar_ret_0` (CV=0.48)
 - Regime ICs: Q1_low_vol=+0.115, Q2=+0.037, Q3_mid=+0.146, Q4=+0.157, Q5_high_vol=+0.207
-
-**`combo_mean__rbreaker_sell_setup_proximity_early__shaved_bar_trend_conviction`** (Lock IC=+0.0837, Sharpe=+1.7820)
-- Admission: Train IC=+0.1909, Deflated=+0.1899, IR=0.52, Mono=0.71, p=0.0000, MaxCorr=0.92
-- Yearly Linear ICs: 2015: +0.189 | 2016: +0.088 | 2017: +0.168 | 2018: +0.121 | 2019: +0.048 | 2020: +0.132 | 2021: +0.020 | 2022: +0.027 | 2023: +0.079 | 2024: +0.049 | 2025: +0.116 | 2026: +0.084
-- Yearly Tail ICs:   2015: +0.200 | 2016: +0.220 | 2017: +0.248 | 2018: +0.358 | 2019: +0.217 | 2020: +0.269 | 2021: +0.075 | 2022: +0.119 | 2023: -0.152 | 2024: +0.157 | 2025: +0.202 | 2026: +0.123
-- IC CV=0.56, Neg years (linear/tail)=0/1 of 8, Half ratio=0.82, Recency ratio=0.98
-- Early IC=+0.0846, Recent IC=+0.0828, 1st-half IC=+0.0886, 2nd-half IC=+0.0730, Neg regimes=0/5
-- Weak component: `shaved_bar_trend_conviction` (CV=1.10)
-- Regime ICs: Q1_low_vol=+0.108, Q2=+0.031, Q3_mid=+0.090, Q4=+0.079, Q5_high_vol=+0.117
-
-**`combo_rank_min__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early`** (Lock IC=+0.1045, Sharpe=+1.6851)
-- Admission: Train IC=+0.2174, Deflated=+0.2172, IR=0.86, Mono=0.79, p=0.0000, MaxCorr=0.86
-- Yearly Linear ICs: 2015: +0.289 | 2016: +0.101 | 2017: +0.231 | 2018: +0.185 | 2019: +0.157 | 2020: +0.172 | 2021: +0.142 | 2022: +0.033 | 2023: +0.098 | 2024: +0.145 | 2025: +0.105 | 2026: +0.100
-- Yearly Tail ICs:   2015: +0.409 | 2016: +0.251 | 2017: +0.357 | 2018: +0.456 | 2019: +0.298 | 2020: +0.315 | 2021: +0.302 | 2022: +0.078 | 2023: -0.003 | 2024: +0.236 | 2025: +0.074 | 2026: +0.233
-- IC CV=0.35, Neg years (linear/tail)=0/1 of 8, Half ratio=0.63, Recency ratio=0.74
-- Early IC=+0.1705, Recent IC=+0.1264, 1st-half IC=+0.1656, 2nd-half IC=+0.1040, Neg regimes=0/5
-- Weak component: `opening_drive_thrust_ratio` (CV=0.31)
-- Regime ICs: Q1_low_vol=+0.101, Q2=+0.027, Q3_mid=+0.142, Q4=+0.123, Q5_high_vol=+0.237
 
 **`combo_tri_min__trend_bar_close_consistency__volatility_expansion_trend_vector__star50_limit_proximity_early`** (Lock IC=+0.0765, Sharpe=+1.5322)
 - Admission: Train IC=+0.2011, Deflated=+0.1999, IR=0.50, Mono=0.68, p=0.0000, MaxCorr=0.94
@@ -2453,24 +1677,6 @@ What stable, persistent features look like in training.
 - Weak component: `bar_ret_0` (CV=0.48)
 - Regime ICs: Q1_low_vol=+0.087, Q2=+0.019, Q3_mid=+0.122, Q4=+0.163, Q5_high_vol=+0.205
 
-**`combo_rank_min__star50_limit_proximity_early__close_vs_open_range`** (Lock IC=+0.0865, Sharpe=+1.1116)
-- Admission: Train IC=+0.1908, Deflated=+0.1895, IR=0.53, Mono=0.66, p=0.0000, MaxCorr=0.85
-- Yearly Linear ICs: 2015: +0.219 | 2016: +0.073 | 2017: +0.226 | 2018: +0.079 | 2019: +0.082 | 2020: +0.119 | 2021: +0.089 | 2022: +0.032 | 2023: +0.095 | 2024: +0.142 | 2025: +0.138 | 2026: +0.085
-- Yearly Tail ICs:   2015: +0.241 | 2016: +0.208 | 2017: +0.338 | 2018: +0.282 | 2019: +0.119 | 2020: +0.215 | 2021: +0.215 | 2022: +0.160 | 2023: +0.008 | 2024: +0.221 | 2025: +0.089 | 2026: +0.313
-- IC CV=0.34, Neg years (linear/tail)=0/0 of 8, Half ratio=1.17, Recency ratio=1.72
-- Early IC=+0.0822, Recent IC=+0.1411, 1st-half IC=+0.0926, 2nd-half IC=+0.1080, Neg regimes=0/5
-- Weak component: `close_vs_open_range` (CV=0.31)
-- Regime ICs: Q1_low_vol=+0.110, Q2=+0.051, Q3_mid=+0.114, Q4=+0.103, Q5_high_vol=+0.126
-
-**`combo_min__star50_limit_proximity_early__close_vs_open_range`** (Lock IC=+0.0708, Sharpe=+1.0762)
-- Admission: Train IC=+0.1885, Deflated=+0.1872, IR=0.49, Mono=0.68, p=0.0000, MaxCorr=0.94
-- Yearly Linear ICs: 2015: +0.224 | 2016: +0.070 | 2017: +0.212 | 2018: +0.089 | 2019: +0.078 | 2020: +0.106 | 2021: +0.082 | 2022: +0.043 | 2023: +0.101 | 2024: +0.149 | 2025: +0.133 | 2026: +0.071
-- Yearly Tail ICs:   2015: +0.285 | 2016: +0.177 | 2017: +0.278 | 2018: +0.299 | 2019: +0.046 | 2020: +0.231 | 2021: +0.063 | 2022: +0.197 | 2023: +0.010 | 2024: +0.341 | 2025: +0.114 | 2026: +0.242
-- IC CV=0.32, Neg years (linear/tail)=0/0 of 8, Half ratio=1.23, Recency ratio=1.69
-- Early IC=+0.0835, Recent IC=+0.1410, 1st-half IC=+0.0904, 2nd-half IC=+0.1112, Neg regimes=0/5
-- Weak component: `close_vs_open_range` (CV=0.31)
-- Regime ICs: Q1_low_vol=+0.101, Q2=+0.065, Q3_mid=+0.119, Q4=+0.098, Q5_high_vol=+0.122
-
 **`combo_tri_mean__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__net_volume_flow`** (Lock IC=+0.0674, Sharpe=+1.0606)
 - Admission: Train IC=+0.2228, Deflated=+0.2222, IR=0.80, Mono=0.77, p=0.0000, MaxCorr=0.92
 - Yearly Linear ICs: 2015: +0.267 | 2016: +0.116 | 2017: +0.229 | 2018: +0.213 | 2019: +0.142 | 2020: +0.186 | 2021: +0.125 | 2022: +0.094 | 2023: +0.080 | 2024: +0.131 | 2025: +0.106 | 2026: +0.067
@@ -2480,15 +1686,6 @@ What stable, persistent features look like in training.
 - Weak component: `opening_drive_thrust_ratio` (CV=0.31)
 - Regime ICs: Q1_low_vol=+0.114, Q2=+0.064, Q3_mid=+0.149, Q4=+0.135, Q5_high_vol=+0.211
 
-**`combo_rank_min__rbreaker_sell_setup_proximity_early__shaved_bar_trend_conviction`** (Lock IC=+0.0711, Sharpe=+0.9941)
-- Admission: Train IC=+0.1946, Deflated=+0.1935, IR=0.57, Mono=0.68, p=0.0000, MaxCorr=0.88
-- Yearly Linear ICs: 2015: +0.155 | 2016: +0.068 | 2017: +0.208 | 2018: +0.088 | 2019: +0.022 | 2020: +0.124 | 2021: +0.030 | 2022: -0.016 | 2023: +0.077 | 2024: +0.067 | 2025: +0.136 | 2026: +0.066
-- Yearly Tail ICs:   2015: +0.321 | 2016: +0.232 | 2017: +0.295 | 2018: +0.341 | 2019: +0.034 | 2020: +0.327 | 2021: +0.259 | 2022: +0.038 | 2023: -0.061 | 2024: +0.343 | 2025: +0.204 | 2026: +0.189
-- IC CV=0.71, Neg years (linear/tail)=1/1 of 8, Half ratio=1.01, Recency ratio=1.83
-- Early IC=+0.0563, Recent IC=+0.1029, 1st-half IC=+0.0737, 2nd-half IC=+0.0747, Neg regimes=0/5
-- Weak component: `shaved_bar_trend_conviction` (CV=1.10)
-- Regime ICs: Q1_low_vol=+0.086, Q2=+0.026, Q3_mid=+0.059, Q4=+0.098, Q5_high_vol=+0.120
-
 **`combo_min__star50_limit_proximity_early__bar_ret_0`** (Lock IC=+0.0849, Sharpe=+0.9197)
 - Admission: Train IC=+0.2157, Deflated=+0.2156, IR=0.54, Mono=0.68, p=0.0000, MaxCorr=0.94
 - Yearly Linear ICs: 2015: +0.287 | 2016: +0.068 | 2017: +0.192 | 2018: +0.151 | 2019: +0.175 | 2020: +0.115 | 2021: +0.088 | 2022: +0.034 | 2023: +0.063 | 2024: +0.109 | 2025: +0.131 | 2026: +0.085
@@ -2497,24 +1694,6 @@ What stable, persistent features look like in training.
 - Early IC=+0.1628, Recent IC=+0.1198, 1st-half IC=+0.1279, 2nd-half IC=+0.0850, Neg regimes=0/5
 - Weak component: `bar_ret_0` (CV=0.48)
 - Regime ICs: Q1_low_vol=+0.128, Q2=+0.008, Q3_mid=+0.084, Q4=+0.130, Q5_high_vol=+0.163
-
-**`combo_rank_min__star50_limit_proximity_early__bar_ret_0`** (Lock IC=+0.0737, Sharpe=+0.8795)
-- Admission: Train IC=+0.2120, Deflated=+0.2118, IR=0.57, Mono=0.72, p=0.0000, MaxCorr=0.94
-- Yearly Linear ICs: 2015: +0.287 | 2016: +0.067 | 2017: +0.194 | 2018: +0.149 | 2019: +0.171 | 2020: +0.117 | 2021: +0.089 | 2022: +0.034 | 2023: +0.064 | 2024: +0.111 | 2025: +0.131 | 2026: +0.079
-- Yearly Tail ICs:   2015: +0.249 | 2016: +0.097 | 2017: +0.214 | 2018: +0.389 | 2019: +0.325 | 2020: +0.223 | 2021: +0.118 | 2022: +0.125 | 2023: +0.121 | 2024: +0.318 | 2025: +0.150 | 2026: +0.051
-- IC CV=0.36, Neg years (linear/tail)=0/0 of 8, Half ratio=0.71, Recency ratio=0.79
-- Early IC=+0.1543, Recent IC=+0.1223, 1st-half IC=+0.1257, 2nd-half IC=+0.0892, Neg regimes=0/5
-- Weak component: `bar_ret_0` (CV=0.48)
-- Regime ICs: Q1_low_vol=+0.130, Q2=+0.013, Q3_mid=+0.086, Q4=+0.127, Q5_high_vol=+0.168
-
-**`combo_rank_max__star50_limit_proximity_early__max_down_ret`** (Lock IC=+0.1466, Sharpe=+0.8696)
-- Admission: Train IC=+0.1923, Deflated=+0.1918, IR=0.52, Mono=0.68, p=0.0000, MaxCorr=0.83
-- Yearly Linear ICs: 2015: +0.291 | 2016: +0.057 | 2017: +0.230 | 2018: +0.093 | 2019: +0.123 | 2020: +0.133 | 2021: +0.031 | 2022: +0.096 | 2023: +0.036 | 2024: +0.139 | 2025: +0.111 | 2026: +0.152
-- Yearly Tail ICs:   2015: +0.353 | 2016: +0.065 | 2017: +0.185 | 2018: +0.151 | 2019: +0.343 | 2020: +0.164 | 2021: +0.294 | 2022: +0.113 | 2023: +0.030 | 2024: +0.178 | 2025: +0.302 | 2026: +0.147
-- IC CV=0.42, Neg years (linear/tail)=0/0 of 8, Half ratio=1.06, Recency ratio=1.15
-- Early IC=+0.1071, Recent IC=+0.1235, 1st-half IC=+0.0993, 2nd-half IC=+0.1048, Neg regimes=0/5
-- Weak component: `max_down_ret` (CV=0.39)
-- Regime ICs: Q1_low_vol=+0.068, Q2=+0.068, Q3_mid=+0.125, Q4=+0.115, Q5_high_vol=+0.128
 
 **`combo_rank_min__rbreaker_sell_setup_proximity_early__bar_body_rng_0`** (Lock IC=+0.0955, Sharpe=+0.7908)
 - Admission: Train IC=+0.2531, Deflated=+0.2531, IR=0.73, Mono=0.76, p=0.0000, MaxCorr=0.84
@@ -2542,15 +1721,6 @@ What stable, persistent features look like in training.
 - Early IC=+0.1518, Recent IC=+0.1286, 1st-half IC=+0.1286, 2nd-half IC=+0.1037, Neg regimes=0/5
 - Weak component: `bar_ret_0` (CV=0.48)
 - Regime ICs: Q1_low_vol=+0.121, Q2=+0.034, Q3_mid=+0.098, Q4=+0.138, Q5_high_vol=+0.165
-
-**`combo_min__first_bar_return__close_vs_open_range`** (Lock IC=+0.0019, Sharpe=+0.4072)
-- Admission: Train IC=+0.2002, Deflated=+0.1992, IR=0.67, Mono=0.74, p=0.0000, MaxCorr=0.92
-- Yearly Linear ICs: 2015: +0.195 | 2016: +0.085 | 2017: +0.189 | 2018: +0.163 | 2019: +0.112 | 2020: +0.068 | 2021: +0.057 | 2022: +0.055 | 2023: +0.080 | 2024: +0.142 | 2025: +0.144 | 2026: +0.002
-- Yearly Tail ICs:   2015: +0.360 | 2016: +0.185 | 2017: +0.309 | 2018: +0.315 | 2019: +0.117 | 2020: +0.073 | 2021: +0.227 | 2022: +0.220 | 2023: +0.141 | 2024: +0.217 | 2025: +0.223 | 2026: +0.202
-- IC CV=0.39, Neg years (linear/tail)=0/0 of 8, Half ratio=1.09, Recency ratio=1.04
-- Early IC=+0.1376, Recent IC=+0.1428, 1st-half IC=+0.0997, 2nd-half IC=+0.1091, Neg regimes=0/5
-- Weak component: `first_bar_return` (CV=0.48)
-- Regime ICs: Q1_low_vol=+0.111, Q2=+0.031, Q3_mid=+0.105, Q4=+0.109, Q5_high_vol=+0.145
 
 **`combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__bar_ret_0`** (Lock IC=+0.0617, Sharpe=+0.3905)
 - Admission: Train IC=+0.2152, Deflated=+0.2149, IR=0.66, Mono=0.74, p=0.0000, MaxCorr=0.92
@@ -2587,15 +1757,6 @@ What stable, persistent features look like in training.
 - Early IC=+0.1669, Recent IC=+0.1044, 1st-half IC=+0.1487, 2nd-half IC=+0.0871, Neg regimes=0/5
 - Weak component: `bar_ret_0` (CV=0.48)
 - Regime ICs: Q1_low_vol=+0.110, Q2=+0.025, Q3_mid=+0.111, Q4=+0.123, Q5_high_vol=+0.190
-
-**`combo_rank_max__opening_drive_thrust_ratio__max_down_ret`** (Lock IC=+0.0069, Sharpe=+0.0524)
-- Admission: Train IC=+0.1983, Deflated=+0.1983, IR=0.72, Mono=0.79, p=0.0000, MaxCorr=0.91
-- Yearly Linear ICs: 2015: +0.280 | 2016: +0.070 | 2017: +0.271 | 2018: +0.191 | 2019: +0.147 | 2020: +0.174 | 2021: +0.099 | 2022: +0.054 | 2023: +0.065 | 2024: +0.158 | 2025: +0.105 | 2026: +0.007
-- Yearly Tail ICs:   2015: +0.476 | 2016: +0.084 | 2017: +0.234 | 2018: +0.163 | 2019: +0.358 | 2020: +0.068 | 2021: +0.297 | 2022: +0.084 | 2023: +0.183 | 2024: +0.402 | 2025: +0.178 | 2026: -0.048
-- IC CV=0.38, Neg years (linear/tail)=0/0 of 8, Half ratio=0.72, Recency ratio=0.78
-- Early IC=+0.1685, Recent IC=+0.1315, 1st-half IC=+0.1454, 2nd-half IC=+0.1051, Neg regimes=0/5
-- Weak component: `max_down_ret` (CV=0.39)
-- Regime ICs: Q1_low_vol=+0.081, Q2=+0.043, Q3_mid=+0.175, Q4=+0.123, Q5_high_vol=+0.195
 
 ### 159915ETF — `single` True Positives
 
@@ -2644,15 +1805,6 @@ What stable, persistent features look like in training.
 - Weak component: `volume_weighted_price_position` (CV=0.69)
 - Regime ICs: Q1_low_vol=+0.117, Q2=+0.129, Q3_mid=+0.147, Q4=+0.100, Q5_high_vol=+0.098
 
-**`combo_rank_min__rbreaker_buy_setup_proximity_early__directional_volume_signature`** (Lock IC=+0.2417, Sharpe=+2.6620)
-- Admission: Train IC=+0.1702, Deflated=+0.1699, IR=0.44, Mono=0.65, p=0.0010, MaxCorr=0.90
-- Yearly Linear ICs: 2015: +0.181 | 2016: +0.004 | 2017: -0.060 | 2018: +0.032 | 2019: +0.195 | 2020: +0.151 | 2021: +0.030 | 2022: +0.031 | 2023: +0.084 | 2024: +0.121 | 2025: +0.079 | 2026: +0.243
-- Yearly Tail ICs:   2015: +0.287 | 2016: -0.042 | 2017: -0.118 | 2018: +0.193 | 2019: +0.299 | 2020: +0.319 | 2021: -0.078 | 2022: +0.170 | 2023: +0.147 | 2024: +0.395 | 2025: +0.124 | 2026: +0.474
-- IC CV=0.66, Neg years (linear/tail)=0/1 of 8, Half ratio=0.98, Recency ratio=0.94
-- Early IC=+0.1100, Recent IC=+0.1038, 1st-half IC=+0.0888, 2nd-half IC=+0.0867, Neg regimes=0/5
-- Weak component: `directional_volume_signature` (CV=0.91)
-- Regime ICs: Q1_low_vol=+0.125, Q2=+0.125, Q3_mid=+0.064, Q4=+0.073, Q5_high_vol=+0.112
-
 **`combo_min__star50_limit_proximity_early__volume_price_confirmation`** (Lock IC=+0.1908, Sharpe=+2.5310)
 - Admission: Train IC=+0.2951, Deflated=+0.2959, IR=0.84, Mono=0.78, p=0.0000, MaxCorr=0.85
 - Yearly Linear ICs: 2015: +0.197 | 2016: +0.063 | 2017: +0.029 | 2018: +0.138 | 2019: +0.183 | 2020: +0.166 | 2021: +0.029 | 2022: +0.057 | 2023: +0.117 | 2024: +0.123 | 2025: +0.106 | 2026: +0.191
@@ -2670,24 +1822,6 @@ What stable, persistent features look like in training.
 - Early IC=+0.1802, Recent IC=+0.1519, 1st-half IC=+0.1509, 2nd-half IC=+0.1481, Neg regimes=0/5
 - Weak component: `opening_drive_thrust_ratio` (CV=0.33)
 - Regime ICs: Q1_low_vol=+0.161, Q2=+0.163, Q3_mid=+0.134, Q4=+0.173, Q5_high_vol=+0.169
-
-**`combo_rel_diff__star50_limit_proximity_early__body_size_progression`** (Lock IC=+0.1846, Sharpe=+2.4687)
-- Admission: Train IC=+0.2120, Deflated=+0.2127, IR=0.47, Mono=0.66, p=0.0002, MaxCorr=0.91
-- Yearly Linear ICs: 2015: +0.198 | 2016: +0.034 | 2017: -0.020 | 2018: +0.105 | 2019: +0.289 | 2020: +0.133 | 2021: +0.039 | 2022: +0.097 | 2023: +0.132 | 2024: +0.093 | 2025: +0.070 | 2026: +0.185
-- Yearly Tail ICs:   2015: +0.195 | 2016: -0.163 | 2017: -0.186 | 2018: +0.224 | 2019: +0.516 | 2020: +0.176 | 2021: +0.223 | 2022: +0.103 | 2023: +0.228 | 2024: +0.213 | 2025: +0.064 | 2026: +0.293
-- IC CV=0.58, Neg years (linear/tail)=0/0 of 8, Half ratio=0.77, Recency ratio=0.41
-- Early IC=+0.1966, Recent IC=+0.0814, 1st-half IC=+0.1363, 2nd-half IC=+0.1050, Neg regimes=0/5
-- Weak component: `body_size_progression` (CV=0.85)
-- Regime ICs: Q1_low_vol=+0.121, Q2=+0.105, Q3_mid=+0.087, Q4=+0.135, Q5_high_vol=+0.142
-
-**`combo_rank_max__opening_drive_thrust_ratio__directional_volume_signature`** (Lock IC=+0.0490, Sharpe=+2.2445)
-- Admission: Train IC=+0.2233, Deflated=+0.2237, IR=0.64, Mono=0.70, p=0.0002, MaxCorr=0.94
-- Yearly Linear ICs: 2015: +0.256 | 2016: +0.056 | 2017: -0.001 | 2018: +0.049 | 2019: +0.188 | 2020: +0.159 | 2021: +0.042 | 2022: +0.016 | 2023: +0.103 | 2024: +0.119 | 2025: +0.094 | 2026: +0.048
-- Yearly Tail ICs:   2015: +0.384 | 2016: +0.039 | 2017: -0.021 | 2018: -0.069 | 2019: +0.237 | 2020: +0.231 | 2021: +0.177 | 2022: +0.077 | 2023: +0.179 | 2024: +0.296 | 2025: +0.158 | 2026: +0.238
-- IC CV=0.52, Neg years (linear/tail)=0/1 of 8, Half ratio=0.90, Recency ratio=0.84
-- Early IC=+0.1292, Recent IC=+0.1088, 1st-half IC=+0.1100, 2nd-half IC=+0.0985, Neg regimes=0/5
-- Weak component: `directional_volume_signature` (CV=0.91)
-- Regime ICs: Q1_low_vol=+0.104, Q2=+0.113, Q3_mid=+0.090, Q4=+0.059, Q5_high_vol=+0.150
 
 **`combo_ifelse__gap_pct__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early`** (Lock IC=+0.0889, Sharpe=+2.1594)
 - Admission: Train IC=+0.3099, Deflated=+0.3100, IR=1.00, Mono=0.84, p=0.0000, MaxCorr=0.92
@@ -2869,15 +2003,6 @@ What stable, persistent features look like in training.
 - Weak component: `rally_strength_max` (CV=0.90)
 - Regime ICs: Q1_low_vol=+0.110, Q2=+0.158, Q3_mid=+0.144, Q4=+0.148, Q5_high_vol=+0.127
 
-**`combo_ratio__star50_limit_proximity_early__volume_weighted_momentum_acceleration`** (Lock IC=+0.2061, Sharpe=+1.0874)
-- Admission: Train IC=+0.1424, Deflated=+0.1422, IR=0.39, Mono=0.65, p=0.0046, MaxCorr=0.21
-- Yearly Linear ICs: 2015: +0.174 | 2016: +0.036 | 2017: +0.012 | 2018: +0.054 | 2019: +0.120 | 2020: +0.044 | 2021: +0.123 | 2022: +0.178 | 2023: +0.059 | 2024: +0.091 | 2025: +0.160 | 2026: +0.206
-- Yearly Tail ICs:   2015: +0.190 | 2016: +0.114 | 2017: +0.138 | 2018: +0.045 | 2019: +0.053 | 2020: +0.179 | 2021: +0.175 | 2022: +0.278 | 2023: -0.156 | 2024: +0.084 | 2025: +0.331 | 2026: +0.127
-- IC CV=0.45, Neg years (linear/tail)=0/1 of 8, Half ratio=1.40, Recency ratio=1.45
-- Early IC=+0.0866, Recent IC=+0.1256, 1st-half IC=+0.0926, 2nd-half IC=+0.1296, Neg regimes=0/5
-- Weak component: `volume_weighted_momentum_acceleration` (CV=0.32)
-- Regime ICs: Q1_low_vol=+0.144, Q2=+0.121, Q3_mid=+0.116, Q4=+0.113, Q5_high_vol=+0.109
-
 **`combo_rel_diff__bar_ret_0__volume_weighted_momentum_acceleration`** (Lock IC=+0.0299, Sharpe=+1.0761)
 - Admission: Train IC=+0.1408, Deflated=+0.1411, IR=0.47, Mono=0.65, p=0.0050, MaxCorr=0.93
 - Yearly Linear ICs: 2015: +0.187 | 2016: +0.113 | 2017: +0.029 | 2018: +0.145 | 2019: +0.226 | 2020: +0.129 | 2021: +0.118 | 2022: +0.077 | 2023: +0.149 | 2024: +0.072 | 2025: +0.106 | 2026: +0.030
@@ -2923,15 +2048,6 @@ What stable, persistent features look like in training.
 - Weak component: `volatility_expansion_trend_vector` (CV=0.58)
 - Regime ICs: Q1_low_vol=+0.149, Q2=+0.131, Q3_mid=+0.119, Q4=+0.102, Q5_high_vol=+0.102
 
-**`combo_rank_max__bar_body_rng_0__volume_price_confirmation`** (Lock IC=+0.0882, Sharpe=+0.8782)
-- Admission: Train IC=+0.1957, Deflated=+0.1963, IR=0.55, Mono=0.70, p=0.0002, MaxCorr=0.92
-- Yearly Linear ICs: 2015: +0.260 | 2016: +0.144 | 2017: +0.006 | 2018: +0.160 | 2019: +0.213 | 2020: +0.165 | 2021: +0.093 | 2022: +0.019 | 2023: +0.113 | 2024: +0.064 | 2025: +0.115 | 2026: +0.089
-- Yearly Tail ICs:   2015: +0.349 | 2016: -0.098 | 2017: -0.103 | 2018: +0.312 | 2019: +0.420 | 2020: +0.058 | 2021: +0.101 | 2022: +0.021 | 2023: +0.342 | 2024: +0.242 | 2025: +0.151 | 2026: +0.255
-- IC CV=0.48, Neg years (linear/tail)=0/0 of 8, Half ratio=0.54, Recency ratio=0.48
-- Early IC=+0.1883, Recent IC=+0.0909, 1st-half IC=+0.1485, 2nd-half IC=+0.0796, Neg regimes=0/5
-- Weak component: `volume_price_confirmation` (CV=0.57)
-- Regime ICs: Q1_low_vol=+0.110, Q2=+0.114, Q3_mid=+0.117, Q4=+0.073, Q5_high_vol=+0.154
-
 **`combo_max__volatility_expansion_trend_vector__directional_volume_signature`** (Lock IC=+0.0206, Sharpe=+0.8649)
 - Admission: Train IC=+0.1848, Deflated=+0.1852, IR=0.54, Mono=0.68, p=0.0004, MaxCorr=0.92
 - Yearly Linear ICs: 2015: +0.222 | 2016: +0.044 | 2017: +0.005 | 2018: +0.037 | 2019: +0.140 | 2020: +0.158 | 2021: +0.074 | 2022: +0.012 | 2023: +0.104 | 2024: +0.105 | 2025: +0.155 | 2026: +0.021
@@ -2950,15 +2066,6 @@ What stable, persistent features look like in training.
 - Weak component: `bar_body_rng_0` (CV=0.37)
 - Regime ICs: Q1_low_vol=+0.170, Q2=+0.173, Q3_mid=+0.119, Q4=+0.144, Q5_high_vol=+0.191
 
-**`combo_diff__max_up_ret__early_late_momentum_divergence`** (Lock IC=+0.0598, Sharpe=+0.7863)
-- Admission: Train IC=+0.1923, Deflated=+0.1934, IR=0.49, Mono=0.69, p=0.0002, MaxCorr=0.91
-- Yearly Linear ICs: 2015: +0.189 | 2016: +0.087 | 2017: +0.021 | 2018: +0.083 | 2019: +0.201 | 2020: +0.113 | 2021: +0.095 | 2022: +0.098 | 2023: +0.172 | 2024: +0.083 | 2025: +0.089 | 2026: +0.060
-- Yearly Tail ICs:   2015: +0.149 | 2016: +0.116 | 2017: +0.173 | 2018: +0.196 | 2019: +0.297 | 2020: -0.003 | 2021: +0.336 | 2022: +0.237 | 2023: +0.374 | 2024: +0.211 | 2025: +0.047 | 2026: -0.050
-- IC CV=0.36, Neg years (linear/tail)=0/1 of 8, Half ratio=0.97, Recency ratio=0.61
-- Early IC=+0.1419, Recent IC=+0.0860, 1st-half IC=+0.1197, 2nd-half IC=+0.1156, Neg regimes=0/5
-- Weak component: `early_late_momentum_divergence` (CV=0.83)
-- Regime ICs: Q1_low_vol=+0.108, Q2=+0.133, Q3_mid=+0.096, Q4=+0.120, Q5_high_vol=+0.119
-
 **`combo_mean__star50_limit_proximity_early__bar_body_rng_0`** (Lock IC=+0.1343, Sharpe=+0.7340)
 - Admission: Train IC=+0.3076, Deflated=+0.3077, IR=0.87, Mono=0.79, p=0.0000, MaxCorr=0.94
 - Yearly Linear ICs: 2015: +0.212 | 2016: +0.120 | 2017: -0.024 | 2018: +0.163 | 2019: +0.230 | 2020: +0.158 | 2021: +0.146 | 2022: +0.107 | 2023: +0.116 | 2024: +0.081 | 2025: +0.143 | 2026: +0.134
@@ -2967,15 +2074,6 @@ What stable, persistent features look like in training.
 - Early IC=+0.1961, Recent IC=+0.1125, 1st-half IC=+0.1690, 2nd-half IC=+0.1165, Neg regimes=0/5
 - Weak component: `bar_body_rng_0` (CV=0.37)
 - Regime ICs: Q1_low_vol=+0.197, Q2=+0.124, Q3_mid=+0.157, Q4=+0.122, Q5_high_vol=+0.161
-
-**`combo_mean__opening_drive_thrust_ratio__volume_price_confirmation`** (Lock IC=+0.0455, Sharpe=+0.6790)
-- Admission: Train IC=+0.1775, Deflated=+0.1780, IR=0.43, Mono=0.68, p=0.0006, MaxCorr=0.93
-- Yearly Linear ICs: 2015: +0.231 | 2016: +0.080 | 2017: +0.051 | 2018: +0.139 | 2019: +0.203 | 2020: +0.146 | 2021: +0.091 | 2022: +0.056 | 2023: +0.146 | 2024: +0.083 | 2025: +0.132 | 2026: +0.046
-- Yearly Tail ICs:   2015: +0.447 | 2016: -0.144 | 2017: -0.073 | 2018: +0.218 | 2019: +0.343 | 2020: +0.197 | 2021: +0.214 | 2022: -0.194 | 2023: +0.326 | 2024: +0.183 | 2025: +0.121 | 2026: +0.071
-- IC CV=0.35, Neg years (linear/tail)=0/1 of 8, Half ratio=0.81, Recency ratio=0.63
-- Early IC=+0.1708, Recent IC=+0.1075, 1st-half IC=+0.1336, 2nd-half IC=+0.1082, Neg regimes=0/5
-- Weak component: `volume_price_confirmation` (CV=0.57)
-- Regime ICs: Q1_low_vol=+0.103, Q2=+0.123, Q3_mid=+0.101, Q4=+0.110, Q5_high_vol=+0.162
 
 **`combo_rank_min__max_up_ret__star50_limit_proximity_early`** (Lock IC=+0.0850, Sharpe=+0.6640)
 - Admission: Train IC=+0.2595, Deflated=+0.2603, IR=0.80, Mono=0.78, p=0.0000, MaxCorr=0.91
@@ -3066,24 +2164,6 @@ What stable, persistent features look like in training.
 - Early IC=+0.1428, Recent IC=+0.0952, 1st-half IC=+0.1451, 2nd-half IC=+0.0946, Neg regimes=0/5
 - Weak component: `volume_price_confirmation` (CV=0.57)
 - Regime ICs: Q1_low_vol=+0.088, Q2=+0.135, Q3_mid=+0.132, Q4=+0.113, Q5_high_vol=+0.137
-
-**`combo_max__bar_body_rng_0__rbreaker_buy_setup_proximity_early`** (Lock IC=+0.0852, Sharpe=+0.3263)
-- Admission: Train IC=+0.1835, Deflated=+0.1829, IR=0.44, Mono=0.68, p=0.0004, MaxCorr=0.93
-- Yearly Linear ICs: 2015: +0.184 | 2016: +0.123 | 2017: -0.015 | 2018: +0.135 | 2019: +0.135 | 2020: +0.081 | 2021: +0.140 | 2022: +0.124 | 2023: +0.090 | 2024: +0.025 | 2025: +0.113 | 2026: +0.085
-- Yearly Tail ICs:   2015: +0.117 | 2016: -0.005 | 2017: +0.114 | 2018: +0.315 | 2019: +0.265 | 2020: -0.028 | 2021: +0.346 | 2022: +0.053 | 2023: +0.089 | 2024: +0.218 | 2025: +0.168 | 2026: +0.074
-- IC CV=0.35, Neg years (linear/tail)=0/1 of 8, Half ratio=0.77, Recency ratio=0.51
-- Early IC=+0.1350, Recent IC=+0.0688, 1st-half IC=+0.1197, 2nd-half IC=+0.0926, Neg regimes=0/5
-- Weak component: `rbreaker_buy_setup_proximity_early` (CV=0.44)
-- Regime ICs: Q1_low_vol=+0.180, Q2=+0.083, Q3_mid=+0.124, Q4=+0.074, Q5_high_vol=+0.104
-
-**`combo_rank_min__max_up_ret__volume_price_confirmation`** (Lock IC=+0.0621, Sharpe=+0.3193)
-- Admission: Train IC=+0.2232, Deflated=+0.2243, IR=0.47, Mono=0.66, p=0.0002, MaxCorr=0.91
-- Yearly Linear ICs: 2015: +0.251 | 2016: +0.088 | 2017: +0.086 | 2018: +0.127 | 2019: +0.164 | 2020: +0.164 | 2021: +0.080 | 2022: +0.068 | 2023: +0.154 | 2024: +0.054 | 2025: +0.113 | 2026: +0.064
-- Yearly Tail ICs:   2015: +0.401 | 2016: -0.035 | 2017: +0.103 | 2018: +0.220 | 2019: +0.310 | 2020: +0.175 | 2021: +0.307 | 2022: -0.048 | 2023: +0.350 | 2024: +0.101 | 2025: +0.429 | 2026: -0.121
-- IC CV=0.35, Neg years (linear/tail)=0/1 of 8, Half ratio=0.81, Recency ratio=0.57
-- Early IC=+0.1467, Recent IC=+0.0841, 1st-half IC=+0.1220, 2nd-half IC=+0.0988, Neg regimes=0/5
-- Weak component: `volume_price_confirmation` (CV=0.57)
-- Regime ICs: Q1_low_vol=+0.110, Q2=+0.115, Q3_mid=+0.080, Q4=+0.077, Q5_high_vol=+0.156
 
 **`combo_max__rbreaker_sell_setup_proximity_early__bar_body_rng_0`** (Lock IC=+0.1358, Sharpe=+0.2908)
 - Admission: Train IC=+0.2041, Deflated=+0.2031, IR=0.49, Mono=0.66, p=0.0002, MaxCorr=0.86
@@ -3345,30 +2425,18 @@ Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies la
 | `combo_diff__star50_limit_proximity_early__volume_weighted_momentum_acceleration` | TP | persistent | +0.1800 | N/A | +0.1800 | ∞ |
 | `combo_clamp_diff__star50_limit_proximity_early__volume_weighted_momentum_acceleration` | TP | persistent | +0.1783 | N/A | +0.1783 | ∞ |
 | `combo_rel_diff__star50_limit_proximity_early__volume_weighted_momentum_acceleration` | TP | persistent | +0.1749 | N/A | +0.1749 | ∞ |
-| `combo_rank_max__star50_limit_proximity_early__max_down_ret` | TP | persistent | +0.1466 | N/A | +0.1466 | ∞ |
 | `combo_mean__star50_limit_proximity_early__bar_body_rng_0` | TP | persistent | +0.1278 | N/A | +0.1278 | ∞ |
-| `combo_clamp_diff__first_bar_return__early_late_momentum_divergence` | Median | persistent | +0.1113 | N/A | +0.1113 | ∞ |
 | `combo_mean__star50_limit_proximity_early__bar_ret_0` | Median | persistent | +0.1105 | N/A | +0.1105 | ∞ |
-| `combo_rank_min__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early` | TP | persistent | +0.1045 | N/A | +0.1045 | ∞ |
 | `combo_min__rbreaker_sell_setup_proximity_early__bar_body_rng_0` | TP | persistent | +0.1016 | N/A | +0.1016 | ∞ |
-| `combo_mean__star50_limit_proximity_early__max_down_ret` | Median | persistent | +0.1008 | N/A | +0.1008 | ∞ |
 | `combo_clamp_diff__max_up_ret__early_late_momentum_divergence` | Median | persistent | +0.0988 | N/A | +0.0988 | ∞ |
 | `combo_rank_min__rbreaker_sell_setup_proximity_early__bar_body_rng_0` | TP | persistent | +0.0955 | N/A | +0.0955 | ∞ |
-| `combo_tri_max__opening_drive_thrust_ratio__volatility_expansion_trend_vector__star50_limit_proximity_early` | Median | persistent | +0.0887 | N/A | +0.0887 | ∞ |
 | `combo_tri_min__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__bar_ret_0` | TP | persistent | +0.0876 | N/A | +0.0876 | ∞ |
-| `combo_rank_min__star50_limit_proximity_early__close_vs_open_range` | TP | persistent | +0.0865 | N/A | +0.0865 | ∞ |
 | `combo_min__star50_limit_proximity_early__bar_ret_0` | TP | persistent | +0.0849 | N/A | +0.0849 | ∞ |
 | `combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__bar_ret_0` | TP | persistent | +0.0846 | N/A | +0.0846 | ∞ |
-| `combo_mean__rbreaker_sell_setup_proximity_early__shaved_bar_trend_conviction` | TP | persistent | +0.0837 | N/A | +0.0837 | ∞ |
-| `combo_clamp_diff__opening_drive_thrust_ratio__body_size_progression` | Median | persistent | +0.0832 | N/A | +0.0832 | ∞ |
 | `combo_tri_mean__opening_drive_thrust_ratio__star50_limit_proximity_early__bar_ret_0` | TP | persistent | +0.0815 | N/A | +0.0815 | ∞ |
-| `combo_tri_min__opening_drive_thrust_ratio__star50_limit_proximity_early__trend_day_regime_conviction` | TP | persistent | +0.0811 | N/A | +0.0811 | ∞ |
 | `combo_tri_min__trend_bar_close_consistency__volatility_expansion_trend_vector__star50_limit_proximity_early` | TP | persistent | +0.0765 | N/A | +0.0765 | ∞ |
-| `combo_rank_min__star50_limit_proximity_early__bar_ret_0` | TP | persistent | +0.0737 | N/A | +0.0737 | ∞ |
 | `combo_tri_min__rbreaker_sell_setup_proximity_early__volatility_expansion_trend_vector__bar_ret_0` | TP | persistent | +0.0733 | N/A | +0.0733 | ∞ |
 | `combo_mean__rbreaker_sell_setup_proximity_early__early_body_momentum` | Median | persistent | +0.0727 | N/A | +0.0727 | ∞ |
-| `combo_rank_min__rbreaker_sell_setup_proximity_early__shaved_bar_trend_conviction` | TP | persistent | +0.0711 | N/A | +0.0711 | ∞ |
-| `combo_min__star50_limit_proximity_early__close_vs_open_range` | TP | persistent | +0.0708 | N/A | +0.0708 | ∞ |
 | `combo_tri_mean__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__net_volume_flow` | TP | persistent | +0.0674 | N/A | +0.0674 | ∞ |
 | `combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__bar_ret_0` | TP | persistent | +0.0617 | N/A | +0.0617 | ∞ |
 | `combo_min__rbreaker_sell_setup_proximity_early__shaved_bar_trend_conviction` | Median | persistent | +0.0600 | N/A | +0.0600 | ∞ |
@@ -3376,190 +2444,79 @@ Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies la
 | `combo_rel_diff__bar_ret_0__demark_setup_reversal_early` | Median | persistent | +0.0529 | N/A | +0.0529 | ∞ |
 | `combo_clamp_diff__first_bar_return__demark_setup_reversal_early` | Median | persistent | +0.0514 | N/A | +0.0514 | ∞ |
 | `combo_tri_mean__rbreaker_sell_setup_proximity_early__early_body_momentum__bar_ret_0` | TP | persistent | +0.0419 | N/A | +0.0419 | ∞ |
-| `combo_tri_max__volatility_expansion_trend_vector__early_body_momentum__star50_limit_proximity_early` | Median | persistent | +0.0390 | N/A | +0.0390 | ∞ |
 | `combo_tri_min__rbreaker_sell_setup_proximity_early__max_up_ret__trend_bar_close_consistency` | Median | persistent | +0.0350 | N/A | +0.0350 | ∞ |
-| `combo_rank_max__bar_ret_0__max_down_ret` | Median | persistent | +0.0298 | N/A | +0.0298 | ∞ |
 | `combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__early_body_momentum` | Median | persistent | +0.0277 | N/A | +0.0277 | ∞ |
-| `combo_rank_min__max_down_ret__vwap_close_divergence_trend` | Median | persistent | +0.0265 | N/A | +0.0265 | ∞ |
-| `combo_diff__net_volume_flow__smooth_momentum_structure` | Median | persistent | +0.0252 | N/A | +0.0252 | ∞ |
-| `combo_mean__opening_drive_thrust_ratio__max_down_ret` | Median | persistent | +0.0234 | N/A | +0.0234 | ∞ |
 | `combo_tri_median__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__bar_ret_0` | Median | persistent | +0.0177 | N/A | +0.0177 | ∞ |
 | `combo_tri_mean__trend_bar_close_consistency__volatility_expansion_trend_vector__star50_limit_proximity_early` | Median | persistent | +0.0175 | N/A | +0.0175 | ∞ |
 | `combo_mean__first_bar_return__max_down_ret` | Median | persistent | +0.0117 | N/A | +0.0117 | ∞ |
 | `combo_rank_min__volatility_expansion_trend_vector__bar_ret_0` | Median | persistent | +0.0095 | N/A | +0.0095 | ∞ |
 | `combo_mean__opening_drive_thrust_ratio__bar_body_rng_0` | Median | persistent | +0.0078 | N/A | +0.0078 | ∞ |
 | `combo_max__bar_ret_0__max_down_ret` | Median | persistent | +0.0077 | N/A | +0.0077 | ∞ |
-| `combo_rank_max__opening_drive_thrust_ratio__max_down_ret` | TP | persistent | +0.0069 | N/A | +0.0069 | ∞ |
-| `combo_min__first_bar_return__vwap_close_divergence_trend` | Median | persistent | +0.0050 | N/A | +0.0050 | ∞ |
-| `combo_rank_min__bar_ret_0__vwap_close_divergence_trend` | Median | persistent | +0.0037 | N/A | +0.0037 | ∞ |
-| `combo_rel_diff__net_volume_flow__volume_weighted_momentum_acceleration` | Median | persistent | +0.0033 | N/A | +0.0033 | ∞ |
 | `combo_clamp_diff__max_up_ret__volume_weighted_momentum_acceleration` | Median | persistent | +0.0028 | N/A | +0.0028 | ∞ |
-| `combo_min__first_bar_return__close_vs_open_range` | TP | persistent | +0.0019 | N/A | +0.0019 | ∞ |
 | `combo_rank_min__max_up_ret__bar_body_rng_0` | Median | persistent | +0.0003 | N/A | +0.0003 | ∞ |
-| `combo_tri_min__trend_bar_close_consistency__volatility_expansion_trend_vector__bar_ret_0` | FP | immediate | -0.0001 | N/A | -0.0001 | ∞ |
 | `combo_min__net_volume_flow__first_bar_return` | FP | immediate | -0.0010 | N/A | -0.0010 | ∞ |
-| `combo_rank_max__max_up_ret__max_down_ret` | FP | immediate | -0.0021 | N/A | -0.0021 | ∞ |
-| `combo_tri_min__opening_drive_thrust_ratio__max_up_ret__bar_ret_0` | FP | immediate | -0.0023 | N/A | -0.0023 | ∞ |
 | `combo_min__first_bar_return__bar_body_rng_0` | FP | immediate | -0.0051 | N/A | -0.0051 | ∞ |
-| `combo_tri_median__opening_drive_thrust_ratio__trend_bar_close_consistency__star50_limit_proximity_early` | FP | immediate | -0.0061 | N/A | -0.0061 | ∞ |
 | `combo_tri_median__opening_drive_thrust_ratio__max_up_ret__smooth_momentum_structure` | FP | immediate | -0.0068 | N/A | -0.0068 | ∞ |
-| `combo_tri_min__opening_drive_thrust_ratio__volatility_expansion_trend_vector__bar_ret_0` | FP | immediate | -0.0080 | N/A | -0.0080 | ∞ |
-| `combo_rank_min__opening_drive_thrust_ratio__max_up_ret` | FP | immediate | -0.0104 | N/A | -0.0104 | ∞ |
-| `first_bar_return` | FP | immediate | -0.0114 | N/A | -0.0114 | ∞ |
 | `combo_tri_mean__opening_drive_thrust_ratio__max_up_ret__bar_ret_0` | FP | immediate | -0.0114 | N/A | -0.0114 | ∞ |
-| `combo_rank_max__opening_drive_thrust_ratio__max_up_ret` | FP | immediate | -0.0132 | N/A | -0.0132 | ∞ |
 | `combo_mean__max_up_ret__max_down_ret` | FP | immediate | -0.0160 | N/A | -0.0160 | ∞ |
 | `combo_rank_min__net_volume_flow__bar_body_rng_0` | FP | immediate | -0.0164 | N/A | -0.0164 | ∞ |
-| `combo_mean__volatility_expansion_trend_vector__max_down_ret` | FP | immediate | -0.0187 | N/A | -0.0187 | ∞ |
 | `combo_tri_median__rbreaker_sell_setup_proximity_early__volatility_expansion_trend_vector__bar_ret_0` | FP | immediate | -0.0197 | N/A | -0.0197 | ∞ |
 | `combo_tri_min__max_up_ret__trend_day_regime_conviction__bar_ret_0` | FP | immediate | -0.0199 | N/A | -0.0199 | ∞ |
 | `combo_tri_mean__opening_drive_thrust_ratio__trend_day_regime_conviction__bar_ret_0` | FP | immediate | -0.0298 | N/A | -0.0298 | ∞ |
-| `combo_mean__rsi_opening__bar_body_rng_0` | FP | immediate | -0.0320 | N/A | -0.0320 | ∞ |
 | `combo_min__bar_ret_0__early_order_flow_imbalance` | FP | immediate | -0.0339 | N/A | -0.0339 | ∞ |
-| `combo_sig_product__max_up_ret__early_order_flow_imbalance` | FP | immediate | -0.0342 | N/A | -0.0342 | ∞ |
 | `combo_mean__bar_ret_0__close_vs_open_range` | FP | immediate | -0.0383 | N/A | -0.0383 | ∞ |
 | `combo_min__early_order_flow_imbalance__bar_body_rng_0` | FP | immediate | -0.0451 | N/A | -0.0451 | ∞ |
-| `combo_tri_max__opening_drive_thrust_ratio__early_body_momentum__trend_day_regime_conviction` | FP | immediate | -0.0451 | N/A | -0.0451 | ∞ |
-| `combo_tri_median__opening_drive_thrust_ratio__max_up_ret__trend_bar_close_consistency` | FP | immediate | -0.0468 | N/A | -0.0468 | ∞ |
-| `combo_rank_max__max_up_ret__early_order_flow_imbalance` | FP | immediate | -0.0476 | N/A | -0.0476 | ∞ |
-| `combo_tri_min__opening_drive_thrust_ratio__trend_bar_close_consistency__volatility_expansion_trend_vector` | FP | immediate | -0.0503 | N/A | -0.0503 | ∞ |
-| `combo_sig_product__max_up_ret__max_down_ret` | FP | immediate | -0.0507 | N/A | -0.0507 | ∞ |
-| `combo_mean__first_bar_return__shaved_bar_trend_conviction` | FP | immediate | -0.0510 | N/A | -0.0510 | ∞ |
 | `combo_sig_product__max_up_ret__vwap_close_divergence_trend` | FP | immediate | -0.0518 | N/A | -0.0518 | ∞ |
-| `net_volume_flow` | FP | immediate | -0.0580 | N/A | -0.0580 | ∞ |
-| `combo_max__net_volume_flow__max_down_ret` | FP | immediate | -0.0643 | N/A | -0.0643 | ∞ |
 | `combo_rank_max__max_up_ret__bar_ret_0` | FP | immediate | -0.0646 | N/A | -0.0646 | ∞ |
-| `combo_rank_max__max_down_ret__vwap_close_divergence_trend` | FP | immediate | -0.0647 | N/A | -0.0647 | ∞ |
 | `combo_tri_mean__max_up_ret__trend_bar_close_consistency__bar_ret_0` | FP | immediate | -0.0656 | N/A | -0.0656 | ∞ |
-| `combo_tri_median__max_up_ret__volume_weighted_momentum_acceleration__bar_ret_0` | FP | immediate | -0.0666 | N/A | -0.0666 | ∞ |
-| `combo_diff__bar_ret_0__h2_l2_pullback_continuation` | FP | immediate | -0.0669 | N/A | -0.0669 | ∞ |
 | `combo_mean__bar_ret_0__vwap_close_divergence_trend` | FP | immediate | -0.0676 | N/A | -0.0676 | ∞ |
-| `combo_tri_median__max_up_ret__net_volume_flow__smooth_momentum_structure` | FP | immediate | -0.0680 | N/A | -0.0680 | ∞ |
-| `combo_mean__bar_ret_0__early_order_flow_imbalance` | FP | immediate | -0.0684 | N/A | -0.0684 | ∞ |
 | `combo_rank_max__volatility_expansion_trend_vector__max_down_ret` | FP | immediate | -0.0686 | N/A | -0.0686 | ∞ |
-| `combo_sig_product__opening_drive_thrust_ratio__volatility_expansion_trend_vector` | FP | immediate | -0.0689 | N/A | -0.0689 | ∞ |
-| `combo_sig_product__max_up_ret__bar_ret_0` | FP | immediate | -0.0695 | N/A | -0.0695 | ∞ |
 | `combo_mean__vwap_close_divergence_trend__bar_body_rng_0` | FP | immediate | -0.0705 | N/A | -0.0705 | ∞ |
 | `combo_rank_max__early_order_flow_imbalance__max_down_ret` | FP | immediate | -0.0706 | N/A | -0.0706 | ∞ |
 | `combo_sig_product__early_order_flow_imbalance__vwap_close_divergence_trend` | FP | immediate | -0.0712 | N/A | -0.0712 | ∞ |
-| `combo_sig_product__volatility_expansion_trend_vector__max_down_ret` | FP | immediate | -0.0739 | N/A | -0.0739 | ∞ |
-| `combo_min__early_body_momentum__close_vs_open_range` | FP | immediate | -0.0785 | N/A | -0.0785 | ∞ |
-| `combo_tri_median__net_volume_flow__volume_weighted_momentum_acceleration__bar_ret_0` | FP | immediate | -0.0843 | N/A | -0.0843 | ∞ |
-| `volatility_expansion_trend_vector` | FP | immediate | -0.0850 | N/A | -0.0850 | ∞ |
-| `combo_rank_min__net_volume_flow__shaved_bar_trend_conviction` | FP | immediate | -0.0862 | N/A | -0.0862 | ∞ |
-| `combo_max__max_down_ret__vwap_close_divergence_trend` | FP | immediate | -0.0888 | N/A | -0.0888 | ∞ |
-| `combo_diff__net_volume_flow__h2_l2_pullback_continuation` | FP | immediate | -0.0890 | N/A | -0.0890 | ∞ |
-| `combo_min__vwap_close_divergence_trend__shaved_bar_trend_conviction` | FP | immediate | -0.0901 | N/A | -0.0901 | ∞ |
-| `combo_tri_min__max_up_ret__trend_bar_close_consistency__volatility_expansion_trend_vector` | FP | immediate | -0.0906 | N/A | -0.0906 | ∞ |
 | `morning_volume_weighted_momentum` | FP | immediate | -0.0906 | N/A | -0.0906 | ∞ |
-| `combo_rank_max__volatility_expansion_trend_vector__bar_ret_0` | FP | immediate | -0.0914 | N/A | -0.0914 | ∞ |
 | `combo_sig_product__max_down_ret__vwap_close_divergence_trend` | FP | immediate | -0.0915 | N/A | -0.0915 | ∞ |
-| `combo_min__early_body_momentum__vwap_close_divergence_trend` | FP | immediate | -0.0918 | N/A | -0.0918 | ∞ |
-| `vwap_close_divergence_trend` | FP | immediate | -0.0940 | N/A | -0.0940 | ∞ |
 | `combo_sig_product__early_body_momentum__vwap_close_divergence_trend` | FP | immediate | -0.0956 | N/A | -0.0956 | ∞ |
-| `combo_sig_product__net_volume_flow__first_bar_return` | FP | immediate | -0.1006 | N/A | -0.1006 | ∞ |
-| `combo_clamp_diff__volatility_expansion_trend_vector__h2_l2_pullback_continuation` | FP | immediate | -0.1034 | N/A | -0.1034 | ∞ |
-| `combo_rel_diff__first_bar_return__h2_l2_pullback_continuation` | FP | immediate | -0.1062 | N/A | -0.1062 | ∞ |
-| `combo_rank_max__early_body_momentum__vwap_close_divergence_trend` | FP | immediate | -0.1077 | N/A | -0.1077 | ∞ |
-| `first_30min_return` | FP | immediate | -0.1128 | N/A | -0.1128 | ∞ |
 | `combo_sig_product__trend_bar_close_consistency__vwap_close_divergence_trend` | FP | immediate | -0.1131 | N/A | -0.1131 | ∞ |
-| `combo_diff__vwap_close_divergence_trend__h2_l2_pullback_continuation` | FP | immediate | -0.1133 | N/A | -0.1133 | ∞ |
-| `combo_rel_diff__vwap_close_divergence_trend__h2_l2_pullback_continuation` | FP | immediate | -0.1155 | N/A | -0.1155 | ∞ |
-| `combo_sig_product__volatility_expansion_trend_vector__star50_limit_proximity_early` | FP | immediate | -0.1166 | N/A | -0.1166 | ∞ |
-| `combo_max__early_body_momentum__early_order_flow_imbalance` | FP | immediate | -0.1244 | N/A | -0.1244 | ∞ |
-| `combo_rank_min__early_order_flow_imbalance__shaved_bar_trend_conviction` | FP | immediate | -0.1351 | N/A | -0.1351 | ∞ |
-| `combo_sig_product__volatility_expansion_trend_vector__first_bar_return` | FP | immediate | -0.1430 | N/A | -0.1430 | ∞ |
 
-**Decay distribution**: immediate=73, fast(1-2y)=0, gradual=0, persistent=54
+**Decay distribution**: immediate=24, fast(1-2y)=0, gradual=0, persistent=32
 
 **FP decay trajectories:**
 
-- `combo_sig_product__volatility_expansion_trend_vector__first_bar_return`: Y1:-0.143
-- `combo_rank_min__early_order_flow_imbalance__shaved_bar_trend_conviction`: Y1:-0.135
-- `combo_max__early_body_momentum__early_order_flow_imbalance`: Y1:-0.124
-- `combo_sig_product__volatility_expansion_trend_vector__star50_limit_proximity_early`: Y1:-0.117
-- `combo_rel_diff__vwap_close_divergence_trend__h2_l2_pullback_continuation`: Y1:-0.116
-- `combo_diff__vwap_close_divergence_trend__h2_l2_pullback_continuation`: Y1:-0.113
 - `combo_sig_product__trend_bar_close_consistency__vwap_close_divergence_trend`: Y1:-0.113
-- `first_30min_return`: Y1:-0.113
-- `combo_rank_max__early_body_momentum__vwap_close_divergence_trend`: Y1:-0.108
-- `combo_rel_diff__first_bar_return__h2_l2_pullback_continuation`: Y1:-0.106
-- `combo_clamp_diff__volatility_expansion_trend_vector__h2_l2_pullback_continuation`: Y1:-0.103
-- `combo_sig_product__net_volume_flow__first_bar_return`: Y1:-0.101
 - `combo_sig_product__early_body_momentum__vwap_close_divergence_trend`: Y1:-0.096
-- `vwap_close_divergence_trend`: Y1:-0.094
-- `combo_min__early_body_momentum__vwap_close_divergence_trend`: Y1:-0.092
 - `combo_sig_product__max_down_ret__vwap_close_divergence_trend`: Y1:-0.092
-- `combo_rank_max__volatility_expansion_trend_vector__bar_ret_0`: Y1:-0.091
 - `morning_volume_weighted_momentum`: Y1:-0.091
-- `combo_tri_min__max_up_ret__trend_bar_close_consistency__volatility_expansion_trend_vector`: Y1:-0.091
-- `combo_min__vwap_close_divergence_trend__shaved_bar_trend_conviction`: Y1:-0.090
-- `combo_diff__net_volume_flow__h2_l2_pullback_continuation`: Y1:-0.089
-- `combo_max__max_down_ret__vwap_close_divergence_trend`: Y1:-0.089
-- `combo_rank_min__net_volume_flow__shaved_bar_trend_conviction`: Y1:-0.086
-- `volatility_expansion_trend_vector`: Y1:-0.085
-- `combo_tri_median__net_volume_flow__volume_weighted_momentum_acceleration__bar_ret_0`: Y1:-0.084
-- `combo_min__early_body_momentum__close_vs_open_range`: Y1:-0.079
-- `combo_sig_product__volatility_expansion_trend_vector__max_down_ret`: Y1:-0.074
 - `combo_sig_product__early_order_flow_imbalance__vwap_close_divergence_trend`: Y1:-0.071
 - `combo_rank_max__early_order_flow_imbalance__max_down_ret`: Y1:-0.071
 - `combo_mean__vwap_close_divergence_trend__bar_body_rng_0`: Y1:-0.071
-- `combo_sig_product__max_up_ret__bar_ret_0`: Y1:-0.069
-- `combo_sig_product__opening_drive_thrust_ratio__volatility_expansion_trend_vector`: Y1:-0.069
 - `combo_rank_max__volatility_expansion_trend_vector__max_down_ret`: Y1:-0.069
-- `combo_mean__bar_ret_0__early_order_flow_imbalance`: Y1:-0.068
-- `combo_tri_median__max_up_ret__net_volume_flow__smooth_momentum_structure`: Y1:-0.068
 - `combo_mean__bar_ret_0__vwap_close_divergence_trend`: Y1:-0.068
-- `combo_diff__bar_ret_0__h2_l2_pullback_continuation`: Y1:-0.067
-- `combo_tri_median__max_up_ret__volume_weighted_momentum_acceleration__bar_ret_0`: Y1:-0.067
 - `combo_tri_mean__max_up_ret__trend_bar_close_consistency__bar_ret_0`: Y1:-0.066
-- `combo_rank_max__max_down_ret__vwap_close_divergence_trend`: Y1:-0.065
 - `combo_rank_max__max_up_ret__bar_ret_0`: Y1:-0.065
-- `combo_max__net_volume_flow__max_down_ret`: Y1:-0.064
-- `net_volume_flow`: Y1:-0.058
 - `combo_sig_product__max_up_ret__vwap_close_divergence_trend`: Y1:-0.052
-- `combo_mean__first_bar_return__shaved_bar_trend_conviction`: Y1:-0.051
-- `combo_sig_product__max_up_ret__max_down_ret`: Y1:-0.051
-- `combo_tri_min__opening_drive_thrust_ratio__trend_bar_close_consistency__volatility_expansion_trend_vector`: Y1:-0.050
-- `combo_rank_max__max_up_ret__early_order_flow_imbalance`: Y1:-0.048
-- `combo_tri_median__opening_drive_thrust_ratio__max_up_ret__trend_bar_close_consistency`: Y1:-0.047
-- `combo_tri_max__opening_drive_thrust_ratio__early_body_momentum__trend_day_regime_conviction`: Y1:-0.045
 - `combo_min__early_order_flow_imbalance__bar_body_rng_0`: Y1:-0.045
 - `combo_mean__bar_ret_0__close_vs_open_range`: Y1:-0.038
-- `combo_sig_product__max_up_ret__early_order_flow_imbalance`: Y1:-0.034
 - `combo_min__bar_ret_0__early_order_flow_imbalance`: Y1:-0.034
-- `combo_mean__rsi_opening__bar_body_rng_0`: Y1:-0.032
 - `combo_tri_mean__opening_drive_thrust_ratio__trend_day_regime_conviction__bar_ret_0`: Y1:-0.030
 - `combo_tri_min__max_up_ret__trend_day_regime_conviction__bar_ret_0`: Y1:-0.020
 - `combo_tri_median__rbreaker_sell_setup_proximity_early__volatility_expansion_trend_vector__bar_ret_0`: Y1:-0.020
-- `combo_mean__volatility_expansion_trend_vector__max_down_ret`: Y1:-0.019
 - `combo_rank_min__net_volume_flow__bar_body_rng_0`: Y1:-0.016
 - `combo_mean__max_up_ret__max_down_ret`: Y1:-0.016
-- `combo_rank_max__opening_drive_thrust_ratio__max_up_ret`: Y1:-0.013
 - `combo_tri_mean__opening_drive_thrust_ratio__max_up_ret__bar_ret_0`: Y1:-0.011
-- `first_bar_return`: Y1:-0.011
-- `combo_rank_min__opening_drive_thrust_ratio__max_up_ret`: Y1:-0.010
-- `combo_tri_min__opening_drive_thrust_ratio__volatility_expansion_trend_vector__bar_ret_0`: Y1:-0.008
 - `combo_tri_median__opening_drive_thrust_ratio__max_up_ret__smooth_momentum_structure`: Y1:-0.007
-- `combo_tri_median__opening_drive_thrust_ratio__trend_bar_close_consistency__star50_limit_proximity_early`: Y1:-0.006
 - `combo_min__first_bar_return__bar_body_rng_0`: Y1:-0.005
-- `combo_tri_min__opening_drive_thrust_ratio__max_up_ret__bar_ret_0`: Y1:-0.002
-- `combo_rank_max__max_up_ret__max_down_ret`: Y1:-0.002
 - `combo_min__net_volume_flow__first_bar_return`: Y1:-0.001
-- `combo_tri_min__trend_bar_close_consistency__volatility_expansion_trend_vector__bar_ret_0`: Y1:-0.000
 
 ### 159915ETF — `single`
 
 | Feature | Tier | Decay | Y1 IC | Y2+ IC (partial) | Y3+ IC | Half-life |
 | :--- | :--- | :--- | ---: | ---: | ---: | ---: |
-| `combo_rank_min__rbreaker_buy_setup_proximity_early__directional_volume_signature` | TP | persistent | +0.2417 | N/A | +0.2417 | ∞ |
 | `combo_min__rbreaker_sell_setup_proximity_early__directional_volume_signature` | TP | persistent | +0.2171 | N/A | +0.2171 | ∞ |
 | `combo_clamp_diff__rbreaker_sell_setup_proximity_early__body_size_progression` | TP | persistent | +0.2095 | N/A | +0.2095 | ∞ |
 | `combo_rank_min__rbreaker_sell_setup_proximity_early__directional_volume_signature` | TP | persistent | +0.2079 | N/A | +0.2079 | ∞ |
 | `combo_rel_diff__rbreaker_sell_setup_proximity_early__late_bar_momentum` | TP | persistent | +0.2070 | N/A | +0.2070 | ∞ |
-| `combo_ratio__star50_limit_proximity_early__volume_weighted_momentum_acceleration` | TP | persistent | +0.2061 | N/A | +0.2061 | ∞ |
 | `combo_min__star50_limit_proximity_early__volume_price_confirmation` | TP | persistent | +0.1908 | N/A | +0.1908 | ∞ |
-| `combo_rel_diff__star50_limit_proximity_early__body_size_progression` | TP | persistent | +0.1846 | N/A | +0.1846 | ∞ |
 | `combo_mean__rbreaker_sell_setup_proximity_early__volume_price_confirmation` | TP | persistent | +0.1842 | N/A | +0.1842 | ∞ |
 | `combo_mean__rbreaker_buy_setup_proximity_early__volume_price_confirmation` | TP | persistent | +0.1814 | N/A | +0.1814 | ∞ |
 | `combo_rank_min__limit_down_proximity_early__volume_price_confirmation` | TP | persistent | +0.1801 | N/A | +0.1801 | ∞ |
@@ -3600,11 +2557,9 @@ Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies la
 | `combo_min__rbreaker_sell_setup_proximity_early__bar_ret_0` | TP | persistent | +0.0895 | N/A | +0.0895 | ∞ |
 | `combo_ifelse__gap_pct__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early` | TP | persistent | +0.0889 | N/A | +0.0889 | ∞ |
 | `combo_min__limit_down_proximity_early__volatility_expansion_trend_vector` | Median | persistent | +0.0888 | N/A | +0.0888 | ∞ |
-| `combo_rank_max__bar_body_rng_0__volume_price_confirmation` | TP | persistent | +0.0882 | N/A | +0.0882 | ∞ |
 | `combo_z_sum__max_up_ret__directional_volume_signature` | TP | persistent | +0.0868 | N/A | +0.0868 | ∞ |
 | `combo_rank_min__opening_drive_thrust_ratio__star50_limit_proximity_early` | TP | persistent | +0.0866 | N/A | +0.0866 | ∞ |
 | `combo_max__bar_ret_0__limit_down_proximity_early` | Median | persistent | +0.0866 | N/A | +0.0866 | ∞ |
-| `combo_max__bar_body_rng_0__rbreaker_buy_setup_proximity_early` | TP | persistent | +0.0852 | N/A | +0.0852 | ∞ |
 | `combo_rank_min__max_up_ret__star50_limit_proximity_early` | TP | persistent | +0.0850 | N/A | +0.0850 | ∞ |
 | `combo_tri_median__demark_setup_reversal_early__star50_limit_proximity_early__bar_body_rng_0` | Median | persistent | +0.0844 | N/A | +0.0844 | ∞ |
 | `combo_mean__limit_down_proximity_early__volatility_expansion_trend_vector` | Median | persistent | +0.0841 | N/A | +0.0841 | ∞ |
@@ -3616,19 +2571,13 @@ Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies la
 | `combo_rank_max__opening_drive_thrust_ratio__rbreaker_buy_setup_proximity_early` | Median | persistent | +0.0712 | N/A | +0.0712 | ∞ |
 | `combo_mean__volatility_expansion_trend_vector__directional_volume_signature` | TP | persistent | +0.0689 | N/A | +0.0689 | ∞ |
 | `combo_rank_min__rbreaker_sell_setup_proximity_early__volatility_expansion_trend_vector` | TP | persistent | +0.0646 | N/A | +0.0646 | ∞ |
-| `combo_min__volatility_expansion_trend_vector__volume_price_confirmation` | Median | persistent | +0.0628 | N/A | +0.0628 | ∞ |
 | `combo_rank_max__rbreaker_sell_setup_proximity_early__volatility_expansion_trend_vector` | Median | persistent | +0.0623 | N/A | +0.0623 | ∞ |
-| `combo_rank_min__max_up_ret__volume_price_confirmation` | TP | persistent | +0.0621 | N/A | +0.0621 | ∞ |
-| `combo_diff__max_up_ret__early_late_momentum_divergence` | TP | persistent | +0.0598 | N/A | +0.0598 | ∞ |
 | `combo_sig_product__star50_limit_proximity_early__bar_body_rng_0` | Median | persistent | +0.0593 | N/A | +0.0593 | ∞ |
 | `combo_rank_max__max_up_ret__star50_limit_proximity_early` | Median | persistent | +0.0586 | N/A | +0.0586 | ∞ |
 | `combo_min__rbreaker_sell_setup_proximity_early__volatility_expansion_trend_vector` | Median | persistent | +0.0578 | N/A | +0.0578 | ∞ |
 | `combo_tri_median__opening_drive_thrust_ratio__star50_limit_proximity_early__bar_body_rng_0` | Median | persistent | +0.0567 | N/A | +0.0567 | ∞ |
-| `combo_ifelse__gap_pct__yesterday_early_trend__first_bar_return` | Median | persistent | +0.0564 | N/A | +0.0564 | ∞ |
 | `combo_mean__rbreaker_sell_setup_proximity_early__volatility_expansion_trend_vector` | Median | persistent | +0.0545 | N/A | +0.0545 | ∞ |
 | `combo_tri_mean__rbreaker_sell_setup_proximity_early__max_up_ret__bar_body_rng_0` | Median | persistent | +0.0510 | N/A | +0.0510 | ∞ |
-| `combo_rank_max__opening_drive_thrust_ratio__directional_volume_signature` | TP | persistent | +0.0490 | N/A | +0.0490 | ∞ |
-| `combo_mean__opening_drive_thrust_ratio__volume_price_confirmation` | TP | persistent | +0.0455 | N/A | +0.0455 | ∞ |
 | `combo_mean__rally_strength_max__volume_price_confirmation` | TP | persistent | +0.0445 | N/A | +0.0445 | ∞ |
 | `combo_ifelse__gap_pct__bar_body_rng_0__first_bar_return` | TP | persistent | +0.0433 | N/A | +0.0433 | ∞ |
 | `combo_tri_median__max_up_ret__star50_limit_proximity_early__bar_body_rng_0` | TP | persistent | +0.0431 | N/A | +0.0431 | ∞ |
@@ -3641,7 +2590,6 @@ Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies la
 | `combo_min__max_up_ret__bar_body_rng_0` | TP | persistent | +0.0307 | N/A | +0.0307 | ∞ |
 | `combo_min__max_up_ret__first_bar_return` | TP | persistent | +0.0299 | N/A | +0.0299 | ∞ |
 | `combo_rel_diff__bar_ret_0__volume_weighted_momentum_acceleration` | TP | persistent | +0.0299 | N/A | +0.0299 | ∞ |
-| `combo_max__limit_down_proximity_early__volatility_expansion_trend_vector` | Median | persistent | +0.0279 | N/A | +0.0279 | ∞ |
 | `combo_max__max_up_ret__directional_volume_signature` | TP | persistent | +0.0276 | N/A | +0.0276 | ∞ |
 | `combo_tri_max__opening_drive_thrust_ratio__max_up_ret__star50_limit_proximity_early` | Median | persistent | +0.0262 | N/A | +0.0262 | ∞ |
 | `combo_mean__volatility_expansion_trend_vector__volume_price_confirmation` | Median | persistent | +0.0262 | N/A | +0.0262 | ∞ |
@@ -3650,14 +2598,10 @@ Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies la
 | `bar_body_rng_0` | Median | persistent | +0.0207 | N/A | +0.0207 | ∞ |
 | `combo_max__volatility_expansion_trend_vector__directional_volume_signature` | TP | persistent | +0.0206 | N/A | +0.0206 | ∞ |
 | `combo_ifelse__gap_pct__max_up_ret__first_bar_return` | Median | persistent | +0.0162 | N/A | +0.0162 | ∞ |
-| `combo_rank_min__first_bar_return__volatility_expansion_trend_vector` | Median | persistent | +0.0154 | N/A | +0.0154 | ∞ |
 | `combo_clamp_diff__first_bar_return__volume_weighted_momentum_acceleration` | Median | persistent | +0.0109 | N/A | +0.0109 | ∞ |
-| `combo_ifelse__gap_pct__max_up_ret__bar_body_rng_0` | Median | persistent | +0.0107 | N/A | +0.0107 | ∞ |
 | `combo_ratio__bar_ret_0__volume_weighted_price_position` | TP | persistent | +0.0098 | N/A | +0.0098 | ∞ |
-| `combo_ifelse__gap_pct__opening_drive_thrust_ratio__bar_body_rng_0` | Median | persistent | +0.0066 | N/A | +0.0066 | ∞ |
 | `combo_rank_max__max_up_ret__volume_price_confirmation` | TP | persistent | +0.0057 | N/A | +0.0057 | ∞ |
 | `combo_rel_diff__max_up_ret__demark_setup_reversal_early` | Median | persistent | +0.0018 | N/A | +0.0018 | ∞ |
-| `combo_sig_product__bar_body_rng_0__volatility_expansion_trend_vector` | FP | immediate | -0.0010 | N/A | -0.0010 | ∞ |
 | `combo_mean__first_bar_return__volume_weighted_price_position` | FP | immediate | -0.0010 | N/A | -0.0010 | ∞ |
 | `combo_min__bar_body_rng_0__volume_weighted_price_position` | FP | immediate | -0.0016 | N/A | -0.0016 | ∞ |
 | `combo_min__opening_drive_thrust_ratio__bar_body_rng_0` | FP | immediate | -0.0036 | N/A | -0.0036 | ∞ |
@@ -3672,36 +2616,26 @@ Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies la
 | `combo_max__volatility_expansion_trend_vector__volume_price_confirmation` | FP | immediate | -0.0185 | N/A | -0.0185 | ∞ |
 | `combo_tri_median__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__max_up_ret` | FP | immediate | -0.0192 | N/A | -0.0192 | ∞ |
 | `combo_rank_max__opening_drive_thrust_ratio__bar_body_rng_0` | FP | immediate | -0.0238 | N/A | -0.0238 | ∞ |
-| `combo_rank_max__bar_body_rng_0__volume_weighted_price_position` | FP | immediate | -0.0256 | N/A | -0.0256 | ∞ |
 | `combo_max__opening_drive_thrust_ratio__bar_ret_0` | FP | immediate | -0.0265 | N/A | -0.0265 | ∞ |
 | `combo_min__max_up_ret__volume_weighted_price_position` | FP | immediate | -0.0303 | N/A | -0.0303 | ∞ |
 | `combo_diff__max_up_ret__demark_setup_reversal_early` | FP | immediate | -0.0318 | N/A | -0.0318 | ∞ |
 | `combo_rel_diff__max_up_ret__keltner_squeeze_width` | FP | immediate | -0.0322 | N/A | -0.0322 | ∞ |
-| `combo_sig_product__max_up_ret__volatility_expansion_trend_vector` | FP | immediate | -0.0325 | N/A | -0.0325 | ∞ |
 | `combo_mean__bar_body_rng_0__volatility_expansion_trend_vector` | FP | immediate | -0.0381 | N/A | -0.0381 | ∞ |
 | `combo_tri_median__max_up_ret__demark_setup_reversal_early__bar_body_rng_0` | FP | immediate | -0.0399 | N/A | -0.0399 | ∞ |
 | `combo_max__opening_drive_thrust_ratio__rally_strength_max` | FP | immediate | -0.0405 | N/A | -0.0405 | ∞ |
 | `combo_tri_mean__opening_drive_thrust_ratio__max_up_ret__bar_body_rng_0` | FP | immediate | -0.0421 | N/A | -0.0421 | ∞ |
 | `combo_ifelse__gap_pct__yesterday_early_momentum__max_up_ret` | FP | immediate | -0.0423 | N/A | -0.0423 | ∞ |
-| `combo_rank_min__volume_weighted_price_position__rally_strength_max` | FP | immediate | -0.0427 | N/A | -0.0427 | ∞ |
-| `combo_ratio__max_up_ret__directional_volume_signature` | FP | immediate | -0.0437 | N/A | -0.0437 | ∞ |
-| `combo_sig_product__volume_weighted_price_position__volatility_expansion_trend_vector` | FP | immediate | -0.0445 | N/A | -0.0445 | ∞ |
 | `combo_max__bar_body_rng_0__rally_strength_max` | FP | immediate | -0.0448 | N/A | -0.0448 | ∞ |
 | `opening_drive_thrust_ratio` | FP | immediate | -0.0464 | N/A | -0.0464 | ∞ |
-| `combo_tri_median__max_up_ret__demark_setup_reversal_early__first_bar_return` | FP | immediate | -0.0495 | N/A | -0.0495 | ∞ |
 | `combo_ifelse__gap_pct__max_up_ret__volume_weighted_price_position` | FP | immediate | -0.0526 | N/A | -0.0526 | ∞ |
-| `combo_rank_min__volume_weighted_price_position__volatility_expansion_trend_vector` | FP | immediate | -0.0561 | N/A | -0.0561 | ∞ |
 | `combo_rank_max__max_up_ret__bar_body_rng_0` | FP | immediate | -0.0563 | N/A | -0.0563 | ∞ |
 | `combo_mean__max_up_ret__volume_weighted_price_position` | FP | immediate | -0.0570 | N/A | -0.0570 | ∞ |
 | `combo_min__opening_drive_thrust_ratio__volatility_expansion_trend_vector` | FP | immediate | -0.0572 | N/A | -0.0572 | ∞ |
-| `combo_ifelse__gap_pct__opening_drive_thrust_ratio__max_up_ret` | FP | immediate | -0.0582 | N/A | -0.0582 | ∞ |
 | `combo_clamp_diff__max_up_ret__keltner_squeeze_width` | FP | immediate | -0.0587 | N/A | -0.0587 | ∞ |
 | `combo_rank_max__opening_drive_thrust_ratio__max_up_ret` | FP | immediate | -0.0595 | N/A | -0.0595 | ∞ |
 | `combo_max__first_bar_return__rally_strength_max` | FP | immediate | -0.0599 | N/A | -0.0599 | ∞ |
 | `combo_diff__max_up_ret__keltner_squeeze_width` | FP | immediate | -0.0616 | N/A | -0.0616 | ∞ |
-| `combo_mean__opening_drive_thrust_ratio__rally_strength_max` | FP | immediate | -0.0641 | N/A | -0.0641 | ∞ |
 | `combo_tri_max__opening_drive_thrust_ratio__max_up_ret__bar_ret_0` | FP | immediate | -0.0654 | N/A | -0.0654 | ∞ |
-| `net_volume_flow` | FP | immediate | -0.0663 | N/A | -0.0663 | ∞ |
 | `combo_ratio__max_up_ret__volume_weighted_price_position` | FP | immediate | -0.0681 | N/A | -0.0681 | ∞ |
 | `combo_min__opening_drive_thrust_ratio__max_up_ret` | FP | immediate | -0.0689 | N/A | -0.0689 | ∞ |
 | `combo_tri_median__opening_drive_thrust_ratio__demark_setup_reversal_early__bar_body_rng_0` | FP | immediate | -0.0711 | N/A | -0.0711 | ∞ |
@@ -3713,8 +2647,6 @@ Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies la
 | `combo_tri_median__opening_drive_thrust_ratio__max_up_ret__demark_setup_reversal_early` | FP | immediate | -0.0776 | N/A | -0.0776 | ∞ |
 | `combo_sig_product__opening_drive_thrust_ratio__max_up_ret` | FP | immediate | -0.0811 | N/A | -0.0811 | ∞ |
 | `combo_max__first_bar_return__volatility_expansion_trend_vector` | FP | immediate | -0.0816 | N/A | -0.0816 | ∞ |
-| `combo_rank_max__volatility_expansion_trend_vector__rally_strength_max` | FP | immediate | -0.0820 | N/A | -0.0820 | ∞ |
-| `combo_mean__volume_weighted_price_position__volatility_expansion_trend_vector` | FP | immediate | -0.0820 | N/A | -0.0820 | ∞ |
 | `combo_rank_min__opening_drive_thrust_ratio__rally_strength_max` | FP | immediate | -0.0825 | N/A | -0.0825 | ∞ |
 | `combo_ratio__max_up_ret__keltner_squeeze_width` | FP | immediate | -0.0851 | N/A | -0.0851 | ∞ |
 | `combo_rank_min__max_up_ret__volatility_expansion_trend_vector` | FP | immediate | -0.0854 | N/A | -0.0854 | ∞ |
@@ -3726,19 +2658,11 @@ Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies la
 | `combo_rank_max__opening_drive_thrust_ratio__volatility_expansion_trend_vector` | FP | immediate | -0.0930 | N/A | -0.0930 | ∞ |
 | `combo_sig_product__opening_drive_thrust_ratio__bar_body_rng_0` | FP | immediate | -0.1027 | N/A | -0.1027 | ∞ |
 | `combo_max__max_up_ret__volatility_expansion_trend_vector` | FP | immediate | -0.1035 | N/A | -0.1035 | ∞ |
-| `combo_ratio__volatility_expansion_trend_vector__volume_weighted_price_position` | FP | immediate | -0.1064 | N/A | -0.1064 | ∞ |
-| `combo_sig_product__opening_drive_thrust_ratio__first_bar_return` | FP | immediate | -0.1070 | N/A | -0.1070 | ∞ |
-| `combo_sig_product__opening_drive_thrust_ratio__volatility_expansion_trend_vector` | FP | immediate | -0.1124 | N/A | -0.1124 | ∞ |
-| `trend_bar_close_consistency` | FP | immediate | -0.1362 | N/A | -0.1362 | ∞ |
 
-**Decay distribution**: immediate=73, fast(1-2y)=0, gradual=0, persistent=105
+**Decay distribution**: immediate=56, fast(1-2y)=0, gradual=0, persistent=90
 
 **FP decay trajectories:**
 
-- `trend_bar_close_consistency`: Y1:-0.136
-- `combo_sig_product__opening_drive_thrust_ratio__volatility_expansion_trend_vector`: Y1:-0.112
-- `combo_sig_product__opening_drive_thrust_ratio__first_bar_return`: Y1:-0.107
-- `combo_ratio__volatility_expansion_trend_vector__volume_weighted_price_position`: Y1:-0.106
 - `combo_max__max_up_ret__volatility_expansion_trend_vector`: Y1:-0.104
 - `combo_sig_product__opening_drive_thrust_ratio__bar_body_rng_0`: Y1:-0.103
 - `combo_rank_max__opening_drive_thrust_ratio__volatility_expansion_trend_vector`: Y1:-0.093
@@ -3750,8 +2674,6 @@ Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies la
 - `combo_rank_min__max_up_ret__volatility_expansion_trend_vector`: Y1:-0.085
 - `combo_ratio__max_up_ret__keltner_squeeze_width`: Y1:-0.085
 - `combo_rank_min__opening_drive_thrust_ratio__rally_strength_max`: Y1:-0.083
-- `combo_mean__volume_weighted_price_position__volatility_expansion_trend_vector`: Y1:-0.082
-- `combo_rank_max__volatility_expansion_trend_vector__rally_strength_max`: Y1:-0.082
 - `combo_max__first_bar_return__volatility_expansion_trend_vector`: Y1:-0.082
 - `combo_sig_product__opening_drive_thrust_ratio__max_up_ret`: Y1:-0.081
 - `combo_tri_median__opening_drive_thrust_ratio__max_up_ret__demark_setup_reversal_early`: Y1:-0.078
@@ -3763,36 +2685,26 @@ Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies la
 - `combo_tri_median__opening_drive_thrust_ratio__demark_setup_reversal_early__bar_body_rng_0`: Y1:-0.071
 - `combo_min__opening_drive_thrust_ratio__max_up_ret`: Y1:-0.069
 - `combo_ratio__max_up_ret__volume_weighted_price_position`: Y1:-0.068
-- `net_volume_flow`: Y1:-0.066
 - `combo_tri_max__opening_drive_thrust_ratio__max_up_ret__bar_ret_0`: Y1:-0.065
-- `combo_mean__opening_drive_thrust_ratio__rally_strength_max`: Y1:-0.064
 - `combo_diff__max_up_ret__keltner_squeeze_width`: Y1:-0.062
 - `combo_max__first_bar_return__rally_strength_max`: Y1:-0.060
 - `combo_rank_max__opening_drive_thrust_ratio__max_up_ret`: Y1:-0.060
 - `combo_clamp_diff__max_up_ret__keltner_squeeze_width`: Y1:-0.059
-- `combo_ifelse__gap_pct__opening_drive_thrust_ratio__max_up_ret`: Y1:-0.058
 - `combo_min__opening_drive_thrust_ratio__volatility_expansion_trend_vector`: Y1:-0.057
 - `combo_mean__max_up_ret__volume_weighted_price_position`: Y1:-0.057
 - `combo_rank_max__max_up_ret__bar_body_rng_0`: Y1:-0.056
-- `combo_rank_min__volume_weighted_price_position__volatility_expansion_trend_vector`: Y1:-0.056
 - `combo_ifelse__gap_pct__max_up_ret__volume_weighted_price_position`: Y1:-0.053
-- `combo_tri_median__max_up_ret__demark_setup_reversal_early__first_bar_return`: Y1:-0.049
 - `opening_drive_thrust_ratio`: Y1:-0.046
 - `combo_max__bar_body_rng_0__rally_strength_max`: Y1:-0.045
-- `combo_sig_product__volume_weighted_price_position__volatility_expansion_trend_vector`: Y1:-0.044
-- `combo_ratio__max_up_ret__directional_volume_signature`: Y1:-0.044
-- `combo_rank_min__volume_weighted_price_position__rally_strength_max`: Y1:-0.043
 - `combo_ifelse__gap_pct__yesterday_early_momentum__max_up_ret`: Y1:-0.042
 - `combo_tri_mean__opening_drive_thrust_ratio__max_up_ret__bar_body_rng_0`: Y1:-0.042
 - `combo_max__opening_drive_thrust_ratio__rally_strength_max`: Y1:-0.041
 - `combo_tri_median__max_up_ret__demark_setup_reversal_early__bar_body_rng_0`: Y1:-0.040
 - `combo_mean__bar_body_rng_0__volatility_expansion_trend_vector`: Y1:-0.038
-- `combo_sig_product__max_up_ret__volatility_expansion_trend_vector`: Y1:-0.033
 - `combo_rel_diff__max_up_ret__keltner_squeeze_width`: Y1:-0.032
 - `combo_diff__max_up_ret__demark_setup_reversal_early`: Y1:-0.032
 - `combo_min__max_up_ret__volume_weighted_price_position`: Y1:-0.030
 - `combo_max__opening_drive_thrust_ratio__bar_ret_0`: Y1:-0.026
-- `combo_rank_max__bar_body_rng_0__volume_weighted_price_position`: Y1:-0.026
 - `combo_rank_max__opening_drive_thrust_ratio__bar_body_rng_0`: Y1:-0.024
 - `combo_tri_median__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__max_up_ret`: Y1:-0.019
 - `combo_max__volatility_expansion_trend_vector__volume_price_confirmation`: Y1:-0.019
@@ -3807,7 +2719,6 @@ Decay types: **immediate** (Y1 ≤ 0), **fast** (Y2 ≤ 0), **gradual** (dies la
 - `combo_min__opening_drive_thrust_ratio__bar_body_rng_0`: Y1:-0.004
 - `combo_min__bar_body_rng_0__volume_weighted_price_position`: Y1:-0.002
 - `combo_mean__first_bar_return__volume_weighted_price_position`: Y1:-0.001
-- `combo_sig_product__bar_body_rng_0__volatility_expansion_trend_vector`: Y1:-0.001
 
 ---
 
@@ -3831,25 +2742,25 @@ How FP features' gate metrics compare to TP features. High overlap = gate cannot
 
 | Metric | FP Mean±Std | TP Mean±Std | Overlap | Verdict |
 | :--- | :--- | :--- | ---: | :--- |
-| monotonicity | 0.738±0.039 | 0.727±0.046 | 80% | WEAK |
-| ic_ir | 0.641±0.100 | 0.649±0.134 | 75% | WEAK |
+| monotonicity | 0.745±0.027 | 0.736±0.045 | 75% | WEAK |
+| ic_ir | 0.676±0.073 | 0.683±0.135 | 72% | WEAK |
 | p_value | 0.000±0.000 | 0.000±0.000 | 0% | USEFUL |
-| max_corr | 0.897±0.050 | 0.893±0.053 | 84% | USELESS |
-| deflated_ic | 0.200±0.025 | 0.220±0.023 | 53% | WEAK |
-| overall_ic | 0.201±0.025 | 0.220±0.023 | 53% | WEAK |
-| raw_ic | 0.112±0.015 | 0.117±0.018 | 95% | USELESS |
+| max_corr | 0.893±0.046 | 0.888±0.060 | 76% | WEAK |
+| deflated_ic | 0.209±0.023 | 0.233±0.019 | 49% | USEFUL |
+| overall_ic | 0.210±0.023 | 0.233±0.019 | 48% | USEFUL |
+| raw_ic | 0.117±0.013 | 0.124±0.014 | 92% | USELESS |
 
 ### 159915ETF — `single`
 
 | Metric | FP Mean±Std | TP Mean±Std | Overlap | Verdict |
 | :--- | :--- | :--- | ---: | :--- |
-| monotonicity | 0.741±0.042 | 0.743±0.063 | 73% | WEAK |
-| ic_ir | 0.669±0.133 | 0.682±0.206 | 77% | WEAK |
-| p_value | 0.000±0.001 | 0.000±0.001 | 69% | WEAK |
-| max_corr | 0.885±0.104 | 0.866±0.153 | 83% | USELESS |
-| deflated_ic | 0.225±0.030 | 0.236±0.052 | 61% | WEAK |
-| overall_ic | 0.225±0.030 | 0.236±0.052 | 61% | WEAK |
-| raw_ic | 0.118±0.011 | 0.123±0.017 | 80% | USELESS |
+| monotonicity | 0.743±0.045 | 0.753±0.061 | 73% | WEAK |
+| ic_ir | 0.683±0.142 | 0.712±0.202 | 72% | WEAK |
+| p_value | 0.000±0.001 | 0.000±0.001 | 76% | WEAK |
+| max_corr | 0.895±0.063 | 0.869±0.139 | 38% | USEFUL |
+| deflated_ic | 0.231±0.028 | 0.242±0.052 | 59% | WEAK |
+| overall_ic | 0.231±0.028 | 0.242±0.052 | 58% | WEAK |
+| raw_ic | 0.121±0.010 | 0.124±0.017 | 65% | WEAK |
 
 ---
 
@@ -3913,9 +2824,11 @@ Top-20 rejects per gate evaluated on lockbox. High FN rate = gate too strict.
 - `combo_tri_min__max_up_ret__net_volume_flow__star50_limit_proximity_early`: Train IC=+0.2513, Lock IC=+0.0798, Sharpe=+0.7199
 - `combo_tri_min__max_up_ret__opening_auction_imbalance__star50_limit_proximity_early`: Train IC=+0.2513, Lock IC=+0.0798, Sharpe=+0.7199
 
-**B4 Correlation Gate**: 1/20 top rejects are profitable (5%)
+**B4 Correlation Gate**: 7/20 top rejects are profitable (35%)
 
-- `combo_tri_min__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early__volatility_expansion_trend_vector`: Train IC=+0.2670, Lock IC=+0.0441, Sharpe=+0.1744
+- `combo_tri_mean__opening_drive_thrust_ratio__volatility_expansion_trend_vector__star50_limit_proximity_early`: Train IC=+0.2557, Lock IC=+0.0706, Sharpe=+0.8062
+- `combo_tri_z_mean__opening_drive_thrust_ratio__volatility_expansion_trend_vector__star50_limit_proximity_early`: Train IC=+0.2557, Lock IC=+0.0706, Sharpe=+0.8062
+- `combo_tri_min__rbreaker_sell_setup_proximity_early__net_volume_flow__bar_ret_0`: Train IC=+0.2515, Lock IC=+0.0869, Sharpe=+0.6688
 
 ### 159915ETF — `single`
 
@@ -4002,7 +2915,7 @@ Stratified sample of ALL rejects per gate evaluated on lockbox.
 | B3 Composite Floor | 63 | 63 | 22 | 30 | 11 | 35% | 17% |
 | B6 Yearly IC CV Gate | 22 | 22 | 4 | 8 | 10 | 18% | 45% |
 | B6 Temporal Stability Gate | 396 | 78 | 49 | 9 | 20 | 63% | 26% |
-| B4 Correlation Gate | 468 | 78 | 41 | 19 | 18 | 53% | 23% |
+| B4 Correlation Gate | 266 | 78 | 38 | 13 | 27 | 49% | 35% |
 
 **7-Year Jackknife** — top TP casualties:
 - `star50_limit_proximity_early`: Train IC=+0.0530, Lock IC=+0.1859, Sharpe=+2.6499
@@ -4025,9 +2938,9 @@ Stratified sample of ALL rejects per gate evaluated on lockbox.
 - `combo_rank_min__net_volume_flow__star50_limit_proximity_early`: Train IC=+0.2119, Lock IC=+0.0910, Sharpe=+2.2390
 
 **B4 Correlation Gate** — top TP casualties:
-- `combo_mean__star50_limit_proximity_early__rsi_opening`: Train IC=+0.2172, Lock IC=+0.1007, Sharpe=+1.2227
-- `combo_rank_min__star50_limit_proximity_early__shaved_bar_trend_conviction`: Train IC=+0.1725, Lock IC=+0.0408, Sharpe=+0.9140
-- `combo_tri_min__trend_bar_close_consistency__star50_limit_proximity_early__bar_ret_0`: Train IC=+0.2194, Lock IC=+0.0731, Sharpe=+0.8933
+- `combo_mean__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early`: Train IC=+0.1745, Lock IC=+0.1332, Sharpe=+1.6190
+- `combo_z_sum__opening_drive_thrust_ratio__rbreaker_sell_setup_proximity_early`: Train IC=+0.1745, Lock IC=+0.1332, Sharpe=+1.6190
+- `combo_tri_min__star50_limit_proximity_early__trend_day_regime_conviction__bar_ret_0`: Train IC=+0.2241, Lock IC=+0.0746, Sharpe=+1.3197
 
 ### 159915ETF — `single`
 
@@ -4040,7 +2953,7 @@ Stratified sample of ALL rejects per gate evaluated on lockbox.
 | B3 Composite Floor | 112 | 78 | 19 | 36 | 23 | 24% | 29% |
 | B6 Yearly IC CV Gate | 4 | 4 | 2 | 2 | 0 | 50% | 0% |
 | B6 Temporal Stability Gate | 88 | 78 | 6 | 43 | 29 | 8% | 37% |
-| B4 Correlation Gate | 280 | 78 | 17 | 22 | 39 | 22% | 50% |
+| B4 Correlation Gate | 258 | 78 | 17 | 25 | 36 | 22% | 46% |
 
 **7-Year Jackknife** — top TP casualties:
 - `combo_mean__limit_down_proximity_early__directional_volume_signature`: Train IC=+0.1947, Lock IC=+0.2092, Sharpe=+3.8591
@@ -4132,28 +3045,29 @@ Breakdown of temporal gate rejects by condition:
 
 **Strong training-only discriminators (Cohen's d > 0.5):**
 
-- `half_ratio`: FP is higher (d=+1.10). Threshold 0.676 → 83% accuracy.
-- `ic_std_across_regimes`: FP is lower (d=-0.89). Threshold 0.013 → 73% accuracy.
-- `ic_cv`: FP is lower (d=-0.72). Threshold 0.215 → 73% accuracy.
+- `half_ratio`: FP is higher (d=+1.39). Threshold 0.696 → 90% accuracy.
+- `ic_std_across_regimes`: FP is lower (d=-1.34). Threshold 0.018 → 57% accuracy.
+- `ic_cv`: FP is lower (d=-0.87). Threshold 0.221 → 57% accuracy.
+- `recency_ratio`: FP is higher (d=+0.80). Threshold 0.681 → 80% accuracy.
 
 **Failure pattern counts:**
-- Era-concentrated (IC CV > 1.5): 0/73
-- Decaying signal (half ratio < 0.3): 0/73
-- Weak component (CV > 2.0): 0/73
-- Regime-dependent (≥2 negative regimes): 0/73
+- Era-concentrated (IC CV > 1.5): 0/24
+- Decaying signal (half ratio < 0.3): 0/24
+- Weak component (CV > 2.0): 0/24
+- Regime-dependent (≥2 negative regimes): 0/24
 
 ### 159915ETF — `single`
 
 **Strong training-only discriminators (Cohen's d > 0.5):**
 
-- `half_ratio`: FP is higher (d=+1.04). Threshold 0.898 → 73% accuracy.
-- `recency_ratio`: FP is higher (d=+0.99). Threshold 0.856 → 76% accuracy.
+- `half_ratio`: FP is higher (d=+1.07). Threshold 0.858 → 72% accuracy.
+- `recency_ratio`: FP is higher (d=+1.05). Threshold 0.856 → 76% accuracy.
 
 **Failure pattern counts:**
-- Era-concentrated (IC CV > 1.5): 0/73
-- Decaying signal (half ratio < 0.3): 0/73
-- Weak component (CV > 2.0): 0/73
-- Regime-dependent (≥2 negative regimes): 0/73
+- Era-concentrated (IC CV > 1.5): 0/56
+- Decaying signal (half ratio < 0.3): 0/56
+- Weak component (CV > 2.0): 0/56
+- Regime-dependent (≥2 negative regimes): 0/56
 
 ---
 
@@ -4163,44 +3077,40 @@ Per-primitive FP rate across all combo features. Flag primitives with FP rate �
 
 | Primitive | FP | TP | Total | FP Rate | Flag |
 | :--- | ---: | ---: | ---: | ---: | :--- |
-| `vwap_close_divergence_trend` | 14 | 0 | 14 | 100% | ⚠ TOXIC |
-| `early_order_flow_imbalance` | 9 | 0 | 9 | 100% | ⚠ TOXIC |
-| `smooth_momentum_structure` | 3 | 0 | 3 | 100% |  |
-| `morning_volume_weighted_momentum` | 7 | 0 | 7 | 100% | ⚠ TOXIC |
-| `h2_l2_pullback_continuation` | 6 | 0 | 6 | 100% | ⚠ TOXIC |
 | `keltner_squeeze_width` | 4 | 0 | 4 | 100% |  |
-| `trend_bar_close_consistency` | 7 | 1 | 8 | 88% | ⚠ TOXIC |
-| `early_body_momentum` | 6 | 1 | 7 | 86% | ⚠ TOXIC |
-| `max_down_ret` | 11 | 2 | 13 | 85% | ⚠ TOXIC |
-| `volatility_expansion_trend_vector` | 30 | 6 | 36 | 83% | ⚠ TOXIC |
-| `max_up_ret` | 72 | 16 | 88 | 82% | ⚠ TOXIC |
-| `volume_weighted_price_position` | 27 | 6 | 33 | 82% | ⚠ TOXIC |
-| `net_volume_flow` | 8 | 2 | 10 | 80% | ⚠ TOXIC |
-| `first_bar_return` | 25 | 7 | 32 | 78% |  |
-| `rally_strength_max` | 14 | 4 | 18 | 78% |  |
-| `demark_setup_reversal_early` | 6 | 2 | 8 | 75% |  |
-| `opening_drive_thrust_ratio` | 48 | 16 | 64 | 75% |  |
-| `trend_day_regime_conviction` | 3 | 1 | 4 | 75% |  |
-| `bar_ret_0` | 27 | 12 | 39 | 69% |  |
-| `shaved_bar_trend_conviction` | 4 | 2 | 6 | 67% |  |
-| `bar_body_rng_0` | 36 | 22 | 58 | 62% |  |
-| `gap_pct` | 4 | 5 | 9 | 44% |  |
-| `close_vs_open_range` | 2 | 3 | 5 | 40% |  |
-| `volume_weighted_momentum_acceleration` | 3 | 5 | 8 | 38% |  |
-| `rbreaker_buy_setup_proximity_early` | 2 | 6 | 8 | 25% |  |
-| `rbreaker_sell_setup_proximity_early` | 10 | 32 | 42 | 24% |  |
-| `volume_price_confirmation` | 2 | 12 | 14 | 14% |  |
-| `star50_limit_proximity_early` | 4 | 29 | 33 | 12% |  |
+| `trend_day_regime_conviction` | 2 | 0 | 2 | 100% |  |
+| `smooth_momentum_structure` | 2 | 0 | 2 | 100% |  |
+| `vwap_close_divergence_trend` | 7 | 0 | 7 | 100% | ⚠ TOXIC |
+| `max_down_ret` | 4 | 0 | 4 | 100% |  |
+| `early_order_flow_imbalance` | 4 | 0 | 4 | 100% |  |
+| `morning_volume_weighted_momentum` | 7 | 0 | 7 | 100% | ⚠ TOXIC |
+| `max_up_ret` | 56 | 14 | 70 | 80% | ⚠ TOXIC |
+| `volume_weighted_price_position` | 21 | 6 | 27 | 78% |  |
+| `opening_drive_thrust_ratio` | 35 | 11 | 46 | 76% |  |
+| `first_bar_return` | 19 | 6 | 25 | 76% |  |
+| `rally_strength_max` | 11 | 4 | 15 | 73% |  |
+| `demark_setup_reversal_early` | 5 | 2 | 7 | 71% |  |
+| `trend_bar_close_consistency` | 2 | 1 | 3 | 67% |  |
+| `volatility_expansion_trend_vector` | 11 | 6 | 17 | 65% |  |
+| `bar_body_rng_0` | 33 | 20 | 53 | 62% |  |
+| `bar_ret_0` | 18 | 11 | 29 | 62% |  |
+| `net_volume_flow` | 2 | 2 | 4 | 50% |  |
+| `early_body_momentum` | 1 | 1 | 2 | 50% |  |
+| `gap_pct` | 3 | 5 | 8 | 38% |  |
+| `rbreaker_buy_setup_proximity_early` | 2 | 4 | 6 | 33% |  |
+| `rbreaker_sell_setup_proximity_early` | 10 | 29 | 39 | 26% |  |
+| `volume_weighted_momentum_acceleration` | 1 | 4 | 5 | 20% |  |
+| `volume_price_confirmation` | 2 | 9 | 11 | 18% |  |
 | `limit_down_proximity_early` | 1 | 9 | 10 | 10% |  |
-| `directional_volume_signature` | 1 | 11 | 12 | 8% |  |
-| `body_size_progression` | 0 | 2 | 2 | 0% |  |
+| `star50_limit_proximity_early` | 2 | 22 | 24 | 8% |  |
+| `directional_volume_signature` | 0 | 9 | 9 | 0% |  |
 | `yesterday_early_vwap_dev` | 0 | 2 | 2 | 0% |  |
 
 ---
 
 ## 9. Operator Class FP Rate
 
-- **Symmetric** (`max, mean, min, rank_max, rank_min`): FP=86, TP=66, FP rate=57%
-- **Conditional** (`abs_diff, clamp_diff, diff, ifelse, product, ratio`): FP=18, TP=10, FP rate=64%
-- **3-way** (`tri_ifelse, tri_max, tri_mean, tri_median, tri_min`): FP=45, TP=17, FP rate=73%
+- **Symmetric** (`max, mean, min, rank_max, rank_min`): FP=61, TP=51, FP rate=54%
+- **Conditional** (`abs_diff, clamp_diff, diff, ifelse, product, ratio`): FP=11, TP=8, FP rate=58%
+- **3-way** (`tri_ifelse, tri_max, tri_mean, tri_median, tri_min`): FP=33, TP=16, FP rate=67%
 
