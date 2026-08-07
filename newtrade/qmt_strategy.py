@@ -1084,7 +1084,17 @@ AUDIT_DATE_OVERRIDE = ""
 
 
 def _audit_stamp():
+    # date (+wall time appended by _audit_time); replay pins the date so
+    # historical replays stamp the replayed day instead of the run day.
     return AUDIT_DATE_OVERRIDE or datetime.datetime.now().strftime("%Y%m%d")
+
+
+def _audit_time():
+    # Wall-clock time the line was written. Monitoring: a healthy live run
+    # stamps DECISION within a few seconds of 10:00:00. Replay stamps the
+    # post-close run time, so the TIME field is STRIPPED before diffing
+    # (see 部署说明.md section 4.3).
+    return datetime.datetime.now().strftime("%H:%M:%S")
 
 
 def _kv(name, val, nd=8):
@@ -1106,32 +1116,69 @@ def audit_decision(etf_key, prev_close, exp_bar_vol, raw_feats, composite, detai
     z_str = ",".join(
         "%s=%.*f" % (k, 8, float(detail[k]["sign"]) * float(detail[k]["z"]))
         for k in names if k in detail)
-    _audit_write("AUDIT %s DECISION %s %s %s %s %s %s %s %s" % (
+    _audit_write("AUDIT %s DECISION %s %s %s %s %s %s %s %s TIME=%s" % (
         _audit_stamp(), etf_key,
         _kv("prev_close", prev_close, 6), _kv("exp_bar_vol", exp_bar_vol, 6),
         "FEATURES=[" + feat_str + "]",
         "ZSIGNED=[" + z_str + "]",
         _kv("composite", composite, 8),
         "TH=long:%.4f/short:%.4f" % (z_th_long, z_th_short),
-        "SIDE=" + side))
+        "SIDE=" + side, _audit_time()))
 
 
 def audit_skip(etf_key, reason):
-    _audit_write("AUDIT %s SKIP %s REASON=%s" % (
-        _audit_stamp(), etf_key, reason))
+    _audit_write("AUDIT %s SKIP %s REASON=%s TIME=%s" % (
+        _audit_stamp(), etf_key, reason, _audit_time()))
 
 
 def audit_entry(etf_key, contract, side, ask, price, composite):
-    _audit_write("AUDIT %s ENTRY %s CONTRACT=%s SIDE=%s %s %s %s" % (
+    _audit_write("AUDIT %s ENTRY %s CONTRACT=%s SIDE=%s %s %s %s TIME=%s" % (
         _audit_stamp(), etf_key, contract, side,
         _kv("ask", ask, 6), _kv("order_price", price, 6),
-        _kv("composite", composite, 8)))
+        _kv("composite", composite, 8), _audit_time()))
 
 
 def audit_event(kind, etf_key, contract, px, extra=""):
-    _audit_write("AUDIT %s %s %s CONTRACT=%s %s%s" % (
+    _audit_write("AUDIT %s %s %s CONTRACT=%s %s%s TIME=%s" % (
         _audit_stamp(), kind, etf_key, contract,
-        _kv("price", px, 6), (" " + extra) if extra else ""))
+        _kv("price", px, 6), (" " + extra) if extra else "", _audit_time()))
+
+
+def _decisions_audited_today(today_str):
+    """ETF keys that already have an AUDIT DECISION line for today_str.
+    Scans the audit file itself so the dedup survives QMT restarts / re-inits
+    even when the state file is lost -- prevents duplicate DECISION lines."""
+    found = set()
+    if not AUDIT_LOG_FILE or not os.path.exists(AUDIT_LOG_FILE):
+        return found
+    pfx = "AUDIT %s DECISION " % today_str
+    try:
+        with open(AUDIT_LOG_FILE, "r", encoding="utf-8", errors="replace") as f:
+            for ln in f:
+                if ln.startswith(pfx):
+                    found.add(ln[len(pfx):].split(" ", 1)[0])
+    except Exception:
+        pass
+    return found
+
+
+def _log_decision_block(etf_key, composite, detail, ecfg, side, now):
+    """Console backup of the AUDIT DECISION line: composite + every selected
+    feature's signed z-score + raw value. Printed once per ETF per day
+    (callers dedupe via A['decision_printed']), so the signal stays visible
+    even if qmt_audit_log.txt cannot be found."""
+    late = now.time() > datetime.time(10, 5, 0)
+    head = (f"[{etf_key}] DECISION @ {now.strftime('%H:%M:%S')} "
+            f"composite={composite:+.6f} "
+            f"th L:{ecfg['z_th_long']}/S:{ecfg['z_th_short']} side={side}")
+    if late:
+        head += " [LATE START: strategy started after 10:00, deciding now]"
+    lines = [head]
+    for name in sorted(detail.keys()):
+        d = detail[name]
+        lines.append(f"    {name}: z={float(d['sign']) * float(d['z']):+.6f} "
+                     f"(sign={int(d['sign']):+d}, raw={float(d['raw']):.8f})")
+    _log("\n".join(lines))
 
 
 # =====================================================================
@@ -1176,6 +1223,11 @@ def init(C):
     A["options_map"] = {}
     A["tick"] = {}
     A["state"] = _load_state(today_str)
+    if A["state"]["decided"] or A["state"]["positions"]:
+        pos_str = ", ".join(f"{k}:{v.get('contract')}"
+                            for k, v in A["state"]["positions"].items()) or "none"
+        _log(f"state restored for {today_str}: "
+             f"decided={A['state']['decided']} positions={pos_str}")
     A["entry_attempts"] = {}
 
     cfg = QMT_CONFIG.get("etfs", {})
@@ -1229,6 +1281,8 @@ def init(C):
 
     C.A = A
     _log(f"init done. underlyings={list(A['options_map'].keys())}")
+    _log(f"audit log -> {AUDIT_LOG_FILE}")
+    _log(f"state dir -> {STATE_DIR}")
 
 
 def _get_prev_context(C, index_code, seed_prev_close, seed_exp_bar_vol):
@@ -1442,11 +1496,31 @@ def handlebar(C):
     if now.time() < DECISION_TIME:
         return
     cfg_all = QMT_CONFIG.get("etfs", {})
+    printed = A.setdefault("decision_printed", set())
+    # restart-safe dedup: never write a second DECISION line for today,
+    # even if state/in-memory markers were lost (QMT re-init / restart)
+    audited = A.setdefault("audited_today", _decisions_audited_today(today_str))
     for etf_key, ecfg in cfg_all.items():
         if etf_key in state["decided"]:
+            # log once why nothing happens (earlier run today already decided)
+            if etf_key not in printed:
+                _log(f"[{etf_key}] already decided today "
+                     f"({state['decided'][etf_key]}), no new decision")
+                printed.add(etf_key)
+            continue
+        # safety: position exists but 'decided' marker was lost (state file
+        # corruption / re-init) -> restore marker, never re-enter
+        if etf_key in state["positions"]:
+            state["decided"][etf_key] = state["positions"][etf_key]["side"]
+            _log(f"[{etf_key}] open position "
+                 f"{state['positions'][etf_key]['contract']} found, decision marker restored")
             continue
         if etf_key not in A["options_map"]:
             state["decided"][etf_key] = "no_chain"
+            if etf_key not in printed:
+                _log(f"[{etf_key}] skip: no option chain was built in init "
+                     f"(check 'NO options returned' init messages)")
+                printed.add(etf_key)
             continue
 
         bars = _get_index_bars(C, ecfg["index_code"], n_bars=6)
@@ -1470,10 +1544,17 @@ def handlebar(C):
 
         composite, detail = compute_composite(ecfg, raw_feats)
         side = decide_side(composite, ecfg["z_th_long"], ecfg["z_th_short"])
-        _log(f"[{etf_key}] composite={composite:+.4f} side={side} "
-             f"(th L:{ecfg['z_th_long']}/S:{ecfg['z_th_short']})")
-        audit_decision(etf_key, prev_close, exp_bar_vol, raw_feats,
-                       composite, detail, ecfg["z_th_long"], ecfg["z_th_short"], side)
+        # console print exactly once per ETF per day, even if QMT re-inits
+        if etf_key not in printed:
+            _log_decision_block(etf_key, composite, detail, ecfg, side, now)
+            printed.add(etf_key)
+        if etf_key in audited:
+            _log(f"[{etf_key}] DECISION already audited today "
+                 f"(earlier run), not writing a duplicate line")
+        else:
+            audit_decision(etf_key, prev_close, exp_bar_vol, raw_feats,
+                           composite, detail, ecfg["z_th_long"], ecfg["z_th_short"], side)
+            audited.add(etf_key)
         state["decided"][etf_key] = side
         if side == "flat":
             _save_state(today_str, state)
@@ -1510,7 +1591,7 @@ def handlebar(C):
                 "peak": ask, "entry_time": now.strftime("%H:%M:%S"),
                 "composite": composite,
             }
-            _log(f"[{etf_key}] BUY {contract} ({side}) @ {ask} detail={detail}")
+            _log(f"[{etf_key}] BUY {contract} ({side}) @ {ask}")
             audit_entry(etf_key, contract, side, ask, ask + PRICE_TICK, composite)
         except Exception as e:
             _log(f"[{etf_key}] entry FAILED: {e}")

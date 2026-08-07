@@ -182,7 +182,10 @@ def main():
     date = pd.Timestamp(datetime.datetime.strptime(args.date, "%Y%m%d"))
     out_path = Path(args.output) if args.output else HERE / f"qmt_audit_replay_{args.date}.log"
 
-    # Point qmt_strategy's audit machinery at the replay log and pin the date
+    # Point qmt_strategy's audit machinery at the replay log and pin the date.
+    # Truncate first: re-running the same date must not be eaten by the
+    # restart-safe DECISION dedup inside qmt_strategy.
+    out_path.write_text("", encoding="utf-8")
     Q.AUDIT_LOG_FILE = str(out_path)
     Q.AUDIT_DATE_OVERRIDE = args.date
 
