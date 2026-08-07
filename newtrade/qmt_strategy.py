@@ -546,6 +546,10 @@ STOPLOSS_TRAILING = 0.30       # opt_time_decay_trailing base (30% from peak)
 ENTRY_RETRY_MAX = 3            # entry order retries before giving up
 MAX_QUOTE_AGE_S = 60           # skip day if ETF/index quote older than this
 DECISION_TIME = datetime.time(10, 0, 0)
+# Entry cutoff: if the decision only happens after this time (late start /
+# late bars), the signal is logged (console + AUDIT DECISION) but NO order
+# is placed. Grace window over 10:00 absorbs QMT bar-delivery latency.
+ENTRY_CUTOFF = datetime.time(10, 5, 0)
 EXIT_TIME = datetime.time(14, 35, 0)
 HARD_DEADLINE = datetime.time(14, 45, 0)
 
@@ -1167,12 +1171,13 @@ def _log_decision_block(etf_key, composite, detail, ecfg, side, now):
     feature's signed z-score + raw value. Printed once per ETF per day
     (callers dedupe via A['decision_printed']), so the signal stays visible
     even if qmt_audit_log.txt cannot be found."""
-    late = now.time() > datetime.time(10, 5, 0)
+    late = now.time() > ENTRY_CUTOFF
     head = (f"[{etf_key}] DECISION @ {now.strftime('%H:%M:%S')} "
             f"composite={composite:+.6f} "
             f"th L:{ecfg['z_th_long']}/S:{ecfg['z_th_short']} side={side}")
     if late:
-        head += " [LATE START: strategy started after 10:00, deciding now]"
+        head += (" [LATE DECISION: past ENTRY_CUTOFF "
+                 f"{ENTRY_CUTOFF.strftime('%H:%M:%S')}, signal logged, NO order]")
     lines = [head]
     for name in sorted(detail.keys()):
         d = detail[name]
@@ -1557,6 +1562,16 @@ def handlebar(C):
             audited.add(etf_key)
         state["decided"][etf_key] = side
         if side == "flat":
+            _save_state(today_str, state)
+            continue
+
+        # late start: decision only happened after ENTRY_CUTOFF -> signal was
+        # logged above for debugging, but no order may be placed
+        if now.time() > ENTRY_CUTOFF:
+            _log(f"[{etf_key}] decision at {now.strftime('%H:%M:%S')} is past "
+                 f"ENTRY_CUTOFF {ENTRY_CUTOFF.strftime('%H:%M:%S')}: "
+                 f"signal logged, NO order placed")
+            audit_skip(etf_key, "late_entry")
             _save_state(today_str, state)
             continue
 
