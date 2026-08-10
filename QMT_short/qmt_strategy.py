@@ -1295,20 +1295,32 @@ def _get_prev_context(C, index_code, seed_prev_close, seed_exp_bar_vol):
     prev_close = last completed daily close; exp_bar_vol = mean(last 20
     daily volumes)/48. Falls back to baked seeds on any failure."""
     try:
-        end = C.A["today"]
-        start_dt = datetime.datetime.strptime(end, "%Y%m%d") - datetime.timedelta(days=45)
+        today_str = C.A["today"]
+        start_dt = datetime.datetime.strptime(today_str, "%Y%m%d") - datetime.timedelta(days=45)
         start = start_dt.strftime("%Y%m%d")
         data = C.get_market_data_ex(
             ["close", "volume"], [index_code], period="1d",
-            start_time=start, end_time=end)
+            start_time=start, end_time=today_str)
         rows = data.get(index_code) if data else None
-        if rows is None or len(rows) < 2:
+        if rows is None or len(rows) < 1:
             return seed_prev_close, seed_exp_bar_vol
-        vals = rows.values[:-1] if len(rows) > 20 else rows.values[:-1]
-        if len(vals) < 1:
+        past_rows = []
+        if hasattr(rows, "iterrows"):
+            for idx, row in rows.iterrows():
+                dt_s = str(idx).replace("-", "").replace(" ", "").replace(":", "")[:8]
+                if dt_s < today_str:
+                    past_rows.append((float(row["close"]), float(row["volume"])))
+        else:
+            vals = rows.values if hasattr(rows, "values") else rows
+            for r in vals:
+                past_rows.append((float(r[0]), float(r[1])))
+            if len(past_rows) > 1:
+                past_rows = past_rows[:-1]
+
+        if len(past_rows) < 1:
             return seed_prev_close, seed_exp_bar_vol
-        prev_close = float(vals[-1][0])
-        vols = [float(r[1]) for r in vals[-20:]]
+        prev_close = past_rows[-1][0]
+        vols = [r[1] for r in past_rows[-20:]]
         exp_bar_vol = (sum(vols) / len(vols)) / 48.0
         if prev_close <= 0 or exp_bar_vol <= 0:
             return seed_prev_close, seed_exp_bar_vol
