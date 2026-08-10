@@ -25,7 +25,7 @@ uv run python newtrade/run_backtest.py -e 300ETF --scheme ew
 # Period-pool backtest (auto OOS start from pool cutoff 2024-01 through 2026-01)
 uv run python newtrade/run_backtest.py -e all --pool-period _p2016_2024 --no-stoploss
 
-# Run all pool vintages sequentially (old, _p2016_2024, _p2018_2026) for full benchmark comparison
+# Run all pool vintages sequentially (old, _p2015_2023, _p2016_2024, _p2017_2025, _p2018_2026) for full benchmark comparison
 uv run python newtrade/run_backtest.py -e all --pool-period all
 
 # Start-year backtest (runs from 2022-01-01 through 2026-01-01)

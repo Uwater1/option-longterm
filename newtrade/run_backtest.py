@@ -369,7 +369,7 @@ def run_single_backtest(etf: str, side: str = "single", scheme_name: str = "ew",
 
     # 8. Date Filtering to OOS Evaluation Period
     t_start = pd.Timestamp(start_date)
-    if end_date:
+    if end_date and pd.Timestamp(end_date) > t_start:
         t_end = pd.Timestamp(end_date)
         mask = (df["date"] >= t_start) & (df["date"] < t_end)
     else:
@@ -611,7 +611,7 @@ def main():
 
     # --pool-period: load period-specific pool override or handle 'all'
     if args.pool_period and args.pool_period.lower() == "all":
-        periods = ["old", "_p2015_2023", "_p2016_2024", "_p2017_2025"]
+        periods = ["old", "_p2015_2023", "_p2016_2024", "_p2017_2025", "_p2018_2026"]
         print("================================================================================")
         print(f"FULL POOL PERIOD BENCHMARK | Running periods: {periods}")
         print("================================================================================\n")
@@ -621,10 +621,10 @@ def main():
             if skip_next:
                 skip_next = False
                 continue
-            if arg == "--pool-period":
+            if arg in ("--pool-period", "-o", "--output"):
                 skip_next = True
                 continue
-            if arg.startswith("--pool-period="):
+            if arg.startswith("--pool-period=") or arg.startswith("--output="):
                 continue
             argv_clean.append(arg)
 
