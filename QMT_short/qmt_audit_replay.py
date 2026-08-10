@@ -14,7 +14,7 @@ lines into a replay log:
           composite=... TH=... SIDE=...
 
 Diff workflow (see 部署说明.md):
-    1. Copy the QMT-side qmt_audit_log.txt off the QMT machine.
+    1. Copy the QMT-side qmt_audit_log_<date>.txt off the QMT machine.
     2. python qmt_audit_replay.py --date YYYYMMDD
     3. Extract AUDIT lines from both files and diff them.
        Identical  -> QMT data feed + config + script all verified.
@@ -160,7 +160,7 @@ def replay_etf(etf: str, date: pd.Timestamp, date_str: str):
                      cfg["z_th_long"], cfg["z_th_short"], side)
 
     xc = xcheck_features(etf, date, raw)
-    with open(Q.AUDIT_LOG_FILE, "a", encoding="utf-8") as fh:
+    with open(Q._audit_log_path(), "a", encoding="utf-8") as fh:
         fh.write("REPLAY %s XCHECK %s %s (prevctx=%s)\n" % (date_str, etf, xc, src))
         fh.write("REPLAY %s SIDE_REF %s SIDE=%s composite=%.8f "
                  "spot_close=%.6f\n" % (date_str, etf, side, composite,
@@ -194,7 +194,7 @@ def main():
     print(f"replay date={args.date} etfs={etfs} -> {out_path}")
     for etf in etfs:
         replay_etf(etf, date, args.date)
-    print(f"done. Diff AUDIT lines: {out_path} vs QMT-side qmt_audit_log.txt")
+    print(f"done. Diff AUDIT lines: {out_path} vs QMT-side qmt_audit_log_{args.date}.txt")
 
 
 if __name__ == "__main__":

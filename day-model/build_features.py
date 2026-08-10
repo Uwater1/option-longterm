@@ -122,7 +122,9 @@ BASE_YESTERDAY_FEATURES = [
     "yesterday_day_skew", "yesterday_day_kurtosis",
     # --- Mined Features v1 Yesterday (6) ---
     "yesterday_afternoon_reversal", "yesterday_lunch_gap", "yesterday_pm_am_vol_ratio",
-    "yesterday_afternoon_momentum", "yesterday_midday_drawdown", "yesterday_cvd_close"
+    "yesterday_afternoon_momentum", "yesterday_midday_drawdown", "yesterday_cvd_close",
+    # --- Wave 6 Volume-Profile (min_vol_gap_day, PASSED 588000) ---
+    "yesterday_min_vol_gap_day"
 ]
 
 EARLY_FEATURES = (
@@ -848,6 +850,30 @@ def _linear_slope(y: np.ndarray) -> float:
 # ============================================================
 # Full-day features (to be shifted for yesterday features)
 # ============================================================
+def _day_min_vol_gap(highs, lows, closes, vols, nbins=20):
+    """Wave 6 volume-profile primitive: largest zero-volume price gap between
+    traded bins (liquidity vacuum / 'no man's land'), normalized to session range.
+    PASSED 588000 (IC=-0.052, IC_CV=1.31, 7Y Jackknife) in dig_wave6_candidates.py.
+    Complementary: no |spearman corr|>0.3 with any existing feature on 588000.
+    """
+    lo_px = float(np.min(lows))
+    rng_px = float(np.max(highs)) - lo_px
+    if rng_px <= 1e-12 or len(highs) < 6:
+        return 0.0
+    tp = (highs + lows + closes) / 3.0
+    bin_idx = (((tp - lo_px) / rng_px) * nbins).astype(int)
+    bin_idx = np.clip(bin_idx, 0, nbins - 1)
+    prof = np.bincount(bin_idx, weights=vols, minlength=nbins).astype(np.float64)
+    if prof.sum() <= 0:
+        return 0.0
+    active = np.where(prof > 1e-9)[0]
+    if len(active) < 2:
+        return 0.0
+    gaps = np.diff(active) - 1
+    max_gap = float(gaps.max()) if gaps.size else 0.0
+    return float(np.clip((max_gap / float(nbins)) * 4.0, -1.0, 1.0))
+
+
 def extract_day_full_features(day_5m: pd.DataFrame) -> dict:
     closes = day_5m["close"].values
     highs = day_5m["high"].values
@@ -863,6 +889,7 @@ def extract_day_full_features(day_5m: pd.DataFrame) -> dict:
             "afternoon_reversal": np.nan, "lunch_gap": np.nan, "pm_am_vol_ratio": np.nan,
             "pm_momentum": np.nan, "midday_liquidity_fade": np.nan, "midday_drawdown": np.nan,
             "cvd_close": np.nan,
+            "min_vol_gap_day": np.nan,
         }
         
     day_open = opens[0]
@@ -920,6 +947,7 @@ def extract_day_full_features(day_5m: pd.DataFrame) -> dict:
         "midday_liquidity_fade": midday_liquidity_fade,
         "midday_drawdown": midday_drawdown,
         "cvd_close": cvd_close,
+        "min_vol_gap_day": _day_min_vol_gap(highs, lows, closes, vols),
     }
 
 
@@ -1104,6 +1132,8 @@ def build_features_for_etf(etf_name: str, save: bool = True, early: bool = False
         # New full day features
         "afternoon_reversal", "lunch_gap", "pm_am_vol_ratio",
         "midday_liquidity_fade", "midday_drawdown", "cvd_close",
+        # Wave 6 volume-profile (shifted to yesterday_min_vol_gap_day)
+        "min_vol_gap_day",
     ]
     cols_to_shift = [col for col in cols_to_shift if col in early_df.columns]
     for col in cols_to_shift:

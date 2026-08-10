@@ -99,7 +99,7 @@ python newtrade/build_qmt_config.py
 
 # Audit-diff workflow (after market close, data downloaded):
 python QMT_short/qmt_audit_replay.py --date YYYYMMDD
-# then diff AUDIT lines: QMT-side qmt_audit_log.txt vs QMT_short/qmt_audit_replay_<date>.log
+# then diff AUDIT lines: QMT-side qmt_audit_log_<date>.txt vs QMT_short/qmt_audit_replay_<date>.log
 
 # Tests
 python newtrade/tests/test_qmt_selection.py [--slow]

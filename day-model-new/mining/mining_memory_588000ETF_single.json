@@ -1,4 +1,17 @@
 {
   "forbidden_features": [],
-  "rejected_families": []
+  "rejected_families": [
+    {
+      "family": "intraday_extreme_asymmetry_day",
+      "added": "2026-08-10",
+      "reason": "Gate-passed (IC -0.04..-0.055 on 300/50/588000, CV<1.2) but is an EXACT algebraic duplicate of existing yesterday_day_close_pos: asym = ((close-low)-(high-close))/range = 2*(close-low)/range - 1 = 2*yesterday_day_close_pos - 1. corr(derived, existing)=1.0. Rejected under complementarity rule (new bases must target complementary mechanisms). Do NOT re-mine close-position asymmetry variants; day_close_pos already covers it."
+    }
+  ],
+  "admitted_features": [
+    {
+      "family": "min_vol_gap_day",
+      "added": "2026-08-10",
+      "reason": "Wave 6 volume-profile primitive (largest zero-volume gap between traded price bins). PASSED 588000 single-side gate (IC=-0.052, IC_CV=1.31, 7Y-Jackknife). Complementary: no |spearman|>0.3 vs any existing 588000 feature. Integrated as yesterday_min_vol_gap_day in build_features.py extract_day_full_features."
+    }
+  ]
 }

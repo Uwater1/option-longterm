@@ -12,6 +12,7 @@ python3 day-model-new/mining/dig_and_test_candidates.py
 python3 day-model-new/mining/dig_multiday_candidates.py     # Multi-day (2-5d) trend/regime primitives
 python3 day-model-new/mining/dig_trend_regime_candidates.py # Wave 4: big-trend/regime (Kaufman/Choppiness/MA-stack/Keltner/Brooks)
 python3 day-model-new/mining/dig_wave5_candidates.py        # Wave 5: smart-money/path/liquidity/cross-asset/calendar/VIX
+python3 day-model-new/mining/dig_wave6_candidates.py        # Wave 6: volume-profile/cum-vol-curve/intraday-path archetypes (winner: min_vol_gap_day on 588000)
 
 # 0b. Generate aggressive feature combination recipes (2-way + 3-way by default)
 # Defaults: top-50 for 2-way, top-25 for 3-way, 11 + 5 ops, dedup via mining_log.json
