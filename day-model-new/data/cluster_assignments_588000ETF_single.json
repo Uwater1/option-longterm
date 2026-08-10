@@ -11,7 +11,7 @@
   ],
   "clusters": {
     "0": [
-      "combo_sig_product__high_low_sequence_momentum__vwap_trend_channel_slope"
+      "combo_sig_product__rsi_opening__vwap_trend_channel_slope"
     ],
     "1": [
       "combo_diff__trend_day_regime_conviction__volume_weighted_momentum_acceleration",

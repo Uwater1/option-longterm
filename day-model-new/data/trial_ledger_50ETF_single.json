@@ -12581,5 +12581,6 @@
   "combo_z_sum__multi_ema_alignment_5_20_50__stoch_k",
   "combo_z_diff__multi_ema_alignment_5_20_50__stoch_k",
   "combo_sig_product__multi_ema_alignment_5_20_50__stoch_k",
-  "combo_rel_diff__multi_ema_alignment_5_20_50__stoch_k"
+  "combo_rel_diff__multi_ema_alignment_5_20_50__stoch_k",
+  "yesterday_min_vol_gap_day"
 ]

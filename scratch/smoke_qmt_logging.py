@@ -86,6 +86,31 @@ if os.path.exists(live):
     Q.AUDIT_LOG_FILE = ""
     Q.AUDIT_DATE_OVERRIDE = "20260810"
 
+# 4d. legacy-file fallback: no per-day file -> readers use qmt_audit_log.txt
+tmp2 = tempfile.mkdtemp(prefix="qmt_smoke_legacy_")
+Q.AUDIT_LOG_PREFIX = os.path.join(tmp2, "qmt_audit_log")
+Q.AUDIT_DATE_OVERRIDE = "20260809"
+legacy = os.path.join(tmp2, "qmt_audit_log.txt")
+with open(legacy, "w", encoding="utf-8") as f:
+    f.write("AUDIT 20260809 DECISION 500ETF prev_close=1.000000 exp_bar_vol=1.000000 "
+            "FEATURES=[a=1.00000000] ZSIGNED=[f1=0.50000000] composite=0.50000000 "
+            "TH=long:0.7000/short:1.2000 SIDE=long TIME=10:00:01\n")
+    f.write("AUDIT 20260809 ENTRY 500ETF CONTRACT=X.SHO SIDE=long ask=0.050000 "
+            "order_price=0.050100 composite=0.50000000 TIME=10:00:02\n")
+    f.write("AUDIT 20260811 SKIP 500ETF REASON=no_bars TIME=10:00:03\n")  # other day
+assert Q._audit_read_path("20260809") == legacy
+assert Q._audit_history_today("20260809") == {"500ETF": {"DECISION", "ENTRY"}}
+assert Q._open_positions_from_audit("20260809")["500ETF"]["contract"] == "X.SHO"
+d09 = Q._decisions_from_audit("20260809")
+assert d09["500ETF"]["side"] == "long" and d09["500ETF"]["zsigned"] == {"f1": 0.5}
+# once the per-day file appears it takes precedence over the legacy file
+with open(os.path.join(tmp2, "qmt_audit_log_20260809.txt"), "w", encoding="utf-8") as f:
+    f.write("AUDIT 20260809 SKIP 500ETF REASON=no_bars TIME=10:00:05\n")
+assert Q._audit_read_path("20260809").endswith("qmt_audit_log_20260809.txt")
+assert Q._audit_history_today("20260809") == {"500ETF": {"SKIP"}}
+Q.AUDIT_LOG_PREFIX = os.path.join(tmp, "qmt_audit_log")
+Q.AUDIT_DATE_OVERRIDE = "20260810"
+
 # 5. decision_detail JSON round-trip (state file) incl. numpy scalars
 state = Q._load_state("20260810")
 state["decided"]["500ETF"] = "long"

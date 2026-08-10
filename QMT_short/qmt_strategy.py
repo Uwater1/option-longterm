@@ -1086,6 +1086,24 @@ def _audit_log_path(date_str=None):
     return "%s_%s.txt" % (AUDIT_LOG_PREFIX, date_str or _audit_stamp())
 
 
+def _audit_read_path(date_str):
+    """File to READ a day's audit history from. Prefers the per-day file;
+    if it does not exist yet (e.g. the naming scheme was introduced mid-day,
+    or a machine upgraded before the first per-day write), falls back to the
+    legacy qmt_audit_log.txt -- safe because every line embeds the date."""
+    if not AUDIT_LOG_ENABLED:
+        return ""
+    if AUDIT_LOG_FILE:
+        return AUDIT_LOG_FILE
+    p = "%s_%s.txt" % (AUDIT_LOG_PREFIX, date_str)
+    if os.path.exists(p):
+        return p
+    legacy = AUDIT_LOG_PREFIX + ".txt"
+    if os.path.exists(legacy):
+        return legacy
+    return ""
+
+
 def _audit_write(line):
     path = _audit_log_path()
     if not path:
@@ -1172,8 +1190,8 @@ def _audit_history_today(today_str):
     no duplicate DECISION lines, no repeated SKIP spam, and -- critically --
     no second ENTRY even if the state file never got saved."""
     hist = {}
-    path = _audit_log_path(today_str)
-    if not path or not os.path.exists(path):
+    path = _audit_read_path(today_str)
+    if not path:
         return hist
     pfx = "AUDIT %s " % today_str
     try:
@@ -1200,8 +1218,8 @@ def _decisions_from_audit(today_str):
     Lets init() re-print factor values on a rerun even when the state file
     was never saved (audit file is the proven-writable store)."""
     out = {}
-    path = _audit_log_path(today_str)
-    if not path or not os.path.exists(path):
+    path = _audit_read_path(today_str)
+    if not path:
         return out
     pfx = "AUDIT %s DECISION " % today_str
 
@@ -1252,8 +1270,8 @@ def _open_positions_from_audit(today_str):
     Restoring them re-arms stoploss monitoring and the 14:35 exit."""
     opens = {}
     closed = set()
-    path = _audit_log_path(today_str)
-    if not path or not os.path.exists(path):
+    path = _audit_read_path(today_str)
+    if not path:
         return opens
     pfx = "AUDIT %s " % today_str
     entries = []

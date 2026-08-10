@@ -3,7 +3,7 @@
   "side": "single",
   "n_features": 37,
   "n_clusters": 22,
-  "avg_silhouette": 0.3421,
+  "avg_silhouette": 0.3425,
   "max_clusters_param": 10,
   "train_period": [
     "2014-01-01",
