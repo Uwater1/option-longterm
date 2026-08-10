@@ -65,7 +65,7 @@
 | ETF | Scheme | Sharpe | DSR | Verdict | CPCV Median | CPCV Std | % Positive |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 300ETF | ensemble | 0.648 | 0.465 | NOT_SIGNIFICANT | 0.758 | 0.310 | 100% |
-| 500ETF | ensemble | 0.620 | 0.413 | NOT_SIGNIFICANT | 1.014 | 0.498 | 100% |
+| 500ETF | ensemble | 0.620 | 0.413 | NOT_SIGNIFICANT | 0.995 | 0.478 | 100% |
 | 159915ETF | ensemble | 1.113 | 0.872 | NOT_SIGNIFICANT | 0.917 | 0.256 | 100% |
 | 300ETF | icw | 0.475 | 0.297 | NOT_SIGNIFICANT | 0.755 | 0.197 | 100% |
 | 500ETF | icw | 0.633 | 0.412 | NOT_SIGNIFICANT | 0.973 | 0.478 | 100% |
@@ -74,6 +74,6 @@
 | 500ETF | sortino | 0.505 | 0.308 | NOT_SIGNIFICANT | 0.935 | 0.514 | 93% |
 | 159915ETF | sortino | 1.192 | 0.899 | NOT_SIGNIFICANT | 1.021 | 0.260 | 100% |
 | 300ETF | ew | 0.787 | 0.737 | NOT_SIGNIFICANT | 0.838 | 0.185 | 100% |
-| 500ETF | ew | 0.783 | 0.560 | NOT_SIGNIFICANT | 0.936 | 0.350 | 100% |
+| 500ETF | ew | 0.783 | 0.560 | NOT_SIGNIFICANT | 0.942 | 0.357 | 100% |
 | 159915ETF | ew | 1.212 | 0.893 | NOT_SIGNIFICANT | 0.937 | 0.282 | 100% |
 
