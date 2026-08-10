@@ -1236,6 +1236,16 @@ def init(C):
     A["entry_attempts"] = {}
 
     cfg = QMT_CONFIG.get("etfs", {})
+    # Proactively request historical index data download to prevent missing local bars
+    for index_code in ["000905.SH", "399006.SZ"]:
+        if hasattr(C, "download_history_data"):
+            try:
+                start_hist = (today - datetime.timedelta(days=45)).strftime("%Y%m%d")
+                C.download_history_data(index_code, "1d", start_hist, today_str)
+                C.download_history_data(index_code, "5m", today_str, today_str)
+            except Exception as e:
+                _log(f"proactive history download notice ({index_code}): {e}")
+
     for etf_key, ecfg in cfg.items():
         underlying = ecfg["qmt_underlying"]
         opt_list = None
