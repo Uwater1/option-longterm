@@ -988,6 +988,24 @@ def main():
         else:
             out_path = HERE / "REPORT.md"
 
+    # Group results by scheme: ENSEMBLE first (primary, 2026-08), then ICW, sortino, others, ew last
+    from collections import OrderedDict
+    scheme_order_pref = ["ensemble", "icw", "sortino"]
+    present_schemes = [r.get("scheme") for r in results]
+    scheme_groups = OrderedDict()
+    for s in scheme_order_pref:
+        if s in present_schemes:
+            scheme_groups[s] = [r for r in results if r.get("scheme") == s]
+    for r in results:
+        s = r.get("scheme", "?")
+        if s not in scheme_order_pref and s != "ew":
+            scheme_groups.setdefault(s, []).append(r)
+    if "ew" in present_schemes:
+        scheme_groups["ew"] = [r for r in results if r.get("scheme") == "ew"]
+
+    # Primary scheme (uncollapsed section + bold chart line): first group in order
+    primary_scheme = next(iter(scheme_groups), "ensemble")
+
     # Generate equity curve plot artifact
     chart_rel_path = None
     if plot_results:
@@ -997,8 +1015,7 @@ def main():
             import matplotlib.pyplot as plt
 
             fig, ax = plt.subplots(figsize=(10, 4.5), dpi=150)
-            # Chart prominence: primary scheme (ICW) bold; all others de-emphasized
-            primary_scheme = "icw"
+            # Chart prominence: primary scheme bold; all others de-emphasized
             for r in plot_results:
                 if r.get("dates") and r.get("cum_pnl"):
                     dates = pd.to_datetime(r["dates"])
@@ -1131,24 +1148,6 @@ def main():
             lines.append("| " + " | ".join(row) + " |")
         return "\n".join(lines)
     
-    # Group results by scheme: ENSEMBLE first (primary, 2026-08), then ICW, sortino, others, ew last
-    from collections import OrderedDict
-    scheme_order_pref = ["ensemble", "icw", "sortino"]
-    present_schemes = [r.get("scheme") for r in results]
-    scheme_groups = OrderedDict()
-    for s in scheme_order_pref:
-        if s in present_schemes:
-            scheme_groups[s] = [r for r in results if r.get("scheme") == s]
-    for r in results:
-        s = r.get("scheme", "?")
-        if s not in scheme_order_pref and s != "ew":
-            scheme_groups.setdefault(s, []).append(r)
-    if "ew" in present_schemes:
-        scheme_groups["ew"] = [r for r in results if r.get("scheme") == "ew"]
-
-    # Primary scheme (uncollapsed section + bold chart line): first group in order
-    primary_scheme = next(iter(scheme_groups), None)
-
     # Build report sections
     report_sections = []
     chart_img_included = False
